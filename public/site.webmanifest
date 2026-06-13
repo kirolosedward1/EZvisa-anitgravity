@@ -1,0 +1,23 @@
+{
+  "name": "EZvisa - Schengen Visa Application Service",
+  "short_name": "EZvisa",
+  "description": "Get your Schengen visa approved fast with AI-powered assistance for 27 European countries",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

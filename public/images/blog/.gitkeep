@@ -1,0 +1,18 @@
+# Blog Images Directory
+
+This directory contains all images used in blog posts.
+
+## Structure:
+- Featured images for post headers
+- Inline images for content sections
+- Infographics and diagrams
+
+## Naming Convention:
+- Descriptive filenames with keywords
+- Format: {topic}-{description}.jpg/webp
+- Example: visa-rejection-appeal-documents.jpg
+
+## Optimization:
+- All images should be < 200KB
+- WebP format preferred
+- Responsive sizing configured
