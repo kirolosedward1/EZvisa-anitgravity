@@ -112,23 +112,20 @@ export function ServicesSection() {
           </div>
 
           {/* Right Column - Premium Travel Image */}
-          <div className="lg:col-span-5 flex justify-center items-center relative">
-            {/* Visual background glows */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/5 to-indigo-500/5 rounded-[3rem] blur-2xl pointer-events-none" />
+          <div className="lg:col-span-5 flex justify-center items-center relative min-h-[400px] lg:min-h-[500px]">
+            {/* Visual background glow centered behind the image */}
+            <div className="absolute w-72 h-72 bg-gradient-to-tr from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
             
             {/* Soft decorative background circles */}
             <div className="absolute w-72 h-72 rounded-full border border-blue-500/5 animate-[spin_40s_linear_infinite] pointer-events-none" />
             <div className="absolute w-[22rem] h-[22rem] rounded-full border border-dashed border-primary/10 animate-[spin_80s_linear_infinite] pointer-events-none" />
 
             <div className="relative w-full aspect-[4/3] sm:aspect-[1.1] md:aspect-[1.2] lg:aspect-[0.9] max-w-[460px] flex items-center justify-center">
-              {/* Backing Card frame */}
-              <div className="absolute inset-4 rounded-3xl bg-gradient-to-tr from-blue-600/10 to-indigo-600/5 -rotate-2 border border-blue-500/10 shadow-sm" />
-              
               <Image
                 src="/images/woman-travel.png"
                 alt="EZvisa Travel Consultant"
                 fill
-                className="object-contain z-10 hover:scale-[1.02] transition-transform duration-500 select-none"
+                className="object-contain z-10 hover:scale-[1.03] transition-transform duration-500 select-none filter drop-shadow-[0_20px_40px_rgba(59,130,246,0.15)]"
                 sizes="(max-w-lg) 100vw, 460px"
                 priority
                 unoptimized
