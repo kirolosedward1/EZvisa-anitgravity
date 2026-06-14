@@ -132,7 +132,7 @@ export function HeroSection() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-primary/5 blur-[120px] dark:bg-primary/10" />
         {/* Subtle, structured grid overlay */}
         <div
-          className="absolute inset-0 opacity-[0.25] dark:opacity-[0.15]"
+          className="absolute inset-0 opacity-[0.25] dark:opacity-[0.15] hidden md:block"
           style={{
             backgroundImage: "radial-gradient(circle at 1px 1px, oklch(0.45 0.25 264 / 0.15) 1.5px, transparent 0)",
             backgroundSize: "24px 24px",

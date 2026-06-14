@@ -91,7 +91,7 @@ export default function DocumentsPage() {
 
               {/* Dot grid decoration */}
               <div
-                className="absolute inset-0 opacity-[0.1] pointer-events-none z-10"
+                className="absolute inset-0 opacity-[0.1] pointer-events-none z-10 hidden md:block"
                 style={{
                   backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
                   backgroundSize: "24px 24px",

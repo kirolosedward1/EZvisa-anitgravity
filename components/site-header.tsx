@@ -45,20 +45,32 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
 
   useEffect(() => {
     if (isMenuOpen) {
-      const scrollY = window.scrollY
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
-      document.body.style.position = "fixed"
-      document.body.style.top = `-${scrollY}px`
-      document.body.style.width = "100%"
-      document.body.style.overflow = "hidden"
-      document.body.style.paddingRight = `${scrollbarWidth}px`
-      return () => {
-        document.body.style.position = ""
-        document.body.style.top = ""
-        document.body.style.width = ""
-        document.body.style.overflow = ""
-        document.body.style.paddingRight = ""
-        window.scrollTo(0, scrollY)
+      const isMobileDevice = window.innerWidth < 1024
+      if (isMobileDevice) {
+        // Simple lock on mobile to prevent viewport height recalculation stutters in Safari
+        document.body.style.overflow = "hidden"
+        document.body.style.height = "100%"
+        return () => {
+          document.body.style.overflow = ""
+          document.body.style.height = ""
+        }
+      } else {
+        // Desktop lock to prevent layout shift from scrollbar disappearing
+        const scrollY = window.scrollY
+        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+        document.body.style.position = "fixed"
+        document.body.style.top = `-${scrollY}px`
+        document.body.style.width = "100%"
+        document.body.style.overflow = "hidden"
+        document.body.style.paddingRight = `${scrollbarWidth}px`
+        return () => {
+          document.body.style.position = ""
+          document.body.style.top = ""
+          document.body.style.width = ""
+          document.body.style.overflow = ""
+          document.body.style.paddingRight = ""
+          window.scrollTo(0, scrollY)
+        }
       }
     }
   }, [isMenuOpen])

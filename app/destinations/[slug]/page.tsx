@@ -360,9 +360,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             </p>
           </div>
 
-          <div className="border border-border rounded-3xl overflow-hidden shadow-xs bg-card">
-            {/* Table Header */}
-            <div className="grid grid-cols-3 bg-muted/40 border-b border-border py-4 px-6 font-bold text-xs uppercase tracking-wider text-muted-foreground items-center">
+          <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
+            <div className="border border-border rounded-3xl overflow-hidden shadow-xs bg-card min-w-[600px] md:min-w-full">
+              {/* Table Header */}
+              <div className="grid grid-cols-3 bg-muted/40 border-b border-border py-4 px-6 font-bold text-xs uppercase tracking-wider text-muted-foreground items-center">
               <div>Feature</div>
               <div>Applying on your own</div>
               <div className="flex items-center gap-1 text-primary font-bold">
@@ -396,6 +397,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
               ))}
             </div>
           </div>
+        </div>
         </div>
       </section>
 

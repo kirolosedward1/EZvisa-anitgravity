@@ -51,7 +51,7 @@ export function ServicesSection() {
     <section id="services" className="relative py-24 md:py-32 bg-background/50 overflow-hidden">
       {/* Decorative background grid */}
       <div
-        className="absolute inset-0 opacity-[0.15] pointer-events-none"
+        className="absolute inset-0 opacity-[0.15] pointer-events-none hidden md:block"
         style={{
           backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
           backgroundSize: "32px 32px",
