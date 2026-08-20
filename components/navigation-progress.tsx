@@ -35,8 +35,8 @@ function NavigationProgressBarContent() {
 
     finishTimerRef.current = setTimeout(() => {
       setLoading(false)
-      setTimeout(() => setProgress(0), 200)
-    }, 250)
+      setProgress(0)
+    }, 100)
   }
 
   // Intercept all internal anchor clicks for immediate feedback on user click
