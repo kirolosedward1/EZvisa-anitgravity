@@ -6,6 +6,8 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
 
+export const revalidate = 3600
+
 export const metadata: Metadata = {
   title: "Schengen Visa News, Guides & Travel Tips | EZvisa Blog",
   description:
