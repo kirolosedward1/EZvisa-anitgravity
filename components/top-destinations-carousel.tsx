@@ -52,10 +52,11 @@ export function TopDestinationsCarousel() {
 
   return (
     <div className="w-full overflow-hidden relative">
-      <div className="space-y-4 sm:space-y-5 py-6" style={{
-        maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
-        WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)'
-      }}>
+      {/* Side gradient fade overlays for smooth mask without GPU performance overhead */}
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-20 bg-gradient-to-r from-background to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-20 bg-gradient-to-l from-background to-transparent z-10" />
+
+      <div className="space-y-4 sm:space-y-5 py-6">
         {/* Row 1 - Scrolling Left */}
         <div className="flex animate-scroll-left py-2">
           {/* Duplicate items for seamless loop */}
@@ -70,6 +71,7 @@ export function TopDestinationsCarousel() {
                   src={`/flags/${destination.name.toLowerCase().replace(/\s+/g, "-")}.png`}
                   alt=""
                   fill
+                  sizes="48px"
                   className="object-cover"
                 />
               </div>
@@ -99,6 +101,7 @@ export function TopDestinationsCarousel() {
                   src={`/flags/${destination.name.toLowerCase().replace(/\s+/g, "-")}.png`}
                   alt=""
                   fill
+                  sizes="48px"
                   className="object-cover"
                 />
               </div>
@@ -118,28 +121,30 @@ export function TopDestinationsCarousel() {
       <style jsx>{`
         @keyframes scroll-left {
           0% {
-            transform: translateX(0);
+            transform: translate3d(0, 0, 0);
           }
           100% {
-            transform: translateX(-33.333%);
+            transform: translate3d(-33.333%, 0, 0);
           }
         }
 
         @keyframes scroll-right {
           0% {
-            transform: translateX(-33.333%);
+            transform: translate3d(-33.333%, 0, 0);
           }
           100% {
-            transform: translateX(0);
+            transform: translate3d(0, 0, 0);
           }
         }
 
         .animate-scroll-left {
           animation: scroll-left 60s linear infinite;
+          will-change: transform;
         }
 
         .animate-scroll-right {
           animation: scroll-right 60s linear infinite;
+          will-change: transform;
         }
 
         .animate-scroll-left:hover,

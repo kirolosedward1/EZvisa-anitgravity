@@ -39,9 +39,8 @@ export function ContactSection() {
               src="/images/6802.jpg"
               alt="Happy traveler in Europe"
               fill
+              sizes="(max-width: 1024px) 100vw, 1200px"
               className="object-cover opacity-[0.12] mix-blend-overlay"
-              priority
-              unoptimized
             />
           </div>
 

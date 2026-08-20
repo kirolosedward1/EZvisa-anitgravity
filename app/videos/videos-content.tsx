@@ -122,9 +122,8 @@ export default function VideosContent() {
                   alt="Scenic France"
                   fill
                   className="object-cover opacity-85 contrast-[1.05]"
-                  sizes="(max-w-6xl) 100vw, 1152px"
+                  sizes="(max-width: 1200px) 100vw, 1152px"
                   priority
-                  unoptimized
                 />
                 <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[1px]" />
               </div>

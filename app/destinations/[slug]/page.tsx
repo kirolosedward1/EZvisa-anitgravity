@@ -275,8 +275,8 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             src="/images/flight-path-3.png"
             alt=""
             fill
+            sizes="240px"
             className="object-contain"
-            unoptimized
           />
         </div>
         <div className="absolute -top-8 right-[4%] w-[280px] h-[190px] pointer-events-none hidden md:block select-none rotate-[12deg] opacity-[0.18] dark:opacity-[0.12] dark:brightness-0 dark:invert">
@@ -284,8 +284,8 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             src="/images/flight-path-3.png"
             alt=""
             fill
+            sizes="280px"
             className="object-contain"
-            unoptimized
           />
         </div>
 

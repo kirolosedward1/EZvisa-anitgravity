@@ -230,7 +230,6 @@ export function WhatYouGetSection() {
                           fill
                           className="object-contain"
                           sizes="320px"
-                          unoptimized
                         />
                       </motion.div>
                     </AnimatePresence>

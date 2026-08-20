@@ -146,9 +146,9 @@ export function HeroSection() {
             src="/images/flight-path-3.png"
             alt=""
             fill
+            sizes="300px"
             className="object-contain"
             priority
-            unoptimized
           />
         </div>
         {/* Bottom Right Flight Path */}
@@ -157,9 +157,9 @@ export function HeroSection() {
             src="/images/flight-path-3.png"
             alt=""
             fill
+            sizes="320px"
             className="object-contain"
             priority
-            unoptimized
           />
         </div>
         {/* Border transition gradient lines */}
@@ -179,8 +179,8 @@ export function HeroSection() {
             alt={heroBgCountryName ? `${heroBgCountryName} background` : "Berlin sunset background"}
             fill
             priority
+            sizes="(max-width: 768px) 100vw, 1200px"
             className="object-cover object-center pointer-events-none"
-            unoptimized
           />
           {/* Dark overlay */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/60 to-black/75 pointer-events-none" />
@@ -253,6 +253,7 @@ export function HeroSection() {
                                     src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
                                     alt=""
                                     fill
+                                    sizes="24px"
                                     className="object-cover"
                                   />
                                 </span>

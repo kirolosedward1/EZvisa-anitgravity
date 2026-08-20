@@ -87,9 +87,8 @@ export function Footer({
           src="/images/flight-path-3.png"
           alt=""
           fill
+          sizes="300px"
           className="object-contain dark:brightness-0 dark:invert"
-          priority
-          unoptimized
         />
       </div>
 

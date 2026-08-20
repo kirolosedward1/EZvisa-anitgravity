@@ -99,9 +99,9 @@ export function InnerHero({
           src="/images/flight-path-3.png"
           alt=""
           fill
+          sizes="220px"
           className="object-contain"
           priority
-          unoptimized
         />
       </div>
 
@@ -111,9 +111,9 @@ export function InnerHero({
           src="/images/flight-path-3.png"
           alt=""
           fill
+          sizes="260px"
           className="object-contain"
           priority
-          unoptimized
         />
       </div>
 

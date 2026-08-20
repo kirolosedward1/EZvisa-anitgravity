@@ -231,8 +231,8 @@ export function TestimonialsSection() {
                     src={testimonials[selectedTestimonial].visaImage || "/placeholder.svg"}
                     alt={`${testimonials[selectedTestimonial].destination} visa approval`}
                     fill
+                    sizes="(max-width: 768px) 100vw, 350px"
                     className="object-cover"
-                    unoptimized
                   />
                 </div>
 

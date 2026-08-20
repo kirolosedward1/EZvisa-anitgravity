@@ -81,20 +81,27 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   }, [])
 
   useEffect(() => {
+    let ticking = false
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20)
-      if (isHomePage) {
-        const heroSection = document.getElementById("hero")
-        if (heroSection) {
-          const heroBottom = heroSection.getBoundingClientRect().bottom
-          setShowGetStarted(heroBottom < 0)
-        }
-      } else {
-        setShowGetStarted(true)
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 20)
+          if (isHomePage) {
+            const heroSection = document.getElementById("hero")
+            if (heroSection) {
+              const heroBottom = heroSection.getBoundingClientRect().bottom
+              setShowGetStarted(heroBottom < 0)
+            }
+          } else {
+            setShowGetStarted(true)
+          }
+          ticking = false
+        })
+        ticking = true
       }
     }
     handleScroll()
-    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [isHomePage])
 

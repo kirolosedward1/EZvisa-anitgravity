@@ -126,9 +126,7 @@ export function ServicesSection() {
                 alt="EZvisa Travel Consultant"
                 fill
                 className="object-contain z-10 hover:scale-[1.03] transition-transform duration-500 select-none filter drop-shadow-[0_20px_40px_rgba(59,130,246,0.15)]"
-                sizes="(max-w-lg) 100vw, 460px"
-                priority
-                unoptimized
+                sizes="(max-width: 640px) 100vw, 460px"
               />
             </div>
           </div>
@@ -160,8 +158,8 @@ export function ServicesSection() {
                   src={services[selectedService].image || "/placeholder.svg"}
                   alt={services[selectedService].title}
                   fill
+                  sizes="(max-width: 768px) 100vw, 400px"
                   className="object-cover"
-                  unoptimized
                 />
               </div>
 
