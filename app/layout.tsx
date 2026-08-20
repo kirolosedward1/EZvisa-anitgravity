@@ -5,6 +5,8 @@ import { Analytics } from "@vercel/analytics/next"
 import { CookieConsent } from "@/components/cookie-consent"
 import { ScrollRestoration } from "@/components/scroll-restoration"
 import { ContinueApplicationNotification } from "@/components/continue-application-notification"
+import { NavigationProgressBar } from "@/components/navigation-progress"
+import { PageTransition } from "@/components/page-transition"
 import Script from "next/script"
 import "./globals.css"
 
@@ -157,8 +159,9 @@ export default function RootLayout({
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
+        <NavigationProgressBar />
         <ScrollRestoration />
-        {children}
+        <PageTransition>{children}</PageTransition>
         <ContinueApplicationNotification />
         <CookieConsent />
         <Analytics />

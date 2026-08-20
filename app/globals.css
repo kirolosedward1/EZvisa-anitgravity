@@ -183,21 +183,6 @@
       -ms-overflow-style: none;
     }
   }
-
-  body::after {
-    content: "";
-    position: fixed;
-    top: 64px;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: oklch(0.45 0.25 264);
-    transform-origin: left;
-    transform: scaleX(var(--scroll-progress-decimal, 0));
-    z-index: 50;
-    pointer-events: none;
-    transition: transform 0.1s ease-out;
-  }
 }
 
 @layer utilities {
