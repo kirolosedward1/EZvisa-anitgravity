@@ -149,9 +149,7 @@ export function DestinationsCatalog() {
                       <h3 className="text-lg font-bold tracking-tight mb-1">
                         {country.name}
                       </h3>
-                      <div className="text-[11px] font-semibold text-white/70">
-                        Starts at <span className="text-white text-xs font-bold">{country.price}</span>
-                      </div>
+                      <div className="text-[11px] font-medium text-white/70">Fast 24-48h File Prep</div>
                     </div>
 
                     {/* Quick Apply Action Button (Floating) */}

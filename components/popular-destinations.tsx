@@ -1,7 +1,7 @@
 "use client"
 
 import { destinations } from "@/lib/destinations"
-import { ArrowRight, MoveRight } from "lucide-react"
+import { ArrowRight, MoveRight, Clock } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -32,7 +32,7 @@ export function PopularDestinations() {
           </Link>
         </div>
 
-        {/* Responsive Grid/Carousel Container */}
+        {/* Responsive Grid Container */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
           {popular.map((country, idx) => (
             <motion.div
@@ -40,53 +40,55 @@ export function PopularDestinations() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
-              className="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-xl transition-shadow bg-muted"
+              transition={{ duration: 0.4, delay: idx * 0.08 }}
+              className="h-full"
             >
-              {/* Country Background Image */}
-              <Image
-                src={country.image}
-                alt={`${country.name} visa documents`}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
-                className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                priority={idx < 3}
-              />
+              <Link
+                href={`/destinations/${country.slug}`}
+                className="group relative aspect-[3/4] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 bg-muted block cursor-pointer w-full h-full"
+              >
+                {/* Country Background Image */}
+                <Image
+                  src={country.image}
+                  alt={`${country.name} visa documents`}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  priority={idx < 3}
+                />
 
-              {/* Dark Vignette Overlay for legibility */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
+                {/* Dark Vignette Overlay for legibility */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent z-10 group-hover:from-black/95 group-hover:via-black/45 transition-colors" />
 
-              {/* Top Right Circular Arrow Link */}
-              <div className="absolute top-4 right-4 z-20">
-                <Link
-                  href={`/destinations/${country.slug}`}
-                  className="h-10 w-10 border border-white/30 rounded-full hover:bg-white text-white hover:text-black flex items-center justify-center transition-all duration-300"
-                  aria-label={`View visa destination details for ${country.name}`}
-                >
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
-              </div>
-
-              {/* Bottom Card Content */}
-              <div className="absolute bottom-6 left-6 right-6 z-20 text-white flex flex-col pointer-events-none">
-                <span className="text-xs font-bold text-accent/90 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                  <span className="relative w-4 h-4 rounded-full overflow-hidden inline-block flex-shrink-0">
-                    <Image
-                      src={`/flags/${country.slug}.png`}
-                      alt=""
-                      fill
-                      className="object-cover"
-                    />
-                  </span>
-                  <span>{country.visaType}</span>
-                </span>
-                <h3 className="text-xl font-bold tracking-tight mb-2">
-                  {country.name}
-                </h3>
-                <div className="text-xs font-semibold text-white/70">
-                  Starts at <span className="text-white text-sm font-bold">{country.price}</span>
+                {/* Top Right Circular Arrow Icon */}
+                <div className="absolute top-4 right-4 z-20">
+                  <div className="h-10 w-10 border border-white/30 rounded-full bg-black/20 backdrop-blur-xs text-white group-hover:bg-white group-hover:text-black flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm">
+                    <ArrowRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
                 </div>
-              </div>
+
+                {/* Bottom Card Content */}
+                <div className="absolute bottom-6 left-5 right-5 z-20 text-white flex flex-col transition-transform duration-300 group-hover:-translate-y-1">
+                  <span className="text-xs font-bold text-accent/90 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <span className="relative w-4 h-4 rounded-full overflow-hidden inline-block flex-shrink-0">
+                      <Image
+                        src={`/flags/${country.slug}.png`}
+                        alt=""
+                        fill
+                        className="object-cover"
+                      />
+                    </span>
+                    <span>{country.visaType}</span>
+                  </span>
+                  <h3 className="text-xl font-bold tracking-tight mb-1">
+                    {country.name}
+                  </h3>
+                  <div className="text-xs font-medium text-white/70 flex items-center gap-1">
+                    <Clock className="h-3 w-3 text-blue-400 inline" />
+                    <span>24-48h File Prep</span>
+                  </div>
+                </div>
+              </Link>
             </motion.div>
           ))}
         </div>
