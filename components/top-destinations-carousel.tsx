@@ -57,14 +57,14 @@ export function TopDestinationsCarousel() {
       <div className="pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-20 bg-gradient-to-l from-background to-transparent z-10" />
 
       <div className="space-y-4 sm:space-y-5 py-6">
-        {/* Row 1 - Scrolling Left */}
-        <div className="flex animate-scroll-left py-2">
+        {/* Row 1 - Scrolling Left (Desktop) / Native Scroll (Mobile) */}
+        <div className="flex sm:animate-scroll-left py-2 overflow-x-auto sm:overflow-visible scrollbar-hide snap-x md:snap-none -mx-4 px-4 sm:mx-0 sm:px-0">
           {/* Duplicate items for seamless loop */}
           {[...ROW_1, ...ROW_1].map((destination, index) => (
             <button
               key={`row1-${index}`}
               onClick={() => handleDestinationClick(destination.name)}
-              className="flex-shrink-0 flex items-center gap-3 px-4 py-3 mx-2.5 bg-background border border-border/80 rounded-2xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 group min-h-[64px] text-left w-[200px] sm:w-[240px] cursor-pointer"
+              className="flex-shrink-0 flex items-center gap-3 px-4 py-3 mx-2 sm:mx-2.5 bg-background border border-border/80 rounded-2xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 group min-h-[64px] text-left w-[200px] sm:w-[240px] cursor-pointer snap-start"
             >
               <div className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-xl overflow-hidden bg-secondary/50 group-hover:scale-110 transition-transform shadow-xs flex-shrink-0">
                 <Image
@@ -87,7 +87,7 @@ export function TopDestinationsCarousel() {
           ))}
         </div>
 
-        {/* Row 2 - Scrolling Right (Desktop & Tablet) */}
+        {/* Row 2 - Scrolling Right (Desktop Only) / Hidden on Mobile for compactness */}
         <div className="hidden sm:flex animate-scroll-right py-2">
           {/* Duplicate items for seamless loop */}
           {[...ROW_2, ...ROW_2].map((destination, index) => (

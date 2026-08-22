@@ -213,7 +213,7 @@ export function HeroSection() {
 
             {/* Country selector card */}
             <motion.div variants={itemVariants} className="mt-10 w-full max-w-3xl relative z-10">
-              <div className="bg-background/95 dark:bg-card/95 md:backdrop-blur- border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-2xl">
+              <div className="bg-background/95 dark:bg-card/95 md:backdrop-blur-md border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-2xl">
               <div className="flex flex-col gap-4">
                 
                 {/* Visual Widget Header */}

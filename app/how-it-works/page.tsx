@@ -64,23 +64,23 @@ export default function HowItWorksPage() {
           <div className="container mx-auto px-6 max-w-6xl relative z-10">
             {/* Header */}
             <div className="text-center max-w-2xl mx-auto mb-16 md:mb-20">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-5">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase mb-5">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                 Post-submission
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
-                What happens after submission?
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight tracking-tight text-foreground text-balance">
+                What happens<br/>after submission?
               </h2>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Step 1 */}
-              <div className="bg-card border border-border/80 rounded-2xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
+              <div className="bg-card border border-border/80 rounded-3xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
                 <div>
-                  <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <Mail className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Instant Confirmation</h3>
+                  <h3 className="font-bold text-lg text-foreground mb-3">Instant Confirmation</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Receive immediate email confirmation with your application reference number and payment receipt.
                   </p>
@@ -88,12 +88,12 @@ export default function HowItWorksPage() {
               </div>
 
               {/* Step 2 */}
-              <div className="bg-card border border-border/80 rounded-2xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
+              <div className="bg-card border border-border/80 rounded-3xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
                 <div>
-                  <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <RefreshCw className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Real-time Tracking</h3>
+                  <h3 className="font-bold text-lg text-foreground mb-3">Real-time Tracking</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Monitor your application progress 24/7 with live status updates through your dashboard.
                   </p>
@@ -101,12 +101,12 @@ export default function HowItWorksPage() {
               </div>
 
               {/* Step 3 */}
-              <div className="bg-card border border-border/80 rounded-2xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
+              <div className="bg-card border border-border/80 rounded-3xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
                 <div>
-                  <div className="w-12 h-12 rounded-xl bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
+                  <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <CheckCircle2 className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Ready to Travel</h3>
+                  <h3 className="font-bold text-lg text-foreground mb-3">Ready to Travel</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Get instant notification when your complete visa package is approved and ready.
                   </p>
