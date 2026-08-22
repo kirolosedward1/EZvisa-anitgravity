@@ -16,7 +16,7 @@ const steps = [
     number: "2",
     icon: CreditCard,
     title: "Pay securely",
-    description: "Complete your application with a flat 249 AED fee. Money-back guarantee.",
+    description: "Complete your application with secure payment processing. Money-back guarantee.",
   },
   {
     number: "3",

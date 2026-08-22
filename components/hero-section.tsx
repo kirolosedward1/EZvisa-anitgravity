@@ -469,7 +469,7 @@ export function HeroSection() {
               </div>
               <div className="flex items-center gap-2 bg-white/5 border border-white/10 backdrop-blur-xs shadow-xs rounded-xl px-3 py-1.5">
                 <Tag className="h-4 w-4 text-blue-300" />
-                <span>From <span className="font-bold text-white">249 AED</span></span>
+                <span className="font-bold text-white">All-Inclusive File</span>
               </div>
             </motion.div>
           </motion.div>

@@ -87,8 +87,8 @@ export function TopDestinationsCarousel() {
           ))}
         </div>
 
-        {/* Row 2 - Scrolling Right */}
-        <div className="flex animate-scroll-right py-2">
+        {/* Row 2 - Scrolling Right (Desktop & Tablet) */}
+        <div className="hidden sm:flex animate-scroll-right py-2">
           {/* Duplicate items for seamless loop */}
           {[...ROW_2, ...ROW_2].map((destination, index) => (
             <button
