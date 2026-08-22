@@ -60,51 +60,63 @@ export function ServicesSection() {
         }}
       />
 
-      <div className="container mx-auto px-6 md:px-12 relative z-10 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      <div className="container mx-auto px-5 sm:px-6 md:px-12 relative z-10 max-w-7xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
           
           {/* Left Column - Content & Cards */}
-          <div className="lg:col-span-7 space-y-10 text-left">
+          <div className="lg:col-span-7 space-y-7 text-left">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-5 w-fit">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-wider uppercase mb-4 w-fit">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 What's included
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
-                Everything you need for a <br />
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-[1.15] tracking-tight text-foreground text-balance">
+                Everything you need for a <br className="hidden sm:block" />
                 <span className="text-primary">successful visa application.</span>
               </h2>
-              <p className="mt-5 text-base md:text-lg text-muted-foreground leading-relaxed">
-                One flat fee. Five core documents prepared by seasoned travel visa experts who know exactly what consulate officers and embassies look for.
+              <p className="mt-3.5 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">
+                One flat fee. Five core documents prepared by seasoned travel visa experts who know exactly what consulate officers look for.
               </p>
             </div>
 
-            {/* Premium service horizontal list */}
-            <div className="space-y-4">
+            {/* Compact 2-column Grid Layout */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {services.map((service, index) => {
                 const Icon = service.icon
+                const isFullWidth = index === 4
+
                 return (
                   <motion.button
                     key={index}
-                    initial={{ opacity: 0, y: 15 }}
+                    initial={{ opacity: 0, y: 12 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: "-40px" }}
-                    transition={{ duration: 0.4, delay: index * 0.08, ease: "easeOut" }}
-                    whileHover={{ x: 6, transition: { duration: 0.2, ease: "easeOut" } }}
+                    viewport={{ once: true, margin: "-20px" }}
+                    transition={{ duration: 0.35, delay: index * 0.06, ease: "easeOut" }}
+                    whileHover={{ y: -3, transition: { duration: 0.2 } }}
                     onClick={() => setSelectedService(index)}
-                    className="group w-full text-left p-5 sm:p-6 rounded-2xl border border-border/80 bg-card hover:bg-primary/[0.01] hover:border-primary/30 flex items-start gap-5 transition-all duration-300 hover:shadow-md cursor-pointer"
+                    className={`group w-full text-left p-4 sm:p-4.5 rounded-2xl border border-border/80 bg-card hover:bg-primary/[0.02] hover:border-primary/40 flex items-start gap-3.5 transition-all duration-300 shadow-xs hover:shadow-xl hover:shadow-primary/5 cursor-pointer relative overflow-hidden ${
+                      isFullWidth ? "sm:col-span-2" : ""
+                    }`}
                   >
-                    <div className="h-11 w-11 rounded-xl bg-primary/5 text-primary border border-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-sm">
-                      <Icon className="h-5 w-5" strokeWidth={2} />
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
+                      <Icon className="h-4.5 w-4.5" strokeWidth={2} />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight group-hover:text-primary transition-colors duration-300 mb-1">
-                        {service.title}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+
+                    <div className="flex-1 min-w-0 pr-6">
+                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                        <h3 className="text-sm sm:text-base font-bold text-foreground tracking-tight group-hover:text-primary transition-colors duration-300 truncate">
+                          {service.title}
+                        </h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
                         {service.description}
                       </p>
                     </div>
+
+                    {/* Step badge in top right */}
+                    <span className="absolute top-3 right-3 text-[10px] font-bold text-primary/40 group-hover:text-primary transition-colors">
+                      0{index + 1}
+                    </span>
                   </motion.button>
                 )
               })}
@@ -112,21 +124,21 @@ export function ServicesSection() {
           </div>
 
           {/* Right Column - Premium Travel Image */}
-          <div className="lg:col-span-5 flex justify-center items-center relative min-h-[400px] lg:min-h-[500px]">
+          <div className="lg:col-span-5 flex justify-center items-center relative min-h-[340px] lg:min-h-[460px]">
             {/* Visual background glow centered behind the image */}
-            <div className="absolute w-72 h-72 bg-gradient-to-tr from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute w-64 h-64 bg-gradient-to-tr from-blue-500/10 to-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
             
             {/* Soft decorative background circles */}
-            <div className="absolute w-72 h-72 rounded-full border border-blue-500/5 animate-[spin_40s_linear_infinite] pointer-events-none" />
-            <div className="absolute w-[22rem] h-[22rem] rounded-full border border-dashed border-primary/10 animate-[spin_80s_linear_infinite] pointer-events-none" />
+            <div className="absolute w-64 h-64 rounded-full border border-blue-500/5 animate-[spin_40s_linear_infinite] pointer-events-none" />
+            <div className="absolute w-[20rem] h-[20rem] rounded-full border border-dashed border-primary/10 animate-[spin_80s_linear_infinite] pointer-events-none" />
 
-            <div className="relative w-full aspect-[4/3] sm:aspect-[1.1] md:aspect-[1.2] lg:aspect-[0.9] max-w-[460px] flex items-center justify-center">
+            <div className="relative w-full aspect-[4/3] sm:aspect-[1.1] md:aspect-[1.2] lg:aspect-[0.95] max-w-[420px] flex items-center justify-center">
               <Image
                 src="/images/woman-travel.png"
                 alt="EZvisa Travel Consultant"
                 fill
-                className="object-contain z-10 hover:scale-[1.03] transition-transform duration-500 select-none filter drop-shadow-[0_20px_40px_rgba(59,130,246,0.15)]"
-                sizes="(max-width: 640px) 100vw, 460px"
+                className="object-contain z-10 hover:scale-[1.03] transition-transform duration-500 select-none filter drop-shadow-[0_15px_30px_rgba(59,130,246,0.15)]"
+                sizes="(max-width: 640px) 100vw, 420px"
               />
             </div>
           </div>
