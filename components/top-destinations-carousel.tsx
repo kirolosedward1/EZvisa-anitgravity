@@ -138,13 +138,17 @@ export function TopDestinationsCarousel() {
         }
 
         .animate-scroll-left {
-          animation: scroll-left 60s linear infinite;
+          animation: scroll-left 30s linear infinite;
           will-change: transform;
+          transform-style: preserve-3d;
+          backface-visibility: hidden;
         }
 
         .animate-scroll-right {
-          animation: scroll-right 60s linear infinite;
+          animation: scroll-right 30s linear infinite;
           will-change: transform;
+          transform-style: preserve-3d;
+          backface-visibility: hidden;
         }
 
         .animate-scroll-left:hover,
