@@ -33,7 +33,12 @@ export async function createClient() {
  * Use this for generateStaticParams, sitemap, and other build-time functions
  */
 export function createBuildClient() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://dummy-url.supabase.co"
-  const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy-key"
-  return createSupabaseClient(url, key)
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  
+  // Use dummy values to prevent crashing during build if env vars are missing
+  return createSupabaseClient(
+    url || "https://dummy-url.supabase.co", 
+    key || "dummy-key"
+  )
 }

@@ -143,7 +143,7 @@ export function WhatYouGetSection() {
         <div className="flex flex-col gap-6 mb-16">
           
           {/* Horizontal Document Selector */}
-          <div className="w-full flex md:flex-wrap gap-3 overflow-x-auto md:overflow-visible pb-4 md:pb-0 scrollbar-hide snap-x md:snap-none -mx-6 px-6 md:mx-0 md:px-0">
+          <div className="w-full flex gap-3 overflow-x-auto pb-4 scrollbar-hide snap-x -mx-6 px-6 md:-mx-4 md:px-4">
             {documents.map((doc, index) => {
               const DocIcon = doc.icon
               const isSelected = index === currentIndex
@@ -151,7 +151,7 @@ export function WhatYouGetSection() {
                 <button
                   key={doc.id}
                   onClick={() => goToSlide(index)}
-                  className={`flex-shrink-0 text-left p-4 rounded-2xl border transition-all flex items-center gap-4 cursor-pointer min-w-[200px] sm:min-w-[220px] md:min-w-[calc(33.333%-0.5rem)] lg:min-w-0 lg:flex-1 snap-start ${
+                  className={`flex-shrink-0 text-left p-4 rounded-2xl border transition-all flex items-center gap-4 cursor-pointer w-[240px] sm:w-[260px] snap-center md:snap-start ${
                     isSelected
                       ? "border-primary bg-primary/[0.04] text-primary shadow-sm"
                       : "border-border/60 hover:border-primary/30 text-muted-foreground hover:text-foreground bg-card/65"

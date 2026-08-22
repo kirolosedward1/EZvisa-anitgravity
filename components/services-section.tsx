@@ -11,31 +11,37 @@ const services = [
     icon: FileText,
     title: "Application forms",
     description: "Error-free visa application forms filled accurately to match official embassy and consulate guidelines.",
-    image: "/images/visa-20application-20forms-20.jpg",
+    image: "/images/documents/application-form.png",
   },
   {
     icon: Plane,
     title: "Flight reservations",
     description: "Verifiable flight reservations to satisfy embassy travel itinerary requirements without buying full tickets beforehand.",
-    image: "/images/dummy-20flight-20bookings-20.webp",
+    image: "/images/documents/flight-reservation.png",
   },
   {
     icon: Hotel,
     title: "Hotel reservations",
     description: "Confirmed hotel reservations covering your entire stay, matched directly to your daily travel itinerary.",
-    image: "/images/hotel-20reservations-20.jpg",
+    image: "/images/documents/hotel-booking.png",
   },
   {
     icon: Map,
     title: "Travel itinerary",
     description: "Custom day-by-day travel plan detailing your destination entry points, hotel stays, and planned activities.",
-    image: "/images/travel-itinerary-new.jpg",
+    image: "/images/documents/itinerary.png",
   },
   {
     icon: Mail,
     title: "Cover letter",
     description: "Expertly drafted cover letter detailing your travel purpose, financial backing, and strong ties to your home country.",
-    image: "/images/cover-20letter.png",
+    image: "/images/documents/cover-letter.png",
+  },
+  {
+    icon: Sparkles,
+    title: "Travel insurance",
+    description: "Compliant Schengen medical travel insurance covering €30,000 for your entire stay in Europe.",
+    image: "/images/documents/travel-insurance.jpeg",
   },
 ]
 
@@ -76,7 +82,7 @@ export function ServicesSection() {
           
           {/* Left Side: 3 Document Cards */}
           <div className="lg:col-span-4 flex flex-col gap-4">
-            {[0, 1, 4].map((index, i) => {
+            {[0, 1, 2].map((index, i) => {
               const service = services[index]
               const Icon = service.icon
               return (
@@ -101,28 +107,32 @@ export function ServicesSection() {
             })}
           </div>
 
-          {/* Center Hub: Lady Image with Pulse Aura */}
-          <div className="lg:col-span-4 flex justify-center items-center relative py-4 lg:py-0">
-            {/* Background Glow Ring */}
-            <div className="absolute w-72 h-72 sm:w-80 sm:h-80 bg-gradient-to-tr from-blue-500/15 via-indigo-500/10 to-sky-400/15 rounded-full blur-3xl pointer-events-none hidden md:block" />
-            <div className="absolute w-72 h-72 sm:w-80 sm:h-80 rounded-full border border-primary/15 animate-[spin_60s_linear_infinite] pointer-events-none" />
-            <div className="absolute w-80 h-80 sm:w-[22rem] sm:h-[22rem] rounded-full border border-dashed border-primary/20 pointer-events-none" />
-
+          {/* Center Hub: Lady Image with Aura */}
+          <div className="lg:col-span-4 flex justify-center items-center relative py-8 lg:py-0">
+            {/* Soft Glowing Aura Background */}
+            <div className="absolute w-[120%] aspect-square bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-sky-400/10 rounded-full blur-3xl pointer-events-none" />
+            
             {/* Center Image Container */}
-            <div className="relative w-full aspect-[4/3] sm:aspect-[1.1] md:aspect-[1.2] lg:aspect-[0.88] max-w-[380px] lg:max-w-[360px] flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="relative w-full aspect-[4/3] sm:aspect-[1.1] md:aspect-[1.2] lg:aspect-[0.9] max-w-[420px] lg:max-w-[400px] flex items-center justify-center"
+            >
               <Image
                 src="/images/woman-travel.png"
                 alt="EZvisa Travel Consultant"
                 fill
-                className="object-contain z-10 select-none filter md:drop-shadow-[0_20px_40px_rgba(59,130,246,0.2)]"
-                sizes="(max-width: 640px) 100vw, 380px"
+                className="object-contain z-10 select-none filter drop-shadow-2xl"
+                sizes="(max-width: 640px) 100vw, 420px"
               />
-            </div>
+            </motion.div>
           </div>
 
-          {/* Right Side: 2 Document Cards */}
+          {/* Right Side: 3 Document Cards */}
           <div className="lg:col-span-4 flex flex-col gap-4 justify-center">
-            {[2, 3].map((index, i) => {
+            {[3, 4, 5].map((index, i) => {
               const service = services[index]
               const Icon = service.icon
               return (
