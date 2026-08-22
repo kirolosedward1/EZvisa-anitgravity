@@ -128,8 +128,7 @@ export function HeroSection() {
     <section id="hero" className="relative overflow-hidden border-b border-border bg-background pt-12">
       {/* Premium Subtle Grid & Radial Glow */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        {/* Soft radial glow centering on the hero container */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-primary/5 blur-[120px] dark:bg-primary/10" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-primary/5 blur-[120px] dark:bg-primary/10 hidden md:block" />
         {/* Subtle, structured grid overlay */}
         <div
           className="absolute inset-0 opacity-[0.25] dark:opacity-[0.15] hidden md:block"

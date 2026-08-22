@@ -142,7 +142,7 @@ export function InnerHero({
           ) : (
             <>
               {/* Animated Mesh Blobs */}
-              <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block">
                 <motion.div
                   animate={{
                     x: [0, 40, 0, -40, 0],

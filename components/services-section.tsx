@@ -104,7 +104,7 @@ export function ServicesSection() {
           {/* Center Hub: Lady Image with Pulse Aura */}
           <div className="lg:col-span-4 flex justify-center items-center relative py-4 lg:py-0">
             {/* Background Glow Ring */}
-            <div className="absolute w-72 h-72 sm:w-80 sm:h-80 bg-gradient-to-tr from-blue-500/15 via-indigo-500/10 to-sky-400/15 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute w-72 h-72 sm:w-80 sm:h-80 bg-gradient-to-tr from-blue-500/15 via-indigo-500/10 to-sky-400/15 rounded-full blur-3xl pointer-events-none hidden md:block" />
             <div className="absolute w-72 h-72 sm:w-80 sm:h-80 rounded-full border border-primary/15 animate-[spin_60s_linear_infinite] pointer-events-none" />
             <div className="absolute w-80 h-80 sm:w-[22rem] sm:h-[22rem] rounded-full border border-dashed border-primary/20 pointer-events-none" />
 
@@ -114,7 +114,7 @@ export function ServicesSection() {
                 src="/images/woman-travel.png"
                 alt="EZvisa Travel Consultant"
                 fill
-                className="object-contain z-10 select-none filter drop-shadow-[0_20px_40px_rgba(59,130,246,0.2)]"
+                className="object-contain z-10 select-none filter md:drop-shadow-[0_20px_40px_rgba(59,130,246,0.2)]"
                 sizes="(max-width: 640px) 100vw, 380px"
               />
             </div>

@@ -162,7 +162,9 @@ export default function RootLayout({
         </noscript>
         <NavigationProgressBar />
         <ScrollRestoration />
-        <PageTransition>{children}</PageTransition>
+        <main className="overflow-x-hidden w-full flex flex-col min-h-screen">
+          <PageTransition>{children}</PageTransition>
+        </main>
         <ContinueApplicationNotification />
         <CookieConsent />
         <Analytics />

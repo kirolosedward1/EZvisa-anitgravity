@@ -96,12 +96,10 @@ export function DestinationsCatalog() {
           <AnimatePresence mode="popLayout">
             {filteredDestinations.length > 0 ? (
               <motion.div
-                layout
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
               >
                 {filteredDestinations.map((country, idx) => (
                   <motion.div
-                    layout
                     key={country.id}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}

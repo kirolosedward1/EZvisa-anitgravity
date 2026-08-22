@@ -45,7 +45,7 @@ export function ContactSection() {
           </div>
 
           {/* Decorative glowing orb */}
-          <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-sky-500/25 blur-[120px] pointer-events-none" />
+          <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-sky-500/25 blur-[120px] pointer-events-none hidden md:block" />
 
           <div className="relative grid lg:grid-cols-[1.25fr_1fr] gap-12 lg:gap-16 p-8 md:p-14 lg:p-16 z-10">
             
