@@ -108,24 +108,24 @@ export function ServicesSection() {
           </div>
 
           {/* Center Hub: Lady Image with Aura */}
-          <div className="lg:col-span-4 flex justify-center items-center relative py-8 lg:py-0">
+          <div className="lg:col-span-4 flex justify-center items-end relative py-8 lg:py-0 min-h-[350px] sm:min-h-[450px]">
             {/* Soft Glowing Aura Background */}
-            <div className="absolute w-[120%] aspect-square bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-sky-400/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] max-w-[600px] aspect-square bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-sky-400/10 rounded-full blur-3xl pointer-events-none" />
             
             {/* Center Image Container */}
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative w-full aspect-[4/3] sm:aspect-[1.1] md:aspect-[1.2] lg:aspect-[0.9] max-w-[420px] lg:max-w-[400px] flex items-center justify-center"
+              className="absolute bottom-[-5rem] sm:bottom-[-7rem] w-[140%] sm:w-[120%] lg:w-[150%] max-w-[500px] lg:max-w-[600px] aspect-[3/4] lg:aspect-[4/5] z-0 pointer-events-none"
             >
               <Image
                 src="/images/woman-travel.png"
                 alt="EZvisa Travel Consultant"
                 fill
-                className="object-contain z-10 select-none filter drop-shadow-2xl"
-                sizes="(max-width: 640px) 100vw, 420px"
+                className="object-contain object-bottom select-none filter drop-shadow-2xl"
+                sizes="(max-width: 1024px) 100vw, 600px"
               />
             </motion.div>
           </div>

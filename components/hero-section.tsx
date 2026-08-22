@@ -457,18 +457,18 @@ export function HeroSection() {
             </div>
 
             {/* Reassurance row under form */}
-            <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl grid grid-cols-3 gap-2 sm:gap-4 md:flex md:flex-wrap md:items-center md:justify-center md:gap-x-8 md:gap-y-3 font-medium text-white/95 mx-auto">
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1.5 sm:gap-2 bg-white/5 border border-white/10 md:backdrop-blur-md shadow-xs rounded-xl p-2 sm:px-3 sm:py-1.5 w-full">
-                <ShieldCheck className="h-4 w-4 sm:h-4 sm:w-4 text-blue-300 flex-shrink-0" />
-                <span className="text-[9px] sm:text-xs md:text-sm leading-tight">Money-back guarantee</span>
+            <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 font-medium text-white/95 mx-auto">
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 w-full h-full">
+                <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
+                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Money-back guarantee</span>
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1.5 sm:gap-2 bg-white/5 border border-white/10 md:backdrop-blur-md shadow-xs rounded-xl p-2 sm:px-3 sm:py-1.5 w-full">
-                <Clock className="h-4 w-4 sm:h-4 sm:w-4 text-blue-300 flex-shrink-0" />
-                <span className="text-[9px] sm:text-xs md:text-sm leading-tight">Ready in 24-48 hours</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 w-full h-full">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
+                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Ready in 24-48 hours</span>
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1.5 sm:gap-2 bg-white/5 border border-white/10 md:backdrop-blur-md shadow-xs rounded-xl p-2 sm:px-3 sm:py-1.5 w-full">
-                <Tag className="h-4 w-4 sm:h-4 sm:w-4 text-blue-300 flex-shrink-0" />
-                <span className="font-bold text-white text-[9px] sm:text-xs md:text-sm leading-tight">All-Inclusive File</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 w-full h-full">
+                <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
+                <span className="font-bold text-white text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">All-Inclusive File</span>
               </div>
             </motion.div>
           </motion.div>
