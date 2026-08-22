@@ -155,7 +155,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
             <div
               key={doc.key}
               className={cn(
-                "rounded-xl p-5 border transition-all duration-300 backdrop-blur-sm",
+                "rounded-xl p-5 border transition-all duration-300 md:backdrop-blur-sm",
                 dragActive === doc.key
                   ? "border-2 border-dashed border-blue-500 bg-blue-500/5 shadow-inner scale-[1.005]"
                   : "border-border/80 bg-background/30 hover:border-blue-500/45 hover:bg-background/60 hover:shadow-md",
@@ -244,7 +244,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
         </div>
       )}
 
-      <div className="md:flex md:justify-between fixed md:static bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-10 flex justify-between gap-3">
+      <div className="md:flex md:justify-between fixed md:static bottom-0 left-0 right-0 p-4 bg-background/80 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-10 flex justify-between gap-3">
         <Button
           type="button"
           onClick={onBack}

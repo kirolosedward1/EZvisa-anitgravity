@@ -74,9 +74,9 @@ export function ServicesSection() {
         {/* Surround Showcase Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
           
-          {/* Left Side: 2 Document Cards */}
+          {/* Left Side: 3 Document Cards */}
           <div className="lg:col-span-4 flex flex-col gap-4">
-            {[0, 1].map((index) => {
+            {[0, 1, 4].map((index, i) => {
               const service = services[index]
               const Icon = service.icon
               return (
@@ -85,7 +85,7 @@ export function ServicesSection() {
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
                   whileHover={{ scale: 1.025, transition: { duration: 0.2 } }}
                   onClick={() => setSelectedService(index)}
                   className="group w-full text-left p-5 sm:p-6 rounded-3xl border border-border/80 bg-card hover:bg-primary/[0.02] hover:border-primary/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 cursor-pointer flex items-center gap-4.5"
@@ -121,8 +121,8 @@ export function ServicesSection() {
           </div>
 
           {/* Right Side: 2 Document Cards */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            {[2, 3].map((index) => {
+          <div className="lg:col-span-4 flex flex-col gap-4 justify-center">
+            {[2, 3].map((index, i) => {
               const service = services[index]
               const Icon = service.icon
               return (
@@ -131,7 +131,7 @@ export function ServicesSection() {
                   initial={{ opacity: 0, x: 20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: (index - 2) * 0.1 }}
+                  transition={{ duration: 0.4, delay: i * 0.1 }}
                   whileHover={{ scale: 1.025, transition: { duration: 0.2 } }}
                   onClick={() => setSelectedService(index)}
                   className="group w-full text-left p-5 sm:p-6 rounded-3xl border border-border/80 bg-card hover:bg-primary/[0.02] hover:border-primary/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 cursor-pointer flex items-center gap-4.5"
@@ -146,39 +146,6 @@ export function ServicesSection() {
               )
             })}
           </div>
-
-        </div>
-
-        {/* Bottom Centered Card: Cover Letter */}
-        <div className="mt-5 max-w-xl mx-auto">
-          {(() => {
-            const index = 4
-            const service = services[index]
-            const Icon = service.icon
-            return (
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4 }}
-                whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
-                onClick={() => setSelectedService(index)}
-                className="group w-full text-left p-5 sm:p-6 rounded-3xl border border-primary/30 bg-gradient-to-r from-primary/[0.03] via-card to-primary/[0.03] hover:border-primary/60 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 cursor-pointer flex items-center justify-center gap-4.5"
-              >
-                <div className="h-12 w-12 rounded-2xl bg-primary text-white flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
-                  <Icon className="h-5.5 w-5.5" strokeWidth={2} />
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
-                    {service.title}
-                  </h3>
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                    <Sparkles className="h-3 w-3" /> Embassy Compliant
-                  </span>
-                </div>
-              </motion.button>
-            )
-          })()}
         </div>
 
       </div>
@@ -191,7 +158,7 @@ export function ServicesSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedService(null)}
-            className="fixed inset-0 bg-foreground/40 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-foreground/40 md:backdrop-blur- z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 20 }}

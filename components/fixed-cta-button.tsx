@@ -30,7 +30,7 @@ export function FixedCTAButton({ country }: FixedCTAButtonProps) {
     >
       <Link
         href={`/apply?to=${encodeURIComponent(country)}`}
-        className="block w-full bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl shadow-2xl hover:shadow-xl transition-all duration-300 backdrop-blur-sm border border-primary/20"
+        className="block w-full bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl shadow-2xl hover:shadow-xl transition-all duration-300 md:backdrop-blur- border border-primary/20"
       >
         <div className="flex items-center justify-center py-3 px-5">
           <div className="text-base font-semibold text-center">Start Your Application</div>

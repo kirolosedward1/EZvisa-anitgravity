@@ -165,7 +165,7 @@ export function Footer({
                     href="https://wa.me/971547109533"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 hover:underline transition-colors"
+                    className="inline-flex items-center gap-1 text-[#25D366] hover:text-[#128C7E] hover:underline transition-colors font-medium"
                   >
                     Chat with us on WhatsApp
                     <ArrowUpRight className="h-3.5 w-3.5" />

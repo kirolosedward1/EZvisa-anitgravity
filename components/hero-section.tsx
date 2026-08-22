@@ -214,7 +214,7 @@ export function HeroSection() {
 
             {/* Country selector card */}
             <motion.div variants={itemVariants} className="mt-10 w-full max-w-3xl relative z-10">
-              <div className="bg-background/95 dark:bg-card/95 backdrop-blur-md border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-2xl">
+              <div className="bg-background/95 dark:bg-card/95 md:backdrop-blur- border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-2xl">
               <div className="flex flex-col gap-4">
                 
                 {/* Visual Widget Header */}
@@ -459,15 +459,15 @@ export function HeroSection() {
 
             {/* Reassurance row under form */}
             <motion.div variants={itemVariants} className="mt-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm font-medium text-white/95">
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 backdrop-blur-xs shadow-xs rounded-xl px-3 py-1.5">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 md:backdrop-blur- shadow-xs rounded-xl px-3 py-1.5">
                 <ShieldCheck className="h-4 w-4 text-blue-300" />
                 <span>Money-back guarantee</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 backdrop-blur-xs shadow-xs rounded-xl px-3 py-1.5">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 md:backdrop-blur- shadow-xs rounded-xl px-3 py-1.5">
                 <Clock className="h-4 w-4 text-blue-300" />
                 <span>Ready in 24-48 hours</span>
               </div>
-              <div className="flex items-center gap-2 bg-white/5 border border-white/10 backdrop-blur-xs shadow-xs rounded-xl px-3 py-1.5">
+              <div className="flex items-center gap-2 bg-white/5 border border-white/10 md:backdrop-blur- shadow-xs rounded-xl px-3 py-1.5">
                 <Tag className="h-4 w-4 text-blue-300" />
                 <span className="font-bold text-white">All-Inclusive File</span>
               </div>

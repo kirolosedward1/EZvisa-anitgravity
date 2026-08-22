@@ -72,7 +72,7 @@ export default function VideosContent() {
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-primary/90 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <div className="w-16 h-16 rounded-full bg-primary/90 md:backdrop-blur- flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                         <Play className="h-7 w-7 text-white ml-1" fill="currentColor" />
                       </div>
                     </div>
@@ -81,13 +81,13 @@ export default function VideosContent() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                     {/* Duration badge */}
-                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/75 backdrop-blur-sm rounded-md flex items-center gap-1">
+                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/75 md:backdrop-blur- rounded-md flex items-center gap-1">
                       <Clock className="h-3 w-3 text-white" />
                       <span className="text-xs font-medium text-white">{video.duration}</span>
                     </div>
 
                     {/* View count */}
-                    <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/75 backdrop-blur-sm rounded-md flex items-center gap-1">
+                    <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/75 md:backdrop-blur- rounded-md flex items-center gap-1">
                       <Eye className="h-3 w-3 text-white" />
                       <span className="text-xs font-medium text-white">{video.views}</span>
                     </div>

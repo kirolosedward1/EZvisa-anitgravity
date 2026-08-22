@@ -68,7 +68,7 @@ export function CookieConsent() {
   return (
     <>
       {/* Cookie Banner */}
-      <div className="fixed bottom-4 right-4 z-50 p-5 bg-background/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl max-w-md w-[calc(100vw-32px)] sm:w-[420px] max-h-[90vh] overflow-y-auto">
+      <div className="fixed bottom-4 right-4 z-50 p-5 bg-background/95 md:backdrop-blur- border border-border shadow-2xl rounded-2xl max-w-md w-[calc(100vw-32px)] sm:w-[420px] max-h-[90vh] overflow-y-auto">
         <div className="w-full">
           {!showPreferences ? (
             <div className="flex flex-col gap-3">

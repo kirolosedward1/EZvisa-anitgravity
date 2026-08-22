@@ -62,7 +62,7 @@ export function PopularDestinations() {
 
                 {/* Top Right Circular Arrow Icon */}
                 <div className="absolute top-4 right-4 z-20">
-                  <div className="h-10 w-10 border border-white/30 rounded-full bg-black/20 backdrop-blur-xs text-white group-hover:bg-white group-hover:text-black flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm">
+                  <div className="h-10 w-10 border border-white/30 rounded-full bg-black/20 md:backdrop-blur- text-white group-hover:bg-white group-hover:text-black flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm">
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>

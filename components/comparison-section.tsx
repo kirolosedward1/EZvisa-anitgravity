@@ -91,7 +91,7 @@ export function ComparisonSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="bg-card/75 backdrop-blur-sm border border-border/80 rounded-3xl p-8 shadow-sm flex flex-col justify-between"
+            className="bg-card/75 md:backdrop-blur- border border-border/80 rounded-3xl p-8 shadow-sm flex flex-col justify-between"
           >
             <div>
               <div className="mb-6">

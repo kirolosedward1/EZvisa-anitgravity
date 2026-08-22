@@ -80,7 +80,7 @@ export function StartApplicationBox() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="sticky top-24 bg-gray-50/80 backdrop-blur-sm rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-lg"
+      className="sticky top-24 bg-gray-50/80 md:backdrop-blur- rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-lg"
     >
       <div className="space-y-6">
         {/* Header */}

@@ -365,7 +365,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
 
         {/* Right Column: Receipt card & actions */}
         <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
-          <div className="bg-card/45 border border-border/60 rounded-3xl p-6 shadow-md backdrop-blur-xl relative overflow-hidden">
+          <div className="bg-card/45 border border-border/60 rounded-3xl p-6 shadow-md md:backdrop-blur-xl relative overflow-hidden">
             {/* Glow effect */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
 
@@ -422,7 +422,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           </div>
 
           {/* Action buttons */}
-          <div className="fixed lg:static bottom-0 left-0 right-0 p-4 lg:p-0 bg-background/85 backdrop-blur-lg border-t border-t-border/80 lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-10 flex lg:flex-col gap-3">
+          <div className="fixed lg:static bottom-0 left-0 right-0 p-4 lg:p-0 bg-background/85 md:backdrop-blur-lg border-t border-t-border/80 lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-10 flex lg:flex-col gap-3">
             <Button
               type="button"
               variant="outline"

@@ -87,7 +87,7 @@ export function CustomDatePicker({
           type="button"
           disabled={disabled}
           className={cn(
-            "h-14 rounded-xl border border-border/80 bg-background/50 backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 hover:border-blue-500/50 hover:bg-background/80 focus-visible:border-blue-500 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:outline-none shadow-sm flex items-center justify-between text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/10 w-full select-none",
+            "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 hover:border-blue-500/50 hover:bg-background/80 focus-visible:border-blue-500 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:outline-none shadow-sm flex items-center justify-between text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/10 w-full select-none",
             !value && "text-muted-foreground/60 font-normal",
             className
           )}

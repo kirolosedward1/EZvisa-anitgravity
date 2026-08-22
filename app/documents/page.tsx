@@ -44,7 +44,7 @@ export default function DocumentsPage() {
               placeholder="Search for a country..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 h-13 text-base bg-white/10 dark:bg-black/30 text-white placeholder:text-white/60 border-white/20 hover:border-white/30 focus:border-white/50 focus:ring-0 rounded-2xl shadow-inner backdrop-blur-md"
+              className="pl-11 h-13 text-base bg-white/10 dark:bg-black/30 text-white placeholder:text-white/60 border-white/20 hover:border-white/30 focus:border-white/50 focus:ring-0 rounded-2xl shadow-inner md:backdrop-blur-"
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-white/70 pointer-events-none z-10" />
           </div>

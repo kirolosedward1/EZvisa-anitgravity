@@ -107,7 +107,7 @@ export function ContactSection() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="lg:self-center w-full"
             >
-              <div className="rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 p-8 text-left">
+              <div className="rounded-3xl bg-white/5 md:backdrop-blur-md border border-white/10 p-8 text-left">
                 <div className="text-xs font-semibold tracking-widest text-sky-300 mb-6">What you get</div>
                 <div className="space-y-4">
                   {benefits.map((benefit, index) => (

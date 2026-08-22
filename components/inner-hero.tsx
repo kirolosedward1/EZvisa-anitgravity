@@ -187,7 +187,7 @@ export function InnerHero({
             {badge && (
               <motion.div
                 variants={itemVariants}
-                className={`mb-5 inline-flex items-center px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wider backdrop-blur-md shadow-sm cursor-default ${
+                className={`mb-5 inline-flex items-center px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wider md:backdrop-blur-md shadow-sm cursor-default ${
                   heroBgImage
                     ? "bg-white/10 text-white/90 border-white/20"
                     : "bg-primary/5 text-primary border-primary/10"

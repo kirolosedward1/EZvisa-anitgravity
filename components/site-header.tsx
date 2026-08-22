@@ -86,22 +86,34 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
       if (!ticking) {
         window.requestAnimationFrame(() => {
           setScrolled(window.scrollY > 20)
-          if (isHomePage) {
-            const heroSection = document.getElementById("hero")
-            if (heroSection) {
-              const heroBottom = heroSection.getBoundingClientRect().bottom
-              setShowGetStarted(heroBottom < 0)
-            }
-          } else {
-            setShowGetStarted(true)
-          }
           ticking = false
         })
         ticking = true
       }
     }
+    
     handleScroll()
     window.addEventListener("scroll", handleScroll, { passive: true })
+    
+    if (isHomePage) {
+      const heroSection = document.getElementById("hero")
+      if (heroSection) {
+        const observer = new IntersectionObserver(
+          ([entry]) => {
+            setShowGetStarted(!entry.isIntersecting && entry.boundingClientRect.top < 0)
+          },
+          { threshold: 0, rootMargin: "0px" }
+        )
+        observer.observe(heroSection)
+        return () => {
+          window.removeEventListener("scroll", handleScroll)
+          observer.disconnect()
+        }
+      }
+    } else {
+      setShowGetStarted(true)
+    }
+
     return () => window.removeEventListener("scroll", handleScroll)
   }, [isHomePage])
 
@@ -172,7 +184,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
         <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-6xl">
           <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
             scrolled || forceBackground || isWizardPage
-              ? "bg-background/80 backdrop-blur-xl border border-border/60 shadow-lg shadow-black/5" 
+              ? "bg-background/80 md:backdrop-blur- border border-border/60 shadow-lg shadow-black/5" 
               : "bg-transparent border-transparent"
           }`}>
             <Link href="/" className="flex items-center flex-shrink-0">
@@ -318,7 +330,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="fixed inset-0 bg-black/40 backdrop-blur-md z-40"
+              className="fixed inset-0 bg-black/40 md:backdrop-blur- z-40"
               onClick={() => setIsMenuOpen(false)}
             />
 

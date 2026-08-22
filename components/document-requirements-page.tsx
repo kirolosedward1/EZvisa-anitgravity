@@ -265,7 +265,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="min-w-[240px] md:min-w-[280px] h-12 md:h-14 justify-between text-left font-normal bg-white/10 dark:bg-black/30 text-white border-white/20 hover:border-white/30 hover:bg-white/20 focus:border-white/50 rounded-2xl shadow-inner backdrop-blur-md"
+                  className="min-w-[240px] md:min-w-[280px] h-12 md:h-14 justify-between text-left font-normal bg-white/10 dark:bg-black/30 text-white border-white/20 hover:border-white/30 hover:bg-white/20 focus:border-white/50 rounded-2xl shadow-inner md:backdrop-blur-"
                 >
                   <div className="flex items-center">
                     <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block mr-3 flex-shrink-0 shadow-xs">
@@ -405,7 +405,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="sticky top-24 bg-gray-50/80 backdrop-blur-sm rounded-2xl p-8 border border-gray-200 shadow-lg"
+                className="sticky top-24 bg-gray-50/80 md:backdrop-blur- rounded-2xl p-8 border border-gray-200 shadow-lg"
               >
                 <div className="space-y-6">
                   {/* Header */}

@@ -154,7 +154,7 @@ export default function AboutPage() {
             </div>
 
             {/* Stats */}
-            <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 backdrop-blur-sm shadow-primary/[0.02]">
+            <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 md:backdrop-blur- shadow-primary/[0.02]">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">5,000+</div>

@@ -1,7 +1,8 @@
 "use client"
 
-import { Star, X } from "lucide-react"
+import { Star, X, ArrowRight } from "lucide-react"
 import Image from "next/image"
+import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect, useRef, useCallback } from "react"
 
@@ -94,10 +95,17 @@ export function TestimonialsSection() {
   useEffect(() => {
     if (!isMobile || !scrollRef.current) return
     const container = scrollRef.current
+    let ticking = false
     const handleScroll = () => {
-      const cardWidth = container.offsetWidth
-      const newIndex = Math.round(container.scrollLeft / cardWidth)
-      setCurrentIndex(newIndex)
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const cardWidth = container.offsetWidth
+          const newIndex = Math.round(container.scrollLeft / cardWidth)
+          setCurrentIndex(newIndex)
+          ticking = false
+        })
+        ticking = true
+      }
     }
     container.addEventListener("scroll", handleScroll, { passive: true })
     return () => container.removeEventListener("scroll", handleScroll)
@@ -128,14 +136,24 @@ export function TestimonialsSection() {
               Loved by <span className="text-primary font-semibold">5,000+ happy travelers.</span>
             </h2>
           </div>
-          <div className="flex items-center gap-3.5 px-4 py-2.5 rounded-2xl bg-secondary/15 border border-border/40 self-start md:self-auto">
-            <div className="flex gap-0.5">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star key={i} className="h-4.5 w-4.5 fill-accent text-accent" />
-              ))}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 self-start md:self-auto">
+            <div className="flex items-center gap-3.5 px-4 py-2.5 rounded-2xl bg-secondary/15 border border-border/40">
+              <div className="flex gap-0.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="h-4.5 w-4.5 fill-accent text-accent" />
+                ))}
+              </div>
+              <div className="h-4 w-[1px] bg-border/80" />
+              <span className="text-sm font-semibold text-foreground">4.9/5 rating</span>
             </div>
-            <div className="h-4 w-[1px] bg-border/80" />
-            <span className="text-sm font-semibold text-foreground">4.9/5 · 5,000+ reviews</span>
+            
+            <Link 
+              href="/reviews" 
+              className="group flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+            >
+              View all 5,000+ reviews
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
         </div>
 
@@ -204,7 +222,7 @@ export function TestimonialsSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedTestimonial(null)}
-            className="fixed inset-0 bg-foreground/30 backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-foreground/30 md:backdrop-blur- z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}

@@ -609,7 +609,7 @@ function ApplyPageContent() {
               <div className="lg:hidden mb-4">
                 <div
                   onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
-                  className="flex items-center justify-between p-4 rounded-xl bg-background/80 border border-border/80 shadow-md backdrop-blur-md cursor-pointer transition-all duration-200 hover:bg-background/95"
+                  className="flex items-center justify-between p-4 rounded-xl bg-background/80 border border-border/80 shadow-md md:backdrop-blur- cursor-pointer transition-all duration-200 hover:bg-background/95"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold bg-blue-600 text-white shadow-sm ring-4 ring-blue-500/10 shrink-0">
@@ -632,7 +632,7 @@ function ApplyPageContent() {
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="overflow-hidden mt-2 space-y-1 bg-background/95 backdrop-blur-md rounded-xl shadow-lg border border-border/80 p-1"
+                      className="overflow-hidden mt-2 space-y-1 bg-background/95 md:backdrop-blur- rounded-xl shadow-lg border border-border/80 p-1"
                     >
                       {steps.map((step, index) => (
                         <div
@@ -679,9 +679,9 @@ function ApplyPageContent() {
                     onClick={() => handleStepClick(step.number)}
                     className={`flex items-start gap-4 p-4 rounded-xl transition-all duration-300 ${
                       currentStep === step.number
-                        ? "bg-background/80 backdrop-blur-md border border-border shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-foreground font-medium scale-[1.02] relative pl-5 after:absolute after:left-0 after:top-3 after:bottom-3 after:w-1 after:bg-blue-600 after:rounded-r-md"
+                        ? "bg-background/80 md:backdrop-blur- border border-border shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-foreground font-medium scale-[1.02] relative pl-5 after:absolute after:left-0 after:top-3 after:bottom-3 after:w-1 after:bg-blue-600 after:rounded-r-md"
                         : currentStep > step.number
-                          ? "bg-background/40 backdrop-blur-sm border border-border/40 cursor-pointer hover:bg-background/60 hover:scale-[1.01] text-foreground/80 hover:shadow-sm"
+                          ? "bg-background/40 md:backdrop-blur- border border-border/40 cursor-pointer hover:bg-background/60 hover:scale-[1.01] text-foreground/80 hover:shadow-sm"
                           : "bg-muted/10 border border-transparent cursor-not-allowed opacity-50 text-muted-foreground/50"
                     }`}
                   >
@@ -707,7 +707,7 @@ function ApplyPageContent() {
 
             {/* Step Content */}
             <div className="flex-1 pb-8">
-              <Card className="border border-border/50 bg-card/45 backdrop-blur-xl shadow-2xl rounded-3xl overflow-hidden transition-all duration-300">
+              <Card className="border border-border/50 bg-card/45 md:backdrop-blur- shadow-2xl rounded-3xl overflow-hidden transition-all duration-300">
                 <CardContent className="p-6 md:p-8 overflow-hidden">
                   <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
@@ -746,8 +746,8 @@ function ApplyPageContent() {
       </div>
 
       {showResumeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-card/90 backdrop-blur-xl border border-border/80 shadow-2xl rounded-3xl p-6 md:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col gap-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 md:backdrop-blur- animate-in fade-in duration-200">
+          <div className="bg-card/90 md:backdrop-blur- border border-border/80 shadow-2xl rounded-3xl p-6 md:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col gap-5">
             <div className="space-y-2">
               <h3 className="text-xl font-semibold tracking-tight text-foreground">Continue Application?</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
