@@ -60,7 +60,7 @@ export function TopDestinationsCarousel() {
         {/* Row 1 - Scrolling Left */}
         <div className="flex animate-scroll-left py-2">
           {/* Duplicate items for seamless loop */}
-          {[...ROW_1, ...ROW_1, ...ROW_1].map((destination, index) => (
+          {[...ROW_1, ...ROW_1].map((destination, index) => (
             <button
               key={`row1-${index}`}
               onClick={() => handleDestinationClick(destination.name)}
@@ -90,7 +90,7 @@ export function TopDestinationsCarousel() {
         {/* Row 2 - Scrolling Right */}
         <div className="flex animate-scroll-right py-2">
           {/* Duplicate items for seamless loop */}
-          {[...ROW_2, ...ROW_2, ...ROW_2].map((destination, index) => (
+          {[...ROW_2, ...ROW_2].map((destination, index) => (
             <button
               key={`row2-${index}`}
               onClick={() => handleDestinationClick(destination.name)}
@@ -124,13 +124,13 @@ export function TopDestinationsCarousel() {
             transform: translate3d(0, 0, 0);
           }
           100% {
-            transform: translate3d(-33.333%, 0, 0);
+            transform: translate3d(-50%, 0, 0);
           }
         }
 
         @keyframes scroll-right {
           0% {
-            transform: translate3d(-33.333%, 0, 0);
+            transform: translate3d(-50%, 0, 0);
           }
           100% {
             transform: translate3d(0, 0, 0);
