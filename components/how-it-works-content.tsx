@@ -105,7 +105,30 @@ export function HowItWorksContent() {
   }
 
   return (
-    <section className="container mx-auto px-4 py-12 lg:py-16 max-w-7xl">
+    <section className="container mx-auto px-4 py-12 lg:py-16 max-w-7xl relative">
+      {/* Top Left Flight Path */}
+      <div className="absolute top-12 -left-20 w-[240px] h-[160px] pointer-events-none hidden lg:block select-none rotate-[85deg] -scale-x-100 opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-0">
+        <Image
+          src="/images/flight-path-3.png"
+          alt=""
+          fill
+          sizes="240px"
+          className="object-contain"
+          priority
+        />
+      </div>
+      
+      {/* Bottom Right Flight Path */}
+      <div className="absolute bottom-32 -right-12 w-[280px] h-[200px] pointer-events-none hidden lg:block select-none rotate-[15deg] opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-0">
+        <Image
+          src="/images/flight-path-3.png"
+          alt=""
+          fill
+          sizes="280px"
+          className="object-contain"
+          priority
+        />
+      </div>
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Left Column - Steps (65%) */}
         <div className="flex-1 lg:w-[65%]">

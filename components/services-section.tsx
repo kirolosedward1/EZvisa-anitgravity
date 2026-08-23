@@ -118,7 +118,7 @@ export function ServicesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="absolute bottom-[-5rem] sm:bottom-[-7rem] left-1/2 -translate-x-1/2 w-[500px] h-[500px] sm:w-[700px] sm:h-[700px] lg:w-[900px] lg:h-[900px] z-0 pointer-events-none flex justify-center"
+              className="absolute bottom-[-5rem] sm:bottom-[-7rem] left-1/2 -translate-x-1/2 w-[140%] max-w-[450px] aspect-square sm:w-[700px] sm:h-[700px] lg:w-[900px] lg:h-[900px] sm:aspect-auto z-0 pointer-events-none flex justify-center"
             >
               <Image
                 src="/images/woman-travel.png"

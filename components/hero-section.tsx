@@ -139,8 +139,25 @@ export function HeroSection() {
             WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 50% 30%, black 70%, transparent 100%)",
           }}
         />
+        {/* Border transition gradient lines */}
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
+      </div>
+
+      <div className="relative container mx-auto px-4 pt-6 md:pt-10 lg:pt-12 pb-10 md:pb-12 max-w-6xl">
         {/* Top Left Flight Path */}
-        <div className="absolute -top-4 -left-4 w-[300px] h-[220px] opacity-[0.25] brightness-0 invert pointer-events-none hidden lg:block select-none rotate-[90deg] -scale-x-100">
+        <div className="absolute top-2 -left-12 w-[280px] h-[200px] pointer-events-none hidden lg:block select-none rotate-[85deg] -scale-x-100 opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-10">
+          <Image
+            src="/images/flight-path-3.png"
+            alt=""
+            fill
+            sizes="280px"
+            className="object-contain"
+            priority
+          />
+        </div>
+        
+        {/* Bottom Right Flight Path */}
+        <div className="absolute bottom-16 -right-8 w-[300px] h-[220px] pointer-events-none hidden lg:block select-none rotate-[15deg] opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-10">
           <Image
             src="/images/flight-path-3.png"
             alt=""
@@ -150,22 +167,7 @@ export function HeroSection() {
             priority
           />
         </div>
-        {/* Bottom Right Flight Path */}
-        <div className="absolute bottom-28 right-[4%] w-[320px] h-[240px] opacity-[0.25] brightness-0 invert pointer-events-none hidden lg:block select-none rotate-[10deg]">
-          <Image
-            src="/images/flight-path-3.png"
-            alt=""
-            fill
-            sizes="320px"
-            className="object-contain"
-            priority
-          />
-        </div>
-        {/* Border transition gradient lines */}
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
-      </div>
 
-      <div className="relative container mx-auto px-4 pt-6 md:pt-10 lg:pt-12 pb-10 md:pb-12 max-w-6xl">
         <motion.div 
           variants={containerVariants}
           initial="hidden"

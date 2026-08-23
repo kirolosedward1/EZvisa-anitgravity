@@ -7,6 +7,7 @@ import { Menu, X, Rocket, ChevronDown, Check } from "lucide-react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname, useRouter } from "next/navigation"
+import { destinations } from "@/lib/destinations"
 
 const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
 
@@ -207,7 +208,67 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                     onMouseEnter={() => setHoveredNavItem(item.id)}
                     onMouseLeave={() => setHoveredNavItem(null)}
                   >
-                    {item.type === "scroll" ? (
+                    {item.id === "/destinations" ? (
+                      <>
+                        <Link
+                          href={item.id}
+                          className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer group"
+                        >
+                          {item.label}
+                          <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-all duration-300" />
+                        </Link>
+                        
+                        {/* Mega Menu Dropdown */}
+                        <AnimatePresence>
+                          {hoveredNavItem === item.id && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-[600px] z-50 cursor-default"
+                            >
+                              <div className="bg-background/95 backdrop-blur-xl border border-border/60 shadow-2xl shadow-black/10 rounded-3xl p-6 relative overflow-hidden">
+                                {/* Subtle background glow */}
+                                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
+                                
+                                <div className="relative z-10">
+                                  <div className="flex items-center justify-between mb-4 px-2">
+                                    <h3 className="text-sm font-bold tracking-tight text-foreground">Popular Destinations</h3>
+                                    <Link href="/destinations" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+                                      View all <span className="hidden sm:inline">29 countries</span> &rarr;
+                                    </Link>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {destinations.filter(d => d.popular).slice(0, 8).map(dest => (
+                                      <Link
+                                        key={dest.id}
+                                        href={`/destinations/${dest.slug}`}
+                                        className="group/item flex items-center gap-3 p-3 rounded-2xl hover:bg-secondary/40 transition-colors border border-transparent hover:border-border/50"
+                                      >
+                                        <div className="h-10 w-10 rounded-xl overflow-hidden shadow-sm relative flex-shrink-0 bg-secondary/50">
+                                          <Image 
+                                            src={`/flags/${dest.name.toLowerCase().replace(/\s+/g, "-")}.png`} 
+                                            alt={dest.name}
+                                            fill
+                                            sizes="40px"
+                                            className="object-cover group-hover/item:scale-110 transition-transform duration-500"
+                                          />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-sm font-semibold text-foreground group-hover/item:text-primary transition-colors truncate">{dest.name}</div>
+                                          <div className="text-[11px] text-muted-foreground truncate">{dest.visaType}</div>
+                                        </div>
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    ) : item.type === "scroll" ? (
                       <button
                         onClick={() => scrollToSection(item.id)}
                         className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer"
