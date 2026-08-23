@@ -149,10 +149,10 @@ export function TestimonialsSection() {
             
             <Link 
               href="/reviews" 
-              className="group flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5"
+              className="group flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 whitespace-nowrap"
             >
-              View all 5,000+ reviews
-              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              View all reviews
+              <ArrowRight className="h-4 w-4 flex-shrink-0 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
         </div>

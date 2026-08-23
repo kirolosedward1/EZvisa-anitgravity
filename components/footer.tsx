@@ -162,7 +162,7 @@ export function Footer({
                 <div className="mt-8 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                   <span>Questions?</span>
                   <Link
-                    href="https://wa.me/971547109533"
+                    href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-[#25D366] hover:text-[#128C7E] hover:underline transition-colors font-medium"

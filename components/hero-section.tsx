@@ -457,16 +457,16 @@ export function HeroSection() {
             </div>
 
             {/* Reassurance row under form */}
-            <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 font-medium text-white/95 mx-auto">
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 w-full h-full">
+            <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-6 font-medium text-white/95 mx-auto">
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
                 <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Money-back guarantee</span>
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 w-full h-full">
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
                 <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Ready in 24-48 hours</span>
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 w-full h-full">
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
                 <span className="font-bold text-white text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">All-Inclusive File</span>
               </div>
