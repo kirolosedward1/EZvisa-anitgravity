@@ -105,7 +105,7 @@ export function DestinationsCatalog() {
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     transition={{ duration: 0.3, delay: Math.min(idx * 0.03, 0.3) }}
-                    className="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-xl transition-all duration-300 bg-muted"
+                    className="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 ring-1 ring-border/50 hover:ring-primary/50 transition-all duration-300 bg-muted"
                   >
                     {/* Country Background Image & Link to landing page */}
                     <Link href={`/destinations/${country.slug}`} className="absolute inset-0 z-0 block cursor-pointer">

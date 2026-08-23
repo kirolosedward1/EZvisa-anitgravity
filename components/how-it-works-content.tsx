@@ -142,7 +142,7 @@ export function HowItWorksContent() {
                     <div className="hidden lg:block absolute left-12 top-20 bottom-[-32px] w-[2px] bg-gradient-to-b from-primary/30 to-primary/5" />
                   )}
 
-                  <div className="bg-card border border-border/80 rounded-2xl p-6 lg:p-8 relative shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300">
+                  <div className="bg-card border border-border/80 rounded-2xl p-6 lg:p-8 relative shadow-sm hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 group">
                     <div className="flex flex-col lg:flex-row gap-6">
                       {/* Icon & Step Number */}
                       <div className="flex-shrink-0">
