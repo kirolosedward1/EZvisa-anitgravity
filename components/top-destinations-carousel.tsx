@@ -115,45 +115,6 @@ export function TopDestinationsCarousel() {
           ))}
         </div>
       </div>
-
-      <style jsx>{`
-        @keyframes scroll-left {
-          0% {
-            transform: translate3d(0, 0, 0);
-          }
-          100% {
-            transform: translate3d(-50%, 0, 0);
-          }
-        }
-
-        @keyframes scroll-right {
-          0% {
-            transform: translate3d(-50%, 0, 0);
-          }
-          100% {
-            transform: translate3d(0, 0, 0);
-          }
-        }
-
-        .animate-scroll-left {
-          animation: scroll-left 30s linear infinite;
-          will-change: transform;
-          transform-style: preserve-3d;
-          backface-visibility: hidden;
-        }
-
-        .animate-scroll-right {
-          animation: scroll-right 30s linear infinite;
-          will-change: transform;
-          transform-style: preserve-3d;
-          backface-visibility: hidden;
-        }
-
-        .animate-scroll-left:hover,
-        .animate-scroll-right:hover {
-          animation-play-state: paused;
-        }
-      `}</style>
     </div>
   )
 }
