@@ -42,12 +42,12 @@ export function DestinationsCatalog() {
   return (
     <div className="w-full">
       {/* Search and Tabs Control Panel */}
-      <div className="bg-background/80 md:backdrop-blur- border-b border-border/40 py-6 mb-10">
+      <div className="bg-background/80 md:backdrop-blur-md border-b border-border/40 py-6 mb-10">
         <div className="container mx-auto px-6 max-w-6xl">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Real-time Search */}
             <div className="relative w-full md:max-w-sm">
-              <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search country..."
@@ -114,7 +114,7 @@ export function DestinationsCatalog() {
                         alt={`${country.name} visa checklist documents`}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+                        className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       />
                       {/* Vignette Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 transition-opacity duration-300 group-hover:from-black/100 group-hover:via-black/50" />
@@ -170,7 +170,7 @@ export function DestinationsCatalog() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="max-w-2xl mx-auto text-center py-16 px-6 bg-gradient-to-br from-muted/50 to-muted border border-border/40 rounded-3xl md:backdrop-blur-"
+                className="max-w-2xl mx-auto text-center py-16 px-6 bg-gradient-to-br from-muted/50 to-muted border border-border/40 rounded-3xl md:backdrop-blur-md"
               >
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
                   <Compass className="w-8 h-8 animate-pulse" />

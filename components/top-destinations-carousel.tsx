@@ -58,7 +58,7 @@ export function TopDestinationsCarousel() {
 
       <div className="space-y-4 sm:space-y-5 py-6">
         {/* Row 1 - Scrolling Left */}
-        <div className="flex max-md:w-full max-md:overflow-x-auto max-md:snap-x max-md:snap-mandatory max-md:scrollbar-hide md:w-max md:animate-scroll-left py-2 hover:[animation-play-state:paused] max-md:px-4">
+        <div className="flex w-max animate-scroll-left py-2 hover:[animation-play-state:paused] px-4 md:px-0">
           {[...ROW_1, ...ROW_1].map((destination, index) => (
             <button
               key={`row1-${index}`}
@@ -87,7 +87,7 @@ export function TopDestinationsCarousel() {
         </div>
 
         {/* Row 2 - Scrolling Right */}
-        <div className="flex max-md:w-full max-md:overflow-x-auto max-md:snap-x max-md:snap-mandatory max-md:scrollbar-hide md:w-max md:animate-scroll-right py-2 hover:[animation-play-state:paused] max-md:px-4">
+        <div className="flex w-max animate-scroll-right py-2 hover:[animation-play-state:paused] px-4 md:px-0">
           {[...ROW_2, ...ROW_2].map((destination, index) => (
             <button
               key={`row2-${index}`}
