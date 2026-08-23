@@ -29,6 +29,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const [showGetStarted, setShowGetStarted] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null)
+  const [isMobileDestinationsOpen, setIsMobileDestinationsOpen] = useState(false)
 
   const getWhatsAppMessage = () => {
     const baseUrl = typeof window !== 'undefined' ? window.location.href : ''
@@ -421,7 +422,56 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.1 + index * 0.05 }}
                     >
-                      {item.type === "scroll" ? (
+                      {item.id === "/destinations" ? (
+                        <div className="w-full">
+                          <button
+                            onClick={() => setIsMobileDestinationsOpen(!isMobileDestinationsOpen)}
+                            className="w-full flex items-center justify-between py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"
+                          >
+                            <span>{item.label}</span>
+                            <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isMobileDestinationsOpen ? "rotate-180" : ""}`} />
+                          </button>
+                          <AnimatePresence>
+                            {isMobileDestinationsOpen && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-2 pb-4 px-2 space-y-1">
+                                  {destinations.filter(d => d.popular).slice(0, 6).map(dest => (
+                                    <Link
+                                      key={dest.id}
+                                      href={`/destinations/${dest.slug}`}
+                                      onClick={() => setIsMenuOpen(false)}
+                                      className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary/50 transition-colors"
+                                    >
+                                      <div className="h-8 w-8 rounded-lg overflow-hidden relative flex-shrink-0">
+                                        <Image 
+                                          src={`/flags/${dest.name.toLowerCase().replace(/\s+/g, "-")}.png`} 
+                                          alt={dest.name}
+                                          fill
+                                          sizes="32px"
+                                          className="object-cover"
+                                        />
+                                      </div>
+                                      <span className="text-base font-medium text-foreground">{dest.name}</span>
+                                    </Link>
+                                  ))}
+                                  <Link
+                                    href="/destinations"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="block text-center py-3 mt-2 text-sm font-semibold text-primary hover:underline"
+                                  >
+                                    View all countries &rarr;
+                                  </Link>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      ) : item.type === "scroll" ? (
                         <button
                           onClick={() => scrollToSection(item.id)}
                           className="w-full text-left py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"

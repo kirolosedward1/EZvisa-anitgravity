@@ -223,11 +223,11 @@ export function Footer({
               </div>
 
               {/* Desktop grid */}
-              <div className="hidden md:grid md:grid-cols-4 gap-8">
+              <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {footerSections.map((section) => (
                   <div key={section.title}>
                     <h3 className="text-sm font-semibold text-foreground mb-4">{section.title}</h3>
-                    <ul className="space-y-3">
+                    <ul className="space-y-1">
                       {section.links.map((link) => (
                         <li key={link.href}>
                           {link.isCookieButton ? (
@@ -236,14 +236,14 @@ export function Footer({
                                   localStorage.removeItem("cookie-consent")
                                   window.location.reload()
                               }}
-                              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                              className="block py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                             >
                               {link.label}
                             </button>
                           ) : (
                             <Link
                               href={link.href}
-                              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                              className="block py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                             >
                               {link.label}
                             </Link>

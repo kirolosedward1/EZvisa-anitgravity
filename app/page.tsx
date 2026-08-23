@@ -1,13 +1,16 @@
 import { SiteHeader } from "@/components/site-header"
 import { HeroSection } from "@/components/hero-section"
-import { ServicesSection } from "@/components/services-section"
 import { PopularDestinations } from "@/components/popular-destinations"
-import { HowItWorksSimple } from "@/components/how-it-works-simple"
-import { ComparisonSection } from "@/components/comparison-section"
-import { TestimonialsSection } from "@/components/testimonials-section"
-import { FAQSection } from "@/components/faq-section"
-import { ContactSection } from "@/components/contact-section"
-import { Footer } from "@/components/footer"
+import dynamic from "next/dynamic"
+
+// Lazy load below-the-fold components for performance
+const ServicesSection = dynamic(() => import("@/components/services-section").then(mod => mod.ServicesSection), { ssr: true })
+const HowItWorksSimple = dynamic(() => import("@/components/how-it-works-simple").then(mod => mod.HowItWorksSimple), { ssr: true })
+const ComparisonSection = dynamic(() => import("@/components/comparison-section").then(mod => mod.ComparisonSection), { ssr: true })
+const TestimonialsSection = dynamic(() => import("@/components/testimonials-section").then(mod => mod.TestimonialsSection), { ssr: true })
+const FAQSection = dynamic(() => import("@/components/faq-section").then(mod => mod.FAQSection), { ssr: true })
+const ContactSection = dynamic(() => import("@/components/contact-section").then(mod => mod.ContactSection), { ssr: true })
+const Footer = dynamic(() => import("@/components/footer").then(mod => mod.Footer), { ssr: true })
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
