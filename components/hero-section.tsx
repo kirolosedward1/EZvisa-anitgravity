@@ -145,7 +145,7 @@ export function HeroSection() {
 
       <div className="relative container mx-auto px-4 pt-6 md:pt-10 lg:pt-12 pb-10 md:pb-12 max-w-6xl">
         {/* Top Left Flight Path */}
-        <div className="absolute top-2 -left-12 w-[280px] h-[200px] pointer-events-none hidden lg:block select-none rotate-[85deg] -scale-x-100 opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-10">
+        <div className="absolute -top-12 -left-24 w-[400px] h-[300px] pointer-events-none hidden lg:block select-none rotate-[105deg] -scale-x-100 opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-10">
           <Image
             src="/images/flight-path-3.png"
             alt=""
@@ -157,7 +157,7 @@ export function HeroSection() {
         </div>
         
         {/* Bottom Right Flight Path */}
-        <div className="absolute bottom-16 -right-8 w-[300px] h-[220px] pointer-events-none hidden lg:block select-none rotate-[15deg] opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-10">
+        <div className="absolute -bottom-12 -right-24 w-[400px] h-[300px] pointer-events-none hidden lg:block select-none rotate-[15deg] opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-10">
           <Image
             src="/images/flight-path-3.png"
             alt=""
@@ -172,7 +172,7 @@ export function HeroSection() {
           variants={containerVariants}
           initial="hidden"
           animate="visible"
-          className="relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-border/40 shadow-2xl p-6 py-12 md:p-12 lg:p-16 flex flex-col items-center text-center bg-slate-950"
+          className="relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-border/40 shadow-2xl p-6 py-12 md:p-12 lg:p-16 flex flex-col items-center text-center bg-slate-950 z-20"
         >
           {/* Background Image */}
           <Image
@@ -204,12 +204,12 @@ export function HeroSection() {
             </motion.div>
 
             {/* Headline */}
-            <motion.h1 variants={itemVariants} className="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-bold leading-[1.1] tracking-tight text-balance max-w-4xl text-white">
+            <motion.h1 variants={itemVariants} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.15] tracking-tight text-balance max-w-4xl text-white">
               Get your Schengen visa approved, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-indigo-200 to-sky-200 animate-gradient-x">the easy way.</span>
             </motion.h1>
 
             {/* Subheading */}
-            <motion.p variants={itemVariants} className="mt-6 max-w-2xl text-lg md:text-xl text-blue-100/90 leading-relaxed font-medium">
+            <motion.p variants={itemVariants} className="mt-5 max-w-2xl text-base md:text-lg text-blue-100/90 leading-relaxed font-medium">
               We prepare your complete visa file — forms, cover letter, itinerary, and bookings — so embassies say yes.
             </motion.p>
 
