@@ -66,12 +66,13 @@ export function ContactForm() {
                   <Input
                     id="name"
                     type="text"
+                    autoComplete="name"
                     placeholder="John Doe"
                     required
                     disabled={isSubmitting}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary focus:bg-background focus:ring-4 focus:ring-primary/10 focus:outline-none shadow-xs"
+                    className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
@@ -84,12 +85,13 @@ export function ContactForm() {
                   <Input
                     id="email"
                     type="email"
+                    autoComplete="email"
                     placeholder="john@example.com"
                     required
                     disabled={isSubmitting}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary focus:bg-background focus:ring-4 focus:ring-primary/10 focus:outline-none shadow-xs"
+                    className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
                   />
                 </div>
               </div>
@@ -109,7 +111,7 @@ export function ContactForm() {
                   disabled={isSubmitting}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary focus:bg-background focus:ring-4 focus:ring-primary/10 focus:outline-none shadow-xs"
+                  className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
                 />
               </div>
 
@@ -128,7 +130,7 @@ export function ContactForm() {
                   rows={5}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="rounded-xl border border-border/80 bg-background/50 p-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary focus:bg-background focus:ring-4 focus:ring-primary/10 focus:outline-none shadow-xs"
+                  className="rounded-xl border border-border/80 bg-background/50 p-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
                 />
               </div>
 

@@ -479,6 +479,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           </label>
           <input
             id="firstName"
+            autoComplete="given-name"
             value={formData.firstName || ""}
             onChange={(e) => {
               handleFieldChange("firstName", e.target.value)
@@ -497,6 +498,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           </label>
           <input
             id="lastName"
+            autoComplete="family-name"
             value={formData.lastName || ""}
             onChange={(e) => {
               handleFieldChange("lastName", e.target.value)
@@ -516,6 +518,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           <input
             id="email"
             type="email"
+            autoComplete="email"
             value={formData.email || ""}
             onChange={(e) => {
               handleFieldChange("email", e.target.value)
@@ -538,6 +541,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           <input
             id="phone"
             type="tel"
+            autoComplete="tel"
             value={formData.phone || ""}
             onChange={(e) => {
               const value = e.target.value.replace(/[^\d+\-() ]/g, "")
