@@ -41,6 +41,12 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
     
     if (!isFormValid) {
       setShowErrors(true)
+      setTimeout(() => {
+        const firstError = document.querySelector(".border-destructive")
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+      }, 100)
       return
     }
     onNext()

@@ -169,6 +169,12 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
     e.preventDefault()
     if (!isFormValid) {
       setShowErrors(true)
+      setTimeout(() => {
+        const firstError = document.querySelector(".border-destructive")
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+      }, 100)
       return
     }
     onNext()

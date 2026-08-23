@@ -104,6 +104,13 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
     e.preventDefault()
     if (!isFormValid) {
       setShowErrors(true)
+      // Auto-scroll to the first field with an error
+      setTimeout(() => {
+        const firstError = document.querySelector(".border-destructive")
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: "smooth", block: "center" })
+        }
+      }, 100)
       return
     }
     onNext()
