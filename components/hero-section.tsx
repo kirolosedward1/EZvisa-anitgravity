@@ -144,8 +144,8 @@ export function HeroSection() {
       </div>
 
       <div className="relative container mx-auto px-4 pt-6 md:pt-10 lg:pt-12 pb-10 md:pb-12 max-w-6xl">
-        {/* Top Right Flight Path */}
-        <div className="absolute -top-16 -right-20 w-[400px] h-[300px] pointer-events-none hidden lg:block select-none rotate-[20deg] opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-10">
+        {/* Top Left Flight Path */}
+        <div className="absolute top-24 -left-24 w-[400px] h-[300px] pointer-events-none hidden lg:block select-none rotate-[20deg] -scale-x-100 opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert z-10">
           <Image
             src="/images/flight-path-3.png"
             alt=""
