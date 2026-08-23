@@ -118,14 +118,14 @@ export function ServicesSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="absolute bottom-[-5rem] sm:bottom-[-7rem] left-1/2 -translate-x-1/2 w-[140%] max-w-[450px] aspect-square sm:w-[700px] sm:h-[700px] lg:w-[900px] lg:h-[900px] sm:aspect-auto z-0 pointer-events-none flex justify-center"
+              className="absolute bottom-[-2rem] sm:bottom-[-3rem] lg:bottom-[-4rem] left-1/2 -translate-x-1/2 w-[150%] max-w-[500px] aspect-square sm:w-[800px] sm:h-[800px] lg:w-[1100px] lg:h-[1100px] sm:aspect-auto z-0 pointer-events-none flex justify-center"
             >
               <Image
                 src="/images/woman-travel.png"
                 alt="EZvisa Travel Consultant"
                 fill
                 className="object-contain object-bottom select-none filter drop-shadow-2xl"
-                sizes="(max-width: 1024px) 700px, 900px"
+                sizes="(max-width: 1024px) 800px, 1100px"
               />
             </motion.div>
           </div>
