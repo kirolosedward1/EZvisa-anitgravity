@@ -49,17 +49,19 @@ export default function HowItWorksPage() {
         <HowItWorksContent />
 
         {/* What Happens Next */}
-        <section className="relative py-24 md:py-32 bg-secondary/5 border-t border-border/80 overflow-hidden">
-          {/* France Background Overlay with smooth blend */}
-          <div className="absolute inset-0 opacity-[0.06] mix-blend-overlay pointer-events-none">
+        <section className="relative py-24 md:py-32 border-t border-border/80 overflow-hidden">
+          {/* Background Image with Frosted Overlay */}
+          <div className="absolute inset-0 pointer-events-none z-0">
             <img 
               src="/images/eiffel-tower-view.jpg" 
-              alt="Eiffel Tower" 
+              alt="Eiffel Tower Background" 
               className="w-full h-full object-cover object-center" 
             />
+            {/* White overlay to ensure text readability */}
+            <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
+            {/* Subtle gradient to fade into next/previous sections */}
+            <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
           </div>
-          {/* Subtle vignette layer */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background pointer-events-none" />
           
           <div className="container mx-auto px-6 max-w-6xl relative z-10">
             {/* Header */}

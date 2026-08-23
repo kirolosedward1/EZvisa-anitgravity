@@ -57,14 +57,13 @@ export function TopDestinationsCarousel() {
       <div className="pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-20 bg-gradient-to-l from-background to-transparent z-10" />
 
       <div className="space-y-4 sm:space-y-5 py-6">
-        {/* Row 1 - Native Scroll */}
-        <div className="flex py-2 overflow-x-auto scrollbar-hide snap-x -mx-4 px-4 sm:mx-0 sm:px-0">
-          {/* We only need one set of items now since it's not an infinite loop */}
-          {ROW_1.map((destination, index) => (
+        {/* Row 1 - Scrolling Left */}
+        <div className="flex w-max animate-scroll-left py-2 hover:[animation-play-state:paused]">
+          {[...ROW_1, ...ROW_1].map((destination, index) => (
             <button
               key={`row1-${index}`}
               onClick={() => handleDestinationClick(destination.name)}
-              className="flex-shrink-0 flex items-center gap-3 px-4 py-3 mx-2 sm:mx-2.5 bg-background border border-border/80 rounded-2xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 group min-h-[64px] text-left w-[200px] sm:w-[240px] cursor-pointer snap-start"
+              className="flex-shrink-0 flex items-center gap-3 px-4 py-3 mx-2 sm:mx-2.5 bg-background border border-border/80 rounded-2xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 group min-h-[64px] text-left w-[200px] sm:w-[240px] cursor-pointer"
             >
               <div className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-xl overflow-hidden bg-secondary/50 group-hover:scale-110 transition-transform shadow-xs flex-shrink-0">
                 <Image
@@ -87,13 +86,13 @@ export function TopDestinationsCarousel() {
           ))}
         </div>
 
-        {/* Row 2 - Native Scroll (Desktop & Tablet) */}
-        <div className="hidden sm:flex py-2 overflow-x-auto scrollbar-hide snap-x sm:mx-0 sm:px-0">
-          {ROW_2.map((destination, index) => (
+        {/* Row 2 - Scrolling Right */}
+        <div className="flex w-max animate-scroll-right py-2 hover:[animation-play-state:paused]">
+          {[...ROW_2, ...ROW_2].map((destination, index) => (
             <button
               key={`row2-${index}`}
               onClick={() => handleDestinationClick(destination.name)}
-              className="flex-shrink-0 flex items-center gap-3 px-4 py-3 mx-2.5 bg-background border border-border/80 rounded-2xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 group min-h-[64px] text-left w-[200px] sm:w-[240px] cursor-pointer snap-start"
+              className="flex-shrink-0 flex items-center gap-3 px-4 py-3 mx-2.5 bg-background border border-border/80 rounded-2xl hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 group min-h-[64px] text-left w-[200px] sm:w-[240px] cursor-pointer"
             >
               <div className="relative h-10 w-10 sm:h-12 sm:w-12 rounded-xl overflow-hidden bg-secondary/50 group-hover:scale-110 transition-transform shadow-xs flex-shrink-0">
                 <Image

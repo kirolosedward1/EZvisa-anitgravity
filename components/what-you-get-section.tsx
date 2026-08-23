@@ -151,24 +151,24 @@ export function WhatYouGetSection() {
                 <button
                   key={doc.id}
                   onClick={() => goToSlide(index)}
-                  className={`flex-shrink-0 text-left p-4 rounded-2xl border transition-all flex items-center gap-4 cursor-pointer w-[240px] sm:w-[260px] snap-center md:snap-start ${
+                  className={`flex-shrink-0 text-left py-2.5 px-4 rounded-xl border transition-all flex items-center gap-3 cursor-pointer snap-center md:snap-start ${
                     isSelected
                       ? "border-primary bg-primary/[0.04] text-primary shadow-sm"
                       : "border-border/60 hover:border-primary/30 text-muted-foreground hover:text-foreground bg-card/65"
                   }`}
                 >
                   {/* Icon Wrapper */}
-                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center border flex-shrink-0 transition-colors ${
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center border flex-shrink-0 transition-colors ${
                     isSelected
                       ? "bg-primary text-white border-primary"
                       : "bg-background border-border text-muted-foreground"
                   }`}>
-                    <DocIcon className="h-5 w-5" strokeWidth={2} />
+                    <DocIcon className="h-4 w-4" strokeWidth={2.5} />
                   </div>
                   
                   {/* Title */}
-                  <div className="min-w-0 flex-1">
-                    <span className={`text-sm font-bold block leading-tight ${isSelected ? "text-primary font-bold" : "text-foreground"}`}>
+                  <div className="min-w-0">
+                    <span className={`text-xs sm:text-sm font-medium whitespace-nowrap block leading-tight ${isSelected ? "text-primary" : "text-foreground"}`}>
                       {doc.title}
                     </span>
                   </div>
