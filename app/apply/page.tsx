@@ -535,11 +535,11 @@ function ApplyPageContent() {
 
       <div className="flex-1 relative overflow-hidden bg-background">
         {/* Aurora Mesh Gradient Background - Lighter */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Animated gradient orbs */}
-          <div className="absolute -top-[40%] -right-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-blue-400/15 via-indigo-400/10 to-purple-400/5 blur-3xl animate-[pulse_8s_ease-in-out_infinite]" />
-          <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tr from-violet-400/12 via-blue-300/8 to-cyan-300/5 blur-3xl animate-[pulse_10s_ease-in-out_infinite_2s]" />
-          <div className="absolute top-[60%] right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-indigo-400/10 via-blue-400/8 to-primary/5 blur-3xl animate-[pulse_12s_ease-in-out_infinite_4s]" />
+        <div className="absolute inset-0 overflow-hidden pointer-events-none transform-gpu">
+          {/* Static gradient orbs - Optimized for GPU/Battery by removing continuous pulse animations */}
+          <div className="absolute -top-[40%] -right-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-blue-400/15 via-indigo-400/10 to-purple-400/5 blur-3xl" />
+          <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tr from-violet-400/12 via-blue-300/8 to-cyan-300/5 blur-3xl" />
+          <div className="absolute top-[60%] right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-indigo-400/10 via-blue-400/8 to-primary/5 blur-3xl" />
           
           {/* Mesh overlay for texture */}
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.03),transparent_50%)] opacity-40" />

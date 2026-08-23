@@ -141,24 +141,12 @@ export function InnerHero({
             </>
           ) : (
             <>
-              {/* Animated Mesh Blobs */}
-              <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block">
-                <motion.div
-                  animate={{
-                    x: [0, 40, 0, -40, 0],
-                    y: [0, 20, 40, 20, 0],
-                    scale: [1, 1.1, 1, 0.95, 1],
-                  }}
-                  transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+              {/* Static Mesh Blobs - Optimized for GPU/Battery */}
+              <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block transform-gpu">
+                <div
                   className={`absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full ${selectedBlobs.blob1} blur-[90px]`}
                 />
-                <motion.div
-                  animate={{
-                    x: [0, -30, 0, 30, 0],
-                    y: [0, -30, 0, 30, 0],
-                    scale: [1, 0.95, 1.05, 1, 1],
-                  }}
-                  transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+                <div
                   className={`absolute top-20 -left-32 w-[400px] h-[400px] rounded-full ${selectedBlobs.blob2} blur-[90px]`}
                 />
               </div>

@@ -15,16 +15,49 @@ export function ContactForm() {
   const [message, setMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isError, setIsError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setIsError(false)
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    try {
+      const html = `
+        <h2 style="color: #2563eb;">New Contact Form Submission</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <tr style="background: #f8fafc;"><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold; width: 120px;">Name</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${name}</td></tr>
+          <tr><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold;">Email</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${email}</td></tr>
+          <tr style="background: #f8fafc;"><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold;">Subject</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${subject}</td></tr>
+          <tr><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold;">Message</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${message.replace(/\n/g, '<br>')}</td></tr>
+        </table>
+      `;
 
-    setIsSubmitting(false)
-    setIsSuccess(true)
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: "ezvisa.net@gmail.com", // Send to admin
+          subject: `EZvisa Contact: ${subject}`,
+          html: html,
+          type: "admin_notification"
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to send message. Please try again.");
+      }
+
+      setIsSuccess(true)
+    } catch (error: any) {
+      setIsError(true)
+      setErrorMessage(error.message || "An unexpected network error occurred. Please try again later.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -53,6 +86,13 @@ export function ContactForm() {
             <p className="text-sm text-muted-foreground mb-8 font-medium">
               Fill out the form below and one of our visa coordinators will get in touch with you shortly.
             </p>
+
+            {isError && (
+              <div className="mb-6 bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-xl text-sm font-medium flex items-start gap-3">
+                <svg className="w-5 h-5 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>{errorMessage}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-5">
