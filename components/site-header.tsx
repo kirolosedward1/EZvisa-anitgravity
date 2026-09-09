@@ -186,7 +186,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
         <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-6xl">
           <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
             scrolled || forceBackground || isWizardPage
-              ? "bg-background/80 md:backdrop-blur-md border border-border/60 shadow-lg shadow-black/5" 
+              ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
               : "bg-transparent border-transparent"
           }`}>
             <Link href="/" className="flex items-center flex-shrink-0">
