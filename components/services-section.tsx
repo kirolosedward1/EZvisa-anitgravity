@@ -61,22 +61,7 @@ export function ServicesSection() {
         }}
       />
 
-      {/* Center Lady Image - Positioned relative to section so it starts exactly from bottom */}
-      <motion.div 
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[150%] max-w-[600px] aspect-square sm:w-[900px] sm:h-[900px] lg:w-[1400px] lg:h-[1400px] sm:aspect-auto z-0 pointer-events-none flex justify-center"
-      >
-        <Image
-          src="/images/woman-travel.png"
-          alt="EZvisa Travel Consultant"
-          fill
-          className="object-contain object-bottom select-none filter drop-shadow-2xl"
-          sizes="(max-width: 1024px) 900px, 1400px"
-        />
-      </motion.div>
+      {/* Center Lady Image moved to grid */}
 
       <div className="container mx-auto px-4 sm:px-6 md:px-12 relative z-10 max-w-7xl">
         {/* Section Header */}
@@ -124,9 +109,25 @@ export function ServicesSection() {
             })}
           </div>
 
-          {/* Center Hub: Soft Glowing Aura Background */}
-          <div className="lg:col-span-4 flex justify-center items-end relative py-8 lg:py-0 min-h-[350px] sm:min-h-[450px]">
+          {/* Center Hub: Soft Glowing Aura Background and Lady Image */}
+          <div className="lg:col-span-4 flex justify-center items-end relative py-8 lg:py-0 min-h-[400px] sm:min-h-[500px]">
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-[800px] aspect-square bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-sky-400/10 rounded-full blur-[100px] pointer-events-none" />
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="absolute -top-12 -bottom-20 -left-20 -right-20 z-0 pointer-events-none flex justify-center"
+            >
+              <Image
+                src="/images/woman-travel.png"
+                alt="EZvisa Travel Consultant"
+                fill
+                className="object-contain object-center select-none filter drop-shadow-2xl"
+                sizes="(max-width: 1024px) 100vw, 33vw"
+              />
+            </motion.div>
           </div>
 
           {/* Right Side: 3 Document Cards */}
