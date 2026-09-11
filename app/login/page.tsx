@@ -69,7 +69,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-6 p-8 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-border/60">
+    <div className="w-full max-w-md space-y-6 p-8 bg-card rounded-2xl shadow-xl border border-border/60">
       <div className="text-center">
         <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Customer Portal</h2>
         <p className="text-muted-foreground text-xs md:text-sm mt-1.5">
@@ -78,18 +78,18 @@ function LoginForm() {
       </div>
 
       {/* Mode Switcher Tabs */}
-      <div className="flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1 text-xs font-semibold">
+      <div className="flex rounded-xl bg-muted/50 p-1 text-xs font-semibold">
         <button
           type="button"
           onClick={() => { setMode("password"); setError(""); }}
-          className={`flex-1 py-2 rounded-lg transition-all ${mode === "password" ? "bg-white dark:bg-slate-900 text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+          className={`flex-1 py-2 rounded-lg transition-all ${mode === "password" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
         >
           Password Sign In
         </button>
         <button
           type="button"
           onClick={() => { setMode("magic-link"); setError(""); }}
-          className={`flex-1 py-2 rounded-lg transition-all ${mode === "magic-link" ? "bg-white dark:bg-slate-900 text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
+          className={`flex-1 py-2 rounded-lg transition-all ${mode === "magic-link" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
         >
           Email Magic Link
         </button>
@@ -213,7 +213,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
       <Suspense fallback={<div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
         <LoginForm />
       </Suspense>

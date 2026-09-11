@@ -48,7 +48,7 @@ function SignupForm() {
 
   if (success) {
     return (
-      <div className="w-full max-w-md space-y-6 p-8 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-border/50 text-center">
+      <div className="w-full max-w-md space-y-6 p-8 bg-card rounded-xl shadow-lg border border-border/50 text-center">
         <h2 className="text-2xl font-bold tracking-tight text-emerald-600">Check your email</h2>
         <p className="text-muted-foreground">We sent you a verification link to {email}. Please verify your account to continue.</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push("/login")}>Back to login</Button>
@@ -57,7 +57,7 @@ function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-8 p-8 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-border/50">
+    <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
       <div className="text-center">
         <h2 className="text-3xl font-bold tracking-tight text-foreground">Create an account</h2>
         <p className="text-muted-foreground mt-2">Sign up to track and manage your visa applications</p>
@@ -120,7 +120,7 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
       <Suspense fallback={<div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
         <SignupForm />
       </Suspense>
