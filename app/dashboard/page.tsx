@@ -81,8 +81,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     return (
       <>
         <SiteHeader />
-        <main className="min-h-[75vh] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 py-12">
-          <div className="w-full max-w-lg bg-white dark:bg-slate-900 border rounded-2xl p-6 sm:p-8 shadow-sm text-center">
+        <main className="min-h-[75vh] bg-background flex flex-col items-center justify-center p-4 py-12">
+          <div className="w-full max-w-lg bg-card border rounded-2xl p-6 sm:p-8 shadow-sm text-center">
             <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="w-8 h-8" />
             </div>
@@ -132,7 +132,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           applicantEmail={user.email}
         />
       )}
-      <main className="min-h-[100dvh] bg-slate-50 dark:bg-slate-950 pb-20 pt-8">
+      <main className="min-h-[100dvh] bg-background pb-20 pt-8">
         <div className="container mx-auto px-4 max-w-6xl">
           <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
             <div>
@@ -167,12 +167,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               
               {/* Application Selector */}
               {relatedApps.length > 1 && (
-                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border p-4">
+                <div className="bg-card rounded-xl shadow-sm border p-4">
                   <h3 className="font-semibold text-foreground mb-3 text-sm">Your Applications:</h3>
                   <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     {relatedApps.map(app => (
                       <Link key={app.id} href={`/dashboard?id=${app.id}`}>
-                        <div className={`px-4 py-2.5 rounded-lg border flex-shrink-0 cursor-pointer transition-colors ${app.id === mainApp.id ? 'bg-primary/5 border-primary text-primary font-semibold' : 'bg-transparent border-border hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                        <div className={`px-4 py-2.5 rounded-lg border flex-shrink-0 cursor-pointer transition-colors ${app.id === mainApp.id ? 'bg-primary/5 border-primary text-primary font-semibold' : 'bg-transparent border-border hover:bg-muted'}`}>
                           <div className="text-sm font-medium">{app.destination_country} Visa</div>
                           <div className="text-xs opacity-75">{app.full_name} &bull; {app.application_status}</div>
                         </div>
@@ -183,7 +183,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               )}
 
               {/* Status Banner */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border p-6 md:p-8">
+              <div className="bg-card rounded-xl shadow-sm border p-6 md:p-8">
                 <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between mb-8">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -249,7 +249,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       </div>
                     </div>
 
-                    <div className="bg-white/90 dark:bg-slate-900/90 rounded-lg p-3.5 border border-emerald-500/20 text-xs space-y-2">
+                    <div className="bg-background/90 rounded-lg p-3.5 border border-emerald-500/20 text-xs space-y-2">
                       <div className="font-semibold text-foreground flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Included in your Dossier Pack:</span>
@@ -303,8 +303,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </div>
 
               {/* Documents Checklist Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border overflow-hidden">
-                <div className="p-4 border-b bg-slate-50 dark:bg-slate-950 flex justify-between items-center">
+              <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
+                <div className="p-4 border-b bg-background flex justify-between items-center">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
                     <FileText className="w-4 h-4 text-primary" />
                     Supporting Documents Checklist
@@ -316,7 +316,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                   </Button>
                 </div>
                 <div className="divide-y text-sm">
-                  <div className="p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors">
+                  <div className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                     <div>
                       <p className="font-medium text-foreground">Passport Copy</p>
                       <p className="text-xs text-muted-foreground">Scanned color copy of the bio page</p>
@@ -327,7 +327,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       <span className="text-amber-600 bg-amber-500/10 px-2.5 py-1 text-xs font-bold rounded-full">Pending</span>
                     )}
                   </div>
-                  <div className="p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors">
+                  <div className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                     <div>
                       <p className="font-medium text-foreground">Personal Photo</p>
                       <p className="text-xs text-muted-foreground">Recent 35x45mm Schengen specification</p>
@@ -338,7 +338,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       <span className="text-amber-600 bg-amber-500/10 px-2.5 py-1 text-xs font-bold rounded-full">Pending</span>
                     )}
                   </div>
-                  <div className="p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors">
+                  <div className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                     <div>
                       <p className="font-medium text-foreground">Bank Statement</p>
                       <p className="text-xs text-muted-foreground">Last 3-6 months stamped statement</p>
@@ -349,7 +349,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                       <span className="text-amber-600 bg-amber-500/10 px-2.5 py-1 text-xs font-bold rounded-full">Pending</span>
                     )}
                   </div>
-                  <div className="p-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-950/50 transition-colors">
+                  <div className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors">
                     <div>
                       <p className="font-medium text-foreground">Employment Proof</p>
                       <p className="text-xs text-muted-foreground">NOC letter or company salary certificate</p>
@@ -367,7 +367,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             {/* Sidebar Column */}
             <div className="space-y-6">
               {/* Quick Case Info */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border p-6">
+              <div className="bg-card rounded-xl shadow-sm border p-6">
                 <h3 className="font-semibold text-foreground mb-4">Case Reference</h3>
                 <div className="space-y-3 text-sm mb-5">
                   <div className="flex justify-between text-muted-foreground">
@@ -420,7 +420,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
               {/* WhatsApp Concierge Support */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/50 dark:border-blue-900/50 rounded-xl p-6">
-                <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-sm mb-4">
+                <div className="w-10 h-10 bg-background rounded-full flex items-center justify-center shadow-sm mb-4">
                   <HelpCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <h3 className="font-bold text-foreground mb-1">WhatsApp Concierge</h3>

@@ -55,14 +55,14 @@ export default function UploadDocumentsPage() {
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <main className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-background pt-24 pb-16 px-4">
         <div className="container max-w-2xl mx-auto space-y-6">
           <Link href={`/track/${token}`} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Link>
           
-          <div className="bg-white dark:bg-slate-900 border rounded-xl p-8 shadow-sm">
+          <div className="bg-card border rounded-xl p-8 shadow-sm">
             <h1 className="text-2xl font-bold mb-2">Secure Document Upload</h1>
             <p className="text-muted-foreground mb-8">Upload missing or replacement documents for your application.</p>
             
@@ -83,7 +83,7 @@ export default function UploadDocumentsPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Select File (PDF, JPG, PNG)</label>
-                <div className="border-2 border-dashed rounded-xl p-8 text-center bg-slate-50 dark:bg-slate-950">
+                <div className="border-2 border-dashed rounded-xl p-8 text-center bg-background">
                   <input type="file" id="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
                   <label htmlFor="file" className="cursor-pointer flex flex-col items-center">
                     <Upload className="w-8 h-8 text-muted-foreground mb-3" />

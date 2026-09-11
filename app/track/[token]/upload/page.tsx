@@ -96,7 +96,7 @@ export default function UploadDocumentsPage() {
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <main className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-background pt-24 pb-16 px-4">
         <div className="container max-w-3xl mx-auto space-y-6">
           <div className="flex items-center justify-between">
             <Link href={`/track/${token}`} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -109,7 +109,7 @@ export default function UploadDocumentsPage() {
           </div>
           
           {/* Header Card */}
-          <div className="bg-white dark:bg-slate-900 border rounded-xl p-6 md:p-8 shadow-sm">
+          <div className="bg-card border rounded-xl p-6 md:p-8 shadow-sm">
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
                 <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary mb-2">
@@ -130,7 +130,7 @@ export default function UploadDocumentsPage() {
 
           {/* Real-Time Document Checklist */}
           {appStatus && (
-            <div className="bg-white dark:bg-slate-900 border rounded-xl p-6 shadow-sm">
+            <div className="bg-card border rounded-xl p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-base font-bold flex items-center gap-2">
                   <FileText className="w-4 h-4 text-primary" />
@@ -148,7 +148,7 @@ export default function UploadDocumentsPage() {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg border flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
+                <div className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
                   <div>
                     <p className="text-sm font-medium">Passport Copy</p>
                     <p className="text-xs text-muted-foreground">Bio page (min. 6mo validity)</p>
@@ -160,7 +160,7 @@ export default function UploadDocumentsPage() {
                   )}
                 </div>
 
-                <div className="p-3 rounded-lg border flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
+                <div className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
                   <div>
                     <p className="text-sm font-medium">Personal Photo</p>
                     <p className="text-xs text-muted-foreground">35x45mm white background</p>
@@ -172,7 +172,7 @@ export default function UploadDocumentsPage() {
                   )}
                 </div>
 
-                <div className="p-3 rounded-lg border flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
+                <div className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
                   <div>
                     <p className="text-sm font-medium">Bank Statement</p>
                     <p className="text-xs text-muted-foreground">Last 3-6 months with bank stamp</p>
@@ -184,7 +184,7 @@ export default function UploadDocumentsPage() {
                   )}
                 </div>
 
-                <div className="p-3 rounded-lg border flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/50">
+                <div className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
                   <div>
                     <p className="text-sm font-medium">Employment Proof / NOC</p>
                     <p className="text-xs text-muted-foreground">Signed company NOC letter</p>
@@ -209,7 +209,7 @@ export default function UploadDocumentsPage() {
           )}
           
           {/* Upload Form */}
-          <div className="bg-white dark:bg-slate-900 border rounded-xl p-6 md:p-8 shadow-sm">
+          <div className="bg-card border rounded-xl p-6 md:p-8 shadow-sm">
             <h2 className="text-lg font-bold mb-4">Select Document to Upload</h2>
             
             <div className="space-y-6">
@@ -233,7 +233,7 @@ export default function UploadDocumentsPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">Select File (PDF, JPG, PNG)</label>
-                <div className="border-2 border-dashed rounded-xl p-8 text-center bg-slate-50 dark:bg-slate-950 transition-colors hover:bg-slate-100/60 dark:hover:bg-slate-900/60">
+                <div className="border-2 border-dashed rounded-xl p-8 text-center bg-background transition-colors hover:bg-slate-100/60 dark:hover:bg-slate-900/60">
                   <input type="file" id="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
                   <label htmlFor="file" className="cursor-pointer flex flex-col items-center">
                     <Upload className="w-8 h-8 text-muted-foreground mb-3" />

@@ -93,7 +93,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <main className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-background pt-24 pb-16 px-4">
         <div className="container max-w-4xl mx-auto space-y-6">
           
           {/* Header */}
@@ -105,7 +105,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
             
             {/* Multiple Cases Switcher */}
             {relatedApps.length > 1 && (
-              <div className="w-full md:w-auto bg-white dark:bg-slate-900 border rounded-lg p-2 flex gap-2 overflow-x-auto">
+              <div className="w-full md:w-auto bg-card border rounded-lg p-2 flex gap-2 overflow-x-auto">
                 {relatedApps.map((app: any) => (
                   <Link 
                     key={app.id} 
@@ -125,7 +125,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
             <div className="md:col-span-2 space-y-6">
               
               {/* Application Card */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border p-6">
+              <div className="bg-card rounded-xl shadow-sm border p-6">
                 <div className="flex items-start justify-between border-b pb-4 mb-6">
                   <div className="flex items-center gap-4">
                      <span className="relative w-12 h-12 rounded-full overflow-hidden border shadow-sm">
@@ -204,7 +204,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
                       </div>
                     </div>
 
-                    <div className="bg-white/90 dark:bg-slate-900/90 rounded-lg p-3.5 border border-emerald-500/20 text-xs space-y-2">
+                    <div className="bg-background/90 rounded-lg p-3.5 border border-emerald-500/20 text-xs space-y-2">
                       <div className="font-semibold text-foreground flex items-center gap-1.5">
                         <FileText className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Included in your Dossier Pack:</span>
@@ -258,8 +258,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
               </div>
 
               {/* Documents Checklist */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border overflow-hidden">
-                <div className="p-4 border-b bg-slate-50 dark:bg-slate-950 flex justify-between items-center">
+              <div className="bg-card rounded-xl shadow-sm border overflow-hidden">
+                <div className="p-4 border-b bg-background flex justify-between items-center">
                   <h3 className="font-semibold text-foreground flex items-center gap-2">
                     <FileText className="w-4 h-4 text-muted-foreground" />
                     Documents Checklist
@@ -321,7 +321,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
             <div className="space-y-6">
               
               {/* Order Summary Summary */}
-              <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border p-6">
+              <div className="bg-card rounded-xl shadow-sm border p-6">
                 <h3 className="font-semibold text-foreground mb-4">Payment Summary</h3>
                 <div className="space-y-3 text-sm mb-4">
                   <div className="flex justify-between text-muted-foreground">
@@ -346,7 +346,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ toke
 
               {/* Support */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200/50 dark:border-blue-900/50 rounded-xl p-6">
-                <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-sm mb-4">
+                <div className="w-10 h-10 bg-background rounded-full flex items-center justify-center shadow-sm mb-4">
                   <HelpCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                 </div>
                 <h3 className="font-bold text-foreground mb-2">Need Assistance?</h3>
