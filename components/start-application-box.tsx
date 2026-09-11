@@ -80,7 +80,7 @@ export function StartApplicationBox() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="sticky top-24 bg-gray-50/80 md:backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-lg"
+      className="sticky top-24 bg-gray-50/80 md:backdrop-blur- rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-lg"
     >
       <div className="space-y-6">
         {/* Header */}
@@ -104,7 +104,6 @@ export function StartApplicationBox() {
                         src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
                         alt=""
                         fill
-                        sizes="32px"
                         className="object-cover"
                       />
                     </span>
@@ -150,7 +149,6 @@ export function StartApplicationBox() {
                               src={`/flags/${country.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
                               alt=""
                               fill
-                              sizes="32px"
                               className="object-cover"
                             />
                           </span>

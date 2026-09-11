@@ -97,7 +97,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               asChild
             >
               <a
-                href={`https://wa.me/971547109533?text=${encodeURIComponent(whatsappMessage)}`}
+                href={`https://wa.me/971585864446?text=${encodeURIComponent(whatsappMessage)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -152,6 +152,28 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
         </CardContent>
       </Card>
 
+      {/* Success Stats */}
+      <Card className="shadow-lg bg-gradient-to-br from-emerald-500/10 to-primary/5 border-emerald-500/20">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 mb-4">
+            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
+            <div>
+              <p className="text-2xl font-bold text-foreground">5,000+</p>
+              <p className="text-sm text-muted-foreground">Successful Applications</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+            <div>
+              <p className="text-xl font-bold text-primary">98%</p>
+              <p className="text-xs text-muted-foreground">Approval Rate</p>
+            </div>
+            <div>
+              <p className="text-xl font-bold text-primary">4.9/5</p>
+              <p className="text-xs text-muted-foreground">Customer Rating</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

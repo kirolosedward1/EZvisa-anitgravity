@@ -222,7 +222,7 @@ export function TestimonialsSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedTestimonial(null)}
-            className="fixed inset-0 bg-foreground/30 md:backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-foreground/30 md:backdrop-blur- z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
@@ -247,7 +247,7 @@ export function TestimonialsSection() {
                 <div className="relative md:w-2/5 aspect-[16/11] md:aspect-auto min-h-[220px] bg-muted border-b md:border-b-0 md:border-r border-border/50">
                   <Image
                     src={testimonials[selectedTestimonial].visaImage || "/placeholder.svg"}
-                    alt={`${testimonials[selectedTestimonial].destination} visa document prepared`}
+                    alt={`${testimonials[selectedTestimonial].destination} visa approval`}
                     fill
                     sizes="(max-width: 768px) 100vw, 350px"
                     className="object-cover"
@@ -273,7 +273,7 @@ export function TestimonialsSection() {
                     </div>
                     <div>
                       <div className="font-semibold text-foreground text-sm">{testimonials[selectedTestimonial].name}</div>
-                      <div className="text-xs text-primary font-semibold">Traveled to {testimonials[selectedTestimonial].destination}</div>
+                      <div className="text-xs text-primary font-semibold">{testimonials[selectedTestimonial].destination} visa approved</div>
                     </div>
                   </div>
                 </div>
@@ -288,28 +288,31 @@ export function TestimonialsSection() {
 
 function TestimonialCard({ testimonial }: { testimonial: typeof testimonials[number] }) {
   return (
-    <div className="group relative h-full bg-white dark:bg-slate-900 border border-border/80 border-t-[4px] border-t-primary rounded-sm p-6 md:p-8 hover:shadow-md transition-all duration-300 flex flex-col justify-between items-start text-left cursor-pointer">
-      {/* Decorative stamp element */}
-      <div className="absolute right-6 top-6 px-3 py-1 border-2 border-emerald-500/30 text-emerald-600/40 dark:border-emerald-400/20 dark:text-emerald-400/20 text-xs font-black uppercase tracking-widest rotate-[-12deg] rounded-sm select-none pointer-events-none group-hover:scale-105 group-hover:text-emerald-500/60 group-hover:border-emerald-500/50 transition-all duration-300">
-        Verified
-      </div>
+    <div className="group relative h-full bg-card border border-border/80 rounded-2xl p-6 md:p-8 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300 flex flex-col justify-between items-start text-left cursor-pointer">
+      {/* Decorative quotation background element */}
+      <span className="absolute right-6 top-4 text-7xl font-serif text-muted-foreground/10 select-none pointer-events-none">&ldquo;</span>
 
       <div>
-        <p className="text-base font-medium leading-relaxed text-foreground mt-4 mb-6 line-clamp-4 font-mono text-sm">
-          {testimonial.text}
+        <div className="flex gap-0.5 mb-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+          ))}
+        </div>
+        <p className="text-base font-semibold leading-relaxed text-foreground mb-6 line-clamp-4">
+          "{testimonial.text}"
         </p>
       </div>
 
-      <div className="flex items-center gap-3.5 pt-5 border-t border-dashed border-border/60 w-full">
-        <div className="h-10 w-10 rounded-sm bg-slate-100 dark:bg-slate-800 text-primary flex items-center justify-center font-bold text-xs group-hover:bg-primary group-hover:text-white transition-colors duration-300 border border-border">
+      <div className="flex items-center gap-3.5 pt-5 border-t border-border/40 w-full">
+        <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-xs group-hover:bg-primary group-hover:text-white transition-colors duration-300">
           {testimonial.initials}
         </div>
         <div>
-          <div className="font-bold text-foreground text-sm group-hover:text-primary transition-colors duration-300">
+          <div className="font-semibold text-foreground text-sm group-hover:text-primary transition-colors duration-300">
             {testimonial.name}
           </div>
-          <div className="text-xs text-muted-foreground uppercase tracking-widest mt-0.5">
-            {testimonial.destination}
+          <div className="text-xs text-muted-foreground">
+            {testimonial.destination} visa approved
           </div>
         </div>
       </div>

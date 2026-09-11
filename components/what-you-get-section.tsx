@@ -86,7 +86,7 @@ const documents = [
   {
     id: 9,
     title: "Sponsorship Letter",
-    description: "Standardized financial sponsorship letters to substantiate travel funding.",
+    description: "Consulate-approved financial sponsorship letters to substantiate travel funding.",
     image: "/images/documents/sponsorship-letter.png",
     icon: HandCoins,
     type: "Financial Draft",
@@ -127,12 +127,12 @@ export function WhatYouGetSection() {
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Section Header */}
         <div className="text-left max-w-2xl mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-primary/20 bg-primary/5 text-primary text-[10px] font-bold tracking-widest uppercase mb-5">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Documents Included
+            Documents included
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
-            Your complete, <span className="text-primary font-bold">consolidated dossier.</span>
+            Your complete, <span className="text-primary">consolidated dossier.</span>
           </h2>
           <p className="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed">
             EZvisa provides a fully compiled and filled-out Schengen visa application packet with all necessary paperwork configured for your profile.
@@ -151,24 +151,24 @@ export function WhatYouGetSection() {
                 <button
                   key={doc.id}
                   onClick={() => goToSlide(index)}
-                  className={`flex-shrink-0 text-left py-2.5 px-4 rounded-md border transition-all flex items-center gap-3 cursor-pointer snap-center md:snap-start ${
+                  className={`flex-shrink-0 text-left py-2.5 px-4 rounded-xl border transition-all flex items-center gap-3 cursor-pointer snap-center md:snap-start ${
                     isSelected
                       ? "border-primary bg-primary/[0.04] text-primary shadow-sm"
                       : "border-border/60 hover:border-primary/30 text-muted-foreground hover:text-foreground bg-card/65"
                   }`}
                 >
                   {/* Icon Wrapper */}
-                  <div className={`h-8 w-8 rounded-sm flex items-center justify-center border flex-shrink-0 transition-colors ${
+                  <div className={`h-8 w-8 rounded-lg flex items-center justify-center border flex-shrink-0 transition-colors ${
                     isSelected
                       ? "bg-primary text-white border-primary"
                       : "bg-background border-border text-muted-foreground"
                   }`}>
-                    <DocIcon className="h-4 w-4" strokeWidth={2} />
+                    <DocIcon className="h-4 w-4" strokeWidth={2.5} />
                   </div>
                   
                   {/* Title */}
                   <div className="min-w-0">
-                    <span className={`text-xs sm:text-sm font-bold tracking-tight whitespace-nowrap block leading-tight ${isSelected ? "text-primary" : "text-foreground"}`}>
+                    <span className={`text-xs sm:text-sm font-medium whitespace-nowrap block leading-tight ${isSelected ? "text-primary" : "text-foreground"}`}>
                       {doc.title}
                     </span>
                   </div>
@@ -178,15 +178,15 @@ export function WhatYouGetSection() {
           </div>
 
           {/* Full-width Live Document Preview Panel */}
-          <div className="w-full bg-white dark:bg-slate-900 border border-border rounded-md p-6 md:p-10 flex flex-col justify-between relative overflow-hidden shadow-lg shadow-primary/[0.02]">
+          <div className="w-full bg-card border border-border/80 rounded-3xl p-6 md:p-10 flex flex-col justify-between relative overflow-hidden shadow-xl shadow-primary/[0.02]">
             
             {/* Header Details */}
-            <div className="mb-6 relative z-10 border-b border-dashed border-border/60 pb-5">
+            <div className="mb-6 relative z-10">
               <div className="flex items-center gap-3.5 mb-3">
-                <div className="h-9 w-9 rounded-sm bg-slate-50 dark:bg-slate-950 text-primary border border-border flex items-center justify-center shadow-sm">
-                  <IconComponent className="h-4.5 w-4.5" strokeWidth={1.5} />
+                <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary border border-primary/10 flex items-center justify-center">
+                  <IconComponent className="h-4.5 w-4.5" strokeWidth={2.5} />
                 </div>
-                <h3 className="text-lg font-black tracking-tight text-foreground uppercase">
+                <h3 className="text-lg font-bold text-primary tracking-tight">
                   {currentDocument.title}
                 </h3>
               </div>

@@ -7,9 +7,9 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 
 export const metadata: Metadata = {
-  title: "About EZvisa - Expert Schengen Visa Document Preparation",
+  title: "About EZvisa - Expert Schengen Visa Service | 98% Approval Rate",
   description:
-    "Learn about EZvisa, your trusted Schengen visa document preparation partner in UAE. Professional visa assistance for 29 European countries.",
+    "Learn about EZvisa, your trusted Schengen visa application partner in UAE. AI-powered visa assistance with 98% success rate. Fast, reliable service for 29 European countries since 2020.",
   keywords: [
     "about EZvisa",
     "visa application company",
@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     "travel visa company",
   ],
   alternates: {
-    canonical: "https://www.ezvisa.net/about",
+    canonical: "https://ezvisa.net/about",
   },
   openGraph: {
-    title: "About EZvisa - Expert Schengen Visa Document Preparation",
-    description: "Your trusted partner for European visa document preparation in the UAE.",
-    url: "https://www.ezvisa.net/about",
+    title: "About EZvisa - Expert Schengen Visa Service",
+    description: "Your trusted partner for European visa applications with 98% approval rate.",
+    url: "https://ezvisa.net/about",
     type: "website",
   },
 }
@@ -154,7 +154,7 @@ export default function AboutPage() {
             </div>
 
             {/* Stats */}
-            <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 md:backdrop-blur-md shadow-primary/[0.02]">
+            <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 md:backdrop-blur- shadow-primary/[0.02]">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">5,000+</div>
@@ -165,8 +165,8 @@ export default function AboutPage() {
                   <div className="text-sm font-semibold text-muted-foreground">Countries Covered</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-primary mb-1">24-48h</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Turnaround Time</div>
+                  <div className="text-3xl font-bold text-primary mb-1">98%</div>
+                  <div className="text-sm font-semibold text-muted-foreground">Success Rate</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">24/7</div>

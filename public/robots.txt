@@ -4,25 +4,12 @@ Allow: /
 
 # Disallow private/internal pages
 Disallow: /api/
-Disallow: /admin/
-Disallow: /apply
 Disallow: /payment-success
 Disallow: /payment-failed
-Disallow: /download/
 Disallow: /_next/
-Disallow: /private/
+Disallow: /static/
 
-# Googlebot specific rules
-User-agent: Googlebot
-Allow: /
-Disallow: /api/
-Disallow: /admin/
-Disallow: /apply
-Disallow: /payment-success
-Disallow: /payment-failed
-Disallow: /download/
-
-# Crawl-delay for AI bots
+# Crawl-delay for specific bots
 User-agent: GPTBot
 Disallow: /
 
@@ -30,7 +17,7 @@ User-agent: ChatGPT-User
 Disallow: /
 
 # Sitemap location
-Sitemap: https://www.ezvisa.net/sitemap.xml
+Sitemap: https://ezvisa.net/sitemap.xml
 
 # Host declaration
-Host: https://www.ezvisa.net
+Host: https://ezvisa.net

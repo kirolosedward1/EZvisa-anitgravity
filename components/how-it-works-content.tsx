@@ -41,7 +41,7 @@ const steps = [
     icon: FileCheck,
     title: "We Prepare Your File",
     description:
-      "Our visa experts review your application and prepare your complete visa file including application forms, hotel accommodation bookings, verifiable flight reservations, travel insurance guidance, cover letter, and all necessary supporting documents.",
+      "Our visa experts review your application and prepare your complete visa file including application forms, hotel bookings, dummy travel tickets, travel insurance, cover letter, and all necessary supporting documents.",
     duration: "24-48 hours",
   },
   {

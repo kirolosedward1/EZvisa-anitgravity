@@ -13,12 +13,12 @@ export const metadata: Metadata = {
     "Contact EZvisa support team for Schengen visa questions. Reach us via WhatsApp (+971 54 710 9533), email, or contact form. Fast response, expert guidance available 24/7.",
   keywords: ["contact visa service", "visa support", "visa help", "EZvisa contact", "visa consultation"],
   alternates: {
-    canonical: "https://www.ezvisa.net/contact",
+    canonical: "https://ezvisa.net/contact",
   },
   openGraph: {
     title: "Contact EZvisa - 24/7 Visa Support",
     description: "Get expert help with your Schengen visa application. WhatsApp & email support available 24/7.",
-    url: "https://www.ezvisa.net/contact",
+    url: "https://ezvisa.net/contact",
     type: "website",
   },
 }

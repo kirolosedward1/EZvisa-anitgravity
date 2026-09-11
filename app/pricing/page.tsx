@@ -20,12 +20,12 @@ export const metadata: Metadata = {
     "visa application charges",
   ],
   alternates: {
-    canonical: "https://www.ezvisa.net/pricing",
+    canonical: "https://ezvisa.net/pricing",
   },
   openGraph: {
     title: "Schengen Visa Pricing - 249 AED All-Inclusive",
     description: "Transparent pricing for Schengen visa applications. All-inclusive service from 249 AED.",
-    url: "https://www.ezvisa.net/pricing",
+    url: "https://ezvisa.net/pricing",
     type: "website",
   },
 }
@@ -76,10 +76,10 @@ export default function PricingPage() {
                   "Personalized visa requirements checklist",
                   "Application form preparation and filling",
                   "Expert consultation and guidance",
-                  "Verifiable flight and hotel booking reservations",
-                  "Customized consular cover letter",
+                  "Dummy flight and hotel bookings",
+                  "Customized cover letter",
                   "Day-by-day travel itinerary",
-                  "24/7 customer support via WhatsApp and email",
+                  "24/7 customer support via chat and email",
                 ].map((item, index) => (
                   <div key={index} className="flex items-start gap-4 group">
                     <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-green-200 transition-colors">
@@ -101,11 +101,10 @@ export default function PricingPage() {
               </div>
               <div className="space-y-5">
                 {[
-                  "Official embassy visa fee (€90 / ~360 AED paid at appointment)",
-                  "Visa center service fee (VFS/TLS logistics charge ~110-150 AED)",
-                  "Travel medical insurance policy (optional add-on)",
+                  "Embassy/consulate visa fees (paid directly to embassy)",
+                  "Travel insurance (if required)",
                   "Document attestation or translation fees",
-                  "Optional courier passport delivery service",
+                  "Courier or shipping charges",
                 ].map((item, index) => (
                   <div key={index} className="flex items-start gap-4">
                     <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -123,9 +122,10 @@ export default function PricingPage() {
                     <span className="text-xl">💡</span>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 mb-2">Transparent Consular Fee Structure</p>
-                    <p className="text-gray-700 leading-relaxed text-sm">
-                      Our 249 AED fee covers complete document preparation, cover letters, and booking reservations. The official Schengen visa fee (~€90 / 360 AED) and center logistics fee are paid directly to the consular center (VFS/TLS/BLS) during your biometrics appointment.
+                    <p className="font-semibold text-gray-900 mb-2">Important Note</p>
+                    <p className="text-gray-700 leading-relaxed">
+                      Embassy visa fees vary by country (typically 300-500 AED) and must be paid separately during
+                      your appointment.
                     </p>
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export default function PricingPage() {
               </Button>
             </Link>
             <p className="text-muted-foreground">
-              Join 5,000+ satisfied travelers who prepared their visa files with EZvisa
+              Join 5,000+ satisfied customers who got their visa approved
             </p>
           </div>
 
@@ -154,9 +154,10 @@ export default function PricingPage() {
                   <Shield className="w-12 h-12 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl lg:text-3xl font-bold mb-3 text-gray-900">Service Satisfaction Guarantee</h3>
+                  <h3 className="text-2xl lg:text-3xl font-bold mb-3 text-gray-900">100% Money-Back Guarantee</h3>
                   <p className="text-base text-gray-700 leading-relaxed">
-                    If we cannot process your file due to an error on our part, or if you request a cancellation before document review begins, we provide a full refund in accordance with our terms.{" "}
+                    If we cannot process your application due to our error, we'll provide a full refund. Your
+                    satisfaction and trust are our top priorities.{" "}
                     <Link
                       href="/refund-policy"
                       className="text-primary font-semibold hover:underline inline-flex items-center"

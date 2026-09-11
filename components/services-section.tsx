@@ -66,21 +66,21 @@ export function ServicesSection() {
       <div className="container mx-auto px-4 sm:px-6 md:px-12 relative z-10 max-w-7xl">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-primary/20 bg-primary/5 text-primary text-[10px] font-bold tracking-widest uppercase mb-5">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-wider uppercase mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            What's Included
+            What's included
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight tracking-tight text-foreground text-balance">
             Everything you need for a <br className="hidden sm:block" />
-            <span className="text-primary font-bold">complete visa application.</span>
+            <span className="text-primary">successful visa application.</span>
           </h2>
           <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
-            One flat fee. Essential documents prepared by seasoned experts. <span className="font-semibold text-foreground">Click any document below</span> to view details.
+            One flat fee. Five core documents prepared by seasoned travel visa experts. <span className="font-semibold text-foreground">Click any box below</span> to view full document details.
           </p>
         </div>
 
         {/* Surround Showcase Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-stretch relative">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
           
           {/* Left Side: 3 Document Cards */}
           <div className="lg:col-span-4 flex flex-col gap-4">
@@ -94,12 +94,12 @@ export function ServicesSection() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
-                  whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                  whileHover={{ scale: 1.025, transition: { duration: 0.2 } }}
                   onClick={() => setSelectedService(index)}
-                  className="group w-full text-left p-5 sm:p-6 rounded-md border border-border bg-white dark:bg-slate-900 border-l-[4px] border-l-slate-200 dark:border-l-slate-800 hover:border-l-primary transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex items-center gap-4.5"
+                  className="group w-full text-left p-5 sm:p-6 rounded-3xl border border-border/80 bg-card hover:bg-primary/[0.02] hover:border-primary/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 cursor-pointer flex items-center gap-4.5"
                 >
-                  <div className="h-10 w-10 rounded-sm bg-slate-50 dark:bg-slate-950 border border-border text-primary flex items-center justify-center shrink-0 group-hover:border-primary/50 transition-all duration-300 shadow-sm">
-                    <Icon className="h-5 w-5" strokeWidth={1.5} />
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
+                    <Icon className="h-5.5 w-5.5" strokeWidth={2} />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
                     {service.title}
@@ -109,20 +109,22 @@ export function ServicesSection() {
             })}
           </div>
 
-          {/* Center Hub: Lady Image */}
+          {/* Center Hub: Soft Glowing Aura Background and Lady Image */}
           <div className="lg:col-span-4 flex justify-center items-end relative py-8 lg:py-0 min-h-[400px] sm:min-h-[500px]">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-[800px] aspect-square bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-sky-400/10 rounded-full blur-[100px] pointer-events-none" />
+            
             <motion.div 
               initial={{ opacity: 0, y: 50 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="absolute top-0 bottom-0 -left-10 -right-10 z-0 pointer-events-none flex justify-center"
+              className="absolute -top-12 -bottom-20 -left-20 -right-20 z-0 pointer-events-none flex justify-center"
             >
               <Image
                 src="/images/woman-travel.png"
                 alt="EZvisa Travel Consultant"
                 fill
-                className="object-contain object-bottom select-none filter drop-shadow-2xl"
+                className="object-contain object-center select-none filter drop-shadow-2xl"
                 sizes="(max-width: 1024px) 100vw, 33vw"
               />
             </motion.div>
@@ -140,12 +142,12 @@ export function ServicesSection() {
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ duration: 0.4, delay: i * 0.1 }}
-                  whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
+                  whileHover={{ scale: 1.025, transition: { duration: 0.2 } }}
                   onClick={() => setSelectedService(index)}
-                  className="group w-full text-right p-5 sm:p-6 rounded-md border border-border bg-white dark:bg-slate-900 border-r-[4px] border-r-slate-200 dark:border-r-slate-800 hover:border-r-primary transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer flex items-center justify-end gap-4.5 flex-row-reverse"
+                  className="group w-full text-left p-5 sm:p-6 rounded-3xl border border-border/80 bg-card hover:bg-primary/[0.02] hover:border-primary/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 cursor-pointer flex items-center gap-4.5"
                 >
-                  <div className="h-10 w-10 rounded-sm bg-slate-50 dark:bg-slate-950 border border-border text-primary flex items-center justify-center shrink-0 group-hover:border-primary/50 transition-all duration-300 shadow-sm">
-                    <Icon className="h-5 w-5" strokeWidth={1.5} />
+                  <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
+                    <Icon className="h-5.5 w-5.5" strokeWidth={2} />
                   </div>
                   <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
                     {service.title}
@@ -166,7 +168,7 @@ export function ServicesSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedService(null)}
-            className="fixed inset-0 bg-foreground/40 md:backdrop-blur-md z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-foreground/40 md:backdrop-blur- z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 20 }}
