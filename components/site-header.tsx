@@ -163,6 +163,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "Services", id: "services", type: "scroll" },
     { label: "Destinations", id: "/destinations", type: "link" },
     { label: "Documents", id: "/documents", type: "link" },
+    { label: "Tools", id: "/tools", type: "link" },
+    { label: "Dashboard", id: "/dashboard", type: "link" },
     { label: "Success Stories", id: "testimonials", type: "scroll" },
     { label: "FAQ", id: "faq", type: "scroll" },
     { label: "News", id: "/news", type: "link" },
