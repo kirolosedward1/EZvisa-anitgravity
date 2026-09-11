@@ -14,7 +14,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
-import { createBrowserClient } from "@supabase/ssr"
+import { createBrowserClient } from "@/lib/supabase/client"
 
 const WIZARD_STORAGE_KEY = "visa_wizard_data"
 const AUTO_SAVE_DELAY = 300
@@ -406,10 +406,7 @@ function ApplyPageContent() {
   useEffect(() => {
     const loadAuthenticatedUser = async () => {
       try {
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-        )
+        const supabase = createBrowserClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (user && user.email) {
           setFormData((prev) => ({

@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { createBrowserClient } from "@supabase/ssr"
+import { createBrowserClient } from "@/lib/supabase/client"
 import { Menu, X, Rocket, ChevronDown, Check, Calendar, Wallet, MapPin } from "lucide-react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -41,10 +41,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
       setScrolled(window.scrollY > 20)
     }
 
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    const supabase = createBrowserClient()
 
     const fetchUser = async () => {
       try {

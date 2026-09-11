@@ -1,44 +1,27 @@
-import { createServerClient } from "@supabase/ssr"
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import { createServerClient as createClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
-/**
- * Create a Supabase client for server-side operations
- * Important: Always create a new client within each function (Fluid compute)
- */
-export async function createClient() {
+export async function createServerClient() {
   const cookieStore = await cookies()
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "https://dummy-url.supabase.co"
-  const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "dummy-key"
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder-project.supabase.co"
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key"
 
-  return createServerClient(url, key, {
+  return createClient(url, key, {
     cookies: {
       getAll() {
         return cookieStore.getAll()
       },
       setAll(cookiesToSet) {
         try {
-          cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
         } catch {
-          // The "setAll" method was called from a Server Component.
-          // This can be ignored if you have proxy refreshing user sessions.
+          // Can be ignored in Server Component
         }
       },
     },
   })
 }
 
-/**
- * Create a Supabase client for build-time operations (without cookies)
- * Use this for generateStaticParams, sitemap, and other build-time functions
- */
-export function createBuildClient() {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  
-  // Use dummy values to prevent crashing during build if env vars are missing
-  return createSupabaseClient(
-    url || "https://dummy-url.supabase.co", 
-    key || "dummy-key"
-  )
-}
+export { createServerClient as createClient }

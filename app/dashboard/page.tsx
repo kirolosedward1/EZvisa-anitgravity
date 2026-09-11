@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { createServerClient } from "@supabase/ssr";
+import { createServerClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { format } from "date-fns";
 import { SiteHeader } from "@/components/site-header";
@@ -43,17 +43,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     };
   } else {
     try {
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            getAll() {
-              return cookieStore.getAll();
-            },
-          },
-        }
-      );
+      const supabase = await createServerClient();
       const { data } = await supabase.auth.getUser();
       user = data.user;
     } catch {
@@ -72,17 +62,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     relatedApps = getDemoApplicationsByEmail(user.email);
   } else {
     try {
-      const supabase = createServerClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          cookies: {
-            getAll() {
-              return cookieStore.getAll();
-            },
-          },
-        }
-      );
+      const supabase = await createServerClient();
       const { data, error: relatedError } = await supabase
         .from("visa_applications")
         .select("*")
