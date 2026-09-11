@@ -17,9 +17,16 @@ import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
 import { FixedCTAButton } from "@/components/fixed-cta-button"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
+import { DocumentSolvencyTools } from "@/components/documents/document-solvency-tools"
+
+import type { ProcessingTime, VisaFee } from "@/lib/visa-rules"
 
 interface DocumentRequirementsPageProps {
   initialCountry: string
+  provider?: string
+  processingTime?: ProcessingTime
+  fee?: VisaFee
+  lastReviewed?: string
 }
 
 // Country background images mapping
@@ -144,7 +151,13 @@ const fromCountryFlags: Record<string, string> = {
   Syria: "🇸🇾",
 }
 
-export function DocumentRequirementsPage({ initialCountry }: DocumentRequirementsPageProps) {
+export function DocumentRequirementsPage({ 
+  initialCountry,
+  provider = "VFS Global",
+  processingTime = { minDays: 10, maxDays: 15, note: "" },
+  fee = { eur: 90, aed: 360, note: "" },
+  lastReviewed
+}: DocumentRequirementsPageProps) {
   const router = useRouter()
   const [selectedCountry, setSelectedCountry] = useState<string>(initialCountry)
   const [selectedNationality, setSelectedNationality] = useState<string>("")
@@ -335,6 +348,36 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Left Column - Documents List (65%) */}
             <div className="flex-1 lg:w-[65%] space-y-8">
+              {/* Visa Information */}
+              <div className="bg-white dark:bg-slate-900 border border-border border-l-[4px] border-l-blue-500 rounded-md p-6 shadow-sm">
+                <h2 className="text-xl font-black text-foreground mb-4 flex items-center gap-2 uppercase tracking-tight">
+                  <AlertCircle className="w-5 h-5 text-blue-500" strokeWidth={2} />
+                  {selectedCountry} Visa Summary
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1">Appointment Center</span>
+                    <span className="font-semibold">{provider}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1">Processing Time</span>
+                    <span className="font-semibold">{processingTime?.minDays}-{processingTime?.maxDays} working days</span>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{processingTime?.note}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1">Embassy Fee</span>
+                    <span className="font-semibold">{fee?.eur} EUR (~{fee?.aed} AED)</span>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{fee?.note}</p>
+                  </div>
+                  {lastReviewed && (
+                    <div>
+                      <span className="text-muted-foreground block text-[10px] uppercase tracking-widest font-bold mb-1">Last Reviewed</span>
+                      <span className="font-semibold">{lastReviewed}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Essential Documents */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -397,6 +440,9 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                   ))}
                 </div>
               </motion.div>
+
+              {/* Solvency, Stay Calculator & Stacking Protocol */}
+              <DocumentSolvencyTools country={selectedCountry} provider={provider} />
             </div>
 
             {/* Right Column - Sticky CTA Box (35%) */}
@@ -405,7 +451,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="sticky top-24 bg-gray-50/80 md:backdrop-blur- rounded-2xl p-8 border border-gray-200 shadow-lg"
+                className="sticky top-24 bg-gray-50/80 md:backdrop-blur-md rounded-2xl p-8 border border-gray-200 shadow-lg"
               >
                 <div className="space-y-6">
                   {/* Header */}
@@ -493,10 +539,10 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                   <Button 
                     size="lg" 
                     asChild 
-                    className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all rounded-xl"
+                    className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-white shadow-md hover:shadow-lg transition-all rounded-md"
                   >
                     <Link href="/apply" className="flex items-center justify-center gap-2">
-                      Apply Now!
+                      Start Application
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
@@ -514,20 +560,29 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
 
                     <div className="space-y-2.5">
                       <div className="flex items-center gap-2.5 text-sm">
-                        <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                         <span className="text-gray-700">Document verification</span>
                       </div>
                       <div className="flex items-center gap-2.5 text-sm">
-                        <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                         <span className="text-gray-700">Cover letter writing</span>
                       </div>
                       <div className="flex items-center gap-2.5 text-sm">
-                        <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                         <span className="text-gray-700">Travel itinerary creation</span>
                       </div>
                       <div className="flex items-center gap-2.5 text-sm">
-                        <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        <Check className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                         <span className="text-gray-700">Application review</span>
+                      </div>
+                    </div>
+
+                    {/* Transparent Fee Disclosure */}
+                    <div className="mt-4 pt-3 border-t border-gray-200/80 text-[11px] text-muted-foreground leading-relaxed">
+                      <p className="font-semibold text-gray-800 dark:text-gray-200 mb-1">Transparent Fee Structure:</p>
+                      <div className="space-y-1 bg-gray-100/70 dark:bg-slate-800/70 p-2.5 rounded-lg border border-gray-200/50">
+                        <p><strong>EZvisa File Prep:</strong> {formatPrice(PRICES.visaApplication, currency)} (covers dossier pack, cover letter &amp; booking itineraries)</p>
+                        <p><strong>Official Embassy / VFS Fee:</strong> Paid directly at your center appointment (~€90 / 360 AED + center logistics fee)</p>
                       </div>
                     </div>
                   </div>
@@ -543,28 +598,26 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
   )
 }
 
-function DocumentCard({ title, description, required, icon: Icon }: { title: string; description: string; required: boolean; icon: React.ComponentType<{ className?: string }> }) {
+function DocumentCard({ title, description, required, icon: Icon }: { title: string; description: string; required: boolean; icon: React.ComponentType<{ className?: string, strokeWidth?: number }> }) {
   return (
-    <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200 hover:border-primary/50 hover:shadow-sm transition-all">
-      <div className="flex items-start gap-2.5 md:gap-3">
-        <div
-          className={`mt-0.5 h-7 w-7 md:h-8 md:w-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-            required ? "bg-primary/10" : "bg-gray-100"
-          }`}
-        >
-          <Icon className={`h-3.5 w-3.5 md:h-4 md:w-4 ${required ? "text-primary" : "text-gray-500"}`} />
+    <div className="bg-white dark:bg-slate-900 rounded-md p-3 md:p-4 border border-dashed border-border/80 hover:border-primary/50 hover:shadow-sm transition-all group flex items-start gap-3 md:gap-4">
+      <div
+        className={`mt-1 h-8 w-8 md:h-10 md:w-10 rounded-sm border flex items-center justify-center flex-shrink-0 transition-colors ${
+          required ? "bg-slate-50 dark:bg-slate-950 border-border group-hover:border-primary/30 text-primary" : "bg-slate-100 dark:bg-slate-800 border-transparent text-muted-foreground"
+        }`}
+      >
+        <Icon className={`h-4 w-4 md:h-5 md:w-5`} strokeWidth={1.5} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1.5">
+          <h3 className="text-sm md:text-base font-bold tracking-tight">{title}</h3>
+          {required && (
+            <span className="text-[9px] px-1.5 py-0.5 bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 rounded-sm font-bold uppercase tracking-widest whitespace-nowrap">
+              Required
+            </span>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm md:text-base font-semibold">{title}</h3>
-            {required && (
-              <span className="text-[9px] md:text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium whitespace-nowrap">
-                Required
-              </span>
-            )}
-          </div>
-          <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{description}</p>
-        </div>
+        <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{description}</p>
       </div>
     </div>
   )

@@ -89,7 +89,7 @@ export function generateOrganizationSchema() {
       height: 200,
     },
     description:
-      "Professional Schengen visa application service with 98% approval rate. AI-powered assistance for 27 European countries.",
+      "Professional Schengen visa document preparation service for 27 European countries.",
     address: {
       "@type": "PostalAddress",
       addressCountry: "AE",

@@ -67,7 +67,7 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
       {/* Helper Text */}
       <div className="flex items-start gap-3.5 p-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl shadow-sm">
         <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
@@ -181,7 +181,7 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
       </div>
 
       {/* Navigation Buttons */}
-      <div className="md:flex md:justify-between md:gap-4 fixed md:static bottom-0 left-0 right-0 p-4 bg-background/80 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-10 flex gap-3">
+      <div className="md:flex md:justify-between md:gap-4 fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex gap-3">
         <Button
           type="button"
           onClick={onBack}

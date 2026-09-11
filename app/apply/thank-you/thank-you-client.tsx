@@ -9,6 +9,7 @@ import { ApplicationSummaryCard } from "@/components/thank-you/application-summa
 import { NextStepsTimeline } from "@/components/thank-you/next-steps-timeline"
 import { ThankYouCTASection } from "@/components/thank-you/thank-you-cta-section"
 import { Loader2 } from "lucide-react"
+import { trackEvent } from "@/lib/analytics"
 
 interface ApplicationData {
   firstName: string
@@ -77,6 +78,13 @@ export function ThankYouClient() {
     }
 
     setIsLoading(false)
+
+    // Fire deduplicated payment_success funnel event
+    const finalData = pendingApplicationData ? JSON.parse(pendingApplicationData) : null
+    const dest = finalData?.destination || searchParams?.get("destination") || "unknown"
+    const amount = finalData?.paymentAmount || Number.parseFloat(searchParams?.get("amount") || "0")
+    const txnId = finalData?.transactionId || searchParams?.get("transaction_id") || searchParams?.get("order_id") || `tx_${dest}_${Date.now()}`
+    trackEvent("payment_success", { destination: dest, amount }, `ps_${txnId}`)
 
     // Clean up after successful payment
     setTimeout(() => {

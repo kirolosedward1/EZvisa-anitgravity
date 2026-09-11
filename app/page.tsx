@@ -14,9 +14,9 @@ const Footer = dynamic(() => import("@/components/footer").then(mod => mod.Foote
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Schengen Visa Application Service UAE | 98% Approval Rate | EZvisa",
+  title: "Schengen Visa Document Preparation Service UAE | EZvisa",
   description:
-    "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 27 European countries. Expert help with documents, itinerary planning, cover letters & more. 98% approval rate. Starting from 249 AED. Apply today!",
+    "Professional document preparation for your Schengen visa with EZvisa UAE. Assistance for European countries. Expert help with documents, itinerary planning, cover letters & more. Starting from 249 AED.",
   keywords: [
     "Schengen visa UAE",
     "Schengen visa Dubai",
@@ -32,14 +32,14 @@ export const metadata: Metadata = {
     "visa application help Dubai",
     "Europe tourist visa UAE",
     "Schengen visa requirements UAE",
-    "visa approval service Dubai"
+    "visa document preparation Dubai"
   ],
   alternates: {
     canonical: "https://www.ezvisa.net/",
   },
   openGraph: {
-    title: "Schengen Visa Application UAE | 98% Approval | EZvisa",
-    description: "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 27 European countries. 98% approval rate. From 249 AED.",
+    title: "Schengen Visa Document Preparation UAE | EZvisa",
+    description: "Professional document preparation for your Schengen visa with EZvisa UAE. Assistance for European countries. From 249 AED.",
     url: "https://www.ezvisa.net/",
     type: "website",
     images: [
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
         url: "https://www.ezvisa.net/images/logo-main.png",
         width: 1200,
         height: 630,
-        alt: "EZvisa - Schengen Visa Application Service UAE",
+        alt: "EZvisa - Schengen Visa Preparation Service UAE",
       },
     ],
   },
@@ -69,7 +69,7 @@ export default function Home() {
           height: 200,
         },
         description:
-          "Professional Schengen visa application service with 98% approval rate. AI-powered assistance for 27 European countries.",
+          "Professional Schengen visa document preparation service.",
         address: {
           "@type": "PostalAddress",
           addressCountry: "AE",
@@ -136,10 +136,10 @@ export default function Home() {
           },
           {
             "@type": "Question",
-            name: "What is your visa approval rate?",
+            name: "Do you guarantee visa approval?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "We maintain a 98% approval rate for Schengen visa applications through our AI-powered document verification and personalized itinerary planning.",
+              text: "No agency can guarantee visa approval, as final decisions rest solely with the respective embassy or consulate. EZvisa maximizes your chances by ensuring your documentation, flight and hotel reservations, cover letter, and travel itinerary are complete, compliant, and free from procedural errors.",
             },
           },
           {

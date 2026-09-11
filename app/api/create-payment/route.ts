@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { amount, currency = "AED", success_url, cancel_url, test = true } = await request.json()
-    console.log("[v0] Payment request:", { amount, currency, success_url, cancel_url, test })
+    const { applicationId, amount, currency = "AED", success_url, cancel_url, test = true } = await request.json()
+    console.log("[v0] Payment request:", { applicationId, amount, currency, success_url, cancel_url, test })
     
     // Validate currency
     const supportedCurrencies = ["AED", "USD", "EUR", "GBP", "SAR"]
@@ -111,6 +111,25 @@ export async function POST(request: NextRequest) {
         { error: "Invalid payment response", details: "Missing redirect_url or id" },
         { status: 500 },
       )
+    }
+
+    // LINK PAYMENT TO APPLICATION
+    if (applicationId) {
+      const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
+      
+      if (supabaseUrl && supabaseKey) {
+        const { createClient } = await import('@supabase/supabase-js')
+        const supabase = createClient(supabaseUrl, supabaseKey)
+        const { error } = await supabase
+          .from("visa_applications")
+          .update({ payment_id: data.id })
+          .eq("id", applicationId)
+          
+        if (error) {
+          console.error("Failed to link payment to application", error)
+        }
+      }
     }
 
     console.log("[v0] Payment intent created successfully:", data.id)

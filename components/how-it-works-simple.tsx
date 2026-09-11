@@ -16,7 +16,7 @@ const steps = [
     number: "2",
     icon: CreditCard,
     title: "Pay securely",
-    description: "Complete your application with secure payment processing. Money-back guarantee.",
+    description: "Complete your application with secure payment processing. Transparent flat-fee pricing.",
   },
   {
     number: "3",
@@ -28,29 +28,26 @@ const steps = [
     number: "4",
     icon: PlaneTakeoff,
     title: "Submit & travel",
-    description: "Download your file, walk into your appointment, and get approved.",
+    description: "Download your file, attend your appointment, and await your visa decision.",
   },
 ]
 
 export function HowItWorksSimple() {
   return (
     <section id="how-it-works" className="relative py-24 md:py-32 bg-secondary/15 overflow-hidden">
-      {/* Subtle backdrop circle blur */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none hidden md:block" />
-
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Section header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16 md:mb-20">
           <div className="max-w-2xl text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-5">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-sm border border-primary/20 bg-primary/5 text-primary text-[10px] font-bold tracking-widest uppercase mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              How it works
+              Application Process
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
-              Four simple steps to your <span className="text-primary">approved visa.</span>
+              Four simple steps to your <span className="text-primary font-bold">complete visa file.</span>
             </h2>
           </div>
-          <Button asChild variant="outline" className="hidden md:inline-flex rounded-xl font-semibold border-primary/20 text-primary hover:bg-primary/5 hover:text-primary transition-all duration-300">
+          <Button asChild variant="outline" className="hidden md:inline-flex rounded-md font-semibold border-border text-foreground hover:bg-slate-100 transition-all duration-300">
             <Link href="/how-it-works" className="flex items-center gap-2">
               See full process <ArrowRight className="h-4 w-4" />
             </Link>
@@ -61,11 +58,12 @@ export function HowItWorksSimple() {
         <div className="relative">
           {/* Connecting line on desktop */}
           <div 
-            className="absolute top-[3.5rem] left-[8%] right-[8%] h-[2px] hidden lg:block pointer-events-none z-0"
-            style={{
-              backgroundImage: "linear-gradient(to right, transparent, var(--primary) 15%, var(--primary) 85%, transparent)",
-              opacity: 0.25,
-            }}
+            className="absolute top-[3.5rem] left-[8%] right-[8%] h-[1px] hidden lg:block pointer-events-none z-0 border-t border-dashed border-primary/30"
+          />
+
+          {/* Connecting line on mobile */}
+          <div 
+            className="absolute top-[4rem] bottom-[4rem] left-[2.2rem] w-[1px] block lg:hidden pointer-events-none z-0 border-l border-dashed border-primary/30"
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
@@ -79,13 +77,20 @@ export function HowItWorksSimple() {
                   viewport={{ once: true, margin: "-40px" }}
                   transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
                   whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                  className="group relative bg-card border border-border/80 rounded-2xl p-7 transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 flex flex-col items-start text-left"
+                  className="group relative bg-white dark:bg-slate-900 border border-border/80 rounded-md p-7 transition-all duration-300 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 flex flex-col items-start text-left"
                 >
                   {/* Step Marker & Icon container */}
-                  <div className="flex flex-col items-start mb-6 relative">
-                    {/* Icon Circle */}
-                    <div className="h-14 w-14 rounded-2xl bg-background border border-border/80 text-primary flex items-center justify-center shadow-sm transition-all duration-300 group-hover:scale-105 group-hover:border-primary/20 group-hover:shadow-md group-hover:shadow-primary/5">
-                      <Icon className="h-6 w-6" strokeWidth={2} />
+                  <div className="flex flex-col items-start mb-6 relative w-full">
+                    <div className="flex items-center justify-between w-full">
+                      {/* Icon Container */}
+                      <div className="h-12 w-12 rounded-sm bg-slate-50 dark:bg-slate-950 border border-border text-primary flex items-center justify-center shadow-sm transition-all duration-300 group-hover:border-primary/30">
+                        <Icon className="h-5 w-5" strokeWidth={1.5} />
+                      </div>
+                      
+                      {/* Step Number */}
+                      <span className="text-3xl font-black text-border/40 group-hover:text-primary/20 transition-colors pointer-events-none select-none">
+                        0{step.number}
+                      </span>
                     </div>
                   </div>
 

@@ -21,13 +21,13 @@ export const metadata: Metadata = {
     "travel insurance visa",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/documents",
+    canonical: "https://www.ezvisa.net/documents",
   },
   openGraph: {
     title: "Schengen Visa Document Requirements by Country",
     description:
       "Detailed document requirements for Schengen visa applications. Complete checklists for all 27 European countries.",
-    url: "https://ezvisa.net/documents",
+    url: "https://www.ezvisa.net/documents",
     type: "website",
   },
 }

@@ -26,28 +26,12 @@ export function InnerHero({
   children,
   className = "",
 }: InnerHeroProps) {
-  const [heroBgImage, setHeroBgImage] = useState<string | undefined>(backgroundImage)
-  const [heroBgCountryName, setHeroBgCountryName] = useState<string | undefined>(undefined)
-
-  useEffect(() => {
-    if (randomizeBackground) {
-      const randomIndex = Math.floor(Math.random() * destinations.length)
-      const randomDest = destinations[randomIndex]
-      if (randomDest && randomDest.image) {
-        setHeroBgImage(randomDest.image)
-        setHeroBgCountryName(randomDest.name)
-      }
-    } else {
-      setHeroBgImage(backgroundImage)
-      // Look up country name by image path
-      const matchingDest = destinations.find(d => d.image === backgroundImage)
-      if (matchingDest) {
-        setHeroBgCountryName(matchingDest.name)
-      } else {
-        setHeroBgCountryName(undefined)
-      }
-    }
-  }, [backgroundImage, randomizeBackground])
+  // Use props directly to avoid hydration mismatch and LCP delays
+  const heroBgImage = backgroundImage;
+  
+  // Look up country name by image path
+  const matchingDest = destinations.find(d => d.image === backgroundImage);
+  const heroBgCountryName = matchingDest ? matchingDest.name : undefined;
 
   // Define blob color configurations based on gradientType
   const blobColors = {

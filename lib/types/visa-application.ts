@@ -14,6 +14,8 @@ export interface VisaApplication {
   travel_purpose: string
   entry_date?: string
   exit_date?: string
+  travel_start_date?: string
+  travel_end_date?: string
   duration_days?: number
 
   // Documents Status
@@ -35,7 +37,8 @@ export interface VisaApplication {
   payment_status?: "pending" | "paid" | "processing" | "completed"
   payment_amount?: number
   payment_id?: string
-  application_status?: "submitted" | "reviewing" | "approved" | "rejected"
+  application_status?: "submitted" | "reviewing" | "approved" | "ready" | "rejected"
+  tracking_token?: string
 
   // Metadata
   submission_ip?: string

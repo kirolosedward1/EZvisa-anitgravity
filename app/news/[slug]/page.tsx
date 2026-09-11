@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     keywords: post.seo.keywords,
     authors: [{ name: post.author }],
     alternates: {
-      canonical: `https://ezvisa.net/news/${slug}`,
+      canonical: `https://www.ezvisa.net/news/${slug}`,
     },
     openGraph: {
       title: post.seo.metaTitle,
@@ -53,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: "article",
       publishedTime: post.publishedAt,
       authors: [post.author],
-      url: `https://ezvisa.net/news/${slug}`,
+      url: `https://www.ezvisa.net/news/${slug}`,
     },
     twitter: {
       card: "summary_large_image",
@@ -89,12 +89,12 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       name: "EZvisa",
       logo: {
         "@type": "ImageObject",
-        url: "https://ezvisa.net/images/logo-main.png",
+        url: "https://www.ezvisa.net/images/logo-main.png",
       },
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://ezvisa.net/news/${slug}`,
+      "@id": `https://www.ezvisa.net/news/${slug}`,
     },
   }
 

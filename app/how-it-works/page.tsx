@@ -19,12 +19,12 @@ export const metadata: Metadata = {
     "Europe visa process",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/how-it-works",
+    canonical: "https://www.ezvisa.net/how-it-works",
   },
   openGraph: {
     title: "How It Works - 4-Step Visa Application Process",
-    description: "Simple 4-step process to get your Schengen visa approved. 24-48 hour turnaround.",
-    url: "https://ezvisa.net/how-it-works",
+    description: "Simple 4-step process for your Schengen visa file preparation. 24-48 hour turnaround.",
+    url: "https://www.ezvisa.net/how-it-works",
     type: "website",
   },
 }

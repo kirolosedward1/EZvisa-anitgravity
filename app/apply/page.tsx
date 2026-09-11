@@ -12,7 +12,9 @@ import { CheckCircle2, ChevronDown } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { useSearchParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
+import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
+import { createBrowserClient } from "@supabase/ssr"
 
 const WIZARD_STORAGE_KEY = "visa_wizard_data"
 const AUTO_SAVE_DELAY = 300
@@ -26,6 +28,9 @@ interface WizardFormData {
   lastName: string
   email: string
   phone: string
+  whatsappOptIn?: boolean
+  dateOfBirth: string
+  passportNumber: string
   maritalStatus: "single" | "married" | "divorced" | "widowed" | ""
   employmentStatus: "employed" | "business" | "freelancer" | "student" | "unemployed" | "retired" | ""
   spouseNationality?: string
@@ -105,6 +110,9 @@ const defaultFormData: WizardFormData = {
   lastName: "",
   email: "",
   phone: "",
+  whatsappOptIn: true,
+  dateOfBirth: "",
+  passportNumber: "",
   maritalStatus: "",
   employmentStatus: "",
   jobTitle: "",
@@ -190,14 +198,18 @@ function ApplyPageContent() {
 
   const handleContinuePrevious = useCallback(() => {
     if (pendingSavedData) {
-      const fromCountry = searchParams.get("from") || ""
-      const toCountry = searchParams.get("to") || ""
+      const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
+      const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
+      const travelStartDate = searchParams.get("travelStartDate") || ""
+      const travelEndDate = searchParams.get("travelEndDate") || ""
       
       setFormData({
         ...defaultFormData,
         ...pendingSavedData,
         ...(fromCountry && { nationality: fromCountry }),
         ...(toCountry && { destination: toCountry }),
+        ...(travelStartDate && { travelStartDate }),
+        ...(travelEndDate && { travelEndDate }),
       })
     }
     setShowResumeModal(false)
@@ -205,13 +217,17 @@ function ApplyPageContent() {
 
   const handleStartFresh = useCallback(() => {
     localStorage.removeItem(WIZARD_STORAGE_KEY)
-    const fromCountry = searchParams.get("from") || ""
-    const toCountry = searchParams.get("to") || ""
+    const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
+    const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
+    const travelStartDate = searchParams.get("travelStartDate") || ""
+    const travelEndDate = searchParams.get("travelEndDate") || ""
     
     setFormData({
       ...defaultFormData,
       ...(fromCountry && { nationality: fromCountry }),
       ...(toCountry && { destination: toCountry }),
+      ...(travelStartDate && { travelStartDate }),
+      ...(travelEndDate && { travelEndDate }),
     })
     
     const slug = getStepSlug(1)
@@ -222,7 +238,7 @@ function ApplyPageContent() {
     )
     
     setShowResumeModal(false)
-  }, [router])
+  }, [router, searchParams])
 
   const scrollToWizardTop = useCallback(() => {
     if (typeof window === "undefined") return
@@ -251,6 +267,7 @@ function ApplyPageContent() {
   }, [])
 
   const handleNext = useCallback(() => {
+    trackEvent("application_step_completed", { step: currentStep, destination: formData.destination })
     setDirection(1)
     setCurrentStep((prevStep) => {
       const nextStep = prevStep + 1
@@ -261,7 +278,7 @@ function ApplyPageContent() {
         return 3 // Skip to employment
       }
       
-      return Math.min(nextStep, 6)
+      return Math.min(nextStep, 5)
     })
     scrollToWizardTop()
   }, [formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
@@ -298,8 +315,14 @@ function ApplyPageContent() {
     isMounted.current = true
 
     try {
-      const fromCountry = searchParams.get("from") || ""
-      const toCountry = searchParams.get("to") || ""
+      const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
+      const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
+      const travelStartDate = searchParams.get("travelStartDate") || ""
+      const travelEndDate = searchParams.get("travelEndDate") || ""
+      
+      if (toCountry) {
+        trackEvent("application_started", { destination: toCountry })
+      }
       const stepSlug = searchParams.get("step") || ""
       const isRetry = searchParams.get("retry") === "true"
 
@@ -336,6 +359,8 @@ function ApplyPageContent() {
           ...defaultFormData,
           ...(fromCountry && { nationality: fromCountry }),
           ...(toCountry && { destination: toCountry }),
+          ...(travelStartDate && { travelStartDate }),
+          ...(travelEndDate && { travelEndDate }),
         })
       } else {
         setFormData({
@@ -343,6 +368,8 @@ function ApplyPageContent() {
           ...savedData,
           ...(fromCountry && { nationality: fromCountry }),
           ...(toCountry && { destination: toCountry }),
+          ...(travelStartDate && { travelStartDate }),
+          ...(travelEndDate && { travelEndDate }),
         })
       }
 
@@ -375,6 +402,31 @@ function ApplyPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Auto-fill logged-in user profile if available
+  useEffect(() => {
+    const loadAuthenticatedUser = async () => {
+      try {
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        )
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && user.email) {
+          setFormData((prev) => ({
+            ...prev,
+            email: prev.email || user.email || "",
+            firstName: prev.firstName || (user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || ""),
+            lastName: prev.lastName || (user.user_metadata?.last_name || user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || ""),
+            phone: prev.phone || (user.user_metadata?.phone || ""),
+          }))
+        }
+      } catch (err) {
+        // Non-blocking
+      }
+    }
+    loadAuthenticatedUser()
+  }, [])
+
   const steps = useMemo(() => {
     const shouldShowSpouseStep = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
 
@@ -384,8 +436,7 @@ function ApplyPageContent() {
         { number: 2, title: "Spouse Information", description: "Spouse details" },
         { number: 3, title: "Employment", description: "Work & income details" },
         { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
-        { number: 5, title: "Documents", description: "Required documents" },
-        { number: 6, title: "Review & Payment", description: "Confirm & complete payment" },
+        { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
       ]
     }
 
@@ -393,8 +444,7 @@ function ApplyPageContent() {
       { number: 1, title: "Personal Information", description: "Profile & contact details" },
       { number: 3, title: "Employment", description: "Work & income details" },
       { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
-      { number: 5, title: "Documents", description: "Required documents" },
-      { number: 6, title: "Review & Payment", description: "Confirm & complete payment" },
+      { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
     ]
   }, [formData.maritalStatus, formData.spouseAccompanying])
 
@@ -485,17 +535,8 @@ function ApplyPageContent() {
             isLoading={isTransitioning}
           />
         )
-      case "documents":
-        return (
-          <DocumentsStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-            onBack={handleBack}
-            isLoading={isTransitioning}
-          />
-        )
       case "payment":
+      case "documents":
         return <PaymentStep formData={formData} onBack={handleBack} isLoading={isTransitioning} paymentError={paymentError} />
       default:
         return null
@@ -530,7 +571,7 @@ function ApplyPageContent() {
   }, [formData, isInitialized])
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-[100dvh] flex flex-col">
       <SiteHeader />
 
       <div className="flex-1 relative overflow-hidden bg-background">
@@ -560,9 +601,10 @@ function ApplyPageContent() {
             </p>
             <div className="max-w-md mx-auto mt-4">
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                <span>
-                  Step {currentVisualStep} of {totalSteps}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span>Step {currentVisualStep} of {totalSteps}</span>
+                  {lastSaved && <span className="text-emerald-500 font-medium">✓ Saved</span>}
+                </div>
                 <span>{Math.round(progressPercentage)}% complete</span>
               </div>
               <div className="h-1.5 bg-border/40 rounded-full overflow-hidden">
@@ -589,9 +631,10 @@ function ApplyPageContent() {
                 
                 <div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                    <span>
-                      Step {currentVisualStep} of {totalSteps}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span>Step {currentVisualStep} of {totalSteps}</span>
+                      {lastSaved && <span className="text-emerald-500 font-medium">✓ Saved</span>}
+                    </div>
                     <span>{Math.round(progressPercentage)}% complete</span>
                   </div>
                   <div className="h-1.5 bg-border/40 rounded-full overflow-hidden">
@@ -609,14 +652,14 @@ function ApplyPageContent() {
               <div className="lg:hidden mb-4">
                 <div
                   onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
-                  className="flex items-center justify-between p-4 rounded-xl bg-background/80 border border-border/80 shadow-md md:backdrop-blur- cursor-pointer transition-all duration-200 hover:bg-background/95"
+                  className="flex items-center justify-between p-4 rounded-md bg-white dark:bg-slate-900 border border-border/80 shadow-sm cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:dark:bg-slate-950"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold bg-blue-600 text-white shadow-sm ring-4 ring-blue-500/10 shrink-0">
+                    <div className="w-10 h-10 rounded-sm flex items-center justify-center font-bold bg-primary text-white shadow-sm ring-2 ring-primary/20 shrink-0">
                       {currentVisualStep}
                     </div>
                     <div>
-                      <p className="font-semibold text-sm text-foreground">{steps.find((s) => s.number === currentStep)?.title}</p>
+                      <p className="font-bold text-sm tracking-tight text-foreground">{steps.find((s) => s.number === currentStep)?.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {steps.find((s) => s.number === currentStep)?.description}
                       </p>
@@ -632,27 +675,27 @@ function ApplyPageContent() {
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="overflow-hidden mt-2 space-y-1 bg-background/95 md:backdrop-blur- rounded-xl shadow-lg border border-border/80 p-1"
+                      className="overflow-hidden mt-2 space-y-1 bg-white dark:bg-slate-900 rounded-md shadow-lg border border-border/80 p-1"
                     >
                       {steps.map((step, index) => (
                         <div
                           key={step.number}
                           onClick={() => handleStepClick(step.number)}
-                          className={`flex items-start gap-4 p-3 rounded-lg transition-all ${
+                          className={`flex items-start gap-4 p-3 rounded-md transition-all ${
                             currentStep === step.number
-                                ? "bg-muted/65 text-foreground font-medium"
+                                ? "bg-slate-50 dark:bg-slate-950 text-foreground font-bold"
                                 : currentStep > step.number
-                                  ? "cursor-pointer hover:bg-muted/40"
+                                  ? "cursor-pointer hover:bg-slate-50 hover:dark:bg-slate-950"
                                   : "cursor-not-allowed opacity-50"
                           }`}
                         >
                           <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs shrink-0 ${
+                            className={`w-8 h-8 rounded-sm flex items-center justify-center font-bold text-xs shrink-0 ${
                               currentStep === step.number
-                                ? "bg-blue-600 text-white"
+                                ? "bg-primary text-white"
                                 : currentStep > step.number
-                                  ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                                  : "bg-muted text-muted-foreground/60 border border-border/60"
+                                  ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
                             }`}
                           >
                             {currentStep > step.number ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
@@ -677,27 +720,27 @@ function ApplyPageContent() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                     onClick={() => handleStepClick(step.number)}
-                    className={`flex items-start gap-4 p-4 rounded-xl transition-all duration-300 ${
+                    className={`flex items-start gap-4 p-4 rounded-md transition-all duration-300 ${
                       currentStep === step.number
-                        ? "bg-background/80 md:backdrop-blur- border border-border shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-foreground font-medium scale-[1.02] relative pl-5 after:absolute after:left-0 after:top-3 after:bottom-3 after:w-1 after:bg-blue-600 after:rounded-r-md"
+                        ? "bg-white dark:bg-slate-900 border border-border/80 shadow-md text-foreground font-medium scale-[1.02] relative pl-5 after:absolute after:left-0 after:top-3 after:bottom-3 after:w-[3px] after:bg-primary after:rounded-r-sm"
                         : currentStep > step.number
-                          ? "bg-background/40 md:backdrop-blur- border border-border/40 cursor-pointer hover:bg-background/60 hover:scale-[1.01] text-foreground/80 hover:shadow-sm"
-                          : "bg-muted/10 border border-transparent cursor-not-allowed opacity-50 text-muted-foreground/50"
+                          ? "bg-slate-50 dark:bg-slate-950/50 border border-border/40 cursor-pointer hover:bg-slate-100 hover:dark:bg-slate-900 text-foreground/80 hover:shadow-sm"
+                          : "bg-transparent border border-transparent cursor-not-allowed opacity-50 text-muted-foreground"
                     }`}
                   >
                     <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center font-semibold text-sm shrink-0 transition-all ${
+                      className={`w-9 h-9 rounded-sm flex items-center justify-center font-bold text-sm shrink-0 transition-all ${
                         currentStep === step.number
-                          ? "bg-blue-600 text-white shadow-sm ring-4 ring-blue-500/10"
+                          ? "bg-primary text-white shadow-sm ring-2 ring-primary/20"
                           : currentStep > step.number
-                            ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
-                            : "bg-muted text-muted-foreground/50 border border-border/60"
+                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                            : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
                       }`}
                     >
                       {currentStep > step.number ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm">{step.title}</p>
+                      <p className="font-bold text-sm tracking-tight">{step.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
                     </div>
                   </motion.div>
@@ -707,7 +750,7 @@ function ApplyPageContent() {
 
             {/* Step Content */}
             <div className="flex-1 pb-8">
-              <Card className="border border-border/50 bg-card/45 md:backdrop-blur- shadow-2xl rounded-3xl overflow-hidden transition-all duration-300">
+              <Card className="border border-border/80 bg-white dark:bg-slate-900 shadow-xl rounded-md overflow-hidden transition-all duration-300">
                 <CardContent className="p-6 md:p-8 overflow-hidden">
                   <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
@@ -746,8 +789,8 @@ function ApplyPageContent() {
       </div>
 
       {showResumeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 md:backdrop-blur- animate-in fade-in duration-200">
-          <div className="bg-card/90 md:backdrop-blur- border border-border/80 shadow-2xl rounded-3xl p-6 md:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col gap-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 md:backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 border border-border/80 shadow-xl rounded-md p-6 md:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col gap-5">
             <div className="space-y-2">
               <h3 className="text-xl font-semibold tracking-tight text-foreground">Continue Application?</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -780,7 +823,7 @@ function ApplyPageContent() {
 
 export default function ApplyPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[100dvh]">Loading...</div>}>
       <ApplyPageContent />
     </Suspense>
   )

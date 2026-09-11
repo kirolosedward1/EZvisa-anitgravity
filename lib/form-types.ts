@@ -11,9 +11,12 @@ export interface FormData {
   lastName: string
   email: string
   phone: string
+  whatsappOptIn?: boolean
   maritalStatus: "single" | "married" | "divorced" | "widowed" | ""
   spouseAccompanying: "yes" | "no" | undefined
   hasValidPassport: "yes" | "no" | undefined
+  dateOfBirth: string
+  passportNumber: string
 
   // Spouse Step
   spouseFirstName: string

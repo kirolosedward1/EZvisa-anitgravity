@@ -25,3 +25,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local caches and clutter
+.pnpm-store/
+.claude/
+.DS_Store
+*.DS_Store
+scratch/
+

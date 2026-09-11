@@ -81,9 +81,7 @@ export const getClientConfirmationEmail = (data: ApplicationData) => {
                 <ul>
                   <li>Complete your payment to start processing</li>
                   <li>Our visa experts will review your application within 24 hours</li>
-                  <li>We'll prepare all required documents (flight, hotel, itinerary, cover letter)</li>
-                  <li>You'll receive updates at every step</li>
-                  <li>24/7 support until your visa is approved</li>
+                  <li>Dedicated support throughout your file preparation</li>
                 </ul>
               </div>
               
@@ -172,7 +170,7 @@ export const getPaymentSuccessEmail = (data: ApplicationData, paymentAmount: num
                   <li>Proof of residence</li>
                   <li>Bank statements (if applicable)</li>
                 </ul>
-                <p style="margin: 15px 0 0 0;"><a href="${process.env.NEXT_PUBLIC_SITE_URL || 'https://ezvisa.net'}/upload" style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Upload Documents</a></p>
+                <p style="margin: 15px 0 0 0;"><a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ezvisa.net'}/dashboard" style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Dashboard & Upload</a></p>
               </div>
               ` : ''}
               
@@ -243,7 +241,7 @@ export const getPaymentRetryEmail = (data: ApplicationData, paymentLink: string)
                   <li>Detailed travel itinerary</li>
                   <li>Personalized cover letter</li>
                   <li>Document review and verification</li>
-                  <li>24/7 support until visa approval</li>
+                  <li>Dedicated support throughout your application journey</li>
                 </ul>
               </div>
               

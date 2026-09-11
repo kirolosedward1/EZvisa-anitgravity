@@ -2,9 +2,10 @@
 
 import type React from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, FileText, X, Info, Loader2, AlertCircle } from "lucide-react"
+import { Upload, FileText, X, Info, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { trackEvent } from "@/lib/analytics"
 
 interface DocumentsStepProps {
   formData: {
@@ -45,10 +46,10 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
   }
 
   const handleFile = (file: File, type: "passport" | "residency" | "photo" | "noc") => {
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024 // 10MB in bytes
+    // Validate file size (max 5MB)
+    const maxSize = 5 * 1024 * 1024 // 5MB in bytes
     if (file.size > maxSize) {
-      alert(`File size must be less than 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`)
+      alert(`File size must be less than 5MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`)
       return
     }
 
@@ -71,6 +72,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
     } else {
       updateFormData({ nocSalaryCertificate: file })
     }
+    trackEvent("document_upload_completed", { document_type: type })
   }
 
   const handleFileInput = (
@@ -121,7 +123,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-28 md:pb-0">
       <div className="flex items-start gap-3.5 p-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl shadow-sm">
         <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -155,10 +157,12 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
             <div
               key={doc.key}
               className={cn(
-                "rounded-xl p-5 border transition-all duration-300 md:backdrop-blur-sm",
+                "rounded-xl p-5 border-2 transition-all duration-300 md:backdrop-blur-sm relative",
                 dragActive === doc.key
-                  ? "border-2 border-dashed border-blue-500 bg-blue-500/5 shadow-inner scale-[1.005]"
-                  : "border-border/80 bg-background/30 hover:border-blue-500/45 hover:bg-background/60 hover:shadow-md",
+                  ? "border-dashed border-blue-500 bg-blue-500/5 shadow-inner scale-[1.005]"
+                  : doc.file 
+                    ? "border-solid border-emerald-500/30 bg-emerald-500/5 hover:border-emerald-500/50 hover:shadow-md" 
+                    : "border-dashed border-border/80 bg-background/30 hover:border-blue-500/45 hover:bg-background/60 hover:shadow-md cursor-pointer",
               )}
               onDragEnter={(e) => handleDrag(e, doc.key)}
               onDragLeave={(e) => handleDrag(e, doc.key)}
@@ -168,12 +172,12 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
               {doc.file ? (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-                      <FileText className="w-5 h-5 text-blue-500" />
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-sm text-foreground truncate">{doc.file.name}</p>
-                      <p className="text-xs text-muted-foreground">{(doc.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <p className="text-xs text-muted-foreground">{(doc.file.size / 1024 / 1024).toFixed(2)} MB • Uploaded successfully</p>
                     </div>
                   </div>
                   <button
@@ -185,14 +189,14 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3.5 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-muted/30 border border-border/80 flex items-center justify-center shrink-0">
+                <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-4 text-center sm:text-left">
+                  <div className="flex flex-col sm:flex-row items-center gap-3.5 flex-1 min-w-0">
+                    <div className="w-12 h-12 sm:w-10 sm:h-10 rounded-xl bg-muted/30 border border-border/80 flex items-center justify-center shrink-0 shadow-sm">
                       <Upload className="w-5 h-5 text-muted-foreground/60" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-foreground">{doc.label}</p>
-                      <p className="text-xs text-muted-foreground">{doc.formats} (Max 10MB)</p>
+                      <p className="font-semibold text-sm text-foreground mb-0.5">{doc.label}</p>
+                      <p className="text-xs text-muted-foreground">Drag and drop or click to upload ({doc.formats}, Max 5MB)</p>
                     </div>
                   </div>
                   <input
@@ -244,7 +248,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
         </div>
       )}
 
-      <div className="md:flex md:justify-between fixed md:static bottom-0 left-0 right-0 p-4 bg-background/80 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-10 flex justify-between gap-3">
+      <div className="md:flex md:justify-between fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex justify-between gap-3">
         <Button
           type="button"
           onClick={onBack}

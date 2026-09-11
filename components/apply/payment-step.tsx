@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { trackEvent } from "@/lib/analytics"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Check, AlertCircle, Lock, ShieldCheck, FileText, ClipboardList } from "lucide-react"
@@ -9,6 +10,7 @@ import { useState, useEffect } from "react"
 import { getDefaultCurrency, type CurrencyInfo } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import type { FormData } from "@/lib/form-types"
+import { DossierReadinessCard } from "@/components/apply/dossier-readiness-card"
 
 interface PaymentStepProps {
   formData: FormData
@@ -20,6 +22,7 @@ interface PaymentStepProps {
 export function PaymentStep({ formData, onBack, isLoading, paymentError }: PaymentStepProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [currency, setCurrency] = useState<CurrencyInfo>(getDefaultCurrency())
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const router = useRouter()
 
@@ -43,73 +46,33 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
     }
   }, [])
 
+  // Calculate dynamic price
+  const basePrice = currency.basePrice || 299
+  const multiplier = formData.spouseAccompanying === "yes" ? 2 : 1
+  const paymentAmount = basePrice * multiplier
+
   const handlePayment = async () => {
     setIsProcessing(true)
+    trackEvent("checkout_started", { destination: formData.destination, amount: paymentAmount })
+    setSubmitError(null)
 
     try {
-      // Submit application to database
-      try {
-        const submitResponse = await fetch("/api/submit-application", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        })
+      // 1. Submit application to database (BLOCKING)
+      const submitResponse = await fetch("/api/submit-application", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
 
-        await submitResponse.json()
-
-        // Send emails after successful submission
-        try {
-          const { getAdminNotificationEmail, getClientConfirmationEmail } = await import("@/lib/email-templates")
-          
-          const emailData = {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            phone: formData.phone || "",
-            nationality: formData.nationality,
-            destination: formData.destination,
-            travelStartDate: formData.travelStartDate,
-            travelEndDate: formData.travelEndDate,
-            maritalStatus: formData.maritalStatus,
-            spouseAccompanying: formData.spouseAccompanying,
-            hasDocuments: !!(formData.photo || formData.passportPhoto || formData.passportFront),
-          }
-
-          // Send admin notification
-          const adminEmail = getAdminNotificationEmail(emailData)
-          fetch("/api/send-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: "ezvisa.net@gmail.com",
-              subject: adminEmail.subject,
-              html: adminEmail.html,
-              type: "admin_notification",
-            }),
-          }).catch(() => {})
-
-          // Send client confirmation
-          const clientEmail = getClientConfirmationEmail(emailData)
-          fetch("/api/send-email", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: formData.email,
-              subject: clientEmail.subject,
-              html: clientEmail.html,
-              type: "client_confirmation",
-            }),
-          }).catch(() => {})
-        } catch (emailError) {
-          // Email sending is non-blocking
-        }
-      } catch (submitError) {
-        // Database submission error - continue with payment
+      if (!submitResponse.ok) {
+        throw new Error("Failed to save application. Please try again.")
       }
 
-      // Send lead to HubSpot
+      const submitData = await submitResponse.json()
+
+      // 2. Send lead to HubSpot (NON-BLOCKING)
       let hubspotContactId: string | null = null
       try {
         const hubspotResponse = await fetch("/api/hubspot/create-lead", {
@@ -125,74 +88,53 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           hubspotContactId = hubspotData.contactId || hubspotData.id
         }
       } catch (hubspotError) {
-        // HubSpot error - continue with payment
+        console.error("HubSpot lead creation failed:", hubspotError)
       }
 
-      // Upload documents to HubSpot if we have a contact ID and files
-      const hasUploadedFiles =
-        formData.passportPhoto ||
-        formData.passportFront ||
-        formData.passportBack ||
-        formData.bankStatement ||
-        formData.nocCertificate ||
-        formData.salaryCertificate ||
-        formData.photo
+      // 3. PAYMENT FLOW
+      const successUrl = new URL("/payment-success", window.location.origin)
+      if (submitData.trackingToken) successUrl.searchParams.set("token", submitData.trackingToken)
+      if (submitData.applicationId) successUrl.searchParams.set("appId", submitData.applicationId)
+      if (formData.destination) successUrl.searchParams.set("dest", formData.destination)
 
-      if (hubspotContactId && hasUploadedFiles) {
-        try {
-          const fileFormData = new window.FormData()
-          fileFormData.append("contactId", hubspotContactId)
-          fileFormData.append("applicantName", `${formData.firstName} ${formData.lastName}`)
-          
-          if (formData.passportPhoto) fileFormData.append("passportPhoto", formData.passportPhoto)
-          if (formData.passportFront) fileFormData.append("passportFront", formData.passportFront)
-          if (formData.passportBack) fileFormData.append("passportBack", formData.passportBack)
-          if (formData.bankStatement) fileFormData.append("bankStatement", formData.bankStatement)
-          if (formData.nocCertificate) fileFormData.append("nocCertificate", formData.nocCertificate)
-          if (formData.salaryCertificate) fileFormData.append("salaryCertificate", formData.salaryCertificate)
-          if (formData.photo) fileFormData.append("photo", formData.photo)
-
-          // Non-blocking file upload
-          fetch("/api/hubspot/upload-files", {
-            method: "POST",
-            body: fileFormData,
-          }).catch(() => {})
-        } catch (uploadError) {
-          // Error initiating document upload - continue with payment
-        }
-      }
-
-      // PAYMENT FLOW
-      const paymentAmount = currency.basePrice || 299
-      
-      const response = await fetch("/api/create-payment", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: paymentAmount,
-          currency: currency.code,
-          success_url: `${window.location.origin}/payment-success`,
-          cancel_url: `${window.location.origin}/payment-failed`,
-          test: false,
-        }),
-      })
-      
-      const data = await response.json()
-
-      if (data.redirect_url) {
-        sessionStorage.setItem("pendingApplication", JSON.stringify({
-          ...formData,
-          paymentAmount,
-          currency: currency.code,
-          currencySymbol: currency.symbol,
-        }))
+        const response = await fetch("/api/create-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            applicationId: submitData.applicationId, // Pass the DB application ID
+            amount: paymentAmount,
+            currency: currency.code,
+            success_url: successUrl.toString(),
+            cancel_url: `${window.location.origin}/payment-failed`,
+            test: false,
+          }),
+        })
         
-        window.location.href = data.redirect_url
+        const data = await response.json()
+
+        if (data.redirect_url) {
+          sessionStorage.setItem("lastCompletedToken", submitData.trackingToken || "")
+          sessionStorage.setItem("lastCompletedAppId", submitData.applicationId || "")
+          sessionStorage.setItem("lastCompletedDest", formData.destination || "")
+          sessionStorage.setItem("pendingApplication", JSON.stringify({
+            ...formData,
+            paymentAmount,
+            currency: currency.code,
+            currencySymbol: currency.symbol,
+          }))
+          
+          window.location.href = data.redirect_url
+        } else {
+          throw new Error("Failed to generate payment link. Please try again.")
       }
     } catch (error) {
-      console.log("Payment flow error (non-blocking):", error)
+      console.error("Payment flow error:", error)
+      const errorMsg = error instanceof Error ? error.message : "An unexpected error occurred. Please try again."
+      setSubmitError(errorMsg)
+      trackEvent("payment_failed", { destination: formData.destination, error: errorMsg })
+      setIsProcessing(false)
     }
   }
 
@@ -228,13 +170,15 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-24 lg:pb-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-28 lg:pb-0">
         {/* Left Column: Dossier Review & Security info */}
         <div className="lg:col-span-7 space-y-6">
           <div>
             <h3 className="font-semibold text-lg text-foreground mb-1">Review your Application Details</h3>
             <p className="text-xs text-muted-foreground">Verify your information before completing payment.</p>
           </div>
+
+          <DossierReadinessCard formData={formData} />
 
           {/* Detailed Application Dossier Summary Card */}
           <div className="bg-muted/10 border border-border/60 rounded-3xl p-6 space-y-5">
@@ -331,17 +275,45 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
             </div>
           </div>
 
-          {!hasDocuments && (
-            <div className="border border-amber-500/20 bg-amber-500/5 rounded-2xl p-4 flex items-start gap-3 shadow-sm">
-              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-              <div className="flex-1 space-y-1">
-                <h4 className="font-semibold text-sm text-foreground">Upload Documents Later Enabled</h4>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  No files uploaded yet. Finish your order now and upload them later via the secure link sent to your email.
-                </p>
+          {/* Post-Payment Document Submission Notice */}
+          <div className="border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/60 dark:bg-blue-950/20 rounded-3xl p-6 space-y-4 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-blue-600 shrink-0">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-foreground">Post-Payment Document Upload</h4>
+                <p className="text-xs text-muted-foreground">Upload your files after checkout in your customer dashboard or via WhatsApp</p>
               </div>
             </div>
-          )}
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              To expedite your checkout today, file uploads are scheduled immediately after payment. You will need clear photos or scans of:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs text-foreground">
+              <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-border/50">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Passport Copy (Bio page)</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-border/50">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>UAE Residence Visa &amp; Emirates ID</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-border/50">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Recent Passport Photo</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-border/50">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Stamped Bank Statements (3-6 mo)</span>
+              </div>
+              <div className="flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 p-2.5 rounded-xl border border-border/50 sm:col-span-2">
+                <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Employment NOC / Salary Certificate / Trade License</span>
+              </div>
+            </div>
+          </div>
 
           <div className="p-4 rounded-2xl bg-muted/10 border border-border/30 space-y-3">
             <div className="flex items-center gap-2">
@@ -411,18 +383,33 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Embassy Fees</span>
                   <span className="text-[11px] text-muted-foreground italic">Paid at Appointment</span>
                 </div>
+                
+                {multiplier > 1 && (
+                  <div className="flex justify-between items-center py-1 mt-2 text-blue-600 dark:text-blue-400 font-medium text-sm">
+                    <span>Including Accompanying Spouse</span>
+                    <span>x{multiplier}</span>
+                  </div>
+                )}
+                
                 <div className="flex justify-between items-baseline pt-2">
                   <span className="text-base font-semibold text-foreground">Total Fee</span>
                   <span className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
-                    {currency.basePrice} {currency.code}
+                    {paymentAmount} {currency.code}
                   </span>
                 </div>
               </div>
             </div>
+            
+            {submitError && (
+              <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm font-medium flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>{submitError}</p>
+              </div>
+            )}
           </div>
 
           {/* Action buttons */}
-          <div className="fixed lg:static bottom-0 left-0 right-0 p-4 lg:p-0 bg-background/85 md:backdrop-blur-lg border-t border-t-border/80 lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-10 flex lg:flex-col gap-3">
+          <div className="fixed lg:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:p-0 bg-background/95 md:backdrop-blur-lg border-t border-t-border/80 lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-20 flex lg:flex-col gap-3">
             <Button
               type="button"
               variant="outline"

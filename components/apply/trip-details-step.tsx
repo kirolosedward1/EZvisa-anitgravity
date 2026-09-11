@@ -183,7 +183,8 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
   const isDatesValid =
     formData.travelStartDate &&
     formData.travelEndDate &&
-    new Date(formData.travelEndDate) > new Date(formData.travelStartDate)
+    new Date(formData.travelEndDate) > new Date(formData.travelStartDate) &&
+    tripDuration <= 90
 
   const isFormValid =
     formData.purposeOfTrip &&
@@ -204,7 +205,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
       {showErrors && !isFormValid && (
         <div className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl text-foreground text-sm">
           <Info className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
@@ -247,7 +248,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
           <CustomDatePicker
             id="travelStartDate"
             placeholder="Select departure date"
-            min={new Date().toISOString().split("T")[0]}
+            min={new Date(new Date().setDate(new Date().getDate() + 15)).toISOString().split("T")[0]}
             value={formData.travelStartDate || ""}
             onChange={(val) => handleFieldChange("travelStartDate", val)}
             className={cn(getErrorClass(formData.travelStartDate))}
@@ -274,8 +275,8 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
             <span>
               Total Stay Duration: <strong>{tripDuration} days</strong>.
               {tripDuration > 90 && (
-                <span className="text-amber-600 block mt-1 font-medium">
-                  ⚠️ Note: Schengen tourist visas typically permit stays up to 90 days only.
+                <span className="text-destructive block mt-1 font-medium">
+                  ⚠️ Error: Schengen tourist visas permit a maximum stay of 90 days.
                 </span>
               )}
             </span>
@@ -626,7 +627,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
       </div>
 
       {/* Action Buttons */}
-      <div className="md:flex md:justify-between md:pt-4 fixed md:static bottom-0 left-0 right-0 p-4 bg-background/80 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-10 flex justify-between gap-3">
+      <div className="md:flex md:justify-between md:pt-4 fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex justify-between gap-3">
         <Button
           type="button"
           onClick={onBack}

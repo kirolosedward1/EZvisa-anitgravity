@@ -58,6 +58,7 @@ const footerSections = [
     links: [
       { href: "/about", label: "About" },
       { href: "/how-it-works", label: "How it works" },
+      { href: "/reviews", label: "Reviews" },
       { href: "/contact", label: "Contact" },
     ],
   },
@@ -73,6 +74,9 @@ const footerSections = [
   {
     title: "Resources",
     links: [
+      { href: "/tools/schengen-calculator", label: "90/180-Day Calculator" },
+      { href: "/tools/bank-balance-calculator", label: "Bank Balance Calculator" },
+      { href: "/tools/appointment-guide", label: "UAE Appointment Guide" },
       { href: "/news", label: "Journal" },
       { href: "/videos", label: "Videos" },
       { href: "/#faq", label: "FAQ" },
@@ -259,7 +263,7 @@ export function Footer({
             {/* Disclaimer */}
             <div className="border-t border-border/80 pt-6 mb-8 text-center">
               <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-4xl mx-auto">
-                <span className="text-foreground/80 font-medium">Disclaimer:</span> EZvisa is not a travel agency. We provide document preparation and guidance services only. We do not guarantee visa approval — final decisions rest solely with the respective embassy or consulate. All travel arrangements and visa outcomes are subject to official government policies.
+                <span className="text-foreground/80 font-medium">Disclaimer:</span> EZvisa is a private document preparation and guidance service. We are not an embassy, consulate, government authority, or visa issuer. We do not issue visas or guarantee visa approval — final decisions rest solely with the respective embassy or consulate. All travel arrangements and visa outcomes are subject to official government policies.
               </p>
             </div>
           </>

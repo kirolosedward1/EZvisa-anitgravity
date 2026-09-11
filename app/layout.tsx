@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Poppins } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { CookieConsent } from "@/components/cookie-consent"
 import { ScrollRestoration } from "@/components/scroll-restoration"
@@ -10,21 +9,14 @@ import { PageTransition } from "@/components/page-transition"
 import Script from "next/script"
 import "./globals.css"
 
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-poppins",
-  display: "swap",
-})
-
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ezvisa.net"),
   title: {
-    default: "EZvisa - Schengen Visa Application Service | 98% Approval Rate",
+    default: "EZvisa - Schengen Visa Document Preparation Service",
     template: "%s | EZvisa",
   },
   description:
-    "Get your Schengen visa approved fast with EZvisa. AI-powered visa application assistance for 27 European countries. Expert help with documents, itinerary, and cover letters. 98% approval rate. Starting from 249 AED.",
+    "Professional document preparation service for your Schengen visa. Expert assistance with applications, itinerary, and cover letters for 27 European countries. Starting from 249 AED.",
   keywords: [
     "Schengen visa",
     "tourist visa Europe",
@@ -51,9 +43,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
+    title: "EZvisa - Schengen Visa Document Preparation Service",
     description:
-      "AI-powered Schengen visa application service for 27 European countries. Expert assistance with documents, itinerary & cover letters. 98% approval rate. From 249 AED.",
+      "Professional Schengen visa document preparation service for 27 European countries. Expert assistance with applications, itinerary & cover letters. From 249 AED.",
     url: "https://www.ezvisa.net/",
     siteName: "EZvisa",
     locale: "en_US",
@@ -69,9 +61,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
+    title: "EZvisa - Schengen Visa Document Preparation Service",
     description:
-      "AI-powered Schengen visa service. Expert help for 27 European countries. 98% approval rate. From 249 AED.",
+      "Professional Schengen visa service. Expert help for 27 European countries. From 249 AED.",
     images: ["https://www.ezvisa.net/images/logo-main.png"],
     creator: "@ezvisa",
   },
@@ -151,7 +143,7 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body className={`${poppins.variable} font-sans antialiased`}>
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <noscript>
           <iframe 
             src="https://www.googletagmanager.com/ns.html?id=GTM-PMXQRKLC"

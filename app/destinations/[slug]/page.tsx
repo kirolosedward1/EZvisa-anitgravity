@@ -1,4 +1,5 @@
 import { destinations } from "@/lib/destinations"
+import { VISA_RULES, getProviderForDestination } from "@/lib/visa-rules"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
@@ -43,8 +44,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
-  const title = `Apply for ${destination.name} Schengen Visa from UAE | EZvisa`
-  const description = `Get your ${destination.name} tourist visa from Dubai & Abu Dhabi easily. Complete visa file preparation including application forms, cover letter, flights, and hotel bookings in 24-48h.`
+  const title = `Apply for ${destination.name} Schengen Visa from UAE | Document Preparation`
+  const description = `Document preparation service for your ${destination.name} tourist visa from Dubai & Abu Dhabi. Complete application forms, cover letter, flights, and hotel bookings in 24-48h.`
 
   return {
     title,
@@ -55,7 +56,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       `${destination.name} visa requirements Dubai`,
       `Schengen visa documents ${destination.name}`,
       `VFS ${destination.name} appointment Dubai`,
-      `EZvisa ${destination.name}`,
     ],
     alternates: {
       canonical: `https://www.ezvisa.net/destinations/${slug}`,
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
           url: destination.image,
           width: 1200,
           height: 630,
-          alt: `${destination.name} Schengen Visa UAE`,
+          alt: `${destination.name} Schengen Visa Preparation UAE`,
         },
       ],
     },
@@ -85,45 +85,46 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
     notFound()
   }
 
-  // Common Schengen statistics / facts tailored for this destination
+  const provider = getProviderForDestination(destination.slug);
+  const { standardFee, processingTime, stayDuration } = VISA_RULES.schengen;
+
+  // Common Schengen statistics / facts tailored for this destination using centralized rules
   const fastFacts = [
     {
       icon: Clock,
       label: "Processing Time",
-      value: "10-15 working days",
-      description: "Typical embassy turnaround time after biometrics appointment."
+      value: `${processingTime.minDays}-${processingTime.maxDays} working days`,
+      description: processingTime.note
     },
     {
       icon: Calendar,
       label: "Stay Duration",
-      value: "Up to 90 days",
+      value: stayDuration.split(" in ")[0],
       description: "Short-stay Schengen visa (Type C) valid in 180-day window."
     },
     {
       icon: MapPin,
       label: "Where to Apply",
-      value: slug === "greece" || slug === "france" || slug === "italy" || slug === "germany" || slug === "spain" || slug === "switzerland" || slug === "netherlands" || slug === "austria"
-        ? "VFS Global / TLScontact"
-        : "VFS Global Center",
+      value: provider,
       description: "Embassy partner centers in Dubai or Abu Dhabi based on nationality."
     },
     {
       icon: Coins,
       label: "Embassy Visa Fee",
-      value: "90 EUR (~360 AED)",
-      description: "Standard visa fee paid directly at the application center. Under 6 years free."
+      value: `${standardFee.eur} EUR (~${standardFee.aed} AED)`,
+      description: standardFee.note
     },
     {
       icon: Sparkles,
-      label: "EZvisa Price",
+      label: "EZvisa Service Fee",
       value: destination.price,
       description: "Flat fee for full application form, itineraries, hotel/flight reservations & support."
     },
     {
       icon: ShieldCheck,
-      label: "Refund Guarantee",
-      value: "100% Money-Back",
-      description: "Full refund of service fee in case of visa rejection. Real confidence."
+      label: "Service Guarantee",
+      value: "Full Service Support",
+      description: "We ensure your document dossier is accurately prepared to Embassy standards."
     }
   ]
 
@@ -181,13 +182,30 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       answer: "Embassies allow applications to be submitted up to 6 months before your departure date. We highly recommend starting your application with EZvisa at least 4 to 6 weeks in advance to secure prime biometrics appointment slots and avoid seasonal processing delays."
     },
     {
-      question: "What is your 100% money-back guarantee?",
-      answer: `If your ${destination.name} visa application is rejected by the embassy, EZvisa will refund 100% of our service fee (${destination.price}). Please note that third-party embassy/VFS fees are non-refundable. We offer this because our expert review process ensures a near-perfect success rate.`
+      question: "Do you guarantee visa approval?",
+      answer: `No. The final decision to approve or reject a visa rests entirely with the ${destination.name} Embassy or Consulate. EZvisa guarantees that your application forms, cover letters, and itineraries will be professionally prepared to standard, maximizing your chances of success, but we do not issue visas.`
     }
   ]
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.answer
+      }
+    }))
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
       
@@ -196,7 +214,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         badge="Apply from Dubai & Abu Dhabi"
         title={
           <>
-            Get your <span className="text-blue-300">{destination.name}</span> Schengen Visa approved, easily.
+            Get your <span className="text-blue-300">{destination.name}</span> Schengen Visa application ready.
           </>
         }
         description={`Complete visa file preparation for ${destination.name}. We prepare your application forms, travel itinerary, flight reservations, and cover letter for a successful submission.`}
@@ -220,8 +238,8 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white/60">
-            <Star className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
-            <span>Over 5,000+ Schengen visas processed successfully.</span>
+            <ShieldCheck className="w-4.5 h-4.5 text-blue-300" />
+            <span>Professional visa document preparation services.</span>
           </div>
         </div>
       </InnerHero>
@@ -263,6 +281,46 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Travel Tools Contextual Callout */}
+      <section className="py-12 bg-primary/5 border-y border-border/40">
+        <div className="container mx-auto px-6 max-w-6xl">
+          <div className="bg-card border border-primary/20 rounded-3xl p-6 md:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 shadow-sm">
+            <div className="max-w-xl">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold text-primary uppercase tracking-wider mb-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Free Consular Planning Tools</span>
+              </div>
+              <h3 className="text-xl md:text-2xl font-bold text-foreground">
+                Prepare your {destination.name} application with our interactive tools
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
+                Estimate your required closing bank balance in AED, verify your rolling 90/180-day stay compliance, and check center booking procedures in Dubai and Abu Dhabi.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+              <Button asChild variant="outline" size="sm" className="rounded-full text-xs font-semibold">
+                <Link href="/tools/bank-balance-calculator">
+                  <Coins className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                  Bank Balance Calculator
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="rounded-full text-xs font-semibold">
+                <Link href="/tools/schengen-calculator">
+                  <Calendar className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                  90/180 Calculator
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="rounded-full text-xs font-semibold">
+                <Link href="/tools/appointment-guide">
+                  <MapPin className="w-3.5 h-3.5 mr-1.5 text-amber-600" />
+                  Appointment Centers
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -445,10 +503,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         
         <div className="relative container mx-auto px-6 max-w-4xl z-10">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
-            Ready to secure your {destination.name} Visa?
+            Ready to prepare your {destination.name} Visa File?
           </h2>
           <p className="mt-4 text-blue-100/90 text-sm sm:text-base max-w-xl mx-auto">
-            Get your completed form, itinerary, bookings, and cover letter in 24-48 hours. Secure and backed by our money-back guarantee.
+            Get your completed form, itinerary, verifiable bookings, and cover letter in 24-48 hours. Professional, compliant, and backed by our service guarantee.
           </p>
           
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">

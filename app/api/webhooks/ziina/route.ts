@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { logger } from "@/lib/logger"
+import crypto from "crypto"
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -12,7 +13,27 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABAS
  */
 export async function POST(request: Request) {
   try {
-    const payload = await request.json()
+    const rawBody = await request.text()
+    const signature = request.headers.get("x-ziina-signature")
+    const webhookSecret = process.env.ZIINA_WEBHOOK_SECRET
+
+    if (webhookSecret) {
+      if (!signature) {
+        logger.error("Missing webhook signature", undefined, { prefix: "WEBHOOK" })
+        return NextResponse.json({ error: "Missing signature" }, { status: 401 })
+      }
+
+      const computed = crypto.createHmac("sha256", webhookSecret).update(rawBody).digest("hex")
+      const sigBuffer = Buffer.from(signature)
+      const compBuffer = Buffer.from(computed)
+
+      if (sigBuffer.length !== compBuffer.length || !crypto.timingSafeEqual(sigBuffer, compBuffer)) {
+        logger.error("Invalid webhook signature", undefined, { prefix: "WEBHOOK" })
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 })
+      }
+    }
+
+    const payload = JSON.parse(rawBody)
     
     logger.log("Ziina webhook received", payload, { prefix: "WEBHOOK" })
 
@@ -39,6 +60,8 @@ export async function POST(request: Request) {
       "failed": "failed",
       "cancelled": "cancelled",
       "expired": "expired",
+      "refunded": "refunded",
+      "partially_refunded": "partially_refunded",
     }
 
     const mappedStatus = paymentStatusMap[status.toLowerCase()] || status.toLowerCase()
@@ -64,77 +87,29 @@ export async function POST(request: Request) {
       } else if (data && data.length > 0) {
         logger.log(`Payment status updated for application`, { paymentId, status: mappedStatus }, { prefix: "WEBHOOK" })
 
-        // Send email notification on successful payment
-        if (mappedStatus === "paid" && data[0].email) {
+        if ((mappedStatus === "paid" || mappedStatus === "failed") && data[0].email) {
           try {
-            const { getPaymentSuccessEmail } = await import("@/lib/email-templates")
+            const { EmailService } = await import("@/lib/email/service");
+            const eventName = mappedStatus === "paid" ? "payment.completed" : "payment.failed";
+            const application = data[0];
             
-            const emailData = {
-              firstName: data[0].full_name?.split(" ")[0] || "Customer",
-              lastName: data[0].full_name?.split(" ").slice(1).join(" ") || "",
-              email: data[0].email,
-              phone: data[0].phone || "",
-              nationality: data[0].nationality || "",
-              destination: data[0].destination_country || "",
-              travelStartDate: data[0].entry_date || "",
-              travelEndDate: data[0].exit_date || "",
-              hasDocuments: data[0].has_passport || false,
-            }
-
-            const successEmail = getPaymentSuccessEmail(
-              emailData,
-              amount ? amount / 100 : 0,
-              currency_code || "AED"
-            )
-
-            await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"}/api/send-email`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                to: data[0].email,
-                subject: successEmail.subject,
-                html: successEmail.html,
-                type: "payment_success_webhook",
-              }),
-            })
-
-            logger.log("Payment success email sent via webhook", { email: data[0].email }, { prefix: "WEBHOOK" })
+            await EmailService.sendEvent({
+              event: eventName,
+              entityId: application.id,
+              recipient: application.email,
+              language: application.preferred_language || "en",
+              data: {
+                id: application.id,
+                trackingToken: application.tracking_token,
+                firstName: application.full_name?.split(" ")[0] || "Customer",
+                destination: application.destination_country || "",
+                paymentAmount: amount ? amount / 100 : 0,
+                currency: currency_code || "AED"
+              }
+            });
+            logger.log(`Payment email sent via webhook: ${eventName}`, { email: application.email }, { prefix: "WEBHOOK" });
           } catch (emailError) {
-            logger.error("Failed to send payment success email", emailError, { prefix: "WEBHOOK" })
-          }
-        }
-
-        // Send retry email on failed payment
-        if (mappedStatus === "failed" && data[0].email) {
-          try {
-            const { getPaymentRetryEmail } = await import("@/lib/email-templates")
-            
-            const retryEmail = getPaymentRetryEmail({
-              firstName: data[0].full_name?.split(" ")[0] || "Customer",
-              lastName: data[0].full_name?.split(" ").slice(1).join(" ") || "",
-              email: data[0].email,
-              phone: data[0].phone || "",
-              nationality: data[0].nationality || "",
-              destination: data[0].destination_country || "",
-              travelStartDate: data[0].entry_date || "",
-              travelEndDate: data[0].exit_date || "",
-              hasDocuments: data[0].has_passport || false,
-            }, `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://ezvisa.net"}/apply?retry=true`)
-
-            await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"}/api/send-email`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                to: data[0].email,
-                subject: retryEmail.subject,
-                html: retryEmail.html,
-                type: "payment_retry_webhook",
-              }),
-            })
-
-            logger.log("Payment retry email sent via webhook", { email: data[0].email }, { prefix: "WEBHOOK" })
-          } catch (emailError) {
-            logger.error("Failed to send payment retry email", emailError, { prefix: "WEBHOOK" })
+            logger.error("Failed to send payment email", emailError, { prefix: "WEBHOOK" });
           }
         }
       } else {

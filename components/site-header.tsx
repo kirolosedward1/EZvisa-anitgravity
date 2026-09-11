@@ -3,11 +3,14 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Rocket, ChevronDown, Check } from "lucide-react"
+import { createBrowserClient } from "@supabase/ssr"
+import { Menu, X, Rocket, ChevronDown, Check, Calendar, Wallet, MapPin } from "lucide-react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname, useRouter } from "next/navigation"
 import { destinations } from "@/lib/destinations"
+import { trackEvent } from "@/lib/analytics"
+import { LanguageToggle } from "@/components/language-toggle"
 
 const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
 
@@ -24,12 +27,60 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const isWizardPage = pathname?.startsWith("/apply")
   const isHomePage = pathname === "/"
   
-  const [selectedNationality, setSelectedNationality] = useState("")
   const [isNationalityOpen, setIsNationalityOpen] = useState(false)
   const [showGetStarted, setShowGetStarted] = useState(false)
   const [scrolled, setScrolled] = useState(false)
   const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null)
   const [isMobileDestinationsOpen, setIsMobileDestinationsOpen] = useState(false)
+  const [isMobileToolsOpen, setIsMobileToolsOpen] = useState(false)
+  const [selectedNationality, setSelectedNationality] = useState<string>("")
+  const [user, setUser] = useState<any>(null)
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+
+    const fetchUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          setUser(user)
+          return
+        }
+      } catch (e) {
+        // Supabase fetch fallback
+      }
+
+      if (typeof document !== "undefined" && document.cookie.includes("ez_demo_active=1")) {
+        setUser({ email: "demo@ezvisa.net", isDemo: true })
+      }
+    }
+
+    fetchUser()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+      } else if (typeof document !== "undefined" && document.cookie.includes("ez_demo_active=1")) {
+        setUser({ email: "demo@ezvisa.net", isDemo: true })
+      } else {
+        setUser(null)
+      }
+    })
+
+
+    window.addEventListener("scroll", handleScroll)
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+      subscription.unsubscribe()
+    }
+  }, [])
 
   const getWhatsAppMessage = () => {
     const baseUrl = typeof window !== 'undefined' ? window.location.href : ''
@@ -160,13 +211,12 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   }, [pathname])
 
   const navItems = [
-    { label: "Services", id: "services", type: "scroll" },
     { label: "Destinations", id: "/destinations", type: "link" },
     { label: "Documents", id: "/documents", type: "link" },
-    { label: "Success Stories", id: "testimonials", type: "scroll" },
-    { label: "FAQ", id: "faq", type: "scroll" },
+    { label: "Tools", id: "/tools", type: "link" },
+    { label: "How It Works", id: "/how-it-works", type: "link" },
+    { label: "Pricing", id: "/pricing", type: "link" },
     { label: "News", id: "/news", type: "link" },
-    { label: "Videos", id: "/videos", type: "link" },
   ]
 
   return (
@@ -180,15 +230,13 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
 
       <header 
         className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
-          scrolled ? "py-2" : "py-4"
+          scrolled || forceBackground || isWizardPage
+            ? "bg-white border-b border-border/60 shadow-md py-3"
+            : "bg-transparent py-4"
         }`}
       >
         <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-6xl">
-          <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
-            scrolled || forceBackground || isWizardPage
-              ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
-              : "bg-transparent border-transparent"
-          }`}>
+          <div className="w-full flex items-center justify-between gap-4 transition-all duration-300 px-2 sm:px-4">
             <Link href="/" className="flex items-center flex-shrink-0">
               <Image 
                 src="/images/logo-main.png" 
@@ -229,13 +277,11 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                               transition={{ duration: 0.2 }}
                               className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-[600px] z-50 cursor-default"
                             >
-                              <div className="bg-background/95 backdrop-blur-xl border border-border/60 shadow-2xl shadow-black/10 rounded-3xl p-6 relative overflow-hidden">
-                                {/* Subtle background glow */}
-                                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
+                              <div className="bg-white dark:bg-slate-900 border border-border/80 shadow-2xl rounded-md p-6 relative overflow-hidden">
                                 
                                 <div className="relative z-10">
-                                  <div className="flex items-center justify-between mb-4 px-2">
-                                    <h3 className="text-sm font-bold tracking-tight text-foreground">Popular Destinations</h3>
+                                  <div className="flex items-center justify-between mb-4 px-2 border-b border-border pb-2">
+                                    <h3 className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Popular Destinations</h3>
                                     <Link href="/destinations" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
                                       View all <span className="hidden sm:inline">29 countries</span> &rarr;
                                     </Link>
@@ -245,9 +291,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                       <Link
                                         key={dest.id}
                                         href={`/destinations/${dest.slug}`}
-                                        className="group/item flex items-center gap-3 p-3 rounded-2xl hover:bg-secondary/40 transition-colors border border-transparent hover:border-border/50"
+                                        className="group/item flex items-center gap-3 p-3 rounded-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-border"
                                       >
-                                        <div className="h-10 w-10 rounded-xl overflow-hidden shadow-sm relative flex-shrink-0 bg-secondary/50">
+                                        <div className="h-8 w-8 rounded-sm overflow-hidden shadow-sm relative flex-shrink-0 border border-border/50">
                                           <Image 
                                             src={`/flags/${dest.name.toLowerCase().replace(/\s+/g, "-")}.png`} 
                                             alt={dest.name}
@@ -263,6 +309,76 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                       </Link>
                                     ))}
                                   </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    ) : item.id === "/tools" ? (
+                      <>
+                        <Link
+                          href={item.id}
+                          className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer group whitespace-nowrap"
+                        >
+                          {item.label}
+                          <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-all duration-300" />
+                        </Link>
+                        
+                        {/* Tools Dropdown */}
+                        <AnimatePresence>
+                          {hoveredNavItem === item.id && (
+                            <motion.div
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-[420px] z-50 cursor-default"
+                            >
+                              <div className="bg-white dark:bg-slate-900 border border-border/80 shadow-2xl rounded-2xl p-3 relative overflow-hidden">
+                                <div className="flex items-center justify-between mb-2 px-2 border-b border-border/60 pb-2">
+                                  <h3 className="text-[11px] font-bold tracking-widest uppercase text-muted-foreground">Travel Intelligence Suite</h3>
+                                  <Link href="/tools" className="text-xs font-semibold text-primary hover:underline">
+                                    All Tools &rarr;
+                                  </Link>
+                                </div>
+                                <div className="space-y-1">
+                                  <Link
+                                    href="/tools/schengen-calculator"
+                                    className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/tool"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600 shrink-0 mt-0.5">
+                                      <Calendar className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-semibold text-foreground group-hover/tool:text-primary transition-colors">90/180-Day Calculator</div>
+                                      <div className="text-xs text-muted-foreground">Calculate allowed stay days under EU rules</div>
+                                    </div>
+                                  </Link>
+                                  <Link
+                                    href="/tools/bank-balance-calculator"
+                                    className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/tool"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 shrink-0 mt-0.5">
+                                      <Wallet className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-semibold text-foreground group-hover/tool:text-primary transition-colors">Bank Balance Calculator</div>
+                                      <div className="text-xs text-muted-foreground">Consular daily funds converted to AED</div>
+                                    </div>
+                                  </Link>
+                                  <Link
+                                    href="/tools/appointment-guide"
+                                    className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors group/tool"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950 flex items-center justify-center text-amber-600 shrink-0 mt-0.5">
+                                      <MapPin className="w-4 h-4" />
+                                    </div>
+                                    <div>
+                                      <div className="text-sm font-semibold text-foreground group-hover/tool:text-primary transition-colors">Appointment &amp; Biometrics Hub</div>
+                                      <div className="text-xs text-muted-foreground">VFS, TLS, BLS center rules &amp; 59-mo exemption</div>
+                                    </div>
+                                  </Link>
                                 </div>
                               </div>
                             </motion.div>
@@ -300,6 +416,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
             )}
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <LanguageToggle />
               <div
                 className="relative flex items-center gap-2"
                 onMouseEnter={() => setShowWhatsAppTooltip(true)}
@@ -312,6 +429,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   href={whatsappLink}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={() => trackEvent("whatsapp_click", { source: "header" })}
                   className="h-10 w-10 flex items-center justify-center rounded-full bg-green-50 hover:bg-green-100 transition-colors shadow-sm"
                   aria-label="Contact us on WhatsApp"
                 >
@@ -335,11 +453,22 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   )}
                 </AnimatePresence>
               </div>
-
+              
               {!isWizardPage && (
                 <>
+                  <div className="hidden sm:flex items-center gap-2 mr-2 border-r border-border/50 pr-4">
+                    {user ? (
+                      <Button variant="ghost" asChild className="h-10 rounded-md font-semibold text-foreground/80 hover:text-foreground">
+                        <Link href="/dashboard">Dashboard</Link>
+                      </Button>
+                    ) : (
+                      <Button variant="ghost" asChild className="h-10 rounded-md font-semibold text-foreground/80 hover:text-foreground">
+                        <Link href="/login">Sign In</Link>
+                      </Button>
+                    )}
+                  </div>
                   <div className="hidden sm:block">
-                    <Button variant="default" asChild className="h-10 rounded-full px-5 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-0.5">
+                    <Button variant="default" asChild className="h-10 rounded-md px-5 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-0.5">
                       <Link href="/apply" className="flex items-center gap-2">
                         <Rocket className="h-4 w-4" />
                         Get Started
@@ -426,7 +555,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                         <div className="w-full">
                           <button
                             onClick={() => setIsMobileDestinationsOpen(!isMobileDestinationsOpen)}
-                            className="w-full flex items-center justify-between py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"
+                            className="w-full flex items-center justify-between py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-md transition-colors bg-transparent border-0 outline-none cursor-pointer"
                           >
                             <span>{item.label}</span>
                             <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isMobileDestinationsOpen ? "rotate-180" : ""}`} />
@@ -471,10 +600,70 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                             )}
                           </AnimatePresence>
                         </div>
+                      ) : item.id === "/tools" ? (
+                        <div className="w-full">
+                          <button
+                            onClick={() => setIsMobileToolsOpen(!isMobileToolsOpen)}
+                            className="w-full flex items-center justify-between py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-md transition-colors bg-transparent border-0 outline-none cursor-pointer"
+                          >
+                            <span>{item.label}</span>
+                            <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isMobileToolsOpen ? "rotate-180" : ""}`} />
+                          </button>
+                          <AnimatePresence>
+                            {isMobileToolsOpen && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <div className="pt-2 pb-4 px-2 space-y-1">
+                                  <Link
+                                    href="/tools/schengen-calculator"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary/50 transition-colors"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600 shrink-0">
+                                      <Calendar className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-base font-medium text-foreground">90/180-Day Calculator</span>
+                                  </Link>
+                                  <Link
+                                    href="/tools/bank-balance-calculator"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary/50 transition-colors"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 shrink-0">
+                                      <Wallet className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-base font-medium text-foreground">Bank Balance Calculator</span>
+                                  </Link>
+                                  <Link
+                                    href="/tools/appointment-guide"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary/50 transition-colors"
+                                  >
+                                    <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950 flex items-center justify-center text-amber-600 shrink-0">
+                                      <MapPin className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-base font-medium text-foreground">Appointment Guide</span>
+                                  </Link>
+                                  <Link
+                                    href="/tools"
+                                    onClick={() => setIsMenuOpen(false)}
+                                    className="block text-center py-3 mt-2 text-sm font-semibold text-primary hover:underline"
+                                  >
+                                    View all tools &rarr;
+                                  </Link>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
                       ) : item.type === "scroll" ? (
                         <button
                           onClick={() => scrollToSection(item.id)}
-                          className="w-full text-left py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"
+                          className="w-full text-left py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-md transition-colors bg-transparent border-0 outline-none cursor-pointer"
                         >
                           {item.label}
                         </button>
@@ -482,7 +671,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                         <Link
                           href={item.id}
                           onClick={() => setIsMenuOpen(false)}
-                          className="block py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"
+                          className="block py-3.5 px-4 text-lg font-semibold text-foreground/80 hover:bg-secondary hover:text-foreground rounded-md transition-colors bg-transparent border-0 outline-none cursor-pointer"
                         >
                           {item.label}
                         </Link>
@@ -495,7 +684,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="mt-8 p-5 bg-secondary/50 rounded-3xl space-y-3"
+                  className="mt-8 p-5 bg-secondary/50 rounded-lg space-y-3"
                 >
                   <label className="text-sm font-bold text-foreground/70 uppercase tracking-wider">Your nationality</label>
                   <div className="relative">
@@ -530,7 +719,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -10, scale: 0.95 }}
                           transition={{ duration: 0.2 }}
-                          className="absolute bottom-full left-0 right-0 mb-2 bg-background border border-border rounded-2xl shadow-xl overflow-hidden z-10 max-h-60 overflow-y-auto py-1"
+                          className="absolute bottom-full left-0 right-0 mb-2 bg-background border border-border rounded-md shadow-xl overflow-hidden z-10 max-h-60 overflow-y-auto py-1"
                         >
                           {nationalities.map((nationality) => (
                             <button
@@ -558,6 +747,27 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   </div>
                 </motion.div>
               </nav>
+
+              <div className="p-6 border-t border-border/50 bg-background space-y-3">
+                {user ? (
+                  <Button variant="outline" size="lg" className="w-full text-base font-semibold" asChild>
+                    <Link href="/dashboard" onClick={() => setIsMenuOpen(false)}>
+                      My Dashboard
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="lg" className="w-full text-base font-semibold" asChild>
+                    <Link href="/login" onClick={() => setIsMenuOpen(false)}>
+                      Sign In
+                    </Link>
+                  </Button>
+                )}
+                <Button size="lg" className="w-full text-lg shadow-xl shadow-primary/20" asChild>
+                  <Link href="/apply" onClick={() => setIsMenuOpen(false)}>
+                    Start Application
+                  </Link>
+                </Button>
+              </div>
             </motion.div>
           </>
         )}

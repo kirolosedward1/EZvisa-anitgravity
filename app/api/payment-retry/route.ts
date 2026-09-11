@@ -23,27 +23,23 @@ export async function POST(request: Request) {
       travelEndDate: travelEndDate || "",
     }
 
-    const retryEmail = getPaymentRetryEmail(emailData, paymentLink)
+    const { EmailService } = await import("@/lib/email/service");
 
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/send-email`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: email,
-          subject: retryEmail.subject,
-          html: retryEmail.html,
-          type: "payment_retry",
-        }),
-      },
-    )
+    const result = await EmailService.sendEvent({
+      event: "payment.failed", // use the same failed/retry template
+      entityId: `retry_${Date.now()}`, // fallback since we don't have id here
+      recipient: email,
+      language: "en", // fallback
+      data: {
+        firstName: firstName || "Customer",
+        destination: destination || "",
+        trackingToken: paymentLink.split("retry=true")[0] // Just fallback logic
+      }
+    });
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      console.error("[v0] Failed to send payment retry email:", data)
-      return NextResponse.json({ success: false, message: "Failed to send email", error: data }, { status: 500 })
+    if (!result.success) {
+      console.error("[v0] Failed to send payment retry email");
+      return NextResponse.json({ success: false, message: "Failed to send email" }, { status: 500 })
     }
 
     console.log("[v0] Payment retry email sent successfully")

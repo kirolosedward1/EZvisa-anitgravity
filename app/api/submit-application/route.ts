@@ -32,6 +32,20 @@ export async function POST(request: Request) {
       companyName: sanitizeInput(formData.companyName || "", 200),
     }
 
+    // Server-side Date Validation
+    if (formData.travelStartDate && formData.travelEndDate) {
+      const start = new Date(formData.travelStartDate)
+      const end = new Date(formData.travelEndDate)
+      const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
+      
+      if (end <= start) {
+        return NextResponse.json({ success: false, message: "Return date must be after departure date" }, { status: 400 })
+      }
+      if (duration > 90) {
+        return NextResponse.json({ success: false, message: "Stay duration cannot exceed 90 days" }, { status: 400 })
+      }
+    }
+
     // Support multiple env var naming conventions
     const supabaseUrl = 
       process.env.SUPABASE_URL || 
@@ -73,10 +87,10 @@ export async function POST(request: Request) {
                     (1000 * 60 * 60 * 24),
                 )
               : null,
-          has_passport: formData.passportCopy ? true : false,
-          has_photos: formData.photo ? true : false,
-          has_bank_statements: formData.bankStatement ? true : false,
-          has_employment_proof: formData.salaryCertificate ? true : false,
+          has_passport: false,
+          has_photos: false,
+          has_bank_statements: false,
+          has_employment_proof: false,
           payment_status: "pending",
           application_status: "submitted",
           additional_notes: JSON.stringify({
@@ -95,10 +109,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, message: "Failed to save application", error }, { status: 500 })
     }
 
+    const application = data[0];
+
+    // Trigger application.submitted email asynchronously
+    try {
+      const { EmailService } = await import("@/lib/email/service");
+      await EmailService.sendEvent({
+        event: "application.submitted",
+        entityId: application.id,
+        recipient: application.email,
+        language: application.preferred_language || "en",
+        data: {
+          id: application.id,
+          trackingToken: application.tracking_token,
+          firstName: application.full_name?.split(" ")[0] || "Customer",
+          destination: application.destination_country || "",
+        }
+      });
+    } catch (err) {
+      console.error("[Submit] Email notification failed:", err);
+      // Non-blocking
+    }
+
     return NextResponse.json({
       success: true,
       message: "Application submitted successfully",
-      applicationId: data[0].id,
+      applicationId: application.id,
     })
   } catch (error) {
     return NextResponse.json(

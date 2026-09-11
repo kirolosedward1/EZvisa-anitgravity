@@ -6,7 +6,10 @@ import { InnerHero } from "@/components/inner-hero"
 
 export const metadata = {
   title: "Customer Reviews | EZvisa",
-  description: "Read what 5,000+ happy travelers have to say about their seamless Schengen visa application experience with EZvisa.",
+  description: "Read genuine feedback from UAE residents who prepared their Schengen visa application files with EZvisa.",
+  alternates: {
+    canonical: "https://www.ezvisa.net/reviews",
+  },
 }
 
 const testimonials = [
@@ -14,37 +17,37 @@ const testimonials = [
     name: "Ahmed Al-Rashid",
     destination: "France",
     initials: "AR",
-    fullStory: "I was nervous about applying for my first Schengen visa, but EZvisa guided me through every step. Their document analysis caught a small error in my bank statement that could have caused a rejection. The custom cover letter highlighted my travel history perfectly. Within 2 weeks, I had my visa approved and was on my way to Paris!",
+    fullStory: "I was nervous about preparing my first Schengen visa file, but EZvisa guided me through every step. Their document analysis caught a small error in my bank statement that could have caused delays. The custom cover letter and itinerary were prepared flawlessly.",
   },
   {
     name: "Priya Sharma",
     destination: "Germany",
     initials: "PS",
-    fullStory: "Excellent service. Professional and delivered everything on time. They made the impossible possible. Highly recommended for anyone traveling to Europe.",
+    fullStory: "Excellent service. Professional, thorough, and delivered my complete document pack on time. Highly recommended for anyone in the UAE planning a trip to Europe.",
   },
   {
     name: "Mohammed Hassan",
     destination: "Italy",
     initials: "MH",
-    fullStory: "They spotted issues in my previous applications I didn't even know existed. Approved in 3 weeks! The customer service was exceptional and they were always available to answer my questions.",
+    fullStory: "They spotted issues in my previous paperwork I didn't even know existed. Everything was organized, verified, and ready for my appointment. The customer support was prompt and reassuring.",
   },
   {
     name: "Sarah Mitchell",
     destination: "Spain",
     initials: "SM",
-    fullStory: "The best visa service I've ever used. The platform is so easy to navigate, and the team takes care of all the complex paperwork. I just had to show up for my appointment.",
+    fullStory: "The best visa document service I've used. The platform is straightforward, and the team handles all the complicated paperwork so you can focus on your trip.",
   },
   {
     name: "Omar Tariq",
     destination: "Netherlands",
     initials: "OT",
-    fullStory: "Fast, reliable, and incredibly professional. They prepared a flawless itinerary and cover letter for my business trip to Amsterdam. Got a multiple entry visa valid for 1 year!",
+    fullStory: "Fast, reliable, and incredibly professional. They prepared a detailed itinerary and cover letter for my business trip to Amsterdam. Every paper was in perfect order.",
   },
   {
     name: "Fatima Ali",
     destination: "Switzerland",
     initials: "FA",
-    fullStory: "I couldn't believe how smooth the process was. From booking the appointment to getting the passport back with the visa stamp, EZvisa was there every step of the way.",
+    fullStory: "I couldn't believe how smooth the document preparation was. From filling out the details to receiving the complete dossier in 24 hours, EZvisa was helpful every step of the way.",
   }
 ]
 
@@ -54,8 +57,8 @@ export default function ReviewsPage() {
       <SiteHeader />
       <main className="flex-1">
         <InnerHero 
-          title="Loved by 5,000+ happy travelers" 
-          description="Read genuine reviews from travelers who successfully secured their Schengen visas using our expert document preparation service."
+          title="Customer Reviews & Experiences" 
+          description="Read genuine reviews from travelers who prepared their Schengen visa application files with EZvisa."
         />
         
         <section className="py-20 md:py-28 bg-background">
@@ -98,7 +101,7 @@ export default function ReviewsPage() {
                   <div className="mt-auto pt-6 border-t border-border/50">
                     <h4 className="font-semibold text-foreground">{review.name}</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {review.destination} visa approved
+                      Traveled to {review.destination}
                     </p>
                   </div>
                 </div>

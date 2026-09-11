@@ -14,12 +14,12 @@ export const metadata: Metadata = {
     "travel video guides",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/videos",
+    canonical: "https://www.ezvisa.net/videos",
   },
   openGraph: {
     title: "Visa Application Video Guides | EZvisa",
     description: "Step-by-step video tutorials on European visa applications.",
-    url: "https://ezvisa.net/videos",
+    url: "https://www.ezvisa.net/videos",
     type: "website",
   },
 }
