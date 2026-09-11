@@ -648,7 +648,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
               Processing...
             </>
           ) : (
-            "Continue to Documents"
+            "Continue to Review & Payment"
           )}
         </Button>
       </div>
