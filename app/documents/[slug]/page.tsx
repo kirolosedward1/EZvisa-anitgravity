@@ -4,15 +4,28 @@ import { SCHENGEN_COUNTRIES } from "@/lib/countries"
 import { VISA_RULES, getProviderForDestination } from "@/lib/visa-rules"
 import { notFound } from "next/navigation"
 
+const PREFIX = "required-documents-to-apply-for-a-tourist-visa-in-"
+
+function parseCountrySlug(slug: string): string {
+  if (slug.startsWith(PREFIX)) {
+    return slug.slice(PREFIX.length)
+  }
+  return slug
+}
+
 export async function generateStaticParams() {
-  return SCHENGEN_COUNTRIES.map((country) => ({
-    slug: country.toLowerCase().replace(/\s+/g, "-"),
-  }))
+  return SCHENGEN_COUNTRIES.map((country) => {
+    const raw = country.toLowerCase().replace(/\s+/g, "-")
+    return {
+      slug: `${PREFIX}${raw}`,
+    }
+  })
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const countryData = getCountryBySlug(slug)
+  const { slug } = await params
+  const countrySlug = parseCountrySlug(slug)
+  const countryData = getCountryBySlug(countrySlug)
   
   if (!countryData) {
     return {
@@ -33,20 +46,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       `Schengen visa checklist ${countryData.name}`,
     ],
     alternates: {
-      canonical: `https://www.ezvisa.net/documents/required-documents-to-apply-for-a-tourist-visa-in-${slug}`,
-    }
+      canonical: `https://www.ezvisa.net/documents/${slug.startsWith(PREFIX) ? slug : `${PREFIX}${slug}`}`,
+    },
   }
 }
 
 export default async function DocumentSlugPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const country = getCountryBySlug(slug)
+  const { slug } = await params
+  const countrySlug = parseCountrySlug(slug)
+  const country = getCountryBySlug(countrySlug)
 
   if (!country) {
     notFound()
   }
 
-  const provider = getProviderForDestination(slug);
+  const provider = getProviderForDestination(countrySlug)
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -55,17 +69,17 @@ export default async function DocumentSlugPage({ params }: { params: Promise<{ s
     "description": `Complete checklist of documents needed for ${country.name} Schengen tourist visa application.`,
     "author": {
       "@type": "Organization",
-      "name": "EZvisa"
+      "name": "EZvisa",
     },
     "publisher": {
       "@type": "Organization",
       "name": "EZvisa",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://www.ezvisa.net/icon.png"
-      }
+        "url": "https://www.ezvisa.net/icon.png",
+      },
     },
-    "dateModified": VISA_RULES.lastReviewed
+    "dateModified": VISA_RULES.lastReviewed,
   }
 
   return (
@@ -84,3 +98,4 @@ export default async function DocumentSlugPage({ params }: { params: Promise<{ s
     </>
   )
 }
+
