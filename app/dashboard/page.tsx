@@ -21,7 +21,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   let demoSession: { email: string; name: string; scenario: DemoScenario } | null = null;
   if (demoCookie?.value) {
     try {
-      demoSession = JSON.parse(demoCookie.value);
+      const parsed = JSON.parse(demoCookie.value);
+      // The cookie is client-editable: only honour it for demo accounts
+      const config = DEMO_CONFIGS[parsed?.scenario as DemoScenario];
+      if (config && parsed.email === config.email) {
+        demoSession = parsed;
+      }
     } catch {
       // ignore JSON parse error
     }
