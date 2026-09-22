@@ -28,7 +28,8 @@ next-env.d.ts
 
 # local caches and clutter
 .pnpm-store/
-.claude/
+.claude/*
+!.claude/skills/
 .DS_Store
 *.DS_Store
 scratch/

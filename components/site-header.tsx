@@ -3,7 +3,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Rocket, ChevronDown, Check } from "lucide-react"
+import { Menu, X, Rocket, ChevronDown, Check, UserRound } from "lucide-react"
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname, useRouter } from "next/navigation"
@@ -163,8 +163,6 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "Services", id: "services", type: "scroll" },
     { label: "Destinations", id: "/destinations", type: "link" },
     { label: "Documents", id: "/documents", type: "link" },
-    { label: "Tools", id: "/tools", type: "link" },
-    { label: "Dashboard", id: "/dashboard", type: "link" },
     { label: "Success Stories", id: "testimonials", type: "scroll" },
     { label: "FAQ", id: "faq", type: "scroll" },
     { label: "News", id: "/news", type: "link" },
@@ -337,6 +335,14 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   )}
                 </AnimatePresence>
               </div>
+
+              <Link
+                href="/dashboard"
+                className="h-10 w-10 flex items-center justify-center rounded-full bg-secondary text-foreground hover:bg-primary/10 hover:text-primary transition-colors shadow-sm"
+                aria-label="My account"
+              >
+                <UserRound className="h-5 w-5" />
+              </Link>
 
               {!isWizardPage && (
                 <>
