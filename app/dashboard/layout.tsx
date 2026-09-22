@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: "My account | EZvisa",
+  title: "My account",
   robots: {
     index: false,
     follow: false,

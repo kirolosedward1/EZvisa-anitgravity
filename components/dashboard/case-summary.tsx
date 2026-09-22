@@ -36,7 +36,7 @@ export function CaseSummary({
       <dl className="flex flex-col gap-3 px-6 py-5 text-sm">
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Reference</dt>
-          <dd className="flex items-center gap-1 font-mono font-semibold text-foreground">
+          <dd className="flex items-center gap-1 font-semibold tabular-nums text-foreground">
             {reference}
             {reference && <CopyButton value={reference} label="Copy reference" />}
           </dd>

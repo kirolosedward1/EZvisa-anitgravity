@@ -80,7 +80,9 @@ export function getStatusLabel(app: ApplicationLike): { label: string; tone: "su
 }
 
 export function getReference(token?: string | null): string {
-  return token ? `EZ-${token.slice(0, 8).toUpperCase()}` : ""
+  if (!token) return ""
+  // Some tokens already carry an "ez-" prefix; don't print it twice
+  return `EZ-${token.replace(/^ez-/i, "").slice(0, 8).toUpperCase()}`
 }
 
 export function getFlagSrc(country: string): string {

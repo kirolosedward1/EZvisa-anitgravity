@@ -40,7 +40,8 @@ export function PayNowButton({ applicationId, trackingToken, destination, amount
       if (!res.ok || !data.redirect_url) throw new Error(data.error || "Could not start payment")
       window.location.href = data.redirect_url
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not start payment")
+      console.error("Payment start failed:", err)
+      setError("We couldn't open the payment page")
       setLoading(false)
     }
   }

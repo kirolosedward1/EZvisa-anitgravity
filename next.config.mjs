@@ -19,6 +19,12 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
     minimumCacheTTL: 31536000,
   },
+  async redirects() {
+    return [
+      // Old upload page that could never resolve an application; uploads live at /track/[token]/upload
+      { source: '/dashboard/upload', destination: '/dashboard', permanent: true },
+    ]
+  },
   async headers() {
     return [
       {

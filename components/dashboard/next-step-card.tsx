@@ -123,7 +123,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
 
   return (
     <div className="flex flex-col gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-5 sm:p-6">
-      <div className="flex items-start gap-4">
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="size-5" aria-hidden="true" />
         </span>
