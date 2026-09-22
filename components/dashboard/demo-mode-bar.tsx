@@ -35,23 +35,24 @@ export function DemoModeBar({ currentScenario, applicantName, applicantEmail }: 
   };
 
   return (
-    <aside aria-label="Demo mode navigation bar" className="bg-slate-900 text-white border-b border-slate-800 py-2.5 px-4 sticky top-16 z-30 shadow-md">
-      <div className="container mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5 flex-wrap">
-          <span className="inline-flex items-center gap-1 bg-amber-400/20 text-amber-300 font-bold px-2 py-0.5 rounded-full text-[11px] border border-amber-400/30">
-            <Sparkles className="w-3 h-3" /> DEMO MODE
+    <aside aria-label="Demo mode" className="border-b border-border/60 bg-secondary/60">
+      <div className="container mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 text-sm sm:px-6 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1 rounded-full border border-warning/25 bg-warning/10 px-2.5 py-0.5 text-xs font-medium text-warning">
+            <Sparkles className="size-3.5" aria-hidden="true" /> Demo mode
           </span>
-          <span className="text-slate-300">
-            Viewing as <strong className="text-white">{applicantName}</strong> ({applicantEmail})
+          <span className="text-muted-foreground">
+            Viewing as <strong className="font-medium text-foreground">{applicantName}</strong> ({applicantEmail})
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-slate-400 text-[11px] mr-1 hidden md:inline">Switch Case:</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="hidden text-xs text-muted-foreground lg:inline">Try another case:</span>
           {(Object.keys(DEMO_CONFIGS) as DemoScenario[]).map((key) => {
             const config = DEMO_CONFIGS[key];
             const isActive = key === currentScenario;
             const isLoading = switching === key;
+            const Icon = key === "ready" ? CheckCircle2 : key === "pending" ? AlertCircle : Files;
 
             return (
               <button
@@ -59,33 +60,26 @@ export function DemoModeBar({ currentScenario, applicantName, applicantEmail }: 
                 type="button"
                 onClick={() => handleSwitch(key)}
                 disabled={isActive || switching !== null}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all flex items-center gap-1.5 ${
+                aria-pressed={isActive}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors disabled:cursor-default ${
                   isActive
-                    ? "bg-primary text-white shadow-xs"
-                    : "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border/60 bg-background text-foreground hover:bg-secondary"
                 }`}
               >
-                {isLoading ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : key === "ready" ? (
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                ) : key === "pending" ? (
-                  <AlertCircle className="w-3 h-3 text-amber-400" />
-                ) : (
-                  <Files className="w-3 h-3 text-blue-400" />
-                )}
-                <span>{config.destination}</span>
+                {isLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Icon className="size-3.5" aria-hidden="true" />}
+                {config.destination}
               </button>
             );
           })}
 
-          <form action="/api/auth/signout" method="POST" className="inline-block ml-1.5">
+          <form action="/api/auth/signout" method="POST">
             <button
               type="submit"
-              className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-red-950/60 text-red-300 hover:bg-red-900 border border-red-800/40 transition-colors flex items-center gap-1"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
-              <LogOut className="w-3 h-3" />
-              <span>Exit Demo</span>
+              <LogOut className="size-3.5" aria-hidden="true" />
+              Exit demo
             </button>
           </form>
         </div>

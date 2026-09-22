@@ -1,14 +1,14 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: "Download Documents | EZvisa",
+  title: "My account | EZvisa",
   robots: {
     index: false,
     follow: false,
   },
 }
 
-export default function DownloadLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
