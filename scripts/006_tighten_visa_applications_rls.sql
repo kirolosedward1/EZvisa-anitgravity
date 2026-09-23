@@ -20,3 +20,12 @@ DROP POLICY IF EXISTS "Only admins can update" ON public.visa_applications;
 
 -- visa_documents bucket: no client-side access (service role only)
 DROP POLICY IF EXISTS "Admins have full access to visa_documents" ON storage.objects;
+
+-- Verify after running: this should return exactly one row, the
+-- "Users can view own submissions" SELECT policy scoped to the caller's email.
+-- Any other policy on visa_applications, or any policy on storage.objects
+-- mentioning visa_documents, means the old broad access is still in place.
+SELECT schemaname, tablename, policyname, cmd, roles, qual
+FROM pg_policies
+WHERE (schemaname = 'public' AND tablename = 'visa_applications' AND cmd <> 'INSERT')
+   OR (schemaname = 'storage' AND tablename = 'objects' AND qual ILIKE '%visa_documents%');
