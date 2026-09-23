@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: "Download Documents | EZvisa",
+  title: "Track your application",
   robots: {
     index: false,
     follow: false,
