@@ -417,7 +417,7 @@ export const ALLOWED_UPLOAD_TYPES = ["application/pdf", "image/jpeg", "image/png
 // Status
 // ---------------------------------------------------------------------------
 
-export type ApplicationStatus = "draft" | "submitted" | "reviewing" | "approved" | "ready" | "rejected"
+export type ApplicationStatus = "draft" | "submitted" | "reviewing" | "approved" | "ready" | "rejected" | "cancelled"
 export type PaymentStatus =
   | "pending" | "paid" | "processing" | "completed" | "failed" | "cancelled" | "expired" | "refunded" | "partially_refunded"
 
@@ -426,11 +426,12 @@ export function isPaid(paymentStatus: string | null | undefined): boolean {
 }
 
 /** The customer-facing stage, combining application + payment status. */
-export type Stage = "draft" | "awaiting_payment" | "in_review" | "ready" | "approved" | "rejected"
+export type Stage = "draft" | "awaiting_payment" | "in_review" | "ready" | "approved" | "rejected" | "cancelled"
 
 export function stageOf(applicationStatus: string | null | undefined, paymentStatus: string | null | undefined): Stage {
   if (applicationStatus === "draft") return "draft"
   if (applicationStatus === "rejected") return "rejected"
+  if (applicationStatus === "cancelled") return "cancelled"
   if (applicationStatus === "approved") return "approved"
   if (applicationStatus === "ready") return "ready"
   if (!isPaid(paymentStatus)) return "awaiting_payment"
@@ -444,4 +445,5 @@ export const STAGE_LABELS: Record<Stage, string> = {
   ready: "Documents ready",
   approved: "Visa approved",
   rejected: "Visa refused",
+  cancelled: "Cancelled",
 }

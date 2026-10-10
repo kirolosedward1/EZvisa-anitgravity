@@ -42,7 +42,7 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'visa_applications_application_status_check') THEN
     ALTER TABLE public.visa_applications
       ADD CONSTRAINT visa_applications_application_status_check
-      CHECK (application_status IN ('draft', 'submitted', 'reviewing', 'approved', 'ready', 'rejected'));
+      CHECK (application_status IN ('draft', 'submitted', 'reviewing', 'approved', 'ready', 'rejected', 'cancelled'));
   END IF;
 END $$;
 

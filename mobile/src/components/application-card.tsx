@@ -13,6 +13,7 @@ export const STAGE_TONE: Record<Stage, "primary" | "success" | "warning" | "dang
   ready: "success",
   approved: "success",
   rejected: "danger",
+  cancelled: "neutral",
 }
 
 export function ApplicationCard({ app, onPress }: { app: Application; onPress: () => void }) {
