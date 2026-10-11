@@ -38,6 +38,20 @@ Everything used is bundled in Expo Go (secure store, camera/photo/document
 pickers, file system, print, sharing, web browser), so no custom build is
 needed for testing.
 
+## Publish to expo.dev (open without a dev server)
+
+Needs an Expo account (`EXPO_TOKEN` or `npx eas-cli@latest login`):
+
+```bash
+cd mobile
+npx eas-cli@latest update:configure   # first time only: links the project, adds expo-updates
+npm run publish:preview               # uploads the JS bundle to EAS Update
+```
+
+The update page on expo.dev shows a QR code — scan it with the iPhone camera to
+open the app in Expo Go. The `EXPO_PUBLIC_*` values from `.env` are baked in
+at publish time, so fill `.env` in first.
+
 ## Payments in Expo Go
 
 Checkout opens Ziina in an in-app browser. Ziina returns to

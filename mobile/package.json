@@ -47,7 +47,8 @@
     "ios": "expo start --ios",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
-    "doctor": "expo-doctor"
+    "doctor": "expo-doctor",
+    "publish:preview": "eas update --branch preview --message \"Preview build\""
   },
   "private": true,
   "main": "expo-router/entry"
