@@ -16,7 +16,9 @@ export function Flag({ country, size = 28 }: { country?: string | null; size?: n
   const xml = country ? FLAG_SVG[country] : undefined;
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", backgroundColor: c.fill }}>
-      {xml ? <SvgXml xml={xml} width={size} height={size} /> : (
+      {xml ? <SvgXml xml={xml} width={size} height={size} /> : country === "Other" ? (
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: size * 0.6 }}>🌐</Text></View>
+      ) : (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text variant="caption" tone="secondary">{(country ?? "?").slice(0, 2).toUpperCase()}</Text></View>
       )}
       <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: size / 2, borderWidth: 1, borderColor: c.ring } as ViewStyle} />

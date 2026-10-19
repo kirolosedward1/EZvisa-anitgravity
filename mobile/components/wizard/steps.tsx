@@ -5,7 +5,7 @@ import { Text, Icon, Button } from "../ui";
 import { PhoneField } from "../CountryPicker";
 import { useColors, S, R } from "../../lib/theme";
 import { WORLD } from "../../lib/world";
-import { SCHENGEN, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE, tripDays, iso as isoDate, adultMax, earliestDeparture, type WizardForm, type Errors } from "../../lib/wizard";
+import { SCHENGEN, UAE_NATIONALITIES, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE, tripDays, iso as isoDate, adultMax, earliestDeparture, type WizardForm, type Errors } from "../../lib/wizard";
 import { FormField, Input, TextArea, SelectField, CountryField, DateField, YesNoToggle, Checkbox, Note, Group, Divider, Label, FieldError, fmtShort } from "./fields";
 import { useState } from "react";
 
@@ -27,8 +27,13 @@ export function PersonalStep({ f, set, patch, errors: e, show }: StepProps) {
         <CountryField label="Destination Country (Schengen) *" value={f.destination} names={SCHENGEN} placeholder="Select destination country" searchPlaceholder="Search country..." onChange={set("destination")} error={has("destination")} />
       </FormField>
       <FormField label="Nationality *">
-        <CountryField label="Nationality *" value={f.nationality} names={WORLD_NAMES} placeholder="Select nationality" searchPlaceholder="Search nationality..." onChange={set("nationality")} error={has("nationality")} />
+        <CountryField label="Nationality *" value={f.nationality} names={UAE_NATIONALITIES} placeholder="Select nationality" searchPlaceholder="Search nationality..." onChange={(v) => patch({ nationality: v, ...(v !== "Other" && { nationalityOther: "" }) })} error={has("nationality")} />
       </FormField>
+      {f.nationality === "Other" && (
+        <FormField label="Your Nationality *">
+          <Input value={f.nationalityOther ?? ""} onChangeText={set("nationalityOther")} placeholder="Enter your nationality" accessibilityLabel="Your Nationality" error={has("nationalityOther")} />
+        </FormField>
+      )}
       <FormField label="Country of Residence *">
         <CountryField label="Country of Residence *" value={f.countryOfResidence} names={WORLD_NAMES} placeholder="Select country" searchPlaceholder="Search country..."
           onChange={(v) => patch({ countryOfResidence: v, ...(v !== "United Arab Emirates" && { hasEmiratesId: "" }) })} error={has("countryOfResidence")} />

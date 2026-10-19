@@ -6,7 +6,7 @@ export type YesNo = "yes" | "no" | "";
 
 export type WizardForm = {
   // personal
-  destination: string; nationality: string; countryOfResidence: string; cityOfResidence: string; hasEmiratesId: YesNo;
+  destination: string; nationality: string; nationalityOther: string; countryOfResidence: string; cityOfResidence: string; hasEmiratesId: YesNo;
   firstName: string; lastName: string; email: string; phone: string; phoneCountry: string; phoneLocal: string; whatsappOptIn: boolean;
   dateOfBirth: string; passportNumber: string; hasValidPassport: YesNo;
   maritalStatus: "" | "single" | "married" | "divorced" | "widowed"; spouseAccompanying: YesNo;
@@ -23,7 +23,7 @@ export type WizardForm = {
 };
 
 export const emptyForm: WizardForm = {
-  destination: "", nationality: "", countryOfResidence: "", cityOfResidence: "", hasEmiratesId: "",
+  destination: "", nationality: "", nationalityOther: "", countryOfResidence: "", cityOfResidence: "", hasEmiratesId: "",
   firstName: "", lastName: "", email: "", phone: "", phoneCountry: "AE", phoneLocal: "", whatsappOptIn: true,
   dateOfBirth: "", passportNumber: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "",
   spouseFirstName: "", spouseLastName: "", spouseHasValidPassport: "", spouseOccupation: "",
@@ -35,6 +35,8 @@ export const emptyForm: WizardForm = {
 type Opt = { value: string; label: string };
 export const SCHENGEN = ["Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland", "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland"];
 export const NATIONALITIES = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria", "United Arab Emirates", "Saudi Arabia", "Philippines", "Bangladesh"];
+/** Largest UAE expat nationalities that need a Schengen visa (visa-exempt passports such as UAE, UK, US are left out). "Other" opens a free-text field. */
+export const UAE_NATIONALITIES = ["India", "Pakistan", "Bangladesh", "Philippines", "Egypt", "Nepal", "Sri Lanka", "China", "Jordan", "Lebanon", "Syria", "Palestine", "Sudan", "Iran", "Iraq", "Yemen", "Afghanistan", "Morocco", "Tunisia", "Algeria", "Nigeria", "Kenya", "Ethiopia", "Uganda", "Ghana", "Cameroon", "South Africa", "Indonesia", "Vietnam", "Thailand", "Russian Federation", "Turkey", "Kazakhstan", "Uzbekistan", "Azerbaijan", "Other"];
 export const RESIDENCES = ["United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Egypt", "Jordan"];
 export const MARITAL: Opt[] = [{ value: "single", label: "Single" }, { value: "married", label: "Married" }, { value: "divorced", label: "Divorced" }, { value: "widowed", label: "Widowed" }];
 export const EMPLOYMENT: Opt[] = [{ value: "employed", label: "Employed" }, { value: "business", label: "Business Owner" }, { value: "freelancer", label: "Freelancer" }, { value: "student", label: "Student" }, { value: "unemployed", label: "Unemployed" }, { value: "retired", label: "Retired" }];
@@ -88,6 +90,7 @@ export function validatePersonal(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.destination) e.destination = "Please select a destination";
   if (!f.nationality) e.nationality = "Please select your nationality";
+  else if (f.nationality === "Other" && !(f.nationalityOther ?? "").trim()) e.nationalityOther = "Please enter your nationality";
   if (!f.countryOfResidence) e.countryOfResidence = "Please select your country of residence";
   if (!f.cityOfResidence.trim()) e.cityOfResidence = "City is required";
   if (f.countryOfResidence === "United Arab Emirates" && !f.hasEmiratesId) e.hasEmiratesId = "Please choose Yes or No";

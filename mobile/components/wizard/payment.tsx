@@ -90,7 +90,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
         </View>
         <KV k="Full Name"><V>{f.firstName} {f.lastName}</V></KV>
         <KV k="Contact Information"><V>{f.email}</V><Sub>{f.phone}</Sub></KV>
-        <KV k="Nationality"><V>{f.nationality}</V></KV>
+        <KV k="Nationality"><V>{f.nationality === "Other" ? f.nationalityOther || "Other" : f.nationality}</V></KV>
         <KV k="Destination & Residence"><V>{f.destination} (Applying from {f.cityOfResidence}, {f.countryOfResidence})</V></KV>
         <KV k="Intended Travel Dates"><V>{fmtShort(f.travelStartDate)} to {fmtShort(f.travelEndDate)} ({days} days)</V><Sub>Dates Flexible: {yn(f.datesFlexible)}</Sub></KV>
         <KV k="Trip Purpose & Companions"><V>{lab(PURPOSES, f.purposeOfTrip)}</V><Sub>Traveling: {lab(COMPANIONS, f.travelingWith)}</Sub></KV>
@@ -130,7 +130,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
           <Icon name="shield.checkered" size={18} color={c.tint} />
           <Text variant="headline">Order Summary</Text>
         </View>
-        {[["Applicant", `${f.firstName} ${f.lastName}`.trim()], ["Nationality", f.nationality], ["Destination", f.destination]].map(([k, v]) => (
+        {[["Applicant", `${f.firstName} ${f.lastName}`.trim()], ["Nationality", f.nationality === "Other" ? f.nationalityOther || "Other" : f.nationality], ["Destination", f.destination]].map(([k, v]) => (
           <View key={k} style={{ flexDirection: "row", justifyContent: "space-between", gap: S.sm, borderBottomWidth: 1, borderBottomColor: c.separator, paddingBottom: S.sm }}>
             <Text variant="caption" tone="secondary" weight="500" style={{ textTransform: "uppercase", letterSpacing: 0.8 }}>{k}</Text>
             <Text variant="subhead" weight="600" style={{ flexShrink: 1, textAlign: "right" }}>{v}</Text>
