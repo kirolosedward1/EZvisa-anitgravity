@@ -4,13 +4,18 @@
 // resumed on another device and is visible to EZvisa staff; submitting turns that same row into "submitted".
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { emptyForm, validatePersonal, hasAnswers, type WizardForm } from "./wizard";
+import { emptyForm, validatePersonal, hasAnswers, needsSchengenVisa, type WizardForm } from "./wizard";
 import { normalizePage, stepOfPage } from "./questions";
 import { useAuth } from "./auth";
 import { saveDraft, latestDraft } from "./data";
 export { emptyForm } from "./wizard";
 
 const KEY = "ezvisa.wizard.v1";
+/** Old saves could hold "Other" + free text (or a visa-exempt country from a link). Clear it so the user re-picks from the visa-required list. */
+function cleanNationality(f: WizardForm): WizardForm {
+  const { nationalityOther: _drop, ...rest } = f as WizardForm & { nationalityOther?: string };
+  return { ...(rest as WizardForm), nationality: needsSchengenVisa(rest.nationality) ? rest.nationality : "" };
+}
 type Submitted = { applicationId: string; trackingToken?: string; reference?: string; amount?: number; destination?: string; spouse?: boolean } | null;
 type Ctx = {
   form: WizardForm; setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
@@ -43,7 +48,11 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
       if (!raw) return;
       const d = JSON.parse(raw);
       if (d?.v === 1 && d.form) {
-        const f = { ...emptyForm, ...d.form }; setForm(f); setPage(normalizePage(typeof d.page === "string" ? d.page : null, f));
+        const f = cleanNationality({ ...emptyForm, ...d.form });
+        const pg = normalizePage(typeof d.page === "string" ? d.page : null, f);
+        setForm(f); setPage(pg);
+        if (f.nationality !== d.form.nationality || "nationalityOther" in d.form) // persist the cleanup right away
+          AsyncStorage.setItem(KEY, JSON.stringify({ ...d, form: f, page: pg })).catch(() => {});
         setSavedAt(d.savedAt ?? null); setPromptDismissed(!!d.promptDismissed); setDraft(d.draftId ?? null);
       }
     }).catch(() => {}).finally(() => setHydrated(true));
@@ -87,7 +96,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     latestDraft().then((d) => {
       if (!on || !d) return;
       if (hasAnswers(latest.current.form) && idRef.current !== d.id) return; // local work on a different case wins
-      setForm(d.form); setPage(normalizePage(d.question ? `q:${d.question}` : d.step, d.form)); setDraft(d.id); setCloudSavedAt(d.updatedAt ? Date.parse(d.updatedAt) : Date.now());
+      { const cf = cleanNationality({ ...emptyForm, ...d.form }); setForm(cf); setPage(normalizePage(d.question ? `q:${d.question}` : d.step, cf)); } setDraft(d.id); setCloudSavedAt(d.updatedAt ? Date.parse(d.updatedAt) : Date.now());
     }).catch(() => {});
     return () => { on = false; };
   }, [hydrated, email]);

@@ -6,7 +6,7 @@ export type YesNo = "yes" | "no" | "";
 
 export type WizardForm = {
   // personal
-  destination: string; nationality: string; nationalityOther: string; countryOfResidence: string; cityOfResidence: string; hasEmiratesId: YesNo;
+  destination: string; nationality: string; countryOfResidence: string; cityOfResidence: string; hasEmiratesId: YesNo;
   firstName: string; lastName: string; email: string; phone: string; phoneCountry: string; phoneLocal: string; whatsappOptIn: boolean;
   dateOfBirth: string; passportNumber: string; hasValidPassport: YesNo;
   maritalStatus: "" | "single" | "married" | "divorced" | "widowed"; spouseAccompanying: YesNo;
@@ -23,7 +23,7 @@ export type WizardForm = {
 };
 
 export const emptyForm: WizardForm = {
-  destination: "", nationality: "", nationalityOther: "", countryOfResidence: "", cityOfResidence: "", hasEmiratesId: "",
+  destination: "", nationality: "", countryOfResidence: "", cityOfResidence: "", hasEmiratesId: "",
   firstName: "", lastName: "", email: "", phone: "", phoneCountry: "AE", phoneLocal: "", whatsappOptIn: true,
   dateOfBirth: "", passportNumber: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "",
   spouseFirstName: "", spouseLastName: "", spouseHasValidPassport: "", spouseOccupation: "",
@@ -36,7 +36,16 @@ type Opt = { value: string; label: string };
 export const SCHENGEN = ["Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland", "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland"];
 export const NATIONALITIES = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria", "United Arab Emirates", "Saudi Arabia", "Philippines", "Bangladesh"];
 /** Largest UAE expat nationalities that need a Schengen visa (visa-exempt passports such as UAE, UK, US are left out). "Other" opens a free-text field. */
-export const UAE_NATIONALITIES = ["India", "Pakistan", "Bangladesh", "Philippines", "Egypt", "Nepal", "Sri Lanka", "China", "Jordan", "Lebanon", "Syria", "Palestine", "Sudan", "Iran", "Iraq", "Yemen", "Afghanistan", "Morocco", "Tunisia", "Algeria", "Nigeria", "Kenya", "Ethiopia", "Uganda", "Ghana", "Cameroon", "South Africa", "Indonesia", "Vietnam", "Thailand", "Russian Federation", "Turkey", "Kazakhstan", "Uzbekistan", "Azerbaijan", "Other"];
+// Nationals who NEED a Schengen short-stay visa: Regulation (EU) 2018/1806, Annex I (1. States + 2. the Palestinian Authority),
+// consolidated version 02018R1806-20251230 (in force 30.12.2025, last amended by Reg. (EU) 2025/2441).
+// Source: https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX%3A02018R1806-20251230 (checked 2026-10-19).
+// Names follow lib/world.ts (e.g. "DR Congo", "Cabo Verde", "Gambia", "Myanmar", "Russian Federation", "Sao Tome and Principe").
+// Annex II (visa-exempt, e.g. UAE, UK, US, Canada, Japan, Australia, Brazil) and EU/EEA/Swiss nationals are deliberately absent.
+export const SCHENGEN_VISA_REQUIRED: string[] = ["Afghanistan", "Algeria", "Angola", "Armenia", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus", "Belize", "Benin", "Bhutan", "Bolivia", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Central African Republic", "Chad", "China", "Comoros", "Congo", "Cuba", "Côte d'Ivoire", "DR Congo", "Djibouti", "Dominican Republic", "Ecuador", "Egypt", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Fiji", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "India", "Indonesia", "Iran", "Iraq", "Jamaica", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Kyrgyzstan", "Laos", "Lebanon", "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Maldives", "Mali", "Mauritania", "Mongolia", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nepal", "Niger", "Nigeria", "North Korea", "Oman", "Pakistan", "Palestine", "Papua New Guinea", "Philippines", "Qatar", "Russian Federation", "Rwanda", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sri Lanka", "Sudan", "Suriname", "Syria", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tunisia", "Turkey", "Turkmenistan", "Uganda", "Uzbekistan", "Vanuatu", "Vietnam", "Yemen", "Zambia", "Zimbabwe"];
+export const needsSchengenVisa = (n?: string | null) => !!n && SCHENGEN_VISA_REQUIRED.includes(n);
+export const OTHER_NATIONALITY = "Other nationality";
+/** Top UAE resident nationalities (all in Annex I), then "Other nationality" which opens the full visa-required list. */
+export const UAE_NATIONALITIES: string[] = ["India", "Pakistan", "Bangladesh", "Philippines", "Egypt", "Nepal", "Sri Lanka", "China", "Jordan", "Lebanon", "Syria", "Palestine", "Sudan", "Iran", "Iraq", "Yemen", "Afghanistan", "Morocco", "Tunisia", "Algeria", "Nigeria", "Kenya", "Ethiopia", "Uganda", "Ghana", "Cameroon", "South Africa", "Indonesia", "Vietnam", "Thailand", "Russian Federation", "Turkey", "Kazakhstan", "Uzbekistan", "Azerbaijan", OTHER_NATIONALITY];
 export const RESIDENCES = ["United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Egypt", "Jordan"];
 export const MARITAL: Opt[] = [{ value: "single", label: "Single" }, { value: "married", label: "Married" }, { value: "divorced", label: "Divorced" }, { value: "widowed", label: "Widowed" }];
 export const EMPLOYMENT: Opt[] = [{ value: "employed", label: "Employed" }, { value: "business", label: "Business Owner" }, { value: "freelancer", label: "Freelancer" }, { value: "student", label: "Student" }, { value: "unemployed", label: "Unemployed" }, { value: "retired", label: "Retired" }];
@@ -89,8 +98,7 @@ export type Errors = Partial<Record<keyof WizardForm, string>>;
 export function validatePersonal(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.destination) e.destination = "Please select a destination";
-  if (!f.nationality) e.nationality = "Please select your nationality";
-  else if (f.nationality === "Other" && !(f.nationalityOther ?? "").trim()) e.nationalityOther = "Please enter your nationality";
+  if (!needsSchengenVisa(f.nationality)) e.nationality = "Please select your nationality";
   if (!f.countryOfResidence) e.countryOfResidence = "Please select your country of residence";
   if (!f.cityOfResidence.trim()) e.cityOfResidence = "City is required";
   if (f.countryOfResidence === "United Arab Emirates" && !f.hasEmiratesId) e.hasEmiratesId = "Please choose Yes or No";

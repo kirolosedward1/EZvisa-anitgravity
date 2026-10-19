@@ -21,9 +21,9 @@ import { useT } from "../../lib/i18n";
 import { PRICE_AED, SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp, startPayment } from "../../lib/api";
 import { submitApplication } from "../../lib/data";
-import { error as hError, tap, success } from "../../lib/haptics";
+import { error as hError, tap, success, select } from "../../lib/haptics";
 import { WORLD } from "../../lib/world";
-import { type WizardForm, type WizardStep, SCHENGEN, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
+import { type WizardForm, type WizardStep, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
 import { type Question, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
 
 const WORLD_NAMES = WORLD.map((w) => w.name);
@@ -62,6 +62,7 @@ export default function Apply() {
   const [showErr, setShowErr] = useState(false);
   const [editing, setEditing] = useState<Set<string> | null>(null); // came from Review: question ids that applied at that moment
   const [resumeAsk, setResumeAsk] = useState(false);
+  const [allMode, setAllMode] = useState(false); // nationality: "Other nationality" opened the full visa-required list
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
   const inFlight = useRef(false); const auto = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef = useRef<any>(null); const inputRef = useRef<TextInput>(null);
@@ -73,12 +74,14 @@ export default function Apply() {
   const page = hydrated ? normalizePage(rawPage, f) : rawPage;
   const q: Question | null = page.startsWith("q:") ? Q_BY_ID[page.slice(2)] : null;
   const step: WizardStep = stepOfPage(page);
+  useEffect(() => { setAllMode(false); }, [page]);
 
   // Link values: from = nationality, to = destination (aliases nationality/destination/country), dates.
   const linkValues = (): Partial<WizardForm> => {
     const dest = matchCountry(p.to ?? p.destination, SCHENGEN) ?? (p.country ? fromSlug(p.country) : null);
     const natRaw = p.from ?? p.nationality;
-    const nat = natRaw ? matchCountry(natRaw, WORLD_NAMES) ?? (titleCase(natRaw) || null) : null;
+    // Only nationals who need a Schengen visa; a visa-exempt or unknown nationality in the link is ignored.
+    const nat = natRaw ? matchCountry(natRaw, SCHENGEN_VISA_REQUIRED) ?? null : null;
     const start = isoDate(p.travelStartDate), end = isoDate(p.travelEndDate);
     return { ...(dest && { destination: dest }), ...(nat && { nationality: nat }), ...(start && { travelStartDate: start }), ...(end && { travelEndDate: end }) };
   };
@@ -149,6 +152,7 @@ export default function Apply() {
   /** Tap on a choice / Yes-No / country: save, then auto-advance (unless the website shows a warning for that answer). */
   const pick = (v: string) => {
     if (!q) return;
+    if (v === OTHER_NATIONALITY && q.allNames) { select(); setAllMode(true); return; }
     const changes = { [q.keys[0]]: v, ...(q.onPick?.(v, fRef.current) ?? {}) } as Partial<WizardForm>;
     const nf = { ...fRef.current, ...changes }; fRef.current = nf; patch(changes);
     const note = q.note?.(nf);
@@ -158,6 +162,7 @@ export default function Apply() {
   };
   const back = () => {
     tap();
+    if (allMode) { setAllMode(false); return; }
     if (editing) { setEditing(null); goTo(REVIEW, -1); return; }
     const list = activeQuestions(f);
     if (page === REVIEW) { goTo(`q:${list[list.length - 1].id}`, -1); return; }
@@ -292,8 +297,8 @@ export default function Apply() {
         {q.id !== "destination" && step === "personal" && !!f.destination && q.kind !== "country" && <Flag country={f.destination} size={18} />}
         {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: 2, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
       </View>
-      <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{t(q.label)}</Text>
-      {!!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
+      <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(q.label)}</Text>
+      {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
   );
   const errBox = e ? <View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View> : null;
@@ -337,7 +342,7 @@ export default function Apply() {
       {header}
       <Animated.View key={page} entering={entering} style={{ flex: 1 }}>
         {q.kind === "country" ? (
-          <CountryList names={q.names!} value={f[q.keys[0]] as string} onPick={pick} searchPlaceholder={q.searchPlaceholder ?? "Search country..."} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
+          <CountryList key={allMode && q.allNames ? "all" : "top"} names={allMode && q.allNames ? q.allNames.filter((n) => !q.names!.includes(n)) : q.names!} searchAll={allMode ? undefined : q.allNames} value={f[q.keys[0]] as string} onPick={pick} searchPlaceholder={q.searchPlaceholder ?? "Search country..."} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
         ) : (
           <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
             {title}

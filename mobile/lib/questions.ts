@@ -3,7 +3,7 @@
 // its errors are exactly validateStep(step) filtered to those keys, so the rules can never drift from the web.
 import { WORLD } from "./world";
 import {
-  SCHENGEN, UAE_NATIONALITIES, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
+  SCHENGEN, UAE_NATIONALITIES, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
   visibleSteps, validateStep, adultMax, earliestDeparture, iso, label as optLabel, type WizardForm, type WizardStep, type Errors,
 } from "./wizard";
 
@@ -13,7 +13,7 @@ export type Question = {
   id: string; step: Exclude<WizardStep, "payment">; keys: (keyof WizardForm)[];
   /** The website's field label (without the trailing " *"). */
   label: string; required: boolean; kind: QKind;
-  placeholder?: string; searchPlaceholder?: string; options?: Opt[]; names?: string[];
+  placeholder?: string; searchPlaceholder?: string; options?: Opt[]; names?: string[]; allNames?: string[];
   /** Short friendly line under the title (also from the website's notes where there is one). */
   hint?: string;
   applies?: (f: WizardForm) => boolean;
@@ -35,8 +35,7 @@ export const QUESTIONS: Question[] = [
   // ---- Personal Information (nationality-step.tsx) ----
   { id: "destination", step: "personal", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "country", names: SCHENGEN, searchPlaceholder: "Search country..." },
   { id: "nationality", step: "personal", keys: ["nationality"], label: "Nationality", required: true, kind: "country", names: UAE_NATIONALITIES, searchPlaceholder: "Search nationality...",
-    onPick: (v) => (v !== "Other" ? { nationalityOther: "" } : {}) },
-  { id: "nationalityOther", step: "personal", keys: ["nationalityOther"], label: "Your Nationality", required: true, kind: "text", placeholder: "Enter your nationality", applies: (f) => f.nationality === "Other", text: { caps: "words" } },
+    allNames: SCHENGEN_VISA_REQUIRED },
   { id: "countryOfResidence", step: "personal", keys: ["countryOfResidence"], label: "Country of Residence", required: true, kind: "country", names: WORLD_NAMES, searchPlaceholder: "Search country...",
     onPick: (v) => (v !== "United Arab Emirates" ? { hasEmiratesId: "" } : {}) },
   { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "City of Residence", required: true, kind: "text", placeholder: "Enter city", text: { caps: "words", contentType: "addressCity" } },
@@ -116,6 +115,7 @@ export const firstUnanswered = (f: WizardForm) => activeQuestions(f).find((q) =>
 const LEGACY: Record<string, WizardStep> = { destination: "personal", nationality: "personal", residence: "personal", contact: "personal", passport: "personal", marital: "personal", work: "employment", purpose: "trip-details", dates: "trip-details", history: "trip-details", stay: "trip-details", funds: "trip-details" };
 export function normalizePage(p: string | null | undefined, f: WizardForm): string {
   if (!p) return `q:${activeQuestions(f)[0].id}`;
+  if (p === "q:nationalityOther") return "q:nationality"; // removed free-text question
   if (p === REVIEW || p === "payment" || p === "documents") return REVIEW;
   if (p.startsWith("q:")) { const q = Q_BY_ID[p.slice(2)]; if (q && activeQuestions(f).includes(q)) return p; if (q) return pageForStep(q.step, f); }
   const step = (["personal", "spouse", "employment", "trip-details"] as string[]).includes(p) ? (p as WizardStep) : LEGACY[p] ?? "personal";

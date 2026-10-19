@@ -123,7 +123,7 @@ const days = (a: string, b: string) => Math.ceil((new Date(b).getTime() - new Da
 function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, question?: string): VisaUpdate {
   const t = (s: string) => (s ?? "").trim();
   return {
-    full_name: `${t(f.firstName)} ${t(f.lastName)}`.trim() || "Draft", email, phone: t(f.phone), nationality: f.nationality === "Other" ? t(f.nationalityOther ?? "") || "Other" : t(f.nationality),
+    full_name: `${t(f.firstName)} ${t(f.lastName)}`.trim() || "Draft", email, phone: t(f.phone), nationality: t(f.nationality),
     destination_country: t(f.destination), date_of_birth: f.dateOfBirth || null, entry_date: f.travelStartDate || null, exit_date: f.travelEndDate || null,
     travel_purpose: t(f.purposeOfTrip), passport_number: t(f.passportNumber) || null,
     duration_days: f.travelStartDate && f.travelEndDate ? days(f.travelStartDate, f.travelEndDate) : null,

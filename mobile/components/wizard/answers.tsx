@@ -64,13 +64,17 @@ export function YesNoTiles({ label, value, onPick }: { label: string; value: str
 }
 
 /** Inline searchable country list (flags). Fills the remaining screen; picking auto-advances. */
-export function CountryList({ names, value, onPick, searchPlaceholder, header }: { names: string[]; value: string; onPick: (n: string) => void; searchPlaceholder: string; header: React.ReactElement }) {
+/** `searchAll`: a wider list that typing also searches (nationality: the full visa-required list behind "Other nationality"). */
+export function CountryList({ names, value, onPick, searchPlaceholder, header, searchAll }: { names: string[]; value: string; onPick: (n: string) => void; searchPlaceholder: string; header: React.ReactElement; searchAll?: string[] }) {
   const c = useColors(); const { t } = useT(); const [q, setQ] = useState("");
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
-    const base = value && names.includes(value) ? [value, ...names.filter((n) => n !== value)] : names;
-    return s ? base.filter((n) => n.toLowerCase().includes(s) || t(n).toLowerCase().includes(s)) : base;
-  }, [q, names, value, t]);
+    const known = value && (names.includes(value) || searchAll?.includes(value));
+    const base = known ? [value, ...names.filter((n) => n !== value)] : names;
+    if (!s) return base;
+    const pool = searchAll ? [...base.filter((n) => !searchAll.includes(n) ? false : true), ...searchAll.filter((n) => !base.includes(n))] : base;
+    return pool.filter((n) => n.toLowerCase().includes(s) || t(n).toLowerCase().includes(s));
+  }, [q, names, value, t, searchAll]);
   return (
     <FlatList data={list} keyExtractor={(n) => n} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" initialNumToRender={14} windowSize={7}
       contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.xs }}
@@ -84,7 +88,7 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header }:
         </View>
       </View>}
       ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>{t("No country found.")}</Text>}
-      renderItem={({ item }) => <AnswerRow label={t(item)} country={item === "Other" ? undefined : item} selected={item === value} onPress={() => onPick(item)} />} />
+      renderItem={({ item }) => <AnswerRow label={t(item)} country={item === "Other" || item === "Other nationality" ? undefined : item} selected={item === value} onPress={() => onPick(item)} />} />
   );
 }
 

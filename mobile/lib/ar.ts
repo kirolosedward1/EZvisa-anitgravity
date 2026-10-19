@@ -326,4 +326,12 @@ export const AR: Record<string, string> = {
   "In progress": "قيد التنفيذ",
   "Visa refused": "رُفضت التأشيرة",
   "{from} → {to}": "من {from} إلى {to}",
+  "Other nationality": "جنسية أخرى", "Countries whose citizens need a Schengen visa.": "الدول التي يحتاج مواطنوها إلى تأشيرة شنغن.",
+  "Armenia": "أرمينيا", "Angola": "أنغولا", "Burkina Faso": "بوركينا فاسو", "Burundi": "بوروندي", "Benin": "بنين", "Bolivia": "بوليفيا", "Bhutan": "بوتان", "Botswana": "بوتسوانا", "Belarus": "بيلاروسيا", "Belize": "بليز",
+  "DR Congo": "الكونغو الديمقراطية", "Central African Republic": "جمهورية أفريقيا الوسطى", "Congo": "الكونغو", "Côte d'Ivoire": "ساحل العاج", "Cuba": "كوبا", "Cabo Verde": "الرأس الأخضر", "Djibouti": "جيبوتي",
+  "Dominican Republic": "جمهورية الدومينيكان", "Ecuador": "الإكوادور", "Eritrea": "إريتريا", "Eswatini": "إسواتيني", "Fiji": "فيجي", "Gabon": "الغابون", "Gambia": "غامبيا", "Guinea": "غينيا", "Equatorial Guinea": "غينيا الاستوائية",
+  "Guinea-Bissau": "غينيا بيساو", "Guyana": "غيانا", "Haiti": "هايتي", "Jamaica": "جامايكا", "Kyrgyzstan": "قيرغيزستان", "Cambodia": "كمبوديا", "Comoros": "جزر القمر", "North Korea": "كوريا الشمالية", "Laos": "لاوس",
+  "Liberia": "ليبيريا", "Lesotho": "ليسوتو", "Libya": "ليبيا", "Madagascar": "مدغشقر", "Mali": "مالي", "Myanmar": "ميانمار", "Mongolia": "منغوليا", "Mauritania": "موريتانيا", "Maldives": "جزر المالديف", "Malawi": "مالاوي",
+  "Mozambique": "موزمبيق", "Namibia": "ناميبيا", "Niger": "النيجر", "Papua New Guinea": "بابوا غينيا الجديدة", "Rwanda": "رواندا", "Sierra Leone": "سيراليون", "Senegal": "السنغال", "Somalia": "الصومال", "Suriname": "سورينام",
+  "South Sudan": "جنوب السودان", "Sao Tome and Principe": "ساو تومي وبرينسيب", "Chad": "تشاد", "Togo": "توغو", "Tajikistan": "طاجيكستان", "Turkmenistan": "تركمانستان", "Tanzania": "تنزانيا", "Vanuatu": "فانواتو", "Zambia": "زامبيا", "Zimbabwe": "زيمبابوي",
 };
