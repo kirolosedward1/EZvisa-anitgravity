@@ -41,6 +41,3 @@ yarn-error.*
 /android
 .env
 .expo-token
-
-# local env
-.env
