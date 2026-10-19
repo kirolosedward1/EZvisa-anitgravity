@@ -9,7 +9,7 @@ import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, fi
 import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
 import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { matchEmirate, DEFAULT_RESIDENCE } from "../../lib/wizard";
+import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { Button, Text, Icon, SuccessCheck, InlineError, Flag, Shake } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
@@ -23,7 +23,10 @@ import { useAuth } from "../../lib/auth";
 import { useT } from "../../lib/i18n";
 import { PRICE_AED, SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp, startPayment } from "../../lib/api";
-import { submitApplication } from "../../lib/data";
+import { submitApplication, listApplications, listRequirements, type Requirement } from "../../lib/data";
+import { RoutePreview, DocsButton, PrefillOffer } from "../../components/wizard/extras";
+import { useNetInfo } from "@react-native-community/netinfo";
+import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
 import { WORLD } from "../../lib/world";
 import { type WizardForm, type WizardStep, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
@@ -33,6 +36,11 @@ const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
 const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
 const AUTO_MS = 260;
+/** Stable personal answers that can be reused from the last application (trip answers are never copied). */
+const PREFILL_KEYS: (keyof WizardForm)[] = ["nationality", "cityOfResidence", "hasEmiratesId", "firstName", "lastName", "phone", "phoneCountry", "phoneLocal", "dateOfBirth", "passportNumber", "maritalStatus",
+  "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
+const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });
+const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
 /** Progress grouped by the website's steps: one animated segment per step. */
@@ -77,11 +85,41 @@ export default function Apply() {
   const fRef = useRef(f); fRef.current = f;
   const navReady = !!useRootNavigationState()?.key;
   const isRTL = rtl || I18nManager.isRTL;
+  const net = useNetInfo(); const offline = net.isConnected === false;
+  const [reqs, setReqs] = useState<Requirement[]>([]);
+  const [prefill, setPrefill] = useState<{ values: Partial<WizardForm>; name: string } | null>(null); const prefillAsked = useRef(false);
+  const [milestone, setMilestone] = useState<string | null>(null); const prevStep = useRef<WizardStep | null>(null);
+  useEffect(() => { listRequirements().then(setReqs).catch(() => {}); cancelDraftReminder(); }, []);
 
   const page = hydrated ? normalizePage(rawPage, f) : rawPage;
   const q: Question | null = page.startsWith("q:") ? Q_BY_ID[page.slice(2)] : null;
   const step: WizardStep = stepOfPage(page);
   useEffect(() => { setAllMode(false); }, [page]);
+  // Section finished: success haptic, short chip in the header, VoiceOver announcement.
+  useEffect(() => {
+    const prev = prevStep.current; prevStep.current = step;
+    if (!prev || STEP_ORDER.indexOf(step) <= STEP_ORDER.indexOf(prev) || editing) return;
+    const done = t("{step} done", { step: t(STEP_TITLES[prev].title) });
+    success(); setMilestone(done); AccessibilityInfo.announceForAccessibility(done);
+    const tm = setTimeout(() => setMilestone(null), 2200); return () => clearTimeout(tm);
+  }, [step]);
+  // Signed in with an empty form: offer the stable answers from the latest application (user confirms).
+  useEffect(() => {
+    if (!hydrated || !session || submitted || prefillAsked.current || fRef.current.nationality || fRef.current.dateOfBirth) return;
+    prefillAsked.current = true;
+    listApplications().then((apps) => {
+      const w = apps.map((a) => a.notes?.wizard as Partial<WizardForm> | undefined).find((x) => x && x.nationality);
+      if (!w) return;
+      const values: Partial<WizardForm> = {};
+      for (const k of PREFILL_KEYS) { const v = (w as any)[k]; if (v !== undefined && v !== null && v !== "") (values as any)[k] = v; }
+      if (Object.keys(values).length) setPrefill({ values, name: [w.firstName, w.lastName].filter(Boolean).join(" ") || String(w.nationality) });
+    }).catch(() => {});
+  }, [hydrated, session]);
+  const usePrefill = () => {
+    if (!prefill) return; tap();
+    const nf = cleanAfterPrefill({ ...fRef.current, ...Object.fromEntries(Object.entries(prefill.values).filter(([k]) => !(fRef.current as any)[k] || k === "phoneCountry")) } as WizardForm);
+    setForm(nf); setPrefill(null); const u = firstUnanswered(nf); if (u) goTo(`q:${u.id}`, 1);
+  };
 
   // Link values: from = nationality, to = destination (aliases nationality/destination/country), dates.
   const linkValues = (): Partial<WizardForm> => {
@@ -178,7 +216,10 @@ export default function Apply() {
     const i = list.findIndex((x) => x.id === q?.id);
     if (i > 0) goTo(`q:${list[i - 1].id}`, -1); else close();
   };
-  const close = () => { if (router.canGoBack()) router.back(); else router.replace("/"); };
+  const close = () => {
+    if (hasAnswers(fRef.current) && !submitted) scheduleDraftReminder(t("Continue your application"), t("Your answers are saved."));
+    if (router.canGoBack()) router.back(); else router.replace("/");
+  };
   const edit = (id: string) => { tap(); setEditing(new Set(activeQuestions(f).map((x) => x.id))); goTo(`q:${id}`, -1); };
 
   const spouse = showSpouse(f);
@@ -192,7 +233,7 @@ export default function Apply() {
     inFlight.current = true; setBusy(true); setErr(null);
     try {
       const id = (await flushDraft()) ?? draftId;
-      const a = await submitApplication(f, id); success();
+      const a = await submitApplication(f, id); success(); cancelDraftReminder();
       setSubmitted({ applicationId: a.id, reference: a.reference, amount, destination: a.destination_country, spouse }); clearDraft();
     } catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
     finally { inFlight.current = false; setBusy(false); }
@@ -230,8 +271,9 @@ export default function Apply() {
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={editing ? t("Back to review") : t("Back")} onPress={back} /></View>
         <View style={{ flex: 1, alignItems: "center" }}>
-          {saved && <Text variant="caption" weight="500" color={c.secondaryLabel} testID="saved-indicator">{cloudSavedAt && session ? t("✓ Saved to your account") : t("✓ Saved on this phone")}</Text>}
+          {milestone ? <Text variant="caption" weight="600" color={c.green} testID="milestone">{"✓ " + milestone}</Text> : saved && <Text variant="caption" weight="500" color={c.secondaryLabel} testID="saved-indicator">{cloudSavedAt && session ? t("✓ Saved to your account") : t("✓ Saved on this phone")}</Text>}
         </View>
+        <DocsButton reqs={reqs} />
         <CircleButton icon="xmark" label={t("Close")} onPress={() => { tap(); close(); }} />
       </View>
       <Progress f={f} page={page} />
@@ -251,7 +293,11 @@ export default function Apply() {
               <Text ref={titleRef} variant="largeTitle" accessibilityRole="header">{t("Review")}</Text>
               <Text variant="subhead" tone="secondary">{t("Tap an answer to change it.")}</Text>
             </View>
-            {!!invalid && <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead">{t("Some answers are missing.")}</Text></Note>}
+            {!!invalid && <View style={{ gap: S.sm }} testID="review-gaps">
+              <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead">{t("{n} answers missing", { n: qs.filter((x) => firstError(x, f)).length })}</Text></Note>
+              <Button title={t("Fix next")} variant="secondary" size="M" icon="arrow.right" onPress={() => edit(invalid.id)} />
+            </View>}
+            {offline && <Note tone="amber" icon="wifi.slash"><Text variant="subhead">{t("You're offline. Your answers are saved on this phone.")}</Text></Note>}
             {groups.map((g) => (
               <View key={g.s} style={{ gap: S.xs }}>
                 <Text variant="footnote" tone="secondary" weight="600" accessibilityRole="header">{t(STEP_TITLES[g.s].title)}</Text>
@@ -288,7 +334,7 @@ export default function Apply() {
         </ScrollView>
         <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg }}>
           <Button title={!SUPABASE_ENABLED ? t("Unavailable") : !session ? t("Sign in to Continue") : busy ? t("Submitting...") : t("Submit application")} icon={session ? "lock.fill" : undefined}
-            loading={busy} disabled={!SUPABASE_ENABLED || busy} onPress={submit} />
+            loading={busy} disabled={!SUPABASE_ENABLED || busy || (offline && !!session)} onPress={submit} />
         </View>
       </View>
     );
@@ -306,6 +352,8 @@ export default function Apply() {
         {<View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
       </View>}
       <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(q.label)}</Text>
+      {!!prefill && !allMode && <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} />}
+      {q.id === "cityOfResidence" && !!f.destination && !!f.nationality && (() => { const l = activeQuestions(f); return <RoutePreview destination={f.destination} nationality={f.nationality} residence={f.countryOfResidence} left={l.length - l.findIndex((x) => x.id === q.id)} />; })()}
       {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
   );
@@ -317,6 +365,7 @@ export default function Apply() {
       case "choice": return <ChoiceList label={t(q.label)} options={q.options!} flag={q.flag} value={f[q.keys[0]] as string} onPick={pick} />;
       case "yesno": return <YesNoTiles label={t(q.label)} value={f[q.keys[0]] as string} onPick={pick} />;
       case "text": case "textarea": return (
+        <View style={{ gap: S.sm }}>
         <TextInput ref={inputRef} value={String(f[q.keys[0]] ?? "")} onChangeText={(v) => patch({ [q.keys[0]]: tp.upper ? v.toUpperCase() : v } as Partial<WizardForm>)}
           placeholder={t(q.placeholder ?? "")} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(q.label)} autoFocus
           keyboardType={tp.keyboard ?? "default"} autoCapitalize={tp.caps ?? "sentences"} autoCorrect={q.kind === "textarea"} spellCheck={q.kind === "textarea"}
@@ -324,6 +373,9 @@ export default function Apply() {
           returnKeyType={q.kind === "textarea" ? "default" : "next"} onSubmitEditing={q.kind === "textarea" ? undefined : () => advance()} blurOnSubmit={false} testID="question-input"
           style={[q.kind === "textarea" ? T.body : T.title3, { color: c.label, minHeight: q.kind === "textarea" ? 150 : 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm,
             borderWidth: e ? 1.5 : 0, borderColor: c.red, textAlign: isRTL ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+          {q.id === "spouseLastName" && !!f.lastName.trim() && f.spouseLastName !== f.lastName && (
+            <View style={{ alignSelf: "flex-start" }}><Button title={t("Use {v}", { v: f.lastName.trim() })} variant="secondary" size="M" icon="person.2.fill" onPress={() => { tap(); patch({ spouseLastName: f.lastName.trim() }); }} /></View>)}
+        </View>
       );
       case "date": return <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />;
       case "phone": return (

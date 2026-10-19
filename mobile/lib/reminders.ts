@@ -29,9 +29,9 @@ export async function setRemindersEnabled(on: boolean, apps: Application[] | nul
   return { on: true };
 }
 
-async function cancelOurs(N: N) {
+async function cancelOurs(N: N, keepDraft = false) {
   const all = await N.getAllScheduledNotificationsAsync();
-  await Promise.all(all.filter((x) => x.identifier.startsWith(PREFIX)).map((x) => N.cancelScheduledNotificationAsync(x.identifier)));
+  await Promise.all(all.filter((x) => x.identifier.startsWith(PREFIX) && !(keepDraft && x.identifier === PREFIX + "draft")).map((x) => N.cancelScheduledNotificationAsync(x.identifier)));
 }
 
 const at9 = (iso: string, addDays = 0, addMonths = 0) => {
@@ -76,7 +76,7 @@ export async function syncReminders(apps: Application[]): Promise<number> {
     if (!N || !(await remindersEnabled())) return 0;
     if ((await N.getPermissionsAsync()).status !== "granted") return 0;
     if (Platform.OS === "android") await N.setNotificationChannelAsync("reminders", { name: "Reminders", importance: N.AndroidImportance.DEFAULT });
-    await cancelOurs(N);
+    await cancelOurs(N, true);
     const plan = planReminders(apps, new Date(), await getPassportExpiry());
     for (const r of plan) {
       await N.scheduleNotificationAsync({
@@ -98,8 +98,19 @@ export function startReminderRouting(): () => void {
     N.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
     sub = N.addNotificationResponseReceivedListener((r) => {
       const url = r.notification.request.content.data?.url;
-      if (typeof url === "string" && (url.startsWith("/applications/") || url === "/account")) router.push(url as any);
+      if (typeof url === "string" && (url.startsWith("/applications/") || url === "/account" || url === "/apply")) router.push(url as any);
     });
   }).catch(() => {});
   return () => { dead = true; sub?.remove(); };
 }
+
+const DRAFT_ID = PREFIX + "draft";
+/** One "continue your application" nudge 24h after leaving an unfinished draft. Only when reminders are already on; never asks permission. */
+export async function scheduleDraftReminder(title: string, body: string) {
+  const N = notif(); if (!N || !(await remindersEnabled())) return;
+  if ((await N.getPermissionsAsync()).status !== "granted") return;
+  await N.cancelScheduledNotificationAsync(DRAFT_ID).catch(() => {});
+  await N.scheduleNotificationAsync({ identifier: DRAFT_ID, content: { title, body, data: { url: "/apply" } },
+    trigger: { type: N.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 24 * 3600, repeats: false } as any }).catch(() => {});
+}
+export async function cancelDraftReminder() { const N = notif(); if (N) await N.cancelScheduledNotificationAsync(DRAFT_ID).catch(() => {}); }

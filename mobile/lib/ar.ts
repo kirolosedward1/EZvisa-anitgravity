@@ -1,6 +1,9 @@
 // Arabic strings, keyed by the English text (English stays the website's exact wording).
 // Placeholders like {n} are kept as-is. Missing keys fall back to English.
 export const AR: Record<string, string> = {
+  "Resident in {c}": "مقيم في {c}", "{n} questions left": "متبقي {n} سؤال", "Documents you'll need": "المستندات المطلوبة", "Upload after you submit.": "ارفعها بعد الإرسال.", "Prepared by EZvisa": "تعدّه EZvisa",
+  "Use details from your last application?": "استخدام بيانات طلبك السابق؟", "Not now": "ليس الآن", "Use": "استخدام", "{step} done": "اكتمل: {step}", "Continue your application": "أكمل طلبك", "Your answers are saved.": "إجاباتك محفوظة.",
+  "{n} answers missing": "{n} إجابات ناقصة", "Fix next": "إصلاح التالي", "You're offline. Your answers are saved on this phone.": "أنت غير متصل. إجاباتك محفوظة على هذا الهاتف.", "Use {v}": "استخدام {v}",
   // ---- steps (website step names) ----
   "Personal Information": "المعلومات الشخصية", "Spouse Information": "معلومات الزوج/الزوجة", "Employment": "العمل", "Trip Details": "تفاصيل الرحلة", "Review & Payment": "المراجعة والدفع",
   "{step}, step {i} of {n}": "{step}، الخطوة {i} من {n}", "{i} of {n}": "{i} من {n}",
@@ -294,7 +297,6 @@ export const AR: Record<string, string> = {
   "Part refunded": "مسترد جزئياً",
   "Uploaded": "تم الرفع",
   "Under review": "قيد المراجعة",
-  "Prepared by EZvisa": "أعدّته EZvisa",
   "Replaced": "مستبدل",
   "Home": "الرئيسية", "Countries": "الدول",
   "Next step": "الخطوة التالية",
