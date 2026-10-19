@@ -1,3 +1,4 @@
+import { PressScale } from "./ui";
 import { useEffect, useState } from "react";
 import { Pressable, TextInput, TextInputProps, View, Platform } from "react-native";
 import { Button, Icon, Text, InlineError } from "./ui";
@@ -82,23 +83,23 @@ export function AuthForm({ mode, onMode }: { mode: "signin" | "signup"; onMode: 
       </>)}
       <Field placeholder={t("Email")} value={mail} onChangeText={(t) => { setMail(t); setErr(null); }} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="username" autoComplete="email" />
       <Field placeholder={t("Password")} value={pw} onChangeText={(t) => { setPw(t); setErr(null); }} secureTextEntry={!show} textContentType={mode === "signup" ? "newPassword" : "password"} autoComplete={mode === "signup" ? "new-password" : "password"} onSubmitEditing={submit}
-        trailing={<Pressable onPress={() => setShow(!show)} accessibilityRole="button" accessibilityLabel={show ? t("Hide password") : t("Show password")} hitSlop={10}><Icon name={show ? "eye.slash" : "eye"} size={18} color={c.secondaryLabel} /></Pressable>} />
+        trailing={<PressScale onPress={() => setShow(!show)} accessibilityRole="button" accessibilityLabel={show ? t("Hide password") : t("Show password")} hitSlop={10}><Icon name={show ? "eye.slash" : "eye"} size={18} color={c.secondaryLabel} /></PressScale>} />
       {!!err && <InlineError text={err} />}
       {!!info && <Text variant="footnote" tone="green" style={{ marginHorizontal: S.xs }} accessibilityLiveRegion="polite">{info}</Text>}
       <View style={{ marginTop: S.xs }}><Button title={mode === "signin" ? t("Sign in") : t("Create account")} loading={busy === "pw"} onPress={submit} /></View>
       {mode === "signin" && (
-        <Pressable onPress={() => setForgot(!forgot)} accessibilityRole="button" accessibilityState={{ expanded: forgot }} style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}>
+        <PressScale onPress={() => setForgot(!forgot)} accessibilityRole="button" accessibilityState={{ expanded: forgot }} style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}>
           <Text variant="subhead" tone="secondary" weight="500">{t("Forgot password?")}</Text>
-        </Pressable>
+        </PressScale>
       )}
       {forgot && mode === "signin" && (
         <View style={{ flexDirection: "row", gap: S.xs }}>
           <View style={{ flex: 1 }}><Button title={t("Reset password")} variant="secondary" size="M" loading={busy === "reset"} onPress={() => check(false) && run("reset", () => supabase!.auth.resetPasswordForEmail(mail.trim(), { redirectTo: resetTo }), "We sent a reset link. Set a new password on ezvisa.net, then sign in here.")} /></View>
         </View>
       )}
-      <Pressable onPress={() => { setErr(null); setInfo(null); setForgot(false); onMode(mode === "signin" ? "signup" : "signin"); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: "center", justifyContent: "center", marginTop: S.xs }}>
+      <PressScale onPress={() => { setErr(null); setInfo(null); setForgot(false); onMode(mode === "signin" ? "signup" : "signin"); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: "center", justifyContent: "center", marginTop: S.xs }}>
         <Text variant="subhead" tone="secondary">{mode === "signin" ? t("New here?") + " " : t("Have an account?") + " "}<Text variant="subhead" tone="tint" weight="600">{mode === "signin" ? t("Create account") : t("Sign in")}</Text></Text>
-      </Pressable>
+      </PressScale>
     </View>
   );
 }

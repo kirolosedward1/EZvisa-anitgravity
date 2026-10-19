@@ -49,6 +49,21 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - Playwright scripts in /tmp/shot (v8.js wizard, v82.js trip/detail/account)
   - screenshots in `screenshots/v8/`
 
+## 2c. v9 design system and polish (2026-10-19)
+- Tokens live in `lib/theme.ts`; screens must not hand-code numbers.
+  - Spacing: `S` = 0/4/8/12/16/20/24/32/40/48/64/80.
+  - Radius: `R` = 4/8/12/16/20/24/32/round.
+  - Elevation: `elevation(0-3)`, plus `card()` = background + hairline + layered boxShadow (light mode only).
+  - Type: `T` + `TYPE_SCALE` (Dynamic Type caps per role).
+  - Colour: one accent `accent`/`accentFill` + neutrals + status colours.
+  - Motion: `DUR`, `SPRING`, `PRESS`.
+- Motion helpers are in `lib/motion.ts`: spring slides, Reduce Motion fallbacks, `useShake`.
+- Primitives:
+  - `PressScale`: scale 0.97 + dim, used by every tappable.
+  - `Shake`, `SavedCheck`, shimmer `Skeleton`, animated `ProgressSegments`.
+- Nationality (v8.3): `SCHENGEN_VISA_REQUIRED` in `lib/wizard.ts` (Reg. (EU) 2018/1806 Annex I). No free text.
+- Performance: long lists stay FlatList (country pickers, nationality list) with flat E0 rows (no shadow/blur). Shadows only on short card stacks (Home hero, application cards, trip days) and the floating tab bar.
+
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
 Not working, because of server config outside the app:

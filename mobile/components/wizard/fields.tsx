@@ -25,7 +25,7 @@ export function Label({ children, nativeID }: { children: string; nativeID?: str
 /** Small red message under a field. */
 export function FieldError({ text }: { text?: string }) {
   if (!text) return null;
-  return <Text variant="footnote" tone="red" style={{ marginTop: 4 }} accessibilityLiveRegion="polite">{text}</Text>;
+  return <Text variant="footnote" tone="red" style={{ marginTop: S.xxs }} accessibilityLiveRegion="polite">{text}</Text>;
 }
 const boxStyle = (c: ReturnType<typeof useColors>, error?: boolean) => ({
   minHeight: H, borderRadius: R.input, borderWidth: 1, borderColor: error ? c.red : c.separator, backgroundColor: c.card, paddingHorizontal: S.md,
@@ -163,7 +163,7 @@ export function Checkbox({ label, value, onChange, icon, iconColor }: { label: s
   return (
     <Pressable onPress={() => { select(); onChange(!value); }} accessibilityRole="checkbox" accessibilityState={{ checked: value }} aria-checked={value} accessibilityLabel={label}
       style={{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 44 }}>
-      <View style={{ width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: value ? c.whatsapp : c.tertiaryLabel, backgroundColor: value ? c.whatsapp : "transparent", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ width: 20, height: 20, borderRadius: R.xs, borderWidth: 1.5, borderColor: value ? c.whatsapp : c.tertiaryLabel, backgroundColor: value ? c.whatsapp : "transparent", alignItems: "center", justifyContent: "center" }}>
         {value && <Icon name="checkmark" size={12} color="#fff" weight="bold" />}
       </View>
       {!!icon && <Icon name={icon} size={14} color={iconColor ?? c.secondaryLabel} />}
@@ -179,7 +179,7 @@ export function Note({ tone, children, icon = "info.circle" }: { tone: "green" |
   const bg = { green: dark ? "rgba(48,209,88,0.10)" : "rgba(26,127,55,0.06)", amber: dark ? "rgba(255,159,10,0.10)" : "rgba(201,52,0,0.05)", blue: dark ? "rgba(123,147,255,0.10)" : "rgba(4,54,220,0.05)", red: dark ? "rgba(255,105,97,0.10)" : "rgba(215,0,21,0.05)" }[tone];
   return (
     <View style={{ flexDirection: "row", gap: S.xs, padding: S.sm, borderRadius: R.input, borderWidth: 1, borderColor: col + "40", backgroundColor: bg, alignItems: "flex-start" }}>
-      <Icon name={icon} size={17} color={col} style={{ marginTop: 1 }} />
+      <Icon name={icon} size={17} color={col} style={{ marginTop: S.none }} />
       <View style={{ flex: 1 }}>{typeof children === "string" ? <Text variant="subhead" tone="secondary">{children}</Text> : children}</View>
     </View>
   );

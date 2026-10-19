@@ -1,9 +1,9 @@
-import { ScrollView, View, RefreshControl, Pressable, Image } from "react-native";
+import { ScrollView, View, RefreshControl, Image, StyleSheet } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../../components/Logo";
-import { Text, Flag, Icon, PressScale, SectionHeader, Avatar, Skeleton, useTabInset, journeyIndex } from "../../../components/ui";
-import { useColors, S, R, curve } from "../../../lib/theme";
+import { Text, Flag, Icon, PressScale, SectionHeader, Avatar, Skeleton, useTabInset, journeyIndex, Button, ProgressSegments } from "../../../components/ui";
+import { useColors, useIsDark, S, R, curve, elevation, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { LinearGradient } from "expo-linear-gradient";
 import { PHOTOS } from "../../../lib/photos";
@@ -21,28 +21,58 @@ import { Q_BY_ID } from "../../../lib/questions";
 import { useT } from "../../../lib/i18n";
 import { countdown } from "../../../lib/countdown";
 
-/** "Next action" for the active application, computed from its real status, payment and documents. */
-function NextActionCard({ a }: { a: Application }) {
-  const c = useColors(); const { t } = useT();
+/** Editorial hero built only from the user's REAL active application: destination, status, countdown, journey progress
+ *  and ONE primary action (the real next step from status, payment and documents). */
+function Hero({ a }: { a: Application }) {
+  const c = useColors(); const dark = useIsDark(); const { t, lang } = useT();
   const [items, setItems] = useState<CheckItem[] | null>(null);
   useEffect(() => { let on = true; listRequirements(a.country_id).then((r) => on && setItems(buildChecklist(r, a.documents).customer)).catch(() => on && setItems([])); return () => { on = false; }; }, [a]);
-  if (items === null) return <View style={{ marginHorizontal: S.lg }}><Skeleton h={88} r={R.card} /></View>;
-  const n = nextAction(a, items);
-  const color = n.tone === "red" ? c.red : n.tone === "orange" ? c.orange : n.tone === "green" ? c.green : c.tint;
-  const act = n.kind === "pay"
-    ? () => { startPayment(a, a.applicants.length > 1).catch(() => router.push(`/applications/${a.id}`)); }
-    : n.kind === "none" ? undefined : () => router.push(`/applications/${a.id}`);
+  const name = a.countries?.name ?? ""; const idx = journeyIndex(a.status, a.payment_status); const cd = countdown(a.entry_date, a.exit_date, t);
+  const n = items ? nextAction(a, items) : null;
+  const open = () => router.push(`/applications/${a.id}`);
+  const act = !n || n.kind === "none" ? open : n.kind === "pay" ? () => { startPayment(a, a.applicants.length > 1).catch(open); } : open;
+  const status = t(STATUS_LABEL[a.status] ?? a.status);
   return (
-    <PressScale onPress={act ? () => { tap(); act(); } : undefined} disabled={!act} accessibilityRole={act ? "button" : "summary"} accessibilityLabel={`${t("Next step")}: ${t(n.title)}. ${t(n.body)}`} accessibilityHint={n.cta ? t(n.cta) : undefined}
-      testID="next-action" style={{ marginHorizontal: S.lg, borderRadius: R.card, backgroundColor: c.card, padding: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }}>
-      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name={n.icon} size={22} color={color} /></View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text variant="caption" tone="secondary" weight="600">{t("Next step").toUpperCase()}</Text>
-        <Text variant="headline">{t(n.title)}</Text>
-        <Text variant="subhead" tone="secondary" numberOfLines={3}>{t(n.body)}</Text>
-        {!!n.cta && <Text variant="subhead" tone="tint" weight="600" style={{ marginTop: 2 }}>{t(n.cta)}</Text>}
-      </View>
-    </PressScale>
+    <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl }} testID="home-hero">
+      <PressScale onPress={() => { tap(); open(); }} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={[t(name), status, cd].filter(Boolean).join(", ")} accessibilityHint={t("Opens the application")}>
+        <Text variant="footnote" tone="secondary" weight="600">{today(lang)}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.md, marginTop: S.md }}>
+          <View style={{ flex: 1, gap: S.xxs }}>
+            <Text variant="caption" tone="secondary" weight="600">{t("Your trip").toUpperCase()}</Text>
+            <Text variant="display" accessibilityRole="header" numberOfLines={2}>{t(name)}</Text>
+          </View>
+          <HeroFlag country={name} />
+        </View>
+        <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: S.xs, marginTop: S.sm }}>
+          <Text variant="callout" weight="600" tone="accent">{status}</Text>
+          {!!cd && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" testID="countdown">{cd}</Text></>}
+        </View>
+        <View style={{ marginTop: S.md }}><ProgressSegments count={4} index={idx} label={status} /></View>
+      </PressScale>
+      {n ? (<>
+        {n.kind !== "none" && <Text variant="subhead" tone="secondary" style={{ marginTop: S.lg }} numberOfLines={3} testID="next-action">{t(n.title)} · {t(n.body)}</Text>}
+        <View style={{ marginTop: S.md }}><Button title={n.kind === "none" || !n.cta ? t("View application") : t(n.cta)} onPress={act} /></View>
+      </>) : <View style={{ marginTop: S.lg, gap: S.md }}><Skeleton w="80%" h={14} /><Skeleton h={56} r={R.round} /></View>}
+    </View>
+  );
+}
+/** Large round flag on a soft accent halo (no photos, no fake content). */
+function HeroFlag({ country }: { country: string }) {
+  const c = useColors(); const dark = useIsDark(); const size = 88;
+  return (
+    <View style={[{ width: size + S.md, height: size + S.md, borderRadius: R.round, alignItems: "center", justifyContent: "center" }, elevation(2, dark)]}>
+      <LinearGradient colors={[c.accentSoft, "transparent"]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: R.round }]} />
+      <Flag country={country} size={size} />
+    </View>
+  );
+}
+function HeroSkeleton() {
+  return (
+    <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }} accessible accessibilityLabel="Loading">
+      <Skeleton w={140} h={14} />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}><View style={{ flex: 1, gap: S.xs }}><Skeleton w={80} h={12} /><Skeleton w="70%" h={40} r={R.md} /></View><Skeleton w={104} h={104} r={R.round} /></View>
+      <Skeleton w="45%" h={16} /><Skeleton h={S.xxs} r={R.xs} /><Skeleton h={56} r={R.round} />
+    </View>
   );
 }
 
@@ -57,16 +87,16 @@ function DraftCard() {
     <View style={{ marginHorizontal: S.lg, marginBottom: S.xxl, borderRadius: R.card, backgroundColor: c.card, flexDirection: "row", alignItems: "center" }} testID="draft-card">
       <PressScale onPress={() => { tap(); router.push({ pathname: "/apply", params: { resume: "1" } }); }} accessibilityRole="button" accessibilityLabel={`${t("Continue {x}", { x: t(form.destination || "application") })}. ${t("Saved on this phone")}, ${pg.q}`}
         style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: S.sm, padding: S.md }}>
-        {form.destination ? <Flag country={form.destination} size={44} /> : <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={20} color={c.tint} /></View>}
-        <View style={{ flex: 1, gap: 2 }}>
+        {form.destination ? <Flag country={form.destination} size={44} /> : <View style={{ width: 44, height: 44, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={20} color={c.tint} /></View>}
+        <View style={{ flex: 1, gap: S.xxs }}>
           <Text variant="headline">{t("Continue {x}", { x: t(form.destination || "application") })}</Text>
           <Text variant="subhead" tone="secondary">{t("Saved on this phone")} · {pg.q}</Text>
         </View>
         <Icon name="chevron.right" size={14} color={c.tertiaryLabel} weight="semibold" />
       </PressScale>
-      <Pressable onPress={() => { tap(); clearDraft(); }} accessibilityRole="button" accessibilityLabel={t("Discard saved application")} style={{ width: 44, height: 44, marginRight: S.xs, alignItems: "center", justifyContent: "center" }}>
+      <PressScale onPress={() => { tap(); clearDraft(); }} accessibilityRole="button" accessibilityLabel={t("Discard saved application")} style={{ width: 44, height: 44, marginRight: S.xs, alignItems: "center", justifyContent: "center" }}>
         <Icon name="xmark" size={14} color={c.secondaryLabel} weight="semibold" />
-      </Pressable>
+      </PressScale>
     </View>
   );
 }
@@ -74,26 +104,6 @@ function DraftCard() {
 const today = (lang: string) => new Date().toLocaleDateString(lang === "ar" ? "ar" : undefined, { weekday: "long", day: "numeric", month: "long" }).toUpperCase();
 
 /** Wallet-style pass for the current application. */
-function Pass({ a }: { a: Application }) {
-  const c = useColors(); const { t } = useT(); const idx = journeyIndex(a.status, a.payment_status); const name = a.countries?.name ?? "";
-  const cd = countdown(a.entry_date, a.exit_date, t);
-  return (
-    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} accessibilityRole="button" accessibilityLabel={`${name} application, ${STATUS_LABEL[a.status] ?? a.status}`}
-      style={[{ marginHorizontal: S.lg, borderRadius: R.card, backgroundColor: c.brand, padding: S.lg, gap: S.xl }, curve]}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
-        <Flag country={name} size={40} />
-        <View style={{ flex: 1 }}><Text variant="title3" color="#fff">{name}</Text><Text variant="footnote" color="rgba(255,255,255,0.72)" tabular>{a.reference}</Text></View>
-        {!!cd && <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: "rgba(255,255,255,0.18)" }} testID="countdown"><Text variant="footnote" weight="600" color="#fff">{cd}</Text></View>}
-        <Icon name="chevron.right" size={14} color="rgba(255,255,255,0.8)" weight="semibold" />
-      </View>
-      <View style={{ gap: S.xs }}>
-        <Text variant="headline" color="#fff">{STATUS_LABEL[a.status] ?? a.status}</Text>
-        <View style={{ flexDirection: "row", gap: 4 }}>{[0, 1, 2, 3].map((i) => <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= idx ? "#fff" : "rgba(255,255,255,0.3)" }} />)}</View>
-      </View>
-    </PressScale>
-  );
-}
-
 const STORIES = [...POPULAR, "Greece", "Netherlands", "Portugal", "Austria", "Croatia", "Czech Republic"];
 const RING = 78, GAP = 2.5;
 
@@ -101,8 +111,8 @@ const RING = 78, GAP = 2.5;
 function Story({ name }: { name: string }) {
   const c = useColors(); const { t } = useT(); const photo = PHOTOS[toSlug(name)]; const inner = RING - GAP * 4;
   return (
-    <PressScale scaleTo={0.92} onPress={() => { tap(); router.push(`/destination/${toSlug(name)}`); }} accessibilityRole="button" accessibilityLabel={name} style={{ width: RING + 8, alignItems: "center", gap: 6 }}>
-      <LinearGradient colors={[c.brand, c.tint, "#7B61FF"]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ width: RING, height: RING, borderRadius: RING / 2, padding: GAP }}>
+    <PressScale scaleTo={0.92} onPress={() => { tap(); router.push(`/destination/${toSlug(name)}`); }} accessibilityRole="button" accessibilityLabel={name} style={{ width: RING + 8, alignItems: "center", gap: S.xs }}>
+      <LinearGradient colors={[c.accentFill, c.accent]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ width: RING, height: RING, borderRadius: RING / 2, padding: GAP }}>
         <View style={{ flex: 1, borderRadius: RING / 2, backgroundColor: c.bg, padding: GAP, alignItems: "center", justifyContent: "center" }}>
           {photo ? <Image source={photo} style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.card }} resizeMode="cover" /> : <Flag country={name} size={inner} />}
         </View>
@@ -110,6 +120,12 @@ function Story({ name }: { name: string }) {
       <Text variant="caption" weight="500" numberOfLines={1} center>{t(name)}</Text>
     </PressScale>
   );
+}
+
+/** Tasteful abstract accent glow behind the signed-out / no-trip headline (decorative only). */
+function Orb() {
+  const c = useColors();
+  return <LinearGradient pointerEvents="none" colors={[c.accentSoft, "transparent"]} start={{ x: 1, y: 0 }} end={{ x: 0.2, y: 1 }} style={{ position: "absolute", top: -S.x5, right: -S.x5, width: 260, height: 260, borderRadius: R.round }} />;
 }
 
 export default function Home() {
@@ -123,23 +139,25 @@ export default function Home() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: S.lg, minHeight: 48 }}>
         <Logo height={22} />
-        <Pressable onPress={() => { tap(); router.push(session ? "/account/notifications" : { pathname: "/auth", params: { mode: "signin" } }); }} accessibilityRole="button" accessibilityLabel={session ? (unread ? `Notifications, ${unread} unread` : "Notifications") : "Sign in"} hitSlop={8}>
+        <PressScale onPress={() => { tap(); router.push(session ? "/account/notifications" : { pathname: "/auth", params: { mode: "signin" } }); }} accessibilityRole="button" accessibilityLabel={session ? (unread ? `Notifications, ${unread} unread` : "Notifications") : "Sign in"} hitSlop={8}>
           {session ? (
-            <View><Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={36} />{unread > 0 && <View style={{ position: "absolute", top: -1, right: -1, width: 12, height: 12, borderRadius: 6, backgroundColor: c.red, borderWidth: 2, borderColor: c.bg }} />}</View>
-          ) : <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={16} color={c.label} /></View>}
-        </Pressable>
+            <View><Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={36} />{unread > 0 && <View style={{ position: "absolute", top: -1, right: -1, width: 12, height: 12, borderRadius: R.xs, backgroundColor: c.red, borderWidth: 2, borderColor: c.bg }} />}</View>
+          ) : <View style={{ width: 44, height: 44, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={16} color={c.label} /></View>}
+        </PressScale>
       </View>
-      <View style={{ paddingHorizontal: S.lg, marginTop: S.xl, marginBottom: S.xl }}>
-        <Text variant="footnote" tone="secondary" weight="600">{today(lang)}</Text>
-        <Text variant="display" accessibilityRole="header" style={{ marginTop: 2 }}>{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
-      </View>
+      <View style={{ marginTop: S.xl }} />
+      {session && apps === null ? <HeroSkeleton /> : active ? <Hero a={active} /> : (
+        <View style={{ paddingHorizontal: S.lg, marginBottom: S.xl }} testID="home-headline">
+          <Orb />
+          <Text variant="footnote" tone="secondary" weight="600">{today(lang)}</Text>
+          <Text variant="display" accessibilityRole="header" style={{ marginTop: S.xxs }}>{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
+        </View>
+      )}
       <PressScale onPress={() => { tap(); router.navigate("/countries"); }} accessibilityRole="search" accessibilityLabel={t("Search destinations")}
         style={{ marginHorizontal: S.lg, marginBottom: S.xxl, minHeight: 56, borderRadius: R.round, backgroundColor: c.card, flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.lg }}>
-        <Icon name="magnifyingglass" size={17} color={c.label} weight="semibold" />
+        <Icon name="magnifyingglass" size={ICON.md} color={c.secondaryLabel} weight="medium" />
         <Text variant="body" tone="secondary">{t("Search destinations")}</Text>
       </PressScale>
-      {session && apps === null && <View style={{ marginHorizontal: S.lg, marginBottom: S.xxl }}><Skeleton h={150} r={R.card} /></View>}
-      {!!active && <View style={{ marginBottom: S.xxl, gap: S.sm }}><Pass a={active} /><NextActionCard a={active} /></View>}
       <DraftCard />
       <SectionHeader title={t("Popular countries")} action={t("See all")} onAction={() => router.navigate("/countries")} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: S.lg - 4, gap: S.xs }} testID="popular-stories">

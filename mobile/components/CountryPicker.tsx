@@ -1,3 +1,4 @@
+import { PressScale } from "./ui";
 // Searchable country list (ISO 3166, circle flags) in a sheet. Used for the phone calling code.
 import { useMemo, useState } from "react";
 import { FlatList, Modal, Platform, Pressable, View, TextInput } from "react-native";
@@ -32,13 +33,13 @@ export function CountrySheet({ visible, title, onClose, onPick, selected, select
           renderItem={({ item: w }) => {
             const on = selectedName ? w.name === selectedName : w.iso2 === selected;
             return (
-              <Pressable onPress={() => { select(); onPick(w.iso2, w.name); setQ(""); }} accessibilityRole="button" accessibilityState={{ selected: on }} aria-selected={on} accessibilityLabel={showDial ? `${w.name}, plus ${w.dial}` : w.name}
+              <PressScale onPress={() => { select(); onPick(w.iso2, w.name); setQ(""); }} accessibilityRole="button" accessibilityState={{ selected: on }} aria-selected={on} accessibilityLabel={showDial ? `${w.name}, plus ${w.dial}` : w.name}
                 style={({ pressed }) => [{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: S.sm, paddingVertical: S.xs, opacity: pressed ? 0.6 : 1 }]}>
                 <Flag country={w.name} size={28} />
                 <Text variant="body" style={{ flex: 1 }}>{w.name}</Text>
                 {showDial && <Text variant="body" tone="secondary" tabular>+{w.dial}</Text>}
                 {on && <Icon name="checkmark" size={15} color={c.tint} weight="bold" />}
-              </Pressable>
+              </PressScale>
             );
           }} />
       </View>
@@ -53,12 +54,12 @@ export function PhoneField({ country, local, onChange, error }: { country: strin
   const full = (iso: string, l: string) => { const d = WORLD.find((x) => x.iso2 === iso)?.dial ?? 971; return l.trim() ? `+${d} ${l.trim()}` : ""; };
   return (
     <View style={{ flexDirection: "row", alignItems: "stretch", backgroundColor: c.card, borderRadius: R.input, minHeight: 56, overflow: "hidden", borderWidth: 1, borderColor: error ? c.red : c.separator }}>
-      <Pressable onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`Country code ${w.name}, plus ${w.dial}. Change`}
-        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: S.md, minWidth: 44, opacity: pressed ? 0.6 : 1, borderRightWidth: 1, borderRightColor: c.separator })}>
+      <PressScale onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`Country code ${w.name}, plus ${w.dial}. Change`}
+        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.md, minWidth: 44, opacity: pressed ? 0.6 : 1, borderRightWidth: 1, borderRightColor: c.separator })}>
         <Flag country={w.name} size={22} />
         <Text variant="body" tabular>+{w.dial}</Text>
         <Icon name="chevron.down" size={11} color={c.secondaryLabel} weight="semibold" />
-      </Pressable>
+      </PressScale>
       <TextInput value={local} onChangeText={(v) => { const l = v.replace(/[^\d\s-]/g, ""); onChange(w.iso2, l, full(w.iso2, l)); }}
         placeholder="50 123 4567" placeholderTextColor={c.secondaryLabel} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" accessibilityLabel="Phone number"
         style={[T.body, { flex: 1, color: c.label, paddingHorizontal: S.md, minHeight: 56 }, Platform.OS === "web" && ({ outlineStyle: "none" } as any), error && { color: c.label }]} />

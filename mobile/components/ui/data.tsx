@@ -18,7 +18,7 @@ export function Flag({ country, size = 28 }: { country?: string | null; size?: n
   return (
     <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", backgroundColor: c.fill }}>
       {xml ? <SvgXml xml={xml} width={size} height={size} /> : country === "Other" ? (
-        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text style={{ fontSize: size * 0.6 }}>🌐</Text></View>
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Icon name="globe" size={size * 0.55} color={c.secondaryLabel} /></View>
       ) : (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text variant="caption" tone="secondary">{(country ?? "?").slice(0, 2).toUpperCase()}</Text></View>
       )}
@@ -30,8 +30,8 @@ export function Flag({ country, size = 28 }: { country?: string | null; size?: n
 export function FlagChip({ country, onPress, selected }: { country: string; onPress: () => void; selected?: boolean }) {
   const c = useColors();
   return (
-    <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={country} accessibilityState={{ selected: !!selected }} style={{ width: 72, alignItems: "center", gap: 6 }}>
-      <View style={{ padding: 3, borderRadius: 34, borderWidth: 2, borderColor: selected ? c.tint : "transparent" }}><Flag country={country} size={56} /></View>
+    <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={country} accessibilityState={{ selected: !!selected }} style={{ width: 72, alignItems: "center", gap: S.xs }}>
+      <View style={{ padding: S.xxs, borderRadius: R.round, borderWidth: 2, borderColor: selected ? c.tint : "transparent" }}><Flag country={country} size={56} /></View>
       <Text variant="footnote" weight="500" numberOfLines={1} color={selected ? c.tint : undefined}>{country}</Text>
     </PressScale>
   );
@@ -41,7 +41,7 @@ const STATUS_TONE = (c: ReturnType<typeof useColors>, v: string) => (({ paid: c.
 export function StatusPill({ v }: { v: string }) {
   const { t } = useT();
   const c = useColors(); const col = STATUS_TONE(c, v);
-  return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{t(STATUS_LABEL[v] ?? v)}</Text></View>;
+  return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: S.xs, paddingVertical: S.xxs, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{t(STATUS_LABEL[v] ?? v)}</Text></View>;
 }
 
 // Customer-facing journey, from the live columns only: application_status (website/admin: submitted -> reviewing -> ready |
@@ -62,7 +62,7 @@ export function MiniProgress({ status, payment }: { status: string; payment?: st
     <View style={{ flexDirection: "row", alignItems: "center" }} accessible accessibilityLabel={`Step ${idx + 1} of 4`}>
       {JOURNEY.map((_, i) => (
         <React.Fragment key={i}>
-          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: i <= idx ? c.tint : c.fill }} />
+          <View style={{ width: 10, height: 10, borderRadius: R.xs, backgroundColor: i <= idx ? c.tint : c.fill }} />
           {i < JOURNEY.length - 1 && <View style={{ flex: 1, height: 2, backgroundColor: i < idx ? c.tint : c.fill }} />}
         </React.Fragment>
       ))}
@@ -86,10 +86,10 @@ export function Timeline({ a, t = (s: string) => s }: { a: Application; t?: (s: 
         return (
           <View key={i} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 28 : 52 }} accessible accessibilityLabel={`${t(label)}${done ? `, ${t("done")}` : ""}${at && done ? `, ${fmtDT(at)}` : ""}`}>
             <View style={{ alignItems: "center", width: 16 }}>
-              <View style={{ width: 14, height: 14, borderRadius: 7, marginTop: 4, backgroundColor: done ? tone : "transparent", borderWidth: 2, borderColor: done ? tone : c.tertiaryLabel, alignItems: "center", justifyContent: "center" }}>
+              <View style={{ width: 14, height: 14, borderRadius: R.sm, marginTop: S.xxs, backgroundColor: done ? tone : "transparent", borderWidth: 2, borderColor: done ? tone : c.tertiaryLabel, alignItems: "center", justifyContent: "center" }}>
                 {done && <Icon name={cancelled && last ? "xmark" : "checkmark"} size={8} color="#fff" weight="bold" />}
               </View>
-              {!last && <View style={{ flex: 1, width: 2, marginVertical: 2, backgroundColor: i < cur ? c.tint : c.fill }} />}
+              {!last && <View style={{ flex: 1, width: 2, marginVertical: S.xxs, backgroundColor: i < cur ? c.tint : c.fill }} />}
             </View>
             <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-between", gap: S.xs }}>
               <Text variant="body" weight={i === cur ? "600" : "400"} tone={done ? "label" : "secondary"} style={{ flex: 1 }}>{t(label)}</Text>
@@ -109,32 +109,41 @@ export function SuccessCheck({ size = 88 }: { size?: number }) {
   return <Animated.View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.green, alignItems: "center", justifyContent: "center" }, a]} accessibilityLabel="Success"><Icon name="checkmark" size={size * 0.45} color="#fff" weight="bold" /></Animated.View>;
 }
 
+/** Small check that pops in (spring) next to a "saved" message. Haptic is fired by the caller. Reduce Motion: no pop. */
+export function SavedCheck({ tone = "green" }: { tone?: "green" | "accent" }) {
+  const c = useColors(); const reduce = useReducedMotion(); const s = useSharedValue(reduce ? 1 : 0.3);
+  useEffect(() => { if (!reduce) s.value = withSpring(1, SPRING.pop); }, []);
+  const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }], opacity: Math.min(1, s.value * 1.4) }));
+  const col = tone === "green" ? c.green : c.accent;
+  return <Animated.View testID="saved-check" style={[{ width: 22, height: 22, borderRadius: R.round, backgroundColor: col, alignItems: "center", justifyContent: "center" }, a]} accessibilityElementsHidden><Icon name="checkmark" size={12} color="#fff" weight="bold" /></Animated.View>;
+}
+
 const fmtShort = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
 export function ApplicationRow({ a }: { a: Application }) {
   const name = a.countries?.name ?? "Application";
   return (
-    <Pressable onPress={() => { tap(); router.push(`/applications/${a.id}`); }} accessibilityRole="button" accessibilityLabel={`${name}, ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}`}
+    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} accessibilityRole="button" accessibilityLabel={`${name}, ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}`}
       style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 64, opacity: pressed ? 0.6 : 1 })}>
       <Flag country={name} size={40} />
-      <View style={{ flex: 1, gap: 2 }}>
+      <View style={{ flex: 1, gap: S.xxs }}>
         <Text variant="headline" numberOfLines={1}>{name}</Text>
         <Text variant="subhead" tone="secondary" numberOfLines={1} tabular>{[a.reference, fmtShort(a.entry_date)].filter(Boolean).join(" · ")}</Text>
       </View>
       <StatusPill v={a.status} />
       <ChevronR />
-    </Pressable>
+    </PressScale>
   );
 }
 const ChevronR = () => { const c = useColors(); return <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />; };
 
 export function CountryRow({ name, onPress }: { name: string; onPress: () => void }) {
   return (
-    <Pressable onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={name}
+    <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={name}
       style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, minHeight: 52, opacity: pressed ? 0.6 : 1 })}>
       <Flag country={name} size={28} />
       <Text variant="body" style={{ flex: 1 }} numberOfLines={1}>{name}</Text>
       <ChevronR />
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -151,7 +160,7 @@ export function StatusHeroCard({ a }: { a: Application }) {
       <MiniProgress status={a.status} payment={a.payment_status} />
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text variant="subhead" tone="secondary">{STATUS_LABEL[a.status] ?? a.status}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Text variant="subhead" tone="tint" weight="600">View</Text><Icon name="chevron.right" size={12} color={c.tint} weight="semibold" /></View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xxs }}><Text variant="subhead" tone="tint" weight="600">View</Text><Icon name="chevron.right" size={12} color={c.tint} weight="semibold" /></View>
       </View>
     </PressScale>
   );

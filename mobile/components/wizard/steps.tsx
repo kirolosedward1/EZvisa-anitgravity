@@ -174,7 +174,7 @@ export function TripStep({ f, set, patch, errors: e, show }: StepProps) {
         {days > 0 && (
           <Note tone="blue">
             <Text variant="subhead" tone="secondary">Total Stay Duration: <Text variant="subhead" weight="700">{days} days</Text>.</Text>
-            {days > 90 && <Text variant="subhead" tone="red" weight="500" style={{ marginTop: 4 }}>Error: Schengen tourist visas permit a maximum stay of 90 days.</Text>}
+            {days > 90 && <Text variant="subhead" tone="red" weight="500" style={{ marginTop: S.xxs }}>Error: Schengen tourist visas permit a maximum stay of 90 days.</Text>}
           </Note>
         )}
         <FormField label="Are your travel dates flexible? *">
@@ -235,7 +235,7 @@ export function TripStep({ f, set, patch, errors: e, show }: StepProps) {
             <View key={a.country} style={{ flexDirection: "row", alignItems: "center", padding: S.md, borderRadius: R.input, borderWidth: 1, borderColor: c.separator, backgroundColor: c.card }}>
               <View style={{ flex: 1 }}>
                 <Text variant="headline">{a.country}</Text>
-                <Text variant="subhead" tone="secondary" style={{ marginTop: 2 }}>{fmtShort(a.arrivalDate)} → {fmtShort(a.departureDate)}</Text>
+                <Text variant="subhead" tone="secondary" style={{ marginTop: S.xxs }}>{fmtShort(a.arrivalDate)} → {fmtShort(a.departureDate)}</Text>
               </View>
               <Pressable onPress={() => set("additionalCountries")(added.filter((x) => x.country !== a.country))} accessibilityRole="button" accessibilityLabel={`Remove ${a.country}`}
                 style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}>

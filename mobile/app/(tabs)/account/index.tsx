@@ -8,7 +8,7 @@ import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ListGroup, ListRow, Avatar, Text, Button, Icon, SegmentedControl, useTabInset } from "../../../components/ui";
 import { useAppearance, type AppearancePref } from "../../../lib/appearance";
-import { useColors, S } from "../../../lib/theme";
+import { useColors, S, R } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
 import { whatsapp, email as mailSupport } from "../../../lib/api";
 import { useApps } from "../../../lib/useApps";
@@ -82,7 +82,7 @@ export default function Account() {
       <Stack.Screen options={{ headerShown: false }} />
       <Text variant="largeTitle" accessibilityRole="header" style={{ marginHorizontal: S.lg, marginBottom: S.xxl }}>{t("Account")}</Text>
       <View style={{ alignItems: "center", paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }}>
-        <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={36} color={c.tertiaryLabel} /></View>
+        <View style={{ width: 88, height: 88, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={36} color={c.tertiaryLabel} /></View>
         <Text variant="title2" center>{t("Sign in to track your visa")}</Text>
         <View style={{ alignSelf: "stretch", gap: S.xs, marginTop: S.sm }}>
           <Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />

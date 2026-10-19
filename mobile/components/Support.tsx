@@ -1,3 +1,4 @@
+import { PressScale } from "./ui";
 // One tap to support from anywhere: WhatsApp or email, with context about where the user is.
 import { useState } from "react";
 import { Modal, Pressable, View } from "react-native";
@@ -16,7 +17,7 @@ export function SupportButton({ context }: { context: string }) {
     <CircleButton icon="questionmark.circle.fill" label="Help" onPress={() => setOpen(true)} />
     <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
       <View style={{ flex: 1, justifyContent: "flex-end" }}>
-        <Pressable style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.4)" }} onPress={() => setOpen(false)} accessibilityLabel="Close help" accessibilityRole="button" />
+        <PressScale style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.4)" }} onPress={() => setOpen(false)} accessibilityLabel="Close help" accessibilityRole="button" />
         <View accessibilityViewIsModal style={{ backgroundColor: c.bg, borderTopLeftRadius: R.sheet, borderTopRightRadius: R.sheet, padding: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.sm }}>
           <Text variant="title3" accessibilityRole="header">Need help?</Text>
           <Text variant="subhead" tone="secondary">Message us on WhatsApp or by email.</Text>

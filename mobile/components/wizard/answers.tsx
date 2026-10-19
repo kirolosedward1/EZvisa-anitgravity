@@ -1,3 +1,4 @@
+import { PressScale } from "../ui";
 // Answer controls for the one-question-per-screen wizard: big tappable choices, Yes / No tiles, an inline searchable
 // country list, native date pickers (iOS inline calendar / wheel, Android dialog, web date input) and the website's
 // "additional countries" editor. All controls are VoiceOver-labelled and grow with Dynamic Type (no fixed heights).
@@ -5,7 +6,7 @@ import { useMemo, useState } from "react";
 import { FlatList, Platform, Pressable, TextInput, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Flag, Icon, Text, Button } from "../ui";
-import { useColors, useIsDark, S, R, T, curve } from "../../lib/theme";
+import { useColors, useIsDark, S, R, T, curve, ICON } from "../../lib/theme";
 import { select } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 import { SCHENGEN, iso, type WizardForm } from "../../lib/wizard";
@@ -22,15 +23,15 @@ export const useFmtDate = () => {
 export function AnswerRow({ label, selected, onPress, country, testID }: { label: string; selected?: boolean; onPress: () => void; country?: string; testID?: string }) {
   const c = useColors();
   return (
-    <Pressable onPress={() => { select(); onPress(); }} accessibilityRole="radio" accessibilityState={{ checked: !!selected }} aria-checked={!!selected} accessibilityLabel={label} testID={testID}
+    <PressScale onPress={() => { select(); onPress(); }} accessibilityRole="radio" accessibilityState={{ checked: !!selected }} aria-checked={!!selected} accessibilityLabel={label} testID={testID}
       style={({ pressed }) => [{ minHeight: 60, borderRadius: R.tile, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm,
         backgroundColor: selected ? c.tintFill : c.card, opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.985 : 1 }] }, curve]}>
       {!!country && <Flag country={country} size={32} />}
       <Text variant="headline" weight={selected ? "600" : "500"} color={selected ? c.onTint : c.label} style={{ flex: 1 }}>{label}</Text>
-      <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: selected ? 0 : 1.5, borderColor: c.tertiaryLabel, backgroundColor: selected ? "rgba(255,255,255,0.25)" : "transparent", alignItems: "center", justifyContent: "center" }}>
-        {selected && <Icon name="checkmark" size={13} color="#fff" weight="bold" />}
+      <View style={{ width: 24, height: 24, borderRadius: R.round, borderWidth: selected ? 0 : 1.5, borderColor: c.tertiaryLabel, backgroundColor: selected ? "rgba(255,255,255,0.25)" : "transparent", alignItems: "center", justifyContent: "center" }}>
+        {selected && <Icon name="checkmark" size={ICON.sm} color="#fff" weight="bold" />}
       </View>
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -51,12 +52,12 @@ export function YesNoTiles({ label, value, onPick }: { label: string; value: str
       {(["yes", "no"] as const).map((v) => {
         const on = value === v;
         return (
-          <Pressable key={v} onPress={() => { select(); onPick(v); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={v === "yes" ? t("Yes") : t("No")}
+          <PressScale key={v} onPress={() => { select(); onPick(v); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={v === "yes" ? t("Yes") : t("No")}
             style={({ pressed }) => [{ flex: 1, minHeight: 120, borderRadius: R.card, alignItems: "center", justifyContent: "center", gap: S.xs, padding: S.md,
               backgroundColor: on ? c.tintFill : c.card, opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, curve]}>
-            <Icon name={v === "yes" ? "checkmark.circle.fill" : "xmark.circle.fill"} size={30} color={on ? "#fff" : v === "yes" ? c.green : c.secondaryLabel} />
+            <Icon name={v === "yes" ? "checkmark.circle.fill" : "xmark.circle.fill"} size={ICON.xl} color={on ? "#fff" : c.secondaryLabel} />
             <Text variant="title3" color={on ? c.onTint : c.label}>{v === "yes" ? t("Yes") : t("No")}</Text>
-          </Pressable>
+          </PressScale>
         );
       })}
     </View>
@@ -84,7 +85,7 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header, s
           <Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />
           <TextInput value={q} onChangeText={setQ} placeholder={t(searchPlaceholder)} placeholderTextColor={c.secondaryLabel} autoCorrect={false} returnKeyType="search" accessibilityLabel={t(searchPlaceholder)}
             style={[T.body, { flex: 1, color: c.label, paddingVertical: S.sm }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
-          {!!q && <Pressable onPress={() => setQ("")} accessibilityRole="button" accessibilityLabel={t("Clear search")} hitSlop={10}><Icon name="xmark.circle.fill" size={16} color={c.tertiaryLabel} /></Pressable>}
+          {!!q && <PressScale onPress={() => setQ("")} accessibilityRole="button" accessibilityLabel={t("Clear search")} hitSlop={10}><Icon name="xmark.circle.fill" size={16} color={c.tertiaryLabel} /></PressScale>}
         </View>
       </View>}
       ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>{t("No country found.")}</Text>}
@@ -116,7 +117,7 @@ export function DateAnswer({ label, value, onChange, min, max, style, placeholde
   );
   if (Platform.OS === "android") return (
     <>
-      <Pressable onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmt(value) : t("not set")}`} accessibilityHint={t("Opens a date picker")}>{box}</Pressable>
+      <PressScale onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmt(value) : t("not set")}`} accessibilityHint={t("Opens a date picker")}>{box}</PressScale>
       {open && <DateTimePicker value={initial} mode="date" minimumDate={minD} maximumDate={maxD} onChange={(e, d) => { setOpen(false); if (e.type === "set" && d) onChange(iso(d)); }} />}
     </>
   );
@@ -154,8 +155,8 @@ export function AdditionalCountries({ f, onChange }: { f: WizardForm; onChange: 
             <Text variant="headline">{t(a.country)}</Text>
             <Text variant="subhead" tone="secondary">{fmt(a.arrivalDate)} → {fmt(a.departureDate)}</Text>
           </View>
-          <Pressable onPress={() => { select(); onChange(added.filter((x) => x.country !== a.country)); }} accessibilityRole="button" accessibilityLabel={t("Remove {c}", { c: t(a.country) })}
-            style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="xmark" size={16} color={c.secondaryLabel} weight="semibold" /></Pressable>
+          <PressScale onPress={() => { select(); onChange(added.filter((x) => x.country !== a.country)); }} accessibilityRole="button" accessibilityLabel={t("Remove {c}", { c: t(a.country) })}
+            style={{ width: 44, height: 44, alignItems: "center", justifyContent: "center" }}><Icon name="xmark" size={16} color={c.secondaryLabel} weight="semibold" /></PressScale>
         </View>
       ))}
       {!nc ? (
@@ -163,10 +164,10 @@ export function AdditionalCountries({ f, onChange }: { f: WizardForm; onChange: 
           <Text variant="footnote" tone="secondary" weight="600">{t("Add a country")}</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.xs }}>
             {addable.map((n) => (
-              <Pressable key={n} onPress={() => { select(); setNc(n); setErr(""); }} accessibilityRole="button" accessibilityLabel={t("Add {c}", { c: t(n) })}
-                style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: 6, minHeight: 44, paddingHorizontal: S.sm, borderRadius: R.round, backgroundColor: c.card, opacity: pressed ? 0.7 : 1 })}>
+              <PressScale key={n} onPress={() => { select(); setNc(n); setErr(""); }} accessibilityRole="button" accessibilityLabel={t("Add {c}", { c: t(n) })}
+                style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 44, paddingHorizontal: S.sm, borderRadius: R.round, backgroundColor: c.card, opacity: pressed ? 0.7 : 1 })}>
                 <Flag country={n} size={22} /><Text variant="subhead" weight="500">{t(n)}</Text>
-              </Pressable>
+              </PressScale>
             ))}
           </View>
         </View>
@@ -174,7 +175,7 @@ export function AdditionalCountries({ f, onChange }: { f: WizardForm; onChange: 
         <View style={[{ gap: S.sm, padding: S.md, borderRadius: R.card, backgroundColor: c.fill2 }, curve]}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
             <Flag country={nc} size={28} /><Text variant="headline" style={{ flex: 1 }}>{t(nc)}</Text>
-            <Pressable onPress={() => { setNc(""); setNa(""); setNd(""); setErr(""); }} accessibilityRole="button" accessibilityLabel={t("Cancel")} style={{ minHeight: 44, justifyContent: "center" }}><Text variant="subhead" tone="tint" weight="600">{t("Cancel")}</Text></Pressable>
+            <PressScale onPress={() => { setNc(""); setNa(""); setNd(""); setErr(""); }} accessibilityRole="button" accessibilityLabel={t("Cancel")} style={{ minHeight: 44, justifyContent: "center" }}><Text variant="subhead" tone="tint" weight="600">{t("Cancel")}</Text></PressScale>
           </View>
           <Text variant="footnote" tone="secondary" weight="600">{t("Arrival Date")}</Text>
           <DateAnswer label={t("Arrival Date")} value={na} style="calendar" placeholder="Select arrival date" min={f.travelStartDate || todayIso} max={f.travelEndDate || undefined}

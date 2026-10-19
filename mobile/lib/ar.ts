@@ -334,4 +334,13 @@ export const AR: Record<string, string> = {
   "Liberia": "ليبيريا", "Lesotho": "ليسوتو", "Libya": "ليبيا", "Madagascar": "مدغشقر", "Mali": "مالي", "Myanmar": "ميانمار", "Mongolia": "منغوليا", "Mauritania": "موريتانيا", "Maldives": "جزر المالديف", "Malawi": "مالاوي",
   "Mozambique": "موزمبيق", "Namibia": "ناميبيا", "Niger": "النيجر", "Papua New Guinea": "بابوا غينيا الجديدة", "Rwanda": "رواندا", "Sierra Leone": "سيراليون", "Senegal": "السنغال", "Somalia": "الصومال", "Suriname": "سورينام",
   "South Sudan": "جنوب السودان", "Sao Tome and Principe": "ساو تومي وبرينسيب", "Chad": "تشاد", "Togo": "توغو", "Tajikistan": "طاجيكستان", "Turkmenistan": "تركمانستان", "Tanzania": "تنزانيا", "Vanuatu": "فانواتو", "Zambia": "زامبيا", "Zimbabwe": "زيمبابوي",
+  "Your trip": "رحلتك", "View application": "عرض الطلب", "Opens the application": "يفتح الطلب",
+  "Schengen visa": "تأشيرة شنغن", "Get started": "ابدأ",
+  "Your applications live here": "طلباتك تظهر هنا",
+  "Filter": "تصفية",
+  "Active": "النشطة",
+  "Past": "السابقة",
+  "No active applications": "لا توجد طلبات نشطة",
+  "Nothing here yet": "لا شيء هنا بعد",
+  "Start application": "ابدأ الطلب",
 };

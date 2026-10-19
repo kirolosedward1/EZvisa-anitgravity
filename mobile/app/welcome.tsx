@@ -7,6 +7,7 @@ import { Logo } from "../components/Logo";
 import { Button, Flag, Text } from "../components/ui";
 import { useColors, S } from "../lib/theme";
 import { markWelcomed } from "../lib/onboarding";
+import { useT } from "../lib/i18n";
 
 // Flags arranged on two orbits around the centre.
 const ORBIT = [
@@ -15,11 +16,11 @@ const ORBIT = [
 ] as const;
 
 export default function Welcome() {
-  const c = useColors(); const insets = useSafeAreaInsets(); const { width } = useWindowDimensions(); const reduce = useReducedMotion();
+  const c = useColors(); const insets = useSafeAreaInsets(); const { width } = useWindowDimensions(); const reduce = useReducedMotion(); const { t } = useT();
   const rot = useSharedValue(0);
   useEffect(() => { if (!reduce) rot.value = withRepeat(withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.sin) }), -1, true); }, [reduce]);
   const spin = useAnimatedStyle(() => ({ transform: [{ translateY: -6 + rot.value * 12 }] }));
-  const R1 = Math.min(width * 0.38, 168), R2 = R1 * 0.7, box = R1 * 2 + 64;
+  const R1 = Math.min(width * 0.38, 168), R2 = R1 * 0.7, box = R1 * 2 + S.x5;
   const go = async (to: "/" | "/auth") => { await markWelcomed(); router.replace("/"); if (to === "/auth") setTimeout(() => router.push({ pathname: "/auth", params: { mode: "signin" } }), 50); };
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, S.lg) }}>
@@ -33,10 +34,10 @@ export default function Welcome() {
         <View style={{ position: "absolute", alignItems: "center" }}><Logo height={34} /></View>
       </View>
       <Animated.View entering={reduce ? undefined : FadeInDown.delay(200).duration(500)} style={{ paddingHorizontal: S.xl, gap: S.xs }}>
-        <Text variant="largeTitle" center>Schengen visas,{"\n"}made simple.</Text>
+        <Text variant="largeTitle" center accessibilityRole="header">{t("Schengen visa")}</Text>
         <View style={{ height: S.xxl }} />
-        <Button title="Get started" onPress={() => go("/")} />
-        <Button title="Sign in" variant="plain" color={c.label} onPress={() => go("/auth")} />
+        <Button title={t("Get started")} onPress={() => go("/")} />
+        <Button title={t("Sign in")} variant="plain" color={c.label} onPress={() => go("/auth")} />
       </Animated.View>
     </View>
   );

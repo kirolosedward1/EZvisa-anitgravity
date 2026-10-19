@@ -3,7 +3,7 @@ import { Alert, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } fro
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
-import { useColors, S } from "../../../lib/theme";
+import { useColors, S, R } from "../../../lib/theme";
 import { getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL } from "../../../lib/data";
 import { enqueueUpload, retryUpload, removeUpload, useUploads } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
@@ -76,7 +76,15 @@ export default function ApplicationDetail() {
   if (!a) return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: S.lg, gap: S.md }}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false }} />
-      <View accessible accessibilityLabel="Loading" style={{ gap: S.md }}><Skeleton w={56} h={56} r={28} /><Skeleton w="50%" h={26} /><Skeleton w="30%" h={16} /><Skeleton h={160} r={20} /></View>
+      {/* Mirrors the real layout: hero, Status timeline (4 steps), Trip group */}
+      <View accessible accessibilityLabel={t("Loading")} style={{ gap: S.md }} testID="detail-skeleton">
+        <Skeleton w={72} h={72} r={R.round} /><Skeleton w="55%" h={34} r={R.md} />
+        <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Skeleton w="35%" h={16} /><Skeleton w={84} h={22} r={R.sm} /></View>
+        <Skeleton w={90} h={20} style={{ marginTop: S.lg }} />
+        <View style={{ borderRadius: R.card, padding: S.md, gap: S.lg, backgroundColor: c.card }}>{[0, 1, 2, 3].map((i) => <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}><Skeleton w={14} h={14} r={R.round} /><Skeleton w={`${60 - i * 8}%` as `${number}%`} h={16} /></View>)}</View>
+        <Skeleton w={60} h={20} style={{ marginTop: S.lg }} />
+        <View style={{ borderRadius: R.card, padding: S.md, gap: S.lg, backgroundColor: c.card }}>{[0, 1, 2].map((i) => <View key={i} style={{ flexDirection: "row", justifyContent: "space-between" }}><Skeleton w="25%" h={16} /><Skeleton w="40%" h={16} /></View>)}</View>
+      </View>
     </ScrollView>
   );
   const docs = [...a.documents].sort((x, y) => y.created_at.localeCompare(x.created_at));
@@ -91,9 +99,9 @@ export default function ApplicationDetail() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: S.x3 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.tint} />}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerRight: () => <SupportButton context={`application ${a.reference}`} /> }} />
-      <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xl, gap: S.xs }}>
-        <Flag country={name} size={56} />
-        <Text variant="title1" style={{ marginTop: S.xs }} accessibilityRole="header">{t(name)}</Text>
+      <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xxl, gap: S.xs }}>
+        <Flag country={name} size={72} />
+        <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text variant="subhead" tone="secondary" tabular>{a.reference}</Text>
           <StatusPill v={a.status} />
@@ -111,7 +119,7 @@ export default function ApplicationDetail() {
       {list ? (<>
         <ListGroup header={t("Your documents · {i} of {n}", { i: done, n: list.customer.length })} footer={canUpload ? t("PDF or image · max 10 MB. Tap a missing item to upload it.") : undefined} inset={58}>
           <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} accessible accessibilityLabel={`${done} of ${list.customer.length} documents provided`}>
-            <View style={{ height: 6, borderRadius: 3, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 6, borderRadius: 3, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
+            <View style={{ height: 6, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 6, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
           </View>
           {list.customer.map((i) => <CheckRow key={i.req.id} i={i} busy={busyType(i.req.document_type)} canUpload={canUpload}
             onPress={() => (isOpen(i) ? (canUpload ? pickFile(i.req.document_type, i.req.id) : undefined) : i.doc && open(i.doc.storage_path))} />)}
@@ -121,7 +129,7 @@ export default function ApplicationDetail() {
             {list.ezvisa.map((i) => <CheckRow key={i.req.id} i={i} busy={false} canUpload={false} onPress={i.doc ? () => open(i.doc!.storage_path) : undefined} />)}
           </ListGroup>
         )}
-      </>) : <View style={{ marginHorizontal: S.lg, marginBottom: S.xl }}><Skeleton h={120} r={20} /></View>}
+      </>) : <View style={{ marginHorizontal: S.lg, marginBottom: S.xl }}><Skeleton h={120} r={R.card} /></View>}
       {!!queue.length && (
         <ListGroup header={t("Uploads")} footer={queue.some((j) => j.state === "queued") ? t("Queued uploads continue automatically when you're online.") : undefined} inset={58}>
           {queue.map((j) => (

@@ -33,7 +33,7 @@ function Card({ children, tone }: { children: React.ReactNode; tone?: "blue" }) 
   return <View style={{ borderRadius: R.card, borderWidth: 1, borderColor: tone === "blue" ? c.tint + "40" : c.separator, backgroundColor: tone === "blue" ? c.tint + "0F" : c.fill2, padding: S.md, gap: S.md }}>{children}</View>;
 }
 function KV({ k, children }: { k: string; children: React.ReactNode }) {
-  return <View style={{ gap: 2 }}><Text variant="caption" tone="secondary" weight="600" style={{ textTransform: "uppercase", letterSpacing: 0.8 }}>{k}</Text>{children}</View>;
+  return <View style={{ gap: S.xxs }}><Text variant="caption" tone="secondary" weight="600" style={{ textTransform: "uppercase", letterSpacing: 0.8 }}>{k}</Text>{children}</View>;
 }
 const V = ({ children }: { children: React.ReactNode }) => <Text variant="subhead" weight="500">{children}</Text>;
 const Sub = ({ children, red }: { children: React.ReactNode; red?: boolean }) => <Text variant="footnote" tone={red ? "red" : "secondary"}>{children}</Text>;
@@ -45,7 +45,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
     <View style={{ gap: S.lg }}>
       <View>
         <Text variant="headline">Review your Application Details</Text>
-        <Text variant="footnote" tone="secondary" style={{ marginTop: 2 }}>Verify your information before completing payment.</Text>
+        <Text variant="footnote" tone="secondary" style={{ marginTop: S.xxs }}>Verify your information before completing payment.</Text>
       </View>
       {incomplete.length > 0 && (
         <Note tone="red" icon="exclamationmark.circle.fill">
@@ -61,23 +61,23 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
       )}
       <Card tone="blue">
         <View style={{ flexDirection: "row", gap: S.sm, alignItems: "center" }}>
-          <View style={{ width: 40, height: 40, borderRadius: 14, backgroundColor: c.tintFill, alignItems: "center", justifyContent: "center" }}><Icon name="sparkles" size={20} color="#fff" /></View>
+          <View style={{ width: 40, height: 40, borderRadius: R.lg, backgroundColor: c.tintFill, alignItems: "center", justifyContent: "center" }}><Icon name="sparkles" size={20} color="#fff" /></View>
           <View style={{ flex: 1 }}>
             <Text variant="footnote" weight="700" style={{ textTransform: "uppercase", letterSpacing: 0.6 }}>Pre-Flight File Readiness Score</Text>
             <Text variant="caption" tone="secondary">Automated procedural audit based on official Schengen consular criteria</Text>
           </View>
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderRadius: 999, borderWidth: 1, borderColor: c.separator, backgroundColor: c.bg, paddingHorizontal: S.sm, paddingVertical: 6 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs, alignSelf: "flex-start", borderRadius: R.round, borderWidth: 1, borderColor: c.separator, backgroundColor: c.bg, paddingHorizontal: S.sm, paddingVertical: S.xs }}>
           <Icon name="shield.checkered" size={14} color={c.green} />
           <Text variant="caption" weight="700">{r.score}/100 Readiness</Text>
         </View>
-        <View style={{ height: 8, borderRadius: 4, backgroundColor: c.fill, overflow: "hidden" }} accessible accessibilityLabel={`Readiness ${r.score} of 100`}>
-          <View style={{ height: 8, width: `${r.score}%`, borderRadius: 4, backgroundColor: c.green }} />
+        <View style={{ height: 8, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }} accessible accessibilityLabel={`Readiness ${r.score} of 100`}>
+          <View style={{ height: 8, width: `${r.score}%`, borderRadius: R.xs, backgroundColor: c.green }} />
         </View>
         <View style={{ gap: S.xs }}>
           {r.checks.map((x, i) => (
             <View key={i} style={{ flexDirection: "row", gap: S.xs, alignItems: "flex-start" }}>
-              <Icon name={x.passed ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"} size={15} color={x.passed ? c.green : c.orange} style={{ marginTop: 1 }} />
+              <Icon name={x.passed ? "checkmark.circle.fill" : "exclamationmark.triangle.fill"} size={15} color={x.passed ? c.green : c.orange} style={{ marginTop: S.none }} />
               <Text variant="footnote" style={{ flex: 1 }} color={x.passed ? c.label : c.orange} weight={x.passed ? "400" : "500"}>{x.label}</Text>
             </View>
           ))}
@@ -109,7 +109,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
       </Card>
       <Card tone="blue">
         <View style={{ flexDirection: "row", gap: S.sm, alignItems: "center" }}>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.tint + "22", alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={18} color={c.tint} /></View>
+          <View style={{ width: 36, height: 36, borderRadius: R.xl, backgroundColor: c.tint + "22", alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={18} color={c.tint} /></View>
           <View style={{ flex: 1 }}>
             <Text variant="footnote" weight="700">Post-Payment Document Upload</Text>
             <Text variant="caption" tone="secondary">Upload your files after checkout in the app or via WhatsApp</Text>
@@ -138,7 +138,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
         ))}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderBottomColor: c.separator, paddingBottom: S.sm }}>
           <Text variant="caption" tone="secondary" weight="500" style={{ textTransform: "uppercase", letterSpacing: 0.8 }}>Documents</Text>
-          <View style={{ borderRadius: 999, borderWidth: 1, borderColor: c.orange + "55", backgroundColor: c.orange + "18", paddingHorizontal: S.sm, paddingVertical: 4 }}><Text variant="caption" weight="600" color={c.orange}>Upload Later</Text></View>
+          <View style={{ borderRadius: R.round, borderWidth: 1, borderColor: c.orange + "55", backgroundColor: c.orange + "18", paddingHorizontal: S.sm, paddingVertical: S.xxs }}><Text variant="caption" weight="600" color={c.orange}>Upload Later</Text></View>
         </View>
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <Text variant="caption" tone="secondary" weight="600" style={{ textTransform: "uppercase", letterSpacing: 0.8 }}>Embassy Fees</Text>
@@ -160,7 +160,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
         <View testID="review-signin">
           <Note tone="blue" icon="person.crop.circle">
             <Text variant="subhead" weight="600">Sign in to submit</Text>
-            <Text variant="footnote" tone="secondary" style={{ marginTop: 2 }}>Your answers stay saved on this phone while you sign in.</Text>
+            <Text variant="footnote" tone="secondary" style={{ marginTop: S.xxs }}>Your answers stay saved on this phone while you sign in.</Text>
             <View style={{ marginTop: S.sm }}><Button title="Sign in" size="M" onPress={onSignIn} /></View>
           </Note>
         </View>

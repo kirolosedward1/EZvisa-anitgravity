@@ -1,6 +1,7 @@
+import { PressScale } from "./ui";
 import { Pressable, Text, View, ActivityIndicator } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { useIsDark, T } from "../lib/theme";
+import { useIsDark, T, S, R } from "../lib/theme";
 
 // Follows Google's sign-in branding: white (light) / #131314 (dark) button, multicolour "G", Roboto-like medium label.
 function G() {
@@ -17,14 +18,14 @@ function G() {
 export function GoogleButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
   const dark = useIsDark();
   return (
-    <Pressable onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel="Continue with Google"
-      style={({ pressed }) => ({ minHeight: 56, borderRadius: 999, borderWidth: dark ? 1 : 0, borderColor: "#8E918F", backgroundColor: dark ? "#131314" : "#F2F2F2", alignItems: "center", justifyContent: "center", opacity: pressed ? 0.85 : 1 })}>
+    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel="Continue with Google"
+      style={({ pressed }) => ({ minHeight: 56, borderRadius: R.round, borderWidth: dark ? 1 : 0, borderColor: "#8E918F", backgroundColor: dark ? "#131314" : "#F2F2F2", alignItems: "center", justifyContent: "center", opacity: pressed ? 0.85 : 1 })}>
       {loading ? <ActivityIndicator color={dark ? "#E3E3E3" : "#1F1F1F"} /> : (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
           <G />
           <Text style={[T.headline, { color: dark ? "#E3E3E3" : "#1F1F1F", fontWeight: "500" }]}>Continue with Google</Text>
         </View>
       )}
-    </Pressable>
+    </PressScale>
   );
 }

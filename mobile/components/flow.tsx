@@ -11,12 +11,12 @@ export function FlowProgress({ value }: { value: number }) {
   const c = useColors(); const w = useSharedValue(value);
   useEffect(() => { w.value = withTiming(value, { duration: 320, easing: Easing.out(Easing.cubic) }); }, [value]);
   const a = useAnimatedStyle(() => ({ width: `${Math.max(0.04, w.value) * 100}%` as any }));
-  return <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }} style={{ height: 4, borderRadius: 2, backgroundColor: c.card, overflow: "hidden" }}><Animated.View style={[{ height: 4, borderRadius: 2, backgroundColor: c.tint }, a]} /></View>;
+  return <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }} style={{ height: 4, borderRadius: R.xs, backgroundColor: c.card, overflow: "hidden" }}><Animated.View style={[{ height: 4, borderRadius: R.xs, backgroundColor: c.tint }, a]} /></View>;
 }
 
 export function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const c = useColors();
-  return <Pressable onPress={() => { select(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={15} color={c.label} weight="bold" /></Pressable>;
+  return <PressScale onPress={() => { select(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={{ width: 44, height: 44, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={15} color={c.label} weight="bold" /></PressScale>;
 }
 
 /** Full-width selectable row with a leading icon or flag. */
@@ -58,20 +58,20 @@ export function DateCard({ label, value, onChange, min, max, error, icon }: { la
   const now = new Date();
   const current = parse(value) ?? (max && max < now ? max : min && min > now ? min : now);
   const head = (
-    <View style={{ flex: 1, gap: 2 }}>
+    <View style={{ flex: 1, gap: S.xxs }}>
       <Text variant="footnote" tone={error ? "red" : "secondary"} weight="500">{error ?? label}</Text>
       {Platform.OS !== "ios" && <Text variant="title3" color={value ? undefined : c.tertiaryLabel}>{value ? fmtDate(value) : "Select date"}</Text>}
     </View>
   );
   return (
-    <Pressable onPress={() => { if (Platform.OS === "android") { select(); setOpen(true); } }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmtDate(value) : "not set"}`}
+    <PressScale onPress={() => { if (Platform.OS === "android") { select(); setOpen(true); } }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmtDate(value) : "not set"}`}
       style={[{ minHeight: 84, borderRadius: R.card, backgroundColor: c.card, paddingHorizontal: S.lg, paddingVertical: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }, curve]}>
       {!!icon && <Icon name={icon} size={22} color={c.tint} />}
       {head}
       {Platform.OS === "ios" && !value && (
-        <Pressable onPress={() => { select(); onChange(iso(current)); }} accessibilityRole="button" accessibilityLabel={`Select ${label}`} style={{ paddingHorizontal: S.sm, minHeight: 44, borderRadius: 10, backgroundColor: c.surface2, justifyContent: "center" }}>
+        <PressScale onPress={() => { select(); onChange(iso(current)); }} accessibilityRole="button" accessibilityLabel={`Select ${label}`} style={{ paddingHorizontal: S.sm, minHeight: 44, borderRadius: R.md, backgroundColor: c.surface2, justifyContent: "center" }}>
           <Text variant="body" color={c.tint}>Select</Text>
-        </Pressable>
+        </PressScale>
       )}
       {Platform.OS === "ios" && !!value && <DateTimePicker value={current} mode="date" display="compact" minimumDate={min} maximumDate={max} accentColor={c.tint} themeVariant={dark ? "dark" : "light"} onChange={(_, d) => d && onChange(iso(d))} />}
       {Platform.OS === "web" && (
@@ -80,7 +80,7 @@ export function DateCard({ label, value, onChange, min, max, error, icon }: { la
           style={{ position: "absolute", inset: 0, opacity: 0, border: "none", background: "transparent", width: "100%", height: "100%", cursor: "pointer", colorScheme: dark ? "dark" : "light" }} />
       )}
       {Platform.OS === "android" && open && <DateTimePicker value={current} mode="date" minimumDate={min} maximumDate={max} onChange={(e, d) => { setOpen(false); if (e.type === "set" && d) onChange(iso(d)); }} />}
-    </Pressable>
+    </PressScale>
   );
 }
 
@@ -88,7 +88,7 @@ export function DateCard({ label, value, onChange, min, max, error, icon }: { la
 export function StepProgress({ count, index, fraction }: { count: number; index: number; fraction: number }) {
   const c = useColors();
   return (
-    <View accessibilityRole="progressbar" accessibilityLabel={`Step ${index + 1} of ${count}`} style={{ flexDirection: "row", gap: 6 }}>
+    <View accessibilityRole="progressbar" accessibilityLabel={`Step ${index + 1} of ${count}`} style={{ flexDirection: "row", gap: S.xs }}>
       {Array.from({ length: count }, (_, i) => (
         <View key={i} style={{ flex: 1 }}><FlowProgress value={i < index ? 1 : i > index ? 0.0001 : Math.max(0.08, fraction)} /></View>
       ))}
@@ -97,7 +97,7 @@ export function StepProgress({ count, index, fraction }: { count: number; index:
 }
 
 export function QLabel({ children, first }: { children: string; first?: boolean }) {
-  return <Text variant="headline" style={{ marginTop: first ? 0 : S.lg, marginBottom: 2, marginHorizontal: 2 }}>{children}</Text>;
+  return <Text variant="headline" style={{ marginTop: first ? 0 : S.lg, marginBottom: S.xxs, marginHorizontal: S.xxs }}>{children}</Text>;
 }
 
 /** Yes / No pair (the web's toggle buttons). */
@@ -138,7 +138,7 @@ export function Area({ value, onChangeText, placeholder }: { value: string; onCh
 export function Tip({ children }: { children: string }) {
   const c = useColors();
   return (
-    <View style={{ flexDirection: "row", gap: S.xs, alignItems: "flex-start", marginHorizontal: 2, marginTop: 2 }} accessible accessibilityLabel={`Tip: ${children}`}>
+    <View style={{ flexDirection: "row", gap: S.xs, alignItems: "flex-start", marginHorizontal: S.xxs, marginTop: S.xxs }} accessible accessibilityLabel={`Tip: ${children}`}>
       <Icon name="lightbulb.fill" size={14} color={c.orange} />
       <Text variant="footnote" tone="secondary" style={{ flex: 1 }}>{children}</Text>
     </View>

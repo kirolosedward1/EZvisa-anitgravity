@@ -1,3 +1,4 @@
+import { PressScale } from "./ui";
 import { Image, Pressable, ScrollView, View, useWindowDimensions, Platform } from "react-native";
 import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -29,7 +30,7 @@ export default function CountryDetail() {
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView contentContainerStyle={{ paddingBottom: S.xl }} showsVerticalScrollIndicator={false}>
         <Image source={PHOTOS[slug!]} style={{ width: "100%", height: heroH, backgroundColor: c.card }} resizeMode="cover" accessibilityIgnoresInvertColors />
-        <View style={[{ marginTop: -32, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: c.bg, paddingHorizontal: S.lg, paddingTop: S.xl }, curve]}>
+        <View style={[{ marginTop: -S.xxl, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: c.bg, paddingHorizontal: S.lg, paddingTop: S.xl }, curve]}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}>
             <Flag country={name} size={56} />
             <View style={{ flex: 1 }}>
@@ -39,7 +40,7 @@ export default function CountryDetail() {
           </View>
           <View style={{ flexDirection: "row", gap: S.sm, marginTop: S.xl }}>
             {FACTS.map(([v, l]) => (
-              <View key={l} style={[{ flex: 1, borderRadius: R.tile, backgroundColor: c.card, paddingVertical: S.md, paddingHorizontal: S.sm, alignItems: "center", gap: 2 }, curve]} accessible accessibilityLabel={`${v} ${l}`}>
+              <View key={l} style={[{ flex: 1, borderRadius: R.tile, backgroundColor: c.card, paddingVertical: S.md, paddingHorizontal: S.sm, alignItems: "center", gap: S.xxs }, curve]} accessible accessibilityLabel={`${v} ${l}`}>
                 <Text variant="title2" tabular numberOfLines={1} adjustsFontSizeToFit>{v}</Text>
                 <Text variant="footnote" tone="secondary">{l}</Text>
               </View>
@@ -48,17 +49,17 @@ export default function CountryDetail() {
           <Text variant="title3" style={{ marginTop: S.xxl, marginBottom: S.xs }} accessibilityRole="header">What you'll need</Text>
           {DOCS.map(([i, d]) => (
             <View key={d} style={{ flexDirection: "row", alignItems: "center", gap: S.md, minHeight: 52 }}>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={i} size={16} color={c.tint} /></View>
+              <View style={{ width: 36, height: 36, borderRadius: R.xl, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={i} size={16} color={c.tint} /></View>
               <Text variant="body">{d}</Text>
             </View>
           ))}
         </View>
       </ScrollView>
-      <Pressable onPress={back} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8}
-        style={{ position: "absolute", top: insets.top + S.xs, left: S.md, width: 44, height: 44, borderRadius: 22, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
+      <PressScale onPress={back} accessibilityRole="button" accessibilityLabel="Back" hitSlop={8}
+        style={{ position: "absolute", top: insets.top + S.xs, left: S.md, width: 44, height: 44, borderRadius: R.round, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
         <BlurView intensity={50} tint={dark ? "dark" : "light"} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: Platform.OS === "android" ? c.glassTint : undefined }} />
         <Icon name="chevron.left" size={16} color={c.label} weight="bold" />
-      </Pressable>
+      </PressScale>
       <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.lg), backgroundColor: c.bg }}>
         <Button title={`Apply for ${name}`} onPress={() => router.push({ pathname: "/apply", params: { step: "personal", to: name } })} />
       </View>

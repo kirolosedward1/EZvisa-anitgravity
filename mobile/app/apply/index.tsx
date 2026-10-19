@@ -1,3 +1,4 @@
+import { PressScale } from "../../components/ui";
 // Application wizard, one question per screen. The questions, labels, options, order and validation come from the
 // website wizard (lib/questions.ts on top of lib/wizard.ts), so the data stays identical to www.ezvisa.net/apply.
 // Choices and Yes / No auto-advance with haptics; questions that don't apply are skipped; every answer is autosaved
@@ -5,15 +6,16 @@
 // come straight back. Links keep the website's params: /apply?step=<slug>&from=<nationality>&to=<destination>.
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
-import Animated, { FadeIn, FadeOut, SlideInRight, SlideInLeft, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, Easing } from "react-native-reanimated";
+import Animated, { FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
+import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
-import { Button, Text, Icon, SuccessCheck, InlineError, Flag } from "../../components/ui";
+import { Button, Text, Icon, SuccessCheck, InlineError, Flag, Shake } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
 import { PhoneField } from "../../components/CountryPicker";
 import { Checkbox, Note } from "../../components/wizard/fields";
 import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries, useFmtDate } from "../../components/wizard/answers";
-import { useColors, S, R, T, curve } from "../../lib/theme";
+import { useColors, S, R, T, curve, SPRING } from "../../lib/theme";
 import { fromSlug } from "../../lib/countries";
 import { useForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
@@ -38,7 +40,7 @@ function Progress({ f, page }: { f: WizardForm; page: string }) {
   const p = progressOf(f, page); const cur = p.segs[p.stepIndex];
   return (
     <View accessible accessibilityRole="progressbar" accessibilityLabel={t("{step}, step {i} of {n}", { step: t(STEP_TITLES[p.curStep].title), i: p.stepIndex + 1, n: p.steps.length })} style={{ gap: S.xs }}>
-      <View style={{ flexDirection: "row", gap: 4 }}>{p.segs.map((s) => <Seg key={s.step} fill={s.fill} />)}</View>
+      <View style={{ flexDirection: "row", gap: S.xxs }}>{p.segs.map((s) => <Seg key={s.step} fill={s.fill} />)}</View>
       <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
         <Text variant="caption" weight="600" tone="secondary">{t(STEP_TITLES[p.curStep].title)}</Text>
         {p.curStep !== "payment" && cur && <Text variant="caption" tone="secondary" tabular>{t("{i} of {n}", { i: cur.index, n: cur.count })}</Text>}
@@ -47,10 +49,10 @@ function Progress({ f, page }: { f: WizardForm; page: string }) {
   );
 }
 function Seg({ fill }: { fill: number }) {
-  const c = useColors(); const w = useSharedValue(fill);
-  useEffect(() => { w.value = withTiming(fill, { duration: 280, easing: Easing.out(Easing.cubic) }); }, [fill]);
+  const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
+  useEffect(() => { w.value = reduce ? fill : withSpring(fill, SPRING.enter); }, [fill, reduce]);
   const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
-  return <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: 4, borderRadius: 2, backgroundColor: c.tintFill }, a]} /></View>;
+  return <View style={{ flex: 1, height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
 }
 
 export default function Apply() {
@@ -59,7 +61,7 @@ export default function Apply() {
   const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, cloudSavedAt, flushDraft } = useForm();
   const { session } = useAuth();
   const [dir, setDir] = useState(1);
-  const [showErr, setShowErr] = useState(false);
+  const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
   const [editing, setEditing] = useState<Set<string> | null>(null); // came from Review: question ids that applied at that moment
   const [resumeAsk, setResumeAsk] = useState(false);
   const [allMode, setAllMode] = useState(false); // nationality: "Other nationality" opened the full visa-required list
@@ -136,7 +138,7 @@ export default function Apply() {
   const advance = (nf: WizardForm = fRef.current) => {
     if (!q) return;
     const e = firstError(q, nf);
-    if (e) { hError(); setShowErr(true); AccessibilityInfo.announceForAccessibility(t(e)); return; }
+    if (e) { hError(); setShowErr(true); setErrTick((n) => n + 1); AccessibilityInfo.announceForAccessibility(t(e)); return; }
     tap();
     const list = activeQuestions(nf);
     if (editing) {
@@ -214,7 +216,7 @@ export default function Apply() {
     </View>
   );
 
-  const entering = reduce ? FadeIn.duration(120) : (dir > 0) !== isRTL ? SlideInRight.duration(240).easing(Easing.out(Easing.cubic)) : SlideInLeft.duration(240).easing(Easing.out(Easing.cubic));
+  const entering = slideIn(dir, isRTL, reduce);
   const saved = !!savedAt && hasAnswers(f);
   const header = (
     <View style={{ paddingTop: top, paddingHorizontal: S.lg, gap: S.md, paddingBottom: S.sm }}>
@@ -238,7 +240,7 @@ export default function Apply() {
         {header}
         <ScrollView contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.lg }}>
           <Animated.View entering={entering} style={{ gap: S.lg }}>
-            <View style={{ gap: 4 }}>
+            <View style={{ gap: S.xxs }}>
               <Text ref={titleRef} variant="largeTitle" accessibilityRole="header">{t("Review")}</Text>
               <Text variant="subhead" tone="secondary">{t("Tap an answer to change it.")}</Text>
             </View>
@@ -250,16 +252,16 @@ export default function Apply() {
                   {g.qs.map((x, i) => {
                     const e = firstError(x, f); const v = displayValue(x, f, t, fmt);
                     return (
-                      <Pressable key={x.id} onPress={() => edit(x.id)} accessibilityRole="button" accessibilityLabel={`${t(x.label)}: ${v || (e ? t("Missing") : t("Not answered"))}`} accessibilityHint={t("Edit")} testID={`review-${x.id}`}
+                      <PressScale key={x.id} onPress={() => edit(x.id)} accessibilityRole="button" accessibilityLabel={`${t(x.label)}: ${v || (e ? t("Missing") : t("Not answered"))}`} accessibilityHint={t("Edit")} testID={`review-${x.id}`}
                         style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 56, opacity: pressed ? 0.6 : 1,
                           borderTopWidth: i ? 1 : 0, borderTopColor: c.separator })}>
-                        <View style={{ flex: 1, gap: 2 }}>
+                        <View style={{ flex: 1, gap: S.xxs }}>
                           <Text variant="footnote" tone="secondary">{t(x.label)}</Text>
                           {e ? <Text variant="subhead" tone="red" weight="500">{t("Missing")}</Text>
                             : <Text variant="body" weight="500">{v || t("Not answered")}</Text>}
                         </View>
                         <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" /></View>
-                      </Pressable>
+                      </PressScale>
                     );
                   })}
                 </View>
@@ -295,13 +297,13 @@ export default function Apply() {
     <View style={{ gap: S.xs }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
         {q.id !== "destination" && step === "personal" && !!f.destination && q.kind !== "country" && <Flag country={f.destination} size={18} />}
-        {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: 2, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
+        {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
       </View>
       <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(q.label)}</Text>
       {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
   );
-  const errBox = e ? <View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View> : null;
+  const errBox = e ? <Shake on={`${e}|${errTick}`}><View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View></Shake> : null;
   const noteBox = note ? <Note tone={note.tone}>{t(note.text)}</Note> : null;
   const tp = q.text ?? {};
   const body = (() => {

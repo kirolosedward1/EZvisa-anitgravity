@@ -1,7 +1,8 @@
+import { PressScale } from "./ui";
 import { useState } from "react";
 import { Platform, Pressable, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useColors, useIsDark, T, S } from "../lib/theme";
+import { useColors, useIsDark, T, S, R } from "../lib/theme";
 import { IconTile, IconName, Text } from "./ui";
 import { select } from "../lib/haptics";
 
@@ -27,19 +28,19 @@ export function DateRow({ label, value, onChange, min, max, icon, error }: { lab
       {lead}{title}
       {/* @ts-ignore react-native-web renders a DOM input */}
       <input type="date" value={value} min={min ? iso(min) : undefined} max={max ? iso(max) : undefined} onChange={(e: any) => onChange(e.target.value)} aria-label={label}
-        style={{ border: "none", background: c.fill, color: c.label, borderRadius: 8, padding: "6px 10px", fontSize: 15, fontFamily: "inherit", colorScheme: dark ? "dark" : "light" }} />
+        style={{ border: "none", background: c.fill, color: c.label, borderRadius: R.sm, padding: `${S.xs}px ${S.sm}px`, fontSize: T.subhead.fontSize, fontFamily: "inherit", colorScheme: dark ? "dark" : "light" }} />
     </View>
   );
   return (
     <View>
-      <Pressable onPress={() => { select(); setOpen(!open); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmt(value) : "not set"}`} style={row}>
+      <PressScale onPress={() => { select(); setOpen(!open); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmt(value) : "not set"}`} style={row}>
         {lead}{title}
         {Platform.OS === "ios" ? (
           <DateTimePicker value={current} mode="date" display="compact" minimumDate={min} maximumDate={max} accentColor={c.tint} themeVariant={dark ? "dark" : "light"} onChange={(_, d) => d && onChange(iso(d))} />
         ) : (
           <Text variant="body" color={value ? c.tint : c.tertiaryLabel} style={T.body}>{value ? fmt(value) : "Select"}</Text>
         )}
-      </Pressable>
+      </PressScale>
       {Platform.OS === "android" && open && (
         <DateTimePicker value={current} mode="date" minimumDate={min} maximumDate={max} onChange={(e, d) => { setOpen(false); if (e.type === "set" && d) onChange(iso(d)); }} />
       )}

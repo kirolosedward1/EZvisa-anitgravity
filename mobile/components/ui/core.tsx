@@ -4,7 +4,9 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, wit
 import { SymbolView, SFSymbol } from "expo-symbols";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors, useIsDark, T, S, R, curve, elevation, SPRING, TAB_BAR_HEIGHT } from "../../lib/theme";
+import { useColors, useIsDark, T, S, R, HIT, ICON, curve, elevation, card, SPRING, PRESS, DUR, TAB_BAR_HEIGHT, type Level } from "../../lib/theme";
+import { LinearGradient } from "expo-linear-gradient";
+import { useShake } from "../../lib/motion";
 import { tap, select } from "../../lib/haptics";
 import { Text } from "./Text";
 
@@ -19,11 +21,12 @@ export function Icon({ name, size = 17, color, weight, style }: { name: IconName
 export function useTabInset(extra = S.xl) { const i = useSafeAreaInsets(); return Math.max(i.bottom, 12) + TAB_BAR_HEIGHT + extra; }
 
 const APressable = Animated.createAnimatedComponent(Pressable);
-/** Pressable with spring scale feedback (respects Reduce Motion). */
-export function PressScale({ scaleTo = 0.97, style, children, onPressIn, onPressOut, ...p }: PressableProps & { scaleTo?: number; style?: StyleProp<ViewStyle>; children?: React.ReactNode }) {
-  const reduce = useReducedMotion(); const s = useSharedValue(1);
-  const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
-  return <APressable {...p} onPressIn={(e) => { if (!reduce) s.value = withSpring(scaleTo, SPRING.press); onPressIn?.(e); }} onPressOut={(e) => { s.value = withSpring(1, SPRING.press); onPressOut?.(e); }} style={[style, a]}>{children}</APressable>;
+/** The one pressed state: spring scale to 0.97 + dim (and an optional 1pt lift for cards). Reduce Motion: dim only. */
+export function PressScale({ scaleTo = PRESS.scale, lift, style: style0, children, onPressIn, onPressOut, ...p }: Omit<PressableProps, "style"> & { scaleTo?: number; lift?: boolean; style?: StyleProp<ViewStyle> | ((s: { pressed: boolean }) => StyleProp<ViewStyle>); children?: React.ReactNode }) {
+  const style = typeof style0 === "function" ? style0({ pressed: false }) : style0; // feedback comes from the shared press animation
+  const reduce = useReducedMotion(); const s = useSharedValue(0);
+  const a = useAnimatedStyle(() => ({ opacity: 1 - (1 - PRESS.dim) * s.value, transform: reduce ? [] : [{ scale: 1 - (1 - scaleTo) * s.value }, { translateY: lift ? PRESS.lift * s.value : 0 }] }));
+  return <APressable {...p} onPressIn={(e) => { s.value = withSpring(1, SPRING.press); onPressIn?.(e); }} onPressOut={(e) => { s.value = withSpring(0, SPRING.press); onPressOut?.(e); }} style={[style, a]}>{children}</APressable>;
 }
 
 export function Button({ title, onPress, variant = "primary", size = "L", loading, disabled, icon, color, a11yLabel }: { title: string; onPress: () => void; variant?: "primary" | "secondary" | "plain" | "destructive"; size?: "L" | "M"; loading?: boolean; disabled?: boolean; icon?: IconName; color?: string; a11yLabel?: string }) {
@@ -33,10 +36,10 @@ export function Button({ title, onPress, variant = "primary", size = "L", loadin
   const off = disabled || loading;
   return (
     <PressScale onPress={() => { tap(); onPress(); }} disabled={off} accessibilityRole="button" accessibilityLabel={a11yLabel ?? title} accessibilityState={{ disabled: !!disabled, busy: !!loading }}
-      style={[{ minHeight: size === "L" ? 56 : 44, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: bg, opacity: disabled ? 0.4 : 1 }, curve]}>
+      style={[{ minHeight: size === "L" ? 56 : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: bg, opacity: disabled ? 0.4 : 1 }, curve, variant === "primary" && !off && elevation(1, false)]}>
       {loading ? <ActivityIndicator color={fg} /> : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
-          {!!icon && <Icon name={icon} size={17} color={fg} weight="semibold" />}
+          {!!icon && <Icon name={icon} size={ICON.md} color={fg} weight="semibold" />}
           <Text variant="headline" color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>
         </View>
       )}
@@ -44,16 +47,17 @@ export function Button({ title, onPress, variant = "primary", size = "L", loadin
   );
 }
 
-export function Surface({ children, style, level = 1 }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; level?: 0 | 1 | 2 }) {
+/** Card surface from the tokens: E0 = grouped list background (no shadow, safe in long lists), E1+ = raised card with hairline + layered shadow. */
+export function Surface({ children, style, level = 1 }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; level?: Level }) {
   const c = useColors(); const dark = useIsDark();
-  return <View style={[{ backgroundColor: c.card, borderRadius: R.card }, curve, elevation(level, dark), style]}>{children}</View>;
+  return <View style={[card(c, dark, level), style]}>{children}</View>;
 }
 
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginHorizontal: S.lg, marginBottom: S.sm, minHeight: 25 }}>
-      <Text variant="title3" accessibilityRole="header">{title}</Text>
-      {!!action && <Pressable onPress={() => { tap(); onAction?.(); }} hitSlop={12} accessibilityRole="button"><Text variant="subhead" tone="secondary" weight="500">{action}</Text></Pressable>}
+    <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginHorizontal: S.lg, marginBottom: S.sm, minHeight: S.xl }}>
+      <Text variant="title3" accessibilityRole="header" style={{ flexShrink: 1 }}>{title}</Text>
+      {!!action && <PressScale onPress={() => { tap(); onAction?.(); }} hitSlop={12} accessibilityRole="button"><Text variant="subhead" tone="secondary" weight="600">{action}</Text></PressScale>}
     </View>
   );
 }
@@ -76,24 +80,26 @@ export function ListGroup({ header, footer, action, onAction, children, inset = 
   );
 }
 
-export function IconTile({ name, color, size = 30 }: { name: IconName; color: string; size?: number }) {
-  return <View style={[{ width: size, height: size, borderRadius: 8, backgroundColor: color, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={size * 0.55} color="#fff" weight="semibold" /></View>;
+/** Neutral icon tile (restrained palette): neutral fill, label-coloured symbol. Only destructive red and brand WhatsApp keep their colour. */
+export function IconTile({ name, color, size = 32 }: { name: IconName; color: string; size?: number }) {
+  const c = useColors(); const keep = color === c.red || color === c.whatsapp;
+  return <View style={[{ width: size, height: size, borderRadius: R.sm, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={ICON.md} color={keep ? color : c.label} weight="medium" /></View>;
 }
 
 export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPress, chevron = !!onPress, trailing, destructive, tint, bold, a11yLabel, a11yHint, minHeight = 44 }: { title: string; subtitle?: string; leading?: React.ReactNode; icon?: IconName; iconColor?: string; value?: string; onPress?: () => void; chevron?: boolean; trailing?: React.ReactNode; destructive?: boolean; tint?: boolean; bold?: boolean; a11yLabel?: string; a11yHint?: string; minHeight?: number }) {
   const c = useColors();
   return (
-    <Pressable onPress={onPress ? () => { tap(); onPress(); } : undefined} disabled={!onPress} accessibilityRole={onPress ? "button" : "text"} accessibilityLabel={a11yLabel ?? [title, subtitle, value].filter(Boolean).join(", ")} accessibilityHint={a11yHint}
-      style={({ pressed }) => ({ minHeight: subtitle ? Math.max(minHeight, 60) : Math.max(minHeight, 44), paddingHorizontal: S.md, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: S.sm, backgroundColor: pressed ? c.fill2 : "transparent" })}>
+    <PressScale onPress={onPress ? () => { tap(); onPress(); } : undefined} disabled={!onPress} scaleTo={onPress ? PRESS.scale : 1} accessibilityRole={onPress ? "button" : "text"} accessibilityLabel={a11yLabel ?? [title, subtitle, value].filter(Boolean).join(", ")} accessibilityHint={a11yHint}
+      style={{ minHeight: subtitle ? Math.max(minHeight, 64) : Math.max(minHeight, 52), paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm }}>
       {leading ?? (icon ? <IconTile name={icon} color={iconColor ?? c.tint} /> : null)}
       <View style={{ flex: 1, minWidth: 80 }}>
         <Text variant={bold ? "headline" : "body"} color={destructive ? c.red : tint ? c.tint : undefined} numberOfLines={1}>{title}</Text>
-        {!!subtitle && <Text variant="subhead" tone="secondary" numberOfLines={2} style={{ marginTop: 1 }}>{subtitle}</Text>}
+        {!!subtitle && <Text variant="subhead" tone="secondary" numberOfLines={2}>{subtitle}</Text>}
       </View>
       {!!value && <Text variant="body" tone="secondary" numberOfLines={1} ellipsizeMode="middle" style={{ flexShrink: 1, maxWidth: "60%", textAlign: "right" }} tabular>{value}</Text>}
       {trailing}
-      {chevron && <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />}
-    </Pressable>
+      {chevron && <Icon name="chevron.right" size={ICON.sm} color={c.tertiaryLabel} weight="semibold" />}
+    </PressScale>
   );
 }
 
@@ -113,7 +119,7 @@ export function TextField({ label, error, trailing, ...p }: TextInputProps & { l
 export function FormRow({ label, error, ...p }: TextInputProps & { label: string; error?: string }) {
   const c = useColors();
   return (
-    <View style={{ paddingHorizontal: S.md, paddingVertical: 6, minHeight: 52, justifyContent: "center" }}>
+    <View style={{ paddingHorizontal: S.md, paddingVertical: S.xs, minHeight: 52, justifyContent: "center" }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Text variant="body" color={error ? c.red : undefined} style={{ width: 110 }} numberOfLines={1}>{label}</Text>
         <TextInput placeholderTextColor={c.tertiaryLabel} accessibilityLabel={label} maxFontSizeMultiplier={1.6} {...p}
@@ -127,14 +133,14 @@ export function FormRow({ label, error, ...p }: TextInputProps & { label: string
 export function SegmentedControl({ options, value, onChange, label }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void; label: string }) {
   const c = useColors(); const dark = useIsDark();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[{ flexDirection: "row", backgroundColor: c.fill, borderRadius: 10, padding: 2 }, curve]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[{ flexDirection: "row", backgroundColor: c.fill, borderRadius: R.md, padding: S.xxs }, curve]}>
       {options.map((o) => {
         const on = o.value === value;
         return (
-          <Pressable key={o.value} onPress={() => { select(); onChange(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={o.label}
-            style={[{ flex: 1, minHeight: 44, borderRadius: 8, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 }, on && { backgroundColor: dark ? "#636366" : "#fff", ...elevation(1, false) }]}>
+          <PressScale key={o.value} onPress={() => { select(); onChange(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={o.label}
+            style={[{ flex: 1, minHeight: HIT, borderRadius: R.sm, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xxs }, on && { backgroundColor: dark ? "#636366" : "#fff", ...elevation(1, false) }]}>
             <Text variant="footnote" weight={on ? "600" : "500"} numberOfLines={2} center>{o.label}</Text>
-          </Pressable>
+          </PressScale>
         );
       })}
     </View>
@@ -150,7 +156,7 @@ export function ChipGroup({ options, value, onChange, label }: { options: { valu
         const on = o.value === value;
         return (
           <PressScale key={o.value} onPress={() => { select(); onChange(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={o.label}
-            style={[{ minHeight: 44, paddingHorizontal: 14, borderRadius: R.round, justifyContent: "center", backgroundColor: on ? c.tintFill : c.fill }]}>
+            style={[{ minHeight: HIT, paddingHorizontal: S.md, borderRadius: R.round, justifyContent: "center", backgroundColor: on ? c.accentFill : c.fill }]}>
             <Text variant="subhead" weight="500" color={on ? "#fff" : c.label}>{o.label}</Text>
           </PressScale>
         );
@@ -159,11 +165,17 @@ export function ChipGroup({ options, value, onChange, label }: { options: { valu
   );
 }
 
-export function Skeleton({ w = "100%", h = 16, r = 8, style }: { w?: number | `${number}%`; h?: number; r?: number; style?: StyleProp<ViewStyle> }) {
-  const c = useColors(); const reduce = useReducedMotion(); const o = useSharedValue(0.5);
-  useEffect(() => { if (!reduce) o.value = withRepeat(withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }), -1, true); }, [reduce]);
-  const a = useAnimatedStyle(() => ({ opacity: o.value }));
-  return <Animated.View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: w, height: h, borderRadius: r, backgroundColor: c.fill }, a, style]} />;
+/** Skeleton block with a soft travelling shimmer (static when Reduce Motion is on). Compose these to mirror the real layout. */
+export function Skeleton({ w = "100%", h = 16, r = R.sm, style }: { w?: number | `${number}%`; h?: number; r?: number; style?: StyleProp<ViewStyle> }) {
+  const c = useColors(); const dark = useIsDark(); const reduce = useReducedMotion(); const x = useSharedValue(-1);
+  useEffect(() => { if (!reduce) x.value = withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.quad) }), -1, false); }, [reduce]);
+  const a = useAnimatedStyle(() => ({ transform: [{ translateX: `${x.value * 100}%` as any }] }));
+  const hi = dark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.65)";
+  return (
+    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: w, height: h, borderRadius: r, backgroundColor: c.fill, overflow: "hidden" }, curve, style]}>
+      {!reduce && <Animated.View style={[StyleSheet.absoluteFill, a]}><LinearGradient colors={["transparent", hi, "transparent"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} /></Animated.View>}
+    </View>
+  );
 }
 export function SkeletonRows({ n = 3, leading = 40 }: { n?: number; leading?: number }) {
   return (
@@ -172,7 +184,7 @@ export function SkeletonRows({ n = 3, leading = 40 }: { n?: number; leading?: nu
         {Array.from({ length: n }).map((_, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: S.sm, padding: S.md }}>
             <Skeleton w={leading} h={leading} r={leading / 2} />
-            <View style={{ flex: 1, gap: 6 }}><Skeleton w="55%" h={14} /><Skeleton w="35%" h={12} /></View>
+            <View style={{ flex: 1, gap: S.xs }}><Skeleton w="55%" h={14} /><Skeleton w="35%" h={12} /></View>
           </View>
         ))}
       </View>
@@ -195,16 +207,21 @@ export function EmptyState({ icon, title, message, action }: { icon: IconName; t
 /** Inline error. Android reads it via the live region; iOS VoiceOver gets an explicit announcement (opt out with announce={false}). */
 export function InlineError({ text, announce = true }: { text?: string | null; announce?: boolean }) {
   React.useEffect(() => { if (text && announce && Platform.OS === "ios") AccessibilityInfo.announceForAccessibility(text); }, [text, announce]);
-  return text ? <Text variant="footnote" tone="red" accessibilityLiveRegion="polite" style={{ marginHorizontal: S.lg, marginTop: S.xs }}>{text}</Text> : null;
+  return text ? <Shake on={text}><Text variant="footnote" tone="red" accessibilityLiveRegion="polite" style={{ marginHorizontal: S.lg, marginTop: S.xs }}>{text}</Text></Shake> : null;
+}
+/** Shakes its children horizontally whenever `on` changes to a new truthy value (no motion with Reduce Motion). */
+export function Shake({ on, children, style }: { on: unknown; children: React.ReactNode; style?: StyleProp<ViewStyle> }) {
+  const x = useShake(on); const a = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  return <Animated.View style={[style, a]}>{children}</Animated.View>;
 }
 
 export function HeaderIconButton({ icon, onPress, label, dot }: { icon: IconName; onPress: () => void; label: string; dot?: boolean }) {
   const c = useColors();
   return (
-    <Pressable onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
-      <Icon name={icon} size={17} color={c.label} weight="medium" />
-      {dot && <View style={{ position: "absolute", top: 6, right: 7, width: 9, height: 9, borderRadius: 5, backgroundColor: c.red, borderWidth: 1.5, borderColor: c.bg }} />}
-    </Pressable>
+    <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={{ width: HIT, height: HIT, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
+      <Icon name={icon} size={ICON.md} color={c.label} weight="medium" />
+      {dot && <View style={{ position: "absolute", top: S.xs, right: S.xs, width: 8, height: 8, borderRadius: R.round, backgroundColor: c.red, borderWidth: 1.5, borderColor: c.bg }} />}
+    </PressScale>
   );
 }
 
@@ -214,13 +231,20 @@ export function StickyCTA({ children, bottom }: { children: React.ReactNode; bot
   return <View style={{ paddingHorizontal: S.md, paddingTop: S.sm, paddingBottom: bottom ?? Math.max(i.bottom, S.md), backgroundColor: c.bg, gap: S.xs }}>{children}</View>;
 }
 
-export function ProgressSegments({ count, index, label }: { count: number; index: number; label?: string }) {
+/** Segmented progress; the current segment fills with a spring (instant with Reduce Motion). `fraction` = progress inside the current segment. */
+export function ProgressSegments({ count, index, label, fraction = 1 }: { count: number; index: number; label?: string; fraction?: number }) {
   const c = useColors();
   return (
-    <View accessible accessibilityRole="progressbar" accessibilityLabel={label ?? `Step ${index + 1} of ${count}`} style={{ flexDirection: "row", gap: 6 }}>
-      {Array.from({ length: count }).map((_, i) => <View key={i} style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: i <= index ? c.tint : c.fill }} />)}
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={label ?? `Step ${index + 1} of ${count}`} style={{ flexDirection: "row", gap: S.xxs }}>
+      {Array.from({ length: count }).map((_, i) => <Seg key={i} v={i < index ? 1 : i === index ? Math.max(0.08, fraction) : 0} />)}
     </View>
   );
+}
+function Seg({ v }: { v: number }) {
+  const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(v);
+  useEffect(() => { w.value = reduce ? v : withSpring(v, SPRING.enter); }, [v, reduce]);
+  const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
+  return <View style={{ flex: 1, height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
 }
 
 /** Indeterminate progress bar (Storage uploads don't report progress). */
@@ -228,11 +252,11 @@ export function ProgressBar() {
   const c = useColors(); const x = useSharedValue(0);
   useEffect(() => { x.value = withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.ease) }), -1, false); }, []);
   const a = useAnimatedStyle(() => ({ left: `${x.value * 70}%` as any }));
-  return <View accessibilityRole="progressbar" accessibilityLabel="Uploading" style={{ height: 4, borderRadius: 2, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ position: "absolute", top: 0, bottom: 0, width: "30%", borderRadius: 2, backgroundColor: c.tint }, a]} /></View>;
+  return <View accessibilityRole="progressbar" accessibilityLabel="Uploading" style={{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ position: "absolute", top: 0, bottom: 0, width: "30%", borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
 }
 
 export function Avatar({ name, size = 56 }: { name: string; size?: number }) {
   const c = useColors();
   const ini = name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("") || "?";
-  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.tintFill, alignItems: "center", justifyContent: "center" }} accessibilityElementsHidden><Text variant={size > 48 ? "title3" : "headline"} color="#fff">{ini}</Text></View>;
+  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.fill, borderWidth: 1, borderColor: c.hairline, alignItems: "center", justifyContent: "center" }} accessibilityElementsHidden><Text variant={size > 48 ? "title3" : "headline"}>{ini}</Text></View>;
 }
