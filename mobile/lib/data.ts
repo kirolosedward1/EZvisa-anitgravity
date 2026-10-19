@@ -41,6 +41,8 @@ async function me() {
 }
 export const parseNotes = (s: string | null): Notes => { if (!s) return {}; try { const j = JSON.parse(s); return j && typeof j === "object" ? j : {}; } catch { return { }; } };
 /** Same display reference the website uses (#EZ-XXXXXXXX). The live table has no tracking_token column, so it is derived from the id. */
+/** Paid per the backend (payment_status set by the Ziina webhook). Documents are uploaded only after this. */
+export const isPaid = (a: { payment_status?: string | null }) => a.payment_status === "paid" || a.payment_status === "completed";
 export const referenceOf = (id: string) => `EZ-${id.replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 const slug = (n: string) => n.toLowerCase().replace(/\s+/g, "-");
 
@@ -65,7 +67,10 @@ const REQS: Requirement[] = [
   { id: "req-dossier", document_type: "final_package", title: "Cover letter, itinerary & bookings", description: null, is_mandatory: false, provided_by_ezvisa: true, sort_order: 6, country_id: null },
 ];
 /** The website has no requirements table; this is the website's upload checklist. */
-export async function listRequirements(_countryId?: string | null): Promise<Requirement[]> { return REQS; }
+/** NOC applies only to employees (the wizard asks it only for "employed"); self-employed / other statuses never get it. */
+export async function listRequirements(_countryId?: string | null, employmentStatus?: string | null): Promise<Requirement[]> {
+  return employmentStatus && employmentStatus !== "employed" ? REQS.filter((r) => r.document_type !== "nocCertificate") : REQS;
+}
 
 /** Documents are inferred from the row: uploads recorded by this app (exact type) and the website's has_* flags. */
 function docsOf(r: VisaRow, n: Notes): Doc[] {

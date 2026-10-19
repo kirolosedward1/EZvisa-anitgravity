@@ -122,8 +122,9 @@ export function validatePersonal(f: WizardForm): Errors {
   if (!f.email.trim()) e.email = "Email is required"; else if (!isValidEmail(f.email.trim())) e.email = "Please enter a valid email address. Check for typos in the domain.";
   if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = "Please enter a valid phone number (7-15 digits).";
   if (!f.dateOfBirth) e.dateOfBirth = "Please select your date of birth (must be 18+)"; else if (Date.parse(f.dateOfBirth) > adultMax().getTime()) e.dateOfBirth = "You must be 18 or older";
-  if (!f.passportNumber.trim()) e.passportNumber = "Passport number is required";
   if (!f.hasValidPassport) e.hasValidPassport = "Please choose Yes or No";
+  else if (f.hasValidPassport === "no") e.hasValidPassport = "You need a valid passport (at least 6 months validity from your travel date) before applying.";
+  else if (!f.passportNumber.trim()) e.passportNumber = "Passport number is required";
   if (!f.maritalStatus) e.maritalStatus = "Please select your marital status";
   if (f.maritalStatus === "married" && !f.spouseAccompanying) e.spouseAccompanying = "Please choose Yes or No";
   return e;

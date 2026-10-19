@@ -1,6 +1,8 @@
 // Arabic strings, keyed by the English text (English stays the website's exact wording).
 // Placeholders like {n} are kept as-is. Missing keys fall back to English.
 export const AR: Record<string, string> = {
+  "You need a valid passport (at least 6 months validity from your travel date) before applying.": "تحتاج إلى جواز سفر ساري المفعول (صلاحية 6 أشهر على الأقل من تاريخ السفر) قبل التقديم.",
+  "Documents unlock after payment.": "تُفتح المستندات بعد الدفع.", "Available after payment": "متاح بعد الدفع", "Next step": "الخطوة التالية", "The last payment didn't go through.": "لم تكتمل عملية الدفع الأخيرة.",
   "Resident in {c}": "مقيم في {c}", "{n} questions left": "متبقي {n} سؤال", "Documents you'll need": "المستندات المطلوبة", "Upload after you submit.": "ارفعها بعد الإرسال.", "Prepared by EZvisa": "تعدّه EZvisa",
   "Use details from your last application?": "استخدام بيانات طلبك السابق؟", "Not now": "ليس الآن", "Use": "استخدام", "{step} done": "اكتمل: {step}", "Continue your application": "أكمل طلبك", "Your answers are saved.": "إجاباتك محفوظة.",
   "{n} answers missing": "{n} إجابات ناقصة", "Fix next": "إصلاح التالي", "You're offline. Your answers are saved on this phone.": "أنت غير متصل. إجاباتك محفوظة على هذا الهاتف.", "Use {v}": "استخدام {v}",
@@ -299,7 +301,6 @@ export const AR: Record<string, string> = {
   "Under review": "قيد المراجعة",
   "Replaced": "مستبدل",
   "Home": "الرئيسية", "Countries": "الدول",
-  "Next step": "الخطوة التالية",
   "Continue {x}": "متابعة {x}",
   "application": "الطلب",
   "Saved on this phone": "محفوظ على هذا الهاتف",
@@ -317,7 +318,6 @@ export const AR: Record<string, string> = {
   "This application hasn't been submitted yet.": "لم يتم تقديم هذا الطلب بعد.",
   "We're checking your details. No action needed.": "نحن نتحقق من بياناتك. لا يلزم أي إجراء.",
   "Your file is ready. We'll confirm the appointment.": "ملفك جاهز. سنؤكد الموعد.",
-  "The last payment didn't go through.": "لم تنجح عملية الدفع الأخيرة.",
   "Payment is the next step. Secure checkout by Ziina.": "الدفع هو الخطوة التالية. دفع آمن عبر Ziina.",
   "A document needs to be replaced.": "يجب استبدال أحد المستندات.",
   "Fix now": "إصلاح الآن",

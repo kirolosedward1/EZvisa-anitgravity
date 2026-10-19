@@ -97,7 +97,7 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header, s
  *  `onDraft` reports the date the picker currently shows, so Continue can accept it without an extra tap. */
 export function DateAnswer({ label, value, onChange, min, max, style, placeholder, defaultDate }: { label: string; value: string; onChange: (v: string) => void; min?: string; max?: string; style: "calendar" | "wheel"; placeholder?: string; defaultDate?: string }) {
   const c = useColors(); const dark = useIsDark(); const fmt = useFmtDate(); const { t, lang } = useT();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); const [w, setW] = useState(0);
   const minD = min ? parse(min) : undefined, maxD = max ? parse(max) : undefined;
   const now = new Date();
   const clamp = (d: Date) => (maxD && d > maxD ? maxD : minD && d < minD ? minD : d);
@@ -127,10 +127,18 @@ export function DateAnswer({ label, value, onChange, min, max, style, placeholde
   return (
     <View style={{ gap: S.md }}>
       <Text variant="title2" weight="600" center color={value ? c.label : c.secondaryLabel} accessibilityLiveRegion="polite" testID="date-value">{value ? fmt(value) : t(placeholder ?? "Select date")}</Text>
-      <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden", paddingVertical: style === "wheel" ? S.xs : 0 }, curve]}>
-        <DateTimePicker value={initial} mode="date" display={style === "wheel" ? "spinner" : "inline"} minimumDate={minD} maximumDate={maxD} accentColor={c.tint} themeVariant={dark ? "dark" : "light"}
-          locale={lang === "ar" ? "ar" : undefined} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={style === "wheel" ? { width: "100%", height: 216 } : { width: "100%" }} />
+      {style === "wheel" ? (
+        // UIDatePicker keeps its intrinsic width unless given a number: measure the row and centre the wheel in it (no card).
+        <View onLayout={(ev) => setW(Math.round(ev.nativeEvent.layout.width))} style={{ alignSelf: "stretch", alignItems: "center" }}>
+          {w > 0 && <DateTimePicker key={`${w}-${dark}-${lang}`} value={initial} mode="date" display="spinner" minimumDate={minD} maximumDate={maxD} accentColor={c.tint} textColor={c.label} themeVariant={dark ? "dark" : "light"}
+            locale={lang === "ar" ? "ar" : "en"} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: w, height: 216, alignSelf: "center" }} />}
+        </View>
+      ) : (
+      <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden" }, curve]}>
+        <DateTimePicker value={initial} mode="date" display="inline" minimumDate={minD} maximumDate={maxD} accentColor={c.tint} themeVariant={dark ? "dark" : "light"}
+          locale={lang === "ar" ? "ar" : "en"} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: "100%" }} />
       </View>
+      )}
     </View>
   );
 }

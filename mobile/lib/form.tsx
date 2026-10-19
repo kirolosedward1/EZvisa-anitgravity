@@ -14,7 +14,7 @@ const KEY = "ezvisa.wizard.v1";
 /** Old saves could hold "Other" + free text (or a visa-exempt country from a link). Clear it so the user re-picks from the visa-required list. */
 function cleanNationality(f: WizardForm): WizardForm {
   const { nationalityOther: _drop, ...rest } = f as WizardForm & { nationalityOther?: string };
-  return coerceResidence({ ...(rest as WizardForm), nationality: needsSchengenVisa(rest.nationality) ? rest.nationality : "" });
+  return coerceResidence({ ...(rest as WizardForm), nationality: needsSchengenVisa(rest.nationality) ? rest.nationality : "", ...(rest.hasValidPassport === "no" && { passportNumber: "" }), ...(rest.employmentStatus && rest.employmentStatus !== "employed" && { hasNOC: "" }) });
 }
 type Submitted = { applicationId: string; trackingToken?: string; reference?: string; amount?: number; destination?: string; spouse?: boolean } | null;
 type Ctx = {

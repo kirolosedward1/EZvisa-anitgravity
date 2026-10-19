@@ -26,7 +26,7 @@ import { countdown } from "../../../lib/countdown";
 function Hero({ a }: { a: Application }) {
   const c = useColors(); const dark = useIsDark(); const { t, lang } = useT();
   const [items, setItems] = useState<CheckItem[] | null>(null);
-  useEffect(() => { let on = true; listRequirements(a.country_id).then((r) => on && setItems(buildChecklist(r, a.documents).customer)).catch(() => on && setItems([])); return () => { on = false; }; }, [a]);
+  useEffect(() => { let on = true; listRequirements(a.country_id, (a.notes?.wizard as any)?.employmentStatus).then((r) => on && setItems(buildChecklist(r, a.documents).customer)).catch(() => on && setItems([])); return () => { on = false; }; }, [a]);
   const name = a.countries?.name ?? ""; const idx = journeyIndex(a.status, a.payment_status); const cd = countdown(a.entry_date, a.exit_date, t);
   const n = items ? nextAction(a, items) : null;
   const open = () => router.push(`/applications/${a.id}`);

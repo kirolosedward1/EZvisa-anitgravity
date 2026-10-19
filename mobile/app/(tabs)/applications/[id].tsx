@@ -4,7 +4,7 @@ import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
-import { getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL } from "../../../lib/data";
+import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL } from "../../../lib/data";
 import { enqueueUpload, retryUpload, removeUpload, useUploads } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
@@ -33,7 +33,7 @@ export default function ApplicationDetail() {
     try {
       setErr(null);
       const app = await getApplication(id!); setA(app);
-      listRequirements(app.country_id).then(setReqs).catch(() => setReqs([]));
+      listRequirements(app.country_id, (app.notes?.wizard as any)?.employmentStatus).then(setReqs).catch(() => setReqs([]));
     } catch (e: any) { setErr(e?.message ?? String(e)); }
   }, [id]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -93,7 +93,8 @@ export default function ApplicationDetail() {
   const others = docs.filter((d) => !matched.has(d.id));
   const done = list ? list.customer.filter((i) => !isOpen(i)).length : 0;
   const busyType = (t: string) => queue.some((j) => j.documentType === t && j.state !== "failed");
-  const canUpload = EDITABLE.includes(a.status);
+  const paid = isPaid(a); const locked = a.status !== "draft" && !paid;
+  const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
   return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: S.x3 }}
@@ -108,6 +109,11 @@ export default function ApplicationDetail() {
         </View>
       </View>
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
+      {locked && (
+        <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
+          <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : t("Pay {amount}", { amount: `${Number(a.total_amount).toFixed(0)} ${a.currency}` })} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />
+        </ListGroup>
+      )}
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
         <ListRow title={t("Dates")} value={`${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />
@@ -116,7 +122,9 @@ export default function ApplicationDetail() {
         {a.status !== "cancelled" && <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />}
       </ListGroup>
       <QuickFacts country={name} />
-      {list ? (<>
+      {locked ? (
+        <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
+      ) : list ? (<>
         <ListGroup header={t("Your documents · {i} of {n}", { i: done, n: list.customer.length })} footer={canUpload ? t("PDF or image · max 10 MB. Tap a missing item to upload it.") : undefined} inset={58}>
           <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} accessible accessibilityLabel={`${done} of ${list.customer.length} documents provided`}>
             <View style={{ height: 6, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 6, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
@@ -130,7 +138,7 @@ export default function ApplicationDetail() {
           </ListGroup>
         )}
       </>) : <View style={{ marginHorizontal: S.lg, marginBottom: S.xl }}><Skeleton h={120} r={R.card} /></View>}
-      {!!queue.length && (
+      {!locked && !!queue.length && (
         <ListGroup header={t("Uploads")} footer={queue.some((j) => j.state === "queued") ? t("Queued uploads continue automatically when you're online.") : undefined} inset={58}>
           {queue.map((j) => (
             <View key={j.id}>
@@ -146,16 +154,15 @@ export default function ApplicationDetail() {
           ))}
         </ListGroup>
       )}
-      <ListGroup header={list ? "Other documents" : "Documents"} inset={58}>
+      {!locked && <ListGroup header={list ? t("Other documents") : t("Documents")} inset={58}>
         {others.map((d) => <ListRow key={d.id} icon="doc.fill" iconColor={d.status === "rejected" ? c.red : d.source === "generated" ? c.green : c.tint} title={d.file_name ?? d.document_type}
           subtitle={`${DOC_TYPES.find((t) => t.value === d.document_type)?.label ?? d.document_type} · ${STATUS_LABEL[d.status] ?? d.status}${d.rejection_reason ? ` · ${d.rejection_reason}` : ""}`} onPress={() => open(d.storage_path)} />)}
         {others.length === 0 && !canUpload && <ListRow title={t("No other documents")} />}
         {canUpload && <ListRow icon="plus" iconColor={c.tint} title={t("Add another document")} tint onPress={addDocument} chevron={false} />}
         {picking && <View style={{ padding: S.md }}><ChipGroup label={t("Document type")} options={DOC_TYPES} value="" onChange={pickFile} /></View>}
-      </ListGroup>
+      </ListGroup>}
       <InlineError text={upErr} />
       <ListGroup inset={58}>
-        {a.status !== "draft" && ["pending", "failed", "cancelled", "expired"].includes(a.payment_status ?? "pending") && <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : t("Pay {amount}", { amount: `${Number(a.total_amount).toFixed(0)} ${a.currency}` })} subtitle={t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />}
         {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={`${Number(p.amount).toFixed(0)} ${p.currency}`} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />

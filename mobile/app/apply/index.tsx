@@ -24,7 +24,7 @@ import { useT } from "../../lib/i18n";
 import { PRICE_AED, SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp, startPayment } from "../../lib/api";
 import { submitApplication, listApplications, listRequirements, type Requirement } from "../../lib/data";
-import { RoutePreview, DocsButton, PrefillOffer } from "../../components/wizard/extras";
+import { PrefillOffer } from "../../components/wizard/extras";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
@@ -273,7 +273,6 @@ export default function Apply() {
         <View style={{ flex: 1, alignItems: "center" }}>
           {milestone ? <Text variant="caption" weight="600" color={c.green} testID="milestone">{"✓ " + milestone}</Text> : saved && <Text variant="caption" weight="500" color={c.secondaryLabel} testID="saved-indicator">{cloudSavedAt && session ? t("✓ Saved to your account") : t("✓ Saved on this phone")}</Text>}
         </View>
-        <DocsButton reqs={reqs} />
         <CircleButton icon="xmark" label={t("Close")} onPress={() => { tap(); close(); }} />
       </View>
       <Progress f={f} page={page} />
@@ -353,7 +352,6 @@ export default function Apply() {
       </View>}
       <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(q.label)}</Text>
       {!!prefill && !allMode && <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} />}
-      {q.id === "cityOfResidence" && !!f.destination && !!f.nationality && (() => { const l = activeQuestions(f); return <RoutePreview destination={f.destination} nationality={f.nationality} residence={f.countryOfResidence} left={l.length - l.findIndex((x) => x.id === q.id)} />; })()}
       {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
   );
