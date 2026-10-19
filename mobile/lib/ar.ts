@@ -24,7 +24,7 @@ export const AR: Record<string, string> = {
   "Please specify the country, date, and reason stated in the refusal letter. We will formulate a mitigation explanation in your cover letter.": "يرجى ذكر الدولة والتاريخ والسبب المذكور في خطاب الرفض. سنصيغ توضيحًا مناسبًا في خطاب التغطية.",
   "Add other Schengen countries you plan to visit during your trip": "أضف دول شنغن الأخرى التي تخطط لزيارتها خلال رحلتك",
   "Provide details about your planned activities, accommodations, and schedule": "أضف تفاصيل عن أنشطتك وإقامتك وجدولك",
-  "Enter your nationality": "أدخل جنسيتك", "Enter city": "أدخل المدينة", "Enter first name": "أدخل الاسم الأول", "Enter last name": "أدخل اسم العائلة", "your.email@example.com": "your.email@example.com",
+  "Enter your nationality": "أدخل جنسيتك", "Enter city": "أدخل المدينة", "Select emirate": "اختر الإمارة", "Please select your emirate": "يرجى اختيار الإمارة", "Abu Dhabi": "أبوظبي", "Dubai": "دبي", "Sharjah": "الشارقة", "Ajman": "عجمان", "Umm Al Quwain": "أم القيوين", "Ras Al Khaimah": "رأس الخيمة", "Fujairah": "الفجيرة", "Enter first name": "أدخل الاسم الأول", "Enter last name": "أدخل اسم العائلة", "your.email@example.com": "your.email@example.com",
   "Select date of birth": "اختر تاريخ الميلاد", "e.g. A1234567": "مثال: A1234567", "Enter occupation": "أدخل المهنة", "Enter job title": "أدخل المسمى الوظيفي", "Enter company name": "أدخل اسم الشركة",
   "Select start date": "اختر تاريخ البدء", "e.g., 15,000 AED": "مثال: 15,000 درهم", "Select departure date": "اختر تاريخ المغادرة", "Select return date": "اختر تاريخ العودة",
   "e.g., Rejected by France in Nov 2025 due to insufficient justification of travel purpose...": "مثال: رفض من فرنسا في نوفمبر 2025 بسبب عدم كفاية مبررات الغرض من السفر...",

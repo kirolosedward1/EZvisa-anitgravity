@@ -3,7 +3,7 @@
 // its errors are exactly validateStep(step) filtered to those keys, so the rules can never drift from the web.
 import { WORLD } from "./world";
 import {
-  SCHENGEN, UAE_NATIONALITIES, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
+  SCHENGEN, UAE_NATIONALITIES, RESIDENCE_COUNTRIES, EMIRATE_OPTIONS, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
   visibleSteps, validateStep, adultMax, earliestDeparture, iso, label as optLabel, type WizardForm, type WizardStep, type Errors,
 } from "./wizard";
 
@@ -16,11 +16,15 @@ export type Question = {
   placeholder?: string; searchPlaceholder?: string; options?: Opt[]; names?: string[]; allNames?: string[];
   /** Short friendly line under the title (also from the website's notes where there is one). */
   hint?: string;
+  /** Country whose flag is shown on the title and answer rows (instead of the destination flag). */
+  flag?: string;
   applies?: (f: WizardForm) => boolean;
   /** Extra changes the website makes when this answer changes (e.g. clearing dependent fields). */
   onPick?: (v: string, f: WizardForm) => Partial<WizardForm>;
   min?: (f: WizardForm) => string | undefined; max?: (f: WizardForm) => string | undefined;
   dateStyle?: "calendar" | "wheel";
+  /** Where an empty wheel starts (e.g. 1990 for date of birth). */
+  defaultDate?: (f: WizardForm) => string;
   text?: { keyboard?: "default" | "email-address"; caps?: "none" | "words" | "characters" | "sentences"; contentType?: string; autoComplete?: string; upper?: boolean };
   /** Note after an answer; amber/red notes stop auto-advance so the user can read them. */
   note?: (f: WizardForm) => { tone: "green" | "amber" | "blue" | "red"; text: string } | null;
@@ -36,15 +40,15 @@ export const QUESTIONS: Question[] = [
   { id: "destination", step: "personal", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "country", names: SCHENGEN, searchPlaceholder: "Search country..." },
   { id: "nationality", step: "personal", keys: ["nationality"], label: "Nationality", required: true, kind: "country", names: UAE_NATIONALITIES, searchPlaceholder: "Search nationality...",
     allNames: SCHENGEN_VISA_REQUIRED },
-  { id: "countryOfResidence", step: "personal", keys: ["countryOfResidence"], label: "Country of Residence", required: true, kind: "country", names: WORLD_NAMES, searchPlaceholder: "Search country...",
+  { id: "countryOfResidence", step: "personal", keys: ["countryOfResidence"], label: "Country of Residence", required: true, kind: "country", names: RESIDENCE_COUNTRIES, searchPlaceholder: "Search country...", flag: "United Arab Emirates",
     onPick: (v) => (v !== "United Arab Emirates" ? { hasEmiratesId: "" } : {}) },
-  { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "City of Residence", required: true, kind: "text", placeholder: "Enter city", text: { caps: "words", contentType: "addressCity" } },
+  { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "City of Residence", required: true, kind: "choice", options: EMIRATE_OPTIONS, flag: "United Arab Emirates" },
   { id: "hasEmiratesId", step: "personal", keys: ["hasEmiratesId"], label: "Do you have an Emirates ID?", required: true, kind: "yesno", applies: (f) => f.countryOfResidence === "United Arab Emirates" },
   { id: "firstName", step: "personal", keys: ["firstName"], label: "First Name", required: true, kind: "text", placeholder: "Enter first name", hint: "As on your passport.", text: { caps: "words", contentType: "givenName", autoComplete: "given-name" } },
   { id: "lastName", step: "personal", keys: ["lastName"], label: "Last Name", required: true, kind: "text", placeholder: "Enter last name", hint: "As on your passport.", text: { caps: "words", contentType: "familyName", autoComplete: "family-name" } },
   { id: "email", step: "personal", keys: ["email"], label: "Email Address", required: true, kind: "text", placeholder: "your.email@example.com", text: { keyboard: "email-address", caps: "none", contentType: "emailAddress", autoComplete: "email" } },
   { id: "phone", step: "personal", keys: ["phone", "phoneLocal", "phoneCountry", "whatsappOptIn"], label: "Phone Number", required: true, kind: "phone" },
-  { id: "dateOfBirth", step: "personal", keys: ["dateOfBirth"], label: "Date of Birth", required: true, kind: "date", placeholder: "Select date of birth", max: () => iso(adultMax()), dateStyle: "wheel" },
+  { id: "dateOfBirth", step: "personal", keys: ["dateOfBirth"], label: "Date of Birth", required: true, kind: "date", placeholder: "Select date of birth", max: () => iso(adultMax()), dateStyle: "wheel", defaultDate: () => "1990-01-01" },
   { id: "passportNumber", step: "personal", keys: ["passportNumber"], label: "Passport Number", required: true, kind: "text", placeholder: "e.g. A1234567", text: { caps: "characters", upper: true } },
   { id: "hasValidPassport", step: "personal", keys: ["hasValidPassport"], label: "Do you have a valid passport?", required: true, kind: "yesno",
     hint: "Your passport should have at least 6 months validity from your travel date.",

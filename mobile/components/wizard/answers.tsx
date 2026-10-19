@@ -2,7 +2,7 @@ import { PressScale } from "../ui";
 // Answer controls for the one-question-per-screen wizard: big tappable choices, Yes / No tiles, an inline searchable
 // country list, native date pickers (iOS inline calendar / wheel, Android dialog, web date input) and the website's
 // "additional countries" editor. All controls are VoiceOver-labelled and grow with Dynamic Type (no fixed heights).
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FlatList, Platform, Pressable, TextInput, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Flag, Icon, Text, Button } from "../ui";
@@ -35,11 +35,11 @@ export function AnswerRow({ label, selected, onPress, country, testID }: { label
   );
 }
 
-export function ChoiceList({ label, options, value, onPick }: { label: string; options: Opt[]; value: string; onPick: (v: string) => void }) {
+export function ChoiceList({ label, options, value, onPick, flag }: { label: string; options: Opt[]; value: string; onPick: (v: string) => void; flag?: string }) {
   const { t } = useT();
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: S.xs }}>
-      {options.map((o) => <AnswerRow key={o.value} label={t(o.label)} selected={value === o.value} onPress={() => onPick(o.value)} />)}
+      {options.map((o) => <AnswerRow key={o.value} label={t(o.label)} selected={value === o.value} country={flag} onPress={() => onPick(o.value)} />)}
     </View>
   );
 }
@@ -81,12 +81,12 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header, s
       contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.xs }}
       ListHeaderComponent={<View style={{ gap: S.md, marginBottom: S.xs }}>
         {header}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 52, borderRadius: R.round, backgroundColor: c.card, paddingHorizontal: S.md }}>
+        {(names.length > 1 || !!searchAll) && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 52, borderRadius: R.round, backgroundColor: c.card, paddingHorizontal: S.md }}>
           <Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />
           <TextInput value={q} onChangeText={setQ} placeholder={t(searchPlaceholder)} placeholderTextColor={c.secondaryLabel} autoCorrect={false} returnKeyType="search" accessibilityLabel={t(searchPlaceholder)}
             style={[T.body, { flex: 1, color: c.label, paddingVertical: S.sm }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
           {!!q && <PressScale onPress={() => setQ("")} accessibilityRole="button" accessibilityLabel={t("Clear search")} hitSlop={10}><Icon name="xmark.circle.fill" size={16} color={c.tertiaryLabel} /></PressScale>}
-        </View>
+        </View>}
       </View>}
       ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>{t("No country found.")}</Text>}
       renderItem={({ item }) => <AnswerRow label={t(item)} country={item === "Other" || item === "Other nationality" ? undefined : item} selected={item === value} onPress={() => onPick(item)} />} />
@@ -95,12 +95,15 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header, s
 
 /** Native date answer. iOS: inline calendar or wheel on the screen. Android: system dialog. Web: <input type=date>.
  *  `onDraft` reports the date the picker currently shows, so Continue can accept it without an extra tap. */
-export function DateAnswer({ label, value, onChange, min, max, style, placeholder }: { label: string; value: string; onChange: (v: string) => void; min?: string; max?: string; style: "calendar" | "wheel"; placeholder?: string }) {
+export function DateAnswer({ label, value, onChange, min, max, style, placeholder, defaultDate }: { label: string; value: string; onChange: (v: string) => void; min?: string; max?: string; style: "calendar" | "wheel"; placeholder?: string; defaultDate?: string }) {
   const c = useColors(); const dark = useIsDark(); const fmt = useFmtDate(); const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const minD = min ? parse(min) : undefined, maxD = max ? parse(max) : undefined;
   const now = new Date();
-  const initial = parse(value) ?? (maxD && maxD < now ? maxD : minD && minD > now ? minD : now);
+  const clamp = (d: Date) => (maxD && d > maxD ? maxD : minD && d < minD ? minD : d);
+  const initial = parse(value) ?? clamp((defaultDate && parse(defaultDate)) || now);
+  // iOS wheel: the wheel itself is the answer, so an empty answer takes the date the wheel starts on.
+  useEffect(() => { if (Platform.OS === "ios" && style === "wheel" && !value) onChange(iso(initial)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const box = (
     <View style={[{ minHeight: 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }, curve]}>
       <Icon name="calendar" size={18} color={c.tint} />
@@ -122,11 +125,11 @@ export function DateAnswer({ label, value, onChange, min, max, style, placeholde
     </>
   );
   return (
-    <View style={{ gap: S.sm }}>
-      {box}
-      <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden", alignItems: "center" }, curve]}>
+    <View style={{ gap: S.md }}>
+      <Text variant="title2" weight="600" center color={value ? c.label : c.secondaryLabel} accessibilityLiveRegion="polite" testID="date-value">{value ? fmt(value) : t(placeholder ?? "Select date")}</Text>
+      <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden", paddingVertical: style === "wheel" ? S.xs : 0 }, curve]}>
         <DateTimePicker value={initial} mode="date" display={style === "wheel" ? "spinner" : "inline"} minimumDate={minD} maximumDate={maxD} accentColor={c.tint} themeVariant={dark ? "dark" : "light"}
-          locale={lang === "ar" ? "ar" : undefined} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={style === "wheel" ? { alignSelf: "stretch" } : undefined} />
+          locale={lang === "ar" ? "ar" : undefined} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={style === "wheel" ? { width: "100%", height: 216 } : { width: "100%" }} />
       </View>
     </View>
   );

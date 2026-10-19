@@ -6,9 +6,10 @@ import { PressScale } from "../../components/ui";
 // come straight back. Links keep the website's params: /apply?step=<slug>&from=<nationality>&to=<destination>.
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
-import Animated, { FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
+import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
 import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { matchEmirate, DEFAULT_RESIDENCE } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { Button, Text, Icon, SuccessCheck, InlineError, Flag, Shake } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
@@ -32,7 +33,7 @@ const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
 const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
 const AUTO_MS = 260;
-type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string };
+type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
 /** Progress grouped by the website's steps: one animated segment per step. */
 function Progress({ f, page }: { f: WizardForm; page: string }) {
@@ -57,6 +58,10 @@ function Seg({ fill }: { fill: number }) {
 
 export default function Apply() {
   const c = useColors(); const reduce = useReducedMotion(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const fmt = useFmtDate();
+  // Lift the whole screen (and its Continue bar) above the iOS keyboard; works inside the modal sheet where
+  // KeyboardAvoidingView mis-measures. Leaves S.md between button and keyboard; back to the safe area when dismissed.
+  const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
+  const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
   const p = useLocalSearchParams<Params>();
   const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, cloudSavedAt, flushDraft } = useForm();
   const { session } = useAuth();
@@ -85,7 +90,9 @@ export default function Apply() {
     // Only nationals who need a Schengen visa; a visa-exempt or unknown nationality in the link is ignored.
     const nat = natRaw ? matchCountry(natRaw, SCHENGEN_VISA_REQUIRED) ?? null : null;
     const start = isoDate(p.travelStartDate), end = isoDate(p.travelEndDate);
-    return { ...(dest && { destination: dest }), ...(nat && { nationality: nat }), ...(start && { travelStartDate: start }), ...(end && { travelEndDate: end }) };
+    // Residence is UAE only (RESIDENCE_COUNTRIES); a city in the link is kept only if it is one of the emirates.
+    const city = matchEmirate(p.city ?? p.cityOfResidence);
+    return { countryOfResidence: DEFAULT_RESIDENCE, ...(city && { cityOfResidence: city }), ...(dest && { destination: dest }), ...(nat && { nationality: nat }), ...(start && { travelStartDate: start }), ...(end && { travelEndDate: end }) };
   };
   // On open: offer to restore an in-progress application (like the site); link values always win.
   useEffect(() => {
@@ -223,7 +230,7 @@ export default function Apply() {
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={editing ? t("Back to review") : t("Back")} onPress={back} /></View>
         <View style={{ flex: 1, alignItems: "center" }}>
-          {saved && <Text variant="caption" weight="600" color={c.green} testID="saved-indicator">{cloudSavedAt && session ? t("✓ Saved to your account") : t("✓ Saved on this phone")}</Text>}
+          {saved && <Text variant="caption" weight="500" color={c.secondaryLabel} testID="saved-indicator">{cloudSavedAt && session ? t("✓ Saved to your account") : t("✓ Saved on this phone")}</Text>}
         </View>
         <CircleButton icon="xmark" label={t("Close")} onPress={() => { tap(); close(); }} />
       </View>
@@ -295,10 +302,9 @@ export default function Apply() {
   const days = q.id === "travelEndDate" ? tripDays(f) : 0;
   const title = (
     <View style={{ gap: S.xs }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
-        {q.id !== "destination" && step === "personal" && !!f.destination && q.kind !== "country" && <Flag country={f.destination} size={18} />}
-        {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
-      </View>
+      {!q.required && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
+        {<View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
+      </View>}
       <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(q.label)}</Text>
       {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
@@ -308,7 +314,7 @@ export default function Apply() {
   const tp = q.text ?? {};
   const body = (() => {
     switch (q.kind) {
-      case "choice": return <ChoiceList label={t(q.label)} options={q.options!} value={f[q.keys[0]] as string} onPick={pick} />;
+      case "choice": return <ChoiceList label={t(q.label)} options={q.options!} flag={q.flag} value={f[q.keys[0]] as string} onPick={pick} />;
       case "yesno": return <YesNoTiles label={t(q.label)} value={f[q.keys[0]] as string} onPick={pick} />;
       case "text": case "textarea": return (
         <TextInput ref={inputRef} value={String(f[q.keys[0]] ?? "")} onChangeText={(v) => patch({ [q.keys[0]]: tp.upper ? v.toUpperCase() : v } as Partial<WizardForm>)}
@@ -319,7 +325,7 @@ export default function Apply() {
           style={[q.kind === "textarea" ? T.body : T.title3, { color: c.label, minHeight: q.kind === "textarea" ? 150 : 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm,
             borderWidth: e ? 1.5 : 0, borderColor: c.red, textAlign: isRTL ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
       );
-      case "date": return <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} />;
+      case "date": return <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />;
       case "phone": return (
         <View style={{ gap: S.sm }}>
           <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />
@@ -340,7 +346,7 @@ export default function Apply() {
   ) : <View style={{ height: Math.max(insets.bottom, S.md) }} />;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+    <Animated.View style={[{ flex: 1, backgroundColor: c.bg }, kbPad]}>
       {header}
       <Animated.View key={page} entering={entering} style={{ flex: 1 }}>
         {q.kind === "country" ? (
@@ -368,6 +374,6 @@ export default function Apply() {
           </View>
         </View>
       </Modal>
-    </KeyboardAvoidingView>
+    </Animated.View>
   );
 }

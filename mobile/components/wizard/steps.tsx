@@ -5,7 +5,7 @@ import { Text, Icon, Button } from "../ui";
 import { PhoneField } from "../CountryPicker";
 import { useColors, S, R } from "../../lib/theme";
 import { WORLD } from "../../lib/world";
-import { SCHENGEN, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE, tripDays, iso as isoDate, adultMax, earliestDeparture, type WizardForm, type Errors } from "../../lib/wizard";
+import { RESIDENCE_COUNTRIES, EMIRATE_OPTIONS, SCHENGEN, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE, tripDays, iso as isoDate, adultMax, earliestDeparture, type WizardForm, type Errors } from "../../lib/wizard";
 import { FormField, Input, TextArea, SelectField, CountryField, DateField, YesNoToggle, Checkbox, Note, Group, Divider, Label, FieldError, fmtShort } from "./fields";
 import { useState } from "react";
 
@@ -30,11 +30,11 @@ export function PersonalStep({ f, set, patch, errors: e, show }: StepProps) {
         <CountryField label="Nationality *" value={f.nationality} names={SCHENGEN_VISA_REQUIRED} placeholder="Select nationality" searchPlaceholder="Search nationality..." onChange={(v) => patch({ nationality: v })} error={has("nationality")} />
       </FormField>
       <FormField label="Country of Residence *">
-        <CountryField label="Country of Residence *" value={f.countryOfResidence} names={WORLD_NAMES} placeholder="Select country" searchPlaceholder="Search country..."
+        <CountryField label="Country of Residence *" value={f.countryOfResidence} names={RESIDENCE_COUNTRIES} placeholder="Select country" searchPlaceholder="Search country..."
           onChange={(v) => patch({ countryOfResidence: v, ...(v !== "United Arab Emirates" && { hasEmiratesId: "" }) })} error={has("countryOfResidence")} />
       </FormField>
       <FormField label="City of Residence *">
-        <Input value={f.cityOfResidence} onChangeText={set("cityOfResidence")} placeholder="Enter city" accessibilityLabel="City of Residence" textContentType="addressCity" error={has("cityOfResidence")} />
+        <SelectField label="City of Residence *" value={f.cityOfResidence} options={EMIRATE_OPTIONS} placeholder="Select emirate" onChange={set("cityOfResidence")} error={has("cityOfResidence")} />
       </FormField>
       {f.countryOfResidence === "United Arab Emirates" && (
         <FormField label="Do you have an Emirates ID? *">

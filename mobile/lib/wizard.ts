@@ -23,7 +23,7 @@ export type WizardForm = {
 };
 
 export const emptyForm: WizardForm = {
-  destination: "", nationality: "", countryOfResidence: "", cityOfResidence: "", hasEmiratesId: "",
+  destination: "", nationality: "", countryOfResidence: "United Arab Emirates", cityOfResidence: "", hasEmiratesId: "",
   firstName: "", lastName: "", email: "", phone: "", phoneCountry: "AE", phoneLocal: "", whatsappOptIn: true,
   dateOfBirth: "", passportNumber: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "",
   spouseFirstName: "", spouseLastName: "", spouseHasValidPassport: "", spouseOccupation: "",
@@ -46,6 +46,20 @@ export const needsSchengenVisa = (n?: string | null) => !!n && SCHENGEN_VISA_REQ
 export const OTHER_NATIONALITY = "Other nationality";
 /** Top UAE resident nationalities (all in Annex I), then "Other nationality" which opens the full visa-required list. */
 export const UAE_NATIONALITIES: string[] = ["India", "Pakistan", "Bangladesh", "Philippines", "Egypt", "Nepal", "Sri Lanka", "China", "Jordan", "Lebanon", "Syria", "Palestine", "Sudan", "Iran", "Iraq", "Yemen", "Afghanistan", "Morocco", "Tunisia", "Algeria", "Nigeria", "Kenya", "Ethiopia", "Uganda", "Ghana", "Cameroon", "South Africa", "Indonesia", "Vietnam", "Thailand", "Russian Federation", "Turkey", "Kazakhstan", "Uzbekistan", "Azerbaijan", OTHER_NATIONALITY];
+/** Countries of residence offered in the wizard. UAE only for now; add names (as in lib/world.ts) to re-enable others. */
+export const RESIDENCE_COUNTRIES: string[] = ["United Arab Emirates"];
+export const DEFAULT_RESIDENCE = RESIDENCE_COUNTRIES[0];
+/** City of residence = one of the 7 UAE emirates (stored as the English name). */
+export const UAE_EMIRATES: string[] = ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"];
+export const EMIRATE_OPTIONS = UAE_EMIRATES.map((e) => ({ value: e, label: e }));
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+export const matchEmirate = (v?: string | null) => (v ? UAE_EMIRATES.find((e) => norm(e) === norm(v)) ?? "" : "");
+/** Coerce residence fields (old drafts, deep links) to the allowed values. */
+export function coerceResidence<T extends { countryOfResidence: string; cityOfResidence: string; hasEmiratesId: YesNo }>(f: T): T {
+  const country = RESIDENCE_COUNTRIES.includes(f.countryOfResidence) ? f.countryOfResidence : DEFAULT_RESIDENCE;
+  const city = country === "United Arab Emirates" ? matchEmirate(f.cityOfResidence) : f.cityOfResidence;
+  return { ...f, countryOfResidence: country, cityOfResidence: city, hasEmiratesId: country === "United Arab Emirates" ? f.hasEmiratesId : "" };
+}
 export const RESIDENCES = ["United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Egypt", "Jordan"];
 export const MARITAL: Opt[] = [{ value: "single", label: "Single" }, { value: "married", label: "Married" }, { value: "divorced", label: "Divorced" }, { value: "widowed", label: "Widowed" }];
 export const EMPLOYMENT: Opt[] = [{ value: "employed", label: "Employed" }, { value: "business", label: "Business Owner" }, { value: "freelancer", label: "Freelancer" }, { value: "student", label: "Student" }, { value: "unemployed", label: "Unemployed" }, { value: "retired", label: "Retired" }];
@@ -99,8 +113,9 @@ export function validatePersonal(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.destination) e.destination = "Please select a destination";
   if (!needsSchengenVisa(f.nationality)) e.nationality = "Please select your nationality";
-  if (!f.countryOfResidence) e.countryOfResidence = "Please select your country of residence";
+  if (!RESIDENCE_COUNTRIES.includes(f.countryOfResidence)) e.countryOfResidence = "Please select your country of residence";
   if (!f.cityOfResidence.trim()) e.cityOfResidence = "City is required";
+  else if (f.countryOfResidence === "United Arab Emirates" && !UAE_EMIRATES.includes(f.cityOfResidence)) e.cityOfResidence = "Please select your emirate";
   if (f.countryOfResidence === "United Arab Emirates" && !f.hasEmiratesId) e.hasEmiratesId = "Please choose Yes or No";
   if (!f.firstName.trim()) e.firstName = "First name is required";
   if (!f.lastName.trim()) e.lastName = "Last name is required";

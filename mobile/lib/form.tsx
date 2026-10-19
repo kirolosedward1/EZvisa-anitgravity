@@ -4,7 +4,7 @@
 // resumed on another device and is visible to EZvisa staff; submitting turns that same row into "submitted".
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { emptyForm, validatePersonal, hasAnswers, needsSchengenVisa, type WizardForm } from "./wizard";
+import { coerceResidence, emptyForm, validatePersonal, hasAnswers, needsSchengenVisa, type WizardForm } from "./wizard";
 import { normalizePage, stepOfPage } from "./questions";
 import { useAuth } from "./auth";
 import { saveDraft, latestDraft } from "./data";
@@ -14,7 +14,7 @@ const KEY = "ezvisa.wizard.v1";
 /** Old saves could hold "Other" + free text (or a visa-exempt country from a link). Clear it so the user re-picks from the visa-required list. */
 function cleanNationality(f: WizardForm): WizardForm {
   const { nationalityOther: _drop, ...rest } = f as WizardForm & { nationalityOther?: string };
-  return { ...(rest as WizardForm), nationality: needsSchengenVisa(rest.nationality) ? rest.nationality : "" };
+  return coerceResidence({ ...(rest as WizardForm), nationality: needsSchengenVisa(rest.nationality) ? rest.nationality : "" });
 }
 type Submitted = { applicationId: string; trackingToken?: string; reference?: string; amount?: number; destination?: string; spouse?: boolean } | null;
 type Ctx = {
