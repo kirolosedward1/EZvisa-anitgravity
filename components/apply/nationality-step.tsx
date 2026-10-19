@@ -165,8 +165,8 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
     formData.phone &&
     isValidPhone(formData.phone) &&
     formData.dateOfBirth &&
+    formData.hasValidPassport === "yes" &&
     formData.passportNumber &&
-    formData.hasValidPassport &&
     formData.maritalStatus &&
     (formData.maritalStatus !== "married" ||
       formData.spouseAccompanying === "yes" ||
@@ -552,7 +552,47 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           )}
         </div>
 
-        {/* Passport Number */}
+        {/* Valid Passport */}
+        <div>
+          <label className={labelStyles}>Do you have a valid passport? *</label>
+          <div className="flex gap-3 mt-1">
+            <button
+              type="button"
+              className={cn("flex-1", formData.hasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
+              onClick={() => {
+                updateFormData({ hasValidPassport: "yes" })
+                setShowErrors(false)
+              }}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              className={cn("flex-1", formData.hasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
+              onClick={() => {
+                updateFormData({ hasValidPassport: "no", passportNumber: "" })
+                setShowErrors(false)
+              }}
+            >
+              No
+            </button>
+          </div>
+          {formData.hasValidPassport === "yes" && (
+            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
+              <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
+              <span>Your passport should have at least 6 months validity from your travel date.</span>
+            </p>
+          )}
+          {formData.hasValidPassport === "no" && (
+            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/20">
+              <Info className="w-4.5 h-4.5 text-amber-500 shrink-0 mt-0.5" />
+              <span>You need a valid passport (at least 6 months validity from your travel date) before applying.</span>
+            </p>
+          )}
+        </div>
+
+        {/* Passport Number (only with a valid passport) */}
+        {formData.hasValidPassport === "yes" && (
         <div>
           <label htmlFor="passportNumber" className={labelStyles}>
             Passport Number *
@@ -576,45 +616,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
             <p className="text-xs text-red-600 mt-1">Please enter your passport number</p>
           )}
         </div>
-
-        {/* Valid Passport */}
-        <div>
-          <label className={labelStyles}>Do you have a valid passport? *</label>
-          <div className="flex gap-3 mt-1">
-            <button
-              type="button"
-              className={cn("flex-1", formData.hasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => {
-                updateFormData({ hasValidPassport: "yes" })
-                setShowErrors(false)
-              }}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              className={cn("flex-1", formData.hasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => {
-                updateFormData({ hasValidPassport: "no" })
-                setShowErrors(false)
-              }}
-            >
-              No
-            </button>
-          </div>
-          {formData.hasValidPassport === "yes" && (
-            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
-              <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Your passport should have at least 6 months validity from your travel date.</span>
-            </p>
-          )}
-          {formData.hasValidPassport === "no" && (
-            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/20">
-              <Info className="w-4.5 h-4.5 text-amber-500 shrink-0 mt-0.5" />
-              <span>You will need to obtain a valid passport before applying for a visa.</span>
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Marital Status */}
         <div>
