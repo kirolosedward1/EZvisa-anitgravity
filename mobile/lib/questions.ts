@@ -42,7 +42,7 @@ export const QUESTIONS: Question[] = [
     allNames: SCHENGEN_VISA_REQUIRED },
   { id: "countryOfResidence", step: "personal", keys: ["countryOfResidence"], label: "Country of Residence", required: true, kind: "country", names: RESIDENCE_COUNTRIES, searchPlaceholder: "Search country...", flag: "United Arab Emirates",
     onPick: (v) => (v !== "United Arab Emirates" ? { hasEmiratesId: "" } : {}) },
-  { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "City of Residence", required: true, kind: "choice", options: EMIRATE_OPTIONS, flag: "United Arab Emirates" },
+  { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "City of Residence", required: true, kind: "choice", options: EMIRATE_OPTIONS },
   { id: "hasEmiratesId", step: "personal", keys: ["hasEmiratesId"], label: "Do you have an Emirates ID?", required: true, kind: "yesno", applies: (f) => f.countryOfResidence === "United Arab Emirates" },
   { id: "firstName", step: "personal", keys: ["firstName"], label: "First Name", required: true, kind: "text", placeholder: "Enter first name", hint: "As on your passport.", text: { caps: "words", contentType: "givenName", autoComplete: "given-name" } },
   { id: "lastName", step: "personal", keys: ["lastName"], label: "Last Name", required: true, kind: "text", placeholder: "Enter last name", hint: "As on your passport.", text: { caps: "words", contentType: "familyName", autoComplete: "family-name" } },
