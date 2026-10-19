@@ -11,7 +11,7 @@ import { tap } from "../../../lib/haptics";
 const fmt = (s?: string | null) => (s ? new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
 
 function AppCard({ a }: { a: Application }) {
-  const c = useColors(); const name = a.countries?.name ?? "Application"; const idx = journeyIndex(a.status);
+  const c = useColors(); const name = a.countries?.name ?? "Application"; const idx = journeyIndex(a.status, a.payment_status);
   return (
     <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} accessibilityRole="button" accessibilityLabel={`${name}, ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}`}
       style={[{ borderRadius: R.card, backgroundColor: c.card, padding: S.lg, gap: S.lg }, curve]}>

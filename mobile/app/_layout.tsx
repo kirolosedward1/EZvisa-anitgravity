@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { View } from "react-native";
 import { NetworkBanner } from "../components/NetworkBanner";
 import { BootOverlay } from "../components/Boot";
+import { LockGate } from "../lib/lock";
 import { useWelcomed } from "../lib/onboarding";
 import { startUploadQueue } from "../lib/uploads";
 import { startReminderRouting } from "../lib/reminders";
@@ -38,8 +39,10 @@ function Themed() {
             <Stack.Screen name="welcome" options={{ animation: "fade", gestureEnabled: false }} />
             <Stack.Screen name="auth" options={{ presentation: "modal" }} />
             <Stack.Screen name="apply" options={{ presentation: "modal" }} />
+            <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
           </Stack>
           <NetworkBanner />
+          <LockGate />
           <Boot />
         </View>
       </FormProvider></AuthProvider>

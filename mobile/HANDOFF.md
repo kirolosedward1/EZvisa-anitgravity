@@ -30,6 +30,25 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **Payments** (`lib/api.ts startPayment/checkPayment`): `POST https://www.ezvisa.net/api/create-payment` with `{applicationId, amount: 249 AED (×2 with spouse), currency:'AED', success_url: https://www.ezvisa.net/payment-success?appId&dest, cancel_url: …/payment-failed, test:false}`. The `redirect_url` (Ziina) opens in the in-app browser, and the status comes from `GET /api/check-payment?id=`. The Ziina webhook (website) sets `payment_status`. If the route fails, the app offers WhatsApp.
 - **Dashboard / status** (`app/(tabs)/applications/*`, `app/(tabs)/(home)`): `select * from visa_applications where email = <me>`, mapped by `toApplication()` into the UI's shape.
 
+## 2b. v8 additions (2026-10-19)
+- **Wizard**: one question per screen (`lib/questions.ts`, `app/apply/index.tsx`, `components/wizard/answers.tsx`). Same fields, labels, options, order and validation as web `lib/wizard.ts`. Auto-advance + haptics, searchable country lists, native dates, skip logic, grouped progress, Reanimated transitions, autosave (local + DB draft) with resume at the exact question, Review with edit-and-return, idempotent double-submit-safe submit.
+- **Loading**: `components/Boot.tsx`. The splash is held until session, fonts, i18n, appearance and draft have loaded, then fades out (280 ms).
+- **Trip plan**: `lib/itinerary.ts` + `app/trip/[id].tsx`. Optional questions (cities, budget, who, interests) produce a deterministic plan labelled "Ideas, not bookings" with no venues, prices or hours. Days and items are editable; PDF via expo-print + expo-sharing. It is saved locally and in `additional_notes.itinerary` while the row is draft/submitted (RLS blocks it later; the UI says "saved on this phone"). AI version + `trip_plans` table: `db/proposed-itinerary-ai.md` (not deployed).
+- **Extras**:
+  - status timeline with real timestamps only; Home next action + countdown chip
+  - Quick facts for the 29 Schengen countries (`lib/facts.ts`, sources in the file)
+  - capture quality checks (`lib/capture.ts`)
+  - Face ID lock (`lib/lock.tsx`)
+  - local passport-expiry reminder (Account)
+  - Sign in with Apple (`lib/apple.ts`), hidden while the provider is disabled. In Expo Go the token audience is `host.exp.Exponent`, so add it to the Apple client IDs for testing.
+  - EN/AR with RTL (`lib/i18n.tsx`, `lib/ar.ts`, switch in Account)
+- **Native build only (not faked)**: home-screen widget, push for status changes (plan in `db/proposed-itinerary-ai.md` §3), MRZ reading, edge-detect document scanning.
+- Tests:
+  - `scripts/run-e2e-v8.mjs`: live data layer, no new rows
+  - `scripts/plan-v82.ts`: deterministic plan/PDF
+  - Playwright scripts in /tmp/shot (v8.js wizard, v82.js trip/detail/account)
+  - screenshots in `screenshots/v8/`
+
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
 Not working, because of server config outside the app:

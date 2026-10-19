@@ -10,6 +10,10 @@ export const remindersSupported = Platform.OS !== "web";
 type N = typeof import("expo-notifications");
 const notif = (): N | null => { if (!remindersSupported) return null; try { return require("expo-notifications") as N; } catch { return null; } };
 
+const PP_KEY = "ezvisa.passportExpiry.v1";
+/** Passport expiry is not a website field, so it is kept on this phone only (Account -> Reminders). */
+export async function getPassportExpiry() { return (await AsyncStorage.getItem(PP_KEY).catch(() => null)) || ""; }
+export async function setPassportExpiry(v: string) { if (v) await AsyncStorage.setItem(PP_KEY, v); else await AsyncStorage.removeItem(PP_KEY); }
 export async function remindersEnabled() { return (await AsyncStorage.getItem(KEY)) === "on"; }
 
 /** Turns reminders on (asks permission) or off (cancels ours). Returns the resulting state. */
@@ -37,7 +41,7 @@ const at9 = (iso: string, addDays = 0, addMonths = 0) => {
 const ACTIVE = (s: string) => !["completed", "rejected", "cancelled"].includes(s);
 
 /** Plans the reminders for the given applications; pure, so it can be checked without a device. */
-export function planReminders(apps: Application[], now = new Date()) {
+export function planReminders(apps: Application[], now = new Date(), passportExpiry = "") {
   const out: { id: string; date: Date; title: string; body: string; url: string }[] = [];
   const seenPassports = new Set<string>();
   for (const a of apps) {
@@ -58,6 +62,10 @@ export function planReminders(apps: Application[], now = new Date()) {
       out.push({ id: `${PREFIX}${p.id}-pp3`, date: at9(p.passport_expiry_date, 0, -3), title: `${who} expires in 3 months`, body: "Renew it before your next visa application.", url });
     }
   }
+  if (passportExpiry && /^\d{4}-\d{2}-\d{2}$/.test(passportExpiry) && !seenPassports.size) {
+    out.push({ id: `${PREFIX}local-pp6`, date: at9(passportExpiry, 0, -6), title: "Your passport expires in 6 months", body: "Many embassies need 3+ months validity after your trip.", url: "/account" });
+    out.push({ id: `${PREFIX}local-pp3`, date: at9(passportExpiry, 0, -3), title: "Your passport expires in 3 months", body: "Renew it before your next visa application.", url: "/account" });
+  }
   return out.filter((r) => r.date.getTime() > now.getTime());
 }
 
@@ -69,7 +77,7 @@ export async function syncReminders(apps: Application[]): Promise<number> {
     if ((await N.getPermissionsAsync()).status !== "granted") return 0;
     if (Platform.OS === "android") await N.setNotificationChannelAsync("reminders", { name: "Reminders", importance: N.AndroidImportance.DEFAULT });
     await cancelOurs(N);
-    const plan = planReminders(apps);
+    const plan = planReminders(apps, new Date(), await getPassportExpiry());
     for (const r of plan) {
       await N.scheduleNotificationAsync({
         identifier: r.id,
@@ -90,7 +98,7 @@ export function startReminderRouting(): () => void {
     N.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
     sub = N.addNotificationResponseReceivedListener((r) => {
       const url = r.notification.request.content.data?.url;
-      if (typeof url === "string" && url.startsWith("/applications/")) router.push(url as any);
+      if (typeof url === "string" && (url.startsWith("/applications/") || url === "/account")) router.push(url as any);
     });
   }).catch(() => {});
   return () => { dead = true; sub?.remove(); };

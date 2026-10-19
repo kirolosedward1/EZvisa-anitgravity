@@ -202,6 +202,7 @@ export default function Apply() {
           catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
           finally { inFlight.current = false; setBusy(false); }
         }} />
+        <Button title={t("Plan my trip")} icon="map.fill" variant="secondary" onPress={() => { const id = submitted.applicationId; router.navigate(`/applications/${id}`); setTimeout(() => { router.push(`/trip/${id}`); setSubmitted(null); }, 350); }} />
         <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference} (${amount} AED).`)} />
         <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications"); setTimeout(() => setSubmitted(null), 400); }} />
       </View>

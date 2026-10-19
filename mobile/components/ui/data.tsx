@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import { useColors, S, R, curve, SPRING } from "../../lib/theme";
 import { FLAG_SVG } from "../../assets/flags";
 import { STATUS_LABEL, type Application } from "../../lib/data";
+import { useT } from "../../lib/i18n";
 import { tap, success as hSuccess } from "../../lib/haptics";
 import { Text } from "./Text";
 import { Icon, PressScale } from "./core";
@@ -38,22 +39,25 @@ export function FlagChip({ country, onPress, selected }: { country: string; onPr
 
 const STATUS_TONE = (c: ReturnType<typeof useColors>, v: string) => (({ paid: c.green, completed: c.green, approved: c.green, ready: c.green, generated: c.green, rejected: c.red, failed: c.red, cancelled: c.grey, draft: c.grey, reviewing: c.orange, under_review: c.orange, processing: c.orange, awaiting_documents: c.orange, pending: c.orange, submitted: c.blue, appointment_booked: c.indigo, uploaded: c.blue } as Record<string, string>)[v] ?? c.grey);
 export function StatusPill({ v }: { v: string }) {
+  const { t } = useT();
   const c = useColors(); const col = STATUS_TONE(c, v);
-  return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{STATUS_LABEL[v] ?? v}</Text></View>;
+  return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: 8, paddingVertical: 3, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{t(STATUS_LABEL[v] ?? v)}</Text></View>;
 }
 
-// Customer-facing journey for the timeline / mini progress.
-export const JOURNEY = ["submitted", "reviewing", "appointment_booked", "completed"] as const;
-const JOURNEY_LABEL = ["Submitted", "In review", "Appointment", "Decision"];
-export function journeyIndex(status: string) {
+// Customer-facing journey, from the live columns only: application_status (website/admin: submitted -> reviewing -> ready |
+// cancelled) and payment_status (set by the Ziina webhook). Dates are shown only where the row really has one.
+export const JOURNEY = ["submitted", "paid", "reviewing", "ready"] as const;
+const JOURNEY_LABEL = ["Submitted", "Paid", "In review", "File ready"];
+const PAID = (p?: string | null) => p === "paid" || p === "completed";
+export function journeyIndex(status: string, payment?: string | null) {
   if (status === "draft") return -1;
-  if (["completed", "approved", "ready", "rejected"].includes(status)) return 3;
-  if (status === "appointment_booked") return 2;
-  if (["reviewing", "awaiting_documents"].includes(status)) return 1;
+  if (["ready", "approved", "completed"].includes(status)) return 3;
+  if (["reviewing", "awaiting_documents", "appointment_booked"].includes(status)) return 2;
+  if (PAID(payment)) return 1;
   return 0;
 }
-export function MiniProgress({ status }: { status: string }) {
-  const c = useColors(); const idx = journeyIndex(status);
+export function MiniProgress({ status, payment }: { status: string; payment?: string | null }) {
+  const c = useColors(); const idx = journeyIndex(status, payment);
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }} accessible accessibilityLabel={`Step ${idx + 1} of 4`}>
       {JOURNEY.map((_, i) => (
@@ -67,28 +71,29 @@ export function MiniProgress({ status }: { status: string }) {
 }
 
 const fmtDT = (s: string) => new Date(s).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-export function Timeline({ status, history }: { status: string; history: { to_status: string; created_at: string; note?: string | null }[] }) {
-  const c = useColors(); const idx = journeyIndex(status);
-  const when = (i: number) => history.filter((h) => journeyIndex(h.to_status) === i).sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+export function Timeline({ a, t = (s: string) => s }: { a: Application; t?: (s: string) => string }) {
+  const c = useColors(); const idx = journeyIndex(a.status, a.payment_status);
+  const cancelled = a.status === "cancelled" || a.status === "rejected";
+  // Real timestamps only: created_at for "Submitted"; updated_at for the latest reached step (we don't know earlier ones).
+  const when = (i: number) => (i === 0 ? a.created_at : i === idx && idx > 0 ? a.updated_at : null);
+  const steps = cancelled ? [...JOURNEY.slice(0, Math.max(1, idx + 1)).map((_, i) => JOURNEY_LABEL[i]), a.status === "rejected" ? "Refused" : "Cancelled"] : JOURNEY_LABEL;
+  const cur = cancelled ? steps.length - 1 : idx;
   return (
-    <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }}>
-      {JOURNEY.map((_, i) => {
-        const done = i <= idx; const h = when(i); const last = i === JOURNEY.length - 1;
-        const label = i === 3 && ["rejected"].includes(status) ? "Refused" : i === idx ? (STATUS_LABEL[status] ?? JOURNEY_LABEL[i]) : JOURNEY_LABEL[i];
+    <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} testID="timeline">
+      {steps.map((label, i) => {
+        const done = i <= cur; const last = i === steps.length - 1; const at = cancelled && last ? a.updated_at : when(i);
+        const tone = cancelled && last ? c.red : c.tint;
         return (
-          <View key={i} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 28 : 52 }} accessible accessibilityLabel={`${label}${done ? ", done" : ""}${h ? `, ${fmtDT(h.created_at)}` : ""}`}>
+          <View key={i} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 28 : 52 }} accessible accessibilityLabel={`${t(label)}${done ? `, ${t("done")}` : ""}${at && done ? `, ${fmtDT(at)}` : ""}`}>
             <View style={{ alignItems: "center", width: 16 }}>
-              <View style={{ width: 14, height: 14, borderRadius: 7, marginTop: 4, backgroundColor: done ? c.tint : "transparent", borderWidth: 2, borderColor: done ? c.tint : c.tertiaryLabel, alignItems: "center", justifyContent: "center" }}>
-                {done && <Icon name="checkmark" size={8} color="#fff" weight="bold" />}
+              <View style={{ width: 14, height: 14, borderRadius: 7, marginTop: 4, backgroundColor: done ? tone : "transparent", borderWidth: 2, borderColor: done ? tone : c.tertiaryLabel, alignItems: "center", justifyContent: "center" }}>
+                {done && <Icon name={cancelled && last ? "xmark" : "checkmark"} size={8} color="#fff" weight="bold" />}
               </View>
-              {!last && <View style={{ flex: 1, width: 2, marginVertical: 2, backgroundColor: i < idx ? c.tint : c.fill }} />}
+              {!last && <View style={{ flex: 1, width: 2, marginVertical: 2, backgroundColor: i < cur ? c.tint : c.fill }} />}
             </View>
             <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-between", gap: S.xs }}>
-              <View style={{ flex: 1 }}>
-                <Text variant="body" weight={i === idx ? "600" : "400"} tone={done ? "label" : "secondary"}>{label}</Text>
-                {!!h?.note && <Text variant="footnote" tone="secondary">{h.note}</Text>}
-              </View>
-              {!!h && <Text variant="footnote" tone="secondary" tabular>{fmtDT(h.created_at)}</Text>}
+              <Text variant="body" weight={i === cur ? "600" : "400"} tone={done ? "label" : "secondary"} style={{ flex: 1 }}>{t(label)}</Text>
+              {!!at && done && <Text variant="footnote" tone="secondary" tabular>{fmtDT(at)}</Text>}
             </View>
           </View>
         );
@@ -143,7 +148,7 @@ export function StatusHeroCard({ a }: { a: Application }) {
         <View style={{ flex: 1 }}><Text variant="headline">{name}</Text><Text variant="subhead" tone="secondary" tabular>{a.reference}</Text></View>
         <StatusPill v={a.status} />
       </View>
-      <MiniProgress status={a.status} />
+      <MiniProgress status={a.status} payment={a.payment_status} />
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text variant="subhead" tone="secondary">{STATUS_LABEL[a.status] ?? a.status}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Text variant="subhead" tone="tint" weight="600">View</Text><Icon name="chevron.right" size={12} color={c.tint} weight="semibold" /></View>
