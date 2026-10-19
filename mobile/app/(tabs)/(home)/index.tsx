@@ -16,7 +16,9 @@ import { buildChecklist, type CheckItem } from "../../../lib/checklist";
 import { nextAction } from "../../../lib/nextAction";
 import { whatsapp, startPayment } from "../../../lib/api";
 import { useForm } from "../../../lib/form";
-import { hasAnswers, STEP_TITLES, type WizardStep } from "../../../lib/wizard";
+import { hasAnswers } from "../../../lib/wizard";
+import { Q_BY_ID } from "../../../lib/questions";
+import { useT } from "../../../lib/i18n";
 
 /** "Next action" for the active application, computed from its real status, payment and documents. */
 function NextActionCard({ a }: { a: Application }) {
@@ -45,9 +47,10 @@ function NextActionCard({ a }: { a: Application }) {
 
 /** Shown when an unfinished application is saved on this phone. */
 function DraftCard() {
-  const c = useColors(); const { form, page, hydrated, savedAt, clearDraft } = useForm();
+  const c = useColors(); const { t } = useT(); const { form, page, hydrated, savedAt, clearDraft } = useForm();
   if (!hydrated || !savedAt || !hasAnswers(form)) return null;
-  const pg = STEP_TITLES[page as WizardStep] ? { q: STEP_TITLES[page as WizardStep].title } : undefined;
+  const q = page.startsWith("q:") ? Q_BY_ID[page.slice(2)] : null;
+  const pg = { q: q ? t(q.label) : t("Review") };
   const where = form.destination || "your application";
   return (
     <View style={{ marginHorizontal: S.lg, marginBottom: S.xxl, borderRadius: R.card, backgroundColor: c.card, flexDirection: "row", alignItems: "center" }} testID="draft-card">

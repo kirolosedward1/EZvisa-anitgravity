@@ -21,7 +21,7 @@ export type Doc = { id: string; document_type: string; requirement_id: string | 
 export type Applicant = { id: string; is_primary: boolean; first_name: string; last_name: string; passport_number: string | null; passport_expiry_date: string | null };
 export type Notes = {
   maritalStatus?: string; employmentStatus?: string; jobTitle?: string; companyName?: string; monthlySalary?: string; spouseAccompanying?: string;
-  source?: string; platform?: string; wizardStep?: string; contactEmail?: string; wizard?: Partial<WizardForm>;
+  source?: string; platform?: string; wizardStep?: string; wizardQuestion?: string; itinerary?: unknown; contactEmail?: string; wizard?: Partial<WizardForm>;
   uploads?: { type: string; path: string; name: string; at: string }[];
 };
 export type Application = VisaRow & {
@@ -120,7 +120,7 @@ export async function getApplication(id: string): Promise<Application> {
 
 const days = (a: string, b: string) => Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
 /** Column mapping identical to web /api/submit-application, plus the full wizard state for cross-device resume. */
-function columns(f: WizardForm, email: string, step: string, prev: Notes = {}): VisaUpdate {
+function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, question?: string): VisaUpdate {
   const t = (s: string) => (s ?? "").trim();
   return {
     full_name: `${t(f.firstName)} ${t(f.lastName)}`.trim() || "Draft", email, phone: t(f.phone), nationality: f.nationality === "Other" ? t(f.nationalityOther ?? "") || "Other" : t(f.nationality),
@@ -135,47 +135,69 @@ function columns(f: WizardForm, email: string, step: string, prev: Notes = {}): 
       ...prev,
       maritalStatus: f.maritalStatus, employmentStatus: f.employmentStatus, jobTitle: t(f.jobTitle), companyName: t(f.companyName),
       monthlySalary: f.monthlySalary, spouseAccompanying: f.spouseAccompanying || "no",
-      source: "mobile-app", platform: Platform.OS, wizardStep: step,
+      source: "mobile-app", platform: Platform.OS, wizardStep: step, ...(question ? { wizardQuestion: question.replace(/^q:/, "") } : {}),
       ...(t(f.email).toLowerCase() !== email ? { contactEmail: t(f.email).toLowerCase() } : {}),
       wizard: { ...f },
     } satisfies Notes),
   };
 }
 
-/** Creates or updates the signed-in user's draft row (application_status "draft"). Returns the row id. */
-export async function saveDraft(f: WizardForm, step: string, id?: string | null): Promise<string> {
+/** Creates or updates the signed-in user's draft row (application_status "draft"). Returns the row id.
+ *  If the row was already submitted (e.g. a second tap, or a retry after a lost response) it is returned unchanged:
+ *  we never insert a second row for the same case. */
+export async function saveDraft(f: WizardForm, step: string, id?: string | null, question?: string): Promise<string> {
   const sb = need(); const u = await me();
   if (id) {
-    const { data: cur } = await sb.from("visa_applications").select("id, application_status, additional_notes").eq("id", id).eq("email", u.email).maybeSingle();
+    const { data: cur, error: ce } = await sb.from("visa_applications").select("id, application_status, additional_notes").eq("id", id).eq("email", u.email).maybeSingle();
+    if (ce) throw ce;
     if (cur && cur.application_status === "draft") {
-      const { error } = await sb.from("visa_applications").update(columns(f, u.email, step, parseNotes(cur.additional_notes))).eq("id", id).eq("application_status", "draft");
+      const { error } = await sb.from("visa_applications").update(columns(f, u.email, step, parseNotes(cur.additional_notes), question)).eq("id", id).eq("application_status", "draft");
       if (error) throw error;
       return id;
     }
+    if (cur) return id; // already submitted / in review: keep the same row
   }
-  const { data, error } = await sb.from("visa_applications").insert({ ...(columns(f, u.email, step) as any), application_status: "draft", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false }).select("id").single();
+  const { data, error } = await sb.from("visa_applications").insert({ ...(columns(f, u.email, step, {}, question) as any), application_status: "draft", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false }).select("id").single();
   if (error) throw error;
   return data.id;
 }
 
-/** Latest unsubmitted draft for this account (started on any device), for resume. */
-export async function latestDraft(): Promise<{ id: string; form: WizardForm; step: string; updatedAt: string | null } | null> {
+/** Latest unsubmitted draft for this account (started on any device), for resume at the exact question. */
+export async function latestDraft(): Promise<{ id: string; form: WizardForm; step: string; question: string | null; updatedAt: string | null } | null> {
   const u = await me();
   const { data, error } = await need().from("visa_applications").select("id, additional_notes, updated_at").eq("email", u.email).eq("application_status", "draft").order("updated_at", { ascending: false }).limit(1);
   if (error) throw error;
   const r = data?.[0]; if (!r) return null;
   const n = parseNotes(r.additional_notes);
-  return { id: r.id, form: { ...emptyForm, ...(n.wizard ?? {}) }, step: n.wizardStep ?? "personal", updatedAt: r.updated_at };
+  return { id: r.id, form: { ...emptyForm, ...(n.wizard ?? {}) }, step: n.wizardStep ?? "personal", question: n.wizardQuestion ?? null, updatedAt: r.updated_at };
 }
 
-/** Submits: the draft row (or a new row) becomes application_status "submitted", payment_status "pending", like the website. */
+/** Submits: the draft row becomes application_status "submitted", payment_status "pending", like the website.
+ *  Idempotent: the same row is updated, and if it is already submitted it is simply returned. */
 export async function submitApplication(f: WizardForm, draftId?: string | null): Promise<Application> {
   const sb = need(); const u = await me();
   const id = await saveDraft(f, "payment", draftId);
-  const { data: cur } = await sb.from("visa_applications").select("additional_notes").eq("id", id).single();
-  const { data, error } = await sb.from("visa_applications").update({ ...columns(f, u.email, "payment", parseNotes(cur?.additional_notes ?? null)), application_status: "submitted", payment_status: "pending" }).eq("id", id).eq("application_status", "draft").select("*").single();
+  const { data: cur, error: ce } = await sb.from("visa_applications").select("*").eq("id", id).eq("email", u.email).single();
+  if (ce) throw ce;
+  if (cur.application_status !== "draft") return toApplication(cur);
+  const { data, error } = await sb.from("visa_applications").update({ ...columns(f, u.email, "payment", parseNotes(cur.additional_notes ?? null)), application_status: "submitted", payment_status: "pending" }).eq("id", id).eq("application_status", "draft").select("*");
   if (error) throw error;
-  return toApplication(data);
+  if (data?.[0]) return toApplication(data[0]);
+  const { data: again, error: ae } = await sb.from("visa_applications").select("*").eq("id", id).single(); // a parallel call won the race
+  if (ae) throw ae;
+  return toApplication(again);
+}
+
+/** Read-modify-write of one key in additional_notes (keeps uploads, wizard, website keys). RLS lets customers update only
+ *  while the case is draft/submitted, so `synced` is false when the row was not writable (e.g. already in review). */
+export async function patchNotes(applicationId: string, patch: Partial<Notes>): Promise<{ synced: boolean }> {
+  const sb = need(); const u = await me();
+  const { data: cur, error: ce } = await sb.from("visa_applications").select("id, additional_notes, application_status").eq("id", applicationId).eq("email", u.email).single();
+  if (ce) throw ce;
+  const n = { ...parseNotes(cur.additional_notes), ...patch };
+  const { data, error } = await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n) }).eq("id", applicationId).eq("email", u.email).select("id");
+  if (error) throw error;
+  return { synced: !!data?.length };
 }
 
 export class UploadError extends Error { constructor(message: string, public network: boolean) { super(message); } }

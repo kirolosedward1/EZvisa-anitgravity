@@ -8,7 +8,8 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "net.ezvisa.app"
+      "bundleIdentifier": "net.ezvisa.app",
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -37,8 +38,30 @@
           "imageWidth": 180,
           "backgroundColor": "#FFFFFF",
           "dark": {
-            "backgroundColor": "#000000"
+            "backgroundColor": "#000000",
+            "image": "./assets/splash-icon-dark.png"
           }
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Unlock EZvisa with Face ID."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Take photos of your visa documents.",
+          "photosPermission": "Choose photos of your visa documents."
         }
       ]
     ],
@@ -52,7 +75,8 @@
       },
       "eas": {
         "projectId": "a9cb0b0a-4ac8-41c4-a3b3-e4ae3ee1f243"
-      }
+      },
+      "supportsRTL": true
     },
     "primaryColor": "#0436DC",
     "updates": {

@@ -1,65 +1,78 @@
-// Application wizard: a 1:1 port of the website wizard (web repo app/apply/page.tsx + components/apply/*).
-// One screen per web step (personal, spouse, employment, trip-details, payment) with the same fields, order,
-// labels, placeholders, controls, header (title, step count, % complete, step menu) and Back / Continue bar.
-// URLs match the site: /apply?step=<slug>&from=<nationality>&to=<destination>.
+// Application wizard, one question per screen. The questions, labels, options, order and validation come from the
+// website wizard (lib/questions.ts on top of lib/wizard.ts), so the data stays identical to www.ezvisa.net/apply.
+// Choices and Yes / No auto-advance with haptics; questions that don't apply are skipped; every answer is autosaved
+// (phone + the account's draft row) and the flow resumes at the exact question. Review lets you edit one answer and
+// come straight back. Links keep the website's params: /apply?step=<slug>&from=<nationality>&to=<destination>.
 import { useEffect, useRef, useState } from "react";
-import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal } from "react-native";
-import Animated, { SlideInRight, SlideInLeft, FadeIn, FadeOut, useReducedMotion } from "react-native-reanimated";
+import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
+import Animated, { FadeIn, FadeOut, SlideInRight, SlideInLeft, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, Easing } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
-import { Button, Text, Icon, SuccessCheck, InlineError } from "../../components/ui";
+import { Button, Text, Icon, SuccessCheck, InlineError, Flag } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
-import { SupportButton } from "../../components/Support";
-import { PersonalStep, SpouseStep, EmploymentStep, TripStep, type StepProps } from "../../components/wizard/steps";
-import { PaymentStep } from "../../components/wizard/payment";
-import { Note } from "../../components/wizard/fields";
-import { useColors, S, R } from "../../lib/theme";
+import { PhoneField } from "../../components/CountryPicker";
+import { Checkbox, Note } from "../../components/wizard/fields";
+import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries, useFmtDate } from "../../components/wizard/answers";
+import { useColors, S, R, T, curve } from "../../lib/theme";
 import { fromSlug } from "../../lib/countries";
 import { useForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
+import { useT } from "../../lib/i18n";
 import { PRICE_AED, SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp, startPayment } from "../../lib/api";
 import { submitApplication } from "../../lib/data";
 import { error as hError, tap, success } from "../../lib/haptics";
 import { WORLD } from "../../lib/world";
-import { type WizardForm, type WizardStep, SCHENGEN, STEP_TITLES, visibleSteps, showSpouse, parseStep, validateStep, matchCountry, isValidEmail, isValidPhone, tripDays, hasAnswers } from "../../lib/wizard";
+import { type WizardForm, type WizardStep, SCHENGEN, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
+import { type Question, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
 
 const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
 const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
-const STEPS: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
-const NEXT_LABEL: Record<WizardStep, string> = { personal: "Continue to Employment", spouse: "Continue", employment: "Continue to Trip Details", "trip-details": "Continue to Review & Payment", payment: "Proceed to Payment" };
-
+const AUTO_MS = 260;
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string };
 
-/** The web's error banner text for each step. */
-function bannerText(step: WizardStep, f: WizardForm) {
-  if (step === "personal") {
-    if (f.email && !isValidEmail(f.email.trim())) return "Please enter a valid email address. Check for typos in the domain.";
-    if (f.phone && !isValidPhone(f.phone)) return "Please enter a valid phone number (8-15 digits, not all same or sequential).";
-    return "Please fill in all required fields before continuing.";
-  }
-  if (step === "spouse") return "Please fill in all required spouse information before continuing.";
-  if (step === "employment") return "Please fill in all required fields for your selected employment status.";
-  if (f.travelStartDate && f.travelEndDate && tripDays(f) <= 0) return "Return date must be after departure date.";
-  return "Please fill in all required travel details before continuing.";
+/** Progress grouped by the website's steps: one animated segment per step. */
+function Progress({ f, page }: { f: WizardForm; page: string }) {
+  const c = useColors(); const { t } = useT();
+  const p = progressOf(f, page); const cur = p.segs[p.stepIndex];
+  return (
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={t("{step}, step {i} of {n}", { step: t(STEP_TITLES[p.curStep].title), i: p.stepIndex + 1, n: p.steps.length })} style={{ gap: S.xs }}>
+      <View style={{ flexDirection: "row", gap: 4 }}>{p.segs.map((s) => <Seg key={s.step} fill={s.fill} />)}</View>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <Text variant="caption" weight="600" tone="secondary">{t(STEP_TITLES[p.curStep].title)}</Text>
+        {p.curStep !== "payment" && cur && <Text variant="caption" tone="secondary" tabular>{t("{i} of {n}", { i: cur.index, n: cur.count })}</Text>}
+      </View>
+    </View>
+  );
+}
+function Seg({ fill }: { fill: number }) {
+  const c = useColors(); const w = useSharedValue(fill);
+  useEffect(() => { w.value = withTiming(fill, { duration: 280, easing: Easing.out(Easing.cubic) }); }, [fill]);
+  const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
+  return <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: 4, borderRadius: 2, backgroundColor: c.tintFill }, a]} /></View>;
 }
 
 export default function Apply() {
-  const c = useColors(); const reduce = useReducedMotion(); const insets = useSafeAreaInsets();
+  const c = useColors(); const reduce = useReducedMotion(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const fmt = useFmtDate();
   const p = useLocalSearchParams<Params>();
-  const { form: f, setForm, submitted, setSubmitted, page, setPage, hydrated, savedAt, clearDraft, draftId, cloudSavedAt, flushDraft } = useForm();
+  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, cloudSavedAt, flushDraft } = useForm();
   const { session } = useAuth();
   const [dir, setDir] = useState(1);
-  const [showErrors, setShowErrors] = useState(false);
-  const [menu, setMenu] = useState(false);
-  const [editing, setEditing] = useState(false); // jumped back from Review & Payment: Continue returns there
+  const [showErr, setShowErr] = useState(false);
+  const [editing, setEditing] = useState<Set<string> | null>(null); // came from Review: question ids that applied at that moment
   const [resumeAsk, setResumeAsk] = useState(false);
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
-  const scroll = useRef<ScrollView>(null); const titleRef = useRef<any>(null);
+  const inFlight = useRef(false); const auto = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleRef = useRef<any>(null); const inputRef = useRef<TextInput>(null);
   const lastSlug = useRef<string | undefined>(undefined); const started = useRef(false);
   const fRef = useRef(f); fRef.current = f;
   const navReady = !!useRootNavigationState()?.key;
+  const isRTL = rtl || I18nManager.isRTL;
+
+  const page = hydrated ? normalizePage(rawPage, f) : rawPage;
+  const q: Question | null = page.startsWith("q:") ? Q_BY_ID[page.slice(2)] : null;
+  const step: WizardStep = stepOfPage(page);
 
   // Link values: from = nationality, to = destination (aliases nationality/destination/country), dates.
   const linkValues = (): Partial<WizardForm> => {
@@ -69,32 +82,33 @@ export default function Apply() {
     const start = isoDate(p.travelStartDate), end = isoDate(p.travelEndDate);
     return { ...(dest && { destination: dest }), ...(nat && { nationality: nat }), ...(start && { travelStartDate: start }), ...(end && { travelEndDate: end }) };
   };
-  // On open: like the site, offer to restore an in-progress application; link values always win.
+  // On open: offer to restore an in-progress application (like the site); link values always win.
   useEffect(() => {
     if (!hydrated || started.current) return;
     started.current = true;
-    if (!p.resume && !submitted && savedAt && hasAnswers(fRef.current)) setResumeAsk(true);
+    const had = hasAnswers(fRef.current);
+    if (!p.resume && !submitted && savedAt && had) setResumeAsk(true);
     const v = linkValues();
-    if (Object.keys(v).length) setForm((x) => ({ ...x, ...v }));
+    if (Object.keys(v).length) {
+      const nf = { ...fRef.current, ...v }; setForm(nf);
+      if (!had && !p.step) { const u = firstUnanswered(nf); if (u) setPage(`q:${u.id}`); }
+    }
   }, [hydrated]);
   useEffect(() => {
     if (!hydrated || !started.current) return;
     const v = linkValues();
     if (Object.keys(v).length) setForm((x) => ({ ...x, ...v }));
   }, [p.to, p.destination, p.country, p.from, p.nationality, p.travelStartDate, p.travelEndDate]);
-  // Which step a link opens (same slugs as the site; unknown -> personal; documents -> payment). No link: resume the saved step.
+  // ?step=<slug> opens that step's first question (unknown -> personal; documents -> review; spouse only when it applies).
   useEffect(() => {
     if (!hydrated) return;
     if (lastSlug.current !== undefined && p.step === lastSlug.current) return;
-    if (p.step === undefined && !p.country) { if (lastSlug.current === undefined) lastSlug.current = page; return; }
+    if (p.step === undefined) { if (lastSlug.current === undefined) lastSlug.current = stepOfPage(page); return; }
     let s = parseStep(p.step);
-    if (s === "spouse" && !showSpouse(fRef.current)) s = "employment"; // the site skips spouse unless married & the spouse travels
-    lastSlug.current = s; setDir(-1); setPage(s); setShowErrors(false); setEditing(false);
-  }, [hydrated, p.step, p.country]);
-  const steps = visibleSteps(f);
-  const step: WizardStep = steps.includes(page as WizardStep) ? (page as WizardStep) : page === "spouse" ? "employment" : "personal";
-  const idx = steps.indexOf(step);
-  // Keep ?step= in sync, like the site.
+    if (s === "spouse" && !showSpouse(fRef.current)) s = "employment";
+    lastSlug.current = s; setDir(-1); setPage(pageForStep(s, fRef.current)); setShowErr(false); setEditing(null);
+  }, [hydrated, p.step]);
+  // Keep ?step= in sync with the current step, like the site.
   useEffect(() => { if (hydrated && navReady && lastSlug.current !== undefined && step !== lastSlug.current) { lastSlug.current = step; router.setParams({ step }); } }, [step, navReady, hydrated]);
   // Signed-in users: prefill email and names (as the site does).
   useEffect(() => {
@@ -102,169 +116,246 @@ export default function Apply() {
     const full = (u.user_metadata?.full_name as string | undefined) ?? "";
     setForm((x) => ({ ...x, email: x.email || u.email || "", firstName: x.firstName || (u.user_metadata?.first_name as string) || full.split(" ")[0] || "", lastName: x.lastName || (u.user_metadata?.last_name as string) || full.split(" ").slice(1).join(" ") || "" }));
   }, [session]);
-  // New step: scroll to top and move VoiceOver/TalkBack focus to the step title.
+  // Every answer: save the account draft right away (local autosave runs on every change in lib/form.tsx).
+  useEffect(() => { if (hydrated && session && !submitted) flushDraft(); }, [page]);
+  // New question: move VoiceOver focus to its title.
   useEffect(() => {
-    scroll.current?.scrollTo({ y: 0, animated: false });
+    setShowErr(false);
     if (Platform.OS === "web") return;
-    const t = setTimeout(() => { const h = titleRef.current ? findNodeHandle(titleRef.current) : null; if (h) AccessibilityInfo.setAccessibilityFocus(h); }, 400);
-    return () => clearTimeout(t);
-  }, [step]);
+    const tm = setTimeout(() => { const h = titleRef.current ? findNodeHandle(titleRef.current) : null; if (h) AccessibilityInfo.setAccessibilityFocus(h); }, 350);
+    return () => clearTimeout(tm);
+  }, [page]);
+  useEffect(() => () => { if (auto.current) clearTimeout(auto.current); }, []);
 
   const patch = (x: Partial<WizardForm>) => { setForm((y) => ({ ...y, ...x })); if (submitted) setSubmitted(null); };
-  const set: StepProps["set"] = (k) => (v) => patch({ [k]: v } as Partial<WizardForm>);
-  const errors = validateStep(step, f);
-  const incomplete = steps.filter((s) => s !== "payment" && Object.keys(validateStep(s, f)).length > 0);
-  const go = (s: WizardStep, d: number) => { setDir(d); setPage(s); setShowErrors(false); setMenu(false); };
-  const next = () => {
-    if (Object.keys(errors).length) {
-      hError(); setShowErrors(true); scroll.current?.scrollTo({ y: 0, animated: true });
-      AccessibilityInfo.announceForAccessibility(bannerText(step, f));
-      return;
-    }
+  const goTo = (pg: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setPage(pg); setShowErr(false); };
+
+  const advance = (nf: WizardForm = fRef.current) => {
+    if (!q) return;
+    const e = firstError(q, nf);
+    if (e) { hError(); setShowErr(true); AccessibilityInfo.announceForAccessibility(t(e)); return; }
     tap();
-    if (editing) { const first = incomplete.find((s) => s !== step); if (first) { go(first, 1); return; } setEditing(false); go("payment", 1); return; }
-    go(steps[Math.min(idx + 1, steps.length - 1)], 1);
+    const list = activeQuestions(nf);
+    if (editing) {
+      const fresh = list.find((x) => !editing.has(x.id)); // became relevant because of this edit (e.g. married -> spouse questions)
+      const bad = firstInvalid(nf);
+      const target = bad && bad.id !== q.id ? bad : fresh;
+      if (target) { const s = new Set(editing); s.add(target.id); setEditing(s); goTo(`q:${target.id}`, 1); return; }
+      setEditing(null); goTo(REVIEW, 1); return;
+    }
+    const i = list.findIndex((x) => x.id === q.id);
+    goTo(list[i + 1] ? `q:${list[i + 1].id}` : REVIEW, 1);
   };
-  const back = () => { if (editing) { setEditing(false); go("payment", 1); return; } if (idx > 0) go(steps[idx - 1], -1); };
-  const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace("/"); };
-  const reachable = (i: number) => i < idx || (i > idx && steps.slice(0, i).every((s) => s === "payment" || !Object.keys(validateStep(s, f)).length));
-  const pickStep = (s: WizardStep) => { const i = steps.indexOf(s); if (i === idx || !reachable(i)) return; if (step === "payment" && i < idx) setEditing(true); go(s, i < idx ? -1 : 1); };
-  const fix = (s: WizardStep) => { setEditing(true); go(s, -1); setTimeout(() => setShowErrors(true), 50); };
+  /** Tap on a choice / Yes-No / country: save, then auto-advance (unless the website shows a warning for that answer). */
+  const pick = (v: string) => {
+    if (!q) return;
+    const changes = { [q.keys[0]]: v, ...(q.onPick?.(v, fRef.current) ?? {}) } as Partial<WizardForm>;
+    const nf = { ...fRef.current, ...changes }; fRef.current = nf; patch(changes);
+    const note = q.note?.(nf);
+    if (note && note.tone !== "green") return;
+    if (auto.current) clearTimeout(auto.current);
+    auto.current = setTimeout(() => advance(nf), reduce ? 80 : AUTO_MS);
+  };
+  const back = () => {
+    tap();
+    if (editing) { setEditing(null); goTo(REVIEW, -1); return; }
+    const list = activeQuestions(f);
+    if (page === REVIEW) { goTo(`q:${list[list.length - 1].id}`, -1); return; }
+    const i = list.findIndex((x) => x.id === q?.id);
+    if (i > 0) goTo(`q:${list[i - 1].id}`, -1); else close();
+  };
+  const close = () => { if (router.canGoBack()) router.back(); else router.replace("/"); };
+  const edit = (id: string) => { tap(); setEditing(new Set(activeQuestions(f).map((x) => x.id))); goTo(`q:${id}`, -1); };
 
   const spouse = showSpouse(f);
   const amount = submitted?.amount ?? PRICE_AED * (spouse ? 2 : 1);
-  const pay = async () => {
-    if (incomplete.length) { hError(); fix(incomplete[0]); return; }
+  const invalid = firstInvalid(f);
+  /** Submit once: button disabled + in-flight guard + the same draft row updated idempotently (lib/data.ts). */
+  const submit = async () => {
+    if (inFlight.current) return;
+    if (invalid) { hError(); edit(invalid.id); return; }
     if (!session) { router.push({ pathname: "/auth", params: { mode: "signin" } }); return; }
-    setBusy(true); setErr(null);
+    inFlight.current = true; setBusy(true); setErr(null);
     try {
       const id = (await flushDraft()) ?? draftId;
       const a = await submitApplication(f, id); success();
       setSubmitted({ applicationId: a.id, reference: a.reference, amount, destination: a.destination_country, spouse }); clearDraft();
-    }
-    catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
-    finally { setBusy(false); }
+    } catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
+    finally { inFlight.current = false; setBusy(false); }
   };
 
   if (!hydrated) return <View style={{ flex: 1, backgroundColor: c.bg }} />;
   const top = Platform.OS === "ios" ? S.sm : insets.top + S.xs;
-  const bottomBar = (children: React.ReactNode) => (
-    <View style={{ flexDirection: "row", gap: S.sm, paddingHorizontal: S.md, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg, borderTopWidth: 1, borderTopColor: c.separator }}>{children}</View>
-  );
 
   if (submitted) return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.md, padding: S.xl }}>
         <SuccessCheck />
-        <Text variant="largeTitle" center accessibilityRole="header" style={{ marginTop: S.md }}>Submitted</Text>
+        <Text variant="largeTitle" center accessibilityRole="header" style={{ marginTop: S.md }}>{t("Submitted")}</Text>
         <Text variant="title3" tone="secondary" tabular center>{submitted.reference}</Text>
       </View>
       <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
         <InlineError text={err} />
-        <Button title={`Pay ${amount} AED securely`} icon="creditcard.fill" loading={busy} onPress={async () => {
-          setBusy(true); setErr(null);
+        <Button title={t("Pay {a} AED securely", { a: amount })} icon="creditcard.fill" loading={busy} onPress={async () => {
+          if (inFlight.current) return; inFlight.current = true; setBusy(true); setErr(null);
           try { await startPayment({ id: submitted.applicationId, destination_country: submitted.destination ?? null, total_amount: amount }, !!submitted.spouse); router.navigate(`/applications/${submitted.applicationId}`); setTimeout(() => setSubmitted(null), 400); }
           catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
-          finally { setBusy(false); }
+          finally { inFlight.current = false; setBusy(false); }
         }} />
-        <Button title="Pay via WhatsApp instead" variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference} (${amount} AED).`)} />
-        <Button title="Done" variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications"); setTimeout(() => setSubmitted(null), 400); }} />
+        <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference} (${amount} AED).`)} />
+        <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications"); setTimeout(() => setSubmitted(null), 400); }} />
       </View>
     </View>
   );
 
-  const total = steps.length; const visual = idx + 1;
-  const pct = Math.round(((visual - 1) / (total - 1)) * 100);
+  const entering = reduce ? FadeIn.duration(120) : (dir > 0) !== isRTL ? SlideInRight.duration(240).easing(Easing.out(Easing.cubic)) : SlideInLeft.duration(240).easing(Easing.out(Easing.cubic));
   const saved = !!savedAt && hasAnswers(f);
-  const props: StepProps = { f, set, patch, errors, show: showErrors };
-  const entering = reduce ? undefined : (dir > 0 ? SlideInRight : SlideInLeft).duration(240);
+  const header = (
+    <View style={{ paddingTop: top, paddingHorizontal: S.lg, gap: S.md, paddingBottom: S.sm }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
+        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={editing ? t("Back to review") : t("Back")} onPress={back} /></View>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          {saved && <Text variant="caption" weight="600" color={c.green} testID="saved-indicator">{cloudSavedAt && session ? t("✓ Saved to your account") : t("✓ Saved on this phone")}</Text>}
+        </View>
+        <CircleButton icon="xmark" label={t("Close")} onPress={() => { tap(); close(); }} />
+      </View>
+      <Progress f={f} page={page} />
+    </View>
+  );
+
+  // ---------------- Review ----------------
+  if (page === REVIEW) {
+    const qs = activeQuestions(f);
+    const groups = (["personal", "spouse", "employment", "trip-details"] as const).map((s) => ({ s, qs: qs.filter((x) => x.step === s) })).filter((g) => g.qs.length);
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg }}>
+        {header}
+        <ScrollView contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.lg }}>
+          <Animated.View entering={entering} style={{ gap: S.lg }}>
+            <View style={{ gap: 4 }}>
+              <Text ref={titleRef} variant="largeTitle" accessibilityRole="header">{t("Review")}</Text>
+              <Text variant="subhead" tone="secondary">{t("Tap an answer to change it.")}</Text>
+            </View>
+            {!!invalid && <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead">{t("Some answers are missing.")}</Text></Note>}
+            {groups.map((g) => (
+              <View key={g.s} style={{ gap: S.xs }}>
+                <Text variant="footnote" tone="secondary" weight="600" accessibilityRole="header">{t(STEP_TITLES[g.s].title)}</Text>
+                <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden" }, curve]}>
+                  {g.qs.map((x, i) => {
+                    const e = firstError(x, f); const v = displayValue(x, f, t, fmt);
+                    return (
+                      <Pressable key={x.id} onPress={() => edit(x.id)} accessibilityRole="button" accessibilityLabel={`${t(x.label)}: ${v || (e ? t("Missing") : t("Not answered"))}`} accessibilityHint={t("Edit")} testID={`review-${x.id}`}
+                        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 56, opacity: pressed ? 0.6 : 1,
+                          borderTopWidth: i ? 1 : 0, borderTopColor: c.separator })}>
+                        <View style={{ flex: 1, gap: 2 }}>
+                          <Text variant="footnote" tone="secondary">{t(x.label)}</Text>
+                          {e ? <Text variant="subhead" tone="red" weight="500">{t("Missing")}</Text>
+                            : <Text variant="body" weight="500">{v || t("Not answered")}</Text>}
+                        </View>
+                        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" /></View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+            <View style={[{ borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.xs }, curve]} testID="review-total">
+              {spouse && <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Text variant="subhead" tone="secondary">{t("Including Accompanying Spouse")}</Text><Text variant="subhead" tone="secondary">x2</Text></View>}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+                <Text variant="headline">{t("Total Fee")}</Text>
+                <Text variant="title2" tone="tint" tabular>{amount} AED</Text>
+              </View>
+              <Text variant="footnote" tone="secondary">{t("Embassy fees are paid at the appointment.")}</Text>
+            </View>
+            {!session && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead">{t("Sign in to submit. Your answers stay saved on this phone.")}</Text></Note>}
+            <InlineError text={err} />
+          </Animated.View>
+        </ScrollView>
+        <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg }}>
+          <Button title={!SUPABASE_ENABLED ? t("Unavailable") : !session ? t("Sign in to Continue") : busy ? t("Submitting...") : t("Submit application")} icon={session ? "lock.fill" : undefined}
+            loading={busy} disabled={!SUPABASE_ENABLED || busy} onPress={submit} />
+        </View>
+      </View>
+    );
+  }
+
+  // ---------------- One question ----------------
+  if (!q) return null;
+  const e = showErr ? firstError(q, f) : undefined;
+  const note = q.note?.(f);
+  const answered = isAnswered(q, f);
+  const days = q.id === "travelEndDate" ? tripDays(f) : 0;
+  const title = (
+    <View style={{ gap: S.xs }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
+        {q.id !== "destination" && step === "personal" && !!f.destination && q.kind !== "country" && <Flag country={f.destination} size={18} />}
+        {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: 2, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
+      </View>
+      <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{t(q.label)}</Text>
+      {!!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
+    </View>
+  );
+  const errBox = e ? <View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View> : null;
+  const noteBox = note ? <Note tone={note.tone}>{t(note.text)}</Note> : null;
+  const tp = q.text ?? {};
+  const body = (() => {
+    switch (q.kind) {
+      case "choice": return <ChoiceList label={t(q.label)} options={q.options!} value={f[q.keys[0]] as string} onPick={pick} />;
+      case "yesno": return <YesNoTiles label={t(q.label)} value={f[q.keys[0]] as string} onPick={pick} />;
+      case "text": case "textarea": return (
+        <TextInput ref={inputRef} value={String(f[q.keys[0]] ?? "")} onChangeText={(v) => patch({ [q.keys[0]]: tp.upper ? v.toUpperCase() : v } as Partial<WizardForm>)}
+          placeholder={t(q.placeholder ?? "")} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(q.label)} autoFocus
+          keyboardType={tp.keyboard ?? "default"} autoCapitalize={tp.caps ?? "sentences"} autoCorrect={q.kind === "textarea"} spellCheck={q.kind === "textarea"}
+          textContentType={tp.contentType as any} autoComplete={tp.autoComplete as any} multiline={q.kind === "textarea"} textAlignVertical={q.kind === "textarea" ? "top" : "center"}
+          returnKeyType={q.kind === "textarea" ? "default" : "next"} onSubmitEditing={q.kind === "textarea" ? undefined : () => advance()} blurOnSubmit={false} testID="question-input"
+          style={[q.kind === "textarea" ? T.body : T.title3, { color: c.label, minHeight: q.kind === "textarea" ? 150 : 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm,
+            borderWidth: e ? 1.5 : 0, borderColor: c.red, textAlign: isRTL ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+      );
+      case "date": return <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} />;
+      case "phone": return (
+        <View style={{ gap: S.sm }}>
+          <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />
+          <Checkbox label={t("Receive application updates via WhatsApp")} value={f.whatsappOptIn} onChange={(v) => patch({ whatsappOptIn: v })} icon="logo.whatsapp" iconColor="#25D366" />
+        </View>
+      );
+      case "countries": return <AdditionalCountries f={f} onChange={(v) => patch({ additionalCountries: v })} />;
+      default: return null;
+    }
+  })();
+  const auto_ = q.kind === "choice" || q.kind === "yesno" || q.kind === "country";
+  const showBtn = !auto_ || answered || !q.required;
+  const btnTitle = !q.required && !answered ? t("Skip") : editing ? t("Save") : t("Continue");
+  const bar = showBtn ? (
+    <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg }}>
+      <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} onPress={() => advance()} />
+    </View>
+  ) : <View style={{ height: Math.max(insets.bottom, S.md) }} />;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <View style={{ paddingTop: top, paddingHorizontal: S.md, flexDirection: "row", justifyContent: "flex-end", gap: S.xs }}>
-        <SupportButton context={`application, ${STEP_TITLES[step].title}`} />
-        <CircleButton icon="xmark" label="Close" onPress={close} />
-      </View>
-      <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.md, paddingBottom: S.xl }}>
-        {/* Title + progress (web: "Visa Application", "Step X of N ✓ Saved", "% complete") */}
-        <View style={{ alignItems: "center", marginBottom: S.lg }}>
-          <Text variant="title1" weight="600" center accessibilityRole="header">Visa Application</Text>
-          <Text variant="subhead" tone="secondary" center style={{ marginTop: 4 }}>Complete your application in {total} simple steps</Text>
-        </View>
-        <View style={{ marginBottom: S.md }} accessible accessibilityRole="progressbar" accessibilityLabel={`Step ${visual} of ${total}, ${pct}% complete${saved ? ", saved on this phone" : ""}`}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: S.xs }}>
-            <View style={{ flexDirection: "row", gap: S.xs, alignItems: "center" }}>
-              <Text variant="caption" tone="secondary">Step {visual} of {total}</Text>
-              {saved && <Text variant="caption" weight="600" color={c.green} testID="saved-indicator">{cloudSavedAt && session ? "✓ Saved to your account" : "✓ Saved on this phone"}</Text>}
-            </View>
-            <Text variant="caption" tone="secondary">{pct}% complete</Text>
-          </View>
-          <View style={{ height: 6, borderRadius: 3, backgroundColor: c.fill, overflow: "hidden" }}>
-            <View style={{ height: 6, borderRadius: 3, width: `${pct}%`, backgroundColor: c.tintFill }} />
-          </View>
-        </View>
-        {/* Step menu (web mobile dropdown) */}
-        <View style={{ marginBottom: S.md }}>
-          <Pressable onPress={() => { tap(); setMenu(!menu); }} accessibilityRole="button" accessibilityState={{ expanded: menu }} accessibilityLabel={`Step ${visual}: ${STEP_TITLES[step].title}, ${STEP_TITLES[step].description}`} accessibilityHint="Shows all steps"
-            style={{ flexDirection: "row", alignItems: "center", gap: S.md, padding: S.md, borderRadius: R.input, borderWidth: 1, borderColor: c.separator, backgroundColor: c.card }}>
-            <View style={{ width: 40, height: 40, borderRadius: 8, backgroundColor: c.tintFill, alignItems: "center", justifyContent: "center" }}><Text variant="headline" color={c.onTint}>{visual}</Text></View>
-            <View style={{ flex: 1 }}>
-              <Text ref={titleRef} variant="subhead" weight="700">{STEP_TITLES[step].title}</Text>
-              <Text variant="caption" tone="secondary">{STEP_TITLES[step].description}</Text>
-            </View>
-            <Icon name={menu ? "chevron.up" : "chevron.down"} size={15} color={c.secondaryLabel} weight="semibold" />
-          </Pressable>
-          {menu && (
-            <Animated.View entering={reduce ? undefined : FadeIn.duration(150)} exiting={reduce ? undefined : FadeOut.duration(120)} style={{ marginTop: S.xs, padding: 4, borderRadius: R.input, borderWidth: 1, borderColor: c.separator, backgroundColor: c.card }}>
-              {steps.map((s, i) => {
-                const cur = i === idx; const done = i < idx; const ok = reachable(i);
-                return (
-                  <Pressable key={s} onPress={() => pickStep(s)} disabled={cur || !ok} accessibilityRole="button" accessibilityState={{ selected: cur, disabled: !cur && !ok }} accessibilityLabel={`Step ${i + 1}: ${STEP_TITLES[s].title}${done ? ", completed" : ""}`}
-                    style={{ flexDirection: "row", gap: S.md, alignItems: "center", padding: S.sm, minHeight: 52, borderRadius: 10, backgroundColor: cur ? c.bg : "transparent", opacity: cur || ok ? 1 : 0.5 }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 6, alignItems: "center", justifyContent: "center", backgroundColor: cur ? c.tintFill : done ? c.green + "1A" : c.fill, borderWidth: cur ? 0 : 1, borderColor: done ? c.green + "40" : c.separator }}>
-                      {done ? <Icon name="checkmark.circle.fill" size={16} color={c.green} /> : <Text variant="footnote" weight="700" color={cur ? c.onTint : c.secondaryLabel}>{i + 1}</Text>}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text variant="subhead" weight="600">{STEP_TITLES[s].title}</Text>
-                      <Text variant="caption" tone="secondary">{STEP_TITLES[s].description}</Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </Animated.View>
-          )}
-        </View>
-        {/* Step content card */}
-        <Animated.View key={step} entering={entering} style={{ borderRadius: R.input, borderWidth: 1, borderColor: c.separator, backgroundColor: c.bg, padding: S.md, gap: S.lg }}>
-          {showErrors && Object.keys(errors).length > 0 && (
-            <View accessibilityRole="alert" testID="step-error"><Note tone="red"><Text variant="subhead">{bannerText(step, f)}</Text></Note></View>
-          )}
-          {step === "personal" && <PersonalStep {...props} />}
-          {step === "spouse" && <SpouseStep {...props} />}
-          {step === "employment" && <EmploymentStep {...props} />}
-          {step === "trip-details" && <TripStep {...props} />}
-          {step === "payment" && <PaymentStep f={f} amount={amount} incomplete={incomplete} onFix={fix} signedIn={!!session} error={err}
-            onSignIn={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />}
-        </Animated.View>
-      </ScrollView>
-      {step === "personal" && !editing
-        ? bottomBar(<View style={{ flex: 1 }}><Button title={NEXT_LABEL.personal} onPress={next} /></View>)
-        : bottomBar(<>
-            <View style={{ flex: 1 }}><Button title={editing ? "Cancel" : "Back"} variant="secondary" onPress={back} disabled={busy} /></View>
-            <View style={{ flex: 2 }}>
-              {step === "payment"
-                ? <Button title={!SUPABASE_ENABLED ? "Unavailable" : session ? (busy ? "Submitting..." : "Proceed to Payment") : "Sign in to Continue"} icon={session ? "lock.fill" : undefined} loading={busy} disabled={!SUPABASE_ENABLED} onPress={pay} />
-                : <Button title={editing ? "Save & Review" : NEXT_LABEL[step]} onPress={next} />}
-            </View>
-          </>)}
+      {header}
+      <Animated.View key={page} entering={entering} style={{ flex: 1 }}>
+        {q.kind === "country" ? (
+          <CountryList names={q.names!} value={f[q.keys[0]] as string} onPick={pick} searchPlaceholder={q.searchPlaceholder ?? "Search country..."} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
+        ) : (
+          <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+            {title}
+            {body}
+            {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" tone="secondary">{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
+            {noteBox}
+            {errBox}
+          </ScrollView>
+        )}
+      </Animated.View>
+      {bar}
       <Modal visible={resumeAsk} transparent animationType="fade" onRequestClose={() => setResumeAsk(false)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
-          <View style={{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.md }} accessibilityViewIsModal>
-            <Text variant="title3" weight="600" accessibilityRole="header">Continue Application?</Text>
-            <Text variant="subhead" tone="secondary">We found a previous in-progress visa application. Would you like to restore your details or start fresh?</Text>
+          <View style={[{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.md }, curve]} accessibilityViewIsModal>
+            <Text variant="title3" accessibilityRole="header">{t("Continue Application?")}</Text>
+            <Text variant="subhead" tone="secondary">{t("Pick up where you left off, or start fresh.")}</Text>
             <View style={{ flexDirection: "row", gap: S.sm }}>
-              <View style={{ flex: 1 }}><Button title="Start Fresh" variant="secondary" onPress={() => { setResumeAsk(false); clearDraft(); const v = linkValues(); setForm((x) => ({ ...x, ...v })); setPage("personal"); setEditing(false); }} /></View>
-              <View style={{ flex: 1 }}><Button title="Restore Details" onPress={() => setResumeAsk(false)} /></View>
+              <View style={{ flex: 1 }}><Button title={t("Start Fresh")} variant="secondary" onPress={() => { setResumeAsk(false); clearDraft(); const v = linkValues(); setForm((x) => ({ ...x, ...v })); setEditing(null); }} /></View>
+              <View style={{ flex: 1 }}><Button title={t("Continue")} onPress={() => setResumeAsk(false)} /></View>
             </View>
           </View>
         </View>
