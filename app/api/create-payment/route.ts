@@ -1,17 +1,18 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
-import { isValidRedirectUrl } from "@/lib/sanitize"
+import { SITE_URL, siteUrl } from "@/lib/site-url"
 
 export async function POST(request: NextRequest) {
   try {
     // Origin validation for CSRF protection
     const origin = request.headers.get("origin")
+    const isDev = process.env.NODE_ENV === "development"
     const allowedOrigins = [
-      process.env.NEXT_PUBLIC_APP_URL,
-      "http://localhost:3000",
+      SITE_URL,
       "https://ezvisa.net",
       "https://www.ezvisa.net",
-    ].filter(Boolean)
+      ...(isDev ? ["http://localhost:3000"] : []),
+    ]
     
     if (origin && !allowedOrigins.some(allowed => origin.startsWith(allowed as string))) {
       return NextResponse.json({ error: "Invalid origin" }, { status: 403 })
@@ -36,16 +37,18 @@ export async function POST(request: NextRequest) {
     const supportedCurrencies = ["AED", "USD", "EUR", "GBP", "SAR"]
     const validCurrency = supportedCurrencies.includes(currency.toUpperCase()) ? currency.toUpperCase() : "AED"
 
-    // Validate redirect URLs to prevent open redirects
-    const allowedDomains = ['ezvisa.net', 'localhost', 'vercel.app', 'vusercontent.net']
-    if (success_url && !isValidRedirectUrl(success_url, allowedDomains)) {
-      console.log("[v0] Invalid success URL:", success_url)
-      return NextResponse.json({ error: "Invalid success URL" }, { status: 400 })
+    // No open redirects: whatever the client sends, Ziina returns the customer to the official domain.
+    const toSite = (u: string | undefined, fallbackPath: string) => {
+      if (!u) return siteUrl(fallbackPath)
+      try {
+        const parsed = new URL(u, SITE_URL)
+        return isDev && parsed.hostname === "localhost" ? parsed.toString() : siteUrl(parsed.pathname + parsed.search)
+      } catch {
+        return siteUrl(fallbackPath)
+      }
     }
-    if (cancel_url && !isValidRedirectUrl(cancel_url, allowedDomains)) {
-      console.log("[v0] Invalid cancel URL:", cancel_url)
-      return NextResponse.json({ error: "Invalid cancel URL" }, { status: 400 })
-    }
+    const successUrl = toSite(success_url, "/payment-success")
+    const cancelUrl = toSite(cancel_url, "/payment-failed")
 
     const apiKey = process.env.ZIINA_API_KEY
     if (!apiKey) {
@@ -85,8 +88,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         amount: amountInFils, // Use validated integer amount in smallest currency unit
         currency_code: validCurrency,
-        success_url,
-        cancel_url,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         test,
       }),
     })
