@@ -134,9 +134,11 @@ export function DateAnswer({ label, value, onChange, min, max, style, placeholde
             locale={lang === "ar" ? "ar" : "en"} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: w, height: 216, alignSelf: "center" }} />}
         </View>
       ) : (
-      <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden" }, curve]}>
-        <DateTimePicker value={initial} mode="date" display="inline" minimumDate={minD} maximumDate={maxD} accentColor={c.tint} themeVariant={dark ? "dark" : "light"}
-          locale={lang === "ar" ? "ar" : "en"} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: "100%" }} />
+      // Inline calendar: like the wheel, UIDatePicker only fills its box when given explicit numbers, so measure the card
+      // and size the calendar to it (height follows the width; 6 week rows always fit), centred with even padding.
+      <View onLayout={(ev) => setW(Math.round(ev.nativeEvent.layout.width))} style={[{ alignSelf: "stretch", alignItems: "center", borderRadius: R.card, backgroundColor: c.card, overflow: "hidden", paddingVertical: S.xs }, curve]}>
+        {w > 0 && <DateTimePicker key={`${w}-${dark}-${lang}`} value={initial} mode="date" display="inline" minimumDate={minD} maximumDate={maxD} accentColor={c.tint} themeVariant={dark ? "dark" : "light"}
+          locale={lang === "ar" ? "ar" : "en"} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: w - S.md, height: Math.round(Math.min(w - S.md, 400) * 0.94), alignSelf: "center" }} />}
       </View>
       )}
     </View>
