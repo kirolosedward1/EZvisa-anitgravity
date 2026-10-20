@@ -5,17 +5,17 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { translate, type Lang } from "./i18n";
 
-export const MAX_BYTES = 10 * 1024 * 1024; // same limit as the website upload
+export const MAX_BYTES = 5 * 1024 * 1024; // visa_documents bucket file_size_limit (5 MB, read from the live bucket)
 export const MIN_SHORT_SIDE = 1000;        // px; below this, passport text is often unreadable
 export const MIN_BYTES = 40 * 1024;        // a real photo/scan of a page is rarely smaller
 export type Picked = { uri: string; name: string; mimeType?: string | null; size?: number | null; width?: number; height?: number };
-export type Source = "camera" | "library" | "files";
+export type Source = "camera" | "library" | "files" | "scan";
 
 /** Pure quality check, also used by tests. Returns blocking error or warnings. */
 export function checkQuality(f: Picked, lang: Lang = "en"): { error?: string; warnings: string[] } {
   const t = (s: string, v?: Record<string, string | number>) => translate(lang, s, v);
   const w: string[] = [];
-  if (f.size != null && f.size > MAX_BYTES) return { error: t("File is larger than 10 MB."), warnings: [] };
+  if (f.size != null && f.size > MAX_BYTES) return { error: t("File is larger than 5 MB."), warnings: [] };
   const img = (f.mimeType ?? "").startsWith("image/") || /\.(jpe?g|png|heic|webp)$/i.test(f.name);
   if (img && f.width && f.height && Math.min(f.width, f.height) < MIN_SHORT_SIDE) w.push(t("Low resolution ({w}×{h}). Text may be hard to read.", { w: f.width, h: f.height }));
   if (f.size != null && f.size < MIN_BYTES) w.push(t("Very small file ({k} KB). It may be blurry or cropped.", { k: Math.round(f.size / 1024) }));
@@ -24,7 +24,27 @@ export function checkQuality(f: Picked, lang: Lang = "en"): { error?: string; wa
 
 async function sizeOf(uri: string): Promise<number | null> { try { return (await (await fetch(uri)).blob()).size; } catch { return null; } }
 
+/** Multi-page scan: camera pages (compressed) combined into one PDF on the phone with expo-print. */
+async function scanPdf(): Promise<Picked | null> {
+  const p = await ImagePicker.requestCameraPermissionsAsync();
+  if (!p.granted) throw new Error("Camera access is off for EZvisa. Turn it on in Settings.");
+  const pages: string[] = [];
+  for (;;) {
+    const r = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.5, base64: true, exif: false });
+    if (r.canceled || !r.assets?.[0]?.base64) break;
+    pages.push(r.assets[0].base64);
+    const more = await new Promise<boolean>((res) => Alert.alert(`${pages.length} ${pages.length === 1 ? "page" : "pages"}`, undefined, [{ text: "Done", style: "cancel", onPress: () => res(false) }, { text: "Add page", onPress: () => res(true) }]));
+    if (!more) break;
+  }
+  if (!pages.length) return null;
+  const Print = require("expo-print") as typeof import("expo-print");
+  const html = `<html><body style="margin:0">${pages.map((b) => `<div style="page-break-after:always;height:100vh;display:flex;align-items:center;justify-content:center"><img src="data:image/jpeg;base64,${b}" style="max-width:100%;max-height:100vh"/></div>`).join("")}</body></html>`;
+  const { uri } = await Print.printToFileAsync({ html, width: 595, height: 842 });
+  return { uri, name: `scan_${Date.now()}.pdf`, mimeType: "application/pdf", size: await sizeOf(uri) };
+}
+
 export async function pickFrom(source: Source): Promise<Picked | null> {
+  if (source === "scan") return scanPdf();
   if (source === "files") {
     const r = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/jpeg", "image/png", "image/heic", "image/webp"], copyToCacheDirectory: true });
     if (r.canceled || !r.assets?.[0]) return null;
@@ -47,7 +67,7 @@ export function chooseSource(lang: Lang): Promise<Source | null> {
   const t = (s: string) => translate(lang, s);
   if (Platform.OS === "web") return Promise.resolve("files");
   return new Promise((res) => {
-    const opts: [Source, string][] = [["camera", t("Take photo")], ["library", t("Choose photo")], ["files", t("Choose file")]];
+    const opts: [Source, string][] = [["scan", t("Scan pages (PDF)")], ["camera", t("Take photo")], ["library", t("Choose photo")], ["files", t("Choose file")]];
     if (Platform.OS === "ios") ActionSheetIOS.showActionSheetWithOptions({ options: [...opts.map((o) => o[1]), t("Cancel")], cancelButtonIndex: opts.length }, (i) => res(i < opts.length ? opts[i][0] : null));
     else Alert.alert(t("Add document"), undefined, [...opts.map(([v, l]) => ({ text: l, onPress: () => res(v) })), { text: t("Cancel"), style: "cancel" as const, onPress: () => res(null) }], { cancelable: true, onDismiss: () => res(null) });
   });

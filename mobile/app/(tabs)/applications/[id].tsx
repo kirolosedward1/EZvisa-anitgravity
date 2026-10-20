@@ -125,7 +125,7 @@ export default function ApplicationDetail() {
       {locked ? (
         <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
       ) : list ? (<>
-        <ListGroup header={t("Your documents · {i} of {n}", { i: done, n: list.customer.length })} footer={canUpload ? t("PDF or image · max 10 MB. Tap a missing item to upload it.") : undefined} inset={58}>
+        <ListGroup header={t("Your documents · {i} of {n}", { i: done, n: list.customer.length })} footer={canUpload ? t("PDF or image · max 5 MB. Tap a missing item to upload it.") : undefined} inset={58}>
           <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} accessible accessibilityLabel={`${done} of ${list.customer.length} documents provided`}>
             <View style={{ height: 6, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 6, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
           </View>

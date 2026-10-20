@@ -9,7 +9,7 @@ import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, fi
 import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
 import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence } from "../../lib/wizard";
+import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence, iso as isoLocal } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { Button, Text, Icon, SuccessCheck, InlineError, Flag, Shake } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
@@ -85,6 +85,9 @@ export default function Apply() {
   const fRef = useRef(f); fRef.current = f;
   const navReady = !!useRootNavigationState()?.key;
   const isRTL = rtl || I18nManager.isRTL;
+  // Inline validation: errors appear on their own once typing pauses (no need to press Continue first).
+  const [settled, setSettled] = useState(true);
+  useEffect(() => { setSettled(false); const tm = setTimeout(() => setSettled(true), 700); return () => clearTimeout(tm); }, [f]);
   const net = useNetInfo(); const offline = net.isConnected === false;
   const [reqs, setReqs] = useState<Requirement[]>([]);
   const [prefill, setPrefill] = useState<{ values: Partial<WizardForm>; name: string } | null>(null); const prefillAsked = useRef(false);
@@ -341,7 +344,9 @@ export default function Apply() {
 
   // ---------------- One question ----------------
   if (!q) return null;
-  const e = showErr ? firstError(q, f) : undefined;
+  const liveErr = firstError(q, f);
+  const hasInput = q.kind === "phone" ? !!f.phoneLocal.trim() : isAnswered(q, f);
+  const e = showErr || (settled && hasInput) ? liveErr : undefined;
   const note = q.note?.(f);
   const answered = isAnswered(q, f);
   const days = q.id === "travelEndDate" ? tripDays(f) : 0;
@@ -375,7 +380,20 @@ export default function Apply() {
             <View style={{ alignSelf: "flex-start" }}><Button title={t("Use {v}", { v: f.lastName.trim() })} variant="secondary" size="M" icon="person.2.fill" onPress={() => { tap(); patch({ spouseLastName: f.lastName.trim() }); }} /></View>)}
         </View>
       );
-      case "date": return <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />;
+      case "date": return (
+        <View style={{ gap: S.md }}>
+          {q.id === "travelEndDate" && !!f.travelStartDate && (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.xs }} accessibilityRole="radiogroup" accessibilityLabel={t("Trip length")} testID="date-quickpicks">
+              {([[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const).map(([n, l]) => {
+                const [y, m, d] = f.travelStartDate.split("-").map(Number); const v = isoLocal(new Date(y, m - 1, d + n)); const on = f.travelEndDate === v;
+                return <PressScale key={n} onPress={() => { select(); patch({ travelEndDate: v }); }} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t(l)}
+                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? c.tintFill : c.card }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? c.tint : c.label}>{t(l)}</Text></PressScale>;
+              })}
+            </View>
+          )}
+          <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />
+        </View>
+      );
       case "phone": return (
         <View style={{ gap: S.sm }}>
           <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />
@@ -391,7 +409,7 @@ export default function Apply() {
   const btnTitle = !q.required && !answered ? t("Skip") : editing ? t("Save") : t("Continue");
   const bar = showBtn ? (
     <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg }}>
-      <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} onPress={() => advance()} />
+      <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} disabled={!!liveErr && (q.required || answered)} onPress={() => advance()} />
     </View>
   ) : <View style={{ height: Math.max(insets.bottom, S.md) }} />;
 

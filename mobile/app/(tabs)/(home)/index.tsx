@@ -2,7 +2,7 @@ import { ScrollView, View, RefreshControl, Image, StyleSheet } from "react-nativ
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../../components/Logo";
-import { Text, Flag, Icon, PressScale, SectionHeader, Avatar, Skeleton, useTabInset, journeyIndex, Button, ProgressSegments } from "../../../components/ui";
+import { Text, Flag, Icon, PressScale, SectionHeader, Avatar, Skeleton, useTabInset, journeyIndex, Button, ProgressSegments, Timeline } from "../../../components/ui";
 import { useColors, useIsDark, S, R, curve, elevation, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { LinearGradient } from "expo-linear-gradient";
@@ -53,6 +53,11 @@ function Hero({ a }: { a: Application }) {
         {n.kind !== "none" && <Text variant="subhead" tone="secondary" style={{ marginTop: S.lg }} numberOfLines={3} testID="next-action">{t(n.title)} · {t(n.body)}</Text>}
         <View style={{ marginTop: S.md }}><Button title={n.kind === "none" || !n.cta ? t("View application") : t(n.cta)} onPress={act} /></View>
       </>) : <View style={{ marginTop: S.lg, gap: S.md }}><Skeleton w="80%" h={14} /><Skeleton h={56} r={R.round} /></View>}
+      {/* Status timeline from the live columns only (application_status, payment_status, created_at/updated_at). */}
+      <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, paddingVertical: S.xs }, curve]} testID="home-timeline">
+        <Text variant="footnote" tone="secondary" weight="600" style={{ paddingHorizontal: S.md, paddingTop: S.sm }} accessibilityRole="header">{t("Your application")}</Text>
+        <Timeline a={a} t={t} />
+      </View>
     </View>
   );
 }
@@ -151,6 +156,13 @@ export default function Home() {
           <Orb />
           <Text variant="footnote" tone="secondary" weight="600">{today(lang)}</Text>
           <Text variant="display" accessibilityRole="header" style={{ marginTop: S.xxs }}>{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
+          {session && apps?.length === 0 && (
+            <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]} testID="home-timeline-empty">
+              <Text variant="headline">{t("No application yet")}</Text>
+              <Text variant="subhead" tone="secondary">{t("Start an application to track it here.")}</Text>
+              <Button title={t("Start application")} size="M" onPress={() => router.push("/apply")} />
+            </View>
+          )}
         </View>
       )}
       <PressScale onPress={() => { tap(); router.navigate("/countries"); }} accessibilityRole="search" accessibilityLabel={t("Search destinations")}

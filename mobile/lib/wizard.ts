@@ -8,7 +8,7 @@ export type WizardForm = {
   // personal
   destination: string; nationality: string; countryOfResidence: string; cityOfResidence: string; hasEmiratesId: YesNo;
   firstName: string; lastName: string; email: string; phone: string; phoneCountry: string; phoneLocal: string; whatsappOptIn: boolean;
-  dateOfBirth: string; passportNumber: string; hasValidPassport: YesNo;
+  dateOfBirth: string; passportNumber: string; passportExpiry: string; hasValidPassport: YesNo;
   maritalStatus: "" | "single" | "married" | "divorced" | "widowed"; spouseAccompanying: YesNo;
   // spouse
   spouseFirstName: string; spouseLastName: string; spouseHasValidPassport: YesNo; spouseOccupation: string;
@@ -25,7 +25,7 @@ export type WizardForm = {
 export const emptyForm: WizardForm = {
   destination: "", nationality: "", countryOfResidence: "United Arab Emirates", cityOfResidence: "", hasEmiratesId: "",
   firstName: "", lastName: "", email: "", phone: "", phoneCountry: "AE", phoneLocal: "", whatsappOptIn: true,
-  dateOfBirth: "", passportNumber: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "",
+  dateOfBirth: "", passportNumber: "", passportExpiry: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "",
   spouseFirstName: "", spouseLastName: "", spouseHasValidPassport: "", spouseOccupation: "",
   employmentStatus: "", jobTitle: "", companyName: "", employmentStartDate: "", monthlySalary: "", hasNOC: "", averageMonthlyIncome: "",
   purposeOfTrip: "", travelStartDate: "", travelEndDate: "", datesFlexible: "", travelingWith: "", hotelCategory: "", fundingSource: "", balanceRange: "",
@@ -106,6 +106,13 @@ const today = () => { const t = new Date(); t.setHours(12, 0, 0, 0); return t; }
 export const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 export const adultMax = () => { const t = today(); t.setFullYear(t.getFullYear() - 18); return t; };
 export const earliestDeparture = () => new Date(today().getTime() + 15 * day);
+/** Passport expiry >= return date + 3 months (or today + 3 months while the return date is unknown). */
+export function passportCoversTrip(f: { passportExpiry: string; travelEndDate: string }) {
+  if (!f.passportExpiry) return true;
+  const base = f.travelEndDate ? new Date(f.travelEndDate + "T00:00:00") : new Date();
+  const need = new Date(base.getFullYear(), base.getMonth() + 3, base.getDate());
+  return new Date(f.passportExpiry + "T00:00:00").getTime() >= need.getTime();
+}
 export const tripDays = (f: WizardForm) => (f.travelStartDate && f.travelEndDate ? Math.ceil((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) : 0);
 
 export type Errors = Partial<Record<keyof WizardForm, string>>;
@@ -124,7 +131,12 @@ export function validatePersonal(f: WizardForm): Errors {
   if (!f.dateOfBirth) e.dateOfBirth = "Please select your date of birth (must be 18+)"; else if (Date.parse(f.dateOfBirth) > adultMax().getTime()) e.dateOfBirth = "You must be 18 or older";
   if (!f.hasValidPassport) e.hasValidPassport = "Please choose Yes or No";
   else if (f.hasValidPassport === "no") e.hasValidPassport = "You need a valid passport (at least 6 months validity from your travel date) before applying.";
-  else if (!f.passportNumber.trim()) e.passportNumber = "Passport number is required";
+  else {
+    if (!f.passportNumber.trim()) e.passportNumber = "Passport number is required";
+    // App-only field (kept in the wizard notes JSON; no DB column): valid >= 3 months after the return date.
+    if (!f.passportExpiry) e.passportExpiry = "Please select your passport expiry date";
+    else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date";
+  }
   if (!f.maritalStatus) e.maritalStatus = "Please select your marital status";
   if (f.maritalStatus === "married" && !f.spouseAccompanying) e.spouseAccompanying = "Please choose Yes or No";
   return e;
@@ -159,6 +171,7 @@ export function validateTrip(f: WizardForm): Errors {
   if (!f.travelEndDate) e.travelEndDate = "Please select a return date";
   else if (f.travelStartDate && tripDays(f) <= 0) e.travelEndDate = "Return date must be after departure date";
   else if (tripDays(f) > 90) e.travelEndDate = "Schengen visits are limited to 90 days";
+  else if (f.passportExpiry && !passportCoversTrip(f)) e.travelEndDate = "Passport must be valid at least 3 months after your return date";
   if (!f.datesFlexible) e.datesFlexible = "Please choose Yes or No";
   if (!f.travelingWith) e.travelingWith = "Please select who you are traveling with";
   if (!f.hotelCategory) e.hotelCategory = "Please select an accommodation preference";

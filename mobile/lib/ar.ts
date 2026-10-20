@@ -1,6 +1,9 @@
 // Arabic strings, keyed by the English text (English stays the website's exact wording).
 // Placeholders like {n} are kept as-is. Missing keys fall back to English.
 export const AR: Record<string, string> = {
+  "Scan pages (PDF)": "مسح الصفحات (PDF)", "Passport Expiry Date": "تاريخ انتهاء جواز السفر", "Select expiry date": "اختر تاريخ الانتهاء",
+  "Passport must be valid at least 3 months after your return date": "يجب أن يكون الجواز ساريًا 3 أشهر على الأقل بعد تاريخ العودة", "Please select your passport expiry date": "يرجى اختيار تاريخ انتهاء الجواز",
+  "1 week": "أسبوع", "2 weeks": "أسبوعان", "3 weeks": "3 أسابيع", "1 month": "شهر", "Your application": "طلبك", "No application yet": "لا يوجد طلب بعد", "Start an application to track it here.": "ابدأ طلبًا لمتابعته هنا.", "Start application": "ابدأ الطلب",
   "You need a valid passport (at least 6 months validity from your travel date) before applying.": "تحتاج إلى جواز سفر ساري المفعول (صلاحية 6 أشهر على الأقل من تاريخ السفر) قبل التقديم.",
   "Documents unlock after payment.": "تُفتح المستندات بعد الدفع.", "Available after payment": "متاح بعد الدفع", "Next step": "الخطوة التالية", "The last payment didn't go through.": "لم تكتمل عملية الدفع الأخيرة.",
   "Resident in {c}": "مقيم في {c}", "{n} questions left": "متبقي {n} سؤال", "Documents you'll need": "المستندات المطلوبة", "Upload after you submit.": "ارفعها بعد الإرسال.", "Prepared by EZvisa": "تعدّه EZvisa",
@@ -161,7 +164,7 @@ export const AR: Record<string, string> = {
   "Choose another": "اختيار غيرها",
   "Upload anyway": "رفع على أي حال",
   "Upload anyway?": "الرفع على أي حال؟",
-  "File is larger than 10 MB.": "الملف أكبر من 10 ميغابايت.",
+  "File is larger than 5 MB.": "الملف أكبر من 5 ميغابايت.",
   "Low resolution ({w}×{h}). Text may be hard to read.": "دقة منخفضة ({w}×{h}). قد يصعب قراءة النص.",
   "Very small file ({k} KB). It may be blurry or cropped.": "ملف صغير جداً ({k} كيلوبايت). قد يكون غير واضح أو مقصوصاً.",
   "Trip plan": "خطة الرحلة",
@@ -270,7 +273,7 @@ export const AR: Record<string, string> = {
   "Welcome back": "مرحباً بعودتك",
   "Create your\naccount": "أنشئ\nحسابك",
   "Your documents · {i} of {n}": "مستنداتك · {i} من {n}",
-  "PDF or image · max 10 MB. Tap a missing item to upload it.": "PDF أو صورة · 10 ميغابايت كحد أقصى. اضغط على أي عنصر ناقص لرفعه.",
+  "PDF or image · max 5 MB. Tap a missing item to upload it.": "PDF أو صورة · 5 ميغابايت كحد أقصى. اضغط على أي عنصر ناقص لرفعه.",
   "We prepare these": "نُعدّها نحن",
   "Uploads": "الرفع",
   "Queued uploads continue automatically when you're online.": "يستمر الرفع المنتظر تلقائياً عند اتصالك بالإنترنت.",
@@ -344,5 +347,4 @@ export const AR: Record<string, string> = {
   "Past": "السابقة",
   "No active applications": "لا توجد طلبات نشطة",
   "Nothing here yet": "لا شيء هنا بعد",
-  "Start application": "ابدأ الطلب",
 };

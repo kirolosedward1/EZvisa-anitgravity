@@ -25,7 +25,8 @@ const APressable = Animated.createAnimatedComponent(Pressable);
 export function PressScale({ scaleTo = PRESS.scale, lift, style: style0, children, onPressIn, onPressOut, ...p }: Omit<PressableProps, "style"> & { scaleTo?: number; lift?: boolean; style?: StyleProp<ViewStyle> | ((s: { pressed: boolean }) => StyleProp<ViewStyle>); children?: React.ReactNode }) {
   const style = typeof style0 === "function" ? style0({ pressed: false }) : style0; // feedback comes from the shared press animation
   const reduce = useReducedMotion(); const s = useSharedValue(0);
-  const a = useAnimatedStyle(() => ({ opacity: 1 - (1 - PRESS.dim) * s.value, transform: reduce ? [] : [{ scale: 1 - (1 - scaleTo) * s.value }, { translateY: lift ? PRESS.lift * s.value : 0 }] }));
+  const base = (StyleSheet.flatten(style)?.opacity as number | undefined) ?? 1; // keep e.g. the disabled 0.4 (the press animation used to override it)
+  const a = useAnimatedStyle(() => ({ opacity: base * (1 - (1 - PRESS.dim) * s.value), transform: reduce ? [] : [{ scale: 1 - (1 - scaleTo) * s.value }, { translateY: lift ? PRESS.lift * s.value : 0 }] }));
   return <APressable {...p} onPressIn={(e) => { s.value = withSpring(1, SPRING.press); onPressIn?.(e); }} onPressOut={(e) => { s.value = withSpring(0, SPRING.press); onPressOut?.(e); }} style={[style, a]}>{children}</APressable>;
 }
 
