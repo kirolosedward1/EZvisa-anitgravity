@@ -5,7 +5,7 @@ import { ScrollView, TextInput, View, Platform, I18nManager } from "react-native
 import { router, useLocalSearchParams } from "expo-router";
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Text, Skeleton, InlineError } from "../../components/ui";
+import { Button, Text, Skeleton, InlineError, EmptyState } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
 import { ChoiceList, YesNoTiles, DateAnswer } from "../../components/wizard/answers";
 import { Note } from "../../components/wizard/fields";
@@ -68,7 +68,7 @@ export default function ContinueApplication() {
         <View style={{ flex: 1 }} />
       </View>
       {!f ? (
-        <View style={{ padding: S.lg, gap: S.md }}>{err ? <InlineError text={err} /> : <><Skeleton w="60%" h={28} /><Skeleton h={60} r={R.tile} /><Skeleton h={60} r={R.tile} /></>}</View>
+        err ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} /></View> : <View style={{ padding: S.lg, gap: S.md }}>{ <><Skeleton w="60%" h={28} /><Skeleton h={60} r={R.tile} /><Skeleton h={60} r={R.tile} /></>}</View>
       ) : (
         <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.lg }}>
           <View style={{ gap: S.xs }}>

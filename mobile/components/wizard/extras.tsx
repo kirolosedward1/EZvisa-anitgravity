@@ -51,7 +51,7 @@ export function DocsButton({ reqs }: { reqs: Requirement[] }) {
             {reqs.map((r) => (
               <View key={r.id} accessible accessibilityLabel={`${t(r.title)}${r.provided_by_ezvisa ? `, ${t("Prepared by EZvisa")}` : ""}`}
                 style={[{ minHeight: 56, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm }, curve]}>
-                <Icon name={r.provided_by_ezvisa ? "sparkles" : "doc.fill"} size={16} color={r.provided_by_ezvisa ? c.accent : c.secondaryLabel} />
+                <Icon name={r.provided_by_ezvisa ? "checkmark.seal.fill" : "doc.fill"} size={16} color={r.provided_by_ezvisa ? c.accent : c.secondaryLabel} />
                 <View style={{ flex: 1, gap: S.xxs }}>
                   <Text variant="body" weight="500">{t(r.title)}</Text>
                   {!!r.description && <Text variant="footnote" tone="secondary">{t(r.description)}</Text>}

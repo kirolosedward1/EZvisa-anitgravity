@@ -1,15 +1,15 @@
 // Building blocks for the one-question-per-screen application flow.
 import { useEffect, useState } from "react";
 import { Platform, Pressable, Switch, TextInput, View, useWindowDimensions } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useColors, useIsDark, S, R, T, curve } from "../lib/theme";
+import { useColors, useIsDark, S, R, T, curve, SPRING } from "../lib/theme";
 import { Icon, IconName, PressScale, Text, Flag, InlineError } from "./ui";
 import { select } from "../lib/haptics";
 
 export function FlowProgress({ value }: { value: number }) {
   const c = useColors(); const w = useSharedValue(value);
-  useEffect(() => { w.value = withTiming(value, { duration: 320, easing: Easing.out(Easing.cubic) }); }, [value]);
+  useEffect(() => { w.value = withSpring(value, SPRING.enter); }, [value]);
   const a = useAnimatedStyle(() => ({ width: `${Math.max(0.04, w.value) * 100}%` as any }));
   return <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }} style={{ height: 4, borderRadius: R.xs, backgroundColor: c.card, overflow: "hidden" }}><Animated.View style={[{ height: 4, borderRadius: R.xs, backgroundColor: c.tint }, a]} /></View>;
 }

@@ -5,7 +5,8 @@ import { PressScale } from "../../components/ui";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View, AccessibilityInfo, I18nManager } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import Animated, { FadeIn, SlideInRight, SlideInLeft, useReducedMotion, Easing } from "react-native-reanimated";
+import Animated, { useReducedMotion } from "react-native-reanimated";
+import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -86,7 +87,7 @@ export default function TripPlan() {
     const pickAuto = (patch: Partial<Prefs>) => { setPrefs((p) => ({ ...p, ...patch })); setTimeout(next, reduce ? 60 : 240); };
     const sugg = suggestedCities(a).filter((x) => !prefs.cities.includes(x));
     const addCity = () => { const v = city.trim(); if (v && !prefs.cities.includes(v)) { select(); setPrefs((p) => ({ ...p, cities: [...p.cities, v] })); } setCity(""); };
-    const entering = reduce ? FadeIn.duration(120) : (dir > 0) !== isRTL ? SlideInRight.duration(240).easing(Easing.out(Easing.cubic)) : SlideInLeft.duration(240).easing(Easing.out(Easing.cubic));
+    const entering = slideIn(dir, isRTL, reduce);
     const titles: Record<QStep, string> = { cities: "Which cities?", budget: "What's your budget?", who: "Who's travelling?", interests: "What do you enjoy?" };
     return (
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -121,7 +122,7 @@ export default function TripPlan() {
           </ScrollView>
         </Animated.View>
         <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), gap: S.xs }}>
-          <Button title={q === "interests" ? t("Create plan") : t("Continue")} icon={q === "interests" ? "wand.and.stars" : undefined} onPress={next} />
+          <Button title={q === "interests" ? t("Create plan") : t("Continue")} onPress={next} />
           {q !== "interests" && <Button title={t("Skip")} variant="plain" color={c.secondaryLabel} onPress={next} />}
         </View>
       </KeyboardAvoidingView>

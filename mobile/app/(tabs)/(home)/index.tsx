@@ -5,7 +5,6 @@ import { Logo } from "../../../components/Logo";
 import { Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, journeyIndex, Button, ProgressSegments, Timeline } from "../../../components/ui";
 import { useColors, useIsDark, S, R, curve, elevation, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
-import { LinearGradient } from "expo-linear-gradient";
 import { PHOTOS } from "../../../lib/photos";
 import { STATUS_LABEL, isPaid, type Application } from "../../../lib/data";
 import { useApps, ACTIVE } from "../../../lib/useApps";
@@ -20,6 +19,8 @@ import { hasAnswers, employmentComplete } from "../../../lib/wizard";
 import { Q_BY_ID } from "../../../lib/questions";
 import { useT } from "../../../lib/i18n";
 import { countdown } from "../../../lib/countdown";
+import Animated from "react-native-reanimated";
+import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
 
 /** Editorial hero built only from the user's REAL active application: destination, status, countdown, journey progress
@@ -36,11 +37,9 @@ function Hero({ a }: { a: Application }) {
   return (
     <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl }} testID="home-hero">
       <PressScale onPress={() => { tap(); open(); }} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={[t(name), status, cd].filter(Boolean).join(", ")} accessibilityHint={t("Opens the application")}>
-        <Text variant="footnote" tone="secondary" weight="600">{today(lang)}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.md, marginTop: S.md }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}>
           <View style={{ flex: 1, gap: S.xxs }}>
-            <Text variant="caption" tone="secondary" weight="600">{t("Your trip").toUpperCase()}</Text>
-            <Text variant="display" accessibilityRole="header" numberOfLines={2}>{t(name)}</Text>
+            <Text variant="largeTitle" accessibilityRole="header" numberOfLines={2}>{t(name)}</Text>
           </View>
           <HeroFlag country={name} />
         </View>
@@ -62,21 +61,12 @@ function Hero({ a }: { a: Application }) {
     </View>
   );
 }
-/** Large round flag on a soft accent halo (no photos, no fake content). */
-function HeroFlag({ country }: { country: string }) {
-  const c = useColors(); const dark = useIsDark(); const size = 88;
-  return (
-    <View style={[{ width: size + S.md, height: size + S.md, borderRadius: R.round, alignItems: "center", justifyContent: "center" }, elevation(2, dark)]}>
-      <LinearGradient colors={[c.accentSoft, "transparent"]} start={{ x: 0.2, y: 0 }} end={{ x: 0.8, y: 1 }} style={[StyleSheet.absoluteFill, { borderRadius: R.round }]} />
-      <Flag country={country} size={size} />
-    </View>
-  );
-}
+/** Round flag, no decoration. */
+function HeroFlag({ country }: { country: string }) { return <Flag country={country} size={72} />; }
 function HeroSkeleton() {
   return (
     <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }} accessible accessibilityLabel="Loading">
-      <Skeleton w={140} h={14} />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}><View style={{ flex: 1, gap: S.xs }}><Skeleton w={80} h={12} /><Skeleton w="70%" h={40} r={R.md} /></View><Skeleton w={104} h={104} r={R.round} /></View>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}><View style={{ flex: 1, gap: S.xs }}><Skeleton w={80} h={12} /><Skeleton w="70%" h={40} r={R.md} /></View><Skeleton w={72} h={72} r={R.round} /></View>
       <Skeleton w="45%" h={16} /><Skeleton h={S.xxs} r={R.xs} /><Skeleton h={56} r={R.round} />
     </View>
   );
@@ -107,9 +97,9 @@ function AppList({ apps }: { apps: Application[] | null }) {
   ].sort((x, y) => y.at - x.at).filter(((n) => (i: Item) => !i.remove || n++ < ABANDONED_LIMIT)(0));
   if (!items.length || (items.length === 1 && items[0].key.startsWith("s:"))) return null; // one server app = the hero above
   return (
-    <ListGroup header={t("Your applications")} inset={S.md + 28 + S.md} style={{ marginHorizontal: S.xs }}>
+    <ListGroup header={t("Your applications")} inset={S.md + 28 + S.md} style={{ marginHorizontal: S.xxs }}>
       {items.map((i) => (
-        <View key={i.key} style={{ flexDirection: "row", alignItems: "center" }} testID="home-app-row">
+        <Animated.View key={i.key} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT} style={{ flexDirection: "row", alignItems: "center" }} testID="home-app-row">
           <PressScale onPress={() => { tap(); i.open(); }} onLongPress={i.remove} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
             style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: S.md, paddingLeft: S.md, paddingRight: i.remove ? 0 : S.md, minHeight: 56 }}>
             {i.country ? <Flag country={i.country} size={28} /> : <View style={{ width: 28, height: 28, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={13} color={c.tint} /></View>}
@@ -125,7 +115,7 @@ function AppList({ apps }: { apps: Application[] | null }) {
               <Icon name="trash" size={17} color={c.red} />
             </PressScale>
           )}
-        </View>
+        </Animated.View>
       ))}
     </ListGroup>
   );
@@ -143,21 +133,16 @@ function Story({ name }: { name: string }) {
   const c = useColors(); const { t } = useT(); const photo = PHOTOS[toSlug(name)]; const inner = RING - GAP * 4;
   return (
     <PressScale scaleTo={0.92} onPress={() => { tap(); router.push(`/destination/${toSlug(name)}`); }} accessibilityRole="button" accessibilityLabel={name} style={{ width: RING + 8, alignItems: "center", gap: S.xs }}>
-      <LinearGradient colors={[c.accentFill, c.accent]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 0 }} style={{ width: RING, height: RING, borderRadius: RING / 2, padding: GAP }}>
+      <View style={{ width: RING, height: RING, borderRadius: RING / 2, padding: GAP, borderWidth: StyleSheet.hairlineWidth, borderColor: c.separator }}>
         <View style={{ flex: 1, borderRadius: RING / 2, backgroundColor: c.bg, padding: GAP, alignItems: "center", justifyContent: "center" }}>
           {photo ? <Image source={photo} style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.card }} resizeMode="cover" /> : <Flag country={name} size={inner} />}
         </View>
-      </LinearGradient>
+      </View>
       <Text variant="caption" weight="500" numberOfLines={1} center>{t(name)}</Text>
     </PressScale>
   );
 }
 
-/** Tasteful abstract accent glow behind the signed-out / no-trip headline (decorative only). */
-function Orb() {
-  const c = useColors();
-  return <LinearGradient pointerEvents="none" colors={[c.accentSoft, "transparent"]} start={{ x: 1, y: 0 }} end={{ x: 0.2, y: 1 }} style={{ position: "absolute", top: -S.x5, right: -S.x5, width: 260, height: 260, borderRadius: R.round }} />;
-}
 
 export default function Home() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t, lang } = useT();
@@ -179,9 +164,7 @@ export default function Home() {
       <View style={{ marginTop: S.xl }} />
       {session && apps === null ? <HeroSkeleton /> : active ? <Hero a={active} /> : (
         <View style={{ paddingHorizontal: S.lg, marginBottom: S.xl }} testID="home-headline">
-          <Orb />
-          <Text variant="footnote" tone="secondary" weight="600">{today(lang)}</Text>
-          <Text variant="display" accessibilityRole="header" style={{ marginTop: S.xxs }}>{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
+          <Text variant="largeTitle" accessibilityRole="header">{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
           {session && apps?.length === 0 && (
             <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]} testID="home-timeline-empty">
               <Text variant="headline">{t("No application yet")}</Text>
@@ -192,7 +175,7 @@ export default function Home() {
         </View>
       )}
       <PressScale onPress={() => { tap(); router.navigate("/countries"); }} accessibilityRole="search" accessibilityLabel={t("Search destinations")}
-        style={{ marginHorizontal: S.lg, marginBottom: S.xxl, minHeight: 56, borderRadius: R.round, backgroundColor: c.card, flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.lg }}>
+        style={{ marginHorizontal: S.lg, marginBottom: S.xxl, minHeight: 44, borderRadius: R.md, backgroundColor: c.fill, flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.sm }}>
         <Icon name="magnifyingglass" size={ICON.md} color={c.secondaryLabel} weight="medium" />
         <Text variant="body" tone="secondary">{t("Search destinations")}</Text>
       </PressScale>

@@ -9,6 +9,8 @@ import { STATUS_LABEL, type Application } from "../../../lib/data";
 import { useApps, ACTIVE } from "../../../lib/useApps";
 import { tap } from "../../../lib/haptics";
 import { askDiscard, isAbandoned } from "../../../lib/discard";
+import Animated from "react-native-reanimated";
+import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 
 const fmt = (s?: string | null) => (s ? new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
 
@@ -16,7 +18,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
   const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const idx = journeyIndex(a.status, a.payment_status);
   return (
     <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift
-      style={[card(c, dark, 1), { padding: S.lg, gap: S.lg }]}>
+      style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={44} />
         <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[a.reference, a.entry_date && `${fmt(a.entry_date)} – ${fmt(a.exit_date)}`].filter(Boolean).join(" · ")}</Text></View>
@@ -39,7 +41,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
 function AppCardSkeleton() {
   const c = useColors(); const dark = useIsDark();
   return (
-    <View style={[card(c, dark, 1), { padding: S.lg, gap: S.lg }]}>
+    <View style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}><Skeleton w={44} h={44} r={R.round} /><View style={{ flex: 1, gap: S.xs }}><Skeleton w="45%" h={20} /><Skeleton w="70%" h={12} /></View></View>
       <View style={{ gap: S.xs }}><Skeleton h={S.xxs} r={R.xs} /><Skeleton w={84} h={20} r={R.sm} /></View>
     </View>
@@ -75,7 +77,7 @@ export default function Applications() {
             <EmptyState icon="airplane" title={tab === "active" ? t("No active applications") : t("Nothing here yet")} action={tab === "active" ? <Button title={t("Start application")} onPress={() => router.push("/apply")} /> : undefined} />
           </View>
         )}
-        <View style={{ gap: S.sm }}>{list.map((a) => <AppCard key={a.id} a={a} onDiscard={isAbandoned(a) ? () => { discard(a).catch(() => {}); } : undefined} />)}</View>
+        <View style={{ gap: S.sm }}>{list.map((a) => <Animated.View key={a.id} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT}><AppCard a={a} onDiscard={isAbandoned(a) ? () => { discard(a).catch(() => {}); } : undefined} /></Animated.View>)}</View>
       </>)}
     </ScrollView>
   );
