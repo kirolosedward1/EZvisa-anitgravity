@@ -30,7 +30,7 @@ function Hero({ a }: { a: Application }) {
   const name = a.countries?.name ?? ""; const idx = journeyIndex(a.status, a.payment_status); const cd = countdown(a.entry_date, a.exit_date, t);
   const n = items ? nextAction(a, items) : null;
   const open = () => router.push(`/applications/${a.id}`);
-  const act = !n || n.kind === "none" ? open : n.kind === "pay" ? () => { startPayment(a, a.applicants.length > 1).catch(open); } : open;
+  const act = n?.kind === "continue" ? () => router.push(`/continue/${a.id}`) : !n || n.kind === "none" ? open : n.kind === "pay" ? () => { startPayment(a, a.applicants.length > 1).catch(open); } : open;
   const status = t(STATUS_LABEL[a.status] ?? a.status);
   return (
     <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl }} testID="home-hero">

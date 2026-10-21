@@ -1,3 +1,4 @@
+import * as Crypto from "expo-crypto";
 // Data layer for the LIVE website database (Supabase project ezvisa-uae, ref dravvaykssrbktztmrlj),
 // matching exactly how ezvisa.net reads and writes:
 //  - one row per case in public.visa_applications (same columns, statuses and additional_notes JSON as
@@ -165,6 +166,17 @@ export async function saveDraft(f: WizardForm, step: string, id?: string | null,
   const { data, error } = await sb.from("visa_applications").insert({ ...(columns(f, u.email, step, {}, question) as any), application_status: "draft", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false }).select("id").single();
   if (error) throw error;
   return data.id;
+}
+
+/** Guest checkout (no account yet): RLS "Allow public submissions" lets anon INSERT, but anon cannot SELECT the row back,
+ *  so the id is made on the phone and nothing is returned. Payment then goes through /api/create-payment (links payment_id
+ *  server-side) and the Ziina webhook marks it paid. Signing in later with the same email makes the row visible (SELECT by email). */
+export async function guestSubmit(f: WizardForm): Promise<{ id: string; reference: string; email: string }> {
+  const sb = need(); const email = f.email.trim().toLowerCase();
+  const id = Crypto.randomUUID();
+  const { error } = await sb.from("visa_applications").insert({ id, ...(columns(f, email, "payment", {}) as any), application_status: "submitted", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false });
+  if (error) throw error;
+  return { id, reference: referenceOf(id), email };
 }
 
 /** Latest unsubmitted draft for this account (started on any device), for resume at the exact question. */

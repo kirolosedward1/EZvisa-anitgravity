@@ -80,10 +80,14 @@ export const STEP_TITLES: Record<WizardStep, { title: string; description: strin
 };
 export const showSpouse = (f: WizardForm) => f.maritalStatus === "married" && f.spouseAccompanying === "yes";
 /** Visible steps, exactly like the web (spouse only when married and the spouse travels). */
-export const visibleSteps = (f: WizardForm): WizardStep[] => (showSpouse(f) ? ["personal", "spouse", "employment", "trip-details", "payment"] : ["personal", "employment", "trip-details", "payment"]);
+// Employment is asked AFTER payment in the app (app/continue/[id].tsx), so it is not a wizard step any more.
+export const visibleSteps = (f: WizardForm): WizardStep[] => (showSpouse(f) ? ["personal", "spouse", "trip-details", "payment"] : ["personal", "trip-details", "payment"]);
+/** Employment answers complete (website rules, validateEmployment). */
+export const employmentComplete = (f: Partial<WizardForm>) => Object.keys(validateEmployment({ ...emptyForm, ...f } as WizardForm)).length === 0;
 /** URL step slug -> step; "documents" is the web's legacy alias for payment; unknown -> personal. */
 export function parseStep(s?: string): WizardStep {
   if (s === "documents") return "payment";
+  if (s === "employment") return "trip-details"; // asked after payment now
   return (["personal", "spouse", "employment", "trip-details", "payment"] as string[]).includes(s ?? "") ? (s as WizardStep) : "personal";
 }
 

@@ -1,3 +1,4 @@
+import { employmentComplete } from "../../../lib/wizard";
 import { useCallback, useState } from "react";
 import { Alert, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
@@ -112,6 +113,11 @@ export default function ApplicationDetail() {
       {locked && (
         <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
           <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : t("Pay {amount}", { amount: `${Number(a.total_amount).toFixed(0)} ${a.currency}` })} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />
+        </ListGroup>
+      )}
+      {paid && EDITABLE.includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) && (
+        <ListGroup header={t("Next step")} footer={t("Then upload your documents below.")} inset={58}>
+          <ListRow icon="briefcase.fill" iconColor={c.tint} title={t("Continue application")} subtitle={t("Add your employment details.")} onPress={() => router.push(`/continue/${a.id}`)} />
         </ListGroup>
       )}
       <ListGroup header={t("Trip")} inset={16}>

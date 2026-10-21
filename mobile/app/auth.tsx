@@ -13,7 +13,7 @@ import { useT } from "../lib/i18n";
 
 export default function Auth() {
   const c = useColors(); const { t } = useT(); const insets = useSafeAreaInsets(); const { session } = useAuth();
-  const p = useLocalSearchParams<{ mode?: string }>();
+  const p = useLocalSearchParams<{ mode?: string; email?: string }>();
   const [mode, setMode] = useState<"signin" | "signup">(p.mode === "signup" ? "signup" : "signin");
   useEffect(() => { if (session) { if (router.canGoBack()) router.back(); else router.replace("/"); } }, [session]);
   const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace("/"); };
@@ -27,7 +27,7 @@ export default function Auth() {
       </View>
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.xxl, paddingBottom: S.x3 }}>
         <Text variant="largeTitle" accessibilityRole="header" style={{ marginBottom: S.xxl }}>{mode === "signin" ? t("Welcome back") : t("Create your\naccount")}</Text>
-        <AuthForm mode={mode} onMode={setMode} />
+        <AuthForm mode={mode} onMode={setMode} initialEmail={p.email} />
       </ScrollView>
     </KeyboardAvoidingView>
   );

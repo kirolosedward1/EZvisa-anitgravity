@@ -8,7 +8,7 @@ import {
 } from "./wizard";
 
 export type Opt = { value: string; label: string };
-export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "phone" | "textarea" | "countries";
+export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "phone" | "textarea" | "countries" | "pair";
 export type Question = {
   id: string; step: Exclude<WizardStep, "payment">; keys: (keyof WizardForm)[];
   /** The website's field label (without the trailing " *"). */
@@ -69,8 +69,9 @@ export const QUESTIONS: Question[] = [
   // ---- Employment (employment-step.tsx) ----
   { id: "employmentStatus", step: "employment", keys: ["employmentStatus"], label: "Employment Status", required: true, kind: "choice", options: EMPLOYMENT,
     onPick: (v) => (v !== "employed" ? { hasNOC: "" } : {}) },
-  { id: "jobTitle", step: "employment", keys: ["jobTitle"], label: "Job Title", required: true, kind: "text", placeholder: "Enter job title", applies: EMP, text: { caps: "words", contentType: "jobTitle" } },
-  { id: "companyName", step: "employment", keys: ["companyName"], label: "Company Name", required: true, kind: "text", placeholder: "Enter company name", applies: (f) => EMP(f) || BIZ(f), text: { caps: "words", contentType: "organizationName" } },
+  // Employed: Job Title + Company Name on one screen (same fields, same rules). Business owner / freelancer: company name only, as before.
+  { id: "jobCompany", step: "employment", keys: ["jobTitle", "companyName"], label: "Job Title & Company", required: true, kind: "pair", applies: EMP },
+  { id: "companyName", step: "employment", keys: ["companyName"], label: "Company Name", required: true, kind: "text", placeholder: "Enter company name", applies: BIZ, text: { caps: "words", contentType: "organizationName" } },
   { id: "employmentStartDate", step: "employment", keys: ["employmentStartDate"], label: "Employment Start Date", required: true, kind: "date", placeholder: "Select start date", applies: EMP, max: todayIso, dateStyle: "wheel" },
   { id: "monthlySalary", step: "employment", keys: ["monthlySalary"], label: "Monthly Salary Range", required: true, kind: "choice", options: SALARY, applies: EMP },
   { id: "hasNOC", step: "employment", keys: ["hasNOC"], label: "Do you have a No Objection Certificate?", required: false, kind: "yesno", applies: EMP },
@@ -124,6 +125,7 @@ const LEGACY: Record<string, WizardStep> = { destination: "personal", nationalit
 export function normalizePage(p: string | null | undefined, f: WizardForm): string {
   if (!p) return `q:${activeQuestions(f)[0].id}`;
   if (p === "q:nationalityOther") return "q:nationality"; // removed free-text question
+  if (p === "q:jobTitle" || (p === "q:companyName" && f.employmentStatus === "employed")) p = "q:jobCompany"; // merged screen (v9.5)
   if (p === REVIEW || p === "payment" || p === "documents") return REVIEW;
   if (p.startsWith("q:")) { const q = Q_BY_ID[p.slice(2)]; if (q && activeQuestions(f).includes(q)) return p; if (q) return pageForStep(q.step, f); }
   const step = (["personal", "spouse", "employment", "trip-details"] as string[]).includes(p) ? (p as WizardStep) : LEGACY[p] ?? "personal";
@@ -131,7 +133,7 @@ export function normalizePage(p: string | null | undefined, f: WizardForm): stri
 }
 export function pageForStep(step: WizardStep, f: WizardForm): string {
   if (step === "payment") return REVIEW;
-  const qs = activeQuestions(f); const q = qs.find((x) => x.step === step) ?? qs.find((x) => x.step === "employment") ?? qs[0];
+  const qs = activeQuestions(f); const q = qs.find((x) => x.step === step) ?? qs.find((x) => x.step === "trip-details") ?? qs[0];
   return `q:${q.id}`;
 }
 export const stepOfPage = (p: string): WizardStep => (p.startsWith("q:") ? Q_BY_ID[p.slice(2)]?.step ?? "personal" : "payment");
@@ -159,6 +161,7 @@ export function displayValue(q: Question, f: WizardForm, t: (s: string) => strin
     case "yesno": return v === "yes" ? t("Yes") : v === "no" ? t("No") : "";
     case "date": return v ? fmtDate(v) : "";
     case "phone": return f.phone || "";
+    case "pair": return [f.jobTitle, f.companyName].map((x) => x.trim()).filter(Boolean).join(" · ");
     case "countries": return f.additionalCountries.map((a) => `${t(a.country)} (${fmtDate(a.arrivalDate)} – ${fmtDate(a.departureDate)})`).join("\n");
     case "country": return v ? t(v) : "";
     default: return String(v ?? "");

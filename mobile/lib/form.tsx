@@ -16,7 +16,7 @@ function cleanNationality(f: WizardForm): WizardForm {
   const { nationalityOther: _drop, ...rest } = f as WizardForm & { nationalityOther?: string };
   return coerceResidence({ ...(rest as WizardForm), nationality: needsSchengenVisa(rest.nationality) ? rest.nationality : "", ...(rest.hasValidPassport === "no" && { passportNumber: "", passportExpiry: "" }), ...(rest.employmentStatus && rest.employmentStatus !== "employed" && { hasNOC: "" }) });
 }
-type Submitted = { applicationId: string; trackingToken?: string; reference?: string; amount?: number; destination?: string; spouse?: boolean } | null;
+type Submitted = { applicationId: string; trackingToken?: string; reference?: string; amount?: number; destination?: string; spouse?: boolean; guestEmail?: string } | null;
 type Ctx = {
   form: WizardForm; setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
   page: string; setPage: (k: string) => void;

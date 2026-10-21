@@ -23,14 +23,14 @@ import { useAuth } from "../../lib/auth";
 import { useT } from "../../lib/i18n";
 import { PRICE_AED, SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp, startPayment } from "../../lib/api";
-import { submitApplication, listApplications, listRequirements, type Requirement } from "../../lib/data";
+import { submitApplication, guestSubmit, listApplications, listRequirements, type Requirement } from "../../lib/data";
 import { PrefillOffer } from "../../components/wizard/extras";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
 import { WORLD } from "../../lib/world";
 import { type WizardForm, type WizardStep, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
-import { type Question, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
+import { type Question, questionErrors, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
 
 const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
@@ -72,7 +72,7 @@ export default function Apply() {
   const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
   const p = useLocalSearchParams<Params>();
   const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, cloudSavedAt, flushDraft } = useForm();
-  const { session } = useAuth();
+  const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   const [dir, setDir] = useState(1);
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
   const [editing, setEditing] = useState<Set<string> | null>(null); // came from Review: question ids that applied at that moment
@@ -80,7 +80,7 @@ export default function Apply() {
   const [allMode, setAllMode] = useState(false); // nationality: "Other nationality" opened the full visa-required list
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
   const inFlight = useRef(false); const auto = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const titleRef = useRef<any>(null); const inputRef = useRef<TextInput>(null);
+  const titleRef = useRef<any>(null); const inputRef = useRef<TextInput>(null); const input2Ref = useRef<TextInput>(null);
   const lastSlug = useRef<string | undefined>(undefined); const started = useRef(false);
   const fRef = useRef(f); fRef.current = f;
   const navReady = !!useRootNavigationState()?.key;
@@ -158,7 +158,7 @@ export default function Apply() {
     if (lastSlug.current !== undefined && p.step === lastSlug.current) return;
     if (p.step === undefined) { if (lastSlug.current === undefined) lastSlug.current = stepOfPage(page); return; }
     let s = parseStep(p.step);
-    if (s === "spouse" && !showSpouse(fRef.current)) s = "employment";
+    if (s === "spouse" && !showSpouse(fRef.current)) s = "trip-details";
     lastSlug.current = s; setDir(-1); setPage(pageForStep(s, fRef.current)); setShowErr(false); setEditing(null);
   }, [hydrated, p.step]);
   // Keep ?step= in sync with the current step, like the site.
@@ -232,9 +232,12 @@ export default function Apply() {
   const submit = async () => {
     if (inFlight.current) return;
     if (invalid) { hError(); edit(invalid.id); return; }
-    if (!session) { router.push({ pathname: "/auth", params: { mode: "signin" } }); return; }
     inFlight.current = true; setBusy(true); setErr(null);
     try {
+      if (!session) { // guest checkout: pay first, sign in with the same email afterwards
+        const g = await guestSubmit(f); success(); cancelDraftReminder();
+        setSubmitted({ applicationId: g.id, reference: g.reference, amount, destination: f.destination, spouse, guestEmail: g.email }); clearDraft(); return;
+      }
       const id = (await flushDraft()) ?? draftId;
       const a = await submitApplication(f, id); success(); cancelDraftReminder();
       setSubmitted({ applicationId: a.id, reference: a.reference, amount, destination: a.destination_country, spouse }); clearDraft();
@@ -256,13 +259,15 @@ export default function Apply() {
         <InlineError text={err} />
         <Button title={t("Pay {a} AED securely", { a: amount })} icon="creditcard.fill" loading={busy} onPress={async () => {
           if (inFlight.current) return; inFlight.current = true; setBusy(true); setErr(null);
-          try { await startPayment({ id: submitted.applicationId, destination_country: submitted.destination ?? null, total_amount: amount }, !!submitted.spouse); router.navigate(`/applications/${submitted.applicationId}`); setTimeout(() => setSubmitted(null), 400); }
+          try { await startPayment({ id: submitted.applicationId, destination_country: submitted.destination ?? null, total_amount: amount }, !!submitted.spouse); if (submitted.guestEmail) { setPaidGuest(true); return; } router.navigate(`/applications/${submitted.applicationId}`); setTimeout(() => setSubmitted(null), 400); }
           catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
           finally { inFlight.current = false; setBusy(false); }
         }} />
-        <Button title={t("Plan my trip")} icon="map.fill" variant="secondary" onPress={() => { const id = submitted.applicationId; router.navigate(`/applications/${id}`); setTimeout(() => { router.push(`/trip/${id}`); setSubmitted(null); }, 350); }} />
+        {submitted.guestEmail && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead" testID="guest-note">{paidGuest ? t("Next: sign in with {e} to add your details and upload documents.", { e: submitted.guestEmail }) : t("After paying, sign in with {e} to continue.", { e: submitted.guestEmail })}</Text></Note>}
+        {submitted.guestEmail ? <Button title={t("Sign in to continue")} variant={paidGuest ? "primary" : "secondary"} onPress={() => { router.replace({ pathname: "/auth", params: { mode: "signup", email: submitted.guestEmail } }); setTimeout(() => setSubmitted(null), 400); }} /> :
+        <Button title={t("Plan my trip")} icon="map.fill" variant="secondary" onPress={() => { const id = submitted.applicationId; router.navigate(`/applications/${id}`); setTimeout(() => { router.push(`/trip/${id}`); setSubmitted(null); }, 350); }} />}
         <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference} (${amount} AED).`)} />
-        <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications"); setTimeout(() => setSubmitted(null), 400); }} />
+        {!submitted.guestEmail && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications"); setTimeout(() => setSubmitted(null), 400); }} />}
       </View>
     </View>
   );
@@ -330,12 +335,12 @@ export default function Apply() {
               </View>
               <Text variant="footnote" tone="secondary">{t("Embassy fees are paid at the appointment.")}</Text>
             </View>
-            {!session && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead">{t("Sign in to submit. Your answers stay saved on this phone.")}</Text></Note>}
+            {!session && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead">{t("No account needed to pay. Afterwards, sign in with {e} to continue.", { e: f.email.trim() })}</Text></Note>}
             <InlineError text={err} />
           </Animated.View>
         </ScrollView>
         <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg }}>
-          <Button title={!SUPABASE_ENABLED ? t("Unavailable") : !session ? t("Sign in to Continue") : busy ? t("Submitting...") : t("Submit application")} icon={session ? "lock.fill" : undefined}
+          <Button title={!SUPABASE_ENABLED ? t("Unavailable") : busy ? t("Submitting...") : t("Submit application")} icon={session ? "lock.fill" : undefined}
             loading={busy} disabled={!SUPABASE_ENABLED || busy || (offline && !!session)} onPress={submit} />
         </View>
       </View>
@@ -345,7 +350,7 @@ export default function Apply() {
   // ---------------- One question ----------------
   if (!q) return null;
   const liveErr = firstError(q, f);
-  const hasInput = q.kind === "phone" ? !!f.phoneLocal.trim() : isAnswered(q, f);
+  const hasInput = q.kind === "phone" ? !!f.phoneLocal.trim() : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
   const e = showErr || (settled && hasInput) ? liveErr : undefined;
   const note = q.note?.(f);
   const answered = isAnswered(q, f);
@@ -380,6 +385,20 @@ export default function Apply() {
             <View style={{ alignSelf: "flex-start" }}><Button title={t("Use {v}", { v: f.lastName.trim() })} variant="secondary" size="M" icon="person.2.fill" onPress={() => { tap(); patch({ spouseLastName: f.lastName.trim() }); }} /></View>)}
         </View>
       );
+      case "pair": {
+        const qe = questionErrors(q, f); const show = !!e;
+        const field = (k: "jobTitle" | "companyName", label: string, ph: string, ct: string, first: boolean) => (
+          <View style={{ gap: S.xs }}>
+            <Text variant="footnote" weight="600" tone="secondary">{t(label)}</Text>
+            <TextInput ref={first ? inputRef : input2Ref} value={f[k]} onChangeText={(v) => patch({ [k]: v } as Partial<WizardForm>)} placeholder={t(ph)} placeholderTextColor={c.secondaryLabel}
+              accessibilityLabel={t(label)} autoFocus={first} autoCapitalize="words" autoCorrect={false} textContentType={ct as any}
+              returnKeyType={first ? "next" : "done"} blurOnSubmit={false} onSubmitEditing={() => (first ? input2Ref.current?.focus() : advance())} testID={first ? "question-input" : "question-input-2"}
+              style={[T.title3, { color: c.label, minHeight: 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm,
+                borderWidth: show && qe[k] ? 1.5 : 0, borderColor: c.red, textAlign: isRTL ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+          </View>
+        );
+        return <View style={{ gap: S.md }}>{field("jobTitle", "Job Title", "Enter job title", "jobTitle", true)}{field("companyName", "Company Name", "Enter company name", "organizationName", false)}</View>;
+      }
       case "date": return (
         <View style={{ gap: S.md }}>
           {q.id === "travelEndDate" && !!f.travelStartDate && (

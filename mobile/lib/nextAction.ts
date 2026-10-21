@@ -1,8 +1,9 @@
 import { isPaid, type Application } from "./data";
+import { employmentComplete } from "./wizard";
 import type { CheckItem } from "./checklist";
 import type { IconName } from "../components/ui";
 
-export type NextAction = { icon: IconName; title: string; body: string; cta?: string; kind: "upload" | "pay" | "open" | "none"; tone: "tint" | "orange" | "red" | "green" };
+export type NextAction = { icon: IconName; title: string; body: string; cta?: string; kind: "upload" | "pay" | "open" | "none" | "continue"; tone: "tint" | "orange" | "red" | "green" };
 
 const money = (n: number | null, cur: string | null) => (n == null ? "" : `${Number(n).toLocaleString()} ${cur ?? ""}`.trim());
 
@@ -13,6 +14,8 @@ export function nextAction(a: Application, checklist: CheckItem[] | null): NextA
   if (["completed", "rejected", "cancelled"].includes(a.status)) return { icon: "checkmark.circle.fill", title: a.status === "completed" ? "Completed" : a.status === "rejected" ? "Visa refused" : "Cancelled", body: "Open the application for details.", cta: "Open", kind: "open", tone: a.status === "completed" ? "green" : "red" };
   // Before payment, Pay is the only next action (documents unlock after payment).
   if (a.status !== "draft" && !isPaid(a)) return { icon: "creditcard.fill", title: `Pay ${money(a.total_amount, a.currency)}`, body: a.payment_status === "failed" ? "The last payment didn't go through." : "Documents unlock after payment.", cta: "Pay now", kind: "pay", tone: "orange" };
+  // Paid: employment details are asked now (moved out of the pre-payment wizard).
+  if (isPaid(a) && ["submitted", "draft"].includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any)) return { icon: "briefcase.fill", title: "Continue application", body: "Add your employment details.", cta: "Continue", kind: "continue", tone: "tint" };
   if (rejected.length) return { icon: "exclamationmark.circle.fill", title: rejected.length === 1 ? `Re-upload ${rejected[0].req.title}` : `Re-upload ${rejected.length} documents`, body: rejected[0].reason || "A document needs to be replaced.", cta: "Fix now", kind: "upload", tone: "red" };
   if (missing.length) return { icon: "arrow.up.circle.fill", title: "Upload documents", body: missing.slice(0, 3).map((i) => i.req.title).join(", "), cta: "Upload", kind: "upload", tone: "tint" };
   switch (a.status) {

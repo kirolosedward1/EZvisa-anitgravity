@@ -24,9 +24,9 @@ export function Field({ trailing, ...p }: TextInputProps & { trailing?: React.Re
 }
 
 /** Email + password and Continue with Google. Errors render inline. */
-export function AuthForm({ mode, onMode }: { mode: "signin" | "signup"; onMode: (m: "signin" | "signup") => void }) {
+export function AuthForm({ mode, onMode, initialEmail }: { mode: "signin" | "signup"; onMode: (m: "signin" | "signup") => void; initialEmail?: string }) {
   const c = useColors(); const { t } = useT();
-  const [mail, setMail] = useState(""); const [pw, setPw] = useState(""); const [show, setShow] = useState(false);
+  const [mail, setMail] = useState(initialEmail ?? ""); const [pw, setPw] = useState(""); const [show, setShow] = useState(false);
   const [busy, setBusy] = useState<"" | "pw" | "google" | "apple" | "link" | "reset">("");
   const [err, setErr] = useState<string | null>(null); const [info, setInfo] = useState<string | null>(null); const [forgot, setForgot] = useState(false);
   // Same links the website sends (official domain only): confirm -> /auth/callback, reset -> /auth/callback?type=recovery.
