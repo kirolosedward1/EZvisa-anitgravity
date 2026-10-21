@@ -84,6 +84,16 @@ function docsOf(r: VisaRow, n: Notes): Doc[] {
   const flagDoc: [keyof VisaRow, string][] = [["has_passport", "passportCopy"], ["has_photos", "photo"], ["has_bank_statements", "bankStatement"], ["has_employment_proof", "nocCertificate"]];
   for (const [col, type] of flagDoc) if (r[col] === true && !seen.has(col as string))
     out.push({ id: `flag-${col}`, document_type: type, requirement_id: REQS.find((q) => q.document_type === type)?.id ?? null, status: "uploaded", source: "customer", storage_path: "", file_name: null, rejection_reason: null, created_at: r.updated_at ?? r.created_at ?? "" });
+  // Staff review per document (document_reviews column, migrations/0005). A newer upload than the review resets it to "uploaded".
+  const reviews = ((r as any).document_reviews ?? {}) as Record<string, { status?: string; reason?: string | null; at?: string }>;
+  for (const [type, rv] of Object.entries(reviews)) {
+    if (!rv || !["under_review", "approved", "rejected"].includes(rv.status ?? "")) continue;
+    const t = type === "salaryCertificate" ? "nocCertificate" : type;
+    const latest = out.filter((d) => d.document_type === t).sort((x, y) => (y.created_at ?? "").localeCompare(x.created_at ?? ""))[0];
+    if (latest && rv.at && latest.created_at && latest.created_at > rv.at) continue;
+    if (latest) Object.assign(latest, { status: rv.status, rejection_reason: rv.status === "rejected" ? rv.reason ?? null : null });
+    else if (rv.status === "rejected") out.push({ id: `rev-${t}`, document_type: t, requirement_id: REQS.find((q) => q.document_type === t)?.id ?? null, status: "rejected", source: "customer", storage_path: "", file_name: null, rejection_reason: rv.reason ?? null, created_at: rv.at ?? "" });
+  }
   if (r.application_status === "ready")
     out.push({ id: "final", document_type: "final_package", requirement_id: "req-dossier", status: "generated", source: "generated", storage_path: `${r.id}/final_package.pdf`, file_name: "Your EZvisa dossier", rejection_reason: null, created_at: r.updated_at ?? "" });
   return out;
