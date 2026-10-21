@@ -42,6 +42,7 @@ function Themed() {
             <Stack.Screen name="apply" options={{ presentation: "modal" }} />
             <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
             <Stack.Screen name="continue/[id]" options={{ presentation: "modal" }} />
+            <Stack.Screen name="payment/[id]" options={{ presentation: "modal", gestureEnabled: false }} />
           </Stack>
           <NetworkBanner />
           <LockGate />

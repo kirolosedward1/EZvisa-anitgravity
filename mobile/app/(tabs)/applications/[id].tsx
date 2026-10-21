@@ -65,7 +65,7 @@ export default function ApplicationDetail() {
   const [paying, setPaying] = useState(false); const [ziina, setZiina] = useState<string | null>(null);
   const pay = async () => {
     if (!a) return; setPaying(true); setUpErr(null);
-    try { const { paymentId } = await startPayment(a, a.applicants.length > 1); setZiina(await checkPayment(paymentId)); await load(); }
+    try { const o = await startPayment(a, a.applicants.length > 1); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned, pid: o.paymentId ?? "" } }); }
     catch (e: any) {
       hError();
       if (e?.fallbackWhatsApp) Alert.alert("Payment", e.message, [{ text: "Cancel", style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${a.reference} (${Number(a.total_amount).toFixed(0)} ${a.currency}).`) }]);

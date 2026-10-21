@@ -270,7 +270,7 @@ export default function Apply() {
         <InlineError text={err} />
         <Button title={t("Pay {a} AED securely", { a: amount })} icon="creditcard.fill" loading={busy} onPress={async () => {
           if (inFlight.current) return; inFlight.current = true; setBusy(true); setErr(null);
-          try { await startPayment({ id: submitted.applicationId, destination_country: submitted.destination ?? null, total_amount: amount }, !!submitted.spouse); if (submitted.guestEmail) { setPaidGuest(true); return; } router.navigate(`/applications/${submitted.applicationId}`); setTimeout(() => setSubmitted(null), 400); }
+          try { const o = await startPayment({ id: submitted.applicationId, destination_country: submitted.destination ?? null, total_amount: amount }, !!submitted.spouse); const id = submitted.applicationId; router.replace({ pathname: "/payment/[id]", params: { id, returned: o.returned, pid: o.paymentId ?? "" } }); setTimeout(() => setSubmitted(null), 400); }
           catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
           finally { inFlight.current = false; setBusy(false); }
         }} />
