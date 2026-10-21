@@ -1,3 +1,4 @@
+import { installCrashHandler } from "../lib/crash";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
@@ -28,7 +29,7 @@ function Boot() {
 function Themed() {
   const dark = useIsDark(); const c = useColors();
   const base = dark ? DarkTheme : DefaultTheme;
-  useEffect(() => { startUploadQueue(); return startReminderRouting(); }, []);
+  useEffect(() => { installCrashHandler(); startUploadQueue(); return startReminderRouting(); }, []);
   return (
     <ThemeProvider value={{ ...base, colors: { ...base.colors, primary: c.tint, background: c.bg, card: c.bg } }}>
       <AuthProvider><FormProvider>
