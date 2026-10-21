@@ -6,7 +6,7 @@ import { EMAIL } from "../../../lib/config";
 import { useEffect, useState } from "react";
 import { remindersEnabled, remindersSupported, setRemindersEnabled, planReminders, getPassportExpiry, setPassportExpiry, syncReminders } from "../../../lib/reminders";
 import { useT, type Lang } from "../../../lib/i18n";
-import { lockSupported, lockEnabled, setLockEnabled, biometricLabel } from "../../../lib/lock";
+import { lockSupported, lockEnabled, setLockEnabled, biometricLabel, lockAfter, setLockAfter, LOCK_AFTER } from "../../../lib/lock";
 import { DateAnswer } from "../../../components/wizard/answers";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -21,7 +21,8 @@ export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true);
   const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT();
-  const [del, setDel] = useState(false);
+  const [del, setDel] = useState(false); const [after, setAfter] = useState(60000);
+  useEffect(() => { lockAfter().then(setAfter); }, []);
   const [rem, setRem] = useState(false); const [remNote, setRemNote] = useState<string | null>(null);
   const [pp, setPp] = useState(""); const [lock, setLock] = useState(false); const [bio, setBio] = useState<string | null>(null); const [lockNote, setLockNote] = useState<string | null>(null);
   useEffect(() => { remindersEnabled().then(setRem); getPassportExpiry().then(setPp); lockEnabled().then(setLock); biometricLabel().then(setBio); }, []);
@@ -45,6 +46,13 @@ export default function Account() {
         <Text variant="body" style={{ flex: 1 }}>{t("Unlock with {m}", { m: t(bio ?? "Face ID") })}</Text>
         <Switch value={lock} disabled={!bio} onValueChange={toggleLock} trackColor={{ true: c.green, false: c.fill }} accessibilityLabel={t("Unlock with {m}", { m: t(bio ?? "Face ID") })} />
       </View>
+    {lock && (
+        <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm, gap: S.xs }}>
+          <Text variant="footnote" tone="secondary">{t("Lock after")}</Text>
+          <SegmentedControl label={t("Lock after")} value={String(after)} onChange={(v) => { setAfter(Number(v)); setLockAfter(Number(v)); }}
+            options={LOCK_AFTER.map((ms) => ({ value: String(ms), label: ms === 0 ? t("Immediately") : t("{n} min", { n: ms / 60000 }) }))} />
+        </View>
+      )}
     </ListGroup>
   ) : null;
   const toggleRem = async (on: boolean) => {

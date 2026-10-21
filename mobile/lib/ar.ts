@@ -425,4 +425,7 @@ export const AR: Record<string, string> = {
   "Add to calendar": "أضف إلى التقويم",
   "Directions in Apple Maps": "الاتجاهات في خرائط Apple",
   "Directions": "الاتجاهات",
+  "Lock after": "القفل بعد",
+  "Immediately": "فورًا",
+  "{n} min": "{n} د",
 };
