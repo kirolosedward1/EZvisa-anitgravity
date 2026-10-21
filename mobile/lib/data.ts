@@ -304,6 +304,16 @@ export async function markRead(ids: string[]) {
 }
 
 /** The live DB has no push_tokens table yet (see db/proposed-live-changes.sql); the token is kept on the device only. */
-export async function registerPushToken(token: string) { await AsyncStorage.setItem("ezvisa.push.token", token).catch(() => {}); }
+/** Stores the Expo push token in device_tokens (RLS: own rows only; user_id/email come from the session server-side). */
+export async function registerPushToken(token: string) {
+  await AsyncStorage.setItem("ezvisa.push.token", token).catch(() => {});
+  if (!supabase) return;
+  const { error } = await supabase.from("device_tokens" as any).insert({ token, platform: Platform.OS === "android" ? "android" : "ios" } as any);
+  if (error && error.code !== "23505") throw error; // already registered is fine
+}
+export async function unregisterPushToken() {
+  const token = await AsyncStorage.getItem("ezvisa.push.token").catch(() => null);
+  if (token && supabase) await supabase.from("device_tokens" as any).delete().eq("token", token).then(() => {}, () => {});
+}
 
 export const STATUS_LABEL: Record<string, string> = { draft: "Draft", submitted: "Submitted", reviewing: "In review", awaiting_documents: "Documents needed", approved: "Approved", ready: "File ready", appointment_booked: "Appointment booked", completed: "Completed", rejected: "Refused", cancelled: "Cancelled", pending: "Unpaid", processing: "Processing", paid: "Paid", failed: "Payment failed", expired: "Payment expired", refunded: "Refunded", partially_refunded: "Part refunded", uploaded: "Uploaded", under_review: "Under review", generated: "Prepared by EZvisa", superseded: "Replaced" };

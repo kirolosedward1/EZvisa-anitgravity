@@ -1,7 +1,7 @@
 import { Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import { STATUS_LABEL, isPaid, type Application } from "../../../lib/data";
+import { STATUS_LABEL, isPaid, unregisterPushToken, type Application } from "../../../lib/data";
 import { EMAIL } from "../../../lib/config";
 import { useEffect, useState } from "react";
 import { remindersEnabled, remindersSupported, setRemindersEnabled, planReminders, getPassportExpiry, setPassportExpiry, syncReminders } from "../../../lib/reminders";
@@ -125,7 +125,8 @@ export default function Account() {
   const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
   const signOut = () => {
     if (Platform.OS === "web") { supabase?.auth.signOut(); return; }
-    Alert.alert("Sign out?", undefined, [{ text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: () => supabase?.auth.signOut() }]);
+    const out = () => unregisterPushToken().finally(() => supabase?.auth.signOut());
+    Alert.alert("Sign out?", undefined, [{ text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: out }]);
   };
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>

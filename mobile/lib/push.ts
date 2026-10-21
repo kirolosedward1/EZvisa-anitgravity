@@ -9,7 +9,16 @@ const supported = Platform.OS === "ios" || (Platform.OS === "android" && !inExpo
 let configured = false;
 
 /** Requests permission and stores the Expo push token in push_tokens. Returns a status string; never throws. */
-export async function setupPush(): Promise<string> {
+let routed = false;
+/** Tapping a push opens its application (data.url = /applications/<id>), also from a cold start. */
+function route(N: typeof import("expo-notifications")) {
+  if (routed) return; routed = true;
+  const go = (r: any) => { const url = r?.notification?.request?.content?.data?.url; if (typeof url === "string" && url.startsWith("/applications/")) require("expo-router").router.push(url); };
+  N.addNotificationResponseReceivedListener(go);
+  N.getLastNotificationResponseAsync().then((r) => r && go(r)).catch(() => {});
+}
+/** ask=false: only registers if permission was already granted (used at sign-in). ask=true: asks in context (after payment). */
+export async function setupPush(ask = false): Promise<string> {
   if (!supported) return Platform.OS === "web" ? "unsupported-web" : "unsupported-expo-go-android";
   try {
     const Notifications = require("expo-notifications") as typeof import("expo-notifications");
@@ -20,6 +29,8 @@ export async function setupPush(): Promise<string> {
     }
     if (!Device.isDevice) return "simulator";
     let { status } = await Notifications.getPermissionsAsync();
+    route(Notifications);
+    if (status !== "granted" && !ask) return "not-asked";
     if (status !== "granted") status = (await Notifications.requestPermissionsAsync()).status;
     if (status !== "granted") return "denied";
     const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
