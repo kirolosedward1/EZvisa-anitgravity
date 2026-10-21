@@ -21,7 +21,19 @@ export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true);
   const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT();
-  const [del, setDel] = useState(false); const [after, setAfter] = useState(60000);
+  const [del, setDel] = useState(false); const [delStep, setDelStep] = useState<"ask" | "sure" | "failed">("ask"); const [delErr, setDelErr] = useState<string | null>(null); const [deleting, setDeleting] = useState(false);
+  /** Calls the delete-account edge function with the user's own session; WhatsApp / email stay as the fallback. */
+  const deleteNow = async () => {
+    setDeleting(true); setDelErr(null);
+    try {
+      const { data, error } = await supabase!.functions.invoke("delete-account", { body: { confirm: "DELETE" } });
+      if (error || !(data as any)?.deleted) throw new Error((data as any)?.error ?? error?.message ?? "Unknown error");
+      setDel(false); await supabase!.auth.signOut().catch(() => {});
+      Alert.alert(t("Account deleted"), t("Your account and personal data were deleted."));
+    } catch {
+      setDelStep("failed"); setDelErr(t("We couldn't delete the account right now. Send us the request and we'll do it within 30 days."));
+    } finally { setDeleting(false); }
+  }; const [after, setAfter] = useState(60000);
   useEffect(() => { lockAfter().then(setAfter); }, []);
   const [rem, setRem] = useState(false); const [remNote, setRemNote] = useState<string | null>(null);
   const [pp, setPp] = useState(""); const [lock, setLock] = useState(false); const [bio, setBio] = useState<string | null>(null); const [lockNote, setLockNote] = useState<string | null>(null);
@@ -152,17 +164,22 @@ export default function Account() {
       {support}
       <ListGroup><ListRow title={t("Sign out")} destructive chevron={false} onPress={signOut} /></ListGroup>
       <ListGroup footer={t("Deleting removes your account and personal data. Records we must keep by law (payments) are kept for the legal period.")}>
-        <ListRow title={t("Delete account")} destructive chevron={false} onPress={() => setDel(true)} />
+        <ListRow title={t("Delete account")} destructive chevron={false} onPress={() => { setDelStep("ask"); setDelErr(null); setDel(true); }} />
       </ListGroup>
       <Modal visible={del} transparent animationType="fade" onRequestClose={() => setDel(false)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
           <View accessibilityViewIsModal style={{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.sm }} testID="delete-sheet">
-            <Text variant="title3" accessibilityRole="header">{t("Delete your account?")}</Text>
-            <Text variant="subhead" tone="secondary">{t("Send us the request and we'll delete your account and data within 30 days, then confirm by email.")}</Text>
+            <Text variant="title3" accessibilityRole="header">{delStep === "sure" ? t("Are you sure?") : t("Delete your account?")}</Text>
+            <Text variant="subhead" tone="secondary">{delStep === "sure" ? t("This permanently deletes your account, uploaded documents and personal details. It can't be undone.") : t("Your account, uploaded documents and personal details are removed. Payment records are kept as required by law.")}</Text>
+            {!!delErr && <Text variant="footnote" tone="red" testID="delete-error">{delErr}</Text>}
             <View style={{ height: S.xs }} />
-            <Button title={t("Request by WhatsApp")} icon="logo.whatsapp" variant="destructive" onPress={() => { setDel(false); whatsapp(`Please delete my EZvisa account (${u.email}).`); }} />
-            <Button title={t("Request by email")} icon="envelope.fill" variant="secondary" onPress={() => { setDel(false); Linking.openURL(`mailto:${EMAIL}?subject=${encodeURIComponent("Delete my EZvisa account")}&body=${encodeURIComponent(`Please delete my EZvisa account and personal data.\nAccount email: ${u.email}`)}`); }} />
-            <Button title={t("Cancel")} variant="plain" color={c.label} onPress={() => setDel(false)} />
+            {delStep === "ask" && <Button title={t("Continue")} variant="destructive" onPress={() => setDelStep("sure")} />}
+            {delStep === "sure" && <Button title={deleting ? t("Deleting…") : t("Delete permanently")} variant="destructive" loading={deleting} disabled={deleting} onPress={deleteNow} />}
+            {(delStep === "failed") && <>
+              <Button title={t("Request by WhatsApp")} icon="logo.whatsapp" variant="secondary" onPress={() => { setDel(false); whatsapp(`Please delete my EZvisa account (${u.email}).`); }} />
+              <Button title={t("Request by email")} icon="envelope.fill" variant="secondary" onPress={() => { setDel(false); Linking.openURL(`mailto:${EMAIL}?subject=${encodeURIComponent("Delete my EZvisa account")}&body=${encodeURIComponent(`Please delete my EZvisa account and personal data.\nAccount email: ${u.email}`)}`); }} />
+            </>}
+            <Button title={t("Cancel")} variant="plain" color={c.label} disabled={deleting} onPress={() => setDel(false)} />
           </View>
         </View>
       </Modal>

@@ -21,7 +21,7 @@ import { countdown } from "../../../lib/countdown";
 
 let LOC: string | undefined;
 const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
-const EDITABLE = ["draft", "submitted", "awaiting_documents"];
+const EDITABLE = ["draft", "submitted", "reviewing", "awaiting_documents"];
 
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -180,7 +180,7 @@ export default function Apply() {
   useEffect(() => { if (hydrated && session && !submitted) flushDraft(); }, [page]);
   // Drop-off analytics (on this phone only, no personal data): which question each session ends on.
   useEffect(() => { track("wizard_open", { platform: Platform.OS }); return () => track("wizard_close"); }, []);
-  useEffect(() => { if (hydrated && !submitted) track("wizard_page", { page: page.replace(/^q:/, ""), signedIn: !!session }); }, [page, hydrated]);
+  useEffect(() => { if (hydrated && !submitted) track("wizard_page", { page: page.replace(/^q:/, ""), signedIn: !!session, ...(f.destination && { destination: f.destination }) }); }, [page, hydrated]);
   useEffect(() => { if (submitted) track("wizard_submit", { guest: !!submitted.guestEmail }); }, [!!submitted]);
   // New question: move VoiceOver focus to its title.
   useEffect(() => {

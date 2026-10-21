@@ -97,7 +97,7 @@ function AppList({ apps }: { apps: Application[] | null }) {
     }),
     ...server.filter((a) => !(a.status === "draft" && drafts.some((d) => d.draftId === a.id))).map((a): Item => {
       const paid = isPaid(a);
-      const status = a.status === "draft" ? t("Draft") : paid && ["submitted", "draft"].includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) ? t("Continue application")
+      const status = a.status === "draft" ? t("Draft") : paid && ["submitted", "draft", "reviewing"].includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) ? t("Continue application")
         : a.status === "submitted" && !paid ? `${t("Submitted")} · ${t("Payment due")}` : paid && a.status === "submitted" ? t("Paid") : t(STATUS_LABEL[a.status] ?? a.status);
       return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : "secondary",
         open: () => router.push(status === t("Continue application") ? `/continue/${a.id}` : `/applications/${a.id}`) };

@@ -1,5 +1,5 @@
 // Embassy / VFS appointment card. Real data only: read from additional_notes.appointment (set by EZvisa staff).
-// The live table has no appointment columns ([DB] migrations/0003_appointment_columns.sql proposes them); hidden when absent.
+// Reads the appointment_* columns (migrations/0003, applied), falling back to additional_notes.appointment; hidden when absent.
 import { Linking, Platform, View } from "react-native";
 import * as CalendarLegacy from "expo-calendar/legacy";
 import { ListGroup, ListRow } from "./ui";
@@ -9,6 +9,9 @@ import type { Application } from "../lib/data";
 
 export type Appt = { at: string; centre?: string; address?: string; lat?: number; lng?: number; reference?: string; durationMin?: number };
 export function appointmentOf(a: Application): Appt | null {
+  const r: any = a; // live columns first (migrations/0003), then the older notes fallback
+  if (r.appointment_at && !isNaN(Date.parse(r.appointment_at)))
+    return { at: r.appointment_at, centre: r.appointment_centre ?? undefined, address: r.appointment_address ?? undefined, lat: r.appointment_lat ?? undefined, lng: r.appointment_lng ?? undefined, reference: r.appointment_reference ?? undefined };
   const x: any = (a.notes as any)?.appointment;
   if (!x || typeof x.at !== "string" || isNaN(Date.parse(x.at))) return null;
   return x as Appt;

@@ -432,4 +432,12 @@ export const AR: Record<string, string> = {
   "Failed": "فشل",
   "Waiting to upload": "بانتظار الرفع",
   "Queued": "في الانتظار",
+  "Are you sure?": "هل أنت متأكد؟",
+  "This permanently deletes your account, uploaded documents and personal details. It can't be undone.": "سيحذف هذا حسابك ومستنداتك وبياناتك الشخصية نهائيًا ولا يمكن التراجع.",
+  "Your account, uploaded documents and personal details are removed. Payment records are kept as required by law.": "تُحذف بيانات حسابك ومستنداتك وتفاصيلك الشخصية. تُحفظ سجلات الدفع كما يقتضي القانون.",
+  "Deleting…": "جارٍ الحذف…",
+  "Delete permanently": "حذف نهائي",
+  "Account deleted": "تم حذف الحساب",
+  "Your account and personal data were deleted.": "تم حذف حسابك وبياناتك الشخصية.",
+  "We couldn't delete the account right now. Send us the request and we'll do it within 30 days.": "تعذّر حذف الحساب الآن. أرسل لنا الطلب وسننفذه خلال 30 يومًا.",
 };
