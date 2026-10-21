@@ -317,3 +317,12 @@ export async function unregisterPushToken() {
 }
 
 export const STATUS_LABEL: Record<string, string> = { draft: "Draft", submitted: "Submitted", reviewing: "In review", awaiting_documents: "Documents needed", approved: "Approved", ready: "File ready", appointment_booked: "Appointment booked", completed: "Completed", rejected: "Refused", cancelled: "Cancelled", pending: "Unpaid", processing: "Processing", paid: "Paid", failed: "Payment failed", expired: "Payment expired", refunded: "Refunded", partially_refunded: "Part refunded", uploaded: "Uploaded", under_review: "Under review", generated: "Prepared by EZvisa", superseded: "Replaced" };
+
+/** Discard an unpaid draft/submitted case (migration 0007: the guard trigger only allows this one change, never on paid rows). */
+export async function cancelApplication(id: string): Promise<boolean> {
+  const sb = need(); const u = await me();
+  const { data, error } = await sb.from("visa_applications").update({ application_status: "cancelled" }).eq("id", id).eq("email", u.email)
+    .in("application_status", ["draft", "submitted"]).not("payment_status", "in", "(paid,completed)").select("id, application_status");
+  if (error) throw error;
+  return !!data?.some((r: any) => r.application_status === "cancelled");
+}

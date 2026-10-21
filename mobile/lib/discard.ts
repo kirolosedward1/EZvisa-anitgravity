@@ -1,11 +1,11 @@
 // Failed / abandoned applications: unpaid drafts or submitted-but-never-paid cases. Customers can't delete rows or set
-// a cancelled status under the live RLS + guard trigger (see migrations/0007_customer_discard.sql, NOT applied), so a
-// discard is: (1) hidden locally in AsyncStorage, and (2) a best-effort `discarded_at` flag in additional_notes, which the
+// a cancelled status under the live RLS + guard trigger (see migrations/0007_customer_discard.sql, applied 2026-10-22; status now becomes 'cancelled'), so a
+// discard was (still kept as fallback): (1) hidden locally in AsyncStorage, and (2) a best-effort `discarded_at` flag in additional_notes, which the
 // existing "Customers update own applications" policy already allows for draft/submitted rows. Paid cases are never discarded.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
 import { ActionSheetIOS, Alert, Platform } from "react-native";
-import { isPaid, patchNotes, type Application } from "./data";
+import { cancelApplication, isPaid, patchNotes, type Application } from "./data";
 
 const KEY = "ezvisa.discarded.v1";
 export const ABANDONED_LIMIT = 10;
@@ -35,7 +35,9 @@ export async function discardApplication(a: Application) {
   if (isPaid(a) || !isAbandoned(a)) throw new Error("Paid applications can't be discarded.");
   ids = new Set(ids).add(a.id); emit();
   await AsyncStorage.setItem(KEY, JSON.stringify([...ids])).catch(() => {});
-  patchNotes(a.id, { discarded_at: new Date().toISOString() } as any).catch(() => {}); // best effort; local hide is enough
+  // Server: status -> cancelled (migration 0007). Fallbacks: the notes flag, and the local hide above.
+  try { await patchNotes(a.id, { discarded_at: new Date().toISOString() } as any); } catch {}
+  try { await cancelApplication(a.id); } catch {}
 }
 
 /** Red "Discard" menu item, then a destructive confirmation. */
