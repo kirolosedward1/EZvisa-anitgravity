@@ -122,7 +122,7 @@ const fmtShort = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12
 export function ApplicationRow({ a }: { a: Application }) {
   const name = a.countries?.name ?? "Application";
   return (
-    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} accessibilityRole="button" accessibilityLabel={`${name}, ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}`}
+    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${name}, ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}`}
       style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 64, opacity: pressed ? 0.6 : 1 })}>
       <Flag country={name} size={40} />
       <View style={{ flex: 1, gap: S.xxs }}>
@@ -150,7 +150,7 @@ export function CountryRow({ name, onPress }: { name: string; onPress: () => voi
 export function StatusHeroCard({ a }: { a: Application }) {
   const c = useColors(); const name = a.countries?.name ?? "";
   return (
-    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} accessibilityRole="button" accessibilityLabel={`${name} application ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}. View`}
+    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${name} application ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}. View`}
       style={[{ backgroundColor: c.card, borderRadius: R.card, padding: S.md, marginHorizontal: S.md, gap: S.md }, curve]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={40} />

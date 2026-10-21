@@ -20,6 +20,7 @@ import { hasAnswers, employmentComplete } from "../../../lib/wizard";
 import { Q_BY_ID } from "../../../lib/questions";
 import { useT } from "../../../lib/i18n";
 import { countdown } from "../../../lib/countdown";
+import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
 
 /** Editorial hero built only from the user's REAL active application: destination, status, countdown, journey progress
  *  and ONE primary action (the real next step from status, payment and documents). */
@@ -29,7 +30,7 @@ function Hero({ a }: { a: Application }) {
   useEffect(() => { let on = true; listRequirements(a.country_id, (a.notes?.wizard as any)?.employmentStatus).then((r) => on && setItems(buildChecklist(r, a.documents).customer)).catch(() => on && setItems([])); return () => { on = false; }; }, [a]);
   const name = a.countries?.name ?? ""; const idx = journeyIndex(a.status, a.payment_status); const cd = countdown(a.entry_date, a.exit_date, t);
   const n = items ? nextAction(a, items) : null;
-  const open = () => router.push(`/applications/${a.id}`);
+  const open = () => router.push(`/applications/${a.id}`, { withAnchor: true });
   const act = n?.kind === "continue" ? () => router.push(`/continue/${a.id}`) : !n || n.kind === "none" ? open : n.kind === "pay" ? () => { startPayment(a, a.applicants.length > 1).then((o) => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned, pid: o.paymentId ?? "" } })).catch(open); } : open;
   const status = t(STATUS_LABEL[a.status] ?? a.status);
   return (
@@ -93,22 +94,23 @@ function AppList({ apps }: { apps: Application[] | null }) {
     ...drafts.filter((d) => hasAnswers(d.form) && !(d.draftId && linked.has(d.draftId) && server.find((a) => a.id === d.draftId)?.status !== "draft")).map((d): Item => {
       const q = d.page.startsWith("q:") ? Q_BY_ID[d.page.slice(2)] : null;
       return { key: `l:${d.key}`, country: d.form.destination, status: `${t("Draft")} · ${q ? t(STEP_LABEL[q.step] ?? q.step) : t("Review")}`, at: d.savedAt,
-        open: () => { openDraft(d.key); router.push({ pathname: "/apply", params: { resume: "1" } }); }, remove: () => removeDraft(d.key) };
+        open: () => { openDraft(d.key); router.push({ pathname: "/apply", params: { resume: "1" } }); }, remove: () => askDiscard(() => removeDraft(d.key), t) };
     }),
     ...server.filter((a) => !(a.status === "draft" && drafts.some((d) => d.draftId === a.id))).map((a): Item => {
       const paid = isPaid(a);
       const status = a.status === "draft" ? t("Draft") : paid && ["submitted", "draft", "reviewing"].includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) ? t("Continue application")
         : a.status === "submitted" && !paid ? `${t("Submitted")} · ${t("Payment due")}` : paid && a.status === "submitted" ? t("Paid") : t(STATUS_LABEL[a.status] ?? a.status);
       return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : "secondary",
-        open: () => router.push(status === t("Continue application") ? `/continue/${a.id}` : `/applications/${a.id}`) };
+        open: () => router.push(status === t("Continue application") ? `/continue/${a.id}` : `/applications/${a.id}`, { withAnchor: true }),
+        remove: isAbandoned(a) ? () => askDiscard(() => { discardApplication(a).catch(() => {}); }, t) : undefined };
     }),
-  ].sort((x, y) => y.at - x.at);
+  ].sort((x, y) => y.at - x.at).filter(((n) => (i: Item) => !i.remove || n++ < ABANDONED_LIMIT)(0));
   if (!items.length || (items.length === 1 && items[0].key.startsWith("s:"))) return null; // one server app = the hero above
   return (
     <ListGroup header={t("Your applications")} inset={S.md + 28 + S.md} style={{ marginHorizontal: S.xs }}>
       {items.map((i) => (
         <View key={i.key} style={{ flexDirection: "row", alignItems: "center" }} testID="home-app-row">
-          <PressScale onPress={() => { tap(); i.open(); }} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
+          <PressScale onPress={() => { tap(); i.open(); }} onLongPress={i.remove} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
             style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: S.md, paddingLeft: S.md, paddingRight: i.remove ? 0 : S.md, minHeight: 56 }}>
             {i.country ? <Flag country={i.country} size={28} /> : <View style={{ width: 28, height: 28, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={13} color={c.tint} /></View>}
             <View style={{ flex: 1, paddingVertical: S.xs }}>
@@ -118,9 +120,9 @@ function AppList({ apps }: { apps: Application[] | null }) {
             {!i.remove && <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />}
           </PressScale>
           {i.remove && (
-            <PressScale onPress={() => { tap(); i.remove!(); }} accessibilityRole="button" accessibilityLabel={`${t("Remove draft")} ${t(i.country || "")}`} testID="draft-remove"
+            <PressScale onPress={() => { tap(); i.remove!(); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
               style={{ width: 44, height: 44, marginRight: S.xs, alignItems: "center", justifyContent: "center" }}>
-              <Icon name="xmark" size={13} color={c.secondaryLabel} weight="semibold" />
+              <Icon name="trash" size={17} color={c.red} />
             </PressScale>
           )}
         </View>

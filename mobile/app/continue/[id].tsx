@@ -64,8 +64,8 @@ export default function ContinueApplication() {
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: c.bg }, kbPad]}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: S.lg, paddingTop: Platform.OS === "ios" ? S.sm : insets.top + S.xs, paddingBottom: S.sm }}>
+        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={t("Back")} onPress={() => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`); }} /></View>
         <View style={{ flex: 1 }} />
-        <CircleButton icon="xmark" label={t("Close")} onPress={() => { tap(); router.back(); }} />
       </View>
       {!f ? (
         <View style={{ padding: S.lg, gap: S.md }}>{err ? <InlineError text={err} /> : <><Skeleton w="60%" h={28} /><Skeleton h={60} r={R.tile} /><Skeleton h={60} r={R.tile} /></>}</View>

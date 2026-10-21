@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { Alert, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
+import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
 import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL } from "../../../lib/data";
 import { enqueueUpload, retryUpload, removeUpload, useUploads } from "../../../lib/uploads";
@@ -18,6 +18,9 @@ import { useT } from "../../../lib/i18n";
 import { FACTS, localTime, diffFromUae, UAE_PLUG } from "../../../lib/facts";
 import { router } from "expo-router";
 import { countdown } from "../../../lib/countdown";
+import { askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
+import { Pressable } from "react-native";
+import { Icon } from "../../../components/ui";
 
 let LOC: string | undefined;
 const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
@@ -25,7 +28,7 @@ const EDITABLE = ["draft", "submitted", "reviewing", "awaiting_documents"];
 
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const c = useColors(); const { t, lang } = useT(); LOC = lang === "ar" ? "ar" : undefined;
+  const c = useColors(); const pb = useTabInset(); const { t, lang } = useT(); LOC = lang === "ar" ? "ar" : undefined;
   const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [upErr, setUpErr] = useState<string | null>(null);
@@ -74,10 +77,10 @@ export default function ApplicationDetail() {
     finally { setPaying(false); }
   };
 
-  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "" }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={load} />} /></View>;
+  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={load} />} /></View>;
   if (!a) return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: S.lg, gap: S.md }}>
-      <Stack.Screen options={{ title: "", headerLargeTitle: false }} />
+      <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg } }} />
       {/* Mirrors the real layout: hero, Status timeline (4 steps), Trip group */}
       <View accessible accessibilityLabel={t("Loading")} style={{ gap: S.md }} testID="detail-skeleton">
         <Skeleton w={72} h={72} r={R.round} /><Skeleton w="55%" h={34} r={R.md} />
@@ -99,9 +102,13 @@ export default function ApplicationDetail() {
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: S.x3 }}
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.tint} />}>
-      <Stack.Screen options={{ title: "", headerLargeTitle: false, headerRight: () => <SupportButton context={`application ${a.reference}`} /> }} />
+      <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => (
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
+          {isAbandoned(a) && <Pressable onPress={() => askDiscard(() => { discardApplication(a).then(() => (router.canGoBack() ? router.back() : router.replace("/applications"))).catch((e) => setUpErr(e?.message ?? String(e))); }, t)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="detail-discard" style={{ minWidth: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={20} color={c.red} /></Pressable>}
+          <SupportButton header context={`application ${a.reference}`} />
+        </View>) }} />
       <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xxl, gap: S.xs }}>
         <Flag country={name} size={72} />
         <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>

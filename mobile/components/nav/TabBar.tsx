@@ -1,6 +1,6 @@
 import { PressScale } from "../ui";
-// iOS 26-style navigation: a floating Liquid Glass capsule with the tabs, plus a separate circular
-// Apply action beside it (the News/Health "separated tab" pattern). Works in Expo Go on every platform.
+// iOS 26-style navigation: a floating Liquid Glass capsule with the tabs. The old floating Apply button beside it was
+// removed (it overlapped the bar and content); "Start application" lives on Home and in the Applications header.
 import { useEffect, useRef, useState } from "react";
 import { Keyboard, Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, useReducedMotion } from "react-native-reanimated";
@@ -28,23 +28,6 @@ function Material({ radius }: { radius: number }) {
   return <BlurView intensity={60} tint={dark ? "systemChromeMaterialDark" : "systemChromeMaterialLight"} style={[st, { backgroundColor: c.glassTint }]} />;
 }
 
-export function ApplyFab() {
-  const c = useColors(); const dark = useIsDark(); const reduce = useReducedMotion();
-  const s = useSharedValue(reduce ? 1 : 0.5); const press = useSharedValue(1); const last = useRef(0);
-  useEffect(() => { if (!reduce) { s.value = withDelay(150, withSpring(1, SPRING.pop)); select(); } }, []);
-  const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value * press.value }] }));
-  const open = () => { const now = Date.now(); if (now - last.current < 800) return; last.current = now; medium(); router.push("/apply"); };
-  return (
-    <Animated.View style={[{ width: H, height: H, borderRadius: H / 2 }, elevation(3, dark), a]}>
-      <Pressable onPress={open} onPressIn={() => { if (!reduce) press.value = withSpring(0.88, SPRING.press); }} onPressOut={() => { press.value = withSpring(1, SPRING.press); }}
-        accessibilityRole="button" accessibilityLabel="Start application" testID="apply-fab" style={{ flex: 1, borderRadius: H / 2, overflow: "hidden" }}>
-        {glass ? <GlassView glassEffectStyle="regular" tintColor={c.brand} isInteractive style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Icon name="airplane" size={ICON.lg} color="#fff" weight="semibold" /></GlassView>
-          : <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: c.brand }}><Icon name="airplane" size={ICON.lg} color="#fff" weight="semibold" /></View>}
-      </Pressable>
-    </Animated.View>
-  );
-}
-
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets();
   const [kb, setKb] = useState(false);
@@ -54,7 +37,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     return () => { a.remove(); b.remove(); };
   }, []);
   const focused = state.routes[state.index];
-  const hidden = kb || (focused.state?.index ?? 0) > 0;
+  // Hidden on every pushed/detail screen (also when it's the only route in its stack, e.g. opened from another tab).
+  const nested = focused.state as { index?: number; routes?: { name: string }[] } | undefined;
+  const top = nested?.routes?.[nested.index ?? 0]?.name;
+  const hidden = kb || (nested?.index ?? 0) > 0 || (!!top && !["index", "countries"].includes(top));
   const bottom = insets.bottom > 0 ? Math.max(insets.bottom - 10, 8) : 14;
   const ty = useSharedValue(0);
   useEffect(() => { ty.value = withSpring(hidden ? H + bottom + 30 : 0, SPRING.press); }, [hidden, bottom]);
@@ -78,7 +64,6 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           })}
         </View>
       </View>
-      <ApplyFab />
     </Animated.View>
   );
 }

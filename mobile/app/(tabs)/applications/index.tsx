@@ -8,18 +8,24 @@ import { useColors, useIsDark, S, R, curve, card, ICON } from "../../../lib/them
 import { STATUS_LABEL, type Application } from "../../../lib/data";
 import { useApps, ACTIVE } from "../../../lib/useApps";
 import { tap } from "../../../lib/haptics";
+import { askDiscard, isAbandoned } from "../../../lib/discard";
 
 const fmt = (s?: string | null) => (s ? new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
 
-function AppCard({ a }: { a: Application }) {
+function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
   const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const idx = journeyIndex(a.status, a.payment_status);
   return (
-    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift
+    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift
       style={[card(c, dark, 1), { padding: S.lg, gap: S.lg }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={44} />
         <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[a.reference, a.entry_date && `${fmt(a.entry_date)} – ${fmt(a.exit_date)}`].filter(Boolean).join(" · ")}</Text></View>
-        <Icon name="chevron.right" size={ICON.sm} color={c.tertiaryLabel} weight="semibold" />
+        {onDiscard ? (
+          <PressScale onPress={() => askDiscard(onDiscard, t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="app-discard"
+            style={{ width: 36, height: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
+            <Icon name="trash" size={16} color={c.red} />
+          </PressScale>
+        ) : <Icon name="chevron.right" size={ICON.sm} color={c.tertiaryLabel} weight="semibold" />}
       </View>
       <View style={{ gap: S.xs }}>
         <ProgressSegments count={4} index={idx} label={t(STATUS_LABEL[a.status] ?? a.status)} />
@@ -42,14 +48,20 @@ function AppCardSkeleton() {
 
 export default function Applications() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
-  const { session, apps, err, refreshing, refresh } = useApps();
+  const { session, apps, err, refreshing, refresh, discard } = useApps();
   const [tab, setTab] = useState<"active" | "past">("active");
   const list = (apps ?? []).filter((a) => (tab === "active" ? ACTIVE(a.status) : !ACTIVE(a.status)));
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb, paddingHorizontal: S.lg, flexGrow: 1 }}
       refreshControl={session ? <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.tint} /> : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
-      <Text variant="largeTitle" accessibilityRole="header" style={{ marginBottom: S.lg }}>{t("Applications")}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: S.lg }}>
+        <Text variant="largeTitle" accessibilityRole="header">{t("Applications")}</Text>
+        <PressScale onPress={() => { tap(); router.push("/apply"); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Start application")} testID="apply-new"
+          style={{ width: 36, height: 36, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}>
+          <Icon name="plus" size={18} color={c.tint} weight="semibold" />
+        </PressScale>
+      </View>
       {!session ? (
         <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}>
           <EmptyState icon="doc.text" title={t("Your applications live here")} action={<Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />} />
@@ -63,7 +75,7 @@ export default function Applications() {
             <EmptyState icon="airplane" title={tab === "active" ? t("No active applications") : t("Nothing here yet")} action={tab === "active" ? <Button title={t("Start application")} onPress={() => router.push("/apply")} /> : undefined} />
           </View>
         )}
-        <View style={{ gap: S.sm }}>{list.map((a) => <AppCard key={a.id} a={a} />)}</View>
+        <View style={{ gap: S.sm }}>{list.map((a) => <AppCard key={a.id} a={a} onDiscard={isAbandoned(a) ? () => { discard(a).catch(() => {}); } : undefined} />)}</View>
       </>)}
     </ScrollView>
   );

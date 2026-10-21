@@ -145,7 +145,7 @@ export default function Account() {
       {!!apps?.length && (
         <ListGroup header={t("Application history")} inset={S.md + 28 + S.md}>
           {apps.map((a) => <ListRow key={a.id} leading={<Flag country={a.countries?.name ?? a.destination_country ?? ""} size={28} />} title={t(a.countries?.name ?? a.destination_country ?? "Application")}
-            subtitle={`${a.reference} · ${t(STATUS_LABEL[a.status] ?? a.status)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`)} />)}
+            subtitle={`${a.reference} · ${t(STATUS_LABEL[a.status] ?? a.status)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`, { withAnchor: true })} />)}
         </ListGroup>
       )}
       {!!paidApps.length && (

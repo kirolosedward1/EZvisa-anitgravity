@@ -1,6 +1,6 @@
 import { PressScale } from "./ui";
 import { Image, Pressable, ScrollView, View, useWindowDimensions, Platform } from "react-native";
-import { Stack, router, useLocalSearchParams } from "expo-router";
+import { Stack, router, useLocalSearchParams, useSegments } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { fromSlug } from "../lib/countries";
@@ -17,7 +17,8 @@ export default function CountryDetail() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const { height } = useWindowDimensions();
   const name = fromSlug(slug ?? "");
-  const back = () => { tap(); if (router.canGoBack()) router.back(); else router.replace("/countries"); };
+  const segs = useSegments() as string[];
+  const back = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(segs.includes("(home)") ? "/" : "/countries"); };
   if (!name) return (
     <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}>
       <Stack.Screen options={{ headerShown: false }} />
