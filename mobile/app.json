@@ -63,6 +63,12 @@
           "cameraPermission": "Take photos of your visa documents.",
           "photosPermission": "Choose photos of your visa documents."
         }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Add your visa appointment to your calendar."
+        }
       ]
     ],
     "scheme": "ezvisa",

@@ -419,4 +419,10 @@ export const AR: Record<string, string> = {
   "Need help?": "تحتاج مساعدة؟",
   "Message us on WhatsApp or by email.": "راسلنا على واتساب أو بالبريد.",
   "Ask about this application": "اسأل عن هذا الطلب",
+  "Visa appointment": "موعد التأشيرة",
+  "Appointment": "الموعد",
+  "Ref": "مرجع",
+  "Add to calendar": "أضف إلى التقويم",
+  "Directions in Apple Maps": "الاتجاهات في خرائط Apple",
+  "Directions": "الاتجاهات",
 };

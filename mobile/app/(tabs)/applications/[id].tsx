@@ -1,3 +1,4 @@
+import { AppointmentCard } from "../../../components/Appointment";
 import { employmentComplete } from "../../../lib/wizard";
 import { useCallback, useState } from "react";
 import { Alert, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
@@ -128,6 +129,7 @@ export default function ApplicationDetail() {
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
         {a.status !== "cancelled" && <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />}
       </ListGroup>
+      <AppointmentCard a={a} />
       <QuickFacts country={name} />
       {locked ? (
         <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
