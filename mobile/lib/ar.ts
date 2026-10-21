@@ -428,4 +428,8 @@ export const AR: Record<string, string> = {
   "Lock after": "القفل بعد",
   "Immediately": "فورًا",
   "{n} min": "{n} د",
+  "Uploading…": "جارٍ الرفع…",
+  "Failed": "فشل",
+  "Waiting to upload": "بانتظار الرفع",
+  "Queued": "في الانتظار",
 };

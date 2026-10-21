@@ -148,11 +148,11 @@ export default function ApplicationDetail() {
         )}
       </>) : <View style={{ marginHorizontal: S.lg, marginBottom: S.xl }}><Skeleton h={120} r={R.card} /></View>}
       {!locked && !!queue.length && (
-        <ListGroup header={t("Uploads")} footer={queue.some((j) => j.state === "queued") ? t("Queued uploads continue automatically when you're online.") : undefined} inset={58}>
+        <ListGroup header={t("Uploads")} footer={queue.some((j) => j.state === "queued" || j.state === "waiting") ? t("Queued uploads continue automatically when you're online.") : undefined} inset={58}>
           {queue.map((j) => (
             <View key={j.id}>
-              <ListRow icon={j.state === "failed" ? "exclamationmark.circle.fill" : "arrow.up.circle.fill"} iconColor={j.state === "failed" ? c.red : c.tint} title={j.name}
-                subtitle={j.state === "uploading" ? "Uploading…" : j.state === "failed" ? `Failed · ${j.error ?? ""}` : j.error ?? "Waiting to upload"} />
+              <ListRow icon={j.state === "failed" ? "exclamationmark.circle.fill" : j.state === "waiting" ? "wifi.slash" : "arrow.up.circle.fill"} iconColor={j.state === "failed" ? c.red : j.state === "waiting" ? c.orange ?? c.secondaryLabel : c.tint} title={j.name}
+                subtitle={j.state === "uploading" ? t("Uploading…") : j.state === "failed" ? `${t("Failed")} · ${j.error ?? ""}` : j.state === "waiting" ? (j.error ?? t("Waiting to upload")) : t("Queued")} />
               {j.state === "uploading" ? <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar /></View> : (
                 <View style={{ flexDirection: "row", gap: S.sm, paddingHorizontal: S.md, paddingBottom: S.sm }}>
                   <View style={{ flex: 1 }}><Button title={t("Retry")} size="M" variant="secondary" onPress={() => retryUpload(j.id)} /></View>
