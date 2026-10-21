@@ -1,47 +1,67 @@
-import { useMemo, useState } from "react";
-import { ScrollView, View, useWindowDimensions } from "react-native";
+import { useMemo, useRef, useState } from "react";
+import { ScrollView, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COUNTRY_LIST, POPULAR, toSlug } from "../../../lib/countries";
-import { EmptyState, Flag, Icon, PressScale, Text, useTabInset } from "../../../components/ui";
+import { EmptyState, Flag, Icon, ListGroup, ListRow, PressScale, Text, useTabInset } from "../../../components/ui";
 import { Field } from "../../../components/AuthForm";
-import { useColors, S, R, curve } from "../../../lib/theme";
+import { useColors, S } from "../../../lib/theme";
 import { tap } from "../../../lib/haptics";
 
-/** Fixed two-column width so every tile (incl. an odd last one) is identical and left-aligned. */
-export const useTileWidth = () => { const { width } = useWindowDimensions(); return Math.floor((Math.min(width, 600) - S.lg * 2 - S.sm) / 2); };
-
-function Tile({ name }: { name: string }) {
-  const c = useColors(); const w = useTileWidth();
-  return (
-    <PressScale onPress={() => { tap(); router.push(`/country/${toSlug(name)}`); }} accessibilityRole="button" accessibilityLabel={name}
-      style={[{ width: w, borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.lg, minHeight: 128 }, curve]}>
-      <Flag country={name} size={44} />
-      <Text variant="headline" numberOfLines={1}>{name}</Text>
-    </PressScale>
-  );
-}
+const ROW = 52; const INSET = S.md + 28 + S.md; // separator starts under the name
+const Row = ({ name }: { name: string }) => (
+  <ListRow title={name} leading={<Flag country={name} size={28} />} minHeight={ROW} onPress={() => router.push(`/country/${toSlug(name)}`)} />
+);
 
 export default function Countries() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
   const [q, setQ] = useState("");
   const t = q.trim().toLowerCase();
   const results = useMemo(() => COUNTRY_LIST.filter((n) => n.toLowerCase().includes(t)), [t]);
-  const rest = COUNTRY_LIST.filter((n) => !POPULAR.includes(n));
+  const popular = POPULAR.slice(0, 4);
+  const sections = useMemo(() => {
+    const m = new Map<string, string[]>();
+    [...COUNTRY_LIST].sort().forEach((n) => { const k = n[0].toUpperCase(); m.set(k, [...(m.get(k) ?? []), n]); });
+    return [...m.entries()];
+  }, []);
+  const scroll = useRef<ScrollView>(null); const ys = useRef<Record<string, number>>({}); const allY = useRef(0); const wrapY = useRef(0);
   return (
-    <ScrollView style={{ backgroundColor: c.bg }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb, paddingHorizontal: S.lg }}>
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
-      <Text variant="largeTitle" accessibilityRole="header">Countries</Text>
-      <Text variant="subhead" tone="secondary" style={{ marginBottom: S.lg }}>{COUNTRY_LIST.length} Schengen destinations</Text>
-      <Field placeholder="Search" value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />} />
-      {t ? (
-        results.length ? <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.sm, marginTop: S.xl }}>{results.map((n) => <Tile key={n} name={n} />)}</View> : <EmptyState icon="magnifyingglass" title="No results" />
-      ) : (<>
-        <Text variant="title3" style={{ marginTop: S.xxl, marginBottom: S.sm }} accessibilityRole="header">Popular</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.sm }}>{POPULAR.slice(0, 4).map((n) => <Tile key={n} name={n} />)}</View>
-        <Text variant="title3" style={{ marginTop: S.xxl, marginBottom: S.sm }} accessibilityRole="header">All countries</Text>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.sm }}>{[...POPULAR.slice(4), ...rest].sort().map((n) => <Tile key={n} name={n} />)}</View>
-      </>)}
-    </ScrollView>
+      <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" testID="countries-list"
+        contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb + S.xl, paddingHorizontal: S.lg }}>
+        <Text variant="largeTitle" accessibilityRole="header">Countries</Text>
+        <Text variant="subhead" tone="secondary" style={{ marginBottom: S.lg }}>{COUNTRY_LIST.length} Schengen destinations</Text>
+        <Field placeholder="Search" value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />} />
+        <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.md, marginTop: S.xl }}>
+          {t ? (
+            results.length ? <ListGroup inset={INSET}>{results.map((n) => <Row key={n} name={n} />)}</ListGroup> : <EmptyState icon="magnifyingglass" title="No results" />
+          ) : (<>
+            <ListGroup header="Popular" inset={INSET}>{popular.map((n) => <Row key={n} name={n} />)}</ListGroup>
+            <View onLayout={(e) => { allY.current = e.nativeEvent.layout.y; }}>
+              <Text variant="title3" accessibilityRole="header" style={{ marginHorizontal: S.lg, marginBottom: S.xs }}>All countries</Text>
+              {sections.map(([k, names]) => (
+                <View key={k} onLayout={(e) => { ys.current[k] = e.nativeEvent.layout.y; }}>
+                  <ListGroup header={k} inset={INSET} style={{ marginBottom: S.md }}>{names.map((n) => <Row key={n} name={n} />)}</ListGroup>
+                </View>
+              ))}
+            </View>
+          </>)}
+        </View>
+      </ScrollView>
+      {!t && (
+        <View pointerEvents="box-none" style={{ position: "absolute", right: 2, top: insets.top + 180, bottom: pb, justifyContent: "center" }}>
+          <View accessibilityLabel="Section index" style={{ alignItems: "center" }}>
+            {sections.map(([k]) => (
+              <PressScale key={k} hitSlop={{ left: 12, right: 4 }} accessibilityRole="button" accessibilityLabel={`Jump to ${k}`}
+                onPress={() => { tap(); scroll.current?.scrollTo({ y: wrapY.current + allY.current + (ys.current[k] ?? 0) - insets.top, animated: false }); }}
+                style={{ paddingHorizontal: S.xxs, paddingVertical: 1 }}>
+                <Text variant="caption2" weight="600" color={c.tint}>{k}</Text>
+              </PressScale>
+            ))}
+          </View>
+        </View>
+      )}
+    </View>
   );
 }

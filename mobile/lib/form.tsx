@@ -10,7 +10,10 @@ import { useAuth } from "./auth";
 import { saveDraft, latestDraft } from "./data";
 export { emptyForm } from "./wizard";
 
-const KEY = "ezvisa.wizard.v1";
+const KEY = "ezvisa.wizard.v1"; // the open (active) draft, same format as before + `key`
+const DRAFTS = "ezvisa.drafts.v2"; // every unfinished application saved on this phone (the active one included)
+export type LocalDraft = { key: string; form: WizardForm; page: string; savedAt: number; draftId: string | null };
+const newKey = () => `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 /** Old saves could hold "Other" + free text (or a visa-exempt country from a link). Clear it so the user re-picks from the visa-required list. */
 function cleanNationality(f: WizardForm): WizardForm {
   const { nationalityOther: _drop, ...rest } = f as WizardForm & { nationalityOther?: string };
@@ -24,6 +27,9 @@ type Ctx = {
   hydrated: boolean; savedAt: number | null; clearDraft: () => void;
   promptDismissed: boolean; dismissPrompt: () => void;
   draftId: string | null; cloudSavedAt: number | null; cloudError: string | null; flushDraft: () => Promise<string | null>;
+  /** All local drafts, newest first (the active one reflects the live form). */
+  drafts: LocalDraft[]; activeKey: string;
+  openDraft: (key: string) => WizardForm | null; startNew: (seed?: Partial<WizardForm>) => WizardForm; removeDraft: (key: string) => void;
 };
 const C = createContext<Ctx>(null as any);
 
@@ -42,11 +48,21 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   const idRef = useRef<string | null>(null);
   const latest = useRef({ form, page }); latest.current = { form, page };
   const setDraft = (id: string | null) => { idRef.current = id; setDraftId(id); };
+  const [drafts, setDrafts] = useState<LocalDraft[]>([]); const draftsRef = useRef<LocalDraft[]>([]);
+  const [activeKey, setActiveKey] = useState(newKey); const keyRef = useRef(activeKey); keyRef.current = activeKey;
+  const writeDrafts = (list: LocalDraft[]) => { const l = [...list].sort((a, b) => b.savedAt - a.savedAt); draftsRef.current = l; setDrafts(l); AsyncStorage.setItem(DRAFTS, JSON.stringify(l)).catch(() => {}); };
 
   useEffect(() => {
-    AsyncStorage.getItem(KEY).then((raw) => {
-      if (!raw) return;
-      const d = JSON.parse(raw);
+    AsyncStorage.multiGet([KEY, DRAFTS]).then(([[, raw], [, rawList]]) => {
+      const d = raw ? JSON.parse(raw) : null;
+      let list: LocalDraft[] = [];
+      try { list = rawList ? (JSON.parse(rawList) as LocalDraft[]).filter((x) => x?.key && x.form).map((x) => ({ ...x, form: cleanNationality({ ...emptyForm, ...x.form }) })) : []; } catch { list = []; }
+      const k = (d?.key as string | undefined) ?? newKey(); setActiveKey(k); keyRef.current = k;
+      // Migration from the single-draft format: the existing saved draft becomes the first entry of the list.
+      if (!rawList && d?.v === 1 && d.form && hasAnswers({ ...emptyForm, ...d.form }))
+        list = [{ key: k, form: cleanNationality({ ...emptyForm, ...d.form }), page: typeof d.page === "string" ? d.page : "q:destination", savedAt: d.savedAt ?? Date.now(), draftId: d.draftId ?? null }];
+      writeDrafts(list);
+      if (!d) return;
       if (d?.v === 1 && d.form) {
         const f = cleanNationality({ ...emptyForm, ...d.form });
         const pg = normalizePage(typeof d.page === "string" ? d.page : null, f);
@@ -64,7 +80,9 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const at = Date.now();
-      AsyncStorage.setItem(KEY, JSON.stringify({ v: 1, form, page, savedAt: at, promptDismissed, draftId })).then(() => setSavedAt(at)).catch(() => {});
+      AsyncStorage.setItem(KEY, JSON.stringify({ v: 1, key: keyRef.current, form, page, savedAt: at, promptDismissed, draftId })).then(() => setSavedAt(at)).catch(() => {});
+      const rest = draftsRef.current.filter((x) => x.key !== keyRef.current);
+      writeDrafts(hasAnswers(form) ? [{ key: keyRef.current, form, page, savedAt: at, draftId }, ...rest] : rest);
     }, 250);
     return () => { if (timer.current) clearTimeout(timer.current); };
   }, [form, page, promptDismissed, hydrated, draftId]);
@@ -107,7 +125,25 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     skipNext.current = true;
     setForm({ ...emptyForm }); setPage("q:destination"); setSavedAt(null); setPromptDismissed(false); setDraft(null); setCloudSavedAt(null);
     AsyncStorage.removeItem(KEY).catch(() => {});
+    writeDrafts(draftsRef.current.filter((x) => x.key !== keyRef.current));
+    const k = newKey(); keyRef.current = k; setActiveKey(k);
   }, []);
-  return <C.Provider value={{ form, setForm, page, setPage, submitted, setSubmitted, hydrated, savedAt, clearDraft, promptDismissed, dismissPrompt: () => setPromptDismissed(true), draftId, cloudSavedAt, cloudError, flushDraft }}>{children}</C.Provider>;
+  /** Switch the wizard to another saved draft (the current one is already in the list). */
+  const load = (d: LocalDraft | null, seed: Partial<WizardForm> = {}) => {
+    if (timer.current) clearTimeout(timer.current); if (cloudTimer.current) clearTimeout(cloudTimer.current);
+    const f = d ? { ...d.form, ...seed } : { ...emptyForm, ...seed }; const pg = d ? normalizePage(d.page, f) : "q:destination";
+    const k = d?.key ?? newKey(); keyRef.current = k; setActiveKey(k);
+    setForm(f); setPage(pg); setDraft(d?.draftId ?? null); setSavedAt(d?.savedAt ?? null); setCloudSavedAt(null); setPromptDismissed(false);
+    latest.current = { form: f, page: pg };
+    AsyncStorage.setItem(KEY, JSON.stringify({ v: 1, key: k, form: f, page: pg, savedAt: d?.savedAt ?? null, promptDismissed: false, draftId: d?.draftId ?? null })).catch(() => {});
+    return f;
+  };
+  const openDraft = useCallback((key: string) => { const d = draftsRef.current.find((x) => x.key === key); return d ? load(d) : null; }, []);
+  const startNew = useCallback((seed?: Partial<WizardForm>) => load(null, seed), []);
+  const removeDraft = useCallback((key: string) => {
+    if (key === keyRef.current) { clearDraft(); return; }
+    writeDrafts(draftsRef.current.filter((x) => x.key !== key));
+  }, [clearDraft]);
+  return <C.Provider value={{ form, setForm, page, setPage, submitted, setSubmitted, hydrated, savedAt, clearDraft, promptDismissed, dismissPrompt: () => setPromptDismissed(true), draftId, cloudSavedAt, cloudError, flushDraft, drafts, activeKey, openDraft, startNew, removeDraft }}>{children}</C.Provider>;
 }
 export const useForm = () => useContext(C);

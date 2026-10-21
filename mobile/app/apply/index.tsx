@@ -71,7 +71,7 @@ export default function Apply() {
   const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
   const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
   const p = useLocalSearchParams<Params>();
-  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, cloudSavedAt, flushDraft } = useForm();
+  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, cloudSavedAt, flushDraft, drafts, openDraft, startNew } = useForm();
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   const [dir, setDir] = useState(1);
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
@@ -139,9 +139,15 @@ export default function Apply() {
   useEffect(() => {
     if (!hydrated || started.current) return;
     started.current = true;
-    const had = hasAnswers(fRef.current);
-    if (!p.resume && !submitted && savedAt && had) setResumeAsk(true);
+    let had = hasAnswers(fRef.current);
     const v = linkValues();
+    // Opening a different country than the draft in progress: switch to that country's own saved draft, or a new one.
+    // The other draft stays saved on this phone (Home lists every draft).
+    if (had && v.destination && fRef.current.destination && v.destination !== fRef.current.destination) {
+      const other = drafts.find((d) => d.form.destination === v.destination);
+      const nf = other ? openDraft(other.key)! : startNew(); fRef.current = nf; had = !!other;
+    }
+    if (!p.resume && !submitted && savedAt && had && !v.destination) setResumeAsk(true);
     if (Object.keys(v).length) {
       const nf = { ...fRef.current, ...v }; setForm(nf);
       if (!had && !p.step) { const u = firstUnanswered(nf); if (u) setPage(`q:${u.id}`); }
@@ -455,7 +461,7 @@ export default function Apply() {
             <Text variant="title3" accessibilityRole="header">{t("Continue Application?")}</Text>
             <Text variant="subhead" tone="secondary">{t("Pick up where you left off, or start fresh.")}</Text>
             <View style={{ flexDirection: "row", gap: S.sm }}>
-              <View style={{ flex: 1 }}><Button title={t("Start Fresh")} variant="secondary" onPress={() => { setResumeAsk(false); clearDraft(); const v = linkValues(); setForm((x) => ({ ...x, ...v })); setEditing(null); }} /></View>
+              <View style={{ flex: 1 }}><Button title={t("Start Fresh")} variant="secondary" onPress={() => { setResumeAsk(false); startNew(); const v = linkValues(); setForm((x) => ({ ...x, ...v })); setEditing(null); }} /></View>
               <View style={{ flex: 1 }}><Button title={t("Continue")} onPress={() => setResumeAsk(false)} /></View>
             </View>
           </View>
