@@ -1,4 +1,8 @@
-import { Alert, Linking, Platform, ScrollView, Switch, View } from "react-native";
+import { Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import { STATUS_LABEL, isPaid, type Application } from "../../../lib/data";
+import { EMAIL } from "../../../lib/config";
 import { useEffect, useState } from "react";
 import { remindersEnabled, remindersSupported, setRemindersEnabled, planReminders, getPassportExpiry, setPassportExpiry, syncReminders } from "../../../lib/reminders";
 import { useT, type Lang } from "../../../lib/i18n";
@@ -6,7 +10,7 @@ import { lockSupported, lockEnabled, setLockEnabled, biometricLabel } from "../.
 import { DateAnswer } from "../../../components/wizard/answers";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ListGroup, ListRow, Avatar, Text, Button, Icon, SegmentedControl, useTabInset } from "../../../components/ui";
+import { ListGroup, ListRow, Flag, Avatar, Text, Button, Icon, SegmentedControl, useTabInset } from "../../../components/ui";
 import { useAppearance, type AppearancePref } from "../../../lib/appearance";
 import { useColors, S, R } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
@@ -17,6 +21,7 @@ export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true);
   const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT();
+  const [del, setDel] = useState(false);
   const [rem, setRem] = useState(false); const [remNote, setRemNote] = useState<string | null>(null);
   const [pp, setPp] = useState(""); const [lock, setLock] = useState(false); const [bio, setBio] = useState<string | null>(null); const [lockNote, setLockNote] = useState<string | null>(null);
   useEffect(() => { remindersEnabled().then(setRem); getPassportExpiry().then(setPp); lockEnabled().then(setLock); biometricLabel().then(setBio); }, []);
@@ -95,7 +100,9 @@ export default function Account() {
       {support}
     </ScrollView>
   );
-  const u = session.user; const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
+  const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
+  const paidApps = (apps ?? []).filter((a) => isPaid(a));
+  const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
   const signOut = () => {
     if (Platform.OS === "web") { supabase?.auth.signOut(); return; }
     Alert.alert("Sign out?", undefined, [{ text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: () => supabase?.auth.signOut() }]);
@@ -108,6 +115,24 @@ export default function Account() {
         <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
         <Text variant="subhead" tone="secondary">{u.email}</Text>
       </View>
+      <ListGroup header={t("Account details")} inset={16}>
+        <ListRow title={t("Name")} value={full} />
+        <ListRow title={t("Email")} value={u.email ?? ""} />
+        <ListRow title={t("Sign-in method")} value={t(provider === "google" ? "Google" : provider === "apple" ? "Apple" : "Email")} />
+        {!!u.created_at && <ListRow title={t("Member since")} value={new Date(u.created_at).toLocaleDateString(lang === "ar" ? "ar" : undefined, { month: "long", year: "numeric" })} />}
+      </ListGroup>
+      {!!apps?.length && (
+        <ListGroup header={t("Application history")} inset={S.md + 28 + S.md}>
+          {apps.map((a) => <ListRow key={a.id} leading={<Flag country={a.countries?.name ?? a.destination_country ?? ""} size={28} />} title={t(a.countries?.name ?? a.destination_country ?? "Application")}
+            subtitle={`${a.reference} · ${t(STATUS_LABEL[a.status] ?? a.status)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`)} />)}
+        </ListGroup>
+      )}
+      {!!paidApps.length && (
+        <ListGroup header={t("Receipts")} footer={t("From your payment record. Tap to save or share a PDF.")} inset={58}>
+          {paidApps.map((a) => <ListRow key={a.id} icon="doc.text.fill" iconColor={c.green} title={`${t("Receipt")} · ${a.reference}`} subtitle={t(a.countries?.name ?? a.destination_country ?? "")}
+            value={`${Number(a.payment_amount ?? a.total_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => shareReceipt(a, full, u.email ?? "")} />)}
+        </ListGroup>
+      )}
       <ListGroup inset={58}>
         <ListRow icon="bell.fill" iconColor={c.red} title={t("Notifications")} value={unread ? String(unread) : undefined} onPress={() => router.push("/account/notifications")} />
         <ListRow icon="doc.text.fill" iconColor={c.tint} title={t("Applications")} onPress={() => router.navigate("/applications")} />
@@ -118,6 +143,37 @@ export default function Account() {
       {reminders}
       {support}
       <ListGroup><ListRow title={t("Sign out")} destructive chevron={false} onPress={signOut} /></ListGroup>
+      <ListGroup footer={t("Deleting removes your account and personal data. Records we must keep by law (payments) are kept for the legal period.")}>
+        <ListRow title={t("Delete account")} destructive chevron={false} onPress={() => setDel(true)} />
+      </ListGroup>
+      <Modal visible={del} transparent animationType="fade" onRequestClose={() => setDel(false)}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
+          <View accessibilityViewIsModal style={{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.sm }} testID="delete-sheet">
+            <Text variant="title3" accessibilityRole="header">{t("Delete your account?")}</Text>
+            <Text variant="subhead" tone="secondary">{t("Send us the request and we'll delete your account and data within 30 days, then confirm by email.")}</Text>
+            <View style={{ height: S.xs }} />
+            <Button title={t("Request by WhatsApp")} icon="logo.whatsapp" variant="destructive" onPress={() => { setDel(false); whatsapp(`Please delete my EZvisa account (${u.email}).`); }} />
+            <Button title={t("Request by email")} icon="envelope.fill" variant="secondary" onPress={() => { setDel(false); Linking.openURL(`mailto:${EMAIL}?subject=${encodeURIComponent("Delete my EZvisa account")}&body=${encodeURIComponent(`Please delete my EZvisa account and personal data.\nAccount email: ${u.email}`)}`); }} />
+            <Button title={t("Cancel")} variant="plain" color={c.label} onPress={() => setDel(false)} />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
+}
+
+const esc = (x: string) => x.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));
+/** Receipt built only from the stored payment record (no invented fields). */
+async function shareReceipt(a: Application, name: string, mail: string) {
+  const amount = `${Number(a.payment_amount ?? a.total_amount).toFixed(2)} ${a.currency || "AED"}`;
+  const rows: [string, string][] = [["Reference", a.reference], ["Destination", a.countries?.name ?? a.destination_country ?? ""], ["Customer", name], ["Email", mail],
+    ["Amount paid", amount], ["Status", a.payment_status ?? ""], ...(a.payment_id ? [["Payment ID", a.payment_id] as [string, string]] : []), ["Date", new Date(a.updated_at ?? a.created_at ?? Date.now()).toLocaleDateString()]];
+  const html = `<html><body style="font-family:-apple-system,Helvetica;padding:32px"><h1 style="margin:0">EZvisa</h1><p style="color:#666">Payment receipt · EZvisa visa application service</p>
+    <table style="width:100%;border-collapse:collapse;margin-top:24px">${rows.map(([k, v]) => `<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #eee">${esc(k)}</td><td style="padding:8px 0;text-align:right;border-bottom:1px solid #eee">${esc(v)}</td></tr>`).join("")}</table>
+    <p style="color:#666;margin-top:24px;font-size:12px">Embassy and VFS fees are not included and are paid at the appointment.</p></body></html>`;
+  try {
+    if (Platform.OS === "web") { await Print.printAsync({ html }); return; }
+    const { uri } = await Print.printToFileAsync({ html });
+    if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: `Receipt ${a.reference}` });
+  } catch (e: any) { Alert.alert("Couldn't create the receipt", e?.message ?? String(e)); }
 }
