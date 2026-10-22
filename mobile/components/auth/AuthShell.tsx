@@ -1,6 +1,6 @@
 // Shared frame for the auth screens: top bar (logo + close, or back), large title, optional one-line subtitle, content.
 import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput, TextInputProps, View } from "react-native";
+import { I18nManager, KeyboardAvoidingView, Platform, ScrollView, TextInput, TextInputProps, View } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import NetInfo from "@react-native-community/netinfo";
@@ -15,14 +15,14 @@ export function closeAuth() {
 }
 
 export function AuthShell({ title, subtitle, nav = "close", children, testID }: { title: string; subtitle?: string; nav?: "close" | "back" | "none"; children: React.ReactNode; testID?: string }) {
-  const c = useColors(); const { t } = useT(); const insets = useSafeAreaInsets();
+  const c = useColors(); const { t, rtl } = useT(); const insets = useSafeAreaInsets();
   const back = () => { tap(); if (router.canGoBack()) router.back(); else router.replace("/auth"); };
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined} testID={testID}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: S.lg, paddingTop: Platform.OS === "ios" ? S.md : insets.top + S.xs, minHeight: 56 }}>
         {nav === "back" ? (
           <PressScale onPress={back} accessibilityRole="button" accessibilityLabel={t("Back")} hitSlop={4} style={{ width: HIT, height: HIT, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}>
-            <Icon name="chevron.left" size={16} color={c.label} weight="bold" />
+            <Icon name="chevron.left" size={16} color={c.label} weight="bold" style={{ transform: [{ scaleX: rtl || I18nManager.isRTL ? -1 : 1 }] }} />
           </PressScale>
         ) : <Logo height={22} />}
         {nav === "close" && (
