@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { sanitizeInput, sanitizeEmail, sanitizePhone } from "@/lib/sanitize"
+import { needsSchengenVisa } from "@/lib/nationalities"
+import { passportCoversTrip } from "@/lib/wizard-rules"
 
 export async function POST(request: Request) {
   try {
@@ -21,6 +23,9 @@ export async function POST(request: Request) {
     // The answers as the app stores them (additional_notes.wizard), so the app shows website submissions the same way.
     const { draftId: _d, draftVersion: _v, ...answers } = formData ?? {}
     const wizard = Object.fromEntries(Object.entries(answers).filter(([, v]) => v === null || ["string", "boolean", "number"].includes(typeof v) || Array.isArray(v)))
+    if (JSON.stringify(wizard).length > 50_000) {
+      return NextResponse.json({ success: false, message: "Application data is too large." }, { status: 413 })
+    }
     
     // Sanitize inputs
     const sanitizedData = {
@@ -34,6 +39,14 @@ export async function POST(request: Request) {
       purposeOfTrip: sanitizeInput(formData.purposeOfTrip || "", 500),
       jobTitle: sanitizeInput(formData.jobTitle || "", 200),
       companyName: sanitizeInput(formData.companyName || "", 200),
+    }
+
+    // Same wizard rules as the app, also on the server (a ?step=payment link skips the browser's step checks).
+    if (formData.nationality && !needsSchengenVisa(String(formData.nationality))) {
+      return NextResponse.json({ success: false, message: "Please choose your nationality from the list." }, { status: 400 })
+    }
+    if (typeof formData.passportExpiry === "string" && formData.passportExpiry && !passportCoversTrip({ passportExpiry: formData.passportExpiry, travelEndDate: formData.travelEndDate })) {
+      return NextResponse.json({ success: false, message: "Passport must be valid at least 3 months after your return date" }, { status: 400 })
     }
 
     // Server-side Date Validation
@@ -115,11 +128,19 @@ export async function POST(request: Request) {
     let error: unknown = null
     const draftId = typeof formData.draftId === "string" && /^[0-9a-f-]{36}$/i.test(formData.draftId) ? formData.draftId : null
     const token = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || ""
-    if (draftId && token) {
+    if (draftId) {
+      // A draft submit is never turned into a guest insert: without a valid owner token and the version the user saw,
+      // nothing is written.
+      if (!token || typeof formData.draftVersion !== "string") {
+        return NextResponse.json({ success: false, message: "Please sign in again to submit this application." }, { status: 403 })
+      }
       const { data: auth } = await supabase.auth.getUser(token)
       const userEmail = auth.user?.email?.toLowerCase()
       const { data: current } = await supabase.from("visa_applications").select("id, email, application_status, additional_notes").eq("id", draftId).maybeSingle()
-      if (userEmail && current && current.email?.toLowerCase() === userEmail) {
+      if (!userEmail || !current || current.email?.toLowerCase() !== userEmail) {
+        return NextResponse.json({ success: false, message: "This application isn't on your account." }, { status: 403 })
+      }
+      {
         if (current.application_status === "draft") {
           let notes: Record<string, unknown> = {}
           try { notes = JSON.parse(current.additional_notes || "{}") } catch {}
@@ -140,8 +161,10 @@ export async function POST(request: Request) {
           }
         }
         if (!error && !data?.length) {
-          // Already submitted (double click, or submitted in the app): return the same application.
-          const res = await supabase.from("visa_applications").select().eq("id", draftId).neq("application_status", "draft")
+          // Already submitted (double click, or submitted in the app): return the same application. A discarded draft
+          // is not resurrected.
+          const res = await supabase.from("visa_applications").select("id, application_status").eq("id", draftId).neq("application_status", "draft")
+          if (res.data?.[0]?.application_status === "cancelled") return NextResponse.json({ success: false, message: "This application was discarded. Start a new one." }, { status: 409 })
           if (res.data?.length) return NextResponse.json({ success: true, message: "Application already submitted", applicationId: res.data[0].id })
         }
       }
@@ -153,7 +176,8 @@ export async function POST(request: Request) {
     }
 
     if (error || !data?.length) {
-      return NextResponse.json({ success: false, message: "Failed to save application", error }, { status: 500 })
+      console.error("[submit-application] save failed:", error)
+      return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
     }
 
     const application = data[0]
