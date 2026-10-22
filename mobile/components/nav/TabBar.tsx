@@ -76,6 +76,9 @@ function Tab({ label, icons, on, progress, reduce, onPress, onLayout, testID }: 
   );
 }
 
+/** The first screen of each tab's stack (its list). */
+const TAB_ROOT: Record<string, string> = { "(home)": "index", "(countries)": "countries", applications: "index", account: "index" };
+
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const reduce = !!useReducedMotion();
   const [kb, setKb] = useState(false);
@@ -112,7 +115,14 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const go = (i: number) => {
     const route = state.routes[i]; const on = state.index === i;
     const e = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-    if (!e.defaultPrevented && !on) { select(); navigation.navigate(route.name, route.params); } else moveTo(state.index);
+    if (!e.defaultPrevented && !on) { select(); navigation.navigate(route.name, route.params); return; }
+    moveTo(state.index);
+    // Tapping the open tab goes back to its list. The stack pops to the top on its own; but a screen opened without the
+    // list under it (after a payment, Continue, a notification) is the stack's only screen, so reset the stack to the list.
+    const stack = (route as any).state as { key?: string; routes?: { name: string }[] } | undefined;
+    const root = TAB_ROOT[route.name];
+    if (!e.defaultPrevented && on && root && stack?.key && stack.routes?.[0]?.name !== root)
+      navigation.dispatch({ type: "RESET", payload: { index: 0, routes: [{ name: root }] }, target: stack.key } as any);
   };
   // Drag the lens across tabs (horizontal pans only, so taps and vertical scrolls are untouched); release snaps + selects.
   const nearest = (cx: number) => { let best = state.index, d = 1e9; slots.current.forEach((s, i) => { if (!s) return; const dd = Math.abs(s.x + s.w / 2 - cx); if (dd < d) { d = dd; best = i; } }); return best; };

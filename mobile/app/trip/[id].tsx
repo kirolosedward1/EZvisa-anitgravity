@@ -41,7 +41,7 @@ export default function TripPlan() {
   }, [id]);
   useEffect(() => { load(); }, [load]);
 
-  const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`); };
+  const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`, { withAnchor: true }); };
   const go = (s: QStep | null, d = 1) => { setDir(d); setQ(s); };
   const persist = async (p: Plan) => {
     if (!a || busy.current) return; busy.current = true; setSaving(true);
