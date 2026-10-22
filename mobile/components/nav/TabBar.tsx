@@ -4,15 +4,19 @@
 // Material: native Liquid Glass (expo-glass-effect GlassView) on iOS 26+, expo-blur elsewhere; translucent fill on Android.
 import React, { useEffect, useRef, useState } from "react";
 import { Keyboard, PanResponder, Platform, Pressable, StyleSheet, View, type LayoutChangeEvent } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, useReducedMotion, interpolate, type SharedValue } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, useAnimatedReaction, withSpring, withSequence, withTiming, useReducedMotion, interpolate, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { router } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/tabs";
-import { useColors, useIsDark, elevation, SPRING, TAB_BAR_HEIGHT, S, ICON, SIZE, DUR } from "../../lib/theme";
+import { useColors, useIsDark, elevation, SPRING, TAB_BAR_HEIGHT, S, R, ICON, SIZE, DUR } from "../../lib/theme";
 import { select, tap } from "../../lib/haptics";
-import { Icon, IconName, Text } from "../ui";
+import { Icon, IconName } from "../ui";
+import { tabBarCompact, resetTabScroll } from "../../lib/tabBarScroll";
+import { useAvatar } from "../../lib/avatar";
+import { useAuth } from "../../lib/auth";
+import { Image } from "expo-image";
 
 const ICONS: Record<string, [IconName, IconName]> = {
   "(home)": ["house", "house.fill"], "(countries)": ["globe.europe.africa", "globe.europe.africa.fill"],
@@ -20,6 +24,7 @@ const ICONS: Record<string, [IconName, IconName]> = {
 };
 const H = TAB_BAR_HEIGHT;
 const PAD = S.xs - 2; // lens inset inside the capsule
+const COMPACT = 0.14; // how much the bar shrinks while scrolling down
 const glass = Platform.OS === "ios" && isLiquidGlassAvailable();
 
 function Material({ radius }: { radius: number }) {
@@ -52,25 +57,28 @@ function NewAppButton() {
 const LENS = { damping: 18, stiffness: 260, mass: 0.7 };      // droplet travel: quick with a soft settle
 const SETTLE = { damping: 12, stiffness: 320, mass: 0.6 };    // stretch / squash recovery
 
-/** One tab: icon + label crossfade between outline/filled and grey/tint, with a spring scale. */
-function Tab({ label, icons, on, progress, reduce, onPress, onLayout, testID }: { label: string; icons: [IconName, IconName]; on: boolean; progress: SharedValue<number>; reduce: boolean; onPress: () => void; onLayout: (e: LayoutChangeEvent) => void; testID: string }) {
+/** One tab: the icon only (the label is read by VoiceOver), crossfading outline/filled and grey/tint, with a spring scale. */
+function Tab({ label, icons, on, progress, reduce, onPress, onLayout, testID, photo }: { label: string; icons: [IconName, IconName]; on: boolean; progress: SharedValue<number>; reduce: boolean; onPress: () => void; onLayout: (e: LayoutChangeEvent) => void; testID: string; photo?: string | null }) {
   const c = useColors();
   useEffect(() => { progress.value = reduce ? withTiming(on ? 1 : 0, { duration: DUR.instant }) : withSpring(on ? 1 : 0, SPRING.pop); }, [on, reduce]);
   const scale = useAnimatedStyle(() => ({ transform: [{ scale: reduce ? 1 : interpolate(progress.value, [0, 1], [1, 1.08]) }] }));
   const onA = useAnimatedStyle(() => ({ opacity: progress.value }));
   const offA = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
-  const both = (name: IconName, color: string, st: any, w: "600" | "500") => (
-    <Animated.View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", gap: S.xxs }, st]}>
-      <Icon name={name} size={ICON.lg} color={color} />
-      <Text variant="caption2" weight={w} color={color} numberOfLines={1}>{label}</Text>
+  // Account with a profile photo: the photo in a circle (a tint ring when selected) instead of the icon.
+  const both = (name: IconName, color: string, st: any) => (
+    <Animated.View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center" }, st]}>
+      {photo ? <View style={{ width: ICON.lg + 6, height: ICON.lg + 6, borderRadius: R.round, borderWidth: 2, borderColor: color === c.accent ? c.accent : "transparent", padding: 1 }}>
+          <Image source={{ uri: photo }} style={{ flex: 1, borderRadius: R.round }} contentFit="cover" accessibilityIgnoresInvertColors />
+        </View>
+        : <Icon name={name} size={ICON.lg} color={color} />}
     </Animated.View>
   );
   return (
     <Pressable onPress={onPress} onLayout={onLayout} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label} testID={testID}
       style={{ flex: 1, height: H - PAD * 2 }}>
       <Animated.View style={[{ flex: 1 }, scale]}>
-        {both(icons[0], c.text, offA, "500")}
-        {both(icons[1], c.accent, onA, "600")}
+        {both(icons[0], c.text, offA)}
+        {both(icons[1], c.accent, onA)}
       </Animated.View>
     </Pressable>
   );
@@ -81,6 +89,7 @@ const TAB_ROOT: Record<string, string> = { "(home)": "index", "(countries)": "co
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const reduce = !!useReducedMotion();
+  const { session } = useAuth(); const photo = useAvatar(session?.user.id);
   const [kb, setKb] = useState(false);
   useEffect(() => {
     const a = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow", () => setKb(true));
@@ -95,7 +104,11 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const bottom = insets.bottom > 0 ? Math.max(insets.bottom - S.xs, S.xs) : S.md;
   const ty = useSharedValue(0);
   useEffect(() => { ty.value = withSpring(hidden ? H + bottom + S.x3 : 0, SPRING.press); }, [hidden, bottom]);
-  const a = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
+  // Compact while the list scrolls down: smaller, still on the same bottom line (lib/tabBarScroll).
+  const k = useSharedValue(0);
+  useAnimatedReaction(() => tabBarCompact.value, (v) => { k.value = reduce ? withTiming(v, { duration: DUR.instant }) : withSpring(v, SPRING.press); }, [reduce]);
+  useEffect(() => { resetTabScroll(); }, [state.index, hidden]);
+  const a = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value + k.value * H * COMPACT / 2 }, { scale: 1 - k.value * COMPACT }] }));
 
   // Lens geometry: tab slots measured on layout; x / w spring to the selected slot.
   const slots = useRef<{ x: number; w: number }[]>([]);
@@ -154,7 +167,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             const label = (descriptors[route.key].options.title ?? route.name) as string;
             return (
               <React.Fragment key={route.key}>{i === 2 && <NewAppButton />}
-                <Tab label={label} icons={ICONS[route.name] ?? ["circle", "circle"]} on={state.index === i} progress={progress[i]} reduce={reduce}
+                <Tab label={label} icons={ICONS[route.name] ?? ["circle", "circle"]} on={state.index === i} progress={progress[i]} reduce={reduce} photo={route.name === "account" ? photo : null}
                   onPress={() => live.current.go(i)} onLayout={onSlot(i)} testID={`tab-${route.name}`} />
               </React.Fragment>
             );

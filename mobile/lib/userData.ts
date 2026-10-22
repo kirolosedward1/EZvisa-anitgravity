@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { clearQueue } from "./uploads";
 import { resetDiscarded } from "./discard";
+import { resetAvatar } from "./avatar";
 import { setRemindersEnabled } from "./reminders";
 
 export const USER_KEYS = [
@@ -15,12 +16,13 @@ export const USER_KEYS = [
   "ezvisa.passportExpiry.v1", "ezvisa.reminders.v1", // reminders (lib/reminders.ts)
   "ezvisa.crash.v1",                                 // last crash report (lib/crash.ts)
   "ezvisa.prefill.v1",                               // per-draft "profile question answered" flags (lib/profile.ts)
+  "ezvisa.avatar.v1",                                // profile photo (lib/avatar.ts)
 ];
 const USER_PREFIXES = ["ezvisa.itinerary.v1."];      // trip plans per application (lib/itinerary.ts)
 
 export async function clearUserData() {
   clearQueue(); // upload queue + the local copies of passports/statements (lib/uploads.ts)
-  resetDiscarded();
+  resetDiscarded(); resetAvatar();
   if (Platform.OS !== "web") await setRemindersEnabled(false, null).catch(() => {}); // cancels scheduled reminders
   try {
     const all = await AsyncStorage.getAllKeys();

@@ -4,7 +4,7 @@
 // existing "Customers update own applications" policy already allows for draft/submitted rows. Paid cases are never discarded.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
-import { ActionSheetIOS, Alert, Platform } from "react-native";
+import { Alert, Platform } from "react-native";
 import { cancelApplication, isPaid, patchNotes, type Application } from "./data";
 
 const KEY = "ezvisa.discarded.v1";
@@ -44,12 +44,8 @@ export async function discardApplication(a: Application) {
   try { await cancelApplication(a.id); } catch {}
 }
 
-/** Red "Discard" menu item, then a destructive confirmation. */
+/** One destructive confirmation (the trash button and long-press). Swipe-to-discard needs none: the swipe is the intent. */
 export function askDiscard(onDiscard: () => void, t: (s: string) => string = (s) => s) {
-  const confirm = () => {
-    if (Platform.OS === "web") { if (typeof window !== "undefined" && window.confirm(t("Discard this application?"))) onDiscard(); return; }
-    Alert.alert(t("Discard this application?"), t("It will be removed from your list."), [{ text: t("Cancel"), style: "cancel" }, { text: t("Discard"), style: "destructive", onPress: onDiscard }]);
-  };
-  if (Platform.OS === "ios") ActionSheetIOS.showActionSheetWithOptions({ options: [t("Discard"), t("Cancel")], destructiveButtonIndex: 0, cancelButtonIndex: 1 }, (i) => { if (i === 0) confirm(); });
-  else confirm();
+  if (Platform.OS === "web") { if (typeof window !== "undefined" && window.confirm(t("Discard this application?"))) onDiscard(); return; }
+  Alert.alert(t("Discard this application?"), t("It will be removed from your list."), [{ text: t("Cancel"), style: "cancel" }, { text: t("Discard"), style: "destructive", onPress: onDiscard }]);
 }
