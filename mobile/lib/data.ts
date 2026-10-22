@@ -230,16 +230,21 @@ export async function patchNotes(applicationId: string, patch: Partial<Notes>): 
 export class UploadError extends Error { constructor(message: string, public network: boolean) { super(message); } }
 const isNetwork = (e: any) => { const m = String(e?.message ?? e).toLowerCase(); return m.includes("network") || m.includes("timeout") || m.includes("offline") || m.includes("failed to fetch"); };
 
-/** Same bucket + path scheme as the website's /api/upload-document: visa_documents/<applicationId>/<type>_<rand8>.<ext>. */
+/** Same bucket + path scheme as the website's /api/upload-document: visa_documents/<applicationId>/<type>_<id>.<ext>.
+ *  <id> is the queue job's stable UUID, so every retry of one upload targets the same object (no duplicates). */
 export const DOC_BUCKET = "visa_documents";
-const rand8 = () => Math.random().toString(16).slice(2, 10).padEnd(8, "0");
+const EXT: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png" };
+/** Object path for one upload. Pure, used by tests. */
+export const docPath = (applicationId: string, documentType: string, uploadId: string, type: string) => `${applicationId}/${documentType}_${uploadId}.${EXT[type] ?? "jpg"}`;
+const alreadyThere = (m: string) => /already exists|duplicate|\b409\b/i.test(m);
 
-/** 1) Upload through the website (POST /api/upload-document, multipart: file, applicationId, documentType), exactly like
- *     web app/dashboard/upload; the server stores the file and flips the matching has_* flag.
+/** 1) Upload through the website (POST /api/upload-document, multipart: file, applicationId, documentType, uploadId), exactly
+ *     like web app/dashboard/upload; the server stores the file and flips the matching has_* flag.
  *  2) If the website route is not configured (it currently answers 500 "Storage not configured"), upload directly to the
  *     same bucket/path with the user's own session and set the has_* flag ourselves. This needs the storage policy in
- *     db/proposed-live-changes.sql; until it is approved the direct upload is refused and the error is shown. */
-export async function uploadDocument(applicationId: string, file: { uri: string; name: string; mimeType?: string | null; size?: number | null }, documentType: string, _requirementId?: string | null) {
+ *     db/proposed-live-changes.sql; until it is approved the direct upload is refused and the error is shown.
+ *  Idempotent per uploadId: "already exists" means an earlier attempt got through, which counts as success. */
+export async function uploadDocument(applicationId: string, file: { uri: string; name: string; mimeType?: string | null; size?: number | null }, documentType: string, uploadId: string) {
   const sb = need();
   try {
     const u = await me();
@@ -249,27 +254,32 @@ export async function uploadDocument(applicationId: string, file: { uri: string;
       const fd = new FormData();
       if (Platform.OS === "web") { const blob = await (await fetch(file.uri)).blob(); fd.append("file", new File([blob], file.name, { type })); }
       else fd.append("file", { uri: file.uri, name: file.name, type } as any);
-      fd.append("applicationId", applicationId); fd.append("documentType", documentType);
+      fd.append("applicationId", applicationId); fd.append("documentType", documentType); fd.append("uploadId", uploadId);
       const res = await fetch(siteUrl("/api/upload-document"), { method: "POST", body: fd });
       const j: any = await res.json().catch(() => ({}));
       if (res.ok && j.success) path = String(j.path ?? "");
       else if (res.status === 400 || res.status === 403) throw new UploadError(j.error || `Upload refused (${res.status})`, false);
       else viaSite = j.error || `HTTP ${res.status}`;
-    } catch (e: any) { if (e instanceof UploadError) throw e; viaSite = e?.message ?? "network"; }
+    } catch (e: any) {
+      if (e instanceof UploadError) throw e;
+      if (isNetwork(e)) throw new UploadError(e?.message ?? "Network request failed", true); // offline: retry later, don't fall through
+      viaSite = e?.message ?? "network";
+    }
     if (path === null) {
-      const ext = (file.name.split(".").pop() || (type === "application/pdf" ? "pdf" : "jpg")).toLowerCase();
-      const p = `${applicationId}/${documentType}_${rand8()}.${ext}`;
+      const p = docPath(applicationId, documentType, uploadId, type);
       const body = await (await fetch(file.uri)).arrayBuffer();
-      const { error: ue } = await sb.storage.from(DOC_BUCKET).upload(p, body, { contentType: type, upsert: true });
-      if (ue) throw new UploadError(/row-level security|not found|unauthorized|403|bucket/i.test(ue.message) ? `Uploads aren't enabled on the server yet (${viaSite || "website upload unavailable"}). Please send the file on WhatsApp for now.` : ue.message, isNetwork(ue));
+      const { error: ue } = await sb.storage.from(DOC_BUCKET).upload(p, body, { contentType: type, upsert: false });
+      if (ue && !alreadyThere(ue.message)) throw new UploadError(/row-level security|not found|unauthorized|403|bucket/i.test(ue.message) ? `Uploads aren't enabled on the server yet (${viaSite || "website upload unavailable"}). Please send the file on WhatsApp for now.` : ue.message, isNetwork(ue));
       path = p;
       const col = DOC_FLAG[documentType];
       if (col) await sb.from("visa_applications").update({ [col]: true } as VisaUpdate).eq("id", applicationId).eq("email", u.email);
     }
     const { data: cur } = await sb.from("visa_applications").select("additional_notes").eq("id", applicationId).eq("email", u.email).single();
     const n = parseNotes(cur?.additional_notes ?? null);
-    n.uploads = [...(n.uploads ?? []), { type: documentType, path, name: file.name, at: new Date().toISOString() }];
-    await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n) }).eq("id", applicationId);
+    if (!(n.uploads ?? []).some((x) => x.path === path)) {
+      n.uploads = [...(n.uploads ?? []), { type: documentType, path, name: file.name, at: new Date().toISOString() }];
+      await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n) }).eq("id", applicationId);
+    }
   } catch (e: any) {
     if (e instanceof UploadError) throw e;
     throw new UploadError(e?.message ?? String(e), isNetwork(e));
