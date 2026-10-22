@@ -64,6 +64,18 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - Nationality (v8.3): `SCHENGEN_VISA_REQUIRED` in `lib/wizard.ts` (Reg. (EU) 2018/1806 Annex I). No free text.
 - Performance: long lists stay FlatList (country pickers, nationality list) with flat E0 rows (no shadow/blur). Shadows only on short card stacks (Home hero, application cards, trip days) and the floating tab bar.
 
+## 2d. Chat 13: profile, settings, Arabic, security (2026-10-22)
+- **Language** (`lib/i18n.tsx`): first launch uses the phone language (`expo-localization` `getLocales()`); the Account choice wins after that. If the RTL direction doesn't match, the app reloads once while the splash is still up (a flag stops reload loops). The English-keyed layer was kept instead of i18next (about 790 strings are keyed by their English text; no plurals or namespaces yet).
+- **RTL**: directional icons (chevrons, arrows, sign-out, open-external) are mirrored once in `Icon` (`components/ui/core.tsx`, `DIRECTIONAL`), and the per-screen `scaleX` wrappers were removed. The tab-bar lens sits in a `direction: "ltr"` layer, because RN swaps `left` under RTL while slot x values are physical. Latin runs in Arabic text (references, emails, amounts) go through `ltr()` (Unicode LRI…PDI).
+  If a chevron points the wrong way on a device, check whether an Arabic `.lproj`/`locales` entry was added to app.json: then UIKit is RTL too, SF Symbols flip on their own, and `DIRECTIONAL` must skip iOS.
+- **Lock** (`lib/lock.tsx`): Face ID / Touch ID / fingerprint, with the device passcode as fallback. Phones with only a passcode can turn it on. Nothing personal is drawn until the lock state is known. An opaque cover hides the screen in the app switcher while the lock is on. If biometrics and passcode were both removed, the lock screen offers Sign out (then sign in with the password). It cannot detect "a new face/finger was enrolled" in Expo Go (iOS `evaluatedPolicyDomainState` isn't exposed), see open issues.
+- **Receipts** (Account): built from the Ziina payment intent (`GET /api/check-payment`) when Ziina says completed; otherwise from the `payment_amount` the Ziina webhook stored. With neither, no receipt is made and the user is offered WhatsApp. The receipt is in the current language, without a computed price or a tax/VAT claim.
+- **Support**: every WhatsApp hand-off names the application as `EZ-XXXXXXXX (ID <uuid>)` (`appTag` in `lib/api.ts`), and never includes passport or personal data.
+- **Deletion**: before calling `delete-account`, the app asks Ziina about every unpaid application that has a `payment_id`, and refuses while a payment may still complete (or, if Ziina can't be reached, when the link is < 2 h old). After a successful deletion it wipes local data (`lib/account.ts`: drafts, upload queue, reminders, lock, read state) and restarts the JS. Proposed server v2: `db/proposed-delete-account-v2.ts` (**not deployed**, needs approval).
+- Notifications screen and the derived inbox items are translated (`Notification.title` is now an English key + `place`/`reference`).
+- `tsconfig.json` excludes `migrations/functions` and `db` (Deno code), so `npx tsc --noEmit` is clean.
+- Screenshots (web build, signed out): `docs/screenshots/chat13/`.
+
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
 Not working, because of server config outside the app:
