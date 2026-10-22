@@ -59,7 +59,8 @@ await expiry.fill(isoIn(900)); await web.waitForTimeout(300);
 log(!(await web.getByText("Passport must be valid at least 3 months after your return date").isVisible()), "expiry 2+ years ahead is accepted");
 
 // 5. A real answer creates the draft, with the app's keys.
-const row = await until(async () => (await db())[0], 12000);
+// The LAST answer must reach the row (an earlier save may land first, so wait for the final value, bounded).
+const row = await until(async () => { const r = (await db())[0]; return r && notes(r).wizard?.passportExpiry === isoIn(900) ? r : null; }, 12000) ?? (await db())[0];
 const n = notes(row);
 log(!!row && row.application_status === "draft" && n.wizard?.passportExpiry === isoIn(900) && n.lastEditedOn === "website" && !!n.wizardStep, "a real answer creates the draft; answers stored as the app stores them", row ? `step=${n.wizardStep}, passportExpiry=${n.wizard?.passportExpiry}` : "no row");
 
