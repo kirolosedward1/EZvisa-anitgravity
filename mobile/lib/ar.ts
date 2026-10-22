@@ -550,4 +550,21 @@ export const AR: Record<string, string> = {
   "Is your UAE residence visa valid at least 3 months after your return date?": "هل تأشيرة إقامتك في الإمارات سارية لمدة 3 أشهر على الأقل بعد تاريخ عودتك؟",
   "Most embassies need your UAE residence visa to be valid at least 3 months after you return. Renew it before your appointment; our team will guide you.": "تشترط معظم السفارات أن تكون إقامتك في الإمارات سارية لمدة 3 أشهر على الأقل بعد عودتك. جدّدها قبل موعدك، وسيرشدك فريقنا.",
   "You'll need a valid passport (at least 6 months validity from your travel date) before your visa appointment. Our team will contact you.": "ستحتاج إلى جواز سفر ساري المفعول (صلاحية 6 أشهر على الأقل من تاريخ السفر) قبل موعد التأشيرة. سيتواصل معك فريقنا.",
+  // ---- chat 15 QA (restored after the PR #13 rebase): strings that showed English in Arabic mode ----
+  "Discard this application?": "تجاهل هذا الطلب؟", "It will be removed from your list.": "ستتم إزالته من قائمتك.",
+  "Mark all read": "تعليم الكل كمقروء", "Sign in to see notifications": "سجّل الدخول لرؤية الإشعارات", "No notifications": "لا توجد إشعارات", "Unread": "غير مقروء",
+  "Not found": "غير موجود", "What you'll need": "ما ستحتاجه", "Apply for {c}": "قدّم على {c}", "Continue with Google": "المتابعة باستخدام Google",
+  "Offline · changes save when you're back": "غير متصل · تُحفظ التغييرات عند عودة الاتصال", "Step {i} of {n}": "الخطوة {i} من {n}", "View": "عرض",
+  "days max": "يومًا كحد أقصى", "Schengen": "شنغن", "processing": "المعالجة", "Emirates ID & UAE visa": "الهوية الإماراتية وتأشيرة الإقامة", "Photo 35×45 mm": "صورة 35×45 مم",
+  "Bank statements": "كشوف الحساب البنكي", "Salary certificate / NOC": "شهادة راتب / عدم ممانعة", "Travel insurance": "تأمين السفر",
+  "Vienna": "فيينا", "Brussels": "بروكسل", "Sofia": "صوفيا", "Zagreb": "زغرب", "Prague": "براغ", "Copenhagen": "كوبنهاغن", "Tallinn": "تالين", "Helsinki": "هلسنكي",
+  "Paris": "باريس", "Berlin": "برلين", "Athens": "أثينا", "Budapest": "بودابست", "Reykjavík": "ريكيافيك", "Rome": "روما", "Riga": "ريغا", "Vaduz": "فادوز",
+  "Vilnius": "فيلنيوس", "Valletta": "فاليتا", "Amsterdam": "أمستردام", "Oslo": "أوسلو", "Warsaw": "وارسو", "Lisbon": "لشبونة",
+  "Bucharest": "بوخارست", "Bratislava": "براتيسلافا", "Ljubljana": "ليوبليانا", "Madrid": "مدريد", "Stockholm": "ستوكهولم", "Bern": "برن",
+  // documents to get later (owner rule: a "No" never blocks)
+  "Valid passport": "جواز سفر ساري", "UAE residence visa valid 3 months after your return": "تأشيرة إقامة إماراتية سارية 3 أشهر بعد عودتك", "Emirates ID": "الهوية الإماراتية",
+  "Spouse's valid passport": "جواز سفر ساري للزوج/الزوجة", "NOC from your employer": "شهادة عدم ممانعة من جهة العمل",
+  "You can continue. Your spouse needs a valid passport; add it later.": "يمكنك المتابعة. يحتاج الزوج/الزوجة إلى جواز سفر ساري؛ أضفه لاحقًا.",
+  "You can continue. Ask your employer for a NOC and add it later.": "يمكنك المتابعة. اطلب شهادة عدم ممانعة من جهة عملك وأضفها لاحقًا.",
+  "To get later": "للحصول عليه لاحقًا", "Your application continues. Add these when you have them.": "طلبك مستمر. أضفها عندما تتوفر لديك.",
 };

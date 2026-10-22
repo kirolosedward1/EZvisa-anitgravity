@@ -2,6 +2,7 @@ import { ActivityIndicator, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { PressScale, Text } from "./ui";
 import { useIsDark, GOOGLE, S, R, SIZE, ICON } from "../lib/theme";
+import { useT } from "../lib/i18n";
 
 // Follows Google's sign-in branding (colours in theme/colors.ts GOOGLE): neutral button, multicolour "G", medium label.
 function G() {
@@ -16,14 +17,14 @@ function G() {
 }
 
 export function GoogleButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
-  const g = useIsDark() ? GOOGLE.dark : GOOGLE.light;
+  const g = useIsDark() ? GOOGLE.dark : GOOGLE.light; const { t } = useT();
   return (
-    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel="Continue with Google" accessibilityState={{ busy: !!loading }}
+    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel={t("Continue with Google")} accessibilityState={{ busy: !!loading }}
       style={{ minHeight: SIZE.buttonL, borderRadius: R.round, borderWidth: 1, borderColor: g.border, backgroundColor: g.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xl }}>
       {loading ? <ActivityIndicator color={g.text} /> : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
           <G />
-          <Text variant="headline" weight="500" color={g.text}>Continue with Google</Text>
+          <Text variant="headline" weight="500" color={g.text}>{t("Continue with Google")}</Text>
         </View>
       )}
     </PressScale>

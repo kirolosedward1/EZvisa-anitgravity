@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/tabs";
 import { useColors, useIsDark, elevation, SPRING, TAB_BAR_HEIGHT, S, ICON, SIZE, DUR } from "../../lib/theme";
 import { select, tap } from "../../lib/haptics";
+import { useT } from "../../lib/i18n";
 import { Icon, IconName, Text } from "../ui";
 
 const ICONS: Record<string, [IconName, IconName]> = {
@@ -33,14 +34,14 @@ function Material({ radius }: { radius: number }) {
 /** Centre "+" (between Countries and Applications): starts a new application via /apply, like the old floating button. */
 const FAB = SIZE.buttonL;
 function NewAppButton() {
-  const c = useColors(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0);
+  const c = useColors(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0); const { t } = useT();
   const a = useAnimatedStyle(() => ({ transform: [{ translateY: -S.sm }, { scale: press.value }] }));
   const open = () => { const now = Date.now(); if (now - last.current < 800) return; last.current = now; tap(); router.push("/apply"); };
   return (
     <View style={{ width: FAB + S.xs, alignItems: "center", justifyContent: "center" }}>
       <Animated.View style={[{ width: FAB, height: FAB, borderRadius: FAB / 2, backgroundColor: c.accentFill, shadowColor: c.shadow, shadowOpacity: 0.16, shadowRadius: S.xs, shadowOffset: { width: 0, height: S.xxs }, elevation: 4 }, a]}>
         <Pressable onPress={open} onPressIn={() => { press.value = withSpring(reduce ? 0.96 : 0.9, SPRING.press); }} onPressOut={() => { press.value = withSpring(1, SPRING.press); }}
-          accessibilityRole="button" accessibilityLabel="New application" testID="tab-new-application" hitSlop={S.xxs}
+          accessibilityRole="button" accessibilityLabel={t("New application")} testID="tab-new-application" hitSlop={S.xxs}
           style={{ flex: 1, borderRadius: FAB / 2, alignItems: "center", justifyContent: "center" }}>
           <Icon name="plus" size={ICON.xl - 2} color={c.onAccent} weight="bold" />
         </Pressable>
