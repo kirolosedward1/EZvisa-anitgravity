@@ -1,7 +1,8 @@
 // Upload queue tests on the REAL lib/uploads.ts + pure helpers (lib/capture.ts, components/CropBox.tsx dragRect, lib/data.ts docPath).
 // Phase "a": offline queueing, airplane mode mid-upload with a lost response, duplicate file, then the app is killed mid-upload.
 // Phase "b" (a NEW process = app restart): the killed upload resumes and finishes; the bucket has no duplicates.
-import fs from "node:fs";
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- node-only test helper (no @types/node in the app)
+const fs = require("node:fs") as { readFileSync(p: string, e: string): string; writeFileSync(p: string, d: string): void; existsSync(p: string): boolean; readdirSync(p: string): string[] };
 import { enqueueUpload, startUploadQueue, restore, backoffMs } from "../lib/uploads";
 import { server } from "./stubs/data-server";
 

@@ -1,6 +1,7 @@
 // Fake lib/data for queue tests: a "server" whose bucket is $TEST_DIR/server.json, keyed by the real docPath().
 // globalThis.__fault: "offline" (request never reaches the server) | "lost" (server stores it, response is lost) | "hang" | undefined.
-import fs from "node:fs";
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- node-only test helper (no @types/node in the app)
+const fs = require("node:fs") as { readFileSync(p: string, e: string): string; writeFileSync(p: string, d: string): void; existsSync(p: string): boolean; readdirSync(p: string): string[] };
 export class UploadError extends Error { constructor(message: string, public network: boolean) { super(message); } }
 const EXT: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/png": "png" };
 export const docPath = (a: string, t: string, id: string, type: string) => `${a}/${t}_${id}.${EXT[type] ?? "jpg"}`;
