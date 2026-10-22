@@ -241,6 +241,7 @@ pnpm lint         # eslint
 
 - After UI changes, verify in the browser at mobile/tablet/desktop breakpoints.
 - A passing build/lint is **not** proof of correct behavior — exercise the actual user path.
+- **Owner's workflow: deploy after every edit.** Once a change is verified, commit, push, open/merge the PR into `main`; Vercel builds production from `main` automatically. Confirm the deployment is READY and the live page responds before reporting done.
 
 ---
 

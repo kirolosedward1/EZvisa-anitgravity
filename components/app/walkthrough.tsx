@@ -22,6 +22,7 @@ interface WalkthroughProps {
  * Both trees are rendered and toggled with CSS so there is no layout switch after hydration.
  */
 export function Walkthrough({ steps }: WalkthroughProps) {
+  if (steps.length === 0) return null
   return (
     <>
       <div className="lg:hidden">
@@ -59,7 +60,7 @@ function StepCopy({ step, active }: { step: WalkthroughStep; active: boolean }) 
 
 function WalkthroughTabs({ steps }: WalkthroughProps) {
   const { isRtl } = useTranslation()
-  const [value, setValue] = useState(steps[0].id)
+  const [value, setValue] = useState(steps[0]?.id ?? "")
   const active = Math.max(
     0,
     steps.findIndex((step) => step.id === value),

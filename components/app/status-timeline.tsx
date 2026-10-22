@@ -47,7 +47,9 @@ export function StatusTimeline({ steps, caption, className }: StatusTimelineProp
   const mounted = useMounted()
   const base = useRevealPhase(ref)
   const [override, setOverride] = useState<RevealPhase | null>(null)
-  const phase = override ?? base
+  // Under reduced motion the card always renders complete: opacity fades and the tick drawing are
+  // not transforms, so MotionConfig alone would still sequence them.
+  const phase: RevealPhase = reduce ? "static" : (override ?? base)
   // Rendered on the server; only removed after mount so hydration markup matches.
   const showReplay = !mounted || !reduce
 

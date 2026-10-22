@@ -41,8 +41,8 @@ export function HeroDevice({ screens, frameClassName, sizes, className }: HeroDe
       className={cn("flex flex-col items-center gap-6", className)}
       onPointerEnter={() => cycle.setHovered(true)}
       onPointerLeave={() => cycle.setHovered(false)}
-      onFocus={() => cycle.setHovered(true)}
-      onBlur={() => cycle.setHovered(false)}
+      onFocus={() => cycle.setFocused(true)}
+      onBlur={() => cycle.setFocused(false)}
     >
       <motion.div
         className={frameClassName}

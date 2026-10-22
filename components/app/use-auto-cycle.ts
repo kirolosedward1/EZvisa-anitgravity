@@ -19,15 +19,18 @@ export function useAutoCycle(count: number, { interval = 4500, enabled, inView }
   const [index, setIndex] = useState(0)
   const [paused, setPaused] = useState(false)
   const [hovered, setHovered] = useState(false)
+  const [focused, setFocused] = useState(false)
   const [tabVisible, setTabVisible] = useState(true)
 
   useEffect(() => {
     const onVisibility = () => setTabVisible(document.visibilityState === "visible")
+    onVisibility() // the page may have mounted in a background tab
     document.addEventListener("visibilitychange", onVisibility)
     return () => document.removeEventListener("visibilitychange", onVisibility)
   }, [])
 
-  const running = enabled && inView && tabVisible && !paused && !hovered
+  // Hover and keyboard focus are tracked separately so ending one never resumes the cycle while the other is active.
+  const running = enabled && inView && tabVisible && !paused && !hovered && !focused
 
   useEffect(() => {
     if (!running || count < 2) return
@@ -42,5 +45,5 @@ export function useAutoCycle(count: number, { interval = 4500, enabled, inView }
 
   const togglePause = useCallback(() => setPaused((current) => !current), [])
 
-  return { index, select, running, paused, togglePause, setHovered }
+  return { index, select, running, paused, togglePause, setHovered, setFocused }
 }
