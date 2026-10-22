@@ -32,6 +32,7 @@ Raw runs (ms):
 - **Flag** is `React.memo`: country / nationality / calling-code list rows re-render on every search keystroke, and each flag is an SVG tree.
 - **FlatList** (nationality list, country sheet): `maxToRenderPerBatch={12}`, `removeClippedSubviews` on Android.
 - **PNG assets** quantized to 128 colours (splash light/dark, logo light/dark).
+- **Audit M12 fixed**: Home, Applications and Account (`useApps(true)`) ran the `visa_applications` query twice on every focus (once directly, once inside `listNotifications`). Now one query; the unread count comes from the same rows.
 - **Analytics** writes are batched (outbox, one insert per flush) instead of one network request per wizard event.
 
 ## Looked at, not changed

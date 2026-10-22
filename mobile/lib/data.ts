@@ -294,8 +294,9 @@ export async function openDocumentUrl(_path: string): Promise<string | null> { r
 export type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null; application_id: string | null };
 const READ_KEY = "ezvisa.notifications.read.v1";
 async function readSet() { try { return new Set<string>(JSON.parse((await AsyncStorage.getItem(READ_KEY)) ?? "[]")); } catch { return new Set<string>(); } }
-export async function listNotifications(): Promise<Notification[]> {
-  const apps = await listApplications(); const read = await readSet();
+/** Pass `loaded` when the caller already has the applications (saves a second query, audit M12). */
+export async function listNotifications(loaded?: Application[]): Promise<Notification[]> {
+  const [apps, read] = await Promise.all([loaded ? Promise.resolve(loaded) : listApplications(), readSet()]);
   const out: Notification[] = [];
   for (const a of apps) {
     const where = a.countries?.name ?? "your trip";
