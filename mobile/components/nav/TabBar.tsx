@@ -25,6 +25,8 @@ const ICONS: Record<string, [IconName, IconName]> = {
 const H = TAB_BAR_HEIGHT;
 const PAD = S.xs - 2; // lens inset inside the capsule
 const COMPACT = 0.14; // how much the bar shrinks while scrolling down
+const DOT = TAB_BAR_HEIGHT - (S.xs - 2) * 2; // selected circle diameter (the bar height minus its inset)
+const TAB_W = 56; // each tab is this wide: the bar hugs its content and sits centred, not edge to edge
 const glass = Platform.OS === "ios" && isLiquidGlassAvailable();
 
 function Material({ radius }: { radius: number }) {
@@ -36,10 +38,10 @@ function Material({ radius }: { radius: number }) {
 }
 
 /** Centre "+" (between Countries and Applications): starts a new application via /apply, like the old floating button. */
-const FAB = SIZE.buttonL;
+const FAB = SIZE.buttonM;
 function NewAppButton() {
   const c = useColors(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0);
-  const a = useAnimatedStyle(() => ({ transform: [{ translateY: -S.sm }, { scale: press.value }] }));
+  const a = useAnimatedStyle(() => ({ transform: [{ scale: press.value }] }));
   const open = () => { const now = Date.now(); if (now - last.current < 800) return; last.current = now; tap(); router.push("/apply"); };
   return (
     <View style={{ width: FAB + S.xs, alignItems: "center", justifyContent: "center" }}>
@@ -47,7 +49,7 @@ function NewAppButton() {
         <Pressable onPress={open} onPressIn={() => { press.value = withSpring(reduce ? 0.96 : 0.9, SPRING.press); }} onPressOut={() => { press.value = withSpring(1, SPRING.press); }}
           accessibilityRole="button" accessibilityLabel="New application" testID="tab-new-application" hitSlop={S.xxs}
           style={{ flex: 1, borderRadius: FAB / 2, alignItems: "center", justifyContent: "center" }}>
-          <Icon name="plus" size={ICON.xl - 2} color={c.onAccent} weight="bold" />
+          <Icon name="plus" size={ICON.lg} color={c.onAccent} weight="bold" />
         </Pressable>
       </Animated.View>
     </View>
@@ -75,7 +77,7 @@ function Tab({ label, icons, on, progress, reduce, onPress, onLayout, testID, ph
   );
   return (
     <Pressable onPress={onPress} onLayout={onLayout} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label} testID={testID}
-      style={{ flex: 1, height: H - PAD * 2 }}>
+      style={{ width: TAB_W, height: H - PAD * 2 }}>
       <Animated.View style={[{ flex: 1 }, scale]}>
         {both(icons[0], c.text, offA)}
         {both(icons[1], c.accent, onA)}
@@ -122,7 +124,8 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     if (far) { sx.value = withSequence(withSpring(1.22, { damping: 20, stiffness: 600 }), withSpring(1, SETTLE)); sy.value = withSequence(withSpring(0.86, { damping: 20, stiffness: 600 }), withSpring(1, SETTLE)); }
   };
   useEffect(() => { moveTo(state.index); }, [state.index, reduce]);
-  const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; slots.current[i] = { x: lx + 2, w: width - 4 }; if (i === state.index) moveTo(i, false); };
+  // The selected highlight is a circle (DOT x DOT) centred on the tab's icon.
+  const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; slots.current[i] = { x: lx + (width - DOT) / 2, w: DOT }; if (i === state.index) moveTo(i, false); };
   const lens = useAnimatedStyle(() => ({ opacity: shown.value, width: w.value, transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
 
   const go = (i: number) => {
@@ -150,12 +153,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   })).current;
   // PanResponder callbacks are created once; keep the latest closures reachable.
   return (
-    <Animated.View pointerEvents={hidden ? "none" : "box-none"} style={[{ position: "absolute", start: S.gutter, end: S.gutter, bottom, height: H }, a]}>
-      <View style={[{ flex: 1, height: H, borderRadius: H / 2 }, elevation(3, dark), { borderWidth: StyleSheet.hairlineWidth, borderColor: c.hairline }]}>
+    <Animated.View pointerEvents={hidden ? "none" : "box-none"} style={[{ position: "absolute", left: 0, right: 0, bottom, height: H, alignItems: "center" }, a]}>
+      <View style={[{ height: H, borderRadius: H / 2 }, elevation(3, dark), { borderWidth: StyleSheet.hairlineWidth, borderColor: c.hairline }]}>
         <Material radius={H / 2} />
         {/* specular rim: a 1pt light edge just inside the outer hairline */}
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: H / 2, borderWidth: 1, borderColor: c.chromeRim }]} />
-        <View {...pan.panHandlers} style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: PAD }} accessibilityRole="tablist">
+        <View {...pan.panHandlers} style={{ height: H, flexDirection: "row", alignItems: "center", paddingHorizontal: PAD }} accessibilityRole="tablist">
           {/* Physical `left` on purpose: the lens is positioned by translateX from measured layout x, which is always
               measured from the left edge, so it lines up in LTR and RTL alike. */}
           <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: PAD, height: H - PAD * 2, borderRadius: (H - PAD * 2) / 2, overflow: "hidden",
