@@ -102,8 +102,8 @@ function docsOf(r: VisaRow, n: Notes): Doc[] {
     if (latest) Object.assign(latest, { status: rv.status, rejection_reason: rv.status === "rejected" ? rv.reason ?? null : null });
     else if (rv.status === "rejected") out.push({ id: `rev-${t}`, document_type: t, requirement_id: REQS.find((q) => q.document_type === t)?.id ?? null, status: "rejected", source: "customer", storage_path: "", file_name: null, rejection_reason: rv.reason ?? null, created_at: rv.at ?? "" });
   }
-  if (r.application_status === "ready")
-    out.push({ id: "final", document_type: "final_package", requirement_id: "req-dossier", status: "generated", source: "generated", storage_path: `${r.id}/final_package.pdf`, file_name: "Your EZvisa dossier", rejection_reason: null, created_at: r.updated_at ?? "" });
+  // No document row is made up for EZvisa's own files (audit H4): the live table has no record of them, so the
+  // checklist shows them as ready only from the real application_status (lib/checklist.ts), with nothing to open.
   return out;
 }
 

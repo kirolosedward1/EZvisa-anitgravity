@@ -38,7 +38,7 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
   const c = useColors(); const { t, lang } = useT();
   const [paying, setPaying] = useState(false);
   const name = a.countries?.name ?? "";
-  const items = buildChecklist(requirementsFor((a.notes?.wizard as any)?.employmentStatus), a.documents).customer;
+  const items = buildChecklist(requirementsFor((a.notes?.wizard as any)?.employmentStatus), a.documents, a.status).customer;
   const n = nextAction(a, items);
   const steps = buildTimeline(a); const done = doneCount(steps);
   const cd = ["completed", "rejected", "cancelled"].includes(a.status) ? null : countdown(a.entry_date, a.exit_date, t);

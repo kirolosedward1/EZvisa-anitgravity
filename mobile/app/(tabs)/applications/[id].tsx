@@ -100,7 +100,7 @@ export default function ApplicationDetail() {
     </ScrollView>
   );
   const docs = [...a.documents].sort((x, y) => y.created_at.localeCompare(x.created_at));
-  const list = reqs ? buildChecklist(reqs, a.documents) : null;
+  const list = reqs ? buildChecklist(reqs, a.documents, a.status) : null;
   const matched = new Set((list ? [...list.customer, ...list.ezvisa] : []).map((i) => i.doc?.id).filter(Boolean));
   const others = docs.filter((d) => !matched.has(d.id));
   const done = list ? list.customer.filter((i) => !isOpen(i)).length : 0;
@@ -170,7 +170,7 @@ export default function ApplicationDetail() {
         </ListGroup>
       )}
       {!locked && <ListGroup header={list ? t("Other documents") : t("Documents")} inset={58}>
-        {others.map((d) => <ListRow key={d.id} icon="doc.fill" iconColor={d.status === "rejected" ? c.red : d.source === "generated" ? c.green : c.tint} title={d.file_name ?? d.document_type}
+        {others.map((d) => <ListRow key={d.id} icon="doc.fill" iconColor={d.status === "rejected" ? c.red : c.tint} title={d.file_name ?? d.document_type}
           subtitle={`${DOC_TYPES.find((t) => t.value === d.document_type)?.label ?? d.document_type} · ${STATUS_LABEL[d.status] ?? d.status}${d.rejection_reason ? ` · ${d.rejection_reason}` : ""}`} onPress={() => open(d.storage_path)} />)}
         {others.length === 0 && !canUpload && <ListRow title={t("No other documents")} />}
         {canUpload && <ListRow icon="plus" iconColor={c.tint} title={t("Add another document")} tint onPress={addDocument} chevron={false} />}
