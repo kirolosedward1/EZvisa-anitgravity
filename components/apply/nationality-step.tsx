@@ -706,7 +706,7 @@ function NationalityFlag({ name }: { name: string }) {
   const src = flagSrc(name)
   return (
     <span className="relative inline-flex size-5 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/50 bg-secondary">
-      {src ? <Image src={src} alt="" fill className="object-cover" /> : <Globe className="size-3 text-muted-foreground" aria-hidden />}
+      {src ? <Image src={src} alt="" fill unoptimized={src.endsWith(".svg")} className="object-cover" /> : <Globe className="size-3 text-muted-foreground" aria-hidden />}
     </span>
   )
 }

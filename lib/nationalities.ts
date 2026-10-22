@@ -8,6 +8,12 @@ export const needsSchengenVisa = (n?: string | null) => !!n && SCHENGEN_VISA_REQ
 export const OTHER_NATIONALITIES = SCHENGEN_VISA_REQUIRED.filter((n) => !UAE_NATIONALITIES.includes(n)).sort((a, b) => a.localeCompare(b))
 
 const slug = (n: string) => n.toLowerCase().replace(/\s+/g, "-")
-/** Flags we have in /public/flags; others show a neutral icon. */
+/** Flags in /public/flags: the site's PNGs, plus circular SVGs from the app's set (HatScripts/circle-flags, MIT,
+ *  public/flags/LICENSE-circle-flags.txt) for the other nationalities. Unknown names show a neutral icon. */
 const LOCAL_FLAGS = new Set(["austria", "bahrain", "bangladesh", "belgium", "bulgaria", "croatia", "czech-republic", "denmark", "egypt", "estonia", "european-union", "finland", "france", "germany", "greece", "hungary", "iceland", "india", "italy", "jordan", "kenya", "kuwait", "latvia", "liechtenstein", "lithuania", "luxembourg", "malta", "monaco", "netherlands", "norway", "oman", "pakistan", "philippines", "poland", "portugal", "qatar", "romania", "russia", "russian-federation", "saudi-arabia", "slovakia", "slovenia", "spain", "sweden", "switzerland", "syria", "tunisia", "united-arab-emirates"])
-export const flagSrc = (name?: string | null) => (name && LOCAL_FLAGS.has(slug(name)) ? `/flags/${slug(name)}.png` : null)
+const SVG_FLAGS = new Set(["afghanistan", "algeria", "angola", "armenia", "azerbaijan", "belarus", "belize", "benin", "bhutan", "bolivia", "botswana", "burkina-faso", "burundi", "cabo-verde", "cambodia", "cameroon", "central-african-republic", "chad", "china", "comoros", "congo", "cuba", "côte-d'ivoire", "djibouti", "dominican-republic", "dr-congo", "ecuador", "equatorial-guinea", "eritrea", "eswatini", "ethiopia", "fiji", "gabon", "gambia", "ghana", "guinea", "guinea-bissau", "guyana", "haiti", "indonesia", "iran", "iraq", "jamaica", "kazakhstan", "kyrgyzstan", "laos", "lebanon", "lesotho", "liberia", "libya", "madagascar", "malawi", "maldives", "mali", "mauritania", "mongolia", "morocco", "mozambique", "myanmar", "namibia", "nepal", "niger", "nigeria", "north-korea", "palestine", "papua-new-guinea", "rwanda", "sao-tome-and-principe", "senegal", "sierra-leone", "somalia", "south-africa", "south-sudan", "sri-lanka", "sudan", "suriname", "tajikistan", "tanzania", "thailand", "togo", "turkey", "turkmenistan", "uganda", "uzbekistan", "vanuatu", "vietnam", "yemen", "zambia", "zimbabwe"])
+export const flagSrc = (name?: string | null) => {
+  if (!name) return null
+  const s = slug(name)
+  return LOCAL_FLAGS.has(s) ? `/flags/${s}.png` : SVG_FLAGS.has(s) ? `/flags/${s}.svg` : null
+}
