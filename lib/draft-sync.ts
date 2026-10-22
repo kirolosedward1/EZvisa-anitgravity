@@ -23,6 +23,11 @@ export function clearWizardData() {
 const DEBOUNCE_MS = 800
 const COLS = "id, application_status, additional_notes, updated_at"
 
+export type SubmitPlan =
+  | { kind: "guest" }
+  | { kind: "draft"; draftId: string; draftVersion: string | null; accessToken: string }
+  | { kind: "submitted"; applicationId: string } // already submitted from this page (e.g. the payment step failed)
+  | { kind: "blocked"; message: string }
 export type DraftSyncStatus = "local" | "saving" | "saved" | "retrying" | "offline" | "error" | "conflict"
 export type ServerDraft = { id: string; wizard: Record<string, unknown>; step: string; updatedAt: string | null; status: string; editedOn: string | null }
 export type DraftConflict = { reason: "newer" | "existing" | "closed" | "gone"; server: ServerDraft | null }
@@ -172,8 +177,11 @@ function readMeta(): Meta {
  * @param answered the user has answered something (link pre-fill and profile auto-fill don't count). Like the app,
  *                 a draft row is created only after a real answer; a draft already on the server keeps saving.
  * @param onLoad   called with a server copy to show (resume, or the user picked the newer copy)
+ * @param normalize the form and step the page will show for a server copy (defaults, coercions), so loading a copy is
+ *                  recognised as saved instead of being written straight back
+ * @param onReset  another account signed in: the page clears the previous person's answers
  */
-export function useDraftSync({ form, step, ready, answered, onLoad }: { form: object; step: string; ready: boolean; answered: boolean; onLoad: (d: ServerDraft) => void }) {
+export function useDraftSync({ form, step, ready, answered, onLoad, normalize, onReset }: { form: object; step: string; ready: boolean; answered: boolean; onLoad: (d: ServerDraft) => void; normalize?: (d: ServerDraft) => { form: object; step: string }; onReset?: () => void }) {
   const sb = useRef<SupabaseClient | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [status, setStatus] = useState<DraftSyncStatus>("local")
@@ -193,6 +201,11 @@ export function useDraftSync({ form, step, ready, answered, onLoad }: { form: ob
   const noResume = useRef(false)
   const onLoadRef = useRef(onLoad)
   onLoadRef.current = onLoad
+  const normalizeRef = useRef(normalize)
+  normalizeRef.current = normalize
+  const onResetRef = useRef(onReset)
+  onResetRef.current = onReset
+  const submittedId = useRef<string | null>(null) // submitted in this page: a second Pay click reuses it
 
   const persist = () => {
     try {
@@ -213,7 +226,8 @@ export function useDraftSync({ form, step, ready, answered, onLoad }: { form: ob
   const outdated = (s: ServerDraft) => !sameVersion(s.updatedAt, meta.current.baseAt) && ![meta.current.syncedFp, meta.current.inflightFp].includes(fingerprint(s.wizard, s.step))
 
   const apply = useCallback((s: ServerDraft) => {
-    meta.current = { draftId: s.id, baseAt: s.updatedAt, syncedFp: fingerprint(s.wizard, s.step), inflightFp: null, owner: emailRef.current }
+    const shown = normalizeRef.current ? normalizeRef.current(s) : { form: s.wizard, step: s.step }
+    meta.current = { draftId: s.id, baseAt: s.updatedAt, syncedFp: fingerprint(serializableAnswers(shown.form), shown.step), inflightFp: null, owner: emailRef.current }
     persist()
     setConflict(null)
     setStatus("saved")
@@ -323,10 +337,14 @@ export function useDraftSync({ form, step, ready, answered, onLoad }: { form: ob
   useEffect(() => {
     if (!ready || !email || !sb.current) return
     if (meta.current.owner && meta.current.owner !== email) {
+      // Another account in this browser: the previous person's answers are never saved into this one.
       meta.current = { ...EMPTY_META }
-      persist()
+      clearWizardData()
+      onResetRef.current?.()
+      return
     }
-    const hasLocal = Object.entries(latest.current.w).some(([k, v]) => ["destination", "firstName", "nationality", "phone"].includes(k) && !!v)
+    // Answers given or restored in this browser (link pre-fill and profile auto-fill don't count) keep this draft.
+    const hasLocal = answeredRef.current
     if (meta.current.draftId) {
       checkRemote()
       return
@@ -334,9 +352,14 @@ export function useDraftSync({ form, step, ready, answered, onLoad }: { form: ob
     if (hasLocal || noResume.current) return
     sb.current.from("visa_applications").select(COLS).eq("email", email).eq("application_status", "draft").order("updated_at", { ascending: false }).limit(1)
       .then(({ data }) => {
-        if (data?.[0] && !meta.current.draftId && !noResume.current) apply(toServerDraft(data[0] as Row))
+        if (!data?.[0] || meta.current.draftId || noResume.current) return
+        const s = toServerDraft(data[0] as Row)
+        // A link for another country (e.g. "Apply for France") starts that application, not the saved one (as in the app).
+        const linked = str(latest.current.w.destination)
+        if (linked && linked !== str(s.wizard.destination)) return
+        apply(s)
       })
-  }, [ready, email, apply, checkRemote])
+  }, [ready, email, apply, checkRemote, answered])
   // Debounced save after each change.
   const fp = fingerprint(latest.current.w, latest.current.step)
   useEffect(() => {
@@ -404,15 +427,21 @@ export function useDraftSync({ form, step, ready, answered, onLoad }: { form: ob
     flushRef.current()
   }, [apply])
 
-  /** For submit: the confirmed draft id plus the session token, or null when there is no saved draft. */
-  const prepareSubmit = useCallback(async (): Promise<{ draftId: string; draftVersion: string | null; accessToken: string } | null> => {
-    if (!sb.current || !emailRef.current) return null
-    const id = await flush()
+  /** For submit. Signed out: a guest submit. Signed in: only the server-confirmed draft is submitted (never a second
+   *  row); while it isn't saved, or a newer copy waits for a choice, submitting is blocked with a message. */
+  const prepareSubmit = useCallback(async (): Promise<SubmitPlan> => {
+    if (!sb.current || !emailRef.current) return { kind: "guest" }
     const { data } = await sb.current.auth.getSession()
-    return id && data.session ? { draftId: id, draftVersion: meta.current.baseAt, accessToken: data.session.access_token } : null
+    if (!data.session) return { kind: "guest" }
+    if (submittedId.current) return { kind: "submitted", applicationId: submittedId.current }
+    const id = conflictRef.current ? null : await flush().catch(() => null)
+    if (id) return { kind: "draft", draftId: id, draftVersion: meta.current.baseAt, accessToken: data.session.access_token }
+    return { kind: "blocked", message: conflictRef.current ? "This application was changed in the app or another browser. Choose which version to keep first." : "Your answers aren't saved yet. Check your connection and try again." }
   }, [flush])
-  /** After a submit, or "Start fresh": this browser no longer has an open draft (and doesn't auto-resume one now). */
-  const forget = useCallback(() => {
+  /** After a submit (pass its id: a retry reuses it), or "Start fresh": this browser no longer has an open draft (and
+   *  doesn't auto-resume one now). */
+  const forget = useCallback((applicationId?: string) => {
+    submittedId.current = applicationId ?? null
     if (timer.current) clearTimeout(timer.current)
     if (retry.current) clearTimeout(retry.current)
     meta.current = { ...EMPTY_META }

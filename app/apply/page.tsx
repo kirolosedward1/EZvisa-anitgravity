@@ -197,12 +197,27 @@ function ApplyPageContent() {
   const [pendingSavedData, setPendingSavedData] = useState<Partial<WizardFormData> | null>(null)
 
   // Signed-in users: answers also autosave to their draft row, shared with the EZvisa app (lib/draft-sync.ts).
-  const handleServerDraft = useCallback((d: ServerDraft) => {
-    setFormData(coerceResidence({ ...defaultFormData, ...(d.wizard as Partial<WizardFormData>) }))
-    setCurrentStep(getStepNumber(d.step))
-  }, [])
   const [answered, setAnswered] = useState(false) // a real answer (not a link pre-fill or profile auto-fill)
-  const draft = useDraftSync({ form: formData, step: getStepSlug(currentStep), ready: isInitialized && !showResumeModal, answered, onLoad: handleServerDraft })
+  // How a server copy is shown: defaults + the same coercions as the effects below, and Employment (asked after
+  // payment) opens Trip Details. draft-sync uses this to know the loaded copy is already saved.
+  const normalizeServerDraft = useCallback((d: ServerDraft) => {
+    const c = coerceResidence({ ...defaultFormData, ...(d.wizard as Partial<WizardFormData>) })
+    const form = { ...c, nationality: c.nationality && !needsSchengenVisa(c.nationality) ? "" : c.nationality }
+    const n = getStepNumber(d.step)
+    return { form, step: getStepSlug(n === 3 ? 4 : n) }
+  }, [])
+  const handleServerDraft = useCallback((d: ServerDraft) => {
+    const n = normalizeServerDraft(d)
+    setFormData(n.form)
+    setCurrentStep(getStepNumber(n.step))
+  }, [normalizeServerDraft])
+  // Another account signed in this browser: start empty (the previous person's answers are cleared by draft-sync).
+  const handleAccountChange = useCallback(() => {
+    setFormData({ ...defaultFormData })
+    setCurrentStep(1)
+    setAnswered(false)
+  }, [])
+  const draft = useDraftSync({ form: formData, step: getStepSlug(currentStep), ready: isInitialized && !showResumeModal, answered, onLoad: handleServerDraft, normalize: normalizeServerDraft, onReset: handleAccountChange })
 
   const isUpdatingUrl = useRef(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -552,7 +567,7 @@ function ApplyPageContent() {
         )
       case "payment":
       case "documents":
-        return <PaymentStep formData={formData} onBack={handleBack} isLoading={isTransitioning} paymentError={paymentError} prepareSubmit={draft.prepareSubmit} onSubmitted={draft.forget} />
+        return <PaymentStep formData={formData} onBack={handleBack} isLoading={isTransitioning} paymentError={paymentError} prepareSubmit={draft.prepareSubmit} onSubmitted={(id) => draft.forget(id)} />
       default:
         return null
     }

@@ -11,6 +11,7 @@ import { getDefaultCurrency, type CurrencyInfo } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import type { FormData } from "@/lib/form-types"
 import { DossierReadinessCard } from "@/components/apply/dossier-readiness-card"
+import type { SubmitPlan } from "@/lib/draft-sync"
 
 interface PaymentStepProps {
   formData: FormData
@@ -18,14 +19,18 @@ interface PaymentStepProps {
   isLoading?: boolean
   paymentError?: string | null
   /** Signed in with a saved draft: its id + session token, so the draft row becomes the submitted application. */
-  prepareSubmit?: () => Promise<{ draftId: string; draftVersion: string | null; accessToken: string } | null>
-  onSubmitted?: () => void
+  prepareSubmit?: () => Promise<SubmitPlan>
+  onSubmitted?: (applicationId: string) => void
 }
 
 export function PaymentStep({ formData, onBack, isLoading, paymentError, prepareSubmit, onSubmitted }: PaymentStepProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [currency, setCurrency] = useState<CurrencyInfo>(getDefaultCurrency())
   const [submitError, setSubmitError] = useState<string | null>(null)
+  // Submitted from this page (or before a failed payment in this tab): paying again reuses it, never a second row.
+  const [submittedId, setSubmittedId] = useState<string | null>(() =>
+    typeof window !== "undefined" && paymentError ? sessionStorage.getItem("lastCompletedAppId") : null,
+  )
 
   const router = useRouter()
 
@@ -60,24 +65,35 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError, prepare
     setSubmitError(null)
 
     try {
-      // 1. Submit application to database (BLOCKING). A saved draft (signed in) is submitted in place, not duplicated.
-      const draft = prepareSubmit ? await prepareSubmit().catch(() => null) : null
-      const submitResponse = await fetch("/api/submit-application", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(draft && { Authorization: `Bearer ${draft.accessToken}` }),
-        },
-        body: JSON.stringify({ ...formData, ...(draft && { draftId: draft.draftId, draftVersion: draft.draftVersion }) }),
-      })
+      // 1. Submit application to database (BLOCKING). A signed-in user's saved draft is submitted in place; an
+      // application already submitted from this page (payment failed, Pay clicked again) is reused, never duplicated.
+      const plan: SubmitPlan = prepareSubmit ? await prepareSubmit() : { kind: "guest" }
+      if (plan.kind === "blocked") throw new Error(plan.message)
+      let submitData: { applicationId?: string; trackingToken?: string }
+      if (plan.kind === "submitted") submitData = { applicationId: plan.applicationId }
+      else if (submittedId) submitData = { applicationId: submittedId }
+      else {
+        const draft = plan.kind === "draft" ? plan : null
+        const submitResponse = await fetch("/api/submit-application", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(draft && { Authorization: `Bearer ${draft.accessToken}` }),
+          },
+          body: JSON.stringify({ ...formData, ...(draft && { draftId: draft.draftId, draftVersion: draft.draftVersion }) }),
+        })
 
-      if (!submitResponse.ok) {
-        const body = submitResponse.status === 409 ? await submitResponse.json().catch(() => null) : null
-        throw new Error(body?.message || "Failed to save application. Please try again.")
+        if (!submitResponse.ok) {
+          const body = [400, 403, 409].includes(submitResponse.status) ? await submitResponse.json().catch(() => null) : null
+          throw new Error(body?.message || "Failed to save application. Please try again.")
+        }
+
+        submitData = await submitResponse.json()
+        if (submitData.applicationId) {
+          setSubmittedId(submitData.applicationId)
+          onSubmitted?.(submitData.applicationId)
+        }
       }
-
-      const submitData = await submitResponse.json()
-      onSubmitted?.()
 
       // 2. Send lead to HubSpot (NON-BLOCKING)
       let hubspotContactId: string | null = null
