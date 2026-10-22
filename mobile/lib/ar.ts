@@ -1,6 +1,9 @@
 // Arabic strings, keyed by the English text (English stays the website's exact wording).
 // Placeholders like {n} are kept as-is. Missing keys fall back to English.
 export const AR: Record<string, string> = {
+  // ---- privacy / diagnostics (chat 14) ----
+  "Privacy": "الخصوصية", "Share usage data": "مشاركة بيانات الاستخدام", "Anonymous app usage and crash reports. Never your name, passport or email.": "استخدام مجهول للتطبيق وتقارير الأعطال. لا يشمل أبدًا اسمك أو جوازك أو بريدك.",
+  "Version": "الإصدار", "Long press for diagnostics": "اضغط مطولًا للتشخيص", "Diagnostics": "التشخيص", "Startup": "بدء التشغيل", "Queued events": "أحداث في الانتظار", "Last error": "آخر خطأ",
   "Scan pages (PDF)": "مسح الصفحات (PDF)", "Passport Expiry Date": "تاريخ انتهاء جواز السفر", "Select expiry date": "اختر تاريخ الانتهاء",
   "Passport must be valid at least 3 months after your return date": "يجب أن يكون الجواز ساريًا 3 أشهر على الأقل بعد تاريخ العودة", "Please select your passport expiry date": "يرجى اختيار تاريخ انتهاء الجواز",
   "1 week": "أسبوع", "2 weeks": "أسبوعان", "3 weeks": "3 أسابيع", "1 month": "شهر", "Your application": "طلبك", "No application yet": "لا يوجد طلب بعد", "Start an application to track it here.": "ابدأ طلبًا لمتابعته هنا.", "Start application": "ابدأ الطلب",
@@ -465,4 +468,31 @@ export const AR: Record<string, string> = {
   "Profile updated.": "تم تحديث الملف الشخصي.",
   "This passport has expired. Enter the number and expiry date of your current passport.": "انتهت صلاحية جواز السفر هذا. أدخل رقم جواز سفرك الحالي وتاريخ انتهائه.",
   "You're signed in to a different account now. Your profile was not changed.": "أنت مسجّل الدخول بحساب آخر الآن. لم يتم تغيير ملفك الشخصي.",
+  // v10: scanner, upload preview, offline queue
+  "Add page": "إضافة صفحة",
+  "Clear": "مسح",
+  "Document": "مستند",
+  "Retake": "إعادة الالتقاط",
+  "Rotate": "تدوير",
+  "Open Settings": "فتح الإعدادات",
+  "PDF": "PDF",
+  "{n} page": "{n} صفحة",
+  "{n} pages": "{n} صفحات",
+  "“{name}” can't be uploaded. Use a PDF or a photo (JPG, PNG or HEIC).": "لا يمكن رفع «{name}». استخدم ملف PDF أو صورة (JPG أو PNG أو HEIC).",
+  "This file is empty. Choose another one.": "هذا الملف فارغ. اختر ملفًا آخر.",
+  "This PDF is {mb} MB. The limit is 5 MB. Scan the pages with the camera instead, or export a smaller copy.": "حجم ملف PDF هذا {mb} ميغابايت والحد الأقصى 5 ميغابايت. امسح الصفحات بالكاميرا بدلًا من ذلك، أو صدّر نسخة أصغر.",
+  "This file isn't a valid PDF. Choose another file.": "هذا ليس ملف PDF صالحًا. اختر ملفًا آخر.",
+  "Allow camera?": "السماح باستخدام الكاميرا؟",
+  "EZvisa uses the camera only to scan documents for your application.": "تستخدم EZvisa الكاميرا فقط لمسح مستندات طلبك.",
+  "Camera is off": "الكاميرا متوقفة",
+  "Turn on Camera for EZvisa in Settings to scan documents. You can still choose a photo or a file.": "فعّل الكاميرا لتطبيق EZvisa من الإعدادات لمسح المستندات. لا يزال بإمكانك اختيار صورة أو ملف.",
+  "Couldn't read this image. Try another photo or a PDF.": "تعذّرت قراءة هذه الصورة. جرّب صورة أخرى أو ملف PDF.",
+  "This file is already in your uploads.": "هذا الملف موجود بالفعل ضمن ملفات الرفع.",
+  "Can't use this file": "لا يمكن استخدام هذا الملف",
+  "Drag the corners to the edges of the document.": "اسحب الزوايا إلى حواف المستند.",
+  "Low resolution. Text may be hard to read.": "دقة منخفضة. قد يصعب قراءة النص.",
+  "Waiting for connection": "بانتظار الاتصال",
+  "Connection problem · retrying ({n}/{max})": "مشكلة في الاتصال · إعادة المحاولة ({n}/{max})",
+  "This photo is too large to upload, even after compressing. Try again closer to the document.": "هذه الصورة كبيرة جدًا للرفع حتى بعد الضغط. حاول مجددًا بالاقتراب من المستند.",
+  "The upload timed out.": "انتهت مهلة الرفع.",
 };

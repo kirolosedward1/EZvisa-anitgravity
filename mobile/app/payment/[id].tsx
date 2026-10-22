@@ -14,6 +14,7 @@ import { checkPayment, startPayment, whatsapp } from "../../lib/api";
 import { setupPush } from "../../lib/push";
 import { employmentComplete } from "../../lib/wizard";
 import { success, error as hError } from "../../lib/haptics";
+import { track } from "../../lib/analytics";
 
 type State = "checking" | "paid" | "pending" | "failed" | "cancelled" | "guest-paid" | "guest-pending";
 const POLL_MS = 2000, POLL_FOR = 30_000;
@@ -43,9 +44,13 @@ export default function PaymentResult() {
     }
   };
   useEffect(() => { verify(); return () => { run.current++; }; }, [id, !!session]);
+  useEffect(() => {
+    const outcome = ({ paid: "paid", "guest-paid": "paid", pending: "pending", "guest-pending": "pending", failed: "failed", cancelled: "cancelled" } as const)[state as Exclude<State, "checking">];
+    if (outcome) track("payment_finished", { outcome });
+  }, [state]);
   const retry = async () => {
     if (busy) return; setBusy(true);
-    try { const a = await getApplication(id!).catch(() => null); const o = await startPayment({ id: id!, destination_country: a?.destination_country ?? null, total_amount: a?.total_amount }, (a?.applicants.length ?? 1) > 1);
+    try { track("payment_started", { retry: true }); const a = await getApplication(id!).catch(() => null); const o = await startPayment({ id: id!, destination_country: a?.destination_country ?? null, total_amount: a?.total_amount }, (a?.applicants.length ?? 1) > 1);
       router.setParams({ returned: o.returned, pid: o.paymentId ?? "" }); setTimeout(verify, 50); }
     catch (e: any) { if (e?.alreadyPaid) verify(); else hError(); } finally { setBusy(false); }
   };

@@ -90,7 +90,7 @@ export function SpouseStep({ f, set, errors: e, show }: StepProps) {
   return (
     <View style={{ gap: S.lg }}>
       <View style={{ padding: S.md, borderRadius: R.tile, borderWidth: 1, borderColor: c.tint + "33", backgroundColor: c.tint + "0D" }}>
-        <Intro>Please provide your spouse's information for the visa application.</Intro>
+        <Intro>{"Please provide your spouse's information for the visa application."}</Intro>
       </View>
       <FormField label="Spouse First Name *">
         <Input value={f.spouseFirstName} onChangeText={set("spouseFirstName")} placeholder="Enter first name" accessibilityLabel="Spouse First Name" error={has("spouseFirstName")} />
@@ -103,7 +103,7 @@ export function SpouseStep({ f, set, errors: e, show }: StepProps) {
           <Label>Does your spouse have a valid passport? *</Label>
           <YesNoToggle label="Does your spouse have a valid passport?" value={f.spouseHasValidPassport} onChange={set("spouseHasValidPassport")} error={has("spouseHasValidPassport")} />
         </View>
-        {f.spouseHasValidPassport === "yes" && <Note tone="green">Your spouse's passport should have at least 6 months validity from your travel date.</Note>}
+        {f.spouseHasValidPassport === "yes" && <Note tone="green">{"Your spouse's passport should have at least 6 months validity from your travel date."}</Note>}
         {f.spouseHasValidPassport === "no" && <Note tone="amber">Your spouse will need to obtain a valid passport before applying for a visa.</Note>}
       </View>
       <FormField label="Spouse Occupation (Optional)">

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { memo, useEffect } from "react";
 import { View, Pressable, Image, StyleProp, ViewStyle } from "react-native";
 import { SvgXml } from "react-native-svg";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming, useReducedMotion } from "react-native-reanimated";
@@ -11,8 +11,9 @@ import { tap, success as hSuccess } from "../../lib/haptics";
 import { Text } from "./Text";
 import { Icon, PressScale } from "./core";
 
-/** Circular flag (HatScripts circle-flags, MIT) with a hairline ring. */
-export function Flag({ country, size = 28 }: { country?: string | null; size?: number }) {
+/** Circular flag (HatScripts circle-flags, MIT) with a hairline ring. Memoised: list rows re-render on every search keystroke,
+ *  and re-rendering an SVG tree per row was the main cost of the country / nationality lists. */
+export const Flag = memo(function Flag({ country, size = 28 }: { country?: string | null; size?: number }) {
   const c = useColors();
   const xml = country ? FLAG_SVG[country] : undefined;
   return (
@@ -25,7 +26,7 @@ export function Flag({ country, size = 28 }: { country?: string | null; size?: n
       <View pointerEvents="none" style={{ position: "absolute", inset: 0, borderRadius: size / 2, borderWidth: 1, borderColor: c.ring } as ViewStyle} />
     </View>
   );
-}
+});
 
 export function FlagChip({ country, onPress, selected }: { country: string; onPress: () => void; selected?: boolean }) {
   const c = useColors();

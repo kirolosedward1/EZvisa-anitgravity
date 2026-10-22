@@ -1,11 +1,12 @@
-import { ScrollView, View, RefreshControl, Image, StyleSheet } from "react-native";
+import { ScrollView, View, RefreshControl, StyleSheet } from "react-native";
+import { Image } from "expo-image";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../../components/Logo";
 import { Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, journeyIndex, Button, ProgressSegments, Timeline } from "../../../components/ui";
 import { useColors, useIsDark, S, R, curve, elevation, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
-import { PHOTOS } from "../../../lib/photos";
+import { PHOTOS, THUMBS } from "../../../lib/photos";
 import { STATUS_LABEL, isPaid, type Application } from "../../../lib/data";
 import { useApps, ACTIVE } from "../../../lib/useApps";
 import { tap } from "../../../lib/haptics";
@@ -130,12 +131,12 @@ const RING = 78, GAP = 2.5;
 
 /** Instagram-highlight style circle: brand-gradient ring, country photo (flag fallback), name only. */
 function Story({ name }: { name: string }) {
-  const c = useColors(); const { t } = useT(); const photo = PHOTOS[toSlug(name)]; const inner = RING - GAP * 4;
+  const c = useColors(); const { t } = useT(); const photo = THUMBS[toSlug(name)] ?? PHOTOS[toSlug(name)]; const inner = RING - GAP * 4;
   return (
     <PressScale scaleTo={0.92} onPress={() => { tap(); router.push(`/destination/${toSlug(name)}`); }} accessibilityRole="button" accessibilityLabel={name} style={{ width: RING + 8, alignItems: "center", gap: S.xs }}>
       <View style={{ width: RING, height: RING, borderRadius: RING / 2, padding: GAP, borderWidth: StyleSheet.hairlineWidth, borderColor: c.separator }}>
         <View style={{ flex: 1, borderRadius: RING / 2, backgroundColor: c.bg, padding: GAP, alignItems: "center", justifyContent: "center" }}>
-          {photo ? <Image source={photo} style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.card }} resizeMode="cover" /> : <Flag country={name} size={inner} />}
+          {photo ? <Image source={photo} style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.card }} contentFit="cover" cachePolicy="memory" recyclingKey={name} /> : <Flag country={name} size={inner} />}
         </View>
       </View>
       <Text variant="caption" weight="500" numberOfLines={1} center>{t(name)}</Text>

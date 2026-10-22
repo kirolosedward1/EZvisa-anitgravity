@@ -6,6 +6,7 @@ import { isDemoToken, getDemoApplicationByToken } from "@/lib/demo-data"
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,9 +82,12 @@ export async function POST(request: NextRequest) {
 
     const verifiedAppId = appData.id;
 
-    // We do NOT use the applicant name or PII in the filename
+    // We do NOT use the applicant name or PII in the filename.
+    // The mobile app sends a stable uploadId per file, so a retry after a lost response overwrites the same object.
+    const uploadId = formData.get("uploadId")
+    const fileId = typeof uploadId === "string" && UUID_RE.test(uploadId) ? uploadId.toLowerCase() : crypto.randomUUID().substring(0,8)
     const fileExtension = file.name.split('.').pop()
-    const safeFilename = `${verifiedAppId}/${documentType}_${crypto.randomUUID().substring(0,8)}.${fileExtension}`
+    const safeFilename = `${verifiedAppId}/${documentType}_${fileId}.${fileExtension}`
 
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)

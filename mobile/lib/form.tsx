@@ -12,6 +12,7 @@ import { useAuth } from "./auth";
 import { saveDraft, latestDraft } from "./data";
 import { clearPrefillFlags } from "./profile";
 import { setPassportExpiry } from "./reminders";
+import { registerSecrets } from "./scrub";
 export { emptyForm } from "./wizard";
 
 const KEY = "ezvisa.wizard.v1"; // the open (active) draft, same format as before + `key`
@@ -82,6 +83,10 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
       }
     }).catch(() => {}).finally(() => setHydrated(true));
   }, []);
+  // Personal answers are removed from crash reports (lib/scrub.ts) by exact match.
+  useEffect(() => {
+    registerSecrets([form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails, session?.user.email]);
+  }, [form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails, session?.user.email]);
   // Local autosave (every change).
   useEffect(() => {
     if (!hydrated) return;

@@ -87,10 +87,10 @@ export function IconTile({ name, color, size = 32 }: { name: IconName; color: st
   return <View style={[{ width: size, height: size, borderRadius: R.sm, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={ICON.md} color={keep ? color : c.label} weight="medium" /></View>;
 }
 
-export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPress, chevron = !!onPress, trailing, destructive, tint, bold, a11yLabel, a11yHint, minHeight = 44 }: { title: string; subtitle?: string; leading?: React.ReactNode; icon?: IconName; iconColor?: string; value?: string; onPress?: () => void; chevron?: boolean; trailing?: React.ReactNode; destructive?: boolean; tint?: boolean; bold?: boolean; a11yLabel?: string; a11yHint?: string; minHeight?: number }) {
+export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPress, onLongPress, chevron = !!onPress, trailing, destructive, tint, bold, a11yLabel, a11yHint, minHeight = 44 }: { title: string; subtitle?: string; leading?: React.ReactNode; icon?: IconName; iconColor?: string; value?: string; onPress?: () => void; onLongPress?: () => void; chevron?: boolean; trailing?: React.ReactNode; destructive?: boolean; tint?: boolean; bold?: boolean; a11yLabel?: string; a11yHint?: string; minHeight?: number }) {
   const c = useColors();
   return (
-    <PressScale onPress={onPress ? () => { tap(); onPress(); } : undefined} disabled={!onPress} scaleTo={onPress ? PRESS.scale : 1} accessibilityRole={onPress ? "button" : "text"} accessibilityLabel={a11yLabel ?? [title, subtitle, value].filter(Boolean).join(", ")} accessibilityHint={a11yHint}
+    <PressScale onPress={onPress ? () => { tap(); onPress(); } : undefined} onLongPress={onLongPress ? () => { tap(); onLongPress(); } : undefined} disabled={!onPress && !onLongPress} scaleTo={onPress ? PRESS.scale : 1} accessibilityRole={onPress ? "button" : "text"} accessibilityLabel={a11yLabel ?? [title, subtitle, value].filter(Boolean).join(", ")} accessibilityHint={a11yHint}
       style={{ minHeight: subtitle ? Math.max(minHeight, 64) : Math.max(minHeight, 52), paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm }}>
       {leading ?? (icon ? <IconTile name={icon} color={iconColor ?? c.tint} /> : null)}
       <View style={{ flex: 1, minWidth: 80 }}>

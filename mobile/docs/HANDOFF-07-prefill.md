@@ -17,7 +17,7 @@ Branch `claude/bold-feynman-ssk2ur`, based on `mobile-app` @ 591aced. All work i
 | Drafts tied to their account; purge on sign-out / account switch | `lib/form.tsx` |
 | Save open draft to the account before sign-out | `app/(tabs)/account/index.tsx` |
 | Arabic strings | `lib/ar.ts` |
-| Proposed profile table (**not applied**, needs approval) | `migrations/0008_customer_profiles.sql` |
+| Proposed profile table (**not applied**, needs approval) | `migrations/0009_customer_profiles.sql` |
 | Tests | `scripts/test-profile.ts` + `run-test-profile.mjs`, `scripts/e2e-prefill-web.mjs`, `scripts/stubs/supabase.js` |
 
 ### Rules as implemented
@@ -27,7 +27,7 @@ Branch `claude/bold-feynman-ssk2ur`, based on `mobile-app` @ 591aced. All work i
 - **Editable:** prefilled answers are ordinary answers. A small "From your profile" chip shows while the value is unchanged.
 - **Expired passport:** prefilled as-is. Validation shows "This passport has expired. Enter the number and expiry date of your current passport.", and Review shows that message instead of "Missing".
 - **Confirm:** on Review, if any prefilled savable field (first/last name, phone, nationality, date of birth) differs from the profile, a card asks "Update your profile too?" and lists each change. **Update profile** calls `auth.updateUser({ data })` with only the changed keys, after re-checking that the signed-in user id still matches. **Keep profile**, or submitting without answering, means no write. The question is asked once per draft (`ezvisa.prefill.v1` flag, no personal data in it).
-- **Passport details are never written to `user_metadata`**, because it is copied into every access token. Saving them needs the proposed table (`migrations/0008_customer_profiles.sql`).
+- **Passport details are never written to `user_metadata`**, because it is copied into every access token. Saving them needs the proposed table (`migrations/0009_customer_profiles.sql`).
 - **No cache:** the profile lives in component state only and is fetched fresh for prefill and for Review.
 - **Account switch:** every local draft records its owner (`uid`). Guest drafts (no owner) are adopted on sign-in, as before. Once auth has loaded, drafts owned by another account are deleted from memory and AsyncStorage, the open draft is reset if it was theirs, and the previous account's prefill flags and device-only passport expiry (`ezvisa.passportExpiry.v1`) are removed (`ezvisa.owner.v1` remembers the last account). Drafts saved before this change are claimed by whoever is signed in at first launch.
 
@@ -40,8 +40,8 @@ Branch `claude/bold-feynman-ssk2ur`, based on `mobile-app` @ 591aced. All work i
 
 ## Not done / needs you
 1. **Real iPhone test not run.** Nothing here can drive a phone. Steps: in Expo Go on an iPhone, sign in as test account A (with a past application) → New application → check the prefilled fields and the chip → change the phone → Review → confirm prompt → Update profile → Account → Sign out → sign in as B → New application: empty fields, nothing of A. Then sign out and back in as A: the new draft has the updated phone.
-2. **Approval needed:** `migrations/0008_customer_profiles.sql`, if you want passport details saved to a profile. Not applied.
+2. **Approval needed:** `migrations/0009_customer_profiles.sql`, if you want passport details saved to a profile. Not applied.
 3. **Chat 06 overlap:** `lib/form.tsx` (owner field + purge effect) and the cloud-resume interplay. Merge carefully. Prefill deliberately yields to `latestDraft()` resume.
-4. **For chats 09/10/13:** still device-wide (not per account) after a switch: `ezvisa.uploads.v1` (offline upload queue), `ezvisa.itinerary.v1.<id>`, `ezvisa.notifications.read.v1`, `ezvisa.discarded.v1`, and scheduled local reminders until `syncReminders` runs for the new account. These hold application ids, not profile data, but the upload queue holds the previous user's files.
+4. **For chats 09/13:** still device-wide (not per account) after a switch: `ezvisa.itinerary.v1.<id>`, `ezvisa.notifications.read.v1`, `ezvisa.discarded.v1`, and scheduled local reminders until `syncReminders` runs for the new account. These hold application ids, not profile data. (The upload queue is emptied on sign-out by chat 10, `lib/uploads.ts`.)
 5. Unsaved local answers are lost on sign-out if the personal step isn't complete yet (only a valid personal step can be cloud-saved; `flushDraft` runs before sign-out).
 6. Known edge, not reachable from the UI today: if account B signed in while A's draft was still open in memory (no sign-out in between), the purge runs after `latestDraft()` resume has already been skipped, so B's cloud draft would only resume on the next launch. Sign-out always comes first in the app, and it purges.

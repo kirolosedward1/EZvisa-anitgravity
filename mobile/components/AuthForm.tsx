@@ -62,7 +62,7 @@ export function AuthForm({ mode, onMode, initialEmail }: { mode: "signin" | "sig
     if (mode === "signin") run("pw", () => supabase!.auth.signInWithPassword({ email: mail.trim(), password: pw }));
     else run("pw", () => supabase!.auth.signUp({ email: mail.trim(), password: pw, options: { emailRedirectTo: confirmTo } }), "Check your email and tap the confirmation link, then sign in here with the same email and password.");
   };
-  if (!supabase) return <Text variant="body" tone="secondary" center>Sign-in isn't configured.</Text>;
+  if (!supabase) return <Text variant="body" tone="secondary" center>{"Sign-in isn't configured."}</Text>;
   return (
     <View style={{ gap: S.sm }}>
       {apple && (

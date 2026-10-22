@@ -16,7 +16,8 @@ export function useApps(withUnread = false) {
     if (!session) { setApps(null); setUnread(0); return; }
     setErr(null);
     try {
-      const [a, n] = await Promise.all([listApplications(), withUnread ? listNotifications() : Promise.resolve([])]);
+      const a = await listApplications(); // one query; the unread count is derived from the same rows
+      const n = withUnread ? await listNotifications(a) : [];
       setApps(a); setUnread(n.filter((x) => !x.read_at).length); syncReminders(a);
     } catch (e: any) { setErr(e?.message ?? String(e)); }
   }, [session, withUnread]);

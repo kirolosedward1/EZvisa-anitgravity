@@ -1,4 +1,4 @@
--- 0008: a real customer profile (one row per account) for prefilling new applications.  NOT APPLIED (needs owner approval).
+-- 0009: a real customer profile (one row per account) for prefilling new applications.  NOT APPLIED (needs owner approval).
 -- Today the app (lib/profile.ts) reads the profile from Supabase Auth user_metadata (name, phone, nationality, date of
 -- birth; the same place the website prefills from) and the passport number/expiry from the user's latest
 -- visa_applications row. Passport details are deliberately NOT written to user_metadata, because user_metadata is
