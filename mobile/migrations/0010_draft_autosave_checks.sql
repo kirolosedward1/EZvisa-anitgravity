@@ -34,14 +34,17 @@ group by 1, 2
 having count(*) > 1
 order by last_saved desc;
 
--- A5. After testing: one test draft in detail (replace the email).
+-- A5. After testing: one test draft in detail (replace the email). Notes that are not a JSON object show as empty
+--     instead of stopping the query.
+with r as (
+  select id, application_status, updated_at,
+         case when additional_notes ~ '^\s*\{' then additional_notes::jsonb end as n
+  from public.visa_applications
+  where lower(email) = lower('you+ezvisa-app-test@gmail.com')
+)
 select id, application_status, updated_at,
-       additional_notes::jsonb ->> 'wizardStep'     as step,
-       additional_notes::jsonb ->> 'wizardQuestion' as question,
-       additional_notes::jsonb ->> 'lastEditedOn'   as last_edited_on,
-       additional_notes::jsonb ->> 'source'         as source
-from public.visa_applications
-where lower(email) = lower('you+ezvisa-app-test@gmail.com')
+       n ->> 'wizardStep' as step, n ->> 'wizardQuestion' as question, n ->> 'lastEditedOn' as last_edited_on, n ->> 'source' as source
+from r
 order by updated_at desc;
 
 -- =====================================================================================================================

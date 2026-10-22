@@ -164,7 +164,8 @@ export default function Account() {
     const note = [!saved && t("Your latest answers aren't saved to your account yet. Signing out removes them from this phone."),
       n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : saved && t("Your applications stay in your account."),
       offline && t("You're offline, so this phone may still get this account's notifications.")].filter(Boolean).join("\n\n");
-    if (Platform.OS === "web") { endSession(); return; }
+    // Web (testing build): the same warning through the browser dialog, only when something would be lost.
+    if (Platform.OS === "web") { if (saved || window.confirm(`${t("Sign out?")}\n\n${note}`)) endSession(); return; }
     Alert.alert(t("Sign out?"), note, [{ text: t("Cancel"), style: "cancel" }, { text: t("Sign out"), style: "destructive", onPress: () => { endSession(); } }]);
   };
   return (

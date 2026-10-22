@@ -42,7 +42,9 @@ export type Application = VisaRow & {
 
 const need = () => { if (!supabase) throw new Error("Backend not configured"); return supabase; };
 async function me() {
-  const { data } = await need().auth.getUser();
+  const { data, error } = await need().auth.getUser();
+  // Offline / server unreachable: keep the original (retryable) error so autosave keeps retrying instead of giving up.
+  if (error && error.name === "AuthRetryableFetchError") throw error;
   if (!data.user?.email) throw new Error("Please sign in first");
   return { id: data.user.id, email: data.user.email.toLowerCase() };
 }
@@ -73,6 +75,9 @@ const REQS: Requirement[] = [
   { id: "req-noc", document_type: "nocCertificate", title: "NOC / employment proof", description: null, is_mandatory: true, provided_by_ezvisa: false, sort_order: 5, country_id: null },
   { id: "req-dossier", document_type: "final_package", title: "Cover letter, itinerary & bookings", description: null, is_mandatory: false, provided_by_ezvisa: true, sort_order: 6, country_id: null },
 ];
+/** Employment status of a row: the app's wizard notes, else the website's top-level additional_notes key (rows the
+ *  website created have no wizard), same rule as continueForm. Drives whether the NOC is required. */
+export const employmentOf = (a: { notes?: Notes | null }) => a.notes?.wizard?.employmentStatus || a.notes?.employmentStatus || null;
 /** The website has no requirements table; this is the website's upload checklist. */
 /** NOC applies only to employees (the wizard asks it only for "employed"); self-employed / other statuses never get it. */
 export function requirementsFor(employmentStatus?: string | null): Requirement[] {
@@ -92,7 +97,9 @@ function docsOf(r: VisaRow, n: Notes): Doc[] {
   }
   const flagDoc: [keyof VisaRow, string][] = [["has_passport", "passportCopy"], ["has_photos", "photo"], ["has_bank_statements", "bankStatement"], ["has_employment_proof", "nocCertificate"]];
   for (const [col, type] of flagDoc) if (r[col] === true && !seen.has(col as string))
-    out.push({ id: `flag-${col}`, document_type: type, requirement_id: REQS.find((q) => q.document_type === type)?.id ?? null, status: "uploaded", source: "customer", storage_path: "", file_name: null, rejection_reason: null, created_at: r.updated_at ?? r.created_at ?? "" });
+    // No upload time is known for a website upload (only the flag), so none is given: updated_at moves on every edit,
+    // including the staff edit that writes document_reviews, and would make every review look older than the file.
+    out.push({ id: `flag-${col}`, document_type: type, requirement_id: REQS.find((q) => q.document_type === type)?.id ?? null, status: "uploaded", source: "customer", storage_path: "", file_name: null, rejection_reason: null, created_at: "" });
   // Staff review per document (document_reviews column, migrations/0005). A newer upload than the review resets it to "uploaded".
   const reviews = ((r as any).document_reviews ?? {}) as Record<string, { status?: string; reason?: string | null; at?: string }>;
   for (const [type, rv] of Object.entries(reviews)) {
@@ -249,11 +256,11 @@ export async function saveDraft(f: WizardForm, step: string, id: string, base: s
 /** Guest checkout (no account yet): RLS "Allow public submissions" lets anon INSERT, but anon cannot SELECT the row back,
  *  so the id is made on the phone and nothing is returned. Payment then goes through /api/create-payment (links payment_id
  *  server-side) and the Ziina webhook marks it paid. Signing in later with the same email makes the row visible (SELECT by email). */
-export async function guestSubmit(f: WizardForm): Promise<{ id: string; reference: string; email: string }> {
+export async function guestSubmit(f: WizardForm, id: string = Crypto.randomUUID()): Promise<{ id: string; reference: string; email: string }> {
   const sb = need(); const email = f.email.trim().toLowerCase();
-  const id = Crypto.randomUUID();
   const { error } = await sb.from("visa_applications").insert({ id, ...(columns(f, email, "payment", { submittedAt: new Date().toISOString() }) as any), application_status: "submitted", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false });
-  if (error) throw error;
+  // Same id again (the caller keeps it per submit): the earlier attempt landed and only its reply was lost.
+  if (error && error.code !== "23505") throw error;
   return { id, reference: referenceOf(id), email };
 }
 
@@ -324,6 +331,9 @@ export const needsContinue = (a: Application) =>
 /** Applications made on the website (not by this app). Continue application asks them only passport number + employment. */
 export const isWebsiteRow = (a: Pick<Application, "notes">) => a.notes?.source !== "mobile-app";
 
+/** A row keeps where it came from. Rows the website created have no `source`, and saveAfterPayment never writes one, so
+ *  they stay website rows (isWebsiteRow). Kept for callers that rebuild a website row's notes. */
+export const keepOrigin = (prev: Notes): Notes => ({ ...prev, source: prev.source ?? "website" });
 /** Saves the answers asked after payment (Continue application). Writes ONLY what those questions own: their keys in
  *  additional_notes.wizard, the website's employment keys, and the matching columns (dates, purpose, date of birth,
  *  passport number, refusals) where an answer exists. Name, contact, nationality, destination, source and payment are

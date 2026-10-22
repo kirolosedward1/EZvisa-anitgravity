@@ -123,7 +123,22 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   nothing until `migrations/0009` (approved 2026-10-22, not yet confirmed applied) adds the table to `supabase_realtime`.
 - **Calendar** (`lib/appointment.ts`): `expo-calendar/legacy` `createEventInCalendarAsync` (SDK 57.0.6). iOS 17+ shows the
   system sheet without permission; older iOS requests access and explains a denial (Open Settings).
-- **Checks**: `bun scripts/run-check.ts scripts/timeline-check.ts` (34 checks, live row shape, no network).
+- **Checks**: `bun scripts/run-check.ts scripts/timeline-check.ts` (53 checks, live row shape, no network) and
+  `bun scripts/run-check.ts scripts/appointment-check.ts` (18: appointment rows, Apple Maps URL, add to calendar on iOS 17+,
+  iOS 16 granted/denied, Android, web, sheet error).
+- **QA pass (2026-10-22, chat 11)** fixed, each with a check that failed first:
+  - Non-employed applicants whose row came from the website were asked for a NOC on Home and the application page:
+    `employmentOf()` reads the wizard or the website's top-level `employmentStatus` (checks P, Q).
+  - Staff reviews of documents known only from the website's `has_*` flags were dropped, because those documents took
+    `updated_at` as their upload time and the review write moves `updated_at`. They now have no upload time (check R).
+  - Upload / Re-upload was offered when uploads are closed (status ready etc.); now only in `UPLOAD_STATUSES` (check S).
+  - Refunded / part-refunded cases were asked to pay again (check T).
+  - "Continue application" relabelled website rows as `source: "mobile-app"`, which dropped their real Submitted time and
+    asked Continue a second time with the app's full question set. `keepOrigin()` keeps them website rows (check U).
+- **Known gaps (not fixed, need a decision or data)**: website rows can never show the residency copy as uploaded (no
+  `has_*` flag for it), so Documents stays open for them until staff move the file on; an app `residencyCopy` upload hides a
+  website `has_passport` flag; Paid and Decision have no time until 0009; after a failed refresh the last loaded data stays
+  on screen without a notice.
   `npm run lint` (eslint-config-expo 57) and `npx tsc --noEmit` pass. Screenshots: `docs/screenshots/v11/` (fixture rows
   in a Playwright harness against a fake Supabase host, not production data).
 ## 2h. Drafts & autosave (chat 06, 2026-10-22)
@@ -133,6 +148,8 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **App** (`lib/form.tsx`, `lib/data.ts` `saveDraft/getDraft/findOpenDraft/submitApplication`, `components/wizard/sync.tsx`): debounce 800 ms + immediate save when the question changes; saves on background, checks for a newer copy on launch / foreground / draft open; NetInfo + web `online` events flush on reconnect; retries with backoff (`lib/uploads.ts backoffMs`). Indicator: *Saving… / Saved* (server-confirmed only) / *Saved on this phone* (signed out or nothing answered) / *Not saved · Offline | Retrying | Tap to retry*. Saved to the account once signed in and the first question is answered. Local drafts carry `owner` (email): another account on the same phone never sees or syncs them. Sign-out (which wipes the phone, section 2g) tries to save first and warns if answers would be lost. Home opens a server draft from another device in the wizard (`openServerDraft`). Submit only goes ahead after the server confirmed the exact answers, and is version-checked.
 - **Website** (branch `claude/nice-faraday-r722ry`, based on `main`, NOT on mobile-app): `lib/draft-sync.ts` (same rules), `components/apply/draft-status.tsx`, `/apply` wiring, `/api/submit-application` turns the signed-in user's draft row into the application (token-verified, version-checked, idempotent) instead of inserting a second row, Supabase browser/server clients also read `NEXT_PUBLIC_ezvisaSUPABASE_*`.
 - **Tests (no live DB):** `scripts/mock-supabase.mjs` (REST + Auth stand-in with updated_at trigger, RLS by email, 23505), `scripts/e2e-drafts-web.mjs` (17 checks, app web build), `scripts/e2e-drafts-cross.mjs` (10 checks, website ↔ app). Screenshots: `docs/screenshots/drafts/`. Read-only SQL checks + optional trigger: `migrations/0010_draft_autosave_checks.sql` (not applied).
+- **QA pass (2026-10-22)** fixed, each with a check that failed on the code before: *Keep this version* now writes the phone's copy (it only said Saved); a save whose reply was lost no longer counts as confirmed (Back to the last screen saves again before Saved); a network error while checking the session retries instead of "Please sign in first"; guest submit reuses one id per application (no second row on retry); discarding a local draft cancels its server draft; sign-out waits at most 4 s for a last save and also warns about other unsaved drafts. Checks: `scripts/e2e-drafts-qa.mjs` (7, app web build + mock DB) and `bun scripts/run-check.ts scripts/drafts-check.ts`. Website fixes are on its branch (`mobile/scripts/e2e-web-qa.mjs` there, 15 checks): server-side wizard rules and draft ownership in `/api/submit-application`, Pay twice → one application, account switch clears answers, open-redirect in `/login?next=`.
+- **Open (need a decision):** client inserts can still set any column (needs an RLS/BEFORE INSERT guard — approval); the Ziina price comes from editable notes; email matching is case-sensitive; `/apply/continue` has no version check; the website still asks trip details before payment while the app asks them after (parity choice for the owner).
 
 ## 2i. Chat 09: document checklist and uploads (2026-10-22)
 - **Checklist** (`lib/data.ts` `REQS` + `lib/checklist.ts`): unchanged rules. Shown only when `payment_status` is paid/completed (from the DB); NOC hidden unless `employmentStatus` is `employed`; states from `additional_notes.uploads`, `has_*` flags and staff `document_reviews` (uploaded · under review · approved · rejected + reason). Rows and alerts are now translated (Arabic).
@@ -204,6 +221,9 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 - Don't touch the other Supabase projects on that account (BrokersConnect/brokerconnect, brokerscareers, openmatsae, topsuite_tracker, supabase-*).
 - Don't push to `main` or change Vercel settings from this work; use the `mobile-app` branch and PRs.
 - Keep test data minimal and labelled (`+ezvisa-app-test` emails).
+- **Owner rule (2026-10-22): deploy and merge after every edit.** Once type-check, lint and the checks pass, fast-forward the
+  work into `mobile-app` right away (never into `main`). That push is the deploy: `.github/workflows/eas-update.yml` publishes
+  it to the Expo Go `preview` channel. Confirm the workflow run succeeded before reporting the edit as done.
 
 ## 6. Next tasks
 1. Owner: set the Vercel env vars (Supabase URL/anon/service role, Ziina key and webhook secret), fix the Supabase Auth URL config, approve `proposed-live-changes.sql`. Then re-run `scripts/e2e-live.mjs`: upload, payment and `payment_id` should pass.
