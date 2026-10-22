@@ -24,6 +24,8 @@ export type Notes = {
   maritalStatus?: string; employmentStatus?: string; jobTitle?: string; companyName?: string; monthlySalary?: string; spouseAccompanying?: string;
   source?: string; platform?: string; wizardStep?: string; wizardQuestion?: string; itinerary?: unknown; contactEmail?: string; wizard?: Partial<WizardForm>;
   uploads?: { type: string; path: string; name: string; at: string }[];
+  /** ISO time the app submitted the case (recorded at submit; drafts are created earlier, so created_at is not it). */
+  submittedAt?: string;
 };
 export type Application = VisaRow & {
   status: AppStatus; reference: string; country_id: string | null;
@@ -69,8 +71,11 @@ const REQS: Requirement[] = [
 ];
 /** The website has no requirements table; this is the website's upload checklist. */
 /** NOC applies only to employees (the wizard asks it only for "employed"); self-employed / other statuses never get it. */
-export async function listRequirements(_countryId?: string | null, employmentStatus?: string | null): Promise<Requirement[]> {
+export function requirementsFor(employmentStatus?: string | null): Requirement[] {
   return employmentStatus && employmentStatus !== "employed" ? REQS.filter((r) => r.document_type !== "nocCertificate") : REQS;
+}
+export async function listRequirements(_countryId?: string | null, employmentStatus?: string | null): Promise<Requirement[]> {
+  return requirementsFor(employmentStatus);
 }
 
 /** Documents are inferred from the row: uploads recorded by this app (exact type) and the website's has_* flags. */
@@ -184,7 +189,7 @@ export async function saveDraft(f: WizardForm, step: string, id?: string | null,
 export async function guestSubmit(f: WizardForm): Promise<{ id: string; reference: string; email: string }> {
   const sb = need(); const email = f.email.trim().toLowerCase();
   const id = Crypto.randomUUID();
-  const { error } = await sb.from("visa_applications").insert({ id, ...(columns(f, email, "payment", {}) as any), application_status: "submitted", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false });
+  const { error } = await sb.from("visa_applications").insert({ id, ...(columns(f, email, "payment", { submittedAt: new Date().toISOString() }) as any), application_status: "submitted", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false });
   if (error) throw error;
   return { id, reference: referenceOf(id), email };
 }
@@ -207,7 +212,7 @@ export async function submitApplication(f: WizardForm, draftId?: string | null):
   const { data: cur, error: ce } = await sb.from("visa_applications").select("*").eq("id", id).eq("email", u.email).single();
   if (ce) throw ce;
   if (cur.application_status !== "draft") return toApplication(cur);
-  const { data, error } = await sb.from("visa_applications").update({ ...columns(f, u.email, "payment", parseNotes(cur.additional_notes ?? null)), application_status: "submitted", payment_status: "pending" }).eq("id", id).eq("application_status", "draft").select("*");
+  const { data, error } = await sb.from("visa_applications").update({ ...columns(f, u.email, "payment", { ...parseNotes(cur.additional_notes ?? null), submittedAt: new Date().toISOString() }), application_status: "submitted", payment_status: "pending" }).eq("id", id).eq("application_status", "draft").select("*");
   if (error) throw error;
   if (data?.[0]) return toApplication(data[0]);
   const { data: again, error: ae } = await sb.from("visa_applications").select("*").eq("id", id).single(); // a parallel call won the race
