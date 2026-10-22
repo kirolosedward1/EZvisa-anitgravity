@@ -1,13 +1,13 @@
 "use client"
 
-// Google / Apple sign-in through Supabase OAuth (PKCE). The round trip returns to /auth/callback, which signs the
-// user in and continues to `next`. Buttons appear only for providers enabled on the project (lib/auth/providers.ts).
+// Google (always) and Apple (when enabled on the project) sign-in through Supabase OAuth (PKCE). The round trip
+// returns to /auth/callback, which signs the user in and continues to `next`. See lib/auth/providers.ts.
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { authCallbackUrl } from "@/lib/auth/redirect"
-import { enabledProviders, socialMessage, PROVIDER_LABEL, type Providers, type SocialProvider } from "@/lib/auth/providers"
+import { ALWAYS_OFFERED, enabledProviders, socialMessage, NOT_SET_UP, PROVIDER_LABEL, type Providers, type SocialProvider } from "@/lib/auth/providers"
 import { authMessage, isNetworkError } from "@/lib/auth/errors"
 
 function GoogleMark({ className }: { className?: string }) {
@@ -29,19 +29,27 @@ function AppleMark({ className }: { className?: string }) {
   )
 }
 
+const MARK: Record<SocialProvider, (p: { className?: string }) => React.ReactElement> = { google: GoogleMark, apple: AppleMark }
+
 export function SocialButtons({ next, onError, disabled }: { next?: string; onError: (message: string) => void; disabled?: boolean }) {
-  const [providers, setProviders] = useState<Providers | null>(null)
+  // null = settings not read (yet, or unreachable): the always-offered providers still show and just try.
+  const [enabled, setEnabled] = useState<Providers | null>(null)
   const [busy, setBusy] = useState<SocialProvider | "">("")
 
   useEffect(() => {
     let alive = true
-    enabledProviders().then((p) => alive && setProviders(p))
+    enabledProviders().then((p) => alive && setEnabled(p))
     return () => { alive = false }
   }, [])
 
-  if (!providers || (!providers.google && !providers.apple)) return null
+  const shown = (["apple", "google"] as SocialProvider[]).filter((p) => ALWAYS_OFFERED.includes(p) || enabled?.[p])
+  if (shown.length === 0) return null
 
   const start = async (provider: SocialProvider) => {
+    if (enabled && enabled[provider] === false) {
+      onError(NOT_SET_UP(provider))
+      return
+    }
     setBusy(provider)
     try {
       const supabase = createBrowserClient()
@@ -63,18 +71,15 @@ export function SocialButtons({ next, onError, disabled }: { next?: string; onEr
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-2">
-        {providers.apple && (
-          <Button type="button" variant="outline" className="w-full h-11 rounded-xl font-semibold" disabled={disabled || !!busy} onClick={() => start("apple")}>
-            {busy === "apple" ? <Loader2 className="h-4 w-4 animate-spin" /> : <AppleMark className="h-4 w-4" />}
-            Continue with {PROVIDER_LABEL.apple}
-          </Button>
-        )}
-        {providers.google && (
-          <Button type="button" variant="outline" className="w-full h-11 rounded-xl font-semibold" disabled={disabled || !!busy} onClick={() => start("google")}>
-            {busy === "google" ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleMark className="h-4 w-4" />}
-            Continue with {PROVIDER_LABEL.google}
-          </Button>
-        )}
+        {shown.map((provider) => {
+          const Mark = MARK[provider]
+          return (
+            <Button key={provider} type="button" variant="outline" className="w-full h-11 rounded-xl font-semibold" disabled={disabled || !!busy} onClick={() => start(provider)}>
+              {busy === provider ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mark className="h-4 w-4" />}
+              Continue with {PROVIDER_LABEL[provider]}
+            </Button>
+          )
+        })}
       </div>
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="h-px flex-1 bg-border" />

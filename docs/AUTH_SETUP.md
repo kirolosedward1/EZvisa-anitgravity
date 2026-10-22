@@ -11,7 +11,8 @@ email on both and sees the same applications.
 | Email link (magic link) | `/login` → "Email me a link" | `signInWithOtp`, creates the account if new |
 | Create account | `/signup` | password ≥ 8 characters, confirmation email |
 | Forgot / reset password | `/forgot-password`, `/reset-password` | reset link → `/auth/callback?type=recovery` → `/reset-password` |
-| Google, Apple | `/login`, `/signup` | buttons appear automatically once the provider is enabled in Supabase |
+| Google | `/login`, `/signup` | always shown; works once the Google provider is enabled in Supabase (below), until then it says "Google sign-in isn't set up yet" |
+| Apple | `/login`, `/signup` | appears automatically once the Apple provider is enabled in Supabase |
 | Demo accounts | `/login` | cookie-based sandbox, no Supabase user |
 
 Every email link and OAuth round trip lands on **`/auth/callback`** (`app/auth/callback/route.ts`), which exchanges
@@ -34,10 +35,17 @@ sync check compares them).
    A redirect that is not on this list silently falls back to the Site URL. With the Site URL still on
    `localhost`, every confirmation / magic / reset link sends customers to a page that does not exist: this is the
    usual cause of "sign-in doesn't work".
-2. **Providers → Google**: create a *Web application* OAuth client in Google Cloud with the authorised redirect
-   URI `https://<project-ref>.supabase.co/auth/v1/callback`, then paste the client id and secret into Supabase and
-   switch the provider on. The buttons on `/login`, `/signup` and in the app appear on their own (they read
-   `/auth/v1/settings`); no deploy needed.
+2. **Providers → Google** (makes "Continue with Google" work on the website and shows it in the app):
+   1. Google Cloud Console → APIs & Services → *OAuth consent screen*: External, app name "EZvisa", support email
+      `support@ezvisa.net`, authorised domain `ezvisa.net`, publish the app (otherwise only test users can sign in).
+   2. *Credentials → Create credentials → OAuth client ID → Web application*:
+      - Authorised JavaScript origins: `https://www.ezvisa.net`, `https://ezvisa.net`
+      - Authorised redirect URI: `https://dravvaykssrbktztmrlj.supabase.co/auth/v1/callback`
+        (the live project's ref; copy it from Supabase → Project Settings → General if it differs)
+   3. Supabase → Authentication → Providers → Google: switch on, paste the client ID and client secret, save.
+   4. Supabase → Authentication → URL configuration: make sure `https://www.ezvisa.net/auth/callback` is on the
+      redirect allow list (step 1), or Google sign-ins land on the Site URL instead of the dashboard.
+   No website deploy is needed: the button is already there and reads the project's settings.
 3. **Providers → Apple** (optional, required by Apple once Google sign-in ships on iOS): Services ID + key from the
    Apple Developer account, return URL `https://<project-ref>.supabase.co/auth/v1/callback`; add the app's bundle
    ids to the client ids list.
