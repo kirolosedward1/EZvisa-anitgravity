@@ -31,6 +31,9 @@ await web.press("#password", "Enter"); await web.waitForURL(/dashboard/, { timeo
 // 1. A link pre-fill alone creates no draft (the app also waits for a real answer).
 await web.goto(`${WEB}/apply?step=personal&to=France&from=India`, { timeout: 120000 }); await web.waitForTimeout(3500);
 log((await db()).length === 0, "link pre-fill alone creates no draft row", `${(await db()).length} row(s)`);
+// Same steps as the app before payment: no Employment step, no passport number (both asked after payment).
+const sidebar = await web.locator("body").innerText();
+log(!/\bEmployment\b\s*\n?\s*Work & income details/.test(sidebar) && (await web.locator("#passportNumber").count()) === 0, "before payment: no Employment step and no passport number (asked after payment, like the app)");
 
 // 2. Nationality list = the app's: visa-required only (UAE absent), every visa-required country reachable.
 await web.getByRole("combobox").filter({ hasText: "India" }).click(); await web.waitForTimeout(400);
@@ -78,6 +81,27 @@ const res = await (await fetch(`${WEB}/api/submit-application`, { method: "POST"
 const done = (await db())[0]; const dn = notes(done);
 log(res.applicationId === cur.id && done.application_status === "submitted" && !!dn.submittedAt && dn.wizard?.passportExpiry === isoIn(900) && dn.wizard?.passportNumber === "A1234567",
   "submit keeps the row and stores submittedAt + wizard answers (app timeline / Continue screen)", `submittedAt=${dn.submittedAt?.slice(0, 19)}`);
+
+// 7b. After payment: the dashboard offers Continue application; the answers land where the app reads them.
+await fetch(`${DB}/__db/edit`, { method: "POST", body: JSON.stringify({ id: cur.id, patch: { payment_status: "paid" } }) });
+await web.goto(`${WEB}/dashboard?id=${cur.id}`, { timeout: 120000 }); await web.waitForTimeout(1500);
+const cont = web.getByRole("link", { name: "Continue application" });
+log(await cont.isVisible().catch(() => false), "paid without employment: dashboard shows Continue application (same next action as the app)");
+await web.screenshot({ path: `${OUT}/web-05-dashboard-continue-390.png` });
+await cont.click(); await web.waitForURL(/apply\/continue\//, { timeout: 60000 }).catch(() => {});
+await web.locator("#passportNumber").waitFor({ timeout: 60000 }).catch(async () => { await web.screenshot({ path: `${OUT}/web-06-continue-failed.png` }); console.log("continue page:", web.url(), (await web.locator("body").innerText()).slice(0, 300)); });
+await web.locator("#passportNumber").fill("b7654321");
+await web.selectOption("#employmentStatus", "business");
+await web.locator("#companyName").fill("Acme Trading LLC");
+await web.getByPlaceholder("e.g., 15,000 AED").fill("20,000 AED");
+await web.screenshot({ path: `${OUT}/web-06-continue-390.png` });
+await web.getByRole("button", { name: "Necessary Only" }).click({ timeout: 3000 }).catch(() => {}); // the site's cookie banner covers the bottom bar
+await web.getByRole("button", { name: "Save" }).click();
+await web.waitForURL(/dashboard/, { timeout: 60000 }).catch(() => {}); await web.waitForTimeout(800);
+const paidRow = (await db())[0]; const pn = notes(paidRow);
+log(paidRow.passport_number === "B7654321" && pn.wizard?.passportNumber === "B7654321" && pn.employmentStatus === "business" && pn.wizard?.companyName === "Acme Trading LLC" && pn.wizard?.averageMonthlyIncome === "20,000 AED" && pn.wizard?.jobTitle === "",
+  "Continue application saves passport number + employment to the column and notes keys the app uses", `passport_number=${paidRow.passport_number}`);
+log(!(await web.getByRole("link", { name: "Continue application" }).isVisible().catch(() => false)), "after saving, the dashboard no longer asks");
 
 // 8. Sign-out clears this browser's wizard answers (the app wipes the phone).
 await web.goto(`${WEB}/apply?step=personal`, { timeout: 120000 }); await web.waitForTimeout(1500);
