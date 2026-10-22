@@ -99,15 +99,15 @@ export default function Account() {
       </View>
       <View style={{ padding: S.sm, gap: S.xs }} testID="passport-expiry">
         <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.xs }}>{t("Passport expiry (kept on this phone)")}</Text>
-        <DateAnswer label={t("Passport expiry")} value={pp} onChange={onPp} style="wheel" placeholder="Select date" min={new Date().toISOString().slice(0, 10)} />
+        <DateAnswer label={t("Passport expiry")} value={pp} onChange={onPp} style="wheel" placeholder={t("Select date")} min={new Date().toISOString().slice(0, 10)} />
       </View>
-      {!!remNote && Platform.OS !== "web" && <ListRow title="Open Settings" tint chevron={false} onPress={() => Linking.openSettings()} />}
+      {!!remNote && Platform.OS !== "web" && <ListRow title={t("Open Settings")} tint chevron={false} onPress={() => Linking.openSettings()} />}
     </ListGroup>
   );
   const appearance = (
     <ListGroup header={t("Appearance")}>
       <View style={{ padding: S.sm }} testID="appearance">
-        <SegmentedControl label="Appearance" value={pref} onChange={(v) => setPref(v as AppearancePref)}
+        <SegmentedControl label={t("Appearance")} value={pref} onChange={(v) => setPref(v as AppearancePref)}
           options={[{ value: "system", label: t("System") }, { value: "light", label: t("Light") }, { value: "dark", label: t("Dark") }]} />
       </View>
     </ListGroup>

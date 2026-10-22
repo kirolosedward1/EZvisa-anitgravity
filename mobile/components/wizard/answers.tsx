@@ -191,11 +191,11 @@ export function AdditionalCountries({ f, onChange }: { f: WizardForm; onChange: 
             <PressScale onPress={() => { setNc(""); setNa(""); setNd(""); setErr(""); }} accessibilityRole="button" accessibilityLabel={t("Cancel")} style={{ minHeight: 44, justifyContent: "center" }}><Text variant="subhead" tone="tint" weight="600">{t("Cancel")}</Text></PressScale>
           </View>
           <Text variant="footnote" tone="secondary" weight="600">{t("Arrival Date")}</Text>
-          <DateAnswer label={t("Arrival Date")} value={na} style="calendar" placeholder="Select arrival date" min={f.travelStartDate || todayIso} max={f.travelEndDate || undefined}
+          <DateAnswer label={t("Arrival Date")} value={na} style="calendar" placeholder={t("Select arrival date")} min={f.travelStartDate || todayIso} max={f.travelEndDate || undefined}
             onChange={(v) => { setNa(v); setErr(""); if (nd && v && nd <= v) { setNd(""); setErr(t("Departure date must be after arrival date")); } }} />
           {!!na && <>
             <Text variant="footnote" tone="secondary" weight="600">{t("Departure Date")}</Text>
-            <DateAnswer label={t("Departure Date")} value={nd} style="calendar" placeholder="Select departure date" min={dayAfter(na)} max={f.travelEndDate || undefined}
+            <DateAnswer label={t("Departure Date")} value={nd} style="calendar" placeholder={t("Select departure date")} min={dayAfter(na)} max={f.travelEndDate || undefined}
               onChange={(v) => { if (na && v <= na) { setErr(t("Departure date must be after arrival date")); return; } setErr(""); setNd(v); }} />
           </>}
           {!!err && <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{err}</Text></Note>}
