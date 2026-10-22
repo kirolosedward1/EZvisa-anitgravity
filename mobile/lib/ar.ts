@@ -561,4 +561,10 @@ export const AR: Record<string, string> = {
   "This app isn't allowed to receive Google sign-ins yet. Please use email for now.": "هذا التطبيق غير مسموح له بتسجيل الدخول عبر Google بعد. يرجى استخدام البريد الإلكتروني الآن.",
   "Google sign-in didn't complete. Please try again.": "لم يكتمل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.",
   "Edit photo": "تعديل الصورة", "Add photo": "إضافة صورة", "Remove photo": "إزالة الصورة", "Remove photo?": "إزالة الصورة؟", "Profile photo": "صورة الملف الشخصي",
+  "We couldn't find this application on your account. Make sure you're signed in with the email you applied with.": "لم نجد هذا الطلب في حسابك. تأكد من تسجيل الدخول بالبريد الذي قدّمت به.",
+  "This is taking too long. Check your connection and try again.": "يستغرق هذا وقتًا طويلًا. تحقّق من اتصالك وحاول مرة أخرى.",
+  "Sign in to continue your application": "سجّل الدخول لمتابعة طلبك",
+  "Use the email you paid with.": "استخدم البريد الذي دفعت به.",
+  "Nothing left to add": "لا شيء آخر لإضافته",
+  "Please sign in first": "يرجى تسجيل الدخول أولاً",
 };

@@ -126,7 +126,8 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   useEffect(() => { moveTo(state.index); }, [state.index, reduce]);
   // The selected highlight is a circle (DOT x DOT) centred on the tab's icon.
   const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; slots.current[i] = { x: lx + (width - DOT) / 2, w: DOT }; if (i === state.index) moveTo(i, false); };
-  const lens = useAnimatedStyle(() => ({ opacity: shown.value, width: w.value, transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
+  // Always a true circle at rest (DOT x DOT); the squash/stretch only plays while it travels.
+  const lens = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
 
   const go = (i: number) => {
     const route = state.routes[i]; const on = state.index === i;
@@ -161,10 +162,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         <View {...pan.panHandlers} style={{ height: H, flexDirection: "row", alignItems: "center", paddingHorizontal: PAD }} accessibilityRole="tablist">
           {/* Physical `left` on purpose: the lens is positioned by translateX from measured layout x, which is always
               measured from the left edge, so it lines up in LTR and RTL alike. */}
-          <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: PAD, height: H - PAD * 2, borderRadius: (H - PAD * 2) / 2, overflow: "hidden",
+          <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: (H - DOT) / 2, width: DOT, height: DOT, borderRadius: DOT / 2, overflow: "hidden",
             backgroundColor: c.lens, borderWidth: 1, borderColor: c.lensRim },
             dark ? null : { shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: PAD, shadowOffset: { width: 0, height: 2 } }, lens]}>
-            {glass && <GlassView glassEffectStyle="clear" style={StyleSheet.absoluteFill} />}
+            {glass && <GlassView glassEffectStyle="clear" style={[StyleSheet.absoluteFill, { borderRadius: DOT / 2 }]} />}
           </Animated.View>
           {state.routes.map((route, i) => {
             const label = (descriptors[route.key].options.title ?? route.name) as string;
