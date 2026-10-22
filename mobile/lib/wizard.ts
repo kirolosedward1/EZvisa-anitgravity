@@ -146,6 +146,7 @@ export function validatePersonal(f: WizardForm): Errors {
     // The passport NUMBER is asked after payment (Continue application, validatePassportNumber); validity and expiry stay here.
     // App-only field (kept in the wizard notes JSON; no DB column): valid >= 3 months after the return date.
     if (!f.passportExpiry) e.passportExpiry = "Please select your passport expiry date";
+    else if (f.passportExpiry < iso(new Date())) e.passportExpiry = "This passport has expired. Enter the expiry date of your current passport.";
     else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date";
   }
   if (!f.maritalStatus) e.maritalStatus = "Please select your marital status";

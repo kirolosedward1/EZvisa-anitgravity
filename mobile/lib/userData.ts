@@ -14,6 +14,7 @@ export const USER_KEYS = [
   "ezvisa.push.token",                               // this device's push token (lib/data.ts)
   "ezvisa.passportExpiry.v1", "ezvisa.reminders.v1", // reminders (lib/reminders.ts)
   "ezvisa.crash.v1",                                 // last crash report (lib/crash.ts)
+  "ezvisa.prefill.v1",                               // per-draft "profile question answered" flags (lib/profile.ts)
 ];
 const USER_PREFIXES = ["ezvisa.itinerary.v1."];      // trip plans per application (lib/itinerary.ts)
 
