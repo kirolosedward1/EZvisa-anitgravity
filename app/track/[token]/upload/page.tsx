@@ -1,12 +1,29 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
+import { useParams, useSearchParams } from "next/navigation";
+import { AlertCircle, ArrowLeft, CheckCircle2, FileText, Loader2, ShieldCheck, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
-import { Upload, FileText, CheckCircle2, Loader2, ArrowLeft, AlertCircle, Clock, ShieldCheck } from "lucide-react";
-import Link from "next/link";
-import { useParams } from "next/navigation";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashboard-card";
+import { StatusBadge } from "@/components/dashboard/status-badge";
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
+import { getDocumentProgress, getReference, REQUIRED_DOCUMENTS } from "@/lib/application-status";
 import { getDocumentHelpWhatsAppUrl } from "@/lib/whatsapp";
+import { cn } from "@/lib/utils";
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+
+const DOCUMENT_OPTIONS = [
+  { value: "passportCopy", label: "Passport bio page (colour copy)" },
+  { value: "residencyCopy", label: "UAE residence visa / Emirates ID" },
+  { value: "photo", label: "Personal photo (35×45 mm)" },
+  { value: "bankStatement", label: "Bank statement (last 3–6 months)" },
+  { value: "nocCertificate", label: "Employment proof (NOC / salary certificate)" },
+];
 
 interface AppDocStatus {
   destination_country?: string;
@@ -20,14 +37,20 @@ interface AppDocStatus {
 
 export default function UploadDocumentsPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const token = params.token as string;
+  const requestedType = searchParams.get("type");
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const [file, setFile] = useState<File | null>(null);
-  const [docType, setDocType] = useState<string>("passportCopy");
+  const [docType, setDocType] = useState<string>(
+    DOCUMENT_OPTIONS.some((option) => option.value === requestedType) ? (requestedType as string) : "passportCopy",
+  );
+  const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [appStatus, setAppStatus] = useState<AppDocStatus | null>(null);
-  const [loadingStatus, setLoadingStatus] = useState(true);
 
   const fetchStatus = useCallback(async () => {
     if (!token) return;
@@ -35,14 +58,10 @@ export default function UploadDocumentsPage() {
       const res = await fetch(`/api/upload-document?token=${token}`);
       if (res.ok) {
         const data = await res.json();
-        if (data.app) {
-          setAppStatus(data.app);
-        }
+        if (data.app) setAppStatus(data.app);
       }
     } catch {
       // Non-critical background fetch
-    } finally {
-      setLoadingStatus(false);
     }
   }, [token]);
 
@@ -50,12 +69,21 @@ export default function UploadDocumentsPage() {
     fetchStatus();
   }, [fetchStatus]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-      setError(null);
-      setSuccess(false);
+  const selectFile = (selected: File | undefined) => {
+    if (!selected) return;
+    setSuccess(false);
+    if (!ACCEPTED_TYPES.includes(selected.type)) {
+      setFile(null);
+      setError("Please choose a PDF, JPG or PNG file.");
+      return;
     }
+    if (selected.size > MAX_FILE_SIZE) {
+      setFile(null);
+      setError("This file is larger than 5 MB. Please compress it or send it to us on WhatsApp.");
+      return;
+    }
+    setError(null);
+    setFile(selected);
   };
 
   const handleUpload = async () => {
@@ -70,231 +98,227 @@ export default function UploadDocumentsPage() {
       formData.append("trackingToken", token);
       formData.append("documentType", docType);
 
-      const res = await fetch("/api/upload-document", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch("/api/upload-document", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
 
       setSuccess(true);
       setFile(null);
+      if (inputRef.current) inputRef.current.value = "";
       await fetchStatus();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
     } finally {
       setUploading(false);
     }
   };
 
-  const allComplete = appStatus &&
-    appStatus.has_passport &&
-    appStatus.has_photos &&
-    appStatus.has_bank_statements &&
-    appStatus.has_employment_proof;
+  const progress = appStatus ? getDocumentProgress(appStatus) : null;
+  const allComplete = progress !== null && progress.missing.length === 0;
 
   return (
     <>
-      <SiteHeader forceBackground={true} />
-      <main className="min-h-screen bg-background pt-24 pb-16 px-4">
-        <div className="container max-w-3xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <Link href={`/track/${token}`} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Tracking &amp; Dashboard
-            </Link>
-            <span className="text-xs font-mono text-muted-foreground bg-muted/60 px-2.5 py-1 rounded">
-              Ref: #{token ? token.slice(0, 8).toUpperCase() : ""}
-            </span>
-          </div>
-          
-          {/* Header Card */}
-          <div className="bg-card border rounded-xl p-6 md:p-8 shadow-sm">
-            <div className="flex items-start justify-between gap-4 mb-3">
-              <div>
-                <span className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary mb-2">
-                  <ShieldCheck className="w-3.5 h-3.5" /> 256-Bit Encrypted Upload Desk
-                </span>
-                <h1 className="text-2xl md:text-3xl font-bold">Upload Supporting Documents</h1>
-                {appStatus && (
-                  <p className="text-muted-foreground mt-1">
-                    Application for <strong className="text-foreground">{appStatus.full_name}</strong> &bull; {appStatus.destination_country} Visa
-                  </p>
-                )}
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Upload your documents below to complete your visa file. Your files are securely encrypted and reviewed directly by our UAE visa specialists.
-            </p>
-          </div>
+      <SiteHeader />
+      <main id="main-content" className="bg-background">
+        <DashboardHeader
+          badge="Secure upload"
+          title="Upload your documents"
+          description={
+            appStatus ? (
+              <>
+                {appStatus.destination_country} visa · {appStatus.full_name} ·{" "}
+                <span className="font-medium text-foreground">{getReference(token)}</span>
+              </>
+            ) : (
+              "Add the documents we need to complete your visa file."
+            )
+          }
+          actions={
+            <Button asChild variant="outline" className="rounded-full px-5">
+              <Link href={`/track/${token}`}>
+                <ArrowLeft />
+                Back to application
+              </Link>
+            </Button>
+          }
+        />
 
-          {/* Real-Time Document Checklist */}
-          {appStatus && (
-            <div className="bg-card border rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-bold flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-primary" />
-                  Document Verification Checklist
-                </h2>
-                {allComplete ? (
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> All Documents Received
-                  </span>
-                ) : (
-                  <span className="text-xs font-bold text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> Pending Uploads
-                  </span>
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
-                  <div>
-                    <p className="text-sm font-medium">Passport Copy</p>
-                    <p className="text-xs text-muted-foreground">Bio page (min. 6mo validity)</p>
-                  </div>
-                  {appStatus.has_passport ? (
-                    <span className="text-emerald-600 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold rounded-full">Received</span>
-                  ) : (
-                    <span className="text-amber-600 bg-amber-500/10 px-2 py-0.5 text-xs font-bold rounded-full">Pending</span>
-                  )}
-                </div>
-
-                <div className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
-                  <div>
-                    <p className="text-sm font-medium">Personal Photo</p>
-                    <p className="text-xs text-muted-foreground">35x45mm white background</p>
-                  </div>
-                  {appStatus.has_photos ? (
-                    <span className="text-emerald-600 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold rounded-full">Received</span>
-                  ) : (
-                    <span className="text-amber-600 bg-amber-500/10 px-2 py-0.5 text-xs font-bold rounded-full">Pending</span>
-                  )}
-                </div>
-
-                <div className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
-                  <div>
-                    <p className="text-sm font-medium">Bank Statement</p>
-                    <p className="text-xs text-muted-foreground">Last 3-6 months with bank stamp</p>
-                  </div>
-                  {appStatus.has_bank_statements ? (
-                    <span className="text-emerald-600 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold rounded-full">Received</span>
-                  ) : (
-                    <span className="text-amber-600 bg-amber-500/10 px-2 py-0.5 text-xs font-bold rounded-full">Pending</span>
-                  )}
-                </div>
-
-                <div className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
-                  <div>
-                    <p className="text-sm font-medium">Employment Proof / NOC</p>
-                    <p className="text-xs text-muted-foreground">Signed company NOC letter</p>
-                  </div>
-                  {appStatus.has_employment_proof ? (
-                    <span className="text-emerald-600 bg-emerald-500/10 px-2 py-0.5 text-xs font-bold rounded-full">Received</span>
-                  ) : (
-                    <span className="text-amber-600 bg-amber-500/10 px-2 py-0.5 text-xs font-bold rounded-full">Pending</span>
-                  )}
-                </div>
-              </div>
-
-              {allComplete && (
-                <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between flex-wrap gap-2">
-                  <span>Great news! All required files are uploaded. Our experts are finalizing your Schengen file.</span>
-                  <Button asChild size="sm" variant="outline" className="text-xs h-7 border-emerald-500/40 text-emerald-700 hover:bg-emerald-100">
-                    <Link href={`/track/${token}`}>Return to Tracker</Link>
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-          
-          {/* Upload Form */}
-          <div className="bg-card border rounded-xl p-6 md:p-8 shadow-sm">
-            <h2 className="text-lg font-bold mb-4">Select Document to Upload</h2>
-            
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">Document Category</label>
-                <select 
-                  className="w-full flex h-11 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-10 sm:px-6 lg:grid-cols-3">
+          <DashboardCard aria-label="Upload a document" className="lg:col-span-2">
+            <DashboardCardHeader title="Choose a document" icon={Upload} />
+            <div className="flex flex-col gap-6 p-6">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="document-type" className="text-sm font-medium text-foreground">
+                  Document type
+                </label>
+                <select
+                  id="document-type"
+                  className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   value={docType}
                   onChange={(e) => setDocType(e.target.value)}
                 >
-                  <option value="passportCopy">Passport Bio Page (Clear Color Copy)</option>
-                  <option value="residencyCopy">UAE Residence Visa / Emirates ID</option>
-                  <option value="photo">Personal Passport Photo (35x45mm Schengen Spec)</option>
-                  <option value="bankStatement">Bank Statement (Last 3-6 Months)</option>
-                  <option value="nocCertificate">Employment Proof (NOC / Salary Certificate)</option>
+                  {DOCUMENT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
-                <p className="text-xs text-muted-foreground mt-1.5">
-                  Select which document you are uploading. You can upload each document one by one.
-                </p>
+                <p className="text-xs text-muted-foreground">Upload one document at a time.</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Select File (PDF, JPG, PNG)</label>
-                <div className="border-2 border-dashed rounded-xl p-8 text-center bg-background transition-colors hover:bg-slate-100/60 dark:hover:bg-slate-900/60">
-                  <input type="file" id="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
-                  <label htmlFor="file" className="cursor-pointer flex flex-col items-center">
-                    <Upload className="w-8 h-8 text-muted-foreground mb-3" />
-                    <span className="font-medium text-primary">Click to browse or drop file here</span>
-                    <span className="text-xs text-muted-foreground mt-1">Accepted: PDF, JPG, PNG &bull; Max 5MB</span>
-                  </label>
-                </div>
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-medium text-foreground">File</span>
+                <label
+                  htmlFor="file"
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    selectFile(e.dataTransfer.files?.[0]);
+                  }}
+                  className={cn(
+                    "flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors",
+                    isDragging ? "border-primary bg-primary/5" : "border-border bg-secondary/40 hover:border-primary/40 hover:bg-primary/5",
+                  )}
+                >
+                  <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Upload className="size-5" aria-hidden="true" />
+                  </span>
+                  <span className="text-sm font-medium text-foreground">
+                    <span className="text-primary">Click to browse</span> or drop a file here
+                  </span>
+                  <span className="text-xs text-muted-foreground">PDF, JPG or PNG · up to 5 MB</span>
+                  <input
+                    ref={inputRef}
+                    type="file"
+                    id="file"
+                    className="sr-only"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    onChange={(e) => selectFile(e.target.files?.[0])}
+                  />
+                </label>
+
                 {file && (
-                  <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded-md flex items-center text-sm border border-blue-100 dark:border-blue-900/50">
-                    <FileText className="w-4 h-4 mr-2 shrink-0" />
-                    <span className="truncate font-medium">{file.name}</span>
-                    <span className="ml-auto text-xs opacity-75">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                  <div className="flex items-center gap-3 rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 text-sm">
+                    <FileText className="size-4 shrink-0 text-primary" aria-hidden="true" />
+                    <span className="truncate font-medium text-foreground">{file.name}</span>
+                    <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFile(null);
+                        if (inputRef.current) inputRef.current.value = "";
+                      }}
+                      aria-label="Remove selected file"
+                      className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    >
+                      <X className="size-4" />
+                    </button>
                   </div>
                 )}
               </div>
 
               {error && (
-                <div className="p-4 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 rounded-md flex items-start text-sm border border-red-100 dark:border-red-900/40">
-                  <AlertCircle className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
+                <div role="alert" className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                   {error}
                 </div>
               )}
 
               {success && (
-                <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-md flex items-start text-sm border border-emerald-100 dark:border-emerald-900/40">
-                  <CheckCircle2 className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
+                <div role="status" className="flex items-start gap-3 rounded-xl border border-success/20 bg-success/10 px-4 py-3 text-sm text-success">
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                   <div>
-                    <p className="font-semibold">Document uploaded successfully!</p>
-                    <p className="text-xs opacity-90 mt-0.5">The checklist has been updated. You can now select and upload the next document.</p>
+                    <p className="font-medium">Document uploaded</p>
+                    <p className="text-xs opacity-90">Your checklist is updated. You can upload the next one.</p>
                   </div>
                 </div>
               )}
 
-              <Button onClick={handleUpload} disabled={!file || uploading} className="w-full h-11 text-base font-semibold">
-                {uploading ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading securely...</>
-                ) : (
-                  <><Upload className="w-4 h-4 mr-2" /> Upload Document</>
-                )}
+              <Button onClick={handleUpload} disabled={!file || uploading} className="h-11 rounded-full text-base">
+                {uploading ? <Loader2 className="animate-spin" /> : <Upload />}
+                {uploading ? "Uploading securely…" : "Upload document"}
               </Button>
 
-              <div className="pt-4 border-t border-border/60 text-center">
-                <p className="text-xs text-muted-foreground mb-2">Need help or prefer sending files directly?</p>
-                <a
-                  href={getDocumentHelpWhatsAppUrl(token)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
-                >
-                  <svg className="w-3.5 h-3.5 text-[#25D366]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-                  </svg>
-                  Send documents directly via WhatsApp Concierge
-                </a>
-              </div>
+              <p className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
+                Files are encrypted and only seen by our visa specialists.
+              </p>
             </div>
-          </div>
+          </DashboardCard>
+
+          <aside className="flex flex-col gap-6" aria-label="Checklist and help">
+            <DashboardCard aria-label="Document checklist">
+              <DashboardCardHeader
+                title="Your checklist"
+                action={
+                  progress && (
+                    <span className="text-sm text-muted-foreground">
+                      {progress.received}/{progress.total}
+                    </span>
+                  )
+                }
+              />
+              <ul className="flex flex-col gap-1 p-2">
+                {REQUIRED_DOCUMENTS.map((doc) => {
+                  const received = Boolean(appStatus?.[doc.key]);
+                  return (
+                    <li key={doc.key}>
+                      <button
+                        type="button"
+                        onClick={() => setDocType(doc.uploadType)}
+                        className={cn(
+                          "flex w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left transition-colors hover:bg-secondary",
+                          docType === doc.uploadType && "bg-secondary",
+                        )}
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-sm font-medium text-foreground">{doc.label}</span>
+                          <span className="block truncate text-xs text-muted-foreground">{doc.hint}</span>
+                        </span>
+                        {appStatus &&
+                          (received ? (
+                            <StatusBadge tone="success">Received</StatusBadge>
+                          ) : (
+                            <StatusBadge tone="warning">Needed</StatusBadge>
+                          ))}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {allComplete && (
+                <div className="border-t border-border/60 px-6 py-4 text-sm text-muted-foreground">
+                  All required documents are in. Our experts will take it from here.
+                </div>
+              )}
+            </DashboardCard>
+
+            <DashboardCard aria-label="Help" className="flex flex-col gap-3 bg-secondary/60 p-6">
+              <h2 className="text-base font-semibold tracking-tight text-foreground">Prefer WhatsApp?</h2>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Send your documents straight to a specialist and we&apos;ll add them to your file.
+              </p>
+              <a
+                href={getDocumentHelpWhatsAppUrl(token)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border/60 bg-background px-5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
+              >
+                <WhatsAppIcon className="size-4 text-whatsapp" />
+                Send on WhatsApp
+              </a>
+            </DashboardCard>
+          </aside>
         </div>
       </main>
       <Footer />
     </>
   );
 }
-
