@@ -17,6 +17,10 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.json()
+    const submittedAt = new Date().toISOString()
+    // The answers as the app stores them (additional_notes.wizard), so the app shows website submissions the same way.
+    const { draftId: _d, draftVersion: _v, ...answers } = formData ?? {}
+    const wizard = Object.fromEntries(Object.entries(answers).filter(([, v]) => v === null || ["string", "boolean", "number"].includes(typeof v) || Array.isArray(v)))
     
     // Sanitize inputs
     const sanitizedData = {
@@ -97,6 +101,11 @@ export async function POST(request: Request) {
         companyName: sanitizedData.companyName,
         monthlySalary: formData.monthlySalary,
         spouseAccompanying: formData.spouseAccompanying,
+        source: "website",
+        lastEditedOn: "website",
+        wizardStep: "payment",
+        submittedAt,
+        wizard,
       }),
     }
 
@@ -118,7 +127,7 @@ export async function POST(request: Request) {
           const base = typeof formData.draftVersion === "string" ? formData.draftVersion : null
           let q = supabase
             .from("visa_applications")
-            .update({ ...row, email: userEmail, additional_notes: JSON.stringify({ ...notes, ...JSON.parse(row.additional_notes), wizardStep: "payment" }), updated_at: new Date().toISOString() })
+            .update({ ...row, email: userEmail, additional_notes: JSON.stringify({ ...notes, ...JSON.parse(row.additional_notes), source: notes.source ?? "website", wizardQuestion: undefined, wizard: { ...((notes.wizard as object) ?? {}), ...wizard } }), updated_at: new Date().toISOString() })
             .eq("id", draftId)
             .eq("application_status", "draft")
           if (base) q = q.eq("updated_at", base)
