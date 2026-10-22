@@ -13,6 +13,7 @@ function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const [token, setToken] = useState<string>("")
   const [destination, setDestination] = useState<string>("")
+  const [appId, setAppId] = useState<string>("")
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -21,6 +22,7 @@ function PaymentSuccessContent() {
     const urlDest = searchParams.get("dest") || sessionStorage.getItem("lastCompletedDest") || ""
     
     setToken(urlToken || urlAppId)
+    setAppId(/^[0-9a-f-]{36}$/i.test(urlAppId) ? urlAppId : "")
     setDestination(urlDest)
 
     const cleanUpStorage = () => {
@@ -71,6 +73,20 @@ function PaymentSuccessContent() {
             <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary font-mono text-sm font-semibold">
               <span className="text-muted-foreground font-sans text-xs">Tracking Reference:</span>
               <span>#EZ-{token.substring(0, 8).toUpperCase()}</span>
+            </div>
+          )}
+
+          {/* Next: the answers asked after payment (passport number + employment), as in the app */}
+          {appId && (
+            <div className="mb-8 rounded-3xl border border-primary/20 bg-primary/5 p-6 text-left shadow-sm md:p-8">
+              <h2 className="text-base font-semibold tracking-tight text-foreground md:text-lg">Next: your passport number and employment</h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">We ask these after payment. It takes a minute.</p>
+              <Button asChild size="lg" className="mt-4 h-12 w-full rounded-xl px-6 text-sm font-semibold sm:w-auto">
+                <Link href={`/apply/continue/${appId}`}>
+                  Continue application
+                  <ArrowRight className="ml-2 size-4" />
+                </Link>
+              </Button>
             </div>
           )}
 

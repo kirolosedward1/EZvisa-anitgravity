@@ -1,11 +1,12 @@
 import Link from "next/link"
-import { CheckCircle2, Clock, Download, FileSearch, LifeBuoy, Printer, Upload, Wallet } from "lucide-react"
+import { Briefcase, CheckCircle2, Clock, Download, FileSearch, LifeBuoy, Printer, Upload, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PayNowButton } from "@/components/dashboard/pay-now-button"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { getDocumentProgress, type Stage } from "@/lib/application-status"
 import { getCaseTrackingWhatsAppUrl, getDocumentHelpWhatsAppUrl } from "@/lib/whatsapp"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import { needsContinue } from "@/lib/wizard-rules"
 
 const DOSSIER_CONTENTS = [
   "Step-by-step submission order",
@@ -19,6 +20,21 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
   const { missing } = getDocumentProgress(app)
 
   const content = (() => {
+    // Paid, but the after-payment answers are missing: same next action as the app ("Continue application").
+    if (stage !== "payment" && needsContinue(app))
+      return {
+        icon: Briefcase,
+        title: "Add your passport number and employment",
+        body: "We ask these after payment. It takes a minute, then you can upload your documents.",
+        actions: (
+          <Button asChild className="rounded-full px-5">
+            <Link href={`/apply/continue/${app.id}`}>
+              <Briefcase />
+              Continue application
+            </Link>
+          </Button>
+        ),
+      }
     switch (stage) {
       case "payment":
         return {

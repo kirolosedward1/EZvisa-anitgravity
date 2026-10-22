@@ -13,6 +13,9 @@ interface EmploymentStepProps {
   updateFormData: (data: FormDataUpdate) => void
   onNext: () => void
   onBack: () => void
+  /** Button labels; the after-payment page (/apply/continue/[id]) uses its own. */
+  submitLabel?: string
+  backLabel?: string
   isLoading?: boolean
 }
 
@@ -26,7 +29,7 @@ const toggleActiveStyles =
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
-export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoading }: EmploymentStepProps) {
+export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoading, submitLabel = "Continue to Trip Details", backLabel = "Back" }: EmploymentStepProps) {
   const [showErrors, setShowErrors] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -215,7 +218,7 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
           disabled={isLoading}
           className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base border border-border bg-background/40 hover:bg-background/80 text-foreground hover:text-foreground transition-all duration-300 active:scale-95 px-8"
         >
-          Back
+          {backLabel}
         </Button>
         <Button
           type="submit"
@@ -228,7 +231,7 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
               Processing...
             </>
           ) : (
-            "Continue to Trip Details"
+            submitLabel
           )}
         </Button>
       </div>
