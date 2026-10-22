@@ -1,9 +1,9 @@
 # EZvisa app: QA and release readiness (chat 15)
 
-Date: 22 Oct 2026. Code verified: `mobile/` on branch `claude/vibrant-wright-ez44ch` = **`origin/mobile-app` @ `463000b`** (chats 02–14, then 03, 06, 08, 09, 11 and `main`, all merged in) + the chat 15 commits in §7. `mobile-app` can fast-forward to it.
+Date: 22 Oct 2026. Code verified: `mobile/` on branch `claude/vibrant-wright-ez44ch` = **`origin/mobile-app` @ `89c1b26`** (chats 02–14, then 03, 06, 08, 09, 11, `main` and the passport-number move, all merged in) + the chat 15 commits in §7. `mobile-app` can fast-forward to it.
 Expo SDK 57.0.30, React Native 0.86.3, expo-router 57.
 
-> Chats 02–14, 03, 06, 08, 09 and 11 landed on `mobile-app` **while this QA was running** (09:19–10:30 UTC). This branch merged them three times, and every result below is from the **last merge**. Commits pushed to `mobile-app` after `463000b` are not covered.
+> Chats 02–14, 03, 06, 08, 09 and 11 landed on `mobile-app` **while this QA was running** (09:19–10:30 UTC). This branch merged them four times, and every result below is from the **last merge**. Commits pushed to `mobile-app` after `89c1b26` are not covered.
 
 ## 0. What could and could not be tested here
 
@@ -47,8 +47,8 @@ Legend: **PASS** verified by the method named · **FAIL** verified broken · **N
 |---|---|---|---|---|
 | 1 | Sign in | Email + password, wrong password, unconfirmed email, rate limit, no internet, double tap, magic link, reset password | PASS (mocked) / NOT RUN (live) | `auth-e2e-web.mjs` 29/29 |
 | 2 | Sign in | Signed-out start shows Welcome; guest can continue without an account | PASS (web) | walk check `welcome-signed-out`; `docs/qa/welcome.jpg` |
-| 3 | Wizard (pre-payment) | Destination → Nationality (visa-required) → Residence (UAE only) → City (7 emirates, no flags) → Emirates ID → name, email, phone, DOB → Valid passport → Passport number → Expiry | PASS (web, 10 runs) | checks `wizard-order`, `residence-uae-only`, `city-emirates`, `city-no-flags`; `wizard-04.jpg`, `wizard-11.jpg`, `wizard-12.jpg` |
-| 4 | Wizard | Valid passport "No" → "You can continue… add it later", Continue goes to Marital Status; Back + "Yes" → Passport Number | PASS (web, 10 runs) | `passport-no-note`, `passport-no-continues`, `back-to-passport`, `passport-number-after-valid`; `wizard-11-no.jpg` |
+| 3 | Wizard (pre-payment) | Destination → Nationality (visa-required) → Residence (UAE only) → City (7 emirates, no flags) → Emirates ID → name, email, phone, DOB → Valid passport → Expiry (the passport **number** is asked after payment since `527dab4`) | PASS (web, 10 runs) | checks `wizard-order`, `residence-uae-only`, `city-emirates`, `city-no-flags`, `expiry-after-valid`; `wizard-04.jpg`, `wizard-11.jpg`, `wizard-12.jpg` |
+| 4 | Wizard | Valid passport "No" → "You can continue… add it later", Continue goes to Marital Status; Back + "Yes" → Passport Expiry | PASS (web, 10 runs) | `passport-no-note`, `passport-no-continues`, `back-to-passport`, `expiry-after-valid`; `wizard-11-no.jpg`, `wizard-11-no-next.jpg` |
 | 5 | Wizard | Review shows "To get later: Valid passport, Emirates ID" and no missing-answer error | PASS (web, 8/8) | `review.jpg` (the button reads "Unavailable" only because this build has no Supabase key) |
 | 6 | Wizard (employed) | Continue application: job title + company, start date, salary, NOC optional ("No" → "add it later") | PASS (static) / NOT RUN | `app/continue/[id].tsx`; needs a paid application to render |
 | 7 | Wizard (self-employed) | Company + income, **no NOC**, NOC not in the checklist | PASS (static) | `continue/[id].tsx` (`hasNOC: emp ? … : ""`), `lib/questions.ts` (`applies: EMP`), `lib/data.ts listRequirements` |
@@ -104,10 +104,10 @@ Legend: **PASS** verified by the method named · **FAIL** verified broken · **N
 | No fake data | PASS after fixes | §4; open question S2-2 |
 | Nationality single, visa-required | PASS | `lib/questions.ts`, `lib/wizard.ts` `SCHENGEN_VISA_REQUIRED` |
 | Residence UAE only; city = 7 emirates, no flags | PASS | web checks |
-| Valid passport before passport number | PASS | question order + web check |
+| Valid passport before passport number | PASS | validity is asked in the wizard; the number after payment (`validatePassportNumber`, skipped when the answer is No) |
 | No NOC for self-employed | PASS | matrix #7 |
 | "No" to a document never blocks (owner, chat 15) | PASS | matrix #4/#5 |
-| Branch is mobile-app | PARTIAL | work is based on `mobile-app` and pushed to `claude/vibrant-wright-ez44ch` (this session can push only there). PR [#13](https://github.com/kirolosedward1/EZvisa-anitgravity/pull/13) was opened against **`main`**; it should target `mobile-app` (see WAITING FOR APPROVAL) |
+| Branch is mobile-app | PARTIAL | work is based on `mobile-app` and pushed to `claude/vibrant-wright-ez44ch` (this session can push only there). PR [#13](https://github.com/kirolosedward1/EZvisa-anitgravity/pull/13) now targets `mobile-app` (retargeted from `main` on the owner's approval) |
 
 ## 6. Open issues
 
@@ -176,7 +176,7 @@ Legend: **PASS** verified by the method named · **FAIL** verified broken · **N
 | `0bc7870` | no invented dossier file (superseded by chat 09's version in the merge) |
 | `d679575` | node checks build again after chat 03 (`expo-secure-store` stub) |
 | `1a50987` | **payment result reachable signed out** (guest whose app restarted) |
-| `e73b8ea`, `b47d7fe`, `cdce290` | merges of `mobile-app` (chats 02–14; 03, 08, 11; 06, 09 + main) |
+| `e73b8ea`, `b47d7fe`, `cdce290`, `fb04efc` | merges of `mobile-app` (chats 02–14; 03, 08, 11; 06, 09 + main; passport number after payment) |
 | `d4b6ebe`, this commit | QA report, evidence sheets, handoff |
 
 ## 8. EAS Update (preview)
