@@ -386,9 +386,16 @@ export async function uploadDocument(applicationId: string, file: { uri: string;
   }
 }
 
-/** Customer files are private (storage is service-role only on the live DB), so only the finished dossier can be opened,
- *  through the website's download route. Returns null when there is nothing the customer can open. */
-export async function openDocumentUrl(_path: string): Promise<string | null> { return null; }
+/** Signed links live this long: opened at once, useless to anyone a minute later. Never a public URL. */
+export const SIGNED_URL_SECONDS = 60;
+/** Short-lived signed link to one of the user's own files. Storage RLS decides: the read policy only covers the user's own
+ *  application folder (db/proposed-live-changes.sql block 2). Returns null when the file can't be opened by this user
+ *  (no path recorded, policy not in place, or someone else's file). */
+export async function openDocumentUrl(path: string): Promise<string | null> {
+  if (!path || !supabase) return null;
+  const { data, error } = await supabase.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS);
+  return error || !data?.signedUrl ? null : data.signedUrl;
+}
 
 // The live DB has no notifications table: the inbox is derived from the real application rows; read state is kept on the device.
 export type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null; application_id: string | null };
