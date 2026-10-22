@@ -1,14 +1,15 @@
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
 import type { Application } from "./data";
+import { notifications } from "./push";
 
-/** Opt-in local reminders (no server): travel date and passport expiry, scheduled on the device from real application data. */
+/** Opt-in local reminders (no server): travel date and passport expiry, scheduled on the device from real application data.
+ * Taps are routed by useNotificationRouting (lib/push.ts), the same as pushes. */
 const KEY = "ezvisa.reminders.v1";
 const PREFIX = "ezvisa-rem-";
 export const remindersSupported = Platform.OS !== "web";
 type N = typeof import("expo-notifications");
-const notif = (): N | null => { if (!remindersSupported) return null; try { return require("expo-notifications") as N; } catch { return null; } };
+const notif = (): N | null => (remindersSupported ? notifications() : null);
 
 const PP_KEY = "ezvisa.passportExpiry.v1";
 /** Passport expiry is not a website field, so it is kept on this phone only (Account -> Reminders). */
@@ -87,21 +88,6 @@ export async function syncReminders(apps: Application[]): Promise<number> {
     }
     return plan.length;
   } catch { return 0; }
-}
-
-/** Opens the application when a reminder is tapped. Returns a cleanup. Only loads the module once reminders were enabled. */
-export function startReminderRouting(): () => void {
-  let sub: { remove: () => void } | null = null; let dead = false;
-  remindersEnabled().then((on) => {
-    const N = on ? notif() : null;
-    if (!N || dead) return;
-    N.setNotificationHandler({ handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }) });
-    sub = N.addNotificationResponseReceivedListener((r) => {
-      const url = r.notification.request.content.data?.url;
-      if (typeof url === "string" && (url.startsWith("/applications/") || url === "/account" || url === "/apply")) router.push(url as any);
-    });
-  }).catch(() => {});
-  return () => { dead = true; sub?.remove(); };
 }
 
 const DRAFT_ID = PREFIX + "draft";
