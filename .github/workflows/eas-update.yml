@@ -1,0 +1,62 @@
+# Publishes the Expo app in mobile/ as an EAS Update on the "preview" channel (what Expo Go opens:
+# exp://u.expo.dev/a9cb0b0a-4ac8-41c4-a3b3-e4ae3ee1f243?channel-name=preview).
+# Runs on every push to mobile-app that touches mobile/ or this file. Needs one repository secret: EXPO_TOKEN
+# (expo.dev > Account settings > Access tokens). The Supabase values below are the public URL and publishable key
+# of the live project (they ship inside the app); never put a service-role key here.
+name: EAS Update (preview)
+
+on:
+  push:
+    branches: [mobile-app]
+    paths: ["mobile/**", ".github/workflows/eas-update.yml"]
+
+concurrency:
+  group: eas-update-preview
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_PUBLIC_SUPABASE_URL: https://dravvaykssrbktztmrlj.supabase.co
+      EXPO_PUBLIC_SUPABASE_ANON_KEY: sb_publishable_FnKWp14bwUgQXIV7p7VZhg_54GxVp6Y
+      EXPO_PUBLIC_SITE_URL: https://www.ezvisa.net
+    steps:
+      - name: Check EXPO_TOKEN
+        working-directory: .
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Add the EXPO_TOKEN repository secret (Settings > Secrets and variables > Actions), then re-run this job."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      - name: Export bundle
+        run: npx expo export --clear --platform ios --platform android --output-dir dist
+
+      - name: Check the bundle points at the live database
+        run: |
+          grep -rlq dravvaykssrbktztmrlj dist || { echo "::error::bundle does not contain dravvaykssrbktztmrlj"; exit 1; }
+          if grep -rlq rjbgteqgqaxalcfnksjc dist; then echo "::error::bundle contains the old project rjbgteqgqaxalcfnksjc"; exit 1; fi
+
+      - name: Publish EAS Update
+        run: |
+          MSG="$(git log -1 --format=%s)"
+          npx eas-cli@latest update --branch preview --environment preview --skip-bundler --input-dir dist \
+            --platform all --non-interactive --message "$MSG"

@@ -279,4 +279,4 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
 
 ---
 
-_Last updated: 2026-10-22 — adds the website ↔ app contract (`lib/shared`), the sync check and the shared auth flow; design system unchanged (Poppins + bright-blue, Atlys-style)._
+_Last updated: 2026-10-22 — adds the website ↔ app contract (`lib/shared`), the sync check and shared auth flow, plus the interactive `/app` page; design system unchanged (Poppins + bright-blue, Atlys-style)._

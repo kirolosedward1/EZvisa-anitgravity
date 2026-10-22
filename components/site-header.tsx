@@ -169,6 +169,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "FAQ", id: "faq", type: "scroll" },
     { label: "News", id: "/news", type: "link" },
     { label: "Videos", id: "/videos", type: "link" },
+    { label: "App", id: "/app", type: "link" },
   ]
 
   return (
@@ -185,7 +186,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           scrolled ? "py-2" : "py-4"
         }`}
       >
-        <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-6xl">
+        <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-7xl">
           <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
             scrolled || forceBackground || isWizardPage
               ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
@@ -203,7 +204,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
             </Link>
 
             {!isWizardPage && !hideNavigation && (
-              <nav className="hidden lg:flex items-center gap-1.5 px-2">
+              <nav className="hidden xl:flex items-center gap-1.5 px-1">
                 {navItems.map((item) => (
                   <div 
                     key={item.id} 
@@ -215,7 +216,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                       <>
                         <Link
                           href={item.id}
-                          className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer group whitespace-nowrap"
+                          className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer group whitespace-nowrap"
                         >
                           {item.label}
                           <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-all duration-300" />
@@ -274,14 +275,14 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                     ) : item.type === "scroll" ? (
                       <button
                         onClick={() => scrollToSection(item.id)}
-                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
+                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {item.label}
                       </button>
                     ) : (
                       <Link
                         href={item.id}
-                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
+                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {item.label}
                       </Link>
@@ -381,7 +382,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className={`${
-                  isWizardPage ? "flex" : "lg:hidden"
+                  isWizardPage ? "flex" : "xl:hidden"
                 } h-10 w-10 rounded-full transition-colors flex items-center justify-center border ${
                   isMenuOpen ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-secondary"
                 }`}

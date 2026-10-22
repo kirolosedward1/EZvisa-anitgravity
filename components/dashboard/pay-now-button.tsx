@@ -7,7 +7,7 @@ import { CreditCard, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-export function PayNowButton({ applicationId, destination, trackingToken, className, label = "Pay now" }: { applicationId: string; destination?: string | null; trackingToken?: string | null; className?: string; label?: string }) {
+export function PayNowButton({ applicationId, destination, trackingToken, className, label = "Pay now" }: { applicationId?: string; destination?: string | null; trackingToken?: string | null; className?: string; label?: string }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -15,6 +15,7 @@ export function PayNowButton({ applicationId, destination, trackingToken, classN
     setBusy(true)
     setError(null)
     try {
+      if (!applicationId) throw new Error("This application could not be identified.")
       const successUrl = new URL("/payment-success", window.location.origin)
       successUrl.searchParams.set("appId", applicationId)
       if (trackingToken) successUrl.searchParams.set("token", trackingToken)
