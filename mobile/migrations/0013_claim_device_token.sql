@@ -1,4 +1,5 @@
--- 0012: one push token = one account (same phone, two users).  NOT APPLIED. Needs owner approval.
+-- 0013: one push token = one account (same phone, two users).  APPROVED by the owner on 2026-10-22 (approved as "0012";
+-- renumbered because 0012_customer_profiles.sql has the same number). NOT YET APPLIED: run it in the ezvisa-uae SQL editor.
 -- Project: ezvisa-uae (dravvaykssrbktztmrlj). Depends on 0006 (device_tokens).
 --
 -- Problem today: device_tokens is unique on (user_id, token) and RLS lets a user touch only their own rows. If user A signs out

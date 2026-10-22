@@ -33,12 +33,14 @@ export function PressScale({ scaleTo = PRESS.scale, lift, style: style0, childre
 
 export function Button({ title, onPress, variant = "primary", size = "L", loading, disabled, icon, color, a11yLabel }: { title: string; onPress: () => void; variant?: "primary" | "secondary" | "plain" | "destructive"; size?: "L" | "M"; loading?: boolean; disabled?: boolean; icon?: IconName; color?: string; a11yLabel?: string }) {
   const c = useColors();
-  const bg = variant === "primary" ? (color ?? c.tintFill) : variant === "secondary" ? c.fill : "transparent";
-  const fg = variant === "primary" ? "#fff" : variant === "destructive" ? c.red : variant === "secondary" ? c.label : (color ?? c.tint);
+  // Primary: ink pill (a `color` keeps a coloured one, e.g. WhatsApp). Secondary: outlined. Plain: a blue text link.
+  const bg = variant === "primary" ? (color ?? c.primaryFill) : variant === "secondary" ? c.surface : "transparent";
+  const fg = variant === "primary" ? (color ? "#fff" : c.onPrimary) : variant === "destructive" ? c.red : variant === "secondary" ? c.label : (color ?? c.tint);
   const off = disabled || loading;
   return (
     <PressScale onPress={() => { tap(); onPress(); }} disabled={off} accessibilityRole="button" accessibilityLabel={a11yLabel ?? title} accessibilityState={{ disabled: !!disabled, busy: !!loading }}
-      style={[{ minHeight: size === "L" ? 56 : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: bg, opacity: disabled ? 0.4 : 1 }, curve, variant === "primary" && !off && elevation(1, false)]}>
+      style={[{ minHeight: size === "L" ? 48 : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: bg, opacity: disabled ? 0.4 : 1 },
+        variant === "secondary" && { borderWidth: 1, borderColor: c.border }, curve]}>
       {loading ? <ActivityIndicator color={fg} /> : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
           {!!icon && <Icon name={icon} size={ICON.md} color={fg} weight="semibold" />}
@@ -58,8 +60,8 @@ export function Surface({ children, style, level = 1 }: { children: React.ReactN
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginHorizontal: S.lg, marginBottom: S.sm, minHeight: S.xl }}>
-      <Text variant="title3" accessibilityRole="header" style={{ flexShrink: 1 }}>{title}</Text>
-      {!!action && <PressScale onPress={() => { tap(); onAction?.(); }} hitSlop={12} accessibilityRole="button"><Text variant="subhead" tone="secondary" weight="600">{action}</Text></PressScale>}
+      <Text variant="overline" tone="secondary" accessibilityRole="header" style={{ flexShrink: 1 }}>{title}</Text>
+      {!!action && <PressScale onPress={() => { tap(); onAction?.(); }} hitSlop={12} accessibilityRole="button"><Text variant="subhead" tone="accent" weight="600">{action}</Text></PressScale>}
     </View>
   );
 }
