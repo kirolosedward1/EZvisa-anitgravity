@@ -40,7 +40,7 @@ const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Da
 const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
 const AUTO_MS = 260;
 /** Stable personal answers that can be reused from the last application (trip answers are never copied). */
-const PREFILL_KEYS: (keyof WizardForm)[] = ["nationality", "cityOfResidence", "hasEmiratesId", "firstName", "lastName", "phone", "phoneCountry", "phoneLocal", "dateOfBirth", "passportNumber", "maritalStatus",
+const PREFILL_KEYS: (keyof WizardForm)[] = ["nationality", "cityOfResidence", "hasEmiratesId", "firstName", "lastName", "phone", "phoneCountry", "phoneLocal", "dateOfBirth", "maritalStatus",
   "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
 const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });
 const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];

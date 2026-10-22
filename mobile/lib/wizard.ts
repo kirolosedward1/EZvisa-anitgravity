@@ -84,6 +84,13 @@ export const showSpouse = (f: WizardForm) => f.maritalStatus === "married" && f.
 export const visibleSteps = (f: WizardForm): WizardStep[] => (showSpouse(f) ? ["personal", "spouse", "trip-details", "payment"] : ["personal", "trip-details", "payment"]);
 /** Employment answers complete (website rules, validateEmployment). */
 export const employmentComplete = (f: Partial<WizardForm>) => Object.keys(validateEmployment({ ...emptyForm, ...f } as WizardForm)).length === 0;
+/** Passport number, asked after payment (app/continue/[id].tsx). Required (website rule) unless there is no valid passport. */
+export function validatePassportNumber(f: Pick<WizardForm, "hasValidPassport" | "passportNumber">): Errors {
+  return f.hasValidPassport !== "no" && !(f.passportNumber ?? "").trim() ? { passportNumber: "Passport number is required" } : {};
+}
+/** Everything the app asks after payment (Continue application): passport number + employment. */
+export const continueComplete = (f: Partial<WizardForm>) =>
+  employmentComplete(f) && Object.keys(validatePassportNumber({ hasValidPassport: f.hasValidPassport ?? "", passportNumber: f.passportNumber ?? "" })).length === 0;
 /** URL step slug -> step; "documents" is the web's legacy alias for payment; unknown -> personal. */
 export function parseStep(s?: string): WizardStep {
   if (s === "documents") return "payment";
@@ -136,7 +143,7 @@ export function validatePersonal(f: WizardForm): Errors {
   if (!f.hasValidPassport) e.hasValidPassport = "Please choose Yes or No";
   else if (f.hasValidPassport === "no") e.hasValidPassport = "You need a valid passport (at least 6 months validity from your travel date) before applying.";
   else {
-    if (!f.passportNumber.trim()) e.passportNumber = "Passport number is required";
+    // The passport NUMBER is asked after payment (Continue application, validatePassportNumber); validity and expiry stay here.
     // App-only field (kept in the wizard notes JSON; no DB column): valid >= 3 months after the return date.
     if (!f.passportExpiry) e.passportExpiry = "Please select your passport expiry date";
     else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date";
