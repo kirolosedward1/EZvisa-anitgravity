@@ -17,6 +17,8 @@ export interface FormData {
   hasValidPassport: "yes" | "no" | undefined
   dateOfBirth: string
   passportNumber: string
+  /** ISO date; must cover the return date + 3 months (same rule as the app). */
+  passportExpiry: string
 
   // Spouse Step
   spouseFirstName: string

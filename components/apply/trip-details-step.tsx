@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
+import { passportCoversTrip } from "@/lib/wizard-rules"
 
 interface TripDetailsStepProps {
   formData: FormData
@@ -184,7 +185,8 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
     formData.travelStartDate &&
     formData.travelEndDate &&
     new Date(formData.travelEndDate) > new Date(formData.travelStartDate) &&
-    tripDuration <= 90
+    tripDuration <= 90 &&
+    passportCoversTrip(formData)
 
   const isFormValid =
     formData.purposeOfTrip &&
@@ -267,6 +269,9 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
             onChange={(val) => handleFieldChange("travelEndDate", val)}
             className={cn(getErrorClass(formData.travelEndDate))}
           />
+          {formData.travelEndDate && !passportCoversTrip(formData) && (
+            <p className="text-xs text-red-600 mt-1">Passport must be valid at least 3 months after your return date</p>
+          )}
         </div>
 
         {tripDuration > 0 && (

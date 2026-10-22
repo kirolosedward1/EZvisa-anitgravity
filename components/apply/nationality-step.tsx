@@ -1,6 +1,8 @@
 "use client"
 
 import { DEFAULT_RESIDENCE, UAE_EMIRATES } from "@/lib/residence"
+import { UAE_NATIONALITIES, OTHER_NATIONALITIES, flagSrc } from "@/lib/nationalities"
+import { passportCoversTrip, isoToday } from "@/lib/wizard-rules"
 import type React from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -18,19 +20,6 @@ interface NationalityStepProps {
   onNext: () => void
   isLoading?: boolean
 }
-
-const nationalityCountries = [
-  { name: "Egypt", flag: "🇪🇬" },
-  { name: "India", flag: "🇮🇳" },
-  { name: "Jordan", flag: "🇯🇴" },
-  { name: "Pakistan", flag: "🇵🇰" },
-  { name: "Russian Federation", flag: "🇷🇺" },
-  { name: "Syria", flag: "🇸🇾" },
-  { name: "United Arab Emirates", flag: "🇦🇪" },
-  { name: "Saudi Arabia", flag: "🇸🇦" },
-  { name: "Philippines", flag: "🇵🇭" },
-  { name: "Bangladesh", flag: "🇧🇩" },
-]
 
 const residenceCountries = [
   { name: "United Arab Emirates", flag: "🇦🇪" },
@@ -167,6 +156,8 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
     formData.dateOfBirth &&
     formData.hasValidPassport === "yes" &&
     formData.passportNumber &&
+    formData.passportExpiry &&
+    passportCoversTrip(formData) &&
     formData.maritalStatus &&
     (formData.maritalStatus !== "married" ||
       formData.spouseAccompanying === "yes" ||
@@ -299,14 +290,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
               >
                 {formData.nationality ? (
                   <div className="flex items-center gap-2">
-                    <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
-                      <Image
-                        src={`/flags/${formData.nationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
+                    <NationalityFlag name={formData.nationality} />
                     <span className="font-medium text-foreground">{formData.nationality}</span>
                   </div>
                 ) : (
@@ -320,37 +304,30 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
                 <CommandInput placeholder="Search nationality..." autoFocus={!isMobile} className="border-none focus:ring-0" />
                 <CommandList>
                   <CommandEmpty>No nationality found.</CommandEmpty>
-                  <CommandGroup>
-                    {nationalityCountries.map((country) => (
-                      <CommandItem
-                        key={country.name}
-                        value={country.name}
-                        className="rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
-                        onSelect={() => {
-                          updateFormData({ nationality: country.name })
-                          setNationalityOpen(false)
-                          setShowErrors(false)
-                          trackEvent("nationality_selected", { nationality: country.name })
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4 text-blue-600",
-                            formData.nationality === country.name ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block mr-2 flex-shrink-0 border border-border/50">
-                          <Image
-                            src={`/flags/${country.name.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                            alt=""
-                            fill
-                            className="object-cover"
-                          />
-                        </span>
-                        <span className="text-foreground">{country.name}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
+                  {/* Same list as the app: only nationalities that need a Schengen visa; common UAE ones first. */}
+                  {[{ heading: "Common", names: UAE_NATIONALITIES }, { heading: "All nationalities", names: OTHER_NATIONALITIES }].map((group) => (
+                    <CommandGroup key={group.heading} heading={group.heading}>
+                      {group.names.map((name) => (
+                        <CommandItem
+                          key={name}
+                          value={name}
+                          className="rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
+                          onSelect={() => {
+                            updateFormData({ nationality: name })
+                            setNationalityOpen(false)
+                            setShowErrors(false)
+                            trackEvent("nationality_selected", { nationality: name })
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4 text-primary", formData.nationality === name ? "opacity-100" : "opacity-0")} />
+                          <span className="mr-2">
+                            <NationalityFlag name={name} />
+                          </span>
+                          <span className="text-foreground">{name}</span>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  ))}
                 </CommandList>
               </Command>
             </PopoverContent>
@@ -570,7 +547,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
               type="button"
               className={cn("flex-1", formData.hasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
               onClick={() => {
-                updateFormData({ hasValidPassport: "no", passportNumber: "" })
+                updateFormData({ hasValidPassport: "no", passportNumber: "", passportExpiry: "" })
                 setShowErrors(false)
               }}
             >
@@ -614,6 +591,33 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           />
           {showErrors && !formData.passportNumber && (
             <p className="text-xs text-red-600 mt-1">Please enter your passport number</p>
+          )}
+        </div>
+        )}
+
+        {/* Passport Expiry Date (same rule as the app: valid 3+ months after the return date) */}
+        {formData.hasValidPassport === "yes" && (
+        <div>
+          <label htmlFor="passportExpiry" className={labelStyles}>
+            Passport Expiry Date *
+          </label>
+          <input
+            id="passportExpiry"
+            type="date"
+            value={formData.passportExpiry || ""}
+            min={isoToday()}
+            onChange={(e) => {
+              handleFieldChange("passportExpiry", e.target.value)
+              setShowErrors(false)
+            }}
+            required
+            className={cn(inputStyles, "w-full", getErrorClass(formData.passportExpiry))}
+          />
+          {showErrors && !formData.passportExpiry && (
+            <p className="text-xs text-red-600 mt-1">Please select your passport expiry date</p>
+          )}
+          {formData.passportExpiry && !passportCoversTrip(formData) && (
+            <p className="text-xs text-red-600 mt-1">Passport must be valid at least 3 months after your return date</p>
           )}
         </div>
         )}
@@ -694,5 +698,15 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
         </Button>
       </div>
     </form>
+  )
+}
+
+/** Flag for a nationality when we have the image, otherwise a neutral globe (no emoji). */
+function NationalityFlag({ name }: { name: string }) {
+  const src = flagSrc(name)
+  return (
+    <span className="relative inline-flex size-5 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/50 bg-secondary">
+      {src ? <Image src={src} alt="" fill className="object-cover" /> : <Globe className="size-3 text-muted-foreground" aria-hidden />}
+    </span>
   )
 }

@@ -17,6 +17,7 @@ import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useDraftSync, type ServerDraft } from "@/lib/draft-sync"
+import { needsSchengenVisa } from "@/lib/nationalities"
 import { DraftStatus, DraftConflictDialog } from "@/components/apply/draft-status"
 
 const WIZARD_STORAGE_KEY = "visa_wizard_data"
@@ -34,6 +35,7 @@ interface WizardFormData {
   whatsappOptIn?: boolean
   dateOfBirth: string
   passportNumber: string
+  passportExpiry: string
   maritalStatus: "single" | "married" | "divorced" | "widowed" | ""
   employmentStatus: "employed" | "business" | "freelancer" | "student" | "unemployed" | "retired" | ""
   spouseNationality?: string
@@ -116,6 +118,7 @@ const defaultFormData: WizardFormData = {
   whatsappOptIn: true,
   dateOfBirth: "",
   passportNumber: "",
+  passportExpiry: "",
   maritalStatus: "",
   employmentStatus: "",
   jobTitle: "",
@@ -199,17 +202,20 @@ function ApplyPageContent() {
     setFormData(coerceResidence({ ...defaultFormData, ...(d.wizard as Partial<WizardFormData>) }))
     setCurrentStep(getStepNumber(d.step))
   }, [])
-  const draft = useDraftSync({ form: formData, step: getStepSlug(currentStep), ready: isInitialized && !showResumeModal, onLoad: handleServerDraft })
+  const [answered, setAnswered] = useState(false) // a real answer (not a link pre-fill or profile auto-fill)
+  const draft = useDraftSync({ form: formData, step: getStepSlug(currentStep), ready: isInitialized && !showResumeModal, answered, onLoad: handleServerDraft })
 
   const isUpdatingUrl = useRef(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const wizardContainerRef = useRef<HTMLDivElement>(null)
   const isMounted = useRef(false)
 
-  // Residence UAE only, city = emirate: coerce restored drafts and links (invalid city is cleared).
+  // Same rules as the app: residence UAE only, city = emirate, nationality only from the visa-required list. Restored
+  // drafts and links are coerced (an invalid city or a visa-exempt nationality is cleared so it is picked again).
   useEffect(() => {
     const c = coerceResidence(formData)
-    if (c.countryOfResidence !== formData.countryOfResidence || c.cityOfResidence !== formData.cityOfResidence) setFormData(c)
+    const nationality = formData.nationality && !needsSchengenVisa(formData.nationality) ? "" : formData.nationality
+    if (c.countryOfResidence !== formData.countryOfResidence || c.cityOfResidence !== formData.cityOfResidence || nationality !== formData.nationality) setFormData({ ...c, nationality })
   }, [formData])
 
   const handleContinuePrevious = useCallback(() => {
@@ -227,6 +233,7 @@ function ApplyPageContent() {
         ...(travelStartDate && { travelStartDate }),
         ...(travelEndDate && { travelEndDate }),
       })
+      setAnswered(true) // restored answers count as answered (the app saves a restored draft too)
     }
     setShowResumeModal(false)
   }, [pendingSavedData, searchParams])
@@ -234,6 +241,7 @@ function ApplyPageContent() {
   const handleStartFresh = useCallback(() => {
     localStorage.removeItem(WIZARD_STORAGE_KEY)
     draft.forget()
+    setAnswered(false)
     const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
     const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
     const travelStartDate = searchParams.get("travelStartDate") || ""
@@ -559,6 +567,7 @@ function ApplyPageContent() {
 
   const updateFormData = useCallback((data: Partial<WizardFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }))
+    setAnswered(true) // steps call this only on user input
   }, [])
 
   useEffect(() => {
@@ -802,7 +811,14 @@ function ApplyPageContent() {
         </div>
       </div>
 
-      <DraftConflictDialog conflict={draft.conflict} onChoose={draft.resolveConflict} />
+      <DraftConflictDialog
+        conflict={draft.conflict}
+        onChoose={(choice) => {
+          const closed = draft.conflict?.reason === "closed" // submitted elsewhere: open it, like the app
+          draft.resolveConflict(choice)
+          if (closed) router.push("/dashboard")
+        }}
+      />
 
       {showResumeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 md:backdrop-blur-md animate-in fade-in duration-200">
