@@ -164,7 +164,7 @@ export default function ApplicationDetail() {
         </ListGroup>
         {!!list.ezvisa.length && (
           <ListGroup header={t("We prepare these")} inset={58}>
-            {list.ezvisa.map((i) => <CheckRow key={i.req.id} i={i} busy={false} canUpload={false} onPress={i.doc ? () => open(i.doc!.storage_path) : undefined} />)}
+            {list.ezvisa.map((i) => <CheckRow key={i.req.id} i={i} busy={false} canUpload={false} onPress={i.doc?.storage_path ? () => open(i.doc!.storage_path) : undefined} />)}
           </ListGroup>
         )}
       </>) : <View style={{ marginHorizontal: S.lg, marginBottom: S.xl }}><Skeleton h={120} r={R.card} /></View>}

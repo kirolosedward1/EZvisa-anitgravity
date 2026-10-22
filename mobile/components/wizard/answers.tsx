@@ -85,7 +85,7 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header, s
           <Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />
           <TextInput value={q} onChangeText={setQ} placeholder={t(searchPlaceholder)} placeholderTextColor={c.secondaryLabel} autoCorrect={false} returnKeyType="search" accessibilityLabel={t(searchPlaceholder)}
             style={[T.body, { flex: 1, color: c.label, paddingVertical: S.sm }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
-          {!!q && <PressScale onPress={() => setQ("")} accessibilityRole="button" accessibilityLabel={t("Clear search")} hitSlop={10}><Icon name="xmark.circle.fill" size={16} color={c.tertiaryLabel} /></PressScale>}
+          {!!q && <PressScale onPress={() => setQ("")} accessibilityRole="button" accessibilityLabel={t("Clear search")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}><Icon name="xmark.circle.fill" size={16} color={c.tertiaryLabel} /></PressScale>}
         </View>}
       </View>}
       ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>{t("No country found.")}</Text>}
@@ -191,11 +191,11 @@ export function AdditionalCountries({ f, onChange }: { f: WizardForm; onChange: 
             <PressScale onPress={() => { setNc(""); setNa(""); setNd(""); setErr(""); }} accessibilityRole="button" accessibilityLabel={t("Cancel")} style={{ minHeight: 44, justifyContent: "center" }}><Text variant="subhead" tone="tint" weight="600">{t("Cancel")}</Text></PressScale>
           </View>
           <Text variant="footnote" tone="secondary" weight="600">{t("Arrival Date")}</Text>
-          <DateAnswer label={t("Arrival Date")} value={na} style="calendar" placeholder="Select arrival date" min={f.travelStartDate || todayIso} max={f.travelEndDate || undefined}
+          <DateAnswer label={t("Arrival Date")} value={na} style="calendar" placeholder={t("Select arrival date")} min={f.travelStartDate || todayIso} max={f.travelEndDate || undefined}
             onChange={(v) => { setNa(v); setErr(""); if (nd && v && nd <= v) { setNd(""); setErr(t("Departure date must be after arrival date")); } }} />
           {!!na && <>
             <Text variant="footnote" tone="secondary" weight="600">{t("Departure Date")}</Text>
-            <DateAnswer label={t("Departure Date")} value={nd} style="calendar" placeholder="Select departure date" min={dayAfter(na)} max={f.travelEndDate || undefined}
+            <DateAnswer label={t("Departure Date")} value={nd} style="calendar" placeholder={t("Select departure date")} min={dayAfter(na)} max={f.travelEndDate || undefined}
               onChange={(v) => { if (na && v <= na) { setErr(t("Departure date must be after arrival date")); return; } setErr(""); setNd(v); }} />
           </>}
           {!!err && <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{err}</Text></Note>}

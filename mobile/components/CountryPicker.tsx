@@ -9,9 +9,10 @@ import { CircleButton } from "./flow";
 import { useColors, S, R, T, curve } from "../lib/theme";
 import { WORLD } from "../lib/world";
 import { select } from "../lib/haptics";
+import { useT } from "../lib/i18n";
 
 export function CountrySheet({ visible, title, onClose, onPick, selected, selectedName, showDial, names, searchPlaceholder = "Search country or code" }: { visible: boolean; title: string; onClose: () => void; onPick: (iso2: string, name: string) => void; selected?: string; selectedName?: string; showDial?: boolean; names?: string[]; searchPlaceholder?: string }) {
-  const c = useColors(); const insets = useSafeAreaInsets(); const [q, setQ] = useState("");
+  const c = useColors(); const insets = useSafeAreaInsets(); const [q, setQ] = useState(""); const { t: tr } = useT();
   const list = useMemo(() => {
     const t = q.trim().toLowerCase().replace(/^\+/, "");
     const base = names ? names.map((n) => WORLD.find((w) => w.name === n) ?? { name: n, iso2: n, dial: 0 }) : showDial ? WORLD.filter((w) => w.dial > 0) : WORLD;
@@ -29,7 +30,7 @@ export function CountrySheet({ visible, title, onClose, onPick, selected, select
         </View>
         <FlatList data={list} keyExtractor={(w) => w.iso2} keyboardShouldPersistTaps="handled" initialNumToRender={20} maxToRenderPerBatch={12} windowSize={7} removeClippedSubviews={Platform.OS === "android"}
           contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: insets.bottom + S.lg }}
-          ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>No country found.</Text>}
+          ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>{tr("No country found.")}</Text>}
           renderItem={({ item: w }) => {
             const on = selectedName ? w.name === selectedName : w.iso2 === selected;
             return (

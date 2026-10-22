@@ -17,7 +17,8 @@ Open in Expo Go from the `preview` branch. Run every section on both devices; ti
 
 ## 2. Wizard (pre-payment)
 - [ ] Destination → Nationality (visa-required only) → Residence fixed to UAE → City = 7 emirates
-- [ ] Valid passport "No" shows the note and blocks Continue; "Yes" asks number + expiry
+- [ ] Valid passport "No" shows "You can continue… add it later" and Continue goes on (no number/expiry asked); "Yes" asks number + expiry
+- [ ] Emirates ID "No" (and spouse passport "No", NOC "No" after payment) shows the same kind of note; Review shows "To get later: …"; the application page lists them under "To get later"
 - [ ] Expiry < return date + 3 months shows the inline error
 - [ ] DOB wheel is full width; inline calendars fill their card
 - [ ] Return-date quick picks (1w/2w/3w/1m) set the right date

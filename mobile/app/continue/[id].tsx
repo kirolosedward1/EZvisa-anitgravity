@@ -89,7 +89,7 @@ export default function ContinueApplication() {
             {input("companyName", "Company Name", "Enter company name", { ref: companyRef, ct: "organizationName" })}
             <View style={{ gap: S.xs }}>
               <Text variant="footnote" weight="600" tone="secondary">{t("Employment Start Date")}</Text>
-              <DateAnswer label={t("Employment Start Date")} value={f.employmentStartDate} onChange={(v) => set({ employmentStartDate: v })} max={iso(new Date())} style="wheel" placeholder="Select start date" />
+              <DateAnswer label={t("Employment Start Date")} value={f.employmentStartDate} onChange={(v) => set({ employmentStartDate: v })} max={iso(new Date())} style="wheel" placeholder={t("Select start date")} />
             </View>
             <View style={{ gap: S.xs }}>
               <Text variant="footnote" weight="600" tone="secondary">{t("Monthly Salary Range")}</Text>
