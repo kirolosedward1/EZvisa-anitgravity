@@ -13,9 +13,9 @@ import { lockSupported, lockEnabled, setLockEnabled, biometricLabel, lockAfter, 
 import { DateAnswer } from "../../../components/wizard/answers";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ListGroup, ListRow, Flag, Avatar, Text, Button, Icon, SegmentedControl, useTabInset } from "../../../components/ui";
+import { ListGroup, ListRow, Flag, Avatar, Text, Button, Icon, SegmentedControl, PressScale, useTabInset } from "../../../components/ui";
 import { useAppearance, type AppearancePref } from "../../../lib/appearance";
-import { useColors, S, R } from "../../../lib/theme";
+import { useColors, S, R, ICON } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
 import { whatsapp, email as mailSupport } from "../../../lib/api";
 import { useApps } from "../../../lib/useApps";
@@ -186,13 +186,18 @@ export default function Account() {
   return (
     <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={{ alignItems: "center", gap: S.xs, marginBottom: S.xxl }} accessible accessibilityLabel={`${full}, ${u.email}`}>
-        <Avatar name={full} size={88} uri={photo} />
-        <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
-        <Text variant="subhead" tone="secondary">{u.email}</Text>
-      </View>
-      <View style={{ alignItems: "center", marginTop: -S.xl, marginBottom: S.xl }} testID="avatar-edit">
-        <Button title={photo ? t("Edit photo") : t("Add photo")} variant="plain" size="M" onPress={editPhoto} />
+      <View style={{ alignItems: "center", gap: S.xs, marginBottom: S.xxl }}>
+        {/* Tap the avatar (small + badge) to add, change or remove the profile photo. */}
+        <PressScale onPress={editPhoto} accessibilityRole="button" accessibilityLabel={photo ? t("Edit photo") : t("Add photo")} testID="avatar-edit">
+          <Avatar name={full} size={88} uri={photo} />
+          <View style={{ position: "absolute", end: 0, bottom: 0, width: 28, height: 28, borderRadius: R.round, backgroundColor: c.accentFill, borderWidth: 2, borderColor: c.bg, alignItems: "center", justifyContent: "center" }}>
+            <Icon name={photo ? "pencil" : "plus"} size={ICON.sm} color={c.onAccent} weight="bold" />
+          </View>
+        </PressScale>
+        <View style={{ alignItems: "center", gap: S.xs }} accessible accessibilityLabel={`${full}, ${u.email}`}>
+          <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
+          <Text variant="subhead" tone="secondary">{u.email}</Text>
+        </View>
       </View>
       <ListGroup header={t("Account details")} inset={16}>
         <ListRow title={t("Name")} value={full} />
