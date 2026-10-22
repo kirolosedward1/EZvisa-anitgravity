@@ -42,7 +42,7 @@ const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").t
 const AUTO_MS = 260;
 /** Other stable answers the user can reuse from the last application with one tap (trip answers are never copied).
  *  The profile fields (name, nationality, date of birth, passport validity and expiry, phone) are prefilled on their own, see lib/profile.ts. */
-const PREFILL_KEYS: (keyof WizardForm)[] = ["cityOfResidence", "hasEmiratesId", "maritalStatus",
+const PREFILL_KEYS: (keyof WizardForm)[] = ["cityOfResidence", "maritalStatus",
   "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
 const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });
 const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
