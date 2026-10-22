@@ -23,6 +23,7 @@ import { lastCrash } from "../../../lib/crash";
 import { startupHistory } from "../../../lib/perf";
 import { pendingEvents } from "../../../lib/analytics";
 import Constants from "expo-constants";
+import NetInfo from "@react-native-community/netinfo";
 import { useForm } from "../../../lib/form";
 
 export default function Account() {
@@ -153,8 +154,11 @@ export default function Account() {
   const signOut = async () => {
     const saved = await saveBeforeSignOut().catch(() => false);
     const n = pendingUploads();
+    // This phone's push token is removed with the session (lib/auth.tsx); offline it stays until someone signs in here again.
+    const offline = (await NetInfo.fetch().catch(() => null))?.isConnected === false;
     const note = [!saved && t("Your latest answers aren't saved to your account yet. Signing out removes them from this phone."),
-      n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : saved && t("Your applications stay in your account.")].filter(Boolean).join("\n\n");
+      n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : saved && t("Your applications stay in your account."),
+      offline && t("You're offline, so this phone may still get this account's notifications.")].filter(Boolean).join("\n\n");
     if (Platform.OS === "web") { endSession(); return; }
     Alert.alert(t("Sign out?"), note, [{ text: t("Cancel"), style: "cancel" }, { text: t("Sign out"), style: "destructive", onPress: () => { endSession(); } }]);
   };
