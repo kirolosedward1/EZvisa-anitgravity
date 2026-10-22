@@ -9,18 +9,18 @@ Expo SDK 57.0.30, React Native 0.86.3, expo-router 57.
 
 **What happened.** PR #13 was rebase-merged into `mobile-app` (de3c31a) on top of chat 02's token commits, and the rebase **silently dropped most of chat 15's code**. Lost: the owner's document rule ("No" → get it later), the Arabic fixes for the notifications, country page, offline banner, tab bar and Google button, the removal of two dead files, and the extra Arabic keys. Commit c2a01ba, for example, kept only its two Markdown files. Then 8651059 moved all document questions after payment. This review restored the lost work on the current `mobile-app` (8651059) and re-verified everything.
 
-**Baseline vs final** (same script, `mobile-app` 8651059 vs this branch):
+**Baseline vs final** (same script; baseline = `mobile-app` 8651059, final = this branch merged with `mobile-app` 0640e4c):
 
 | Check | Baseline 8651059 | Final (this branch) |
 |---|---|---|
 | `npx tsc --noEmit` | 0 errors | 0 errors |
-| `npx eslint .` | 0 errors / 150 warnings | 0 errors / 148 warnings |
-| privacy · secure storage · timeline · payment split | 24/24 · 12/12 · pass · pass | 24/24 · 12/12 · pass · pass |
+| `npx eslint .` | 0 errors / 150 warnings | 0 errors / 152 warnings |
+| privacy · secure storage · timeline · payment split | 24/24 · 12/12 · pass · pass | 41/41 · 12/12 · pass · pass (+ appointment-check, drafts-check: pass) |
 | upload queue (`run-upload-tests.mjs`) | **does not build** (stub lacks `useWindowDimensions`) | 24/24 |
 | `missing-docs-check.ts` (new) | n/a (no `missingDocs`) | 27/27 |
 | iOS / Android bundle (`--clear`) | ok, clean | ok, clean (no old DB ref, service role, secret key or vercel.app) |
 | payment e2e | 20/20 | 20/20 |
-| drafts e2e | **16/17** (test still clicked a radio on the new name screen) | 17/17 |
+| drafts e2e · drafts QA e2e | **16/17** (test still clicked a radio on the new name screen) · n/a | 17/17 · 7/7 |
 | `e2e-continue-web.mjs` (new), EN and AR | **6 of 18 fail** (no NOC note, no "To get later", empty `missingDocuments`) | 19/19 each |
 | sign-in e2e | 29/29 | 29/29 |
 | web walk, 10 runs (390/430, light/dark, EN/AR, largest text) | script out of date for the new wizard | 215 checks, 0 failed |
@@ -32,6 +32,8 @@ Expo SDK 57.0.30, React Native 0.86.3, expo-router 57.
 4. Arabic regressions: notifications, country page (including the 29 capitals), offline banner, tab bar +, Google button, Retry; 61 keys restored.
 5. `steps.tsx` / `payment.tsx` were back; removed again (not imported).
 6. Tests: the upload-queue test didn't build; the drafts e2e followed the old wizard. Both fixed without weakening any assertion.
+
+**Merge note:** `mobile-app` moved again (0640e4c: chats 06/11/14 QA fixes, Sentry, funnel analytics) and was merged in; all results above are on that merge (138bf70).
 
 **EAS Update:** the new CI job (`.github/workflows/eas-update.yml`) publishes on every push to `mobile-app`. Latest run: **update group `8094bb9f-0bd6-4cbf-9096-028bed31eaa6`** (preview, runtime exposdk:57.0.0, commit 8651059). The job verified the bundle contains `dravvaykssrbktztmrlj` and not the old project. That bundle **does not include the fixes above**; CI publishes a new one when this branch is merged into `mobile-app`.
 
