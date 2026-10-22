@@ -58,7 +58,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "test": "for tz in Asia/Dubai UTC America/Los_Angeles; do TZ=$tz node --import ./scripts/ts-resolve.mjs --test scripts/validation.test.ts || exit 1; done",
+    "typecheck": "tsc --noEmit"
   },
   "private": true
 }

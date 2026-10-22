@@ -10,14 +10,14 @@ import { useColors, useIsDark, S, R, T, curve, ICON } from "../../lib/theme";
 import { select } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 import { SCHENGEN, iso, type WizardForm } from "../../lib/wizard";
+import { addDays, fromIso, isIsoDate, todayIso } from "../../lib/dates";
+import { useDateLocale } from "../../lib/locale";
 import type { Opt } from "../../lib/questions";
 import { Note } from "./fields";
 
-const parse = (s: string) => (s ? new Date(s + "T12:00:00") : undefined);
-export const useFmtDate = () => {
-  const { lang } = useT();
-  return (s: string) => (s ? parse(s)!.toLocaleDateString(lang === "ar" ? "ar" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
-};
+const parse = (s: string) => (isIsoDate(s) ? fromIso(s) : undefined);
+/** "22 October 2026" in the phone's locale (lib/locale.ts); the stored value stays YYYY-MM-DD. */
+export const useFmtDate = () => useDateLocale().long;
 
 /** One big answer row. Selected = brand fill + check. */
 export function AnswerRow({ label, selected, onPress, country, testID }: { label: string; selected?: boolean; onPress: () => void; country?: string; testID?: string }) {
@@ -96,7 +96,7 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header, s
 /** Native date answer. iOS: inline calendar or wheel on the screen. Android: system dialog. Web: <input type=date>.
  *  `onDraft` reports the date the picker currently shows, so Continue can accept it without an extra tap. */
 export function DateAnswer({ label, value, onChange, min, max, style, placeholder, defaultDate }: { label: string; value: string; onChange: (v: string) => void; min?: string; max?: string; style: "calendar" | "wheel"; placeholder?: string; defaultDate?: string }) {
-  const c = useColors(); const dark = useIsDark(); const fmt = useFmtDate(); const { t, lang } = useT();
+  const c = useColors(); const dark = useIsDark(); const L = useDateLocale(); const fmt = L.long; const { t, lang } = useT();
   const [open, setOpen] = useState(false); const [w, setW] = useState(0);
   const minD = min ? parse(min) : undefined, maxD = max ? parse(max) : undefined;
   const now = new Date();
@@ -131,14 +131,14 @@ export function DateAnswer({ label, value, onChange, min, max, style, placeholde
         // UIDatePicker keeps its intrinsic width unless given a number: measure the row and centre the wheel in it (no card).
         <View onLayout={(ev) => setW(Math.round(ev.nativeEvent.layout.width))} style={{ alignSelf: "stretch", alignItems: "center" }}>
           {w > 0 && <DateTimePicker key={`${w}-${dark}-${lang}`} value={initial} mode="date" display="spinner" minimumDate={minD} maximumDate={maxD} accentColor={c.tint} textColor={c.label} themeVariant={dark ? "dark" : "light"}
-            locale={lang === "ar" ? "ar" : "en"} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: w, height: 216, alignSelf: "center" }} />}
+            locale={L.tag} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: w, height: 216, alignSelf: "center" }} />}
         </View>
       ) : (
       // Inline calendar: like the wheel, UIDatePicker only fills its box when given explicit numbers, so measure the card
       // and size the calendar to it (height follows the width; 6 week rows always fit), centred with even padding.
       <View onLayout={(ev) => setW(Math.round(ev.nativeEvent.layout.width))} style={[{ alignSelf: "stretch", alignItems: "center", borderRadius: R.card, backgroundColor: c.card, overflow: "hidden", paddingVertical: S.xs }, curve]}>
         {w > 0 && <DateTimePicker key={`${w}-${dark}-${lang}`} value={initial} mode="date" display="inline" minimumDate={minD} maximumDate={maxD} accentColor={c.tint} themeVariant={dark ? "dark" : "light"}
-          locale={lang === "ar" ? "ar" : "en"} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: w - S.md, height: Math.round(Math.min(w - S.md, 400) * 0.94), alignSelf: "center" }} />}
+          locale={L.tag} onChange={(_, d) => d && onChange(iso(d))} accessibilityLabel={label} style={{ width: w - S.md, height: Math.round(Math.min(w - S.md, 400) * 0.94), alignSelf: "center" }} />}
       </View>
       )}
     </View>
@@ -151,8 +151,8 @@ export function AdditionalCountries({ f, onChange }: { f: WizardForm; onChange: 
   const [nc, setNc] = useState(""); const [na, setNa] = useState(""); const [nd, setNd] = useState(""); const [err, setErr] = useState("");
   const added = f.additionalCountries;
   const addable = SCHENGEN.filter((n) => !added.some((a) => a.country === n) && n !== f.destination);
-  const todayIso = iso(new Date());
-  const dayAfter = (s: string) => { const d = new Date(s + "T12:00:00"); d.setDate(d.getDate() + 1); return iso(d); };
+  const today = todayIso();
+  const dayAfter = (s: string) => addDays(s, 1);
   const add = () => {
     if (!nc || !na || !nd) return;
     if (nd <= na) { setErr(t("Departure date must be after arrival date")); return; }
@@ -191,7 +191,7 @@ export function AdditionalCountries({ f, onChange }: { f: WizardForm; onChange: 
             <PressScale onPress={() => { setNc(""); setNa(""); setNd(""); setErr(""); }} accessibilityRole="button" accessibilityLabel={t("Cancel")} style={{ minHeight: 44, justifyContent: "center" }}><Text variant="subhead" tone="tint" weight="600">{t("Cancel")}</Text></PressScale>
           </View>
           <Text variant="footnote" tone="secondary" weight="600">{t("Arrival Date")}</Text>
-          <DateAnswer label={t("Arrival Date")} value={na} style="calendar" placeholder="Select arrival date" min={f.travelStartDate || todayIso} max={f.travelEndDate || undefined}
+          <DateAnswer label={t("Arrival Date")} value={na} style="calendar" placeholder="Select arrival date" min={f.travelStartDate || today} max={f.travelEndDate || undefined}
             onChange={(v) => { setNa(v); setErr(""); if (nd && v && nd <= v) { setNd(""); setErr(t("Departure date must be after arrival date")); } }} />
           {!!na && <>
             <Text variant="footnote" tone="secondary" weight="600">{t("Departure Date")}</Text>

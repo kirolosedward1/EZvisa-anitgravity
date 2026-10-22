@@ -10,7 +10,9 @@ import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, fi
 import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
 import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence, iso as isoLocal } from "../../lib/wizard";
+import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence, passportCoversTrip } from "../../lib/wizard";
+import { isIsoDate } from "../../lib/dates";
+import { DateRangePicker } from "../../components/wizard/DateRangePicker";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { Button, Text, Icon, SuccessCheck, InlineError, Flag, Shake } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
@@ -34,7 +36,7 @@ import { type WizardForm, type WizardStep, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTH
 import { type Question, questionErrors, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
 
 const WORLD_NAMES = WORLD.map((w) => w.name);
-const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
+const isoDate = (s?: string) => (isIsoDate(s) ? s : "");
 const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
 const AUTO_MS = 260;
 /** Stable personal answers that can be reused from the last application (trip answers are never copied). */
@@ -362,10 +364,12 @@ export default function Apply() {
   if (!q) return null;
   const liveErr = firstError(q, f);
   const hasInput = q.kind === "phone" ? !!f.phoneLocal.trim() : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
-  const e = showErr || (settled && hasInput) ? liveErr : undefined;
+  const e = q.kind === "range" ? undefined : showErr || (settled && hasInput) ? liveErr : undefined; // range: errors sit under its own tiles
+  const qErrs = q.kind === "range" ? questionErrors(q, f) : {};
+  const rangeErr = (k: "travelStartDate" | "travelEndDate") => (showErr || (settled && !!f[k]) ? qErrs[k] : undefined);
   const note = q.note?.(f);
   const answered = isAnswered(q, f);
-  const days = q.id === "travelEndDate" ? tripDays(f) : 0;
+  const days = q.kind === "range" ? tripDays(f) : 0;
   const title = (
     <View style={{ gap: S.xs }}>
       {!q.required && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
@@ -411,19 +415,18 @@ export default function Apply() {
         return <View style={{ gap: S.md }}>{field("jobTitle", "Job Title", "Enter job title", "jobTitle", true)}{field("companyName", "Company Name", "Enter company name", "organizationName", false)}</View>;
       }
       case "date": return (
-        <View style={{ gap: S.md }}>
-          {q.id === "travelEndDate" && !!f.travelStartDate && (
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.xs }} accessibilityRole="radiogroup" accessibilityLabel={t("Trip length")} testID="date-quickpicks">
-              {([[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const).map(([n, l]) => {
-                const [y, m, d] = f.travelStartDate.split("-").map(Number); const v = isoLocal(new Date(y, m - 1, d + n)); const on = f.travelEndDate === v;
-                return <PressScale key={n} onPress={() => { select(); patch({ travelEndDate: v }); }} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t(l)}
-                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? c.tintFill : c.card }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? c.tint : c.label}>{t(l)}</Text></PressScale>;
-              })}
-            </View>
-          )}
-          <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />
-        </View>
+        <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />
       );
+      case "range": {
+        const endErr = rangeErr("travelEndDate");
+        // Return date moved past the passport's validity: offer to fix the passport answer (Review-style edit, then back).
+        const passportIssue = !!endErr && f.hasValidPassport === "yes" && !passportCoversTrip(f);
+        return (
+          <DateRangePicker start={f.travelStartDate} end={f.travelEndDate} min={q.min!(f)!} onChange={(a, b) => patch({ travelStartDate: a, travelEndDate: b })}
+            startError={rangeErr("travelStartDate")} endError={endErr}
+            footer={passportIssue ? <View style={{ alignSelf: "flex-start", marginTop: S.xs }}><Button title={t("Change passport expiry")} variant="secondary" size="M" icon="pencil" onPress={() => edit("passportExpiry")} /></View> : null} />
+        );
+      }
       case "phone": return (
         <View style={{ gap: S.sm }}>
           <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />

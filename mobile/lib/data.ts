@@ -12,6 +12,7 @@ import { supabase } from "./supabase";
 import { siteUrl, PRICE_AED } from "./config";
 import type { Database } from "./database.types";
 import { emptyForm, type WizardForm } from "./wizard";
+import { daysBetween } from "./dates";
 
 export type VisaRow = Database["public"]["Tables"]["visa_applications"]["Row"];
 type VisaUpdate = Database["public"]["Tables"]["visa_applications"]["Update"];
@@ -134,7 +135,7 @@ export async function getApplication(id: string): Promise<Application> {
   return toApplication(data);
 }
 
-const days = (a: string, b: string) => Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+const days = (a: string, b: string) => daysBetween(a, b); // = the website route's duration_days for YYYY-MM-DD
 /** Column mapping identical to web /api/submit-application, plus the full wizard state for cross-device resume. */
 function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, question?: string): VisaUpdate {
   const t = (s: string) => (s ?? "").trim();

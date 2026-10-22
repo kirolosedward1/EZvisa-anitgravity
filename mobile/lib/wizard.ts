@@ -1,5 +1,7 @@
 // Mirrors the website wizard (ezvisa.net/apply, web repo lib/wizard-steps.ts + components/apply/*):
-// same step slugs, order, fields, options and validation rules.
+// same step slugs, order, fields, options and validation rules. This file is the app's single validation module:
+// the question screens, Review, autosave gating and submit all call validateStep(); tests: scripts/validation.test.ts.
+import { addDays, addMonths, addYears, daysBetween, fromIso, isIsoDate, toIso, todayIso } from "./dates";
 
 export type WizardStep = "personal" | "spouse" | "employment" | "trip-details" | "payment";
 export type YesNo = "yes" | "no" | "";
@@ -105,22 +107,30 @@ export function isValidPhone(phone: string) {
   if (d.length >= 8 && d.split("").every((x, i, a) => i === 0 || Number(x) === Number(a[i - 1]) + 1)) return false;
   return true;
 }
-const day = 864e5;
-const today = () => { const t = new Date(); t.setHours(12, 0, 0, 0); return t; };
-export const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-export const adultMax = () => { const t = today(); t.setFullYear(t.getFullYear() - 18); return t; };
-export const earliestDeparture = () => new Date(today().getTime() + 15 * day);
-/** Passport expiry >= return date + 3 months (or today + 3 months while the return date is unknown). */
-export function passportCoversTrip(f: { passportExpiry: string; travelEndDate: string }) {
-  if (!f.passportExpiry) return true;
-  const base = f.travelEndDate ? new Date(f.travelEndDate + "T00:00:00") : new Date();
-  const need = new Date(base.getFullYear(), base.getMonth() + 3, base.getDate());
-  return new Date(f.passportExpiry + "T00:00:00").getTime() >= need.getTime();
+// Date rules. Values are "YYYY-MM-DD" (the website's format); maths in lib/dates.ts, so no time-zone day shifts.
+// `today` is a parameter (default: the phone's date) so the rules can be unit-tested for any day.
+export const MIN_DAYS_AHEAD = 15; // web trip-details-step: departure picker min = today + 15
+export const MAX_STAY_DAYS = 90; // web trip-details-step + submit-application route
+export const PASSPORT_MONTHS_AFTER_RETURN = 3; // app rule (owner's spec); the website has no expiry field
+export const iso = toIso;
+export const latestBirthDate = (today = todayIso()) => addYears(today, -18); // web: date input max = today - 18 years
+export const earliestDepartureDate = (today = todayIso()) => addDays(today, MIN_DAYS_AHEAD);
+export const adultMax = () => fromIso(latestBirthDate());
+export const earliestDeparture = () => fromIso(earliestDepartureDate());
+/** Expiry the passport needs: return date + 3 calendar months (month end clamped), or today + 3 months while the return date is unknown. */
+export const passportNeededUntil = (travelEndDate: string, today = todayIso()) => addMonths(isIsoDate(travelEndDate) ? travelEndDate : today, PASSPORT_MONTHS_AFTER_RETURN);
+/** Expiring exactly on the needed day is accepted. */
+export function passportCoversTrip(f: { passportExpiry: string; travelEndDate: string }, today = todayIso()) {
+  if (!isIsoDate(f.passportExpiry)) return !f.passportExpiry;
+  return f.passportExpiry >= passportNeededUntil(f.travelEndDate, today);
 }
-export const tripDays = (f: WizardForm) => (f.travelStartDate && f.travelEndDate ? Math.ceil((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) : 0);
+/** Days between departure and return, as the website computes duration_days (same day = 0). */
+export const tripDays = (f: Pick<WizardForm, "travelStartDate" | "travelEndDate">) => (isIsoDate(f.travelStartDate) && isIsoDate(f.travelEndDate) ? daysBetween(f.travelStartDate, f.travelEndDate) : 0);
 
 export type Errors = Partial<Record<keyof WizardForm, string>>;
-export function validatePersonal(f: WizardForm): Errors {
+// Messages are short (they sit under the field); every English string has an Arabic entry in lib/ar.ts.
+const PASSPORT_SHORT = (f: { travelEndDate: string }) => (isIsoDate(f.travelEndDate) ? "Passport must be valid 3 months after return" : "Passport must be valid for 3 more months");
+export function validatePersonal(f: WizardForm, today = todayIso()): Errors {
   const e: Errors = {};
   if (!f.destination) e.destination = "Please select a destination";
   if (!needsSchengenVisa(f.nationality)) e.nationality = "Please select your nationality";
@@ -130,16 +140,17 @@ export function validatePersonal(f: WizardForm): Errors {
   if (f.countryOfResidence === "United Arab Emirates" && !f.hasEmiratesId) e.hasEmiratesId = "Please choose Yes or No";
   if (!f.firstName.trim()) e.firstName = "First name is required";
   if (!f.lastName.trim()) e.lastName = "Last name is required";
-  if (!f.email.trim()) e.email = "Email is required"; else if (!isValidEmail(f.email.trim())) e.email = "Please enter a valid email address. Check for typos in the domain.";
-  if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = "Please enter a valid phone number (7-15 digits).";
-  if (!f.dateOfBirth) e.dateOfBirth = "Please select your date of birth (must be 18+)"; else if (Date.parse(f.dateOfBirth) > adultMax().getTime()) e.dateOfBirth = "You must be 18 or older";
+  if (!f.email.trim()) e.email = "Email is required"; else if (!isValidEmail(f.email.trim())) e.email = "Enter a valid email address";
+  if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = "Enter a valid phone number (7-15 digits)";
+  if (!isIsoDate(f.dateOfBirth)) e.dateOfBirth = "Select your date of birth"; else if (f.dateOfBirth > latestBirthDate(today)) e.dateOfBirth = "You must be 18 or older";
   if (!f.hasValidPassport) e.hasValidPassport = "Please choose Yes or No";
-  else if (f.hasValidPassport === "no") e.hasValidPassport = "You need a valid passport (at least 6 months validity from your travel date) before applying.";
+  else if (f.hasValidPassport === "no") e.hasValidPassport = "A valid passport is needed to apply"; // the website's longer text is the amber note
   else {
+    // Website rule: required only (uppercased on input, placeholder "e.g. A1234567"); neither web client nor server checks a format.
     if (!f.passportNumber.trim()) e.passportNumber = "Passport number is required";
-    // App-only field (kept in the wizard notes JSON; no DB column): valid >= 3 months after the return date.
-    if (!f.passportExpiry) e.passportExpiry = "Please select your passport expiry date";
-    else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date";
+    // App-only field (kept in the wizard notes JSON; no DB column). Re-checked whenever the return date changes.
+    if (!isIsoDate(f.passportExpiry)) e.passportExpiry = "Please select your passport expiry date";
+    else if (!passportCoversTrip(f, today)) e.passportExpiry = PASSPORT_SHORT(f);
   }
   if (!f.maritalStatus) e.maritalStatus = "Please select your marital status";
   if (f.maritalStatus === "married" && !f.spouseAccompanying) e.spouseAccompanying = "Please choose Yes or No";
@@ -167,15 +178,17 @@ export function validateEmployment(f: WizardForm): Errors {
   }
   return e;
 }
-export function validateTrip(f: WizardForm): Errors {
+export function validateTrip(f: WizardForm, today = todayIso()): Errors {
   const e: Errors = {};
   if (!f.purposeOfTrip) e.purposeOfTrip = "Please select the purpose of your trip";
-  if (!f.travelStartDate) e.travelStartDate = "Please select a departure date";
-  else if (Date.parse(f.travelStartDate) < earliestDeparture().getTime() - day / 2) e.travelStartDate = "Departure must be at least 15 days from today";
-  if (!f.travelEndDate) e.travelEndDate = "Please select a return date";
-  else if (f.travelStartDate && tripDays(f) <= 0) e.travelEndDate = "Return date must be after departure date";
-  else if (tripDays(f) > 90) e.travelEndDate = "Schengen visits are limited to 90 days";
-  else if (f.passportExpiry && !passportCoversTrip(f)) e.travelEndDate = "Passport must be valid at least 3 months after your return date";
+  // Departure >= today + 15 also covers "not in the past" (web client rule; the web server does not check it).
+  if (!isIsoDate(f.travelStartDate)) e.travelStartDate = "Please select a departure date";
+  else if (f.travelStartDate < earliestDepartureDate(today)) e.travelStartDate = "Departure must be at least 15 days from today";
+  // Return > departure and <= 90 days: the website server's checks (same day = 0 days = rejected, like the web).
+  if (!isIsoDate(f.travelEndDate)) e.travelEndDate = "Please select a return date";
+  else if (isIsoDate(f.travelStartDate) && tripDays(f) <= 0) e.travelEndDate = "Return date must be after departure date";
+  else if (tripDays(f) > MAX_STAY_DAYS) e.travelEndDate = "Schengen visits are limited to 90 days";
+  else if (f.hasValidPassport === "yes" && isIsoDate(f.passportExpiry) && !passportCoversTrip(f, today)) e.travelEndDate = PASSPORT_SHORT(f);
   if (!f.datesFlexible) e.datesFlexible = "Please choose Yes or No";
   if (!f.travelingWith) e.travelingWith = "Please select who you are traveling with";
   if (!f.hotelCategory) e.hotelCategory = "Please select an accommodation preference";
@@ -186,8 +199,8 @@ export function validateTrip(f: WizardForm): Errors {
   if (f.previousRefusals === "yes" && !f.refusalDetails.trim()) e.refusalDetails = "Please add the refusal details";
   return e;
 }
-export const validateStep = (s: WizardStep, f: WizardForm): Errors =>
-  s === "personal" ? validatePersonal(f) : s === "spouse" ? validateSpouse(f) : s === "employment" ? validateEmployment(f) : s === "trip-details" ? validateTrip(f) : {};
+export const validateStep = (s: WizardStep, f: WizardForm, today = todayIso()): Errors =>
+  s === "personal" ? validatePersonal(f, today) : s === "spouse" ? validateSpouse(f) : s === "employment" ? validateEmployment(f) : s === "trip-details" ? validateTrip(f, today) : {};
 /** First visible step that is still incomplete, or null when everything is valid. */
 export const firstIncomplete = (f: WizardForm): WizardStep | null => visibleSteps(f).find((s) => s !== "payment" && Object.keys(validateStep(s, f)).length > 0) ?? null;
 

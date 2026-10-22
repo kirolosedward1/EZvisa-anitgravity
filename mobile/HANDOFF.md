@@ -64,6 +64,40 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - Nationality (v8.3): `SCHENGEN_VISA_REQUIRED` in `lib/wizard.ts` (Reg. (EU) 2018/1806 Annex I). No free text.
 - Performance: long lists stay FlatList (country pickers, nationality list) with flat E0 rows (no shadow/blur). Shadows only on short card stacks (Home hero, application cards, trip days) and the floating tab bar.
 
+## 2d. v9.14 validation and trip dates (2026-10-22, chat 05)
+- **One validation module**: `lib/wizard.ts` (`validatePersonal/Trip/Spouse/Employment`, `validateStep`). Question screens, Review, cloud-autosave gating and submit all use it. The date maths is in `lib/dates.ts`: pure `YYYY-MM-DD`, no `new Date("YYYY-MM-DD")`. Every rule takes an optional `today`.
+- **Shared schema with the website: not done.** zod is installed on the website but no file imports it, and the app has no zod. The website's rules sit inline in `components/apply/*-step.tsx` and `app/api/submit-application/route.ts`. Sharing them would mean extracting a package and pointing Metro `watchFolders` at the web repo, which is website work.
+- **Rules**:
+
+  | Rule | Detail | Source |
+  |---|---|---|
+  | Required fields | as before | website |
+  | Passport number | required only, uppercased; no format | website |
+  | Departure | at least today + 15, which also rules out past dates | web client |
+  | Return | after departure; same day rejected | web server |
+  | Trip length | at most 90 days; same formula as the server | web server |
+  | Passport expiry | at least return + 3 calendar months, clamped to month end (30 Nov → 28/29 Feb); exactly 3 months passes; today + 3 months while no return date | owner's spec |
+  | Re-check | changing the return date re-checks the passport expiry on both the dates screen and the passport question | |
+  | Age | 18+ | web client |
+- **Errors**:
+  - shown inline in short text once the field has a value and typing has paused (700 ms), never on first view
+  - Continue stays disabled while the question is invalid
+  - new strings are in `lib/ar.ts`
+- **Date-range picker** (`components/wizard/DateRangePicker.tsx`, question `travelDates`): replaces the two date screens. Old drafts on `q:travelStartDate` / `q:travelEndDate` resume on it.
+  - Built in pure React Native, with no library. `react-native-calendars` declares no React or RN peer range and pulls in lodash, xdate and recyclerlistview, so it isn't verified for RN 0.86 / React 19.2. This version works in Expo Go.
+  - Layout: Departure and Return tiles; presets 1 / 2 / 3 weeks and 1 calendar month; month grid sized to width ÷ 7, so cells are 50 pt at 390 and 55 pt at 430.
+  - Behaviour: RTL-aware; days before the minimum are disabled. If the passport no longer covers the return date, a "Change passport expiry" shortcut appears.
+- **Locale**: `lib/locale.ts` (expo-localization) sets display order, month names and the first weekday. Stored values stay `YYYY-MM-DD`, as on the website.
+- **Tests**: `npm test` runs `scripts/validation.test.ts` (node:test, no new packages) in Asia/Dubai, UTC and America/Los_Angeles: 18 tests.
+- **Screenshots**: `docs/screenshots/v914/` (390 and 430, light and dark, Expo web, TZ Asia/Dubai, locale en-AE).
+- **Website mismatches, owner to decide** (the app keeps the rule shown):
+  1. The web server checks only return > departure and ≤ 90 days. The required fields and departure ≥ today + 15 are client-only, and the 15-day minimum is enforced only by the date picker, not by `isFormValid`.
+  2. The website says "6 months validity from your travel date" (text only, no field). The app uses return + 3 months.
+  3. The web client computes its departure minimum and date-of-birth maximum with `toISOString()` (UTC). Between 00:00 and 03:59 UAE time, both are one day earlier than intended. The app uses the phone's local date.
+  4. On a 29 Feb "today", the web allows a birth date of 1 March 18 years earlier; the app allows up to 28 Feb.
+  5. The web error banner says "8-15 digits" for phones, but the web check (and the app) accepts 7-15.
+- Note: cloud autosave (lib/form.tsx) runs only while the personal step is valid. A return date that the passport no longer covers pauses it until fixed. Local autosave continues.
+
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
 Not working, because of server config outside the app:

@@ -454,4 +454,13 @@ export const AR: Record<string, string> = {
   "Sign in with the email you used to see the latest status.": "سجّل الدخول بالبريد الذي استخدمته لرؤية آخر حالة.",
   "Check again": "تحقق مجددًا",
   "Try again": "حاول مجددًا",
+  // v9.14 validation & date-range picker
+  "Travel Dates": "تواريخ السفر", "Departure at least 15 days from today.": "المغادرة بعد 15 يومًا على الأقل من اليوم.",
+  "Departure": "المغادرة", "Return": "العودة", "Select": "اختر", "Pick on the calendar": "اختر من التقويم",
+  "Now pick your return date.": "اختر الآن تاريخ العودة.", "Previous month": "الشهر السابق", "Next month": "الشهر التالي",
+  "Change passport expiry": "تغيير تاريخ انتهاء الجواز", "Enter a valid email address": "أدخل بريدًا إلكترونيًا صحيحًا",
+  "Enter a valid phone number (7-15 digits)": "أدخل رقم هاتف صحيح (7-15 رقمًا)", "Select your date of birth": "اختر تاريخ ميلادك",
+  "A valid passport is needed to apply": "تحتاج إلى جواز سفر ساري المفعول للتقديم",
+  "Passport must be valid 3 months after return": "يجب أن يكون الجواز ساريًا 3 أشهر بعد العودة",
+  "Passport must be valid for 3 more months": "يجب أن يكون الجواز ساريًا 3 أشهر أخرى على الأقل",
 };
