@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Platform, useWindowDimensions } from "react-native";
 import { useScheme } from "../lib/appearance";
 import { DARK, LIGHT, type Colors } from "./colors";
 import { S, R, ICON, HIT, SIZE, elevation, type Level } from "./tokens";
@@ -17,3 +18,12 @@ export function useTheme() {
   }, [dark]);
 }
 export type Theme = ReturnType<typeof useTheme>;
+
+/** Font scale at which side-by-side layouts should stack (iOS accessibility sizes start around 1.35-1.5x).
+ *  Native: the OS font scale. Web preview: `window.__FONT_SCALE__` (the same simulation the Text primitive uses). */
+export const LARGE_TEXT = 1.35;
+export function useLargeText() {
+  const { fontScale } = useWindowDimensions();
+  const sim = Platform.OS === "web" ? ((globalThis as any).__FONT_SCALE__ ?? 1) : fontScale;
+  return sim >= LARGE_TEXT;
+}
