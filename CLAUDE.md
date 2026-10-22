@@ -75,7 +75,7 @@
 
 /components                           # React components (see section 5)
   /ui                                 # shadcn/ui primitives
-  /app                                # /app page: iphone-frame, store-badges, reveal
+  /app                                # /app page: content (copy + screens), iphone-frame, hero-device, walkthrough, status-timeline, handoff-section, store-badges, reveal
   /apply /blog /thank-you             # feature-specific component groups
 
 /lib
@@ -153,7 +153,7 @@ Usage rules:
 | `top-destinations-carousel.tsx` | Animated destination/flag carousel (Embla) |
 | `country-card.tsx`, `country-document-selector.tsx`, `document-requirements-page.tsx` | Documents flow |
 | `start-application-box.tsx`, `fixed-cta-button.tsx`, `continue-application-notification.tsx` | Conversion helpers |
-| `app/iphone-frame.tsx`, `app/store-badges.tsx`, `app/reveal.tsx` | `/app` page: pure-CSS iPhone frame (scales via container units), App Store / Google Play badges (URLs + "Coming soon" flag live here), scroll reveal that honours `prefers-reduced-motion` |
+| `app/content.ts`, `app/iphone-frame.tsx`, `app/hero-device.tsx`, `app/walkthrough.tsx`, `app/status-timeline.tsx`, `app/handoff-section.tsx`, `app/store-badges.tsx`, `app/reveal.tsx` | `/app` page: all copy + screenshot list in `content.ts`; pure-CSS iPhone frame (scales via container units, accepts children); auto-cycling hero phone with tilt; sticky scroll-driven walkthrough (tabs below `lg`); animated status card; browser-to-phone handoff; App Store / Google Play badges (URLs + "Coming soon" flag live here); `useRevealPhase` keeps server HTML visible and honours `prefers-reduced-motion`. Note: `<main>` in `app/layout.tsx` uses `overflow-x-clip` so `position: sticky` works site-wide |
 | `cookie-consent.tsx`, `scroll-restoration.tsx`, `scroll-to-top.tsx`, `theme-provider.tsx` | App-wide utilities |
 
 ---
@@ -258,4 +258,4 @@ pnpm lint         # eslint
 
 ---
 
-_Last updated: 2026-05-30 — reflects the current Poppins + bright-blue (Atlys-style) design system and the redesigned header/hero._
+_Last updated: 2026-10-22 — reflects the current Poppins + bright-blue (Atlys-style) design system, the redesigned header/hero, and the interactive `/app` page._

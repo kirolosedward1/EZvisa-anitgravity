@@ -162,7 +162,8 @@ export default function RootLayout({
         </noscript>
         <NavigationProgressBar />
         <ScrollRestoration />
-        <main className="overflow-x-hidden w-full flex flex-col min-h-screen">
+        {/* overflow-x-clip (not hidden): hidden would turn <main> into a scroll container and stop position: sticky from working on every page */}
+        <main className="overflow-x-clip w-full flex flex-col min-h-screen">
           <PageTransition>{children}</PageTransition>
         </main>
         <ContinueApplicationNotification />

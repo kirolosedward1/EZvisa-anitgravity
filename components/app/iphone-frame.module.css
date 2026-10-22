@@ -1,25 +1,27 @@
 /*
  * Pure-CSS iPhone frame (15 Pro proportions: 1179 x 2556 screen, Dynamic Island).
  * Every dimension is expressed in container-query width units (cqw), so the same
- * component renders correctly at any size: large in the hero, small in the gallery.
+ * component renders correctly at any size: large in the hero, small elsewhere.
  * Hardware colours are literal because they depict a physical device, not UI.
  */
 
+/* Width is set by the caller's utility classes (e.g. `w-64 lg:w-80`); this file never sets it,
+   because an unlayered module rule would override Tailwind's layered width utilities. */
 .frame {
   container-type: inline-size;
   position: relative;
-  width: 100%;
   /* 3cqw bezel on each side around a 94cqw-wide screen with a 1179:2556 ratio. */
   aspect-ratio: 100 / 209.8;
 }
 
-/* Titanium rim */
+/* Titanium rim: a hairline highlight along the top edge reads as brushed metal under light */
 .body {
   position: absolute;
   inset: 0;
   border-radius: 16.5cqw;
   background: #1c1c1e;
   box-shadow:
+    inset 0 0.3cqw 0 0 rgba(255, 255, 255, 0.14),
     0 0 0 0.35cqw #3a3a3c,
     0 2.5cqw 7cqw rgba(0, 0, 0, 0.22);
 }
@@ -32,11 +34,13 @@
   background: #000;
 }
 
+/* isolation keeps Safari clipping animated children to the rounded corners */
 .screen {
   position: absolute;
   inset: 3cqw;
   border-radius: 13.5cqw;
   overflow: hidden;
+  isolation: isolate;
   background: #fff;
 }
 
