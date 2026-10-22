@@ -28,8 +28,8 @@ export function AnswerRow({ label, selected, onPress, country, testID }: { label
         backgroundColor: selected ? c.tintFill : c.card, opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.985 : 1 }] }, curve]}>
       {!!country && <Flag country={country} size={32} />}
       <Text variant="headline" weight={selected ? "600" : "500"} color={selected ? c.onTint : c.label} style={{ flex: 1 }}>{label}</Text>
-      <View style={{ width: 24, height: 24, borderRadius: R.round, borderWidth: selected ? 0 : 1.5, borderColor: c.tertiaryLabel, backgroundColor: selected ? "rgba(255,255,255,0.25)" : "transparent", alignItems: "center", justifyContent: "center" }}>
-        {selected && <Icon name="checkmark" size={ICON.sm} color="#fff" weight="bold" />}
+      <View style={{ width: 24, height: 24, borderRadius: R.round, borderWidth: selected ? 0 : 1.5, borderColor: c.tertiaryLabel, backgroundColor: selected ? c.onAccentSecondary : "transparent", alignItems: "center", justifyContent: "center" }}>
+        {selected && <Icon name="checkmark" size={ICON.sm} color={c.accentFill} weight="bold" />}
       </View>
     </PressScale>
   );
@@ -55,7 +55,7 @@ export function YesNoTiles({ label, value, onPick }: { label: string; value: str
           <PressScale key={v} onPress={() => { select(); onPick(v); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={v === "yes" ? t("Yes") : t("No")}
             style={({ pressed }) => [{ flex: 1, minHeight: 120, borderRadius: R.card, alignItems: "center", justifyContent: "center", gap: S.xs, padding: S.md,
               backgroundColor: on ? c.tintFill : c.card, opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, curve]}>
-            <Icon name={v === "yes" ? "checkmark.circle.fill" : "xmark.circle.fill"} size={ICON.xl} color={on ? "#fff" : c.secondaryLabel} />
+            <Icon name={v === "yes" ? "checkmark.circle.fill" : "xmark.circle.fill"} size={ICON.xl} color={on ? c.onAccent : c.secondaryLabel} />
             <Text variant="title3" color={on ? c.onTint : c.label}>{v === "yes" ? t("Yes") : t("No")}</Text>
           </PressScale>
         );

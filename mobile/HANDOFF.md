@@ -49,12 +49,12 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - screenshots in `screenshots/v8/`
 
 ## 2c. v9 design system and polish (2026-10-19)
-- Tokens live in `lib/theme.ts`; screens must not hand-code numbers.
-  - Spacing: `S` = 0/4/8/12/16/20/24/32/40/48/64/80.
+- Tokens live in `theme/` (re-exported by `lib/theme.ts`); screens must not hand-code numbers. Full reference: `docs/design-system.md` (chat 02).
+  - Spacing: `S` = 0/4/8/12/16/24/32/40/48/64/80 on an 8pt grid (`S.gutter` = 16 screen margin; `S.lg` is a deprecated alias of 16).
   - Radius: `R` = 4/8/12/16/20/24/32/round.
   - Elevation: `elevation(0-3)`, plus `card()` = background + hairline + layered boxShadow (light mode only).
   - Type: `T` + `TYPE_SCALE` (Dynamic Type caps per role).
-  - Colour: one accent `accent`/`accentFill` + neutrals + status colours.
+  - Colour: semantic names (`background`, `surface`, `text`, `textSecondary`, `border`, `accent`, `success`, `warning`, `danger`, …), light and dark; old names are aliases.
   - Motion: `DUR`, `SPRING`, `PRESS`.
 - Motion helpers are in `lib/motion.ts`: spring slides, Reduce Motion fallbacks, `useShake`.
 - Primitives:
