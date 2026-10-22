@@ -219,6 +219,9 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 - Don't touch the other Supabase projects on that account (BrokersConnect/brokerconnect, brokerscareers, openmatsae, topsuite_tracker, supabase-*).
 - Don't push to `main` or change Vercel settings from this work; use the `mobile-app` branch and PRs.
 - Keep test data minimal and labelled (`+ezvisa-app-test` emails).
+- **Owner rule (2026-10-22): deploy and merge after every edit.** Once type-check, lint and the checks pass, fast-forward the
+  work into `mobile-app` right away (never into `main`). That push is the deploy: `.github/workflows/eas-update.yml` publishes
+  it to the Expo Go `preview` channel. Confirm the workflow run succeeded before reporting the edit as done.
 
 ## 6. Next tasks
 1. Owner: set the Vercel env vars (Supabase URL/anon/service role, Ziina key and webhook secret), fix the Supabase Auth URL config, approve `proposed-live-changes.sql`. Then re-run `scripts/e2e-live.mjs`: upload, payment and `payment_id` should pass.
