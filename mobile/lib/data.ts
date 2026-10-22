@@ -11,7 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
 import { siteUrl } from "./config";
 import type { Database } from "./database.types";
-import { emptyForm, continueComplete, employmentComplete, type WizardForm } from "./wizard";
+import { emptyForm, continueComplete, employmentComplete, missingDocs, type WizardForm } from "./wizard";
 
 export type VisaRow = Database["public"]["Tables"]["visa_applications"]["Row"];
 type VisaUpdate = Database["public"]["Tables"]["visa_applications"]["Update"];
@@ -22,7 +22,7 @@ export type Doc = { id: string; document_type: string; requirement_id: string | 
 export type Applicant = { id: string; is_primary: boolean; first_name: string; last_name: string; passport_number: string | null; passport_expiry_date: string | null };
 export type Notes = {
   maritalStatus?: string; employmentStatus?: string; jobTitle?: string; companyName?: string; monthlySalary?: string; spouseAccompanying?: string;
-  source?: string; platform?: string; wizardStep?: string; wizardQuestion?: string; itinerary?: unknown; contactEmail?: string; wizard?: Partial<WizardForm>;
+  source?: string; platform?: string; wizardStep?: string; wizardQuestion?: string; itinerary?: unknown; contactEmail?: string; wizard?: Partial<WizardForm>; missingDocuments?: string[];
   uploads?: { type: string; path: string; name: string; at: string }[];
   /** Where the draft was last edited ("app" | "website"), for staff and for the "newer copy" prompt. */
   lastEditedOn?: string;
@@ -162,6 +162,7 @@ function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, q
       // A draft started on the website keeps its source; the step is always overwritten (undefined drops a stale question).
       source: prev.source ?? "mobile-app", platform: Platform.OS, lastEditedOn: "app", wizardStep: step, wizardQuestion: question ? question.replace(/^q:/, "") : undefined,
       ...(t(f.email).toLowerCase() !== email ? { contactEmail: t(f.email).toLowerCase() } : {}),
+      missingDocuments: missingDocs(f),
       wizard: { ...f },
     } satisfies Notes),
   };

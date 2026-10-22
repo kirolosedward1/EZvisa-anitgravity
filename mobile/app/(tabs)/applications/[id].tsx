@@ -1,4 +1,5 @@
 import { AppointmentCard } from "../../../components/Appointment";
+import { missingDocs } from "../../../lib/wizard";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
@@ -21,14 +22,13 @@ import { askDiscard, discardApplication, isAbandoned } from "../../../lib/discar
 import { Pressable } from "react-native";
 import { Icon } from "../../../components/ui";
 
-let LOC: string | undefined;
-const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
+const fmtD = (s?: string | null, loc?: string) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(loc, { day: "numeric", month: "short", year: "numeric" }) : "—");
 const EDITABLE = UPLOAD_STATUSES;
 const REFRESH_MS = 30_000;
 
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const c = useColors(); const pb = useTabInset(); const { t, lang } = useT(); LOC = lang === "ar" ? "ar" : undefined;
+  const c = useColors(); const pb = useTabInset(); const { t, lang } = useT(); const loc = lang === "ar" ? "ar" : undefined;
   const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [upErr, setUpErr] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export default function ApplicationDetail() {
   };
   const addDocument = () => {
     if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions({ title: "Document type", options: [...DOC_TYPES.map((d) => d.label), "Cancel"], cancelButtonIndex: DOC_TYPES.length }, (i) => { if (i < DOC_TYPES.length) pickFile(DOC_TYPES[i].value); });
+      ActionSheetIOS.showActionSheetWithOptions({ title: t("Document type"), options: [...DOC_TYPES.map((d) => t(d.label)), t("Cancel")], cancelButtonIndex: DOC_TYPES.length }, (i) => { if (i < DOC_TYPES.length) pickFile(DOC_TYPES[i].value); });
     } else setPicking(!picking);
   };
   const open = async (path: string) => {
@@ -143,9 +143,14 @@ export default function ApplicationDetail() {
           <ListRow icon="briefcase.fill" iconColor={c.tint} title={t("Continue application")} subtitle={t("Add your passport number and employment details.")} onPress={() => router.push(`/continue/${a.id}`)} />
         </ListGroup>
       )}
+      {(() => { const later = missingDocs((a.notes?.wizard ?? {}) as any); return later.length > 0 && (
+        <ListGroup header={t("To get later")} footer={t("Your application continues. Add these when you have them.")} inset={58}>
+          {later.map((d) => <ListRow key={d} icon="clock" iconColor={c.orange} title={t(d)} chevron={false} />)}
+        </ListGroup>
+      ); })()}
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
-        <ListRow title={t("Dates")} value={`${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />
+        <ListRow title={t("Dates")} value={`${fmtD(a.entry_date, loc)} – ${fmtD(a.exit_date, loc)}`} />
         {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
@@ -183,7 +188,7 @@ export default function ApplicationDetail() {
       </ListGroup>}
       <InlineError text={upErr} />
       <ListGroup inset={58}>
-        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
+        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at, loc)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>

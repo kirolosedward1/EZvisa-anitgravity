@@ -101,7 +101,7 @@ export const QUESTIONS: Question[] = [
     fields: [{ key: "spouseFirstName", label: "Spouse First Name", placeholder: "Enter first name" }, { key: "spouseLastName", label: "Spouse Last Name", placeholder: "Enter last name" }] },
   { id: "spouseHasValidPassport", step: "spouse", keys: ["spouseHasValidPassport"], label: "Does your spouse have a valid passport?", required: true, kind: "yesno",
     hint: "Your spouse's passport should have at least 6 months validity from your travel date.",
-    note: (f) => (f.spouseHasValidPassport === "no" ? { tone: "amber", text: "Your spouse will need to obtain a valid passport before applying for a visa." } : null) },
+    note: (f) => (f.spouseHasValidPassport === "no" ? { tone: "amber", text: "You can continue. Your spouse needs a valid passport; add it later." } : null) },
   // ---- Employment ----
   { id: "employmentStatus", step: "employment", keys: ["employmentStatus"], label: "Employment Status", required: true, kind: "choice", options: EMPLOYMENT,
     onPick: (v) => (v !== "employed" ? { hasNOC: "" } : {}) },
@@ -111,7 +111,8 @@ export const QUESTIONS: Question[] = [
   { id: "companyName", step: "employment", keys: ["companyName"], label: "Company Name", required: true, kind: "text", placeholder: "Enter company name", applies: BIZ, text: { caps: "words", contentType: "organizationName" } },
   { id: "employmentStartDate", step: "employment", keys: ["employmentStartDate"], label: "Employment Start Date", required: true, kind: "date", placeholder: "Select start date", applies: EMP, max: todayIso, dateStyle: "wheel" },
   { id: "monthlySalary", step: "employment", keys: ["monthlySalary"], label: "Monthly Salary Range", required: true, kind: "choice", options: SALARY, applies: EMP },
-  { id: "hasNOC", step: "employment", keys: ["hasNOC"], label: "Do you have a No Objection Certificate?", required: false, kind: "yesno", applies: EMP },
+  { id: "hasNOC", step: "employment", keys: ["hasNOC"], label: "Do you have a No Objection Certificate?", required: false, kind: "yesno", applies: EMP,
+    note: (f) => (f.hasNOC === "no" ? { tone: "amber", text: "You can continue. Ask your employer for a NOC and add it later." } : null) },
   { id: "averageMonthlyIncome", step: "employment", keys: ["averageMonthlyIncome"], label: "Average Monthly Income", required: true, kind: "text", placeholder: "e.g., 15,000 AED", applies: BIZ },
 ];
 export const Q_BY_ID: Record<string, Question> = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));

@@ -130,6 +130,18 @@ export function passportCoversTrip(f: { passportExpiry: string; travelEndDate: s
 export const tripDays = (f: WizardForm) => (f.travelStartDate && f.travelEndDate ? Math.ceil((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) : 0);
 
 export type Errors = Partial<Record<keyof WizardForm, string>>;
+
+/** Documents the applicant said they don't have yet (owner rule, chat 15): the application continues and these are
+ *  collected later. English labels are i18n keys; also saved as additional_notes.missingDocuments for the team. */
+export function missingDocs(f: Partial<WizardForm>): string[] {
+  const m: string[] = [];
+  if (f.hasValidPassport === "no") m.push("Valid passport");
+  if (f.residenceVisaValid === "no") m.push("UAE residence visa valid 3 months after your return");
+  else if (!f.residenceVisaValid && f.hasEmiratesId === "no") m.push("Emirates ID"); // website rows: older question
+  if (f.maritalStatus === "married" && f.spouseAccompanying === "yes" && f.spouseHasValidPassport === "no") m.push("Spouse's valid passport");
+  if (f.employmentStatus === "employed" && f.hasNOC === "no") m.push("NOC from your employer");
+  return m;
+}
 export function validatePersonal(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.destination) e.destination = "Please select a destination";
