@@ -1,5 +1,6 @@
 "use client"
 
+import { DEFAULT_RESIDENCE, UAE_EMIRATES } from "@/lib/residence"
 import type React from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -87,7 +88,6 @@ const toggleInactiveStyles =
 
 export function NationalityStep({ formData, updateFormData, onNext, isLoading }: NationalityStepProps) {
   const [nationalityOpen, setNationalityOpen] = useState(false)
-  const [residenceOpen, setResidenceOpen] = useState(false)
   const [destinationOpen, setDestinationOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
@@ -165,8 +165,8 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
     formData.phone &&
     isValidPhone(formData.phone) &&
     formData.dateOfBirth &&
+    formData.hasValidPassport === "yes" &&
     formData.passportNumber &&
-    formData.hasValidPassport &&
     formData.maritalStatus &&
     (formData.maritalStatus !== "married" ||
       formData.spouseAccompanying === "yes" ||
@@ -357,96 +357,35 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           </Popover>
         </div>
 
-        {/* Country of Residence */}
+        {/* Country of Residence (UAE only: lib/residence.ts) */}
         <div>
-          <label className={labelStyles}>Country of Residence *</label>
-          <Popover open={residenceOpen} onOpenChange={setResidenceOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={residenceOpen}
-                className={cn(
-                  inputStyles,
-                  "w-full justify-between font-medium",
-                  getErrorClass(formData.countryOfResidence),
-                )}
-              >
-                {formData.countryOfResidence ? (
-                  <div className="flex items-center gap-2">
-                    <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
-                      <Image
-                        src={`/flags/${formData.countryOfResidence.toLowerCase().replace(/\s+/g, "-")}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
-                    <span className="font-medium text-foreground">{formData.countryOfResidence}</span>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground/60 font-normal">Select country</span>
-                )}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-1 bg-popover/95 md:backdrop-blur-md border border-border/80 shadow-2xl rounded-xl">
-              <Command>
-                <CommandInput placeholder="Search country..." autoFocus={!isMobile} className="border-none focus:ring-0" />
-                <CommandList>
-                  <CommandEmpty>No country found.</CommandEmpty>
-                  <CommandGroup>
-                    {residenceCountries.map((country) => (
-                      <CommandItem
-                        key={country.name}
-                        value={country.name}
-                        className="rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
-                        onSelect={() => {
-                          updateFormData({ countryOfResidence: country.name })
-                          setResidenceOpen(false)
-                          setShowErrors(false)
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4 text-blue-600",
-                            formData.countryOfResidence === country.name ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block mr-2 flex-shrink-0 border border-border/50">
-                          <Image
-                            src={`/flags/${country.name.toLowerCase().replace(/\s+/g, "-")}.png`}
-                            alt=""
-                            fill
-                            className="object-cover"
-                          />
-                        </span>
-                        <span className="text-foreground">{country.name}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <span className={labelStyles}>Country of Residence *</span>
+          <div className={cn(inputStyles, "w-full flex items-center gap-2 font-medium")} aria-label="Country of Residence: United Arab Emirates">
+            <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
+              <Image src="/flags/united-arab-emirates.png" alt="" fill className="object-cover" />
+            </span>
+            <span className="font-medium text-foreground">{formData.countryOfResidence || DEFAULT_RESIDENCE}</span>
+          </div>
         </div>
 
-        {/* City of Residence */}
+        {/* City of Residence = emirate */}
         <div>
           <label htmlFor="cityOfResidence" className={labelStyles}>
             City of Residence *
           </label>
-          <input
+          <select
             id="cityOfResidence"
             value={formData.cityOfResidence || ""}
             onChange={(e) => {
               handleFieldChange("cityOfResidence", e.target.value)
               setShowErrors(false)
             }}
-            placeholder="Enter city"
             required
-            className={cn(inputStyles, "w-full", getErrorClass(formData.cityOfResidence))}
-          />
+            className={cn(inputStyles, "w-full", getErrorClass(formData.cityOfResidence), !formData.cityOfResidence && "text-muted-foreground/60")}
+          >
+            <option value="" disabled>Select emirate</option>
+            {UAE_EMIRATES.map((e) => <option key={e} value={e}>{e}</option>)}
+          </select>
         </div>
 
         {/* Emirates ID - Next to City of Residence */}
@@ -613,7 +552,47 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           )}
         </div>
 
-        {/* Passport Number */}
+        {/* Valid Passport */}
+        <div>
+          <label className={labelStyles}>Do you have a valid passport? *</label>
+          <div className="flex gap-3 mt-1">
+            <button
+              type="button"
+              className={cn("flex-1", formData.hasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
+              onClick={() => {
+                updateFormData({ hasValidPassport: "yes" })
+                setShowErrors(false)
+              }}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              className={cn("flex-1", formData.hasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
+              onClick={() => {
+                updateFormData({ hasValidPassport: "no", passportNumber: "" })
+                setShowErrors(false)
+              }}
+            >
+              No
+            </button>
+          </div>
+          {formData.hasValidPassport === "yes" && (
+            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
+              <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
+              <span>Your passport should have at least 6 months validity from your travel date.</span>
+            </p>
+          )}
+          {formData.hasValidPassport === "no" && (
+            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/20">
+              <Info className="w-4.5 h-4.5 text-amber-500 shrink-0 mt-0.5" />
+              <span>You need a valid passport (at least 6 months validity from your travel date) before applying.</span>
+            </p>
+          )}
+        </div>
+
+        {/* Passport Number (only with a valid passport) */}
+        {formData.hasValidPassport === "yes" && (
         <div>
           <label htmlFor="passportNumber" className={labelStyles}>
             Passport Number *
@@ -637,45 +616,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
             <p className="text-xs text-red-600 mt-1">Please enter your passport number</p>
           )}
         </div>
-
-        {/* Valid Passport */}
-        <div>
-          <label className={labelStyles}>Do you have a valid passport? *</label>
-          <div className="flex gap-3 mt-1">
-            <button
-              type="button"
-              className={cn("flex-1", formData.hasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => {
-                updateFormData({ hasValidPassport: "yes" })
-                setShowErrors(false)
-              }}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              className={cn("flex-1", formData.hasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => {
-                updateFormData({ hasValidPassport: "no" })
-                setShowErrors(false)
-              }}
-            >
-              No
-            </button>
-          </div>
-          {formData.hasValidPassport === "yes" && (
-            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
-              <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Your passport should have at least 6 months validity from your travel date.</span>
-            </p>
-          )}
-          {formData.hasValidPassport === "no" && (
-            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/20">
-              <Info className="w-4.5 h-4.5 text-amber-500 shrink-0 mt-0.5" />
-              <span>You will need to obtain a valid passport before applying for a visa.</span>
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Marital Status */}
         <div>

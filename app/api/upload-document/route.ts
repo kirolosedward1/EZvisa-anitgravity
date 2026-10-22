@@ -7,6 +7,22 @@ import { isDemoToken, getDemoApplicationByToken } from "@/lib/demo-data"
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Document types the upload desk and the mobile app use, and the has_* flag each one sets.
+const DOC_FLAGS: Record<string, string> = {
+  passportCopy: "has_passport",
+  passportFront: "has_passport",
+  passportBack: "has_passport",
+  residencyCopy: "has_passport",
+  photo: "has_photos",
+  personalPhoto: "has_photos",
+  passportPhoto: "has_photos",
+  bankStatement: "has_bank_statements",
+  nocCertificate: "has_employment_proof",
+  salaryCertificate: "has_employment_proof",
+};
+// The object's extension comes from the checked content type, never from the client's file name
+const EXT_BY_TYPE: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png" };
+const PAID = ["paid", "completed"];
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +53,10 @@ export async function POST(request: NextRequest) {
 
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json({ error: "Invalid file type. Only PDF, JPG, PNG allowed." }, { status: 400 })
+    }
+
+    if (!Object.prototype.hasOwnProperty.call(DOC_FLAGS, documentType)) {
+      return NextResponse.json({ error: "Unknown document type" }, { status: 400 })
     }
 
     if (isDemoToken(trackingToken)) {
@@ -70,14 +90,35 @@ export async function POST(request: NextRequest) {
     }
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // Verify ownership
-    let query = supabase.from("visa_applications").select("id");
+    // Verify ownership. The tracking token (website upload desk) is a secret link. An application id is not, so it
+    // needs the signed-in user's session: the case must be theirs (same email, as on the dashboard) and paid.
+    let userEmail: string | null = null
+    if (!trackingToken) {
+      if (!UUID_RE.test(applicationId)) {
+        return NextResponse.json({ error: "Application not found or unauthorized" }, { status: 403 })
+      }
+      const auth = request.headers.get("authorization") ?? ""
+      const jwt = auth.toLowerCase().startsWith("bearer ") ? auth.slice(7).trim() : ""
+      if (!jwt) {
+        return NextResponse.json({ error: "Please sign in to upload documents" }, { status: 401 })
+      }
+      const { data: userData, error: userError } = await supabase.auth.getUser(jwt)
+      if (userError || !userData.user?.email) {
+        return NextResponse.json({ error: "Please sign in to upload documents" }, { status: 401 })
+      }
+      userEmail = userData.user.email.toLowerCase()
+    }
+
+    let query = supabase.from("visa_applications").select("id, email, payment_status");
     if (trackingToken) query = query.eq("tracking_token", trackingToken);
     else query = query.eq("id", applicationId);
 
     const { data: appData, error: appError } = await query.single();
-    if (appError || !appData) {
+    if (appError || !appData || (userEmail && String(appData.email ?? "").toLowerCase() !== userEmail)) {
       return NextResponse.json({ error: "Application not found or unauthorized" }, { status: 403 })
+    }
+    if (userEmail && !PAID.includes(String(appData.payment_status ?? ""))) {
+      return NextResponse.json({ error: "Documents can be uploaded after payment" }, { status: 403 })
     }
 
     const verifiedAppId = appData.id;
@@ -86,7 +127,7 @@ export async function POST(request: NextRequest) {
     // The mobile app sends a stable uploadId per file, so a retry after a lost response overwrites the same object.
     const uploadId = formData.get("uploadId")
     const fileId = typeof uploadId === "string" && UUID_RE.test(uploadId) ? uploadId.toLowerCase() : crypto.randomUUID().substring(0,8)
-    const fileExtension = file.name.split('.').pop()
+    const fileExtension = EXT_BY_TYPE[file.type]
     const safeFilename = `${verifiedAppId}/${documentType}_${fileId}.${fileExtension}`
 
     const arrayBuffer = await file.arrayBuffer()
@@ -106,20 +147,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Update the boolean flag on the application based on document type
-    const columnMap: Record<string, string> = {
-      passportCopy: "has_passport",
-      passportFront: "has_passport",
-      passportBack: "has_passport",
-      residencyCopy: "has_passport",
-      photo: "has_photos",
-      personalPhoto: "has_photos",
-      passportPhoto: "has_photos",
-      bankStatement: "has_bank_statements",
-      nocCertificate: "has_employment_proof",
-      salaryCertificate: "has_employment_proof",
-    }
-
-    const columnToUpdate = columnMap[documentType];
+    const columnToUpdate = DOC_FLAGS[documentType];
     if (columnToUpdate) {
       await supabase.from("visa_applications").update({ [columnToUpdate]: true }).eq("id", verifiedAppId);
     }

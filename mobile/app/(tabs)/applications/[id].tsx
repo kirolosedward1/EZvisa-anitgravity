@@ -1,16 +1,17 @@
 import { AppointmentCard } from "../../../components/Appointment";
 import { employmentComplete } from "../../../lib/wizard";
-import { useCallback, useState } from "react";
-import { Alert, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
-import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL } from "../../../lib/data";
+import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES } from "../../../lib/data";
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
-import { whatsapp, startPayment, checkPayment } from "../../../lib/api";
+import { whatsapp } from "../../../lib/api";
+import { intentStatus, knownPayment, money, startPayment, usePaying, useQuote } from "../../../lib/payments";
 import { Linking } from "react-native";
 import { success, error as hError } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
@@ -24,7 +25,8 @@ import { Icon } from "../../../components/ui";
 
 let LOC: string | undefined;
 const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
-const EDITABLE = ["draft", "submitted", "reviewing", "awaiting_documents"];
+const EDITABLE = UPLOAD_STATUSES;
+const REFRESH_MS = 30_000;
 
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -34,15 +36,22 @@ export default function ApplicationDetail() {
   const [upErr, setUpErr] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [reqs, setReqs] = useState<Requirement[] | null>(null);
-  const load = useCallback(async () => {
+  /** quiet = background refresh: a failure keeps what is on screen instead of replacing it with an error. */
+  const load = useCallback(async (quiet = false) => {
     try {
-      setErr(null);
-      const app = await getApplication(id!); setA(app);
+      const app = await getApplication(id!); setA(app); setErr(null);
       listRequirements(app.country_id, (app.notes?.wizard as any)?.employmentStatus).then(setReqs).catch(() => setReqs([]));
-    } catch (e: any) { setErr(e?.message ?? String(e)); }
+    } catch (e: any) { if (!quiet) setErr(e?.message ?? String(e)); }
   }, [id]);
-  useFocusEffect(useCallback(() => { load(); }, [load]));
-  const onDone = useCallback(() => { success(); load(); }, [load]);
+  // Staff can change statuses on the website while this screen is open: refresh every 30 s while it is visible and
+  // the app is in the foreground, and right away when the app comes back. (No realtime: that needs a DB change.)
+  useFocusEffect(useCallback(() => {
+    load();
+    const tick = setInterval(() => { if (AppState.currentState === "active") load(true); }, REFRESH_MS);
+    const sub = AppState.addEventListener("change", (s) => { if (s === "active") load(true); });
+    return () => { clearInterval(tick); sub.remove(); };
+  }, [load]));
+  const onDone = useCallback(() => { success(); load(true); }, [load]);
   const queue = useUploads(id, onDone);
 
   /** Pick → reject wrong types here with a clear message → crop/compress and confirm on the preview screen → queue. */
@@ -63,22 +72,27 @@ export default function ApplicationDetail() {
     } else setPicking(!picking);
   };
   const open = async (path: string) => {
-    try { const url = path ? await openDocumentUrl(path) : null; if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert("Stored securely", "Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing."); }
-    catch (e: any) { Alert.alert("Can't open file", e?.message); }
+    try { const url = path ? await openDocumentUrl(path) : null; if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert(t("Stored securely"), t("Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing.")); }
+    catch (e: any) { Alert.alert(t("Can't open file"), e?.message); }
   };
-  const [paying, setPaying] = useState(false); const [ziina, setZiina] = useState<string | null>(null);
+  const paying = usePaying(); const [ziina, setZiina] = useState<string | null>(null);
+  const unpaid = !!a && !isPaid(a);
+  const quote = useQuote(unpaid ? a!.id : null, a?.updated_at);
+  // Ziina status of the checkout this device opened (server proxy), so a paid-but-not-yet-recorded payment shows as confirming.
+  useEffect(() => { let on = true; if (unpaid) knownPayment(a!.id).then((p) => p && intentStatus(p.paymentId)).then((s) => on && setZiina(s ?? null)).catch(() => {}); return () => { on = false; }; }, [a?.id, a?.payment_status]);
   const pay = async () => {
-    if (!a) return; setPaying(true); setUpErr(null);
-    try { const o = await startPayment(a, a.applicants.length > 1); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned, pid: o.paymentId ?? "" } }); }
+    if (!a || paying) return; setUpErr(null);
+    try { const o = await startPayment(a.id); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }); }
     catch (e: any) {
+      if (e?.busy) return;
+      if (e?.alreadyPaid) { router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } }); return; }
       hError();
-      if (e?.fallbackWhatsApp) Alert.alert("Payment", e.message, [{ text: "Cancel", style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${a.reference} (${Number(a.total_amount).toFixed(0)} ${a.currency}).`) }]);
+      if (e?.fallbackWhatsApp) Alert.alert("Payment", e.message, [{ text: "Cancel", style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${a.reference}.`) }]);
       else setUpErr(e?.message ?? String(e));
     }
-    finally { setPaying(false); }
   };
 
-  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={load} />} /></View>;
+  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={() => load()} />} /></View>;
   if (!a) return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: S.lg, gap: S.md }}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg } }} />
@@ -94,7 +108,7 @@ export default function ApplicationDetail() {
     </ScrollView>
   );
   const docs = [...a.documents].sort((x, y) => y.created_at.localeCompare(x.created_at));
-  const list = reqs ? buildChecklist(reqs, a.documents) : null;
+  const list = reqs ? buildChecklist(reqs, a.documents, a.status) : null;
   const matched = new Set((list ? [...list.customer, ...list.ezvisa] : []).map((i) => i.doc?.id).filter(Boolean));
   const others = docs.filter((d) => !matched.has(d.id));
   const done = list ? list.customer.filter((i) => !isOpen(i)).length : 0;
@@ -121,7 +135,9 @@ export default function ApplicationDetail() {
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
       {locked && (
         <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
-          <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : t("Pay {amount}", { amount: `${Number(a.total_amount).toFixed(0)} ${a.currency}` })} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />
+          {ziina === "completed" || ziina === "pending"
+            ? <ListRow icon="clock.fill" iconColor={c.tint} title={ziina === "completed" ? t("Payment received") : t("Payment processing")} subtitle={t("Updating your application…")} onPress={() => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } })} />
+            : <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : quote ? t("Pay {amount}", { amount: money(quote) }) : t("Pay securely")} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />}
         </ListGroup>
       )}
       {paid && EDITABLE.includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) && (
@@ -132,7 +148,7 @@ export default function ApplicationDetail() {
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
         <ListRow title={t("Dates")} value={`${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />
-        <ListRow title={t("Total")} value={`${Number(a.total_amount).toFixed(0)} ${a.currency}`} />
+        {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
         {a.status !== "cancelled" && <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />}
@@ -162,7 +178,7 @@ export default function ApplicationDetail() {
         </ListGroup>
       )}
       {!locked && <ListGroup header={list ? t("Other documents") : t("Documents")} inset={58}>
-        {others.map((d) => <ListRow key={d.id} icon="doc.fill" iconColor={d.status === "rejected" ? c.red : d.source === "generated" ? c.green : c.tint} title={d.file_name ?? d.document_type}
+        {others.map((d) => <ListRow key={d.id} icon="doc.fill" iconColor={d.status === "rejected" ? c.red : c.tint} title={d.file_name ?? d.document_type}
           subtitle={`${DOC_TYPES.find((t) => t.value === d.document_type)?.label ?? d.document_type} · ${STATUS_LABEL[d.status] ?? d.status}${d.rejection_reason ? ` · ${d.rejection_reason}` : ""}`} onPress={() => open(d.storage_path)} />)}
         {others.length === 0 && !canUpload && <ListRow title={t("No other documents")} />}
         {canUpload && <ListRow icon="plus" iconColor={c.tint} title={t("Add another document")} tint onPress={addDocument} chevron={false} />}
@@ -170,7 +186,7 @@ export default function ApplicationDetail() {
       </ListGroup>}
       <InlineError text={upErr} />
       <ListGroup inset={58}>
-        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={`${Number(p.amount).toFixed(0)} ${p.currency}`} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
+        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>
@@ -183,14 +199,14 @@ function UploadRow({ j }: { j: UploadJob }) {
   const c = useColors(); const { t } = useT();
   const v = j.state === "done" ? { icon: "checkmark.circle.fill" as const, color: c.green, sub: t("Uploaded") }
     : j.state === "failed" ? { icon: "exclamationmark.circle.fill" as const, color: c.red, sub: `${t("Failed")} · ${t(j.error ?? "")}` }
-    : j.state === "uploading" ? { icon: "arrow.up.circle.fill" as const, color: c.tint, sub: t("Uploading…") }
+    : j.state === "uploading" ? { icon: "arrow.up.circle.fill" as const, color: c.tint, sub: j.progress != null && j.progress > 0 ? `${t("Uploading…")} ${Math.round(j.progress * 100)}%` : t("Uploading…") }
     : j.offline ? { icon: "wifi.slash" as const, color: c.orange, sub: t("Waiting for connection") }
     : j.nextAt ? { icon: "clock.fill" as const, color: c.orange, sub: t("Connection problem · retrying ({n}/{max})", { n: j.attempts, max: 6 }) }
     : { icon: "clock.fill" as const, color: c.secondaryLabel, sub: t("Queued") };
   return (
     <View testID={`upload-${j.state}`}>
       <ListRow icon={v.icon} iconColor={v.color} title={j.name} subtitle={v.sub} />
-      {j.state === "uploading" && <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar /></View>}
+      {j.state === "uploading" && <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar value={j.progress ? j.progress : undefined} label={t("Uploading…")} /></View>}
       {(j.state === "failed" || j.state === "queued") && (
         <View style={{ flexDirection: "row", gap: S.sm, paddingHorizontal: S.md, paddingBottom: S.sm }}>
           {j.state === "failed" && <View style={{ flex: 1 }}><Button title={t("Retry")} size="M" variant="secondary" onPress={() => retryUpload(j.id)} /></View>}
@@ -202,21 +218,23 @@ function UploadRow({ j }: { j: UploadJob }) {
 }
 
 function CheckRow({ i, busy, canUpload, onPress }: { i: CheckItem; busy: boolean; canUpload: boolean; onPress?: () => void }) {
-  const c = useColors();
+  const c = useColors(); const { t } = useT();
   const map: Record<CheckItem["state"], { icon: "checkmark.circle.fill" | "circle" | "exclamationmark.circle.fill" | "clock.fill" | "hourglass"; color: string; label: string }> = {
-    missing: { icon: "circle", color: c.tertiaryLabel, label: i.req.is_mandatory ? "Missing" : "Optional" },
-    rejected: { icon: "exclamationmark.circle.fill", color: c.red, label: `Re-upload${i.reason ? ` · ${i.reason}` : ""}` },
-    uploaded: { icon: "checkmark.circle.fill", color: c.tint, label: "Uploaded" },
-    review: { icon: "clock.fill", color: c.orange, label: "Under review" },
-    approved: { icon: "checkmark.circle.fill", color: c.green, label: "Approved" },
-    ready: { icon: "checkmark.circle.fill", color: c.green, label: "Ready" },
-    preparing: { icon: "hourglass", color: c.secondaryLabel, label: "We'll prepare this" },
+    missing: { icon: "circle", color: c.tertiaryLabel, label: t(i.req.is_mandatory ? "Missing" : "Optional") },
+    // The rejection reason is staff text from document_reviews: shown as written
+    rejected: { icon: "exclamationmark.circle.fill", color: c.red, label: `${t("Re-upload")}${i.reason ? ` · ${i.reason}` : ""}` },
+    uploaded: { icon: "checkmark.circle.fill", color: c.tint, label: t("Uploaded") },
+    review: { icon: "clock.fill", color: c.orange, label: t("Under review") },
+    approved: { icon: "checkmark.circle.fill", color: c.green, label: t("Approved") },
+    ready: { icon: "checkmark.circle.fill", color: c.green, label: t("Ready") },
+    preparing: { icon: "hourglass", color: c.secondaryLabel, label: t("We'll prepare this") },
   };
   const m = map[i.state];
-  const label = busy ? "Uploading…" : m.label;
-  return <ListRow icon={m.icon} iconColor={m.color} title={i.req.title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
-    trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">Upload</Text> : undefined}
-    a11yLabel={`${i.req.title}, ${label}`} a11yHint={isOpen(i) && canUpload ? "Upload" : i.doc ? "Open" : undefined} />;
+  const label = busy ? t("Uploading…") : m.label;
+  const title = t(i.req.title);
+  return <ListRow icon={m.icon} iconColor={m.color} title={title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
+    trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">{t("Upload")}</Text> : undefined}
+    a11yLabel={`${title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} />;
 }
 
 /** Currency, local time, plugs and emergency number from the static dataset in lib/facts.ts. */

@@ -2,7 +2,7 @@
 // Run: node scripts/run-test-profile.mjs
 // @ts-ignore plain JS stub
 import { db as fake } from "./stubs/supabase.js";
-import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, splitPhone, markPrefilled, markAsked, shouldAsk, clearPrefillFlags } from "../lib/profile";
+import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, splitPhone, markPrefilled, markAsked, shouldAsk } from "../lib/profile";
 import { emptyForm, validatePersonal, iso, type WizardForm } from "../lib/wizard";
 declare const process: any;
 const db: any = fake;
@@ -81,7 +81,6 @@ db.rows = [
   ok(await shouldAsk("d1", A.id), "prefilled draft: ask on review");
   ok(!(await shouldAsk("d1", B.id)), "never asked for another account");
   await markAsked("d1"); ok(!(await shouldAsk("d1", A.id)), "asked once only");
-  await markPrefilled("d2", A.id); await clearPrefillFlags(); ok(!(await shouldAsk("d2", A.id)), "flags cleared on account switch");
 
   console.log(fail ? `\n${fail} FAILED` : "\nALL PASSED"); process.exit(fail ? 1 : 0);
 })();

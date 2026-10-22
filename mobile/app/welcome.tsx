@@ -1,12 +1,14 @@
-import { useEffect } from "react";
 import { View, useWindowDimensions } from "react-native";
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Logo } from "../components/Logo";
 import { Button, Flag, Text } from "../components/ui";
+import { TextLink } from "../components/auth/AuthShell";
+import { useAuth } from "../lib/auth";
 import { useColors, S } from "../lib/theme";
 import { markWelcomed } from "../lib/onboarding";
+import { tap } from "../lib/haptics";
 import { useT } from "../lib/i18n";
 
 // Flags arranged on two orbits around the centre.
@@ -18,7 +20,10 @@ const ORBIT = [
 export default function Welcome() {
   const c = useColors(); const insets = useSafeAreaInsets(); const { width } = useWindowDimensions(); const reduce = useReducedMotion(); const { t } = useT();
     const R1 = Math.min(width * 0.38, 168), R2 = R1 * 0.7, box = R1 * 2 + S.x5;
-  const go = async (to: "/" | "/auth") => { await markWelcomed(); router.replace("/"); if (to === "/auth") setTimeout(() => router.push({ pathname: "/auth", params: { mode: "signin" } }), 50); };
+  const { notice, clearNotice, continueAsGuest } = useAuth();
+  // Signed-out landing (route protection sends every signed-out start here). Signing in closes it automatically.
+  const auth = (mode: "signin" | "signup") => { clearNotice(); markWelcomed(); router.push({ pathname: "/auth", params: { mode } }); };
+  const guest = () => { tap(); clearNotice(); markWelcomed(); continueAsGuest(); };
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, S.lg) }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -32,9 +37,11 @@ export default function Welcome() {
       </View>
       <Animated.View entering={reduce ? undefined : FadeInDown.delay(120).springify().damping(22).stiffness(240)} style={{ paddingHorizontal: S.xl, gap: S.xs }}>
         <Text variant="largeTitle" center accessibilityRole="header">{t("Schengen visa")}</Text>
+        {notice ? <Text variant="subhead" tone="secondary" center accessibilityLiveRegion="polite" testID="session-notice" style={{ marginTop: S.xs }}>{t(notice)}</Text> : null}
         <View style={{ height: S.xxl }} />
-        <Button title={t("Get started")} onPress={() => go("/")} />
-        <Button title={t("Sign in")} variant="plain" color={c.label} onPress={() => go("/auth")} />
+        <Button title={t("Sign in")} onPress={() => auth("signin")} />
+        <Button title={t("Create account")} variant="secondary" onPress={() => auth("signup")} />
+        <TextLink title={t("Continue without an account")} onPress={guest} testID="continue-guest" />
       </Animated.View>
     </View>
   );

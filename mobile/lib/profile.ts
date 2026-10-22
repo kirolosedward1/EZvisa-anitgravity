@@ -5,7 +5,7 @@
 //     already prefills from (web app/apply/page.tsx). Only the signed-in user can read or change their own metadata.
 //  2. The user's own latest application (visa_applications .eq("email", me), like listApplications) for anything the
 //     metadata lacks, incl. passport number and expiry. Passport details are never written to user_metadata: that is
-//     copied into every access token. A real profile table for them is proposed in migrations/0009_customer_profiles.sql (not applied).
+//     copied into every access token. A real profile table for them is proposed in migrations/0012_customer_profiles.sql (not applied).
 // Nothing here is cached: the profile is fetched when needed and kept in component state only. The only thing stored
 // on the phone is a per-draft flag (no personal data) so the "update your profile?" question is asked once.
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -136,5 +136,3 @@ export async function markPrefilled(draftKey: string, uid: string) { const m = a
 export async function markAsked(draftKey: string) { const m = await readFlags(); if (m[draftKey]) { m[draftKey].asked = true; await writeFlags(m); } }
 /** True when this draft was prefilled for `uid` and the profile question has not been answered yet. */
 export async function shouldAsk(draftKey: string, uid: string) { const x = (await readFlags())[draftKey]; return !!x && x.uid === uid && !x.asked; }
-/** Account switch / sign-out: forget everything that belonged to the previous account on this phone. */
-export async function clearPrefillFlags() { await AsyncStorage.removeItem(FLAGS).catch(() => {}); }

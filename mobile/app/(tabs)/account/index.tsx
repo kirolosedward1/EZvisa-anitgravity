@@ -1,7 +1,9 @@
 import { Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import { STATUS_LABEL, isPaid, unregisterPushToken, type Application } from "../../../lib/data";
+import { STATUS_LABEL, isPaid, type Application } from "../../../lib/data";
+import { useAuth } from "../../../lib/auth";
+import { pendingUploads } from "../../../lib/uploads";
 import { EMAIL } from "../../../lib/config";
 import { useEffect, useState } from "react";
 import { remindersEnabled, remindersSupported, setRemindersEnabled, planReminders, getPassportExpiry, setPassportExpiry, syncReminders } from "../../../lib/reminders";
@@ -16,17 +18,17 @@ import { useColors, S, R } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
 import { whatsapp, email as mailSupport } from "../../../lib/api";
 import { useApps } from "../../../lib/useApps";
-import { useForm } from "../../../lib/form";
 import { useUsageSharing } from "../../../lib/privacy";
 import { lastCrash } from "../../../lib/crash";
 import { startupHistory } from "../../../lib/perf";
 import { pendingEvents } from "../../../lib/analytics";
 import Constants from "expo-constants";
+import { useForm } from "../../../lib/form";
 
 export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
-  const { session, unread, apps } = useApps(true);
-  const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT(); const { flushDraft } = useForm();
+  const { session, unread, apps } = useApps(true); const { signOut: endSession } = useAuth();
+  const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT(); const { saveBeforeSignOut } = useForm();
   const [del, setDel] = useState(false); const [delStep, setDelStep] = useState<"ask" | "sure" | "failed">("ask"); const [delErr, setDelErr] = useState<string | null>(null); const [deleting, setDeleting] = useState(false);
   /** Calls the delete-account edge function with the user's own session; WhatsApp / email stay as the fallback. */
   const deleteNow = async () => {
@@ -34,7 +36,7 @@ export default function Account() {
     try {
       const { data, error } = await supabase!.functions.invoke("delete-account", { body: { confirm: "DELETE" } });
       if (error || !(data as any)?.deleted) throw new Error((data as any)?.error ?? error?.message ?? "Unknown error");
-      setDel(false); await supabase!.auth.signOut().catch(() => {});
+      setDel(false); await endSession().catch(() => {});
       Alert.alert(t("Account deleted"), t("Your account and personal data were deleted."));
     } catch {
       setDelStep("failed"); setDelErr(t("We couldn't delete the account right now. Send us the request and we'll do it within 30 days."));
@@ -146,11 +148,15 @@ export default function Account() {
   const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
   const paidApps = (apps ?? []).filter((a) => isPaid(a));
   const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
-  // Save the open draft to the account first: signing out removes this account's drafts from the phone (lib/form.tsx).
-  const signOut = () => {
-    if (Platform.OS === "web") { flushDraft().catch(() => null).finally(() => supabase?.auth.signOut()); return; }
-    const out = () => flushDraft().catch(() => null).then(() => unregisterPushToken()).finally(() => supabase?.auth.signOut());
-    Alert.alert("Sign out?", undefined, [{ text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: out }]);
+  /** Ends this phone's session and wipes the person's data from it (lib/auth.tsx). Unsaved answers are saved first;
+   *  what still couldn't be saved (offline) and unsent uploads are named before the wipe. */
+  const signOut = async () => {
+    const saved = await saveBeforeSignOut().catch(() => false);
+    const n = pendingUploads();
+    const note = [!saved && t("Your latest answers aren't saved to your account yet. Signing out removes them from this phone."),
+      n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : saved && t("Your applications stay in your account.")].filter(Boolean).join("\n\n");
+    if (Platform.OS === "web") { endSession(); return; }
+    Alert.alert(t("Sign out?"), note, [{ text: t("Cancel"), style: "cancel" }, { text: t("Sign out"), style: "destructive", onPress: () => { endSession(); } }]);
   };
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>

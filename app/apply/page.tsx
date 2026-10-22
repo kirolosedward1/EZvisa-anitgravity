@@ -1,5 +1,6 @@
 "use client"
 
+import { DEFAULT_RESIDENCE, coerceResidence } from "@/lib/residence"
 import { useState, Suspense, useCallback, useMemo, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { NationalityStep } from "@/components/apply/nationality-step"
@@ -104,7 +105,7 @@ interface WizardFormData {
 
 const defaultFormData: WizardFormData = {
   nationality: "",
-  countryOfResidence: "",
+  countryOfResidence: DEFAULT_RESIDENCE,
   cityOfResidence: "",
   firstName: "",
   lastName: "",
@@ -195,6 +196,12 @@ function ApplyPageContent() {
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const wizardContainerRef = useRef<HTMLDivElement>(null)
   const isMounted = useRef(false)
+
+  // Residence UAE only, city = emirate: coerce restored drafts and links (invalid city is cleared).
+  useEffect(() => {
+    const c = coerceResidence(formData)
+    if (c.countryOfResidence !== formData.countryOfResidence || c.cityOfResidence !== formData.cityOfResidence) setFormData(c)
+  }, [formData])
 
   const handleContinuePrevious = useCallback(() => {
     if (pendingSavedData) {

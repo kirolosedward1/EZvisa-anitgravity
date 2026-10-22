@@ -47,6 +47,8 @@ const mk = (name: string, body: string) => { const p = `${process.env.TEST_DIR}/
     log(server().puts === 0, "offline: nothing sent");
     const dup = await enqueueUpload(APP, mk("passport-again.jpg", "PASSPORT-BYTES"), "passportCopy");
     log(dup.duplicate && dup.id === r1.id && saved().length === 1, "same file added twice: rejected as duplicate");
+    const bad = await enqueueUpload(APP, mk("dossier.pdf", "%PDF-1.7 X"), "final_package").then(() => "queued", (e) => String(e?.message));
+    log(bad.includes("can't be uploaded") && saved().length === 1, "document type outside the website's list: refused, nothing queued", bad);
     // Airplane mode mid-upload: the server receives the bytes but the response is lost, and the device goes offline.
     fault("lost"); net(true);
     await until(() => server().puts >= 1);

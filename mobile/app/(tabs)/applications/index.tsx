@@ -2,7 +2,8 @@ import { useState } from "react";
 import { ScrollView, View, RefreshControl } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, Text, Icon, PressScale, useTabInset, journeyIndex, ProgressSegments } from "../../../components/ui";
+import { SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
+import { buildTimeline, doneCount } from "../../../lib/timeline";
 import { useT } from "../../../lib/i18n";
 import { useColors, useIsDark, S, R, curve, card, ICON } from "../../../lib/theme";
 import { STATUS_LABEL, type Application } from "../../../lib/data";
@@ -15,7 +16,7 @@ import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 const fmt = (s?: string | null) => (s ? new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
 
 function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
-  const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const idx = journeyIndex(a.status, a.payment_status);
+  const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const steps = buildTimeline(a);
   return (
     <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift
       style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
@@ -30,7 +31,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
         ) : <Icon name="chevron.right" size={ICON.sm} color={c.tertiaryLabel} weight="semibold" />}
       </View>
       <View style={{ gap: S.xs }}>
-        <ProgressSegments count={4} index={idx} label={t(STATUS_LABEL[a.status] ?? a.status)} />
+        <ProgressSegments count={steps.length} index={doneCount(steps)} fraction={0} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t(STATUS_LABEL[a.status] ?? a.status)} />
         <StatusPill v={a.status} />
       </View>
     </PressScale>

@@ -2,8 +2,8 @@
 // (one browser profile). Supabase is mocked at the network layer, so no real data is read or written.
 // Run: start `npx expo start --web` with EXPO_PUBLIC_SUPABASE_URL=https://dravvaykssrbktztmrlj.supabase.co and any
 // EXPO_PUBLIC_SUPABASE_ANON_KEY, then: PW=<playwright-core path> node scripts/e2e-prefill-web.mjs [outDir]
-const { chromium } = await import(process.env.PW || "playwright-core");
 import fs from "fs";
+const { chromium } = await import(process.env.PW || "playwright-core");
 const BASE = process.env.BASE || "http://localhost:8081";
 const SB = "https://dravvaykssrbktztmrlj.supabase.co";
 const OUT = process.argv[2] || "/tmp/prefill-shots"; fs.mkdirSync(OUT, { recursive: true });
@@ -54,7 +54,10 @@ async function mock(ctx, w) {
         return single ? (rows[0] ? json(200, rows[0]) : json(406, { code: "PGRST116" })) : json(200, rows);
       }
       if (req.method() === "POST") { const b = JSON.parse(req.postData()); const r = { id: crypto.randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString(), ...(Array.isArray(b) ? b[0] : b) }; w.rows.push(r); return json(201, (req.headers()["accept"] || "").includes("vnd.pgrst.object") ? r : [r]); }
-      if (req.method() === "PATCH") { const b = JSON.parse(req.postData()); rows.forEach((r) => Object.assign(r, b, { updated_at: new Date().toISOString() })); return route.fulfill({ status: 204, body: "" }); }
+      if (req.method() === "PATCH") { // like PostgREST: the body's own updated_at is kept; rows come back when select= is asked
+        const b = JSON.parse(req.postData()); rows.forEach((r) => Object.assign(r, { updated_at: new Date().toISOString() }, b));
+        return url.searchParams.has("select") ? json(200, rows) : route.fulfill({ status: 204, body: "" });
+      }
     }
     return json(404, {});
   });
@@ -144,7 +147,10 @@ for (const width of [390, 430]) {
   const html = await page.content(); const store = JSON.stringify(await localData(page));
   ok(!/Amira|Hassan|A1234567/.test(html + store), "B: no trace of A on screen or in storage");
   const bReads = w.log.slice(mark).filter((l) => l.path === "/rest/v1/visa_applications");
-  ok(bReads.length > 0 && bReads.every((l) => l.as === "b+ezvisa-app-test@example.com" && decodeURIComponent(l.search).includes("email=eq.b+ezvisa-app-test@example.com")), `B: all ${bReads.length} application queries are B's own, filtered by B's email`);
+  // Reads/updates must filter by B's email; inserts (chat 06 creates the draft row early) must write B's email.
+  const mine = (l) => l.as === "b+ezvisa-app-test@example.com" && (l.method === "POST" ? JSON.parse(l.body || "{}").email === "b+ezvisa-app-test@example.com" : decodeURIComponent(l.search).includes("email=eq.b+ezvisa-app-test@example.com"));
+  for (const l of bReads) if (!mine(l)) console.log("   not B's own:", l.method, l.as, decodeURIComponent(l.search).slice(0, 160));
+  ok(bReads.length > 0 && bReads.every(mine), `B: all ${bReads.length} application requests are B's own (reads filtered by B's email, inserts write B's email)`);
 
   // ---- A again: a new draft is prefilled from the updated profile ----
   await page.goto(`${BASE}/account`); await page.waitForTimeout(1200); await page.getByText("Sign out", { exact: true }).click(); await page.waitForTimeout(1500);

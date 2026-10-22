@@ -9,7 +9,7 @@ import * as Crypto from "expo-crypto";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
-import { siteUrl, PRICE_AED } from "./config";
+import { siteUrl } from "./config";
 import type { Database } from "./database.types";
 import { emptyForm, type WizardForm } from "./wizard";
 
@@ -24,14 +24,19 @@ export type Notes = {
   maritalStatus?: string; employmentStatus?: string; jobTitle?: string; companyName?: string; monthlySalary?: string; spouseAccompanying?: string;
   source?: string; platform?: string; wizardStep?: string; wizardQuestion?: string; itinerary?: unknown; contactEmail?: string; wizard?: Partial<WizardForm>;
   uploads?: { type: string; path: string; name: string; at: string }[];
+  /** Where the draft was last edited ("app" | "website"), for staff and for the "newer copy" prompt. */
+  lastEditedOn?: string;
+  /** ISO time the app submitted the case (recorded at submit; drafts are created earlier, so created_at is not it). */
+  submittedAt?: string;
 };
 export type Application = VisaRow & {
   status: AppStatus; reference: string; country_id: string | null;
   countries: { name: string; slug: string; flag_emoji: string | null } | null;
   applicants: Applicant[]; documents: Doc[];
-  payments: { id: string; status: string; amount: number; currency: string; created_at: string }[];
+  payments: { id: string; status: string; amount: number | null; currency: string; created_at: string }[];
   application_status_history: { to_status: string; created_at: string; note?: string | null }[];
-  total_amount: number; currency: string; notes: Notes;
+  /** Amount from the server record (payment_amount) only; null until Ziina reports it. Never a client-side price. */
+  total_amount: number | null; currency: string; notes: Notes;
 };
 
 const need = () => { if (!supabase) throw new Error("Backend not configured"); return supabase; };
@@ -69,8 +74,11 @@ const REQS: Requirement[] = [
 ];
 /** The website has no requirements table; this is the website's upload checklist. */
 /** NOC applies only to employees (the wizard asks it only for "employed"); self-employed / other statuses never get it. */
-export async function listRequirements(_countryId?: string | null, employmentStatus?: string | null): Promise<Requirement[]> {
+export function requirementsFor(employmentStatus?: string | null): Requirement[] {
   return employmentStatus && employmentStatus !== "employed" ? REQS.filter((r) => r.document_type !== "nocCertificate") : REQS;
+}
+export async function listRequirements(_countryId?: string | null, employmentStatus?: string | null): Promise<Requirement[]> {
+  return requirementsFor(employmentStatus);
 }
 
 /** Documents are inferred from the row: uploads recorded by this app (exact type) and the website's has_* flags. */
@@ -94,8 +102,8 @@ function docsOf(r: VisaRow, n: Notes): Doc[] {
     if (latest) Object.assign(latest, { status: rv.status, rejection_reason: rv.status === "rejected" ? rv.reason ?? null : null });
     else if (rv.status === "rejected") out.push({ id: `rev-${t}`, document_type: t, requirement_id: REQS.find((q) => q.document_type === t)?.id ?? null, status: "rejected", source: "customer", storage_path: "", file_name: null, rejection_reason: rv.reason ?? null, created_at: rv.at ?? "" });
   }
-  if (r.application_status === "ready")
-    out.push({ id: "final", document_type: "final_package", requirement_id: "req-dossier", status: "generated", source: "generated", storage_path: `${r.id}/final_package.pdf`, file_name: "Your EZvisa dossier", rejection_reason: null, created_at: r.updated_at ?? "" });
+  // No document row is made up for EZvisa's own files (audit H4): the live table has no record of them, so the
+  // checklist shows them as ready only from the real application_status (lib/checklist.ts), with nothing to open.
   return out;
 }
 
@@ -107,7 +115,7 @@ export function toApplication(r: VisaRow): Application {
   const w = n.wizard ?? {};
   const applicants: Applicant[] = [{ id: `${r.id}-p`, is_primary: true, first_name: w.firstName ?? r.full_name.split(" ")[0] ?? "", last_name: w.lastName ?? r.full_name.split(" ").slice(1).join(" "), passport_number: r.passport_number, passport_expiry_date: null }];
   if (spouse && w.spouseFirstName) applicants.push({ id: `${r.id}-s`, is_primary: false, first_name: w.spouseFirstName, last_name: w.spouseLastName ?? "", passport_number: null, passport_expiry_date: null });
-  const total = r.payment_amount != null ? Number(r.payment_amount) : PRICE_AED * (spouse ? 2 : 1);
+  const total = r.payment_amount != null ? Number(r.payment_amount) : null;
   const history = [{ to_status: "submitted", created_at: r.created_at ?? "" }];
   if (status !== "submitted" && status !== "draft") history.push({ to_status: status, created_at: r.updated_at ?? "" });
   return {
@@ -151,31 +159,90 @@ function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, q
       ...prev,
       maritalStatus: f.maritalStatus, employmentStatus: f.employmentStatus, jobTitle: t(f.jobTitle), companyName: t(f.companyName),
       monthlySalary: f.monthlySalary, spouseAccompanying: f.spouseAccompanying || "no",
-      source: "mobile-app", platform: Platform.OS, wizardStep: step, ...(question ? { wizardQuestion: question.replace(/^q:/, "") } : {}),
+      // A draft started on the website keeps its source; the step is always overwritten (undefined drops a stale question).
+      source: prev.source ?? "mobile-app", platform: Platform.OS, lastEditedOn: "app", wizardStep: step, wizardQuestion: question ? question.replace(/^q:/, "") : undefined,
       ...(t(f.email).toLowerCase() !== email ? { contactEmail: t(f.email).toLowerCase() } : {}),
       wizard: { ...f },
     } satisfies Notes),
   };
 }
 
-/** Creates or updates the signed-in user's draft row (application_status "draft"). Returns the row id.
- *  If the row was already submitted (e.g. a second tap, or a retry after a lost response) it is returned unchanged:
- *  we never insert a second row for the same case. */
-export async function saveDraft(f: WizardForm, step: string, id?: string | null, question?: string): Promise<string> {
-  const sb = need(); const u = await me();
-  if (id) {
-    const { data: cur, error: ce } = await sb.from("visa_applications").select("id, application_status, additional_notes").eq("id", id).eq("email", u.email).maybeSingle();
-    if (ce) throw ce;
-    if (cur && cur.application_status === "draft") {
-      const { error } = await sb.from("visa_applications").update(columns(f, u.email, step, parseNotes(cur.additional_notes), question)).eq("id", id).eq("application_status", "draft");
-      if (error) throw error;
-      return id;
-    }
-    if (cur) return id; // already submitted / in review: keep the same row
-  }
-  const { data, error } = await sb.from("visa_applications").insert({ ...(columns(f, u.email, step, {}, question) as any), application_status: "draft", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false }).select("id").single();
+// ---------------- Drafts: autosave with stale-copy detection ----------------
+// The table has no version column, so updated_at is the version: every write is `... where updated_at = <the value we
+// last saw>`, and 0 rows updated means someone else (the website, another phone) saved in between. The new value is
+// always read back from the server, never compared with this phone's clock. Ids are made on the phone and stored
+// before the first insert, so a save interrupted after the insert (app killed, response lost) updates that same row.
+
+/** The draft as stored on the server: answers, where the user was, and its version. */
+export type ServerDraft = { id: string; form: WizardForm; step: string; question: string | null; updatedAt: string | null; status: string; editedOn: string | null; fingerprint: string };
+export type DraftSaveResult =
+  | { ok: true; id: string; updatedAt: string }
+  /** newer: saved elsewhere since we last saw it · existing: an open draft for the same country already exists ·
+   *  closed: submitted / cancelled elsewhere · gone: the row no longer exists (or is no longer visible). */
+  | { ok: false; reason: "newer" | "existing" | "closed" | "gone"; server: ServerDraft | null };
+
+/** Same instant (the server may return the timestamp in a different text form than the one we hold). */
+export const sameVersion = (a?: string | null, b?: string | null) => !!a && !!b && (a === b || Date.parse(a) === Date.parse(b));
+/** Stable text of the saved content (answers + step + question), so the same content always gives the same value. */
+function stable(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(stable).join(",")}]`;
+  if (v && typeof v === "object") return `{${Object.keys(v).sort().filter((k) => (v as any)[k] !== undefined).map((k) => `${JSON.stringify(k)}:${stable((v as any)[k])}`).join(",")}}`;
+  return JSON.stringify(v ?? null);
+}
+/** Short hash of what a save writes. Used to tell "the server copy is what we saved" from "someone else changed it". */
+export function fingerprint(f: Partial<WizardForm>, step: string, question: string | null): string {
+  const s = stable({ f: JSON.parse(JSON.stringify(f ?? {})), s: step, q: question ? question.replace(/^q:/, "") : null });
+  let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  return `${(h >>> 0).toString(36)}.${s.length}`;
+}
+const DRAFT_COLS = "id, application_status, additional_notes, updated_at";
+function toServerDraft(r: { id: string; application_status: string | null; additional_notes: string | null; updated_at: string | null }): ServerDraft {
+  const n = parseNotes(r.additional_notes); const w = n.wizard ?? {};
+  const step = n.wizardStep ?? "personal"; const question = n.wizardQuestion ?? null;
+  return { id: r.id, form: { ...emptyForm, ...w }, step, question, updatedAt: r.updated_at, status: r.application_status ?? "submitted", editedOn: n.lastEditedOn ?? (n.source === "mobile-app" ? "app" : n.wizard ? "website" : null), fingerprint: fingerprint(w, step, question) };
+}
+export async function getDraft(id: string): Promise<ServerDraft | null> {
+  const u = await me();
+  const { data, error } = await need().from("visa_applications").select(DRAFT_COLS).eq("id", id).eq("email", u.email).maybeSingle();
   if (error) throw error;
-  return data.id;
+  return data ? toServerDraft(data) : null;
+}
+/** Newest open draft of this account for a destination (any device), to offer it instead of creating a second one. */
+export async function findOpenDraft(destination: string, exceptIds: string[] = []): Promise<ServerDraft | null> {
+  if (!destination) return null;
+  const u = await me();
+  const { data, error } = await need().from("visa_applications").select(DRAFT_COLS).eq("email", u.email).eq("application_status", "draft").eq("destination_country", destination).order("updated_at", { ascending: false }).limit(5);
+  if (error) throw error;
+  const r = (data ?? []).find((x) => !exceptIds.includes(x.id));
+  return r ? toServerDraft(r) : null;
+}
+
+/** Saves the signed-in user's draft row (application_status "draft") without ever overwriting newer data.
+ *  `base` is the server version this phone last confirmed (null = never confirmed). `known` are fingerprints of content
+ *  this phone wrote itself (last confirmed + the save in flight), so a version bump that changed nothing we care about,
+ *  or our own write whose answer was lost, is adopted instead of reported as a conflict.
+ *  `checkExisting`: before the first insert, look for an open draft for the same destination (no duplicates). */
+export async function saveDraft(f: WizardForm, step: string, id: string, base: string | null, question: string | undefined, known: string[], checkExisting: boolean): Promise<DraftSaveResult> {
+  const sb = need(); const u = await me();
+  const { data: cur, error: ce } = await sb.from("visa_applications").select(DRAFT_COLS).eq("id", id).eq("email", u.email).maybeSingle();
+  if (ce) throw ce;
+  const now = new Date().toISOString(); // overwritten by the updated_at trigger where it exists; read back either way
+  if (!cur) {
+    if (base) return { ok: false, reason: "gone", server: null };
+    if (checkExisting) { const other = await findOpenDraft(f.destination.trim(), [id]); if (other) return { ok: false, reason: "existing", server: other }; }
+    const { data, error } = await sb.from("visa_applications").insert({ id, ...(columns(f, u.email, step, {}, question) as any), application_status: "draft", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false, updated_at: now }).select("updated_at").single();
+    if (error) throw error;
+    return { ok: true, id, updatedAt: data.updated_at ?? now };
+  }
+  const server = toServerDraft(cur);
+  if (server.status !== "draft") return { ok: false, reason: "closed", server };
+  if (!sameVersion(cur.updated_at, base) && !known.includes(server.fingerprint)) return { ok: false, reason: "newer", server };
+  const { data, error } = await sb.from("visa_applications").update({ ...columns(f, u.email, step, parseNotes(cur.additional_notes), question), updated_at: now })
+    .eq("id", id).eq("email", u.email).eq("application_status", "draft").eq("updated_at", cur.updated_at as string).select("updated_at");
+  if (error) throw error;
+  if (data?.[0]) return { ok: true, id, updatedAt: data[0].updated_at ?? now };
+  const again = await getDraft(id); // changed between our read and our write
+  return { ok: false, reason: !again ? "gone" : again.status !== "draft" ? "closed" : "newer", server: again };
 }
 
 /** Guest checkout (no account yet): RLS "Allow public submissions" lets anon INSERT, but anon cannot SELECT the row back,
@@ -184,34 +251,38 @@ export async function saveDraft(f: WizardForm, step: string, id?: string | null,
 export async function guestSubmit(f: WizardForm): Promise<{ id: string; reference: string; email: string }> {
   const sb = need(); const email = f.email.trim().toLowerCase();
   const id = Crypto.randomUUID();
-  const { error } = await sb.from("visa_applications").insert({ id, ...(columns(f, email, "payment", {}) as any), application_status: "submitted", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false });
+  const { error } = await sb.from("visa_applications").insert({ id, ...(columns(f, email, "payment", { submittedAt: new Date().toISOString() }) as any), application_status: "submitted", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false });
   if (error) throw error;
   return { id, reference: referenceOf(id), email };
 }
 
 /** Latest unsubmitted draft for this account (started on any device), for resume at the exact question. */
-export async function latestDraft(): Promise<{ id: string; form: WizardForm; step: string; question: string | null; updatedAt: string | null } | null> {
+export async function latestDraft(): Promise<ServerDraft | null> {
   const u = await me();
-  const { data, error } = await need().from("visa_applications").select("id, additional_notes, updated_at").eq("email", u.email).eq("application_status", "draft").order("updated_at", { ascending: false }).limit(1);
+  const { data, error } = await need().from("visa_applications").select(DRAFT_COLS).eq("email", u.email).eq("application_status", "draft").order("updated_at", { ascending: false }).limit(1);
   if (error) throw error;
-  const r = data?.[0]; if (!r) return null;
-  const n = parseNotes(r.additional_notes);
-  return { id: r.id, form: { ...emptyForm, ...(n.wizard ?? {}) }, step: n.wizardStep ?? "personal", question: n.wizardQuestion ?? null, updatedAt: r.updated_at };
+  return data?.[0] ? toServerDraft(data[0]) : null;
 }
 
+/** Thrown when the draft changed elsewhere after this phone's last confirmed save; nothing was written. */
+export class DraftConflictError extends Error { constructor() { super("This application was changed on another device."); } }
+
 /** Submits: the draft row becomes application_status "submitted", payment_status "pending", like the website.
- *  Idempotent: the same row is updated, and if it is already submitted it is simply returned. */
-export async function submitApplication(f: WizardForm, draftId?: string | null): Promise<Application> {
+ *  Call after the draft was saved (`base` = its confirmed version). Idempotent: if it is already submitted it is
+ *  returned; if it changed elsewhere since `base`, nothing is written and DraftConflictError is thrown. */
+export async function submitApplication(f: WizardForm, id: string, base: string | null): Promise<Application> {
   const sb = need(); const u = await me();
-  const id = await saveDraft(f, "payment", draftId);
   const { data: cur, error: ce } = await sb.from("visa_applications").select("*").eq("id", id).eq("email", u.email).single();
   if (ce) throw ce;
   if (cur.application_status !== "draft") return toApplication(cur);
-  const { data, error } = await sb.from("visa_applications").update({ ...columns(f, u.email, "payment", parseNotes(cur.additional_notes ?? null)), application_status: "submitted", payment_status: "pending" }).eq("id", id).eq("application_status", "draft").select("*");
+  if (!sameVersion(cur.updated_at, base)) throw new DraftConflictError();
+  const { data, error } = await sb.from("visa_applications").update({ ...columns(f, u.email, "payment", { ...parseNotes(cur.additional_notes ?? null), submittedAt: new Date().toISOString() }), application_status: "submitted", payment_status: "pending", updated_at: new Date().toISOString() })
+    .eq("id", id).eq("application_status", "draft").eq("updated_at", cur.updated_at as string).select("*");
   if (error) throw error;
   if (data?.[0]) return toApplication(data[0]);
   const { data: again, error: ae } = await sb.from("visa_applications").select("*").eq("id", id).single(); // a parallel call won the race
   if (ae) throw ae;
+  if (again.application_status === "draft") throw new DraftConflictError();
   return toApplication(again);
 }
 
@@ -228,12 +299,31 @@ export async function patchNotes(applicationId: string, patch: Partial<Notes>): 
 }
 
 export class UploadError extends Error { constructor(message: string, public network: boolean) { super(message); } }
+/** Statuses in which a paid case still takes documents (the detail screen uses the same list). */
+export const UPLOAD_STATUSES = ["draft", "submitted", "reviewing", "awaiting_documents"];
 const isNetwork = (e: any) => { const m = String(e?.message ?? e).toLowerCase(); return m.includes("network") || m.includes("timeout") || m.includes("offline") || m.includes("failed to fetch"); };
 
 /** Same bucket + path scheme as the website's /api/upload-document: visa_documents/<applicationId>/<type>_<id>.<ext>.
  *  <id> is the queue job's stable UUID, so every retry of one upload targets the same object (no duplicates). */
 export const DOC_BUCKET = "visa_documents";
 const EXT: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png" };
+/** Only the website's document types (DOC_FLAG keys) and its file types (PDF/JPG/PNG) are ever sent. */
+export const isUploadType = (documentType: string) => Object.prototype.hasOwnProperty.call(DOC_FLAG, documentType);
+export const isUploadMime = (mime: string) => mime in EXT;
+
+/** multipart POST with real upload progress (fetch has none). Rejects only on network failure. */
+function postForm(url: string, fd: FormData, token: string | null, onProgress?: (fraction: number) => void): Promise<{ status: number; json: any }> {
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open("POST", url);
+    if (token) x.setRequestHeader("Authorization", `Bearer ${token}`);
+    if (onProgress) x.upload.onprogress = (e) => { if (e.lengthComputable && e.total > 0) onProgress(Math.min(1, e.loaded / e.total)); };
+    x.onload = () => { let json: any = {}; try { json = JSON.parse(x.responseText); } catch {} resolve({ status: x.status, json }); };
+    x.onerror = () => reject(new Error("Network request failed"));
+    x.ontimeout = () => reject(new Error("Network timeout"));
+    x.send(fd);
+  });
+}
 /** Object path for one upload. Pure, used by tests. */
 export const docPath = (applicationId: string, documentType: string, uploadId: string, type: string) => `${applicationId}/${documentType}_${uploadId}.${EXT[type] ?? "jpg"}`;
 const alreadyThere = (m: string) => /already exists|duplicate|\b409\b/i.test(m);
@@ -244,21 +334,31 @@ const alreadyThere = (m: string) => /already exists|duplicate|\b409\b/i.test(m);
  *     same bucket/path with the user's own session and set the has_* flag ourselves. This needs the storage policy in
  *     db/proposed-live-changes.sql; until it is approved the direct upload is refused and the error is shown.
  *  Idempotent per uploadId: "already exists" means an earlier attempt got through, which counts as success. */
-export async function uploadDocument(applicationId: string, file: { uri: string; name: string; mimeType?: string | null; size?: number | null }, documentType: string, uploadId: string) {
+export async function uploadDocument(applicationId: string, file: { uri: string; name: string; mimeType?: string | null; size?: number | null }, documentType: string, uploadId: string, onProgress?: (fraction: number) => void) {
   const sb = need();
   try {
+    if (!isUploadType(documentType)) throw new UploadError("This document type can't be uploaded.", false);
+    const raw = file.mimeType || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    const type = raw === "image/jpg" ? "image/jpeg" : raw;
+    if (!isUploadMime(type)) throw new UploadError("Only PDF, JPG or PNG files.", false);
     const u = await me();
-    const type = file.mimeType || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    // Documents are uploaded only after payment, and only while the case can still change (same rule as the detail screen).
+    const { data: row, error: re } = await sb.from("visa_applications").select("payment_status, application_status").eq("id", applicationId).eq("email", u.email).single();
+    if (re) throw re;
+    if (!isPaid(row)) throw new UploadError("Documents can be uploaded after payment.", false);
+    if (!UPLOAD_STATUSES.includes(row.application_status ?? "submitted")) throw new UploadError("This application can't take new documents.", false);
+    const token = (await sb.auth.getSession()).data.session?.access_token ?? null;
     let path: string | null = null; let viaSite = "";
     try {
       const fd = new FormData();
       if (Platform.OS === "web") { const blob = await (await fetch(file.uri)).blob(); fd.append("file", new File([blob], file.name, { type })); }
       else fd.append("file", { uri: file.uri, name: file.name, type } as any);
       fd.append("applicationId", applicationId); fd.append("documentType", documentType); fd.append("uploadId", uploadId);
-      const res = await fetch(siteUrl("/api/upload-document"), { method: "POST", body: fd });
-      const j: any = await res.json().catch(() => ({}));
-      if (res.ok && j.success) path = String(j.path ?? "");
-      else if (res.status === 400 || res.status === 403) throw new UploadError(j.error || `Upload refused (${res.status})`, false);
+      // The user's session token goes with the file so the website can check who is uploading (audit B2).
+      const res = await postForm(siteUrl("/api/upload-document"), fd, token, onProgress);
+      const j = res.json ?? {};
+      if (res.status >= 200 && res.status < 300 && j.success) path = String(j.path ?? "");
+      else if (res.status === 400 || res.status === 401 || res.status === 403) throw new UploadError(j.error || `Upload refused (${res.status})`, false);
       else viaSite = j.error || `HTTP ${res.status}`;
     } catch (e: any) {
       if (e instanceof UploadError) throw e;
@@ -286,9 +386,16 @@ export async function uploadDocument(applicationId: string, file: { uri: string;
   }
 }
 
-/** Customer files are private (storage is service-role only on the live DB), so only the finished dossier can be opened,
- *  through the website's download route. Returns null when there is nothing the customer can open. */
-export async function openDocumentUrl(_path: string): Promise<string | null> { return null; }
+/** Signed links live this long: opened at once, useless to anyone a minute later. Never a public URL. */
+export const SIGNED_URL_SECONDS = 60;
+/** Short-lived signed link to one of the user's own files. Storage RLS decides: the read policy only covers the user's own
+ *  application folder (migrations/0011, proposed). Returns null when the file can't be opened by this user
+ *  (no path recorded, policy not in place, or someone else's file). */
+export async function openDocumentUrl(path: string): Promise<string | null> {
+  if (!path || !supabase) return null;
+  const { data, error } = await supabase.storage.from(DOC_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS);
+  return error || !data?.signedUrl ? null : data.signedUrl;
+}
 
 // The live DB has no notifications table: the inbox is derived from the real application rows; read state is kept on the device.
 export type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null; application_id: string | null };

@@ -1,6 +1,7 @@
 import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
-import * as Linking from "expo-linking";
+import { completeAuth, parseAuthUrl } from "./authLinks";
+import { AUTH_MESSAGE } from "./authErrors";
 import { supabase } from "./supabase";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
 
@@ -27,14 +28,12 @@ export async function signInWithGoogle(): Promise<"ok" | "cancel"> {
   } catch (e: any) { if (e?.isFriendly) throw e; }
   const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
   if (res.type !== "success") return "cancel";
-  const { queryParams } = Linking.parse(res.url);
-  const fragment = Object.fromEntries(new URLSearchParams(res.url.split("#")[1] ?? ""));
-  const errDesc = (queryParams?.error_description as string) || fragment.error_description;
-  if (errDesc) throw friendly(errDesc);
-  const code = queryParams?.code as string | undefined;
-  if (code) { const { error: xe } = await supabase.auth.exchangeCodeForSession(code); if (xe) throw friendly(xe.message); return "ok"; }
-  if (fragment.access_token && fragment.refresh_token) { const { error: se } = await supabase.auth.setSession({ access_token: fragment.access_token, refresh_token: fragment.refresh_token }); if (se) throw friendly(se.message); return "ok"; }
-  throw new Error("Google sign-in didn't complete. Please try again.");
+  const p = parseAuthUrl(res.url);
+  if (p.error_description) throw friendly(p.error_description);
+  // Shared with the /auth/callback screen, so the code is exchanged once even if the OS also routes the URL there.
+  const r = await completeAuth(p);
+  if (r.ok) return "ok";
+  throw friendly(r.issue === "offline" ? AUTH_MESSAGE.offline : "Google sign-in didn't complete. Please try again.");
 }
 
 function friendly(msg: string) {

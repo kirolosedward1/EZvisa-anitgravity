@@ -39,7 +39,7 @@ People prepare each file. The app collects only what those people need, in the o
 - Employment questions (job title and company on one page) and document upload come after payment.
 - Home shows all of the user's applications. At most the 10 most recent failed or unpaid ones appear, each with Discard plus a confirmation.
 - Languages: English and Arabic, with RTL support; Arabic strings live in `lib/ar.ts`. Dark mode is dropped for now.
-- Auth: email, plus Google sign-in. Sign in with Apple stays hidden until the provider is enabled.
+- Auth: the website's methods (email + password, magic link, sign-up, password reset), same accounts. Google and Apple stay hidden until enabled on the project (the website doesn't offer them). Signed-out starts show Welcome; "Continue without an account" keeps guest checkout.
 - The app uses only the publishable key. It never ships a service-role key.
 - Undecided: branding for the Google sign-in screen (a custom domain or a consent-screen logo) before the store release; home-screen widget, MRZ reading and edge-detected scanning, which all need a native build.
 

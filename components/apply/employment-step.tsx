@@ -81,7 +81,7 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
         <select
           id="employmentStatus"
           value={formData.employmentStatus || ""}
-          onChange={(e) => handleFieldChange("employmentStatus", e.target.value as any)}
+          onChange={(e) => { handleFieldChange("employmentStatus", e.target.value as any); if (e.target.value !== "employed" && formData.hasNOC) handleFieldChange("hasNOC", "" as any) }}
           className={cn(selectStyles, "w-full", getErrorClass(formData.employmentStatus))}
         >
           <option value="">Select employment status</option>

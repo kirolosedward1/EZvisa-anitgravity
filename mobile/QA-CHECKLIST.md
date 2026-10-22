@@ -58,9 +58,24 @@ Open in Expo Go from the `preview` branch. Run every section on both devices; ti
 
 ## 8. Appointment card
 - [ ] Hidden when the application has no appointment
-- [ ] With `additional_notes.appointment` set by staff: date/time, centre, reference shown
-- [ ] Add to calendar opens the iOS event sheet with the right time and location
+- [ ] With `appointment_at` (+ `appointment_centre`/`appointment_address`) set by staff: date/time, centre, reference shown (Home and application page)
+- [ ] Add to calendar opens the iOS event sheet with the right time and location; Save gives a success haptic
+- [ ] iOS 16 or older with calendar access denied: "Calendar access is off" with Open Settings (iOS 17+ needs no permission)
 - [ ] Directions opens Apple Maps to the centre
+
+## 8b. Home dashboard and timeline (v9.14)
+Use the owner's 3 test applications in different states (never create fake rows in production). For each one, compare
+the screen with the row in Supabase (`visa_applications`: application_status, payment_status, additional_notes.submittedAt,
+additional_notes.uploads[].at, document_reviews, appointment_at).
+- [ ] Hero = the most recent active application (submitted or later); others under "Other applications"
+- [ ] Timeline: a step shows ✓ only when the row says so; a time only where the row has one (Paid and Decision never show a time)
+- [ ] Next action per state: unpaid → Pay now; paid, employment missing → Continue; paid, documents missing → Upload;
+      document rejected → Re-upload; appointment upcoming → View appointment (scrolls to the card); passed → Awaiting decision;
+      draft only → Continue draft; rejected → Visa refused + View application; cancelled → Cancelled
+- [ ] Change application_status in Supabase while Home is open: updates on return to the app (and instantly once migration 0009 is approved)
+- [ ] Pull to refresh; Airplane Mode on first load → error card → Try again
+- [ ] No applications → "No application yet" + Start application; first load shows the skeleton, not a spinner
+- [ ] 390 and 430 widths, light and dark, Arabic RTL, largest Dynamic Type
 
 ## 9. Face ID lock
 - [ ] Account › Security › Unlock with Face ID: turning on asks Face ID once
