@@ -57,7 +57,7 @@ export default function ContinueApplication() {
       if (!web && form.spouseAccompanying === "yes" && !form.travelingWith) { form.travelingWith = "spouse"; preset.current.add("travelingWith"); }
       setWebsite(web); setF(form);
       const first = continueQuestions(form, web).find((x) => !!continueError(x, form, saved.current) || preset.current.has(x.id));
-      if (first) setQid(first.id); else router.replace(`/applications/${id}`);
+      if (first) setQid(first.id); else router.replace(`/applications/${id}`, { withAnchor: true });
     }).catch((e) => setLoadErr(e?.message ?? String(e)));
   }, [id]);
 
@@ -66,7 +66,7 @@ export default function ContinueApplication() {
   const idx = q ? list.findIndex((x) => x.id === q.id) : -1;
   const patch = (x: Partial<WizardForm>) => setF((y) => (y ? { ...y, ...x } : y));
   const goTo = (next: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setQid(next); setShowErr(false); setAllMode(false); setErr(null); };
-  const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`); };
+  const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`, { withAnchor: true }); };
 
   /** Save what we have, queued behind earlier saves (best effort while moving on; awaited on the last question). */
   const save = (nf: WizardForm) => {
@@ -87,7 +87,7 @@ export default function ContinueApplication() {
     const next = qs.slice(i + 1).find((x) => pending(x, nf));
     if (next) { save(nf).catch(() => {}); goTo(next.id, 1); return; }
     setBusy(true); setErr(null);
-    try { await save(nf); success(); router.replace(`/applications/${id}`); }
+    try { await save(nf); success(); router.replace(`/applications/${id}`, { withAnchor: true }); }
     catch (x: any) { hError(); setErr(x?.message ?? String(x)); }
     finally { setBusy(false); }
   };

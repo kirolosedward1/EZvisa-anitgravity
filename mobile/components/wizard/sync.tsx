@@ -57,7 +57,7 @@ export function DraftConflictSheet() {
     : { title: t("Draft removed"), body: t("This draft was discarded {where}.", { where }), main: t("Save as new"), alt: t("Discard") };
   const main = () => {
     if (conflict.reason === "gone") { resolveConflict("mine"); return; }
-    if (conflict.reason === "closed" && s) { resolveConflict("server"); router.replace(`/applications/${s.id}`); return; }
+    if (conflict.reason === "closed" && s) { resolveConflict("server"); router.replace(`/applications/${s.id}`, { withAnchor: true }); return; }
     resolveConflict("server");
   };
   const alt = () => resolveConflict(conflict.reason === "gone" ? "discard" : "mine");
