@@ -72,8 +72,8 @@ export default function ApplicationDetail() {
     } else setPicking(!picking);
   };
   const open = async (path: string) => {
-    try { const url = path ? await openDocumentUrl(path) : null; if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert("Stored securely", "Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing."); }
-    catch (e: any) { Alert.alert("Can't open file", e?.message); }
+    try { const url = path ? await openDocumentUrl(path) : null; if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert(t("Stored securely"), t("Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing.")); }
+    catch (e: any) { Alert.alert(t("Can't open file"), e?.message); }
   };
   const paying = usePaying(); const [ziina, setZiina] = useState<string | null>(null);
   const unpaid = !!a && !isPaid(a);
@@ -206,7 +206,7 @@ function UploadRow({ j }: { j: UploadJob }) {
   return (
     <View testID={`upload-${j.state}`}>
       <ListRow icon={v.icon} iconColor={v.color} title={j.name} subtitle={v.sub} />
-      {j.state === "uploading" && <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar value={j.progress} label={t("Uploading…")} /></View>}
+      {j.state === "uploading" && <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar value={j.progress ? j.progress : undefined} label={t("Uploading…")} /></View>}
       {(j.state === "failed" || j.state === "queued") && (
         <View style={{ flexDirection: "row", gap: S.sm, paddingHorizontal: S.md, paddingBottom: S.sm }}>
           {j.state === "failed" && <View style={{ flex: 1 }}><Button title={t("Retry")} size="M" variant="secondary" onPress={() => retryUpload(j.id)} /></View>}
@@ -218,21 +218,23 @@ function UploadRow({ j }: { j: UploadJob }) {
 }
 
 function CheckRow({ i, busy, canUpload, onPress }: { i: CheckItem; busy: boolean; canUpload: boolean; onPress?: () => void }) {
-  const c = useColors();
+  const c = useColors(); const { t } = useT();
   const map: Record<CheckItem["state"], { icon: "checkmark.circle.fill" | "circle" | "exclamationmark.circle.fill" | "clock.fill" | "hourglass"; color: string; label: string }> = {
-    missing: { icon: "circle", color: c.tertiaryLabel, label: i.req.is_mandatory ? "Missing" : "Optional" },
-    rejected: { icon: "exclamationmark.circle.fill", color: c.red, label: `Re-upload${i.reason ? ` · ${i.reason}` : ""}` },
-    uploaded: { icon: "checkmark.circle.fill", color: c.tint, label: "Uploaded" },
-    review: { icon: "clock.fill", color: c.orange, label: "Under review" },
-    approved: { icon: "checkmark.circle.fill", color: c.green, label: "Approved" },
-    ready: { icon: "checkmark.circle.fill", color: c.green, label: "Ready" },
-    preparing: { icon: "hourglass", color: c.secondaryLabel, label: "We'll prepare this" },
+    missing: { icon: "circle", color: c.tertiaryLabel, label: t(i.req.is_mandatory ? "Missing" : "Optional") },
+    // The rejection reason is staff text from document_reviews: shown as written
+    rejected: { icon: "exclamationmark.circle.fill", color: c.red, label: `${t("Re-upload")}${i.reason ? ` · ${i.reason}` : ""}` },
+    uploaded: { icon: "checkmark.circle.fill", color: c.tint, label: t("Uploaded") },
+    review: { icon: "clock.fill", color: c.orange, label: t("Under review") },
+    approved: { icon: "checkmark.circle.fill", color: c.green, label: t("Approved") },
+    ready: { icon: "checkmark.circle.fill", color: c.green, label: t("Ready") },
+    preparing: { icon: "hourglass", color: c.secondaryLabel, label: t("We'll prepare this") },
   };
   const m = map[i.state];
-  const label = busy ? "Uploading…" : m.label;
-  return <ListRow icon={m.icon} iconColor={m.color} title={i.req.title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
-    trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">Upload</Text> : undefined}
-    a11yLabel={`${i.req.title}, ${label}`} a11yHint={isOpen(i) && canUpload ? "Upload" : i.doc ? "Open" : undefined} />;
+  const label = busy ? t("Uploading…") : m.label;
+  const title = t(i.req.title);
+  return <ListRow icon={m.icon} iconColor={m.color} title={title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
+    trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">{t("Upload")}</Text> : undefined}
+    a11yLabel={`${title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} />;
 }
 
 /** Currency, local time, plugs and emergency number from the static dataset in lib/facts.ts. */

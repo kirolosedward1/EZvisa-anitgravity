@@ -535,4 +535,14 @@ export const AR: Record<string, string> = {
   "You're offline. Connect to submit.": "أنت غير متصل. اتصل بالإنترنت للإرسال.", "Not saved yet. Check your connection and try again.": "لم يُحفظ بعد. تحقق من الاتصال وحاول مجددًا.",
   "You're offline. Your answers are saved on this phone and will save to your account when you're back online.": "أنت غير متصل. إجاباتك محفوظة على هذا الهاتف وستُحفظ في حسابك عند عودة الاتصال.",
   "Your latest answers aren't saved to your account yet. Signing out removes them from this phone.": "آخر إجاباتك لم تُحفظ في حسابك بعد. تسجيل الخروج يحذفها من هذا الهاتف.",
+  // ---- chat 09: documents ----
+  "Re-upload": "أعد الرفع",
+  "Stored securely": "محفوظ بأمان",
+  "Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing.": "استلمنا ملفك وهو محفوظ بشكل خاص لدى EZvisa. يراجعه فريقنا وسنتواصل معك إذا احتاج أي شيء إلى استبدال.",
+  "Can't open file": "تعذّر فتح الملف",
+  "This document type can't be uploaded.": "لا يمكن رفع هذا النوع من المستندات.",
+  "Only PDF, JPG or PNG files.": "ملفات PDF أو JPG أو PNG فقط.",
+  "Documents can be uploaded after payment.": "يمكن رفع المستندات بعد الدفع.",
+  "This application can't take new documents.": "لا يقبل هذا الطلب مستندات جديدة.",
+  "Please sign in to upload documents": "سجّل الدخول لرفع المستندات",
 };
