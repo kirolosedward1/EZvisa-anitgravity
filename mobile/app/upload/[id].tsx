@@ -28,6 +28,9 @@ async function openImage(f: Picked): Promise<Img> {
   return { uri: r.uri, width: r.width, height: r.height };
 }
 
+/** Back to the application (also when the preview was opened without a screen under it). */
+const close = (id: string) => (router.canGoBack() ? router.back() : router.replace(`/applications/${id}`));
+
 export default function UploadPreview() {
   const p = useLocalSearchParams<Params>();
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, lang } = useT();
@@ -60,7 +63,7 @@ export default function UploadPreview() {
       const out = kind === "image" ? await prepareImage({ ...file, uri: img!.uri, width: img!.width, height: img!.height }, crop) : file;
       const r = await enqueueUpload(p.id, { uri: out.uri, name: out.name, mimeType: out.mimeType, size: out.size }, p.docType, p.reqId || null);
       if (r.duplicate) { hError(); setErr(t("This file is already in your uploads.")); return; }
-      success(); router.back();
+      success(); close(p.id);
     } catch (e: any) { hError(); setErr(t(e?.message ?? String(e))); } finally { setBusy(null); }
   };
 
@@ -71,7 +74,7 @@ export default function UploadPreview() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: Platform.OS === "ios" ? insets.top : insets.top + S.xs }} testID="upload-preview">
       <View style={{ paddingHorizontal: S.lg, paddingVertical: S.xs, flexDirection: "row", alignItems: "center", gap: S.sm }}>
-        <CircleButton icon="xmark" label={t("Close")} onPress={() => router.back()} />
+        <CircleButton icon="xmark" label={t("Close")} onPress={() => close(p.id)} />
         <Text variant="headline" center numberOfLines={1} style={{ flex: 1 }} accessibilityRole="header">{t(p.title || "Document")}</Text>
         <View style={{ width: 44 }} />
       </View>
