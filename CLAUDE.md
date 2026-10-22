@@ -58,6 +58,7 @@
     page.tsx, loading.tsx
     /thank-you                        # Post-submission page (+ thank-you-client.tsx)
   /about /contact /pricing /how-it-works /videos
+  /app                                # Mobile app landing page (iPhone mockups + store badges)
   /news                               # Blog
     page.tsx, /[slug], not-found.tsx
   /documents                          # Required-documents hub
@@ -74,6 +75,7 @@
 
 /components                           # React components (see section 5)
   /ui                                 # shadcn/ui primitives
+  /app                                # /app page: iphone-frame, store-badges, reveal
   /apply /blog /thank-you             # feature-specific component groups
 
 /lib
@@ -151,6 +153,7 @@ Usage rules:
 | `top-destinations-carousel.tsx` | Animated destination/flag carousel (Embla) |
 | `country-card.tsx`, `country-document-selector.tsx`, `document-requirements-page.tsx` | Documents flow |
 | `start-application-box.tsx`, `fixed-cta-button.tsx`, `continue-application-notification.tsx` | Conversion helpers |
+| `app/iphone-frame.tsx`, `app/store-badges.tsx`, `app/reveal.tsx` | `/app` page: pure-CSS iPhone frame (scales via container units), App Store / Google Play badges (URLs + "Coming soon" flag live here), scroll reveal that honours `prefers-reduced-motion` |
 | `cookie-consent.tsx`, `scroll-restoration.tsx`, `scroll-to-top.tsx`, `theme-provider.tsx` | App-wide utilities |
 
 ---
@@ -217,6 +220,7 @@ Never log or expose secrets. Check the exact required names in the route/handler
 | Edit testimonials / FAQ / footer | the matching `components/*-section.tsx` / `footer.tsx` |
 | Add a Schengen country | `lib/countries.ts` + new `app/documents/required-documents-to-apply-for-a-tourist-visa-in-<country>/page.tsx` |
 | Update pricing | `app/pricing/page.tsx` + price lines in hero/contact |
+| Mobile app page: store links / screenshots | `components/app/store-badges.tsx` (`APP_STORE_URL`, `GOOGLE_PLAY_URL`, `GOOGLE_PLAY_AVAILABLE`); screenshots in `public/app/screenshots/*.png` (1179×2556), OG image `public/app/og.png` |
 | Visa application logic | `app/apply/*`, `lib/wizard-steps.ts`, `lib/form-types.ts`, `lib/actions/visa-application.ts`, `app/api/submit-application` |
 | Payments | `app/api/create-payment`, `app/api/webhooks/ziina`, `app/payment-success`, `app/payment-failed` |
 | Email templates | `lib/email-templates.tsx` + `app/api/send-email` |

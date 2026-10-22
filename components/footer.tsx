@@ -68,6 +68,7 @@ const footerSections = [
       { href: "/destinations", label: "Visa destinations" },
       { href: "/documents", label: "Required documents" },
       { href: "/pricing", label: "Pricing" },
+      { href: "/app", label: "Mobile app" },
     ],
   },
   {
