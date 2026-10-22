@@ -6,7 +6,7 @@ import { router } from "expo-router";
 import { useColors, S, R, curve, SPRING } from "../../lib/theme";
 import { FLAG_SVG } from "../../assets/flags";
 import { STATUS_LABEL, type Application } from "../../lib/data";
-import { useT } from "../../lib/i18n";
+import { useT, ltr } from "../../lib/i18n";
 import { tap, success as hSuccess } from "../../lib/haptics";
 import { Text } from "./Text";
 import { Icon, PressScale } from "./core";
@@ -148,19 +148,19 @@ export function CountryRow({ name, onPress }: { name: string; onPress: () => voi
 }
 
 export function StatusHeroCard({ a }: { a: Application }) {
-  const c = useColors(); const name = a.countries?.name ?? "";
+  const c = useColors(); const { t } = useT(); const name = a.countries?.name ?? "";
   return (
     <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${name} application ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}. View`}
       style={[{ backgroundColor: c.card, borderRadius: R.card, padding: S.md, marginHorizontal: S.md, gap: S.md }, curve]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={40} />
-        <View style={{ flex: 1 }}><Text variant="headline">{name}</Text><Text variant="subhead" tone="secondary" tabular>{a.reference}</Text></View>
+        <View style={{ flex: 1 }}><Text variant="headline">{t(name)}</Text><Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text></View>
         <StatusPill v={a.status} />
       </View>
       <MiniProgress status={a.status} payment={a.payment_status} />
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text variant="subhead" tone="secondary">{STATUS_LABEL[a.status] ?? a.status}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xxs }}><Text variant="subhead" tone="tint" weight="600">View</Text><Icon name="chevron.right" size={12} color={c.tint} weight="semibold" /></View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xxs }}><Text variant="subhead" tone="tint" weight="600">{t("View")}</Text><Icon name="chevron.right" size={12} color={c.tint} weight="semibold" /></View>
       </View>
     </PressScale>
   );

@@ -281,19 +281,20 @@ export async function uploadDocument(applicationId: string, file: { uri: string;
 export async function openDocumentUrl(_path: string): Promise<string | null> { return null; }
 
 // The live DB has no notifications table: the inbox is derived from the real application rows; read state is kept on the device.
-export type Notification = { id: string; title: string; body: string | null; created_at: string; read_at: string | null; application_id: string | null };
+/** `title` / `body` are English keys (translated on screen); `place` fills {c} in the title; `reference` is shown as-is. */
+export type Notification = { id: string; title: string; body: string | null; place?: string; reference?: string; created_at: string; read_at: string | null; application_id: string | null };
 const READ_KEY = "ezvisa.notifications.read.v1";
 async function readSet() { try { return new Set<string>(JSON.parse((await AsyncStorage.getItem(READ_KEY)) ?? "[]")); } catch { return new Set<string>(); } }
 export async function listNotifications(): Promise<Notification[]> {
   const apps = await listApplications(); const read = await readSet();
   const out: Notification[] = [];
   for (const a of apps) {
-    const where = a.countries?.name ?? "your trip";
+    const place = a.countries?.name ?? "your trip"; const reference = a.reference;
     if (a.status === "draft") continue;
-    out.push({ id: `${a.id}-submitted`, title: `${where} application submitted`, body: `${a.reference} · We'll review your details.`, created_at: a.created_at ?? "", read_at: null, application_id: a.id });
-    if (a.payment_status === "paid" || a.payment_status === "completed") out.push({ id: `${a.id}-paid`, title: "Payment received", body: `${a.reference} · Thank you.`, created_at: a.updated_at ?? "", read_at: null, application_id: a.id });
-    if (a.status === "reviewing") out.push({ id: `${a.id}-reviewing`, title: "Your file is in review", body: a.reference, created_at: a.updated_at ?? "", read_at: null, application_id: a.id });
-    if (a.status === "ready") out.push({ id: `${a.id}-ready`, title: "Your file is ready", body: `${a.reference} · Open it to download.`, created_at: a.updated_at ?? "", read_at: null, application_id: a.id });
+    out.push({ id: `${a.id}-submitted`, title: "{c} application submitted", place, reference, body: "We'll review your details.", created_at: a.created_at ?? "", read_at: null, application_id: a.id });
+    if (a.payment_status === "paid" || a.payment_status === "completed") out.push({ id: `${a.id}-paid`, title: "Payment received", reference, body: "Thank you.", created_at: a.updated_at ?? "", read_at: null, application_id: a.id });
+    if (a.status === "reviewing") out.push({ id: `${a.id}-reviewing`, title: "Your file is in review", reference, body: null, created_at: a.updated_at ?? "", read_at: null, application_id: a.id });
+    if (a.status === "ready") out.push({ id: `${a.id}-ready`, title: "Your file is ready", reference, body: "Open it to download.", created_at: a.updated_at ?? "", read_at: null, application_id: a.id });
   }
   return out.map((n) => ({ ...n, read_at: read.has(n.id) ? n.created_at : null })).sort((x, y) => y.created_at.localeCompare(x.created_at));
 }
