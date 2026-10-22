@@ -34,7 +34,7 @@ import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders"
 import { error as hError, tap, success, select } from "../../lib/haptics";
 import { WORLD } from "../../lib/world";
 import { emptyForm, type WizardForm, type WizardStep, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
-import { type Question, questionErrors, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
+import { type Question, setAccountEmail, questionErrors, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
 
 const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
@@ -78,6 +78,7 @@ export default function Apply() {
   const p = useLocalSearchParams<Params>();
   const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, flushDraft, baseAt, sync, checkRemote, drafts, openDraft, startNew, activeKey } = useForm();
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
+  setAccountEmail(session?.user.email); // before any activeQuestions() below: signed in = no email question
   const uid = session?.user.id ?? null;
   const [dir, setDir] = useState(1);
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
@@ -212,8 +213,8 @@ export default function Apply() {
   }, [hydrated, p.step]);
   // Keep ?step= in sync with the current step, like the site.
   useEffect(() => { if (hydrated && navReady && lastSlug.current !== undefined && step !== lastSlug.current) { lastSlug.current = step; router.setParams({ step }); } }, [step, navReady, hydrated]);
-  // Signed-in users: the account email (as the site does). Names and the rest come from the profile prefill above.
-  useEffect(() => { const e = session?.user.email; if (e) setForm((x) => (x.email ? x : { ...x, email: e })); }, [session]);
+  // Signed-in users: always the account email (the email question is skipped), so the application shows up in their account.
+  useEffect(() => { const e = session?.user.email; if (e) setForm((x) => (x.email === e ? x : { ...x, email: e })); }, [session]);
   // Every answer: save the account draft right away (local autosave runs on every change in lib/form.tsx).
   useEffect(() => { if (hydrated && session && !submitted) flushDraft(); }, [page]);
   // Funnel analytics (lib/analytics.ts): question ids, step names and the destination only; never answers.

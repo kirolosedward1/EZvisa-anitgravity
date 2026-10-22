@@ -35,6 +35,11 @@ const todayIso = () => iso(new Date());
 export const BIZ = (f: WizardForm) => f.employmentStatus === "business" || f.employmentStatus === "freelancer";
 const EMP = (f: WizardForm) => f.employmentStatus === "employed";
 
+/** Signed-in account email (set by the wizard screen). When present, the email answer is the account email and the
+ *  question is skipped: applications belong to the account by email (listApplications .eq("email", me)). */
+let accountEmail: string | null = null;
+export const setAccountEmail = (e: string | null | undefined) => { accountEmail = e?.trim().toLowerCase() || null; };
+
 export const QUESTIONS: Question[] = [
   // ---- Personal Information (nationality-step.tsx) ----
   { id: "destination", step: "personal", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "country", names: SCHENGEN, searchPlaceholder: "Search country..." },
@@ -46,7 +51,7 @@ export const QUESTIONS: Question[] = [
   { id: "hasEmiratesId", step: "personal", keys: ["hasEmiratesId"], label: "Do you have an Emirates ID?", required: true, kind: "yesno", applies: (f) => f.countryOfResidence === "United Arab Emirates" },
   { id: "firstName", step: "personal", keys: ["firstName"], label: "First Name", required: true, kind: "text", placeholder: "Enter first name", hint: "As on your passport.", text: { caps: "words", contentType: "givenName", autoComplete: "given-name" } },
   { id: "lastName", step: "personal", keys: ["lastName"], label: "Last Name", required: true, kind: "text", placeholder: "Enter last name", hint: "As on your passport.", text: { caps: "words", contentType: "familyName", autoComplete: "family-name" } },
-  { id: "email", step: "personal", keys: ["email"], label: "Email Address", required: true, kind: "text", placeholder: "your.email@example.com", text: { keyboard: "email-address", caps: "none", contentType: "emailAddress", autoComplete: "email" } },
+  { id: "email", step: "personal", keys: ["email"], label: "Email Address", required: true, kind: "text", applies: () => !accountEmail, placeholder: "your.email@example.com", text: { keyboard: "email-address", caps: "none", contentType: "emailAddress", autoComplete: "email" } },
   { id: "phone", step: "personal", keys: ["phone", "phoneLocal", "phoneCountry", "whatsappOptIn"], label: "Phone Number", required: true, kind: "phone" },
   { id: "dateOfBirth", step: "personal", keys: ["dateOfBirth"], label: "Date of Birth", required: true, kind: "date", placeholder: "Select date of birth", max: () => iso(adultMax()), dateStyle: "wheel", defaultDate: () => "1990-01-01" },
   { id: "hasValidPassport", step: "personal", keys: ["hasValidPassport"], label: "Do you have a valid passport?", required: true, kind: "yesno",
