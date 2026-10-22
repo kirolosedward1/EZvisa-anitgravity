@@ -15,7 +15,7 @@ import { NetworkBanner } from "../components/NetworkBanner";
 import { BootOverlay } from "../components/Boot";
 import { LockGate } from "../lib/lock";
 import { startUploadQueue } from "../lib/uploads";
-import { startReminderRouting } from "../lib/reminders";
+import { useNotificationRouting } from "../lib/push";
 
 export default function Root() {
   return <AppearanceProvider><I18nProvider><Themed /></I18nProvider></AppearanceProvider>;
@@ -54,16 +54,25 @@ function Routes() {
   );
 }
 
+/** Tapped notifications (push or reminder) open their screen once the stored session is known, warm or cold start.
+ *  Application screens are behind the session (Routes), so those taps wait for sign-in. */
+function NotificationRouter() {
+  const { session, loading } = useAuth();
+  useNotificationRouting(!loading, !!session);
+  return null;
+}
+
 function Themed() {
   const dark = useIsDark(); const c = useColors();
   const base = dark ? DarkTheme : DefaultTheme;
-  useEffect(() => { installCrashHandler(); startAnalytics(); startUploadQueue(); return startReminderRouting(); }, []);
+  useEffect(() => { installCrashHandler(); startAnalytics(); startUploadQueue(); }, []);
   return (
     <ThemeProvider value={{ ...base, colors: { ...base.colors, primary: c.tint, background: c.bg, card: c.bg } }}>
       <AuthProvider><FormProvider>
         <View style={{ flex: 1, backgroundColor: c.bg }}>
           <StatusBar style={dark ? "light" : "dark"} />
           <Routes />
+          <NotificationRouter />
           <NetworkBanner />
           <LockGate />
           <Boot />

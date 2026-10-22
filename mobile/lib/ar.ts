@@ -474,6 +474,7 @@ export const AR: Record<string, string> = {
   "Updating your application. This can take a minute.": "جارٍ تحديث طلبك. قد يستغرق ذلك دقيقة.",
   "Updating your application…": "جارٍ تحديث طلبك…",
   "You're offline": "أنت غير متصل",
+  "You're offline, so this phone may still get this account's notifications.": "أنت غير متصل، لذا قد يستمر هذا الهاتف في تلقي إشعارات هذا الحساب.",
   "We'll check your payment when you're back online.": "سنتحقق من الدفع عند عودة الاتصال.",
   "Pay securely": "ادفع بأمان",
   "Shown at checkout": "يظهر عند الدفع",

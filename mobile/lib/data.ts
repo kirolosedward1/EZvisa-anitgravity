@@ -443,17 +443,33 @@ export async function markRead(ids: string[]) {
   await AsyncStorage.setItem(READ_KEY, JSON.stringify([...s]));
 }
 
-/** The live DB has no push_tokens table yet (see db/proposed-live-changes.sql); the token is kept on the device only. */
-/** Stores the Expo push token in device_tokens (RLS: own rows only; user_id/email come from the session server-side). */
+const PUSH_TOKEN_KEY = "ezvisa.push.token";
+/** Stores this phone's Expo push token in device_tokens for the signed-in user (RLS: own rows only; user_id/email come from the session server-side).
+ * claim_device_token (migration 0012) also takes the token off any other account that last used this phone. Until it is applied,
+ * a plain insert is used and an existing row gets a fresh updated_at (notify-status sends a shared token only to its latest owner). */
 export async function registerPushToken(token: string) {
-  await AsyncStorage.setItem("ezvisa.push.token", token).catch(() => {});
+  const prev = await AsyncStorage.getItem(PUSH_TOKEN_KEY).catch(() => null);
+  await AsyncStorage.setItem(PUSH_TOKEN_KEY, token).catch(() => {});
   if (!supabase) return;
-  const { error } = await supabase.from("device_tokens" as any).insert({ token, platform: Platform.OS === "android" ? "android" : "ios" } as any);
-  if (error && error.code !== "23505") throw error; // already registered is fine
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) return;
+  const platform = Platform.OS === "android" ? "android" : "ios";
+  if (prev && prev !== token) await supabase.from("device_tokens" as any).delete().eq("token", prev).then(() => {}, () => {}); // rotated token
+  const claim: { error: { code?: string } | null } = await (supabase as any).rpc("claim_device_token", { p_token: token, p_platform: platform });
+  if (!claim.error) return;
+  if (claim.error.code !== "PGRST202") throw claim.error; // PGRST202 = function not in the database yet
+  const { error } = await supabase.from("device_tokens" as any).insert({ token, platform } as any);
+  if (error?.code === "23505") { await supabase.from("device_tokens" as any).update({ updated_at: new Date().toISOString() } as any).eq("token", token); return; }
+  if (error) throw error;
 }
-export async function unregisterPushToken() {
-  const token = await AsyncStorage.getItem("ezvisa.push.token").catch(() => null);
-  if (token && supabase) await supabase.from("device_tokens" as any).delete().eq("token", token).then(() => {}, () => {});
+/** Removes this phone's token from the signed-in account. false = the server could not be reached, so pushes would continue. */
+export async function unregisterPushToken(): Promise<boolean> {
+  const token = await AsyncStorage.getItem(PUSH_TOKEN_KEY).catch(() => null);
+  if (!token || !supabase) return true;
+  try {
+    const { error } = await supabase.from("device_tokens" as any).delete().eq("token", token);
+    return !error;
+  } catch { return false; }
 }
 
 export const STATUS_LABEL: Record<string, string> = { draft: "Draft", submitted: "Submitted", reviewing: "In review", awaiting_documents: "Documents needed", approved: "Approved", ready: "File ready", appointment_booked: "Appointment booked", completed: "Completed", rejected: "Refused", cancelled: "Cancelled", pending: "Unpaid", processing: "Processing", paid: "Paid", failed: "Payment failed", expired: "Payment expired", refunded: "Refunded", partially_refunded: "Part refunded", uploaded: "Uploaded", under_review: "Under review", generated: "Prepared by EZvisa", superseded: "Replaced" };

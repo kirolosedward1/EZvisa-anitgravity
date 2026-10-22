@@ -20,7 +20,7 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - `additional_notes` JSON: the website's keys (`maritalStatus, employmentStatus, jobTitle, companyName, monthlySalary, spouseAccompanying`) plus the app's keys (`source:"mobile-app", platform, wizardStep, wizard:{full form}, uploads:[{type,path,name,at}], contactEmail?`).
   - Ownership = `email` equals the signed-in user's email (the same query the website dashboard runs). There is no `user_id` column and **no `tracking_token` column** (the web code expects one, see the proposed SQL). The reference shown is `EZ-` + the first 8 hex characters of the id.
 - Storage: the live project has a private bucket `visa-documents` (hyphen) with **service-role-only** policies. The website code uses `visa_documents` (underscore), which does not exist. See below.
-- No requirements, notifications or push_tokens tables exist live. The app uses a static checklist (`lib/data.ts` `REQS`, the same doc types as the website upload page), an inbox derived from application rows, and a push token kept on the device.
+- Push: `public.device_tokens` (migration 0006, applied 2026-10-21) holds Expo push tokens per user; the `notify-status` edge function sends them. See §2k. There is no requirements or notifications table: the app uses a static checklist (`lib/data.ts` `REQS`, the same doc types as the website upload page) and an inbox derived from application rows.
 
 ## 2. Flows (code map)
 - **Auth**: see §2g (chat 03). Same Supabase accounts as the website: email + password, magic link, sign-up, forgot password. Email links open the app (`/auth/callback`).
@@ -41,7 +41,7 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - local passport-expiry reminder (Account)
   - Sign in with Apple (`lib/apple.ts`), hidden while the provider is disabled. In Expo Go the token audience is `host.exp.Exponent`, so add it to the Apple client IDs for testing.
   - EN/AR with RTL (`lib/i18n.tsx`, `lib/ar.ts`, switch in Account)
-- **Native build only (not faked)**: home-screen widget, push for status changes (plan in `db/proposed-itinerary-ai.md` §3), MRZ reading, edge-detect document scanning.
+- **Native build only (not faked)**: home-screen widget, MRZ reading, edge-detect document scanning. (Push for status changes now exists, §2k.)
 - Tests:
   - `scripts/run-e2e-v8.mjs`: live data layer, no new rows
   - `scripts/plan-v82.ts`: deterministic plan/PDF
@@ -144,6 +144,25 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - Old drafts saved on the removed screen resume at Passport Expiry. The website (`main`) still asks the number before payment; only the app changed.
 - Checks: `bun scripts/run-check.ts scripts/passport-later-check.ts` (10), `bun scripts/run-check.ts scripts/timeline-check.ts` (incl. 4 new cases). Screenshots: `docs/screenshots/passport-later/`.
 
+## 2k. Push notifications and deep links (chat 12, 2026-10-22)
+- **Flow**: staff change `visa_applications.application_status` or reject a document in `document_reviews` → trigger `visa_applications_notify` (0006) → `pg_net` POST with the Vault secret → edge function `notify-status` → Expo Push API → the owner's phones (`device_tokens` by email).
+- **App** (`lib/push.ts`):
+  - `notifications()` is the only loader of expo-notifications and sets the single foreground handler (banner + list, no sound, no badge). Reminders use it too.
+  - `setupPush(ask)`: `ask=false` at sign-in (registers only if already granted); `ask=true` after payment (`app/payment/[id].tsx`). Never re-asks once denied. `addPushTokenListener` re-saves the token when APNs rotates it.
+  - `useNotificationRouting` in `app/_layout.tsx` (`NotificationRouter`): warm start via `addNotificationResponseReceivedListener`, cold start via `getLastNotificationResponse()` (the SDK 57 sync API; the Async one is deprecated). It waits until the stored session has loaded (`Routes` keeps application screens behind the session), and application taps wait for sign-in. Each tap is handled once, then `clearLastNotificationResponse()`. It opens `router.push(url, { withAnchor: true })`, so Back goes to Applications.
+  - `lib/notifyRoute.ts` allows only `/applications/<uuid>`, `/account` and `/apply`.
+- **Token storage** (`lib/data.ts`): `registerPushToken` calls RPC `claim_device_token` (0012, not applied). On PGRST202 it falls back to insert, or bumps `updated_at` if the row exists. A rotated token's old row is deleted. `unregisterPushToken` returns false when offline. Sign-out still completes (`lib/auth.tsx`, 3 s timeout), and Account › Sign out says when the phone is offline that it may still get the account's notifications. `clearUserData` drops the stored token key.
+- **Server v2** (`migrations/functions/notify-status/index.ts` + `messages.ts`, NOT deployed; v1 is live):
+  - lock-screen text is only "There's an update on your application." or "A document needs your attention.";
+  - data is `{ type, applicationId, url }`;
+  - no push for the customer's own draft/submit/discard;
+  - a token shared by two accounts goes to its latest owner only.
+- **Expo Go**:
+  - Android Expo Go can't receive remote push (SDK 53+), and `setupPush` returns `unsupported-expo-go-android` there.
+  - iOS Expo Go only warns in the SDK 57 code, but Expo does not support push there. Real delivery must be tested on a development build (`eas build --profile development --platform ios`, APNs key managed by EAS credentials, never in the repo).
+  - Tap routing and the permission prompt can be tested in Expo Go with a local reminder.
+- Checks: `node scripts/check-push.mjs` (route allow-list, message text and data, token ownership). Device test steps: QA-CHECKLIST §11.
+
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
 Not working, because of server config outside the app:
@@ -181,6 +200,6 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 1. Owner: set the Vercel env vars (Supabase URL/anon/service role, Ziina key and webhook secret), fix the Supabase Auth URL config, approve `proposed-live-changes.sql`. Then re-run `scripts/e2e-live.mjs`: upload, payment and `payment_id` should pass.
 2. Send the "application submitted" email for app submissions (e.g. a small authenticated web route that sends it for an existing row id, or a DB webhook).
 3. Customer document viewing: signed URLs are in the app (chat 09); needs `migrations/0011` applied.
-4. Push notifications need a `push_tokens` table (optional block 5) and a sender.
+4. Push: approve and apply `migrations/0012_claim_device_token.sql`, deploy `notify-status` v2, then run QA §11 on a physical iPhone.
 5. Supabase Auth URL configuration (owner): add the app redirect URLs from §2g and set the Site URL to https://www.ezvisa.net. Google sign-in additionally needs the provider enabled (not used by the website today).
 6. Development build (`eas build --profile development`) for push and native testing; App Store / Play listings.
