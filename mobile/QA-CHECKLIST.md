@@ -103,3 +103,10 @@ additional_notes.uploads[].at, document_reviews, appointment_at).
 - [ ] Sign out in Airplane Mode → the confirmation adds "You're offline, so this phone may still get this account's notifications."; signing out still works
 - [ ] Second account signs in on the same phone → only that account's pushes arrive (needs 0012, or notify-status v2)
 - [ ] The customer's own submit or discard sends no push (v2)
+
+## 12. Analytics and crash reports (chat 14; needs EXPO_PUBLIC_SENTRY_DSN in the EAS preview env and migration 0008)
+- [ ] Account › Privacy › long-press Version: startup times listed (note them: cold start after force-quit, 3 times)
+- [ ] "Send test error" → Sentry › Issues shows "EZvisa test error (diagnostics) for [redacted] [redacted]", no email, no name, no user/IP
+- [ ] Run the wizard to payment, then in Supabase SQL: `select event, page, outcome, ms from wizard_events order by id desc limit 30;` shows step viewed/completed, wizard_submit, payment_started/finished, app_start, no personal data
+- [ ] Airplane Mode: answer 3 questions, back online → the events arrive (Diagnostics "Queued events" goes back to 0)
+- [ ] Turn "Share usage data" off → Queued events 0; new wizard steps add no rows; "Send test error" is not offered

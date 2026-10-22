@@ -8,7 +8,7 @@ import { AppointmentCard } from "../../../components/Appointment";
 import { useColors, S, R, curve, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { PHOTOS, THUMBS } from "../../../lib/photos";
-import { STATUS_LABEL, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
+import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
 import { useApps } from "../../../lib/useApps";
 import { tap, error as hError } from "../../../lib/haptics";
 import { useEffect, useRef, useState } from "react";
@@ -38,7 +38,7 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
   const c = useColors(); const { t, lang } = useT();
   const [paying, setPaying] = useState(false);
   const name = a.countries?.name ?? "";
-  const items = buildChecklist(requirementsFor((a.notes?.wizard as any)?.employmentStatus), a.documents, a.status).customer;
+  const items = buildChecklist(requirementsFor(employmentOf(a)), a.documents, a.status).customer;
   const n = nextAction(a, items);
   const steps = buildTimeline(a); const done = doneCount(steps);
   const cd = ["completed", "rejected", "cancelled"].includes(a.status) ? null : countdown(a.entry_date, a.exit_date, t);

@@ -6,6 +6,7 @@ import { PressScale } from "../../components/ui";
 // (phone + the account's draft row) and the flow resumes at the exact question. Review lets you edit one answer and
 // come straight back. Links keep the website's params: /apply?step=<slug>&from=<nationality>&to=<destination>.
 import { useEffect, useRef, useState } from "react";
+import * as Crypto from "expo-crypto";
 import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
 import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
 import { slideIn } from "../../lib/motion";
@@ -72,7 +73,8 @@ function Seg({ fill }: { fill: number }) {
 export default function Apply() {
   const c = useColors(); const reduce = useReducedMotion(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const fmt = useFmtDate();
   const p = useLocalSearchParams<Params>();
-  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, flushDraft, baseAt, sync, checkRemote, drafts, openDraft, startNew, activeKey } = useForm();
+  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, flushDraft, baseAt, sync, checkRemote, hasConflict, drafts, openDraft, startNew, activeKey } = useForm();
+  const guestId = useRef<string | null>(null); // one id per guest submit: a retry after a lost reply can't add a second row
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   setAccountEmail(session?.user.email); // before any activeQuestions() below: signed in = no email question
   const uid = session?.user.id ?? null;
@@ -293,12 +295,13 @@ export default function Apply() {
     if (profileAsk) { markAsked(profileAsk.key); setProfileAsk(null); } // submitting without answering = keep the profile as is
     try {
       if (!session) { // guest checkout: pay first, sign in with the same email afterwards
-        const g = await guestSubmit(f); success(); cancelDraftReminder();
+        const g = await guestSubmit(f, guestId.current ?? (guestId.current = Crypto.randomUUID())); success(); cancelDraftReminder();
+        guestId.current = null; // the next application gets its own id
         setSubmitted({ applicationId: g.id, reference: g.reference, destination: f.destination, spouse, guestEmail: g.email }); clearDraft(); return;
       }
       // Submit only what the server confirmed: an unsaved or changed-elsewhere draft is never submitted.
       const id = await flushDraft();
-      if (!id) { hError(); if (sync !== "conflict") setErr(offline ? t("You're offline. Connect to submit.") : t("Not saved yet. Check your connection and try again.")); return; }
+      if (!id) { hError(); if (!hasConflict()) setErr(offline ? t("You're offline. Connect to submit.") : t("Not saved yet. Check your connection and try again.")); return; }
       const a = await submitApplication(f, id, baseAt()); success(); cancelDraftReminder();
       setSubmitted({ applicationId: a.id, reference: a.reference, destination: a.destination_country, spouse }); clearDraft();
     } catch (e: any) { hError(); if (e instanceof DraftConflictError) checkRemote(); else setErr(e?.message ?? String(e)); }

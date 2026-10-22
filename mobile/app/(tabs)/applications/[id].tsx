@@ -6,7 +6,7 @@ import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
-import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, needsContinue } from "../../../lib/data";
+import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, needsContinue, employmentOf } from "../../../lib/data";
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
@@ -38,7 +38,7 @@ export default function ApplicationDetail() {
   const load = useCallback(async (quiet = false) => {
     try {
       const app = await getApplication(id!); setA(app); setErr(null);
-      listRequirements(app.country_id, (app.notes?.wizard as any)?.employmentStatus).then(setReqs).catch(() => setReqs([]));
+      listRequirements(app.country_id, employmentOf(app)).then(setReqs).catch(() => setReqs([]));
     } catch (e: any) { if (!quiet) setErr(e?.message ?? String(e)); }
   }, [id]);
   // Staff can change statuses on the website while this screen is open: refresh every 30 s while it is visible and

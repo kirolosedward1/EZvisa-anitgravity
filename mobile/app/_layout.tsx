@@ -1,4 +1,5 @@
 import "../lib/perf"; // first: starts the startup clock
+import { initSentry } from "../lib/sentry";
 import { installCrashHandler } from "../lib/crash";
 import { startAnalytics } from "../lib/analytics";
 import { Stack } from "expo-router";
@@ -16,6 +17,8 @@ import { BootOverlay } from "../components/Boot";
 import { LockGate } from "../lib/lock";
 import { startUploadQueue } from "../lib/uploads";
 import { useNotificationRouting } from "../lib/push";
+
+installCrashHandler(); initSentry(); // module load: catches errors in the first render too; Sentry is a no-op without a DSN
 
 export default function Root() {
   return <AppearanceProvider><I18nProvider><Themed /></I18nProvider></AppearanceProvider>;
@@ -66,7 +69,7 @@ function NotificationRouter() {
 function Themed() {
   const dark = useIsDark(); const c = useColors();
   const base = dark ? DarkTheme : DefaultTheme;
-  useEffect(() => { installCrashHandler(); startAnalytics(); startUploadQueue(); }, []);
+  useEffect(() => { startAnalytics(); startUploadQueue(); }, []);
   return (
     <ThemeProvider value={{ ...base, colors: { ...base.colors, primary: c.tint, background: c.bg, card: c.bg } }}>
       <AuthProvider><FormProvider>
