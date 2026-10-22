@@ -2,7 +2,10 @@
 import fs from "node:fs"; import path from "node:path"; import { createHash } from "node:crypto";
 const strip = (u) => String(u).replace(/^file:\/\//, "");
 const join = (parts) => path.join(...parts.map((p) => (typeof p === "string" ? strip(p) : p.uri ? strip(p.uri) : String(p))));
-export class Directory { constructor(...p) { this.uri = join(p); } get exists() { return fs.existsSync(this.uri); } create() { fs.mkdirSync(this.uri, { recursive: true }); } }
+export class Directory {
+  constructor(...p) { this.uri = join(p); } get exists() { return fs.existsSync(this.uri); } create() { fs.mkdirSync(this.uri, { recursive: true }); }
+  list() { return fs.readdirSync(this.uri).map((n) => new File(this.uri, n)); } delete() { fs.rmSync(this.uri, { recursive: true }); }
+}
 export class File {
   constructor(...p) { this.uri = join(p); }
   get exists() { return fs.existsSync(this.uri); }

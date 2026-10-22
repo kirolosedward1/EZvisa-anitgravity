@@ -4,6 +4,7 @@ import NetInfo, { type NetInfoState } from "@react-native-community/netinfo";
 import * as Crypto from "expo-crypto";
 import { useEffect, useState } from "react";
 import { uploadDocument, UploadError } from "./data";
+import { supabase } from "./supabase";
 
 /** Offline-safe upload queue: jobs survive restarts (AsyncStorage + a local copy of the file on native) and are retried
  *  with backoff whenever the device is online and the app is in the foreground.
@@ -54,6 +55,7 @@ export function restore(saved: any[], now = Date.now(), uuid: () => string = Cry
 function load() {
   return (loading ??= (async () => {
     try { const raw = await AsyncStorage.getItem(KEY); if (raw) { jobs = restore(JSON.parse(raw)); persist(); } } catch { jobs = []; }
+    dropOrphans();
     emit();
   })());
 }
@@ -74,6 +76,22 @@ async function keepCopy(uri: string, id: string, name: string): Promise<string> 
 function dropCopy(uri: string) {
   if (Platform.OS === "web" || !uri.includes("/uploads/")) return;
   try { const f = new (FS().File)(uri); if (f.exists) f.delete(); } catch {}
+}
+/** Deletes copies no job points to (e.g. left by a crash between copy and save, or by pre-v10 removals). */
+function dropOrphans() {
+  if (Platform.OS === "web") return;
+  try {
+    const { Directory, Paths, File } = FS(); const dir = new Directory(Paths.document, "uploads");
+    if (!dir.exists) return;
+    const keep = new Set(jobs.map((j) => j.uri));
+    for (const f of dir.list()) if (f instanceof File && !keep.has(f.uri)) f.delete();
+  } catch {}
+}
+/** Sign-out: the queue holds copies of passports and bank statements, so it is emptied and the copies deleted. */
+export function clearQueue() {
+  jobs = []; persist(); emit();
+  if (Platform.OS === "web") return;
+  try { const { Directory, Paths } = FS(); const dir = new Directory(Paths.document, "uploads"); if (dir.exists) dir.delete(); } catch {}
 }
 function md5Of(uri: string): string | null {
   if (Platform.OS === "web") return null;
@@ -158,6 +176,7 @@ export function startUploadQueue() {
     else { jobs.filter((j) => j.state === "queued").forEach((j) => update(j.id, { offline: false, nextAt: undefined })); process(); } // back online: retry now
   });
   AppState.addEventListener("change", (s) => { if (s === "active") process(); });
+  supabase?.auth.onAuthStateChange((e) => { if (e === "SIGNED_OUT") clearQueue(); }); // also runs after account deletion
 }
 
 /** Jobs for one application (or all), re-rendering on change; `onDone` fires after each successful upload. */

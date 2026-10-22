@@ -3,7 +3,7 @@
 // Phase "b" (a NEW process = app restart): the killed upload resumes and finishes; the bucket has no duplicates.
 // eslint-disable-next-line @typescript-eslint/no-require-imports -- node-only test helper (no @types/node in the app)
 const fs = require("node:fs") as { readFileSync(p: string, e: string): string; writeFileSync(p: string, d: string): void; existsSync(p: string): boolean; readdirSync(p: string): string[] };
-import { enqueueUpload, startUploadQueue, restore, backoffMs } from "../lib/uploads";
+import { enqueueUpload, startUploadQueue, restore, backoffMs, clearQueue } from "../lib/uploads";
 import { server } from "./stubs/data-server";
 
 const log = (ok: boolean, step: string, info = "") => { console.log(`${ok ? "PASS" : "FAIL"}  ${step}${info ? "  " + info : ""}`); if (!ok) process.exitCode = 1; };
@@ -65,12 +65,17 @@ const mk = (name: string, body: string) => { const p = `${process.env.TEST_DIR}/
   }
   if (phase === "b") {
     log(saved().some((j) => j.name === "bank.pdf" && j.state === "uploading"), "after restart: saved queue still has the in-flight item");
+    const orphan = process.env.TEST_DIR + "/doc/uploads/orphan_passport.jpg"; fs.writeFileSync(orphan, "LEFTOVER");
     startUploadQueue();
     log(await until(() => saved().find((j) => j.name === "bank.pdf")?.state === "done"), "after restart: item resumed and finished");
     const objs = Object.keys(server().objects);
     log(objs.length === 2 && saved().filter((j) => j.state === "done").length === 2, "queue survived the restart; 2 files, 2 objects, no duplicates", objs.map((o) => o.split("/")[1]).join(", "));
     const copies = fs.existsSync(process.env.TEST_DIR + "/doc/uploads") ? fs.readdirSync(process.env.TEST_DIR + "/doc/uploads") : [];
-    log(copies.length === 0, "local copies removed after upload");
+    log(copies.length === 0, "local copies removed after upload; orphan copy deleted on start");
+    await enqueueUpload(APP, mk("salary.pdf", "%PDF-1.7 SALARY"), "salaryCertificate").catch(() => {});
+    fault("offline"); net(false); await wait(200);
+    clearQueue(); // what SIGNED_OUT runs
+    log(saved().length === 0 && !fs.existsSync(process.env.TEST_DIR + "/doc/uploads"), "sign-out: queue emptied and local copies deleted");
     process.exit();
   }
 })();
