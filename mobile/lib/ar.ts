@@ -550,4 +550,7 @@ export const AR: Record<string, string> = {
   "Is your UAE residence visa valid at least 3 months after your return date?": "هل تأشيرة إقامتك في الإمارات سارية لمدة 3 أشهر على الأقل بعد تاريخ عودتك؟",
   "Most embassies need your UAE residence visa to be valid at least 3 months after you return. Renew it before your appointment; our team will guide you.": "تشترط معظم السفارات أن تكون إقامتك في الإمارات سارية لمدة 3 أشهر على الأقل بعد عودتك. جدّدها قبل موعدك، وسيرشدك فريقنا.",
   "You'll need a valid passport (at least 6 months validity from your travel date) before your visa appointment. Our team will contact you.": "ستحتاج إلى جواز سفر ساري المفعول (صلاحية 6 أشهر على الأقل من تاريخ السفر) قبل موعد التأشيرة. سيتواصل معك فريقنا.",
+  "Kept on this phone": "محفوظ على هذا الهاتف", "Not set": "غير محدد", "Closes the date picker": "يغلق منتقي التاريخ",
+  "Discard this application?": "تجاهل هذا الطلب؟", "It will be removed from your list.": "ستتم إزالته من قائمتك.",
+  "Edit photo": "تعديل الصورة", "Add photo": "إضافة صورة", "Remove photo": "إزالة الصورة", "Remove photo?": "إزالة الصورة؟", "Profile photo": "صورة الملف الشخصي",
 };

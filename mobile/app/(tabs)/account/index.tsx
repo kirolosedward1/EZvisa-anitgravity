@@ -1,4 +1,5 @@
-import { Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
+import { ActionSheetIOS, Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
+import { useAvatar, pickAvatar, removeAvatar } from "../../../lib/avatar";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { STATUS_LABEL, isPaid, type Application } from "../../../lib/data";
@@ -26,10 +27,12 @@ import { SENTRY_ENABLED, sendTestError } from "../../../lib/sentry";
 import Constants from "expo-constants";
 import NetInfo from "@react-native-community/netinfo";
 import { useForm } from "../../../lib/form";
+import { onTabScroll } from "../../../lib/tabBarScroll";
 
 export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true); const { signOut: endSession } = useAuth();
+  const photo = useAvatar(session?.user.id);
   const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT(); const { saveBeforeSignOut } = useForm();
   const [del, setDel] = useState(false); const [delStep, setDelStep] = useState<"ask" | "sure" | "failed">("ask"); const [delErr, setDelErr] = useState<string | null>(null); const [deleting, setDeleting] = useState(false);
   /** Calls the delete-account edge function with the user's own session; WhatsApp / email stay as the fallback. */
@@ -56,7 +59,7 @@ export default function Account() {
       SENTRY_ENABLED && usage ? [{ text: t("Send test error"), onPress: test }, { text: "OK", style: "cancel" }] : undefined);
   };
   const [rem, setRem] = useState(false); const [remNote, setRemNote] = useState<string | null>(null);
-  const [pp, setPp] = useState(""); const [lock, setLock] = useState(false); const [bio, setBio] = useState<string | null>(null); const [lockNote, setLockNote] = useState<string | null>(null);
+  const [pp, setPp] = useState(""); const [ppOpen, setPpOpen] = useState(false); const [lock, setLock] = useState(false); const [bio, setBio] = useState<string | null>(null); const [lockNote, setLockNote] = useState<string | null>(null);
   useEffect(() => { remindersEnabled().then(setRem); getPassportExpiry().then(setPp); lockEnabled().then(setLock); biometricLabel().then(setBio); }, []);
   const onPp = async (v: string) => { setPp(v); await setPassportExpiry(v); if (apps) syncReminders(apps); };
   const toggleLock = async (on: boolean) => {
@@ -101,9 +104,14 @@ export default function Account() {
         <Text variant="body" style={{ flex: 1 }}>{t("Trip and passport reminders")}</Text>
         <Switch value={rem} disabled={!remindersSupported} onValueChange={toggleRem} trackColor={{ true: c.green, false: c.fill }} accessibilityLabel={t("Trip and passport reminders")} />
       </View>
-      <View style={{ padding: S.sm, gap: S.xs }} testID="passport-expiry">
-        <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.xs }}>{t("Passport expiry (kept on this phone)")}</Text>
-        <DateAnswer label={t("Passport expiry")} value={pp} onChange={onPp} style="wheel" placeholder={t("Select date")} min={new Date().toISOString().slice(0, 10)} />
+      {/* A row with the date; the wheel opens only when the row is tapped. */}
+      <View testID="passport-expiry">
+        <ListRow icon="calendar" iconColor={c.tint} title={t("Passport expiry")} subtitle={t("Kept on this phone")} chevron={false}
+          value={pp ? new Date(pp + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : t("Not set")}
+          onPress={() => setPpOpen((o) => !o)} a11yHint={ppOpen ? t("Closes the date picker") : t("Opens a date picker")} />
+        {ppOpen && <View style={{ padding: S.sm }} testID="passport-expiry-picker">
+          <DateAnswer label={t("Passport expiry")} value={pp} onChange={onPp} style="wheel" placeholder={t("Select date")} min={new Date().toISOString().slice(0, 10)} />
+        </View>}
       </View>
       {!!remNote && Platform.OS !== "web" && <ListRow title={t("Open Settings")} tint chevron={false} onPress={() => Linking.openSettings()} />}
     </ListGroup>
@@ -132,7 +140,7 @@ export default function Account() {
     </ListGroup>
   );
   if (!session) return (
-    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>
+    <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>
       <Stack.Screen options={{ headerShown: false }} />
       <Text variant="largeTitle" accessibilityRole="header" style={{ marginHorizontal: S.lg, marginBottom: S.xxl }}>{t("Account")}</Text>
       <View style={{ alignItems: "center", paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }}>
@@ -151,6 +159,13 @@ export default function Account() {
     </ScrollView>
   );
   const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
+  /** Profile photo: choose one from Photos, or remove it (kept on this phone, lib/avatar.ts). */
+  const editPhoto = () => {
+    const choose = () => { pickAvatar(u.id).catch((e) => Alert.alert(t("Couldn't load"), e?.message ?? String(e))); };
+    if (!photo || Platform.OS === "web") { if (photo && Platform.OS === "web" && window.confirm(t("Remove photo?"))) { removeAvatar(); return; } choose(); return; }
+    if (Platform.OS === "ios") { ActionSheetIOS.showActionSheetWithOptions({ options: [t("Choose photo"), t("Remove photo"), t("Cancel")], destructiveButtonIndex: 1, cancelButtonIndex: 2 }, (i) => { if (i === 0) choose(); if (i === 1) removeAvatar(); }); return; }
+    Alert.alert(t("Profile photo"), undefined, [{ text: t("Choose photo"), onPress: choose }, { text: t("Remove photo"), style: "destructive", onPress: () => { removeAvatar(); } }, { text: t("Cancel"), style: "cancel" }]);
+  };
   // Receipts need the amount Ziina actually recorded; a paid row without payment_amount gets no receipt.
   const paidApps = (apps ?? []).filter((a) => isPaid(a) && a.payment_amount != null);
   const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
@@ -169,12 +184,15 @@ export default function Account() {
     Alert.alert(t("Sign out?"), note, [{ text: t("Cancel"), style: "cancel" }, { text: t("Sign out"), style: "destructive", onPress: () => { endSession(); } }]);
   };
   return (
-    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>
+    <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ alignItems: "center", gap: S.xs, marginBottom: S.xxl }} accessible accessibilityLabel={`${full}, ${u.email}`}>
-        <Avatar name={full} size={88} />
+        <Avatar name={full} size={88} uri={photo} />
         <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
         <Text variant="subhead" tone="secondary">{u.email}</Text>
+      </View>
+      <View style={{ alignItems: "center", marginTop: -S.xl, marginBottom: S.xl }} testID="avatar-edit">
+        <Button title={photo ? t("Edit photo") : t("Add photo")} variant="plain" size="M" onPress={editPhoto} />
       </View>
       <ListGroup header={t("Account details")} inset={16}>
         <ListRow title={t("Name")} value={full} />

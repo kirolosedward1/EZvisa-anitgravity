@@ -12,6 +12,8 @@ import { tap } from "../../../lib/haptics";
 import { askDiscard, isAbandoned } from "../../../lib/discard";
 import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
+import { SwipeToDiscard } from "../../../components/SwipeToDiscard";
+import { onTabScroll } from "../../../lib/tabBarScroll";
 
 const fmt = (s?: string | null) => (s ? new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
 
@@ -55,7 +57,7 @@ export default function Applications() {
   const [tab, setTab] = useState<"active" | "past">("active");
   const list = (apps ?? []).filter((a) => (tab === "active" ? ACTIVE(a.status) : !ACTIVE(a.status)));
   return (
-    <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb, paddingHorizontal: S.lg, flexGrow: 1 }}
+    <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb, paddingHorizontal: S.lg, flexGrow: 1 }}
       refreshControl={session ? <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.tint} /> : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: S.lg }}>
@@ -74,7 +76,9 @@ export default function Applications() {
             <EmptyState icon="airplane" title={tab === "active" ? t("No active applications") : t("Nothing here yet")} action={tab === "active" ? <Button title={t("Start application")} onPress={() => router.push("/apply")} /> : undefined} />
           </View>
         )}
-        <View style={{ gap: S.sm }}>{list.map((a) => <Animated.View key={a.id} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT}><AppCard a={a} onDiscard={isAbandoned(a) ? () => { discard(a).catch(() => {}); } : undefined} /></Animated.View>)}</View>
+        <View style={{ gap: S.sm }}>{list.map((a) => <Animated.View key={a.id} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT}>{isAbandoned(a)
+          ? <SwipeToDiscard radius={R.card} onDiscard={() => { discard(a).catch(() => {}); }} testID="app-swipe"><AppCard a={a} onDiscard={() => { discard(a).catch(() => {}); }} /></SwipeToDiscard>
+          : <AppCard a={a} />}</Animated.View>)}</View>
       </>)}
     </ScrollView>
   );

@@ -19,6 +19,8 @@ const MIN_SPLASH_MS = 1600;
 const FLAG = 44; const GAP = 12;
 const ROWS = [COUNTRY_LIST.slice(0, 15), COUNTRY_LIST.slice(15)];
 
+const LOGO_W = 150;
+
 /** One row of flags, drawn twice side by side so a linear loop of one row width is seamless. */
 function FlagRow({ countries, reverse, reduce }: { countries: string[]; reverse?: boolean; reduce: boolean }) {
   const width = countries.length * (FLAG + GAP);
@@ -60,7 +62,8 @@ export function BootOverlay({ ready }: { ready: boolean }) {
     <Animated.View pointerEvents={ready ? "none" : "auto"} style={[StyleSheet.absoluteFill, { backgroundColor: dark ? "#000000" : "#FFFFFF", alignItems: "center", justifyContent: "center", zIndex: 1000 }, a]}
       accessible accessibilityLabel="EZvisa, loading" accessibilityRole="progressbar" testID="boot-overlay">
       <Animated.View style={m}>
-        <Image source={dark ? require("../assets/splash-icon-dark.png") : require("../assets/splash-icon.png")} style={{ width: 180, height: 180 }} resizeMode="contain" />
+        {/* The full logo (mark + "EZvisa"), kept small: 150 pt wide at the file's 873:216 ratio. */}
+        <Image source={dark ? require("../assets/logo-dark.png") : require("../assets/logo.png")} style={{ width: LOGO_W, height: Math.round(LOGO_W * 216 / 873) }} resizeMode="contain" />
       </Animated.View>
       <View style={{ position: "absolute", bottom: "18%", left: 0, right: 0, gap: GAP, overflow: "hidden" }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <FlagRow countries={ROWS[0]} reduce={reduce} />
