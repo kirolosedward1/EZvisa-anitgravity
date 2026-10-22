@@ -31,9 +31,10 @@ for (let i = 0; i < RUNS; i++) {
   let bytes = 0; page.on("response", async (r) => { try { const b = await r.body(); bytes += b.length; } catch {} });
   const t0 = Date.now();
   await page.goto(base + "/", { waitUntil: "commit" });
-  await page.waitForSelector('[data-testid="home-headline"], [data-testid="home-hero"]', { timeout: 60000 });
-  await page.waitForSelector('[data-testid="boot-overlay"]', { state: "detached", timeout: 60000 });
+  // First screen ready = some screen content (any testID) is drawn and the boot overlay is gone.
+  await page.waitForFunction(() => !!document.querySelector('[data-testid]:not([data-testid="boot-overlay"])') && !document.querySelector('[data-testid="boot-overlay"]'), null, { timeout: 60000, polling: 16 });
   out.startup.push(Date.now() - t0);
+  if (process.env.STARTUP_ONLY) { out.bytes.push(bytes); await ctx.close(); continue; }
   const t1 = Date.now();
   await page.goto(base + "/countries", { waitUntil: "commit" });
   await page.waitForSelector('[data-testid="countries-list"]', { timeout: 60000 });
@@ -48,5 +49,5 @@ for (let i = 0; i < RUNS; i++) {
   await ctx.close();
 }
 await browser.close(); server.close();
-const r = { label, runs: RUNS, startup_ms_median: med(out.startup), countries_ms_median: med(out.countries), detail_ms_median: med(out.detail), bytes_median: med(out.bytes), raw: out };
+const r = { label, runs: RUNS, startup_ms_median: med(out.startup), countries_ms_median: out.countries.length ? med(out.countries) : null, detail_ms_median: out.detail.length ? med(out.detail) : null, bytes_median: med(out.bytes), raw: out };
 console.log(JSON.stringify(r, null, 1));

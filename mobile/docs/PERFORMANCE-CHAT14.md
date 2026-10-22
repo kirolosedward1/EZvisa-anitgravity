@@ -41,6 +41,17 @@ Raw runs (ms):
 - `MaterialSymbols` (971 KB) and `Ionicons` (390 KB) fonts are only in the Android/web asset sets; iOS uses SF Symbols.
 - **Startup risk, not fixed**: the splash waits for `supabase.auth.getSession()`. When a stored session has expired, supabase-js refreshes it over the network before resolving, so a slow network can hold the splash. Fixing it (show cached session, refresh in the background) changes auth behaviour, so it is listed as a follow-up.
 
+## Crash reporting cost (Sentry, approved 2026-10-22)
+Measured on the `mobile-app` tree of 2026-10-22 (iOS Hermes bundle; web cold start at 4x CPU, 7 runs, two rounds):
+
+| Variant | iOS .hbc | Web cold start (medians) |
+|---|---:|---|
+| No crash service | 5,590,933 B | 2,494 / 2,131 ms (round 1 / 2); rerun 2,408 / 2,070 ms |
+| `@sentry/react-native` 7.11.0 (SDK 57 pin), initialised | 7,028,987 B (+1,438 KB, +26%) | 2,657 / 2,394 ms (+163 / +263 ms) |
+| Built-in envelope client (`lib/sentry.ts`), initialised | 5,602,771 B (+11.8 KB, +0.2%) | 2,178 / 2,174 ms (within noise) |
+
+The SDK's extra value (native crashes, symbolicated native frames) does not exist in Expo Go, so the app uses the built-in client now and should switch to the SDK with the first development build.
+
 ## On the iPhone
 From this version, the app measures its own cold start (`lib/perf.ts`: JS start, or native process start when React Native reports it, to the first screen).
 **Account › Privacy › long-press "Version"** shows the last five startup times, the queued event count and the last (scrubbed) error.
