@@ -30,7 +30,8 @@ function Boot() {
 
 /** Route protection. Signed out: Welcome (sign in / create account / continue without an account). Signed in or guest: the app.
  *  While the session loads, the app side stays mounted under the splash, so a signed-in start never passes through Welcome.
- *  /auth/* (sign-in screens, email-link callback, new password) and /payment-return are reachable in every state. */
+ *  /auth/* (sign-in screens, email-link callback, new password), /payment-return and /payment/[id] are reachable in every state:
+ *  a guest who paid and whose app restarted (guest mode is in memory only) must still see the payment result. */
 function Routes() {
   const c = useColors(); const { session, guest, loading } = useAuth();
   const inApp = loading || !!session || guest;
@@ -41,7 +42,6 @@ function Routes() {
         <Stack.Screen name="apply" options={{ presentation: "modal" }} />
         <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="continue/[id]" options={{ presentation: "modal" }} />
-        <Stack.Screen name="payment/[id]" options={{ presentation: "modal", gestureEnabled: false }} />
         {/* full screen: a swipe-to-dismiss sheet would fight the crop handles */}
         <Stack.Screen name="upload/[id]" options={{ presentation: "fullScreenModal", gestureEnabled: false }} />
       </Stack.Protected>
@@ -50,6 +50,7 @@ function Routes() {
       </Stack.Protected>
       <Stack.Screen name="auth" options={{ presentation: "modal" }} />
       <Stack.Screen name="payment-return" />
+      <Stack.Screen name="payment/[id]" options={{ presentation: "modal", gestureEnabled: false }} />
     </Stack>
   );
 }
