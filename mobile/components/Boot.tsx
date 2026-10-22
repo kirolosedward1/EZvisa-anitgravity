@@ -6,6 +6,7 @@ import { Image, StyleSheet } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS, useReducedMotion } from "react-native-reanimated";
 import { useIsDark } from "../lib/theme";
+import { markReady } from "../lib/perf";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 try { SplashScreen.setOptions({ fade: true, duration: 150 }); } catch { /* not supported on this platform */ }
@@ -17,6 +18,7 @@ export function BootOverlay({ ready }: { ready: boolean }) {
   const o = useSharedValue(1); const s = useSharedValue(1);
   useEffect(() => {
     if (!ready) return;
+    markReady();
     SplashScreen.hideAsync().catch(() => {});
     const done = () => setGone(true);
     o.value = withTiming(0, { duration: reduce ? 120 : SPLASH_MS, easing: Easing.out(Easing.quad) }, (f) => { if (f) runOnJS(done)(); });

@@ -1,6 +1,9 @@
 // Arabic strings, keyed by the English text (English stays the website's exact wording).
 // Placeholders like {n} are kept as-is. Missing keys fall back to English.
 export const AR: Record<string, string> = {
+  // ---- privacy / diagnostics (chat 14) ----
+  "Privacy": "الخصوصية", "Share usage data": "مشاركة بيانات الاستخدام", "Anonymous app usage and crash reports. Never your name, passport or email.": "استخدام مجهول للتطبيق وتقارير الأعطال. لا يشمل أبدًا اسمك أو جوازك أو بريدك.",
+  "Version": "الإصدار", "Long press for diagnostics": "اضغط مطولًا للتشخيص", "Diagnostics": "التشخيص", "Startup": "بدء التشغيل", "Queued events": "أحداث في الانتظار", "Last error": "آخر خطأ",
   "Scan pages (PDF)": "مسح الصفحات (PDF)", "Passport Expiry Date": "تاريخ انتهاء جواز السفر", "Select expiry date": "اختر تاريخ الانتهاء",
   "Passport must be valid at least 3 months after your return date": "يجب أن يكون الجواز ساريًا 3 أشهر على الأقل بعد تاريخ العودة", "Please select your passport expiry date": "يرجى اختيار تاريخ انتهاء الجواز",
   "1 week": "أسبوع", "2 weeks": "أسبوعان", "3 weeks": "3 أسابيع", "1 month": "شهر", "Your application": "طلبك", "No application yet": "لا يوجد طلب بعد", "Start an application to track it here.": "ابدأ طلبًا لمتابعته هنا.", "Start application": "ابدأ الطلب",

@@ -1,4 +1,6 @@
+import "../lib/perf"; // first: starts the startup clock
 import { installCrashHandler } from "../lib/crash";
+import { startAnalytics } from "../lib/analytics";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
@@ -29,7 +31,7 @@ function Boot() {
 function Themed() {
   const dark = useIsDark(); const c = useColors();
   const base = dark ? DarkTheme : DefaultTheme;
-  useEffect(() => { installCrashHandler(); startUploadQueue(); return startReminderRouting(); }, []);
+  useEffect(() => { installCrashHandler(); startAnalytics(); startUploadQueue(); return startReminderRouting(); }, []);
   return (
     <ThemeProvider value={{ ...base, colors: { ...base.colors, primary: c.tint, background: c.bg, card: c.bg } }}>
       <AuthProvider><FormProvider>

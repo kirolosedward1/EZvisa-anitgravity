@@ -16,6 +16,11 @@ import { useColors, S, R } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
 import { whatsapp, email as mailSupport } from "../../../lib/api";
 import { useApps } from "../../../lib/useApps";
+import { useUsageSharing } from "../../../lib/privacy";
+import { lastCrash } from "../../../lib/crash";
+import { startupHistory } from "../../../lib/perf";
+import { pendingEvents } from "../../../lib/analytics";
+import Constants from "expo-constants";
 
 export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
@@ -35,6 +40,13 @@ export default function Account() {
     } finally { setDeleting(false); }
   }; const [after, setAfter] = useState(60000);
   useEffect(() => { lockAfter().then(setAfter); }, []);
+  const [usage, setUsage] = useUsageSharing();
+  /** Startup times and the last (scrubbed) error on this phone, for testing and support. */
+  const diagnostics = async () => {
+    const [st, cr, q] = await Promise.all([startupHistory(), lastCrash(), pendingEvents()]);
+    const times = st.slice(-5).map((s) => `${s.native ?? s.js} ms`).join(", ") || "-";
+    Alert.alert(t("Diagnostics"), `${t("Startup")}: ${times}\n${t("Queued events")}: ${q}\n${t("Last error")}: ${cr ? `${new Date(cr.at).toLocaleString()} · ${cr.message}` : "-"}`);
+  };
   const [rem, setRem] = useState(false); const [remNote, setRemNote] = useState<string | null>(null);
   const [pp, setPp] = useState(""); const [lock, setLock] = useState(false); const [bio, setBio] = useState<string | null>(null); const [lockNote, setLockNote] = useState<string | null>(null);
   useEffect(() => { remindersEnabled().then(setRem); getPassportExpiry().then(setPp); lockEnabled().then(setLock); biometricLabel().then(setBio); }, []);
@@ -102,6 +114,15 @@ export default function Account() {
       <ListRow icon="envelope.fill" iconColor={c.tint} title="Email" onPress={mailSupport} />
     </ListGroup>
   );
+  const privacy = (
+    <ListGroup header={t("Privacy")} footer={t("Anonymous app usage and crash reports. Never your name, passport or email.")}>
+      <View style={{ minHeight: 52, paddingHorizontal: S.md, paddingVertical: S.xs, flexDirection: "row", alignItems: "center", gap: S.sm }} testID="usage-sharing">
+        <Text variant="body" style={{ flex: 1 }}>{t("Share usage data")}</Text>
+        <Switch value={usage} onValueChange={setUsage} trackColor={{ true: c.green, false: c.fill }} accessibilityLabel={t("Share usage data")} />
+      </View>
+      <ListRow title={t("Version")} value={Constants.expoConfig?.version ?? ""} onLongPress={diagnostics} a11yHint={t("Long press for diagnostics")} />
+    </ListGroup>
+  );
   if (!session) return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -118,6 +139,7 @@ export default function Account() {
       {language}
       {reminders}
       {support}
+      {privacy}
     </ScrollView>
   );
   const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
@@ -163,6 +185,7 @@ export default function Account() {
       {security}
       {reminders}
       {support}
+      {privacy}
       <ListGroup><ListRow title={t("Sign out")} destructive chevron={false} onPress={signOut} /></ListGroup>
       <ListGroup footer={t("Deleting removes your account and personal data. Records we must keep by law (payments) are kept for the legal period.")}>
         <ListRow title={t("Delete account")} destructive chevron={false} onPress={() => { setDelStep("ask"); setDelErr(null); setDel(true); }} />

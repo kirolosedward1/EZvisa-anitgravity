@@ -5,6 +5,7 @@ import * as Crypto from "expo-crypto";
 import { useEffect, useState } from "react";
 import { uploadDocument, UploadError } from "./data";
 import { supabase } from "./supabase";
+import { track } from "./analytics";
 
 /** Offline-safe upload queue: jobs survive restarts (AsyncStorage + a local copy of the file on native) and are retried
  *  with backoff whenever the device is online and the app is in the foreground.
@@ -149,12 +150,13 @@ async function process() {
     dropCopy(job.uri);
     update(job.id, { state: "done", doneAt: Date.now(), nextAt: undefined, error: undefined });
     doneListeners.forEach((l) => l(job.applicationId));
+    track("upload_done", { docType: job.documentType as any, ok: true });
   } catch (e: any) {
     const network = e instanceof UploadError ? e.network : false;
     const attempts = job.attempts + 1;
     if (network && !online) update(job.id, { state: "queued", offline: true, nextAt: undefined }); // no attempt used
     else if (network && attempts < MAX_ATTEMPTS) update(job.id, { state: "queued", attempts, nextAt: Date.now() + backoffMs(attempts), error: e?.message });
-    else update(job.id, { state: "failed", attempts, error: e?.message ?? String(e) });
+    else { update(job.id, { state: "failed", attempts, error: e?.message ?? String(e) }); track("upload_done", { docType: job.documentType as any, ok: false }); }
   } finally {
     running = false;
   }

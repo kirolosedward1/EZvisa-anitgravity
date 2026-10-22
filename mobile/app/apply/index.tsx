@@ -178,10 +178,19 @@ export default function Apply() {
   }, [session]);
   // Every answer: save the account draft right away (local autosave runs on every change in lib/form.tsx).
   useEffect(() => { if (hydrated && session && !submitted) flushDraft(); }, [page]);
-  // Drop-off analytics (on this phone only, no personal data): which question each session ends on.
-  useEffect(() => { track("wizard_open", { platform: Platform.OS }); return () => track("wizard_close"); }, []);
+  // Funnel analytics (lib/analytics.ts): question ids, step names and the destination only; never answers.
+  useEffect(() => { track("wizard_open"); return () => track("wizard_close"); }, []);
   useEffect(() => { if (hydrated && !submitted) track("wizard_page", { page: page.replace(/^q:/, ""), signedIn: !!session, ...(f.destination && { destination: f.destination }) }); }, [page, hydrated]);
-  useEffect(() => { if (submitted) track("wizard_submit", { guest: !!submitted.guestEmail }); }, [!!submitted]);
+  const seenStep = useRef<string | null>(null);
+  useEffect(() => {
+    if (!hydrated || submitted) return;
+    const s = page === REVIEW ? "review" : step; const prev = seenStep.current;
+    if (s === prev) return;
+    seenStep.current = s;
+    if (prev && dir > 0) track("wizard_step_completed", { step: prev as any });
+    track("wizard_step_viewed", { step: s as any });
+  }, [page, hydrated]);
+  useEffect(() => { if (submitted) { track("wizard_step_completed", { step: "review" }); track("wizard_submit", { guest: !!submitted.guestEmail }); } }, [!!submitted]);
   // New question: move VoiceOver focus to its title.
   useEffect(() => {
     setShowErr(false);
@@ -270,7 +279,7 @@ export default function Apply() {
         <InlineError text={err} />
         <Button title={t("Pay {a} AED securely", { a: amount })} icon="creditcard.fill" loading={busy} onPress={async () => {
           if (inFlight.current) return; inFlight.current = true; setBusy(true); setErr(null);
-          try { const o = await startPayment({ id: submitted.applicationId, destination_country: submitted.destination ?? null, total_amount: amount }, !!submitted.spouse); const id = submitted.applicationId; router.replace({ pathname: "/payment/[id]", params: { id, returned: o.returned, pid: o.paymentId ?? "" } }); setTimeout(() => setSubmitted(null), 400); }
+          try { track("payment_started"); const o = await startPayment({ id: submitted.applicationId, destination_country: submitted.destination ?? null, total_amount: amount }, !!submitted.spouse); const id = submitted.applicationId; router.replace({ pathname: "/payment/[id]", params: { id, returned: o.returned, pid: o.paymentId ?? "" } }); setTimeout(() => setSubmitted(null), 400); }
           catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
           finally { inFlight.current = false; setBusy(false); }
         }} />
