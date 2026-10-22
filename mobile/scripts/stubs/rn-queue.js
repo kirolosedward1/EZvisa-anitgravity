@@ -5,3 +5,4 @@ export const Alert = { alert() {} }; export const ActionSheetIOS = {}; export co
 export const I18nManager = { isRTL: false, allowRTL() {}, forceRTL() {} }; export const DevSettings = { reload() {} };
 export const Appearance = {}; export const useColorScheme = () => "light";
 export const View = "View";
+export const useWindowDimensions = () => ({ width: 390, height: 844, scale: 2, fontScale: 1 }); // theme/useTheme.ts (chat 02)
