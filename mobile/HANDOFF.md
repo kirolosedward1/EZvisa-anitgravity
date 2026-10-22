@@ -123,7 +123,22 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   nothing until `migrations/0009` (approved 2026-10-22, not yet confirmed applied) adds the table to `supabase_realtime`.
 - **Calendar** (`lib/appointment.ts`): `expo-calendar/legacy` `createEventInCalendarAsync` (SDK 57.0.6). iOS 17+ shows the
   system sheet without permission; older iOS requests access and explains a denial (Open Settings).
-- **Checks**: `bun scripts/run-check.ts scripts/timeline-check.ts` (34 checks, live row shape, no network).
+- **Checks**: `bun scripts/run-check.ts scripts/timeline-check.ts` (53 checks, live row shape, no network) and
+  `bun scripts/run-check.ts scripts/appointment-check.ts` (18: appointment rows, Apple Maps URL, add to calendar on iOS 17+,
+  iOS 16 granted/denied, Android, web, sheet error).
+- **QA pass (2026-10-22, chat 11)** fixed, each with a check that failed first:
+  - Non-employed applicants whose row came from the website were asked for a NOC on Home and the application page:
+    `employmentOf()` reads the wizard or the website's top-level `employmentStatus` (checks P, Q).
+  - Staff reviews of documents known only from the website's `has_*` flags were dropped, because those documents took
+    `updated_at` as their upload time and the review write moves `updated_at`. They now have no upload time (check R).
+  - Upload / Re-upload was offered when uploads are closed (status ready etc.); now only in `UPLOAD_STATUSES` (check S).
+  - Refunded / part-refunded cases were asked to pay again (check T).
+  - "Continue application" relabelled website rows as `source: "mobile-app"`, which dropped their real Submitted time and
+    asked Continue a second time with the app's full question set. `keepOrigin()` keeps them website rows (check U).
+- **Known gaps (not fixed, need a decision or data)**: website rows can never show the residency copy as uploaded (no
+  `has_*` flag for it), so Documents stays open for them until staff move the file on; an app `residencyCopy` upload hides a
+  website `has_passport` flag; Paid and Decision have no time until 0009; after a failed refresh the last loaded data stays
+  on screen without a notice.
   `npm run lint` (eslint-config-expo 57) and `npx tsc --noEmit` pass. Screenshots: `docs/screenshots/v11/` (fixture rows
   in a Playwright harness against a fake Supabase host, not production data).
 ## 2h. Drafts & autosave (chat 06, 2026-10-22)
