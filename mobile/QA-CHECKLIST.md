@@ -101,7 +101,7 @@ additional_notes.uploads[].at, document_reviews, appointment_at).
 - [ ] Killed (swipe away): tap launches the app straight into the application (after Face ID if the lock is on)
 - [ ] Sign out → row gone from `device_tokens`; the next status change sends nothing to this phone
 - [ ] Sign out in Airplane Mode → the confirmation adds "You're offline, so this phone may still get this account's notifications."; signing out still works
-- [ ] Second account signs in on the same phone → only that account's pushes arrive (needs 0012, or notify-status v2)
+- [ ] Second account signs in on the same phone → only that account's pushes arrive (needs 0013, or notify-status v2)
 - [ ] The customer's own submit or discard sends no push (v2)
 - [ ] Reminders on as a guest, leave a draft, swipe the app away; tap "Continue your application" → Welcome, then "Continue without an account" opens the wizard
 - [ ] The same draft reminder a second time (leave the wizard again, wait for it) opens the wizard again

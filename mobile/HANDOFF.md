@@ -172,10 +172,10 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **Flow**: staff change `visa_applications.application_status` or reject a document in `document_reviews` → trigger `visa_applications_notify` (0006) → `pg_net` POST with the Vault secret → edge function `notify-status` → Expo Push API → the owner's phones (`device_tokens` by email).
 - **App** (`lib/push.ts`):
   - `notifications()` is the only loader of expo-notifications and sets the single foreground handler (banner + list, no sound, no badge). Reminders use it too.
-  - `setupPush(ask)`: `ask=false` at sign-in (registers only if already granted); `ask=true` after payment (`app/payment/[id].tsx`). Never re-asks once denied. `addPushTokenListener` re-saves the token when APNs rotates it.
+  - `setupPush(ask)`: `ask=false` at sign-in (registers only if already granted); `ask=true` after payment (`app/payment/[id].tsx`). Never re-asks once denied, on either platform (Android 13+ would allow a second prompt). `addPushTokenListener` re-saves a rotated token using the token the event carries (`getExpoPushTokenAsync({ devicePushToken })`): the event fires on every device-token fetch, so fetching again inside the listener loops forever.
   - `useNotificationRouting` in `app/_layout.tsx` (`NotificationRouter`): warm start via `addNotificationResponseReceivedListener`, cold start via `getLastNotificationResponse()` (the SDK 57 sync API; the Async one is deprecated). It waits until the stored session has loaded and the app side of `Routes` exists (signed in or guest; a guest restarted on Welcome gets the screen after "Continue without an account"), and application taps also wait for sign-in. Each delivery (identifier + date) is handled once, then `clearLastNotificationResponse()`; a reminder rescheduled under the same identifier (`ezvisa-rem-draft`) opens again. It opens `router.push(url, { withAnchor: true })`, so Back goes to Applications.
   - `lib/notifyRoute.ts` allows only `/applications/<uuid>`, `/account` and `/apply`.
-- **Token storage** (`lib/data.ts`): `registerPushToken` calls RPC `claim_device_token` (0012, not applied). On PGRST202 it falls back to insert, or bumps `updated_at` if the row exists. A rotated token's old row is deleted. `unregisterPushToken` returns false when offline. Sign-out still completes (`lib/auth.tsx`, 3 s timeout), and Account › Sign out says when the phone is offline that it may still get the account's notifications. `clearUserData` drops the stored token key.
+- **Token storage** (`lib/data.ts`): `registerPushToken` calls RPC `claim_device_token` (0013, approved, not yet applied). On PGRST202 it falls back to insert, or bumps `updated_at` if the row exists. A rotated token's old row is deleted only after the new one is saved, and `ezvisa.push.token` holds the last token saved to the server. `unregisterPushToken` waits for any save in flight and blocks later saves for the same session (so a save racing sign-out cannot re-create the row); it returns false when offline. Sign-out still completes (`lib/auth.tsx`, 3 s timeout), and Account › Sign out says when the phone is offline that it may still get the account's notifications. `clearUserData` drops the stored token key.
 - **Server v2** (`migrations/functions/notify-status/index.ts` + `messages.ts`, NOT deployed; v1 is live):
   - lock-screen text is only "There's an update on your application." or "A document needs your attention.";
   - data is `{ type, applicationId, url }`;
@@ -185,7 +185,14 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - Android Expo Go can't receive remote push (SDK 53+), and `setupPush` returns `unsupported-expo-go-android` there.
   - iOS Expo Go only warns in the SDK 57 code, but Expo does not support push there. Real delivery must be tested on an installed build: `eas device:create` (register the iPhone), then `eas build --profile preview --platform ios` (internal distribution, channel `preview`, so it gets the same EAS updates as Expo Go). The APNs key is created and kept by EAS credentials, never in the repo. `eas.json` has no `development` profile (that would need `expo-dev-client`).
   - Tap routing and the permission prompt can be tested in Expo Go with a local reminder.
-- Checks: `node scripts/check-push.mjs` (route allow-list, message text and data, token ownership) and `node scripts/run-push-tests.mjs` (permission, token claim/fallback/rotation, sign-out delete, tap routing warm/cold/guest, Expo Go Android, web; fakes in `scripts/push-fakes.ts`). Device test steps: QA-CHECKLIST §11.
+- **Reminders** (`lib/reminders.ts`): lock-screen text is generic too ("Your trip is in one week", "A passport on your application expires in 6 months"), with no destination or names.
+- **Known limits**: a session that ends on its own (revoked on the website) cannot delete its row (RLS needs the session), so that phone keeps the account's pushes until someone signs in on it (0013 then moves the token). The same applies to an offline sign-out. Lock-screen text is generic, and a tap needs that account's session to open anything.
+- Checks:
+  - `node scripts/check-push.mjs`: route allow-list, message text and data, token ownership.
+  - `node scripts/run-push-tests.mjs`: 29 checks; fakes in `scripts/push-fakes.ts`.
+  - `node scripts/push-server/run-fn.mjs`: the v2 edge function with a fake client, 9 checks.
+  - `bash scripts/push-server/run-sql.sh`: 0006 + 0013 on a throwaway local Postgres, 21 checks.
+  - Device test steps: QA-CHECKLIST §11.
 
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
@@ -224,6 +231,6 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 1. Owner: set the Vercel env vars (Supabase URL/anon/service role, Ziina key and webhook secret), fix the Supabase Auth URL config, approve `proposed-live-changes.sql`. Then re-run `scripts/e2e-live.mjs`: upload, payment and `payment_id` should pass.
 2. Send the "application submitted" email for app submissions (e.g. a small authenticated web route that sends it for an existing row id, or a DB webhook).
 3. Customer document viewing: signed URLs are in the app (chat 09); needs `migrations/0011` applied.
-4. Push: approve and apply `migrations/0012_claim_device_token.sql`, deploy `notify-status` v2, then run QA §11 on a physical iPhone.
+4. Push: apply `migrations/0013_claim_device_token.sql` (approved), deploy `notify-status` v2, then run QA §11 on a physical iPhone.
 5. Supabase Auth URL configuration (owner): add the app redirect URLs from §2g and set the Site URL to https://www.ezvisa.net. Google sign-in additionally needs the provider enabled (not used by the website today).
 6. Development build (`eas build --profile development`) for push and native testing; App Store / Play listings.
