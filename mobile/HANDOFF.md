@@ -126,16 +126,16 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **Website** (branch `claude/nice-faraday-r722ry`, based on `main`, NOT on mobile-app): `lib/draft-sync.ts` (same rules), `components/apply/draft-status.tsx`, `/apply` wiring, `/api/submit-application` turns the signed-in user's draft row into the application (token-verified, version-checked, idempotent) instead of inserting a second row, Supabase browser/server clients also read `NEXT_PUBLIC_ezvisaSUPABASE_*`.
 - **Tests (no live DB):** `scripts/mock-supabase.mjs` (REST + Auth stand-in with updated_at trigger, RLS by email, 23505), `scripts/e2e-drafts-web.mjs` (17 checks, app web build), `scripts/e2e-drafts-cross.mjs` (10 checks, website ↔ app). Screenshots: `docs/screenshots/drafts/`. Read-only SQL checks + optional trigger: `migrations/0010_draft_autosave_checks.sql` (not applied).
 
-## 2f. Chat 09: document checklist and uploads (2026-10-22)
+## 2i. Chat 09: document checklist and uploads (2026-10-22)
 - **Checklist** (`lib/data.ts` `REQS` + `lib/checklist.ts`): unchanged rules. Shown only when `payment_status` is paid/completed (from the DB); NOC hidden unless `employmentStatus` is `employed`; states from `additional_notes.uploads`, `has_*` flags and staff `document_reviews` (uploaded · under review · approved · rejected + reason). Rows and alerts are now translated (Arabic).
 - **No made-up dossier** (audit H4): EZvisa's own items show Ready only from `application_status = 'ready'`, with nothing to open.
 - **Upload rules in the app**: only the website's doc types (`DOC_FLAG` keys) and PDF/JPG/PNG; refused before queueing. `uploadDocument` re-reads the row and refuses unpaid cases or cases outside `UPLOAD_STATUSES` (draft, submitted, reviewing, awaiting_documents).
 - **Authenticated upload** (audit B2): the app sends `Authorization: Bearer <access token>` to `/api/upload-document`. The route on this branch (`app/api/upload-document/route.ts`) now requires it for application-id uploads, checks the case's email = the user's email and that it is paid, allow-lists `documentType`, and takes the extension from the checked content type. Tracking-token uploads (website) unchanged. **Not deployed: needs a PR to `main`.**
 - **Progress**: website uploads go through XHR; real byte progress per job (memory only, 5% steps); bar fills with a percentage, sweep until the first bytes.
-- **Viewing**: `openDocumentUrl` = Storage signed URL, 60 s, opened in the in-app browser. Works only after `migrations/0009` (own-folder read policy) is applied; until then Storage refuses and the "Stored securely" message stays.
+- **Viewing**: `openDocumentUrl` = Storage signed URL, 60 s, opened in the in-app browser. Works only after `migrations/0011` (own-folder read policy) is applied; until then Storage refuses and the "Stored securely" message stays.
 - **Replace / delete**: same as the website: no delete; a rejected or missing item can be uploaded again; approved/under review items only open.
-- **Live status**: the detail screen reloads every 30 s while visible and on return to the foreground; background reloads keep the last data if they fail. Realtime would need the table in the realtime publication (DB change, not proposed yet).
-- **Proposed, not applied**: `migrations/0009_document_storage_policies.sql` (+ `0009_check_document_access.sql`, a rolled-back two-user check).
+- **Live status**: the detail screen reloads every 30 s while visible and on return to the foreground; background reloads keep the last data if they fail. Chat 11's proposed `migrations/0009` adds the table to the realtime publication (Home uses it); the detail screen keeps polling until then.
+- **Proposed, not applied**: `migrations/0011_document_storage_policies.sql` (+ `0011_check_document_access.sql`, a rolled-back two-user check).
 - Tests: `node scripts/run-upload-tests.mjs` (24 checks, incl. type allow-list). Screenshots: `docs/screenshots/chat09/` (Expo web with intercepted fixtures, 390/430, light/dark, Arabic).
 
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
@@ -174,7 +174,7 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 ## 6. Next tasks
 1. Owner: set the Vercel env vars (Supabase URL/anon/service role, Ziina key and webhook secret), fix the Supabase Auth URL config, approve `proposed-live-changes.sql`. Then re-run `scripts/e2e-live.mjs`: upload, payment and `payment_id` should pass.
 2. Send the "application submitted" email for app submissions (e.g. a small authenticated web route that sends it for an existing row id, or a DB webhook).
-3. Customer document viewing: signed URLs are in the app (chat 09); needs `migrations/0009` applied.
+3. Customer document viewing: signed URLs are in the app (chat 09); needs `migrations/0011` applied.
 4. Push notifications need a `push_tokens` table (optional block 5) and a sender.
 5. Supabase Auth URL configuration (owner): add the app redirect URLs from §2g and set the Site URL to https://www.ezvisa.net. Google sign-in additionally needs the provider enabled (not used by the website today).
 6. Development build (`eas build --profile development`) for push and native testing; App Store / Play listings.

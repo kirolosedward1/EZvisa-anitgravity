@@ -1,4 +1,4 @@
--- Check for 0009 (run AFTER 0009 is approved and applied). Everything is rolled back; nothing is kept.
+-- Check for 0011 (run AFTER 0011 is approved and applied). Everything is rolled back; nothing is kept.
 -- Proves: another user can't read (so can't get a signed URL for) or upload into someone else's application folder,
 -- the owner can read their file, and the owner can't upload into an unpaid application.
 -- Expected: four NOTICE lines ending in "OK". Any failure raises an exception.

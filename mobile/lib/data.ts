@@ -389,7 +389,7 @@ export async function uploadDocument(applicationId: string, file: { uri: string;
 /** Signed links live this long: opened at once, useless to anyone a minute later. Never a public URL. */
 export const SIGNED_URL_SECONDS = 60;
 /** Short-lived signed link to one of the user's own files. Storage RLS decides: the read policy only covers the user's own
- *  application folder (db/proposed-live-changes.sql block 2). Returns null when the file can't be opened by this user
+ *  application folder (migrations/0011, proposed). Returns null when the file can't be opened by this user
  *  (no path recorded, policy not in place, or someone else's file). */
 export async function openDocumentUrl(path: string): Promise<string | null> {
   if (!path || !supabase) return null;
