@@ -68,7 +68,7 @@ function Seg({ fill }: { fill: number }) {
 export default function Apply() {
   const c = useColors(); const reduce = useReducedMotion(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const fmt = useFmtDate();
   const p = useLocalSearchParams<Params>();
-  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, flushDraft, baseAt, sync, checkRemote, drafts, openDraft, startNew, activeKey } = useForm();
+  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, flushDraft, baseAt, sync, checkRemote, drafts, openDraft, startNew, activeKey, resumeState } = useForm();
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   setAccountEmail(session?.user.email); // before any activeQuestions() below: signed in = no email question
   const uid = session?.user.id ?? null;
@@ -89,7 +89,8 @@ export default function Apply() {
   useEffect(() => { setSettled(false); const tm = setTimeout(() => setSettled(true), 700); return () => clearTimeout(tm); }, [f]);
   const net = useNetInfo(); const offline = net.isConnected === false;
   const [reqs, setReqs] = useState<Requirement[]>([]);
-  const [prefill, setPrefill] = useState<{ values: Partial<WizardForm>; name: string } | null>(null); const prefillAsked = useRef<string | null>(null);
+  const [prefill, setPrefill] = useState<{ uid: string; key: string; values: Partial<WizardForm>; name: string } | null>(null); // last-application offer, for this account + draft only
+  const prefillAsked = useRef<string | null>(null);
   const [fromProfile, setFromProfile] = useState<{ key: string; values: Partial<WizardForm> } | null>(null); // answers filled from the profile in this draft
   const [profileAsk, setProfileAsk] = useState<{ uid: string; key: string; changes: ProfileChange[] } | null>(null);
   const [profileBusy, setProfileBusy] = useState(false); const [profileErr, setProfileErr] = useState<string | null>(null); const [profileSavedFor, setProfileSavedFor] = useState<string | null>(null);
@@ -117,10 +118,12 @@ export default function Apply() {
     if (draftId || !isFreshDraft(fRef.current)) return;
     const key = activeKey; let on = true; // `on` turns false when the account or the draft changes meanwhile
     loadProfile(uid).then((r) => {
-      if (!on || !r || !isFreshDraft(fRef.current) || (r.hasDraft && !hasAnswers(fRef.current))) return;
+      const rs = resumeState();
+      // Never into a draft loaded from the account (resume can land while the profile loads), and wait for a pending resume.
+      if (!on || !r || rs.fromServer || !isFreshDraft(fRef.current) || (r.hasDraft && !hasAnswers(fRef.current) && !rs.settled)) return;
       const { form: nf, filled } = applyProfile(fRef.current, r.profile);
       if (filled.length) {
-        fRef.current = nf; setForm(nf); markPrefilled(key, uid);
+        fRef.current = nf; setForm(nf); markPrefilled(key, uid, filled);
         setFromProfile({ key, values: Object.fromEntries(filled.map((k) => [k, nf[k]])) });
         AccessibilityInfo.announceForAccessibility(t("Some answers are filled in from your profile. Check them and edit if needed."));
       }
@@ -130,7 +133,7 @@ export default function Apply() {
       // Subtitle = what "Use" fills (e.g. "Dubai · Single"), so it is not mistaken for the profile prefill.
       const vf = { ...emptyForm, ...values } as WizardForm;
       const what = ["cityOfResidence", "maritalStatus", "employmentStatus", "jobCompany", "companyName"].map((id) => (Q_BY_ID[id] ? displayValue(Q_BY_ID[id], vf, t, fmt) : "")).filter(Boolean);
-      if (Object.keys(values).length) setPrefill({ values, name: [...new Set(what)].join(" · ") || [w.firstName, w.lastName].filter(Boolean).join(" ") });
+      if (Object.keys(values).length) setPrefill({ uid, key, values, name: [...new Set(what)].join(" · ") || [w.firstName, w.lastName].filter(Boolean).join(" ") });
     }).catch(() => {});
     return () => { on = false; };
   }, [hydrated, uid, activeKey]);
@@ -139,12 +142,12 @@ export default function Apply() {
   useEffect(() => {
     if (!onReview || !uid || submitted) return;
     const key = activeKey; let on = true;
-    shouldAsk(key, uid).then((ask) => (ask ? loadProfile(uid) : null)).then((r) => {
+    shouldAsk(key, uid).then(async (keys) => ({ keys, r: keys ? await loadProfile(uid) : null })).then(({ keys, r }) => {
       if (!on) return;
-      const changes = r ? profileChanges(fRef.current, r.profile) : [];
+      const changes = r && keys ? profileChanges(fRef.current, r.profile, keys) : [];
       setProfileErr(null); setProfileAsk(changes.length ? { uid, key, changes } : null);
     }).catch(() => {});
-    return () => { on = false; };
+    return () => { on = false; setProfileAsk(null); }; // leaving Review: never show (or save) a card from before an edit
   }, [onReview, uid, activeKey]);
   const answerProfile = async (update: boolean) => {
     if (!profileAsk || profileBusy) return; tap(); setProfileErr(null);
@@ -155,7 +158,7 @@ export default function Apply() {
     finally { setProfileBusy(false); }
   };
   const usePrefill = () => {
-    if (!prefill) return; tap();
+    if (!prefill || prefill.uid !== uid || prefill.key !== activeKey) return; tap();
     const nf = cleanAfterPrefill({ ...fRef.current, ...Object.fromEntries(Object.entries(prefill.values).filter(([k]) => !(fRef.current as any)[k] || k === "phoneCountry")) } as WizardForm);
     setForm(nf); setPrefill(null); const u = firstUnanswered(nf); if (u) goTo(`q:${u.id}`, 1);
   };
@@ -438,7 +441,7 @@ export default function Apply() {
       header={header} entering={entering} pageKey={page} titleRef={titleRef} allMode={allMode} doneLabel={editing ? t("Save") : undefined}
       chips={prefilledHere ? <View testID="from-profile" style={{ flexDirection: "row", alignItems: "center", gap: S.xxs, paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}>
         <Icon name="person.crop.circle" size={12} color={c.tint} /><Text variant="caption" tone="secondary" weight="600">{t("From your profile")}</Text></View> : undefined}
-      belowTitle={!!prefill && !allMode ? <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} /> : undefined}>
+      belowTitle={!!prefill && prefill.uid === uid && prefill.key === activeKey && !allMode ? <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} /> : undefined}>
       <DraftConflictSheet />
       <Modal visible={resumeAsk} transparent animationType="fade" onRequestClose={() => setResumeAsk(false)}>
         <View style={{ flex: 1, backgroundColor: c.overlay, justifyContent: "center", padding: S.gutter }}>

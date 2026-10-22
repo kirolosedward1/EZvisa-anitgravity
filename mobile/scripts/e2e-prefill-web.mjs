@@ -44,6 +44,9 @@ async function mock(ctx, w) {
     if (p === "/auth/v1/logout") return route.fulfill({ status: 204, body: "" });
     if (p === "/rest/v1/visa_applications") {
       if (!userOf(w, req)) return json(401, { message: "JWT required" });
+      // Slow profile load (lib/profile.ts is the only query selecting full_name): lets resume land first.
+      if (w.delayProfileMs && (url.searchParams.get("select") || "").includes("full_name")) await new Promise((r) => setTimeout(r, w.delayProfileMs));
+      if (w.delayResumeMs && url.searchParams.get("application_status") === "eq.draft") await new Promise((r) => setTimeout(r, w.delayResumeMs)); // latestDraft
       const eqs = [...url.searchParams].filter(([, v]) => v.startsWith("eq.")).map(([k, v]) => [k, v.slice(3)]);
       let rows = w.rows.filter((r) => eqs.every(([k, v]) => String(r[k]) === v));
       if (req.method() === "GET") {
@@ -167,6 +170,31 @@ for (const width of [390, 430]) {
   if (await page.getByText("Continue", { exact: true }).count() && await page.getByText("Continue Application?").count()) { await page.getByText("Continue", { exact: true }).last().click(); await page.waitForTimeout(800); }
   const kept = {}; await walk(page, width, "Your Name", {}, { "Your Name": async () => { kept.first = await page.getByTestId("question-input").inputValue(); } });
   ok(kept.first === "Mina", `A: an answer already in the draft is not overwritten by the profile after a reload ("${kept.first}")`);
+  await browser.close();
+}
+// ---- Resume race: the account's website draft arrives after the wizard started loading the profile ----
+{
+  console.log("\n== resume race (390 px) ==");
+  const w = world(); w.delayResumeMs = 3000; w.delayProfileMs = 5000; // resume lands ~2 s before the profile
+  w.rows.push({ id: "bbbbbbbb-0000-4000-8000-000000000002", email: "a+ezvisa-app-test@example.com", application_status: "draft", payment_status: "pending", created_at: "2026-10-20T10:00:00Z", updated_at: "2026-10-20T10:00:00Z",
+    full_name: "Draft", destination_country: "Germany", nationality: "India",
+    additional_notes: JSON.stringify({ source: "website", wizardStep: "personal", wizard: { destination: "Germany", nationality: "India", cityOfResidence: "Dubai" } }) });
+  const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome", args: ["--no-sandbox"] });
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+  await ctx.addInitScript(() => localStorage.setItem("ezvisa.welcomed.v1", "1"));
+  await mock(ctx, w); const page = await ctx.newPage();
+  await signIn(page, "a+ezvisa-app-test@example.com");
+  await page.goto(`${BASE}/apply`); await page.waitForTimeout(9000);
+  const resumed = JSON.parse((await localData(page))["ezvisa.wizard.v1"] || "{}").form || {};
+  ok(resumed.destination === "Germany" && resumed.nationality === "India", `race: the website draft is resumed (${resumed.destination}/${resumed.nationality})`);
+  ok(!resumed.firstName && !resumed.phoneLocal, `race: the profile is not written into the resumed website draft (first name "${resumed.firstName ?? ""}")`);
+  // "Start Fresh" on the resume prompt: an empty new draft, while the account still has a server draft -> prefilled.
+  w.delayResumeMs = 0; w.delayProfileMs = 0;
+  await page.goto(`${BASE}/apply`); await page.waitForTimeout(3500);
+  const fresh0 = await page.getByText("Start Fresh", { exact: true }).count();
+  if (fresh0) { await page.getByText("Start Fresh", { exact: true }).click(); await page.waitForTimeout(4000); }
+  const fresh = JSON.parse((await localData(page))["ezvisa.wizard.v1"] || "{}").form || {};
+  ok(fresh0 > 0 && !fresh.destination && fresh.firstName === "Amira", `race: "Start Fresh" gives an empty new draft that is prefilled (prompt ${fresh0 ? "shown" : "missing"}, first name "${fresh.firstName ?? ""}")`);
   await browser.close();
 }
 console.log(fail ? `\n${fail} FAILED` : "\nALL PASSED"); process.exit(fail ? 1 : 0);

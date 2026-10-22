@@ -55,10 +55,10 @@ db.rows = [
 
   // ---- edits -> profile question (only edited prefilled, savable fields) ----
   const edited = { ...form, phone: "+20 100 999 0000", phoneLocal: "100 999 0000", dateOfBirth: "1992-05-05", passportNumber: "B7654321", passportExpiry: inYears(5) };
-  const ch = profileChanges(edited, p);
+  const ch = profileChanges(edited, p, filled);
   ok(ch.length === 1 && ch[0].key === "phone", `only the edited savable field is offered (got ${ch.map((c) => c.key).join(",")})`);
-  ok(profileChanges(form, p).length === 0, "no question when nothing was edited");
-  ok(profileChanges({ ...form, phone: "+20 1001234567" }, p).length === 0, "phone formatting differences are not a change");
+  ok(profileChanges(form, p, filled).length === 0, "no question when nothing was edited");
+  ok(profileChanges({ ...form, phone: "+20 1001234567" }, p, filled).length === 0, "phone formatting differences are not a change");
 
   // ---- update only after confirmation, only for the same account ----
   ok(!db.calls.some((c: any) => c.updateUser), "nothing written before confirmation (load, prefill and diff never write)");
@@ -81,14 +81,32 @@ db.rows = [
   const partial = (await loadProfile(B.id))!.profile;
   ok(partial.firstName === "Bilal" && !partial.lastName && !partial.passportNumber, "partial profile: only the known fields");
 
+  // ---- review: only fields that were actually prefilled (a link answer is not "from your profile") ----
+  const linkNat = { ...form, nationality: "Pakistan" }; // nationality came from ?from=pakistan, phone from the profile
+  ok(profileChanges(linkNat, p, ["phone", "phoneCountry", "phoneLocal"]).length === 0, "review ignores fields that were not prefilled (link nationality vs profile)");
+  ok(profileChanges({ ...linkNat, phone: "+20 100 555 0000" }, p, ["phone", "phoneCountry", "phoneLocal"]).map((c) => c.key).join() === "phone", "review lists an edited prefilled field");
+  // ---- save writes exactly the confirmed values, nothing unlisted ----
+  db.user = { id: "uid-c", email: "c+ezvisa-app-test@example.com", user_metadata: {} }; db.calls = [];
+  await saveProfile("uid-c", { ...form, firstName: "Changed", lastName: "Hassan2" }, [{ key: "lastName", label: "Last Name", from: "Hassan", to: "Hassan2" }]);
+  const wc = db.calls.find((c: any) => c.updateUser)?.data ?? {};
+  ok(wc.last_name === "Hassan2" && !("first_name" in wc) && !("full_name" in wc), `confirmed last name only: no unlisted first/full name written (${JSON.stringify(wc)})`);
+  db.calls = [];
+  await saveProfile("uid-c", { ...form, phone: "+20 100 777 7777" }, [{ key: "phone", label: "Phone Number", from: "+20 100 123 4567", to: "+20 100 555 0000" }]);
+  ok(db.calls.find((c: any) => c.updateUser)?.data.phone === "+20 100 555 0000", "saves the value shown on the card, not a later form value");
+  // ---- rows anyone can insert (guest submissions) cannot crash prefill with non-text values ----
+  db.user = { id: "uid-d", email: "d+ezvisa-app-test@example.com", user_metadata: {} };
+  db.rows.push({ email: "d+ezvisa-app-test@example.com", application_status: "submitted", updated_at: "2026-10-01", full_name: "X", additional_notes: JSON.stringify({ wizard: { cityOfResidence: { evil: 1 }, firstName: ["a"], maritalStatus: "single" } }) });
+  const rd = await loadProfile("uid-d");
+  ok(!!rd && typeof (rd.last as any)?.cityOfResidence === "undefined" && typeof (rd.profile as any).firstName !== "object" && (rd.last as any)?.maritalStatus === "single", "non-text values in application notes are ignored");
+
   // ---- phone parsing ----
   ok(JSON.stringify(splitPhone("+971 50 123 4567")) === JSON.stringify({ phoneCountry: "AE", phoneLocal: "50 123 4567" }), "+971 -> AE");
   ok(splitPhone("+919876543210")?.phoneCountry === "IN" && splitPhone("+7 701 000 0000", "KZ")?.phoneCountry === "KZ", "+91 -> IN, +7 keeps the preferred KZ");
   ok(splitPhone("0501234567") === null, "a local number without a code is not guessed");
 
   // ---- ask once, per account ----
-  await markPrefilled("d1", A.id);
-  ok(await shouldAsk("d1", A.id), "prefilled draft: ask on review");
+  await markPrefilled("d1", A.id, ["phone"]);
+  ok(JSON.stringify(await shouldAsk("d1", A.id)) === '["phone"]', "prefilled draft: ask on review, for the keys that were prefilled");
   ok(!(await shouldAsk("d1", B.id)), "never asked for another account");
   await markAsked("d1"); ok(!(await shouldAsk("d1", A.id)), "asked once only");
 

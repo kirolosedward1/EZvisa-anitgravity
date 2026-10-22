@@ -66,7 +66,9 @@ export async function loadProfile(uid: string): Promise<{ profile: Profile; last
   const rows = data ?? [];
   // A cancelled (discarded) case may hold half-typed answers; prefer real cases, newest first.
   const best = rows.find((r) => r.application_status !== "draft" && r.application_status !== "cancelled") ?? rows.find((r) => r.application_status !== "cancelled") ?? null;
-  const w: Partial<WizardForm> = best ? { ...(parseNotes(best.additional_notes).wizard ?? {}) } : {};
+  // Rows can be inserted by anyone for any email (guest checkout), so notes are untrusted: keep text values only.
+  const raw = best ? (parseNotes(best.additional_notes).wizard ?? {}) : {};
+  const w = Object.fromEntries(Object.entries(raw).filter(([, v]) => typeof v === "string")) as Partial<WizardForm>;
   const md = (user.user_metadata ?? {}) as Record<string, unknown>;
   const full = s(md.full_name);
   const fromRow = best ? s(best.full_name).replace(/^Draft$/, "") : "";
@@ -104,30 +106,33 @@ export function applyProfile(f: WizardForm, p: Profile): { form: WizardForm; fil
   return { form: out, filled };
 }
 
-/** Prefilled answers the user changed (only fields the profile had a value for, and only savable ones). */
-export function profileChanges(f: WizardForm, p: Profile): ProfileChange[] {
-  return SAVABLE.flatMap(({ key, label }) => {
+/** Prefilled answers the user changed: only fields that were filled from the profile in this draft (`filled`), that the
+ *  profile still has a value for, and that are savable. An answer that came from a link or the user is never listed. */
+export function profileChanges(f: WizardForm, p: Profile, filled: string[]): ProfileChange[] {
+  return SAVABLE.filter(({ key }) => filled.includes(key)).flatMap(({ key, label }) => {
     const from = s((p as any)[key]); const to = s((f as any)[key]);
     const same = key === "phone" ? from.replace(/[^\d]/g, "") === to.replace(/[^\d]/g, "") : from.toLowerCase() === to.toLowerCase();
     return from && to && !same ? [{ key, label, from, to }] : [];
   });
 }
 
-/** Writes the confirmed changes to the signed-in user's own profile (user_metadata). Refuses if the account changed. */
+/** Writes exactly the confirmed changes (the values shown on the card) to the signed-in user's own profile
+ *  (user_metadata); nothing the card did not list. Refuses if the account changed. `f` only supplies the phone's country. */
 export async function saveProfile(uid: string, f: WizardForm, changes: ProfileChange[]): Promise<void> {
   if (!supabase) throw new Error("Backend not configured");
   const { data: { user } } = await supabase.auth.getUser();
   if (!user || user.id !== uid) throw new Error("You're signed in to a different account now. Your profile was not changed.");
-  const keys = new Set(changes.map((c) => c.key)); const data: Record<string, string> = {};
-  if (keys.has("firstName") || keys.has("lastName")) {
-    const md = user.user_metadata ?? {};
-    const first = keys.has("firstName") ? s(f.firstName) : s(md.first_name) || s(md.full_name).split(/\s+/)[0] || s(f.firstName);
-    const last = keys.has("lastName") ? s(f.lastName) : s(md.last_name) || s(md.full_name).split(/\s+/).slice(1).join(" ") || s(f.lastName);
-    Object.assign(data, { first_name: first, last_name: last, full_name: `${first} ${last}`.trim() });
+  const to = Object.fromEntries(changes.map((c) => [c.key, s(c.to)])) as Partial<Record<keyof WizardForm, string>>; const data: Record<string, string> = {};
+  if (to.firstName) data.first_name = to.firstName;
+  if (to.lastName) data.last_name = to.lastName;
+  if (to.firstName || to.lastName) { // full_name too, but only when both parts are known without guessing from the form
+    const md = user.user_metadata ?? {}; const full = s(md.full_name).split(/\s+/);
+    const first = to.firstName || s(md.first_name) || (s(md.full_name) ? full[0] : ""); const last = to.lastName || s(md.last_name) || full.slice(1).join(" ");
+    if (first && last) data.full_name = `${first} ${last}`;
   }
-  if (keys.has("phone")) Object.assign(data, { phone: s(f.phone), phone_country: f.phoneCountry });
-  if (keys.has("nationality")) data.nationality = s(f.nationality);
-  if (keys.has("dateOfBirth")) data.date_of_birth = f.dateOfBirth;
+  if (to.phone) { data.phone = to.phone; const c = splitPhone(to.phone, f.phoneCountry); if (c) data.phone_country = c.phoneCountry; }
+  if (to.nationality) data.nationality = to.nationality;
+  if (to.dateOfBirth) data.date_of_birth = to.dateOfBirth;
   if (!Object.keys(data).length) return;
   const { error } = await supabase.auth.updateUser({ data });
   if (error) throw error;
@@ -135,13 +140,13 @@ export async function saveProfile(uid: string, f: WizardForm, changes: ProfileCh
 
 // ---- Per-draft flags (no personal data): was this draft prefilled, and was the profile question already answered ----
 const FLAGS = "ezvisa.prefill.v1";
-type Flag = { uid: string; asked: boolean; at: number };
+type Flag = { uid: string; asked: boolean; at: number; keys?: string[] };
 async function readFlags(): Promise<Record<string, Flag>> { try { return JSON.parse((await AsyncStorage.getItem(FLAGS)) ?? "{}") ?? {}; } catch { return {}; } }
 async function writeFlags(m: Record<string, Flag>) {
   const keep = Object.entries(m).sort((a, b) => b[1].at - a[1].at).slice(0, 20); // bounded
   await AsyncStorage.setItem(FLAGS, JSON.stringify(Object.fromEntries(keep))).catch(() => {});
 }
-export async function markPrefilled(draftKey: string, uid: string) { const m = await readFlags(); m[draftKey] = { uid, asked: false, at: Date.now() }; await writeFlags(m); }
+export async function markPrefilled(draftKey: string, uid: string, keys: string[]) { const m = await readFlags(); m[draftKey] = { uid, asked: false, at: Date.now(), keys }; await writeFlags(m); }
 export async function markAsked(draftKey: string) { const m = await readFlags(); if (m[draftKey]) { m[draftKey].asked = true; await writeFlags(m); } }
-/** True when this draft was prefilled for `uid` and the profile question has not been answered yet. */
-export async function shouldAsk(draftKey: string, uid: string) { const x = (await readFlags())[draftKey]; return !!x && x.uid === uid && !x.asked; }
+/** The keys prefilled in this draft for `uid` while the profile question is still unanswered; null otherwise. */
+export async function shouldAsk(draftKey: string, uid: string): Promise<string[] | null> { const x = (await readFlags())[draftKey]; return x && x.uid === uid && !x.asked ? x.keys ?? [] : null; }

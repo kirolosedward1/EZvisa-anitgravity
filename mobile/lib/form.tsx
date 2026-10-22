@@ -48,6 +48,9 @@ const isNetworkError = (e: any) => /network|fetch|timeout|timed out|offline|abor
 
 type Submitted = { applicationId: string; trackingToken?: string; reference?: string; amount?: number; destination?: string; spouse?: boolean; guestEmail?: string } | null;
 type Ctx = {
+  /** settled: the account-draft resume check has finished; fromServer: the open draft was loaded from the server
+   *  (resume, newer copy, or a draft opened from the account) rather than started on this phone. Read by profile prefill. */
+  resumeState: () => { settled: boolean; fromServer: boolean };
   form: WizardForm; setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
   page: string; setPage: (k: string) => void;
   submitted: Submitted; setSubmitted: (s: Submitted) => void;
@@ -99,6 +102,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   const emailRef = useRef(email); emailRef.current = email;
   const online = useRef(true);
   const latest = useRef({ form, page }); latest.current = { form, page };
+  const resumeRef = useRef({ settled: false, fromServer: false });
   const setDraft = (id: string | null) => { idRef.current = id; setDraftId(id); };
   const [drafts, setDrafts] = useState<LocalDraft[]>([]); const draftsRef = useRef<LocalDraft[]>([]);
   const [activeKey, setActiveKey] = useState(newKey); const keyRef = useRef(activeKey); keyRef.current = activeKey;
@@ -179,7 +183,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   const outdated = (s: ServerDraft) => !sameVersion(s.updatedAt, baseRef.current) && ![syncedFp.current, inflightFp.current].includes(s.fingerprint);
   /** Show a server copy in the wizard and treat it as the confirmed version (nothing is written until the next answer). */
   const applyServer = (s: ServerDraft) => {
-    clearTimers(); failed.current = 0;
+    clearTimers(); failed.current = 0; resumeRef.current.fromServer = true;
     const f = cleanNationality({ ...emptyForm, ...s.form }); const pg = normalizePage(s.question ? `q:${s.question}` : s.step, f);
     setForm(f); setPage(pg); latest.current = { form: f, page: pg };
     setMeta({ draftId: s.id, baseAt: s.updatedAt, syncedFp: fpOf(f, pg), inflightFp: null, owner: emailRef.current });
@@ -280,9 +284,10 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   // Resume: nothing on this phone -> load the account's latest draft (e.g. started on the website or another device).
   useEffect(() => {
     if (!hydrated || authLoading || !email) return;
-    if (hasAnswers(latest.current.form) && idRef.current) return;
+    resumeRef.current.settled = false;
+    if (hasAnswers(latest.current.form) && idRef.current) { resumeRef.current.settled = true; return; }
     let on = true;
-    latestDraft().then((d) => {
+    latestDraft().finally(() => { if (on) resumeRef.current.settled = true; }).then((d) => {
       if (!on || !d) return;
       if (hasAnswers(latest.current.form) && idRef.current !== d.id) return; // local work on a different case wins
       if (draftsRef.current.some((x) => x.draftId === d.id && x.key !== keyRef.current)) return; // already on this phone
@@ -292,7 +297,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   }, [hydrated, authLoading, email]);
 
   const clearDraft = useCallback(() => {
-    clearTimers();
+    clearTimers(); resumeRef.current.fromServer = false;
     skipNext.current = true;
     setForm({ ...emptyForm }); setPage("q:destination"); latest.current = { form: { ...emptyForm }, page: "q:destination" };
     setSavedAt(null); setPromptDismissed(false); setMeta({ draftId: null }); allowNew.current = false;
@@ -303,7 +308,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   }, []);
   /** Switch the wizard to another saved draft (the current one is already in the list). */
   const load = (d: LocalDraft | null, seed: Partial<WizardForm> = {}) => {
-    clearTimers();
+    clearTimers(); resumeRef.current.fromServer = false;
     if (dirty() && eligible() && !conflictRef.current) persistActive(); // keep the one we leave
     const f = d ? { ...d.form, ...seed } : { ...emptyForm, ...seed }; const pg = d ? normalizePage(d.page, f) : "q:destination";
     const k = d?.key ?? newKey(); keyRef.current = k; setActiveKey(k);
@@ -356,6 +361,6 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   }, [flushDraft]);
 
   const visible = drafts.filter((d) => !d.owner || d.owner === email);
-  return <C.Provider value={{ form, setForm, page, setPage, submitted, setSubmitted, hydrated, savedAt, clearDraft, promptDismissed, dismissPrompt: () => setPromptDismissed(true), draftId, baseAt: () => baseRef.current, sync, syncError, conflict, flushDraft, retrySync, resolveConflict, checkRemote, saveBeforeSignOut, drafts: visible, activeKey, openDraft, startNew, removeDraft, openServerDraft }}>{children}</C.Provider>;
+  return <C.Provider value={{ resumeState: () => resumeRef.current, form, setForm, page, setPage, submitted, setSubmitted, hydrated, savedAt, clearDraft, promptDismissed, dismissPrompt: () => setPromptDismissed(true), draftId, baseAt: () => baseRef.current, sync, syncError, conflict, flushDraft, retrySync, resolveConflict, checkRemote, saveBeforeSignOut, drafts: visible, activeKey, openDraft, startNew, removeDraft, openServerDraft }}>{children}</C.Provider>;
 }
 export const useForm = () => useContext(C);
