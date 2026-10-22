@@ -17,9 +17,12 @@ interface PaymentStepProps {
   onBack: () => void
   isLoading?: boolean
   paymentError?: string | null
+  /** Signed in with a saved draft: its id + session token, so the draft row becomes the submitted application. */
+  prepareSubmit?: () => Promise<{ draftId: string; draftVersion: string | null; accessToken: string } | null>
+  onSubmitted?: () => void
 }
 
-export function PaymentStep({ formData, onBack, isLoading, paymentError }: PaymentStepProps) {
+export function PaymentStep({ formData, onBack, isLoading, paymentError, prepareSubmit, onSubmitted }: PaymentStepProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [currency, setCurrency] = useState<CurrencyInfo>(getDefaultCurrency())
   const [submitError, setSubmitError] = useState<string | null>(null)
@@ -57,20 +60,24 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
     setSubmitError(null)
 
     try {
-      // 1. Submit application to database (BLOCKING)
+      // 1. Submit application to database (BLOCKING). A saved draft (signed in) is submitted in place, not duplicated.
+      const draft = prepareSubmit ? await prepareSubmit().catch(() => null) : null
       const submitResponse = await fetch("/api/submit-application", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(draft && { Authorization: `Bearer ${draft.accessToken}` }),
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, ...(draft && { draftId: draft.draftId, draftVersion: draft.draftVersion }) }),
       })
 
       if (!submitResponse.ok) {
-        throw new Error("Failed to save application. Please try again.")
+        const body = submitResponse.status === 409 ? await submitResponse.json().catch(() => null) : null
+        throw new Error(body?.message || "Failed to save application. Please try again.")
       }
 
       const submitData = await submitResponse.json()
+      onSubmitted?.()
 
       // 2. Send lead to HubSpot (NON-BLOCKING)
       let hubspotContactId: string | null = null
