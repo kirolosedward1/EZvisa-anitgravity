@@ -458,7 +458,8 @@ export default function Apply() {
     </View>
   );
   const errBox = e ? <Shake on={`${e}|${errTick}`}><View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View></Shake> : null;
-  const noteBox = note ? <Note tone={note.tone}>{t(note.text)}</Note> : null;
+  // When the error says the same as the note (valid passport = No), show it once, as the error.
+  const noteBox = note && note.text !== e ? <Note tone={note.tone}>{t(note.text)}</Note> : null;
   const tp = q.text ?? {};
   const body = (() => {
     switch (q.kind) {
