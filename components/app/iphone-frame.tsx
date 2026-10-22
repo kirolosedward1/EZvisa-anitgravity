@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import Image from "next/image"
 
 import { cn } from "@/lib/utils"
@@ -8,38 +9,44 @@ export const SCREENSHOT_WIDTH = 1179
 export const SCREENSHOT_HEIGHT = 2556
 
 interface IphoneFrameProps {
-  /** App screenshot shown inside the frame (1179 x 2556 or the same ratio). */
-  src: string
-  alt: string
+  /** Single screenshot (1179 x 2556 or the same ratio). Ignored when `children` is given. */
+  src?: string
+  alt?: string
   /** Set on the hero mockup so it loads eagerly; everything else lazy-loads. */
   priority?: boolean
   /** `sizes` hint for next/image, matching the rendered frame width. */
   sizes?: string
   /** Width classes for the frame, e.g. `w-64 lg:w-80`. Height follows automatically. */
   className?: string
+  /** Custom screen content. The screen box is positioned, so children can use `absolute inset-0`. */
+  children?: ReactNode
 }
 
 export function IphoneFrame({
   src,
-  alt,
+  alt = "",
   priority = false,
   sizes = "(min-width: 1024px) 300px, 240px",
   className,
+  children,
 }: IphoneFrameProps) {
   return (
     <div className={cn(styles.frame, className)}>
       <div className={styles.body}>
         <div className={styles.bezel}>
           <div className={styles.screen}>
-            <Image
-              src={src}
-              alt={alt}
-              width={SCREENSHOT_WIDTH}
-              height={SCREENSHOT_HEIGHT}
-              sizes={sizes}
-              priority={priority}
-              loading={priority ? "eager" : "lazy"}
-            />
+            {children ??
+              (src ? (
+                <Image
+                  src={src}
+                  alt={alt}
+                  width={SCREENSHOT_WIDTH}
+                  height={SCREENSHOT_HEIGHT}
+                  sizes={sizes}
+                  priority={priority}
+                  loading={priority ? "eager" : "lazy"}
+                />
+              ) : null)}
           </div>
           <div className={styles.island} aria-hidden="true" />
         </div>

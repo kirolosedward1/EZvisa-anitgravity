@@ -74,7 +74,7 @@ export function StoreBadges({ size = "md", className }: StoreBadgesProps) {
       <a
         href={APP_STORE_URL}
         aria-label="Download EZvisa on the App Store"
-        className="inline-flex rounded-md transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="inline-flex rounded-md transition-transform duration-200 hover:-translate-y-0.5 motion-reduce:transition-none motion-reduce:hover:translate-y-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <AppStoreBadge className={cn(badgeHeight, "w-auto")} />
       </a>

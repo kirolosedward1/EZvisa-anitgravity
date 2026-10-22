@@ -1,18 +1,36 @@
 import type { Metadata } from "next"
-import { Smartphone } from "lucide-react"
+import { Check, MessageCircle, Smartphone } from "lucide-react"
 
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
-import { IphoneFrame } from "@/components/app/iphone-frame"
-import { StoreBadges } from "@/components/app/store-badges"
+import { AppFaq } from "@/components/app/app-faq"
+import {
+  DETAILS,
+  FAQS,
+  HERO_SCREENS,
+  PRICE_LABEL,
+  STATUS_POINTS,
+  STATUS_STEPS,
+  WALKTHROUGH_STEPS,
+} from "@/components/app/content"
+import { DetailsList } from "@/components/app/details-list"
+import { DownloadSection } from "@/components/app/download-section"
+import { HandoffSection } from "@/components/app/handoff-section"
+import { HeroDevice } from "@/components/app/hero-device"
 import { MotionPreferences, Reveal } from "@/components/app/reveal"
-import { generateBreadcrumbSchema, generateStructuredData } from "@/lib/seo"
+import { SectionHeading } from "@/components/app/section-heading"
+import { StatusTimeline } from "@/components/app/status-timeline"
+import { StoreBadges } from "@/components/app/store-badges"
+import { Walkthrough } from "@/components/app/walkthrough"
+import { generateBreadcrumbSchema, generateFAQSchema, generateStructuredData } from "@/lib/seo"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
+import { cn } from "@/lib/utils"
+import hero from "@/components/app/app-hero.module.css"
 
 const PAGE_URL = "https://www.ezvisa.net/app"
 const TITLE = "EZvisa App – Schengen visa from your phone"
-const DESCRIPTION =
-  "Start your Schengen visa application, pay securely, upload your documents and follow your case from the EZvisa app for iPhone. Android is coming soon."
+const DESCRIPTION = `Apply for your Schengen visa, pay ${PRICE_LABEL} when it's ready, upload your documents and follow the real status from the EZvisa iPhone app. Same account as ezvisa.net. Android coming soon.`
 
 export const metadata: Metadata = {
   title: { absolute: TITLE },
@@ -36,39 +54,6 @@ export const metadata: Metadata = {
   },
 }
 
-// Screenshots live in public/app/screenshots (1179 x 2556). The current files are placeholders.
-const HERO_SCREEN = {
-  src: "/app/screenshots/home.png",
-  alt: "EZvisa app home screen: a Germany application marked Paid, with a progress bar, status timeline and a Continue application button",
-}
-
-const GALLERY_SCREENS = [
-  {
-    src: "/app/screenshots/apply.png",
-    alt: "EZvisa app apply step asking Where do you want to go, with a list of Schengen countries and Germany selected",
-    title: "Apply in minutes",
-    text: "One question per screen. Your answers save as you go.",
-  },
-  {
-    src: "/app/screenshots/track.png",
-    alt: "EZvisa app application screen for Germany showing the status timeline, appointment details and a document checklist",
-    title: "Track your application",
-    text: "Real status, real timestamps and your appointment in one place.",
-  },
-  {
-    src: "/app/screenshots/upload.png",
-    alt: "EZvisa app document upload screen listing passport, Emirates ID, bank statement and salary certificate with upload progress",
-    title: "Upload documents after payment",
-    text: "Add the files our experts need, straight from your camera or Files.",
-  },
-  {
-    src: "/app/screenshots/continue.png",
-    alt: "EZvisa app continue screen showing a saved Germany draft at the employment step with a Continue button",
-    title: "Pick up where you left off",
-    text: "Start on the website, finish in the app. Same account, same application.",
-  },
-]
-
 const structuredData = generateStructuredData(
   {
     "@type": "SoftwareApplication",
@@ -85,7 +70,10 @@ const structuredData = generateStructuredData(
     { name: "Home", url: "/" },
     { name: "App", url: "/app" },
   ]),
+  generateFAQSchema(FAQS.map(({ question, answer }) => ({ question, answer }))),
 )
+
+const WHATSAPP_URL = getWhatsAppUrl("Hi EZvisa, I have a question about the app.")
 
 export default function AppPage() {
   return (
@@ -97,103 +85,159 @@ export default function AppPage() {
       <MotionPreferences>
         <div id="main-content" className="bg-background">
           {/* Hero */}
-          <section className="pt-32 pb-16 md:pt-40 md:pb-24" aria-labelledby="app-hero-heading">
+          <section className="pb-16 pt-32 md:pb-24 md:pt-40" aria-labelledby="app-hero-heading">
             <div className="container mx-auto max-w-6xl px-4 sm:px-6">
               <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-                <Reveal className="flex flex-col items-start gap-6 text-start">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                <div className="flex flex-col items-start gap-6 text-start">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary",
+                      hero.enter,
+                    )}
+                  >
                     <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
                     Available for iPhone
                   </span>
                   <h1
                     id="app-hero-heading"
-                    className="text-balance text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl"
+                    className={cn(
+                      "text-balance text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl",
+                      hero.enter,
+                      hero.delay1,
+                    )}
                   >
-                    EZvisa, in your pocket.
+                    Your Schengen visa application, on your phone.
                   </h1>
-                  <p className="max-w-md text-lg leading-relaxed text-muted-foreground">
-                    Start your Schengen visa application, pay, add your documents and follow your case from your
-                    phone.
+                  <p className={cn("max-w-md text-lg leading-relaxed text-muted-foreground", hero.enter, hero.delay2)}>
+                    Start an application, pay {PRICE_LABEL} when it&apos;s ready, add your documents and follow its
+                    status, from the same account you use on ezvisa.net.
                   </p>
-                  <StoreBadges />
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Same account as the website. An application you start on one shows up on the other.
+                  <div className={cn(hero.enter, hero.delay3)}>
+                    <StoreBadges />
+                  </div>
+                  <p className={cn("text-sm leading-relaxed text-muted-foreground", hero.enter, hero.delay4)}>
+                    Free to download. iPhone now, Android soon.
                   </p>
-                </Reveal>
+                </div>
 
-                <Reveal delay={0.1} className="flex justify-center lg:justify-end">
-                  <IphoneFrame
-                    src={HERO_SCREEN.src}
-                    alt={HERO_SCREEN.alt}
-                    priority
-                    className="w-64 sm:w-72 lg:w-80"
-                    sizes="(min-width: 1024px) 300px, (min-width: 640px) 272px, 240px"
+                <div className={cn("flex justify-center lg:justify-end", hero.enter, hero.delay2)}>
+                  <HeroDevice
+                    screens={HERO_SCREENS}
+                    frameClassName="w-64 sm:w-72 lg:w-80 xl:w-88"
+                    sizes="(min-width: 1280px) 352px, (min-width: 1024px) 320px, (min-width: 640px) 288px, 256px"
                   />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Walkthrough */}
+          <section className="border-t border-border bg-secondary py-20 md:py-28" aria-labelledby="app-walkthrough-heading">
+            <div className="container mx-auto flex max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:gap-16">
+              <Reveal>
+                <SectionHeading
+                  id="app-walkthrough-heading"
+                  chip="How the app works"
+                  title="Apply, pay, upload, track."
+                  lede="One question per screen, in the order our experts need the answers, saved as you go."
+                />
+              </Reveal>
+              <Walkthrough steps={WALKTHROUGH_STEPS} />
+            </div>
+          </section>
+
+          {/* Status */}
+          <section className="py-20 md:py-28" aria-labelledby="app-status-heading">
+            <div className="container mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:items-center lg:gap-16">
+              <div className="flex flex-col gap-8 lg:col-span-6">
+                <Reveal>
+                  <SectionHeading
+                    id="app-status-heading"
+                    chip="Status tracking"
+                    title="The same status our team sees."
+                    lede="Your application moves through fixed stages. Each one is stamped with the time it happened, and appointment details appear as soon as our staff enter them."
+                  />
+                </Reveal>
+                <Reveal delay={0.05} className="flex flex-col gap-6">
+                  <ul className="flex flex-col gap-3">
+                    {STATUS_POINTS.map((point) => (
+                      <li key={point} className="flex items-start gap-3 text-base leading-relaxed text-muted-foreground">
+                        <Check className="mt-1.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex w-fit items-center gap-2 font-medium text-primary hover:underline"
+                  >
+                    <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                    Message us on WhatsApp
+                  </a>
+                </Reveal>
+              </div>
+              <div className="lg:col-span-6">
+                <StatusTimeline steps={STATUS_STEPS} caption="Example application" />
+              </div>
+            </div>
+          </section>
+
+          {/* Website and app */}
+          <section className="border-t border-border bg-secondary py-20 md:py-28" aria-labelledby="app-handoff-heading">
+            <div className="container mx-auto flex max-w-6xl flex-col gap-12 px-4 sm:px-6 lg:gap-16">
+              <Reveal>
+                <SectionHeading
+                  id="app-handoff-heading"
+                  chip="Website and app"
+                  title="Start on ezvisa.net. Finish on your phone."
+                  lede="The website and the app share one account and one backend. An application you start in a browser is waiting in the app at the same question, and the other way round."
+                  align="center"
+                />
+              </Reveal>
+              <HandoffSection />
+              <p className="text-center text-sm text-muted-foreground">Sign in with the same email you used on the website.</p>
+            </div>
+          </section>
+
+          {/* Details */}
+          <section className="py-20 md:py-28" aria-labelledby="app-details-heading">
+            <div className="container mx-auto grid max-w-6xl gap-12 px-4 sm:px-6 lg:grid-cols-12 lg:gap-16">
+              <div className="lg:col-span-4">
+                <Reveal>
+                  <SectionHeading
+                    id="app-details-heading"
+                    chip="Also in the app"
+                    title="Things you'd only notice if they were missing."
+                  />
+                </Reveal>
+              </div>
+              <div className="lg:col-span-8">
+                <Reveal delay={0.05}>
+                  <DetailsList items={DETAILS} />
                 </Reveal>
               </div>
             </div>
           </section>
 
-          {/* Screenshot gallery */}
-          <section className="border-t border-border bg-secondary py-16 md:py-24" aria-labelledby="app-screens-heading">
-            <div className="container mx-auto max-w-6xl px-4 sm:px-6">
-              <Reveal className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
-                <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                  What&apos;s inside
-                </span>
-                <h2
-                  id="app-screens-heading"
-                  className="text-balance text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl"
-                >
-                  From first question to visa-ready file
-                </h2>
-                <p className="text-base leading-relaxed text-muted-foreground">
-                  The app asks only what our experts need, in the order they need it, and shows the real state of your
-                  case.
-                </p>
+          {/* FAQ */}
+          <section className="border-t border-border bg-secondary py-20 md:py-28" aria-labelledby="app-faq-heading">
+            <div className="container mx-auto flex max-w-3xl flex-col gap-10 px-4 sm:px-6">
+              <Reveal>
+                <SectionHeading id="app-faq-heading" title="Common questions" align="center" />
               </Reveal>
-
-              <ul
-                className="-mx-4 mt-12 flex snap-x snap-mandatory gap-6 overflow-x-auto px-4 pb-4 scroll-px-4 sm:-mx-6 sm:px-6 sm:scroll-px-6 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-4"
-                aria-label="App screenshots"
-              >
-                {GALLERY_SCREENS.map((screen, index) => (
-                  <li key={screen.src} className="w-56 shrink-0 snap-center sm:w-60 md:w-auto">
-                    <Reveal delay={index * 0.06} className="flex flex-col items-center gap-5 text-center">
-                      <IphoneFrame
-                        src={screen.src}
-                        alt={screen.alt}
-                        className="w-full max-w-56 md:max-w-60"
-                        sizes="(min-width: 768px) 240px, 224px"
-                      />
-                      <div className="flex flex-col gap-1">
-                        <h3 className="text-base font-semibold text-foreground">{screen.title}</h3>
-                        <p className="text-sm leading-relaxed text-muted-foreground">{screen.text}</p>
-                      </div>
-                    </Reveal>
-                  </li>
-                ))}
-              </ul>
+              <Reveal delay={0.05}>
+                <AppFaq faqs={FAQS} />
+              </Reveal>
             </div>
           </section>
 
           {/* Download */}
-          <section className="py-16 md:py-24" aria-labelledby="app-download-heading">
+          <section className="py-20 md:py-28" aria-labelledby="app-download-heading">
             <div className="container mx-auto max-w-6xl px-4 sm:px-6">
-              <Reveal className="flex flex-col gap-8 rounded-3xl border border-border bg-card p-8 shadow-sm md:flex-row md:items-center md:justify-between md:p-12">
-                <div className="flex max-w-lg flex-col gap-3 text-start">
-                  <h2
-                    id="app-download-heading"
-                    className="text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl"
-                  >
-                    Get the app
-                  </h2>
-                  <p className="text-base leading-relaxed text-muted-foreground">
-                    Free to download. The service is 249 AED per application, paid in the app when you are ready, with
-                    our money-back guarantee if the visa is denied.
-                  </p>
-                </div>
-                <StoreBadges size="lg" className="shrink-0" />
+              <Reveal>
+                <DownloadSection />
               </Reveal>
             </div>
           </section>

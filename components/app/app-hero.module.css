@@ -1,0 +1,39 @@
+/* Hero entrance: plain CSS keyframes so it plays without JavaScript and never hides
+   server-rendered content behind hydration. Disabled under prefers-reduced-motion. */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.enter {
+  animation: rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.delay1 {
+  animation-delay: 80ms;
+}
+
+.delay2 {
+  animation-delay: 160ms;
+}
+
+.delay3 {
+  animation-delay: 240ms;
+}
+
+.delay4 {
+  animation-delay: 320ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    animation: none;
+  }
+}
