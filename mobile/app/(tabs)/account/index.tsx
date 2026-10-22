@@ -1,3 +1,4 @@
+import { stage } from "../../../lib/stage";
 import { ActionSheetIOS, Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
 import { useAvatar, pickAvatar, removeAvatar } from "../../../lib/avatar";
 import * as Print from "expo-print";
@@ -203,7 +204,7 @@ export default function Account() {
       {!!apps?.length && (
         <ListGroup header={t("Application history")} inset={S.md + 28 + S.md}>
           {apps.map((a) => <ListRow key={a.id} leading={<Flag country={a.countries?.name ?? a.destination_country ?? ""} size={28} />} title={t(a.countries?.name ?? a.destination_country ?? "Application")}
-            subtitle={`${a.reference} · ${t(STATUS_LABEL[a.status] ?? a.status)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`, { withAnchor: true })} />)}
+            subtitle={`${a.reference} · ${t(stage(a).label)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`, { withAnchor: true })} />)}
         </ListGroup>
       )}
       {!!paidApps.length && (

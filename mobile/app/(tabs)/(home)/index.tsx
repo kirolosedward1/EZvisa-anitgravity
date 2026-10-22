@@ -25,12 +25,12 @@ import { countdown } from "../../../lib/countdown";
 import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
-import { SwipeToDiscard, SwipeLock } from "../../../components/SwipeToDiscard";
+import { SwipeToDiscard, SwipeLock, SwipeActive } from "../../../components/SwipeToDiscard";
 import { useAvatar } from "../../../lib/avatar";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 
 const fmtDay = (s: string, lang: string) => new Date(s.slice(0, 10) + "T12:00:00").toLocaleDateString(lang === "ar" ? "ar" : undefined, { day: "numeric", month: "short" });
-const tripDates = (a: Application, lang: string) => (a.entry_date ? [fmtDay(a.entry_date, lang), a.exit_date && fmtDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
+const tripDates = (a: Application, lang: string) => (a.entry_date ? [fmtDay(a.entry_date, lang), a.exit_date && a.exit_date.slice(0, 10) !== a.entry_date.slice(0, 10) && fmtDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
 const STEP_LABEL: Record<string, string> = { personal: "Personal", spouse: "Spouse", employment: "Employment", "trip-details": "Trip" };
 const SERVER_STEP: Record<string, string> = { ...STEP_LABEL, payment: "Review" };
 const draftStep = (d: LocalDraft) => { const q = d.page.startsWith("q:") ? Q_BY_ID[d.page.slice(2)] : null; return q ? STEP_LABEL[q.step] ?? q.step : "Review"; };
@@ -159,10 +159,10 @@ function AppList({ items, title }: { items: Item[]; title: string }) {
             {!i.remove && <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />}
           </PressScale>
           {i.remove && (
-            <PressScale onPress={() => { tap(); askDiscard(i.remove!, t); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
+            <SwipeActive.Consumer>{(sw) => sw ? null : <PressScale onPress={() => { tap(); askDiscard(i.remove!, t); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
               style={{ width: 44, height: 44, marginRight: S.xs, alignItems: "center", justifyContent: "center" }}>
               <Icon name="trash" size={17} color={c.red} />
-            </PressScale>
+            </PressScale>}</SwipeActive.Consumer>
           )}
           </View>
          </SwipeToDiscard>

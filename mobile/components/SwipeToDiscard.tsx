@@ -13,6 +13,8 @@ const REVEAL = 96;
 /** The screen's ScrollView listens here: while a row is being swiped the list must not scroll (screens set
  *  scrollEnabled={!swiping}). */
 export const SwipeLock = createContext<(on: boolean) => void>(() => {});
+/** True while this row is dragged or its Discard button shows: the row hides its own trash button and press effect. */
+export const SwipeActive = createContext(false);
 
 export function SwipeToDiscard({ onDiscard, radius = 0, enabled = true, testID, children }: { onDiscard: () => void; radius?: number; enabled?: boolean; testID?: string; children: React.ReactNode }) {
   const c = useColors(); const { t, rtl } = useT(); const lock = useContext(SwipeLock);
@@ -55,7 +57,7 @@ export function SwipeToDiscard({ onDiscard, radius = 0, enabled = true, testID, 
         </Pressable>
       </View>
       <Animated.View {...pan.panHandlers} style={row}>
-        {children}
+        <SwipeActive.Provider value={open || dragging}>{children}</SwipeActive.Provider>
         {/* While the button shows, a tap on the row closes it instead of opening the application. */}
         {(open || dragging) && <Pressable style={StyleSheet.absoluteFill} onPress={() => { if (!cooling.current) snap(0); }} accessibilityLabel={t("Close")} />}
       </Animated.View>

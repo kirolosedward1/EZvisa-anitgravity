@@ -1,3 +1,4 @@
+import { stage } from "../../lib/stage";
 import React, { memo, useEffect } from "react";
 import { View, Pressable, Image, StyleProp, ViewStyle } from "react-native";
 import { SvgXml } from "react-native-svg";
@@ -40,10 +41,10 @@ export function FlagChip({ country, onPress, selected }: { country: string; onPr
 }
 
 const STATUS_TONE = (c: ReturnType<typeof useColors>, v: string) => (({ paid: c.green, completed: c.green, approved: c.green, ready: c.green, generated: c.green, rejected: c.red, failed: c.red, cancelled: c.grey, draft: c.grey, reviewing: c.orange, under_review: c.orange, processing: c.orange, awaiting_documents: c.orange, pending: c.orange, submitted: c.blue, appointment_booked: c.indigo, uploaded: c.blue } as Record<string, string>)[v] ?? c.grey);
-export function StatusPill({ v }: { v: string }) {
+export function StatusPill({ v, a }: { v: string; a?: { status: string; payment_status?: string | null } }) {
   const { t } = useT();
-  const c = useColors(); const col = STATUS_TONE(c, v);
-  return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: S.xs, paddingVertical: S.xxs, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{t(STATUS_LABEL[v] ?? v)}</Text></View>;
+  const c = useColors(); const st = a ? stage(a) : null; const col = st ? (c as any)[st.tone] ?? c.grey : STATUS_TONE(c, v); v = st ? st.key : v;
+  return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: S.xs, paddingVertical: S.xxs, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{t(st ? st.label : STATUS_LABEL[v] ?? v)}</Text></View>;
 }
 
 // Customer-facing journey, from the live columns only: application_status (website/admin: submitted -> reviewing -> ready |
@@ -139,7 +140,7 @@ export function ApplicationRow({ a }: { a: Application }) {
         <Text variant="headline" numberOfLines={1}>{name}</Text>
         <Text variant="subhead" tone="secondary" numberOfLines={1} tabular>{[a.reference, fmtShort(a.entry_date)].filter(Boolean).join(" · ")}</Text>
       </View>
-      <StatusPill v={a.status} />
+      <StatusPill v={a.status} a={a} />
       <ChevronR />
     </PressScale>
   );
@@ -158,14 +159,14 @@ export function CountryRow({ name, onPress }: { name: string; onPress: () => voi
 }
 
 export function StatusHeroCard({ a }: { a: Application }) {
-  const c = useColors(); const { t } = useT(); const name = a.countries?.name ?? ""; const status = t(STATUS_LABEL[a.status] ?? a.status);
+  const c = useColors(); const { t } = useT(); const name = a.countries?.name ?? ""; const status = t(stage(a).label);
   return (
     <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${status}`}
       style={[{ backgroundColor: c.card, borderRadius: R.card, padding: S.md, marginHorizontal: S.md, gap: S.md }, curve]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={40} />
         <View style={{ flex: 1 }}><Text variant="headline">{t(name)}</Text><Text variant="subhead" tone="secondary" tabular>{a.reference}</Text></View>
-        <StatusPill v={a.status} />
+        <StatusPill v={a.status} a={a} />
       </View>
       <MiniProgress status={a.status} payment={a.payment_status} />
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>

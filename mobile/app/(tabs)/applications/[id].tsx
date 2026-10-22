@@ -127,7 +127,7 @@ export default function ApplicationDetail() {
         <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text variant="subhead" tone="secondary" tabular>{a.reference}</Text>
-          <StatusPill v={a.status} />
+          <StatusPill v={a.status} a={a} />
         </View>
       </View>
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
@@ -143,9 +143,16 @@ export default function ApplicationDetail() {
           <ListRow icon="briefcase.fill" iconColor={c.tint} title={t("Continue application")} subtitle={t("Add your passport number and employment details.")} onPress={() => router.push(`/continue/${a.id}`)} />
         </ListGroup>
       )}
+      {paid && !needsContinue(a) && list && list.customer.length - done > 0 && (
+        <ListGroup header={t("Next step")} inset={58}>
+          <ListRow icon="arrow.up.doc.fill" iconColor={c.tint} title={t(list.customer.length - done === 1 ? "Submit 1 document" : "Submit {n} documents", { n: list.customer.length - done })}
+            subtitle={list.customer.filter(isOpen).slice(0, 3).map((i) => t(i.req.title)).join(", ")} />
+        </ListGroup>
+      )}
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
-        <ListRow title={t("Dates")} value={`${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />
+        {!!a.entry_date && <ListRow title={t("Dates")} value={!a.exit_date || a.exit_date.slice(0, 10) === a.entry_date.slice(0, 10) ? fmtD(a.entry_date) : `${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />}
+        {paid && <ListRow title={t("Paid")} value={fmtD(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null)} />}
         {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />

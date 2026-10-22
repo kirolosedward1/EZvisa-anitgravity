@@ -567,4 +567,9 @@ export const AR: Record<string, string> = {
   "Use the email you paid with.": "استخدم البريد الذي دفعت به.",
   "Nothing left to add": "لا شيء آخر لإضافته",
   "Please sign in first": "يرجى تسجيل الدخول أولاً",
+  "Submit 1 document": "أرسل مستندًا واحدًا",
+  "Submit {n} documents": "أرسل {n} مستندات",
+  "Submit documents": "أرسل المستندات",
+  "Add passport & employment details": "أضف بيانات الجواز والعمل",
+  "Finish application": "أكمل الطلب",
 };
