@@ -85,7 +85,7 @@ export function AuthForm({ mode, onMode, initialEmail }: { mode: "signin" | "sig
       <Field placeholder={t("Password")} value={pw} onChangeText={(t) => { setPw(t); setErr(null); }} secureTextEntry={!show} textContentType={mode === "signup" ? "newPassword" : "password"} autoComplete={mode === "signup" ? "new-password" : "password"} onSubmitEditing={submit}
         trailing={<PressScale onPress={() => setShow(!show)} accessibilityRole="button" accessibilityLabel={show ? t("Hide password") : t("Show password")} hitSlop={10}><Icon name={show ? "eye.slash" : "eye"} size={18} color={c.secondaryLabel} /></PressScale>} />
       {!!err && <InlineError text={err} />}
-      {!!info && <Text variant="footnote" tone="green" style={{ marginHorizontal: S.xs }} accessibilityLiveRegion="polite">{info}</Text>}
+      {!!info && <Text variant="footnote" tone="green" style={{ marginHorizontal: S.xs }} accessibilityLiveRegion="polite">{t(info)}</Text>}
       <View style={{ marginTop: S.xs }}><Button title={mode === "signin" ? t("Sign in") : t("Create account")} loading={busy === "pw"} onPress={submit} /></View>
       {mode === "signin" && (
         <PressScale onPress={() => setForgot(!forgot)} accessibilityRole="button" accessibilityState={{ expanded: forgot }} style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}>

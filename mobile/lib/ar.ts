@@ -502,4 +502,10 @@ export const AR: Record<string, string> = {
   "your trip": "رحلتك",
   "Re-upload": "أعد الرفع",
   "one of your applications": "أحد طلباتك",
+  "Camera access is off for EZvisa. Turn it on in Settings.": "الوصول إلى الكاميرا متوقف لتطبيق EZvisa. فعّله من الإعدادات.",
+  "1 page": "صفحة واحدة",
+  "{n} pages": "{n} صفحات",
+  "Add page": "إضافة صفحة",
+  "Check your email and tap the confirmation link, then sign in here with the same email and password.": "تحقق من بريدك واضغط على رابط التأكيد، ثم سجّل الدخول هنا بنفس البريد وكلمة المرور.",
+  "We sent a reset link. Set a new password on ezvisa.net, then sign in here.": "أرسلنا رابط إعادة التعيين. عيّن كلمة مرور جديدة على ezvisa.net، ثم سجّل الدخول هنا.",
 };

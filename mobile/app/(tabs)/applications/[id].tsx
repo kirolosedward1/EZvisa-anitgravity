@@ -49,7 +49,7 @@ export default function ApplicationDetail() {
     setPicking(false); setUpErr(null);
     try {
       const src = await chooseSource(lang); if (!src) return;
-      const f = await pickFrom(src); if (!f) return;
+      const f = await pickFrom(src, lang); if (!f) return;
       const q = checkQuality(f, lang);
       if (q.error) { hError(); setUpErr(q.error); return; }
       if (!(await confirmWarnings(q.warnings, lang))) return;
@@ -200,9 +200,9 @@ function CheckRow({ i, busy, canUpload, onPress }: { i: CheckItem; busy: boolean
   };
   const m = map[i.state];
   const label = busy ? t("Uploading…") : `${t(m.label)}${i.state === "rejected" && i.reason ? ` · ${i.reason}` : ""}`;
-  return <ListRow icon={m.icon} iconColor={m.color} title={i.req.title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
+  return <ListRow icon={m.icon} iconColor={m.color} title={t(i.req.title)} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
     trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">{t("Upload")}</Text> : undefined}
-    a11yLabel={`${i.req.title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} />;
+    a11yLabel={`${t(i.req.title)}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} />;
 }
 
 /** Currency, local time, plugs and emergency number from the static dataset in lib/facts.ts. */

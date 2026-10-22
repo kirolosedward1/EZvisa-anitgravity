@@ -25,15 +25,16 @@ export function checkQuality(f: Picked, lang: Lang = "en"): { error?: string; wa
 async function sizeOf(uri: string): Promise<number | null> { try { return (await (await fetch(uri)).blob()).size; } catch { return null; } }
 
 /** Multi-page scan: camera pages (compressed) combined into one PDF on the phone with expo-print. */
-async function scanPdf(): Promise<Picked | null> {
+async function scanPdf(lang: Lang): Promise<Picked | null> {
+  const t = (s: string, v?: Record<string, string | number>) => translate(lang, s, v);
   const p = await ImagePicker.requestCameraPermissionsAsync();
-  if (!p.granted) throw new Error("Camera access is off for EZvisa. Turn it on in Settings.");
+  if (!p.granted) throw new Error(t("Camera access is off for EZvisa. Turn it on in Settings."));
   const pages: string[] = [];
   for (;;) {
     const r = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 0.5, base64: true, exif: false });
     if (r.canceled || !r.assets?.[0]?.base64) break;
     pages.push(r.assets[0].base64);
-    const more = await new Promise<boolean>((res) => Alert.alert(`${pages.length} ${pages.length === 1 ? "page" : "pages"}`, undefined, [{ text: "Done", style: "cancel", onPress: () => res(false) }, { text: "Add page", onPress: () => res(true) }]));
+    const more = await new Promise<boolean>((res) => Alert.alert(pages.length === 1 ? t("1 page") : t("{n} pages", { n: pages.length }), undefined, [{ text: t("Done"), style: "cancel", onPress: () => res(false) }, { text: t("Add page"), onPress: () => res(true) }]));
     if (!more) break;
   }
   if (!pages.length) return null;
@@ -43,8 +44,8 @@ async function scanPdf(): Promise<Picked | null> {
   return { uri, name: `scan_${Date.now()}.pdf`, mimeType: "application/pdf", size: await sizeOf(uri) };
 }
 
-export async function pickFrom(source: Source): Promise<Picked | null> {
-  if (source === "scan") return scanPdf();
+export async function pickFrom(source: Source, lang: Lang = "en"): Promise<Picked | null> {
+  if (source === "scan") return scanPdf(lang);
   if (source === "files") {
     const r = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/jpeg", "image/png", "image/heic", "image/webp"], copyToCacheDirectory: true });
     if (r.canceled || !r.assets?.[0]) return null;
@@ -52,7 +53,7 @@ export async function pickFrom(source: Source): Promise<Picked | null> {
   }
   if (source === "camera") {
     const p = await ImagePicker.requestCameraPermissionsAsync();
-    if (!p.granted) throw new Error("Camera access is off for EZvisa. Turn it on in Settings.");
+    if (!p.granted) throw new Error(translate(lang, "Camera access is off for EZvisa. Turn it on in Settings."));
   }
   const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images"], quality: 0.85, allowsEditing: false, exif: false };
   const r = source === "camera" ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
