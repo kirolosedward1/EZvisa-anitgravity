@@ -1,7 +1,9 @@
 import { Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import { STATUS_LABEL, isPaid, unregisterPushToken, type Application } from "../../../lib/data";
+import { STATUS_LABEL, isPaid, type Application } from "../../../lib/data";
+import { useAuth } from "../../../lib/auth";
+import { pendingUploads } from "../../../lib/uploads";
 import { EMAIL } from "../../../lib/config";
 import { useEffect, useState } from "react";
 import { remindersEnabled, remindersSupported, setRemindersEnabled, planReminders, getPassportExpiry, setPassportExpiry, syncReminders } from "../../../lib/reminders";
@@ -24,7 +26,7 @@ import Constants from "expo-constants";
 
 export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
-  const { session, unread, apps } = useApps(true);
+  const { session, unread, apps } = useApps(true); const { signOut: endSession } = useAuth();
   const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT();
   const [del, setDel] = useState(false); const [delStep, setDelStep] = useState<"ask" | "sure" | "failed">("ask"); const [delErr, setDelErr] = useState<string | null>(null); const [deleting, setDeleting] = useState(false);
   /** Calls the delete-account edge function with the user's own session; WhatsApp / email stay as the fallback. */
@@ -33,7 +35,7 @@ export default function Account() {
     try {
       const { data, error } = await supabase!.functions.invoke("delete-account", { body: { confirm: "DELETE" } });
       if (error || !(data as any)?.deleted) throw new Error((data as any)?.error ?? error?.message ?? "Unknown error");
-      setDel(false); await supabase!.auth.signOut().catch(() => {});
+      setDel(false); await endSession().catch(() => {});
       Alert.alert(t("Account deleted"), t("Your account and personal data were deleted."));
     } catch {
       setDelStep("failed"); setDelErr(t("We couldn't delete the account right now. Send us the request and we'll do it within 30 days."));
@@ -145,10 +147,12 @@ export default function Account() {
   const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
   const paidApps = (apps ?? []).filter((a) => isPaid(a));
   const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
+  /** Ends this phone's session and wipes the person's data from it (lib/auth.tsx). Unsent uploads are named first. */
   const signOut = () => {
-    if (Platform.OS === "web") { supabase?.auth.signOut(); return; }
-    const out = () => unregisterPushToken().finally(() => supabase?.auth.signOut());
-    Alert.alert("Sign out?", undefined, [{ text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: out }]);
+    const n = pendingUploads();
+    const note = n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : t("Your applications stay in your account.");
+    if (Platform.OS === "web") { endSession(); return; }
+    Alert.alert(t("Sign out?"), note, [{ text: t("Cancel"), style: "cancel" }, { text: t("Sign out"), style: "destructive", onPress: () => { endSession(); } }]);
   };
   return (
     <ScrollView style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>

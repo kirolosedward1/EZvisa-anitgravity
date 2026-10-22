@@ -36,7 +36,7 @@ const C = createContext<Ctx>(null as any);
 
 
 export function FormProvider({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
+  const { session, epoch } = useAuth();
   const [form, setForm] = useState<WizardForm>(emptyForm); const [page, setPage] = useState("q:destination");
   const [submitted, setSubmitted] = useState<Submitted>(null);
   const [hydrated, setHydrated] = useState(false); const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -92,6 +92,18 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     return () => { if (timer.current) clearTimeout(timer.current); };
   }, [form, page, promptDismissed, hydrated, draftId]);
 
+  // Sign-out (lib/auth.tsx) has already wiped the saved drafts; drop the in-memory copy too so the next person starts empty.
+  const seenEpoch = useRef(epoch);
+  useEffect(() => {
+    if (seenEpoch.current === epoch) return;
+    seenEpoch.current = epoch;
+    if (timer.current) clearTimeout(timer.current); if (cloudTimer.current) clearTimeout(cloudTimer.current);
+    skipNext.current = true;
+    setForm({ ...emptyForm }); setPage("q:destination"); setSubmitted(null); setSavedAt(null); setPromptDismissed(false);
+    setDraft(null); setCloudSavedAt(null); setCloudError(null);
+    draftsRef.current = []; setDrafts([]);
+    const k = newKey(); keyRef.current = k; setActiveKey(k);
+  }, [epoch]);
   const email = session?.user.email ?? null;
   const flushDraft = useCallback(async () => {
     if (!email) return null;

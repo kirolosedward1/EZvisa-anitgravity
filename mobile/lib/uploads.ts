@@ -94,6 +94,8 @@ export function clearQueue() {
   if (Platform.OS === "web") return;
   try { const { Directory, Paths } = FS(); const dir = new Directory(Paths.document, "uploads"); if (dir.exists) dir.delete(); } catch {}
 }
+/** Uploads that haven't reached the server yet (named before signing out). */
+export const pendingUploads = () => jobs.length;
 function md5Of(uri: string): string | null {
   if (Platform.OS === "web") return null;
   try { return new (FS().File)(uri).md5; } catch { return null; }

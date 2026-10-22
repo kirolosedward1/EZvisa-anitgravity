@@ -13,6 +13,9 @@ let ids = new Set<string>(); let loaded = false; const subs = new Set<() => void
 const emit = () => subs.forEach((f) => f());
 async function hydrate() { if (loaded) return; loaded = true; try { const r = await AsyncStorage.getItem(KEY); if (r) ids = new Set(JSON.parse(r)); } catch {} emit(); }
 
+/** Sign-out: the next user starts with nothing hidden. */
+export function resetDiscarded() { ids = new Set(); loaded = false; emit(); }
+
 export const isAbandoned = (a: Application) => !isPaid(a) && ["draft", "submitted"].includes(a.status);
 export const isDiscarded = (a: Application) => ids.has(a.id) || !!(a.notes as any)?.discarded_at;
 
