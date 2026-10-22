@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/lib/site-url"
 import { generateEmailLayout } from "../layout";
 import { EmailButton, EmailCard, EmailCardRow, EmailNotice, EmailText } from "../components";
 
@@ -11,7 +12,7 @@ type AppData = {
 };
 
 function getTrackUrl(trackingToken?: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.ezvisa.net";
+  const baseUrl = SITE_URL;
   return trackingToken ? `${baseUrl}/track/${trackingToken}` : baseUrl;
 }
 
@@ -115,7 +116,7 @@ export const Templates = {
             : "Your file includes your completed application form, cover letter, flight and hotel reservations, and travel itinerary."
         })}
         
-        ${data.trackingToken ? EmailButton({ text: isAr ? "تنزيل ملف التأشيرة" : "Download Your Visa File", url: `${process.env.NEXT_PUBLIC_APP_URL || "https://www.ezvisa.net"}/api/download-document?token=${data.trackingToken}` }) : ""}
+        ${data.trackingToken ? EmailButton({ text: isAr ? "تنزيل ملف التأشيرة" : "Download Your Visa File", url: `${SITE_URL}/api/download-document?token=${data.trackingToken}` }) : ""}
       `
     });
     return { subject, html };

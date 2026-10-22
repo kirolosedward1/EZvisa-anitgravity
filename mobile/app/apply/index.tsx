@@ -1,0 +1,495 @@
+import { track } from "../../lib/analytics";
+import { PressScale } from "../../components/ui";
+// Application wizard, one question per screen. The questions, labels, options, order and validation come from the
+// website wizard (lib/questions.ts on top of lib/wizard.ts), so the data stays identical to www.ezvisa.net/apply.
+// Choices and Yes / No auto-advance with haptics; questions that don't apply are skipped; every answer is autosaved
+// (phone + the account's draft row) and the flow resumes at the exact question. Review lets you edit one answer and
+// come straight back. Links keep the website's params: /apply?step=<slug>&from=<nationality>&to=<destination>.
+import { useEffect, useRef, useState } from "react";
+import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
+import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
+import { slideIn } from "../../lib/motion";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence, iso as isoLocal } from "../../lib/wizard";
+import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
+import { Button, Text, Icon, SuccessCheck, InlineError, Flag, Shake } from "../../components/ui";
+import { CircleButton } from "../../components/flow";
+import { PhoneField } from "../../components/CountryPicker";
+import { Checkbox, Note } from "../../components/wizard/fields";
+import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries, useFmtDate } from "../../components/wizard/answers";
+import { useColors, S, R, T, curve, SPRING } from "../../lib/theme";
+import { fromSlug } from "../../lib/countries";
+import { useForm } from "../../lib/form";
+import { useAuth } from "../../lib/auth";
+import { useT } from "../../lib/i18n";
+import { SUPABASE_ENABLED } from "../../lib/config";
+import { whatsapp } from "../../lib/api";
+import { money, startPayment, usePaying, useQuote } from "../../lib/payments";
+import { submitApplication, guestSubmit, listApplications, listRequirements, DraftConflictError, type Requirement } from "../../lib/data";
+import { PrefillOffer } from "../../components/wizard/extras";
+import { SyncIndicator, DraftConflictSheet } from "../../components/wizard/sync";
+import { useNetInfo } from "@react-native-community/netinfo";
+import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
+import { error as hError, tap, success, select } from "../../lib/haptics";
+import { WORLD } from "../../lib/world";
+import { type WizardForm, type WizardStep, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
+import { type Question, questionErrors, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
+
+const WORLD_NAMES = WORLD.map((w) => w.name);
+const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
+const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
+const AUTO_MS = 260;
+/** Stable personal answers that can be reused from the last application (trip answers are never copied). */
+const PREFILL_KEYS: (keyof WizardForm)[] = ["nationality", "cityOfResidence", "hasEmiratesId", "firstName", "lastName", "phone", "phoneCountry", "phoneLocal", "dateOfBirth", "maritalStatus",
+  "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
+const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });
+const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
+type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
+
+/** Progress grouped by the website's steps: one animated segment per step. */
+function Progress({ f, page }: { f: WizardForm; page: string }) {
+  const c = useColors(); const { t } = useT();
+  const p = progressOf(f, page); const cur = p.segs[p.stepIndex];
+  return (
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={t("{step}, step {i} of {n}", { step: t(STEP_TITLES[p.curStep].title), i: p.stepIndex + 1, n: p.steps.length })} style={{ gap: S.xs }}>
+      <View style={{ flexDirection: "row", gap: S.xxs }}>{p.segs.map((s) => <Seg key={s.step} fill={s.fill} />)}</View>
+      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+        <Text variant="caption" weight="600" tone="secondary">{t(STEP_TITLES[p.curStep].title)}</Text>
+        {p.curStep !== "payment" && cur && <Text variant="caption" tone="secondary" tabular>{t("{i} of {n}", { i: cur.index, n: cur.count })}</Text>}
+      </View>
+    </View>
+  );
+}
+function Seg({ fill }: { fill: number }) {
+  const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
+  useEffect(() => { w.value = reduce ? fill : withSpring(fill, SPRING.enter); }, [fill, reduce]);
+  const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
+  return <View style={{ flex: 1, height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
+}
+
+export default function Apply() {
+  const c = useColors(); const reduce = useReducedMotion(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const fmt = useFmtDate();
+  // Lift the whole screen (and its Continue bar) above the iOS keyboard; works inside the modal sheet where
+  // KeyboardAvoidingView mis-measures. Leaves S.md between button and keyboard; back to the safe area when dismissed.
+  const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
+  const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
+  const p = useLocalSearchParams<Params>();
+  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, flushDraft, baseAt, sync, checkRemote, drafts, openDraft, startNew } = useForm();
+  const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
+  const [dir, setDir] = useState(1);
+  const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
+  const [editing, setEditing] = useState<Set<string> | null>(null); // came from Review: question ids that applied at that moment
+  const [resumeAsk, setResumeAsk] = useState(false);
+  const [allMode, setAllMode] = useState(false); // nationality: "Other nationality" opened the full visa-required list
+  const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
+  const inFlight = useRef(false); const auto = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleRef = useRef<any>(null); const inputRef = useRef<TextInput>(null); const input2Ref = useRef<TextInput>(null);
+  const lastSlug = useRef<string | undefined>(undefined); const started = useRef(false);
+  const fRef = useRef(f); fRef.current = f;
+  const navReady = !!useRootNavigationState()?.key;
+  const isRTL = rtl || I18nManager.isRTL;
+  // Inline validation: errors appear on their own once typing pauses (no need to press Continue first).
+  const [settled, setSettled] = useState(true);
+  useEffect(() => { setSettled(false); const tm = setTimeout(() => setSettled(true), 700); return () => clearTimeout(tm); }, [f]);
+  const net = useNetInfo(); const offline = net.isConnected === false;
+  const [reqs, setReqs] = useState<Requirement[]>([]);
+  const [prefill, setPrefill] = useState<{ values: Partial<WizardForm>; name: string } | null>(null); const prefillAsked = useRef(false);
+  const [milestone, setMilestone] = useState<string | null>(null); const prevStep = useRef<WizardStep | null>(null);
+  useEffect(() => { listRequirements().then(setReqs).catch(() => {}); cancelDraftReminder(); }, []);
+
+  const page = hydrated ? normalizePage(rawPage, f) : rawPage;
+  const q: Question | null = page.startsWith("q:") ? Q_BY_ID[page.slice(2)] : null;
+  const step: WizardStep = stepOfPage(page);
+  useEffect(() => { setAllMode(false); }, [page]);
+  // Section finished: success haptic, short chip in the header, VoiceOver announcement.
+  useEffect(() => {
+    const prev = prevStep.current; prevStep.current = step;
+    if (!prev || STEP_ORDER.indexOf(step) <= STEP_ORDER.indexOf(prev) || editing) return;
+    const done = t("{step} done", { step: t(STEP_TITLES[prev].title) });
+    success(); setMilestone(done); AccessibilityInfo.announceForAccessibility(done);
+    const tm = setTimeout(() => setMilestone(null), 2200); return () => clearTimeout(tm);
+  }, [step]);
+  // Signed in with an empty form: offer the stable answers from the latest application (user confirms).
+  useEffect(() => {
+    if (!hydrated || !session || submitted || prefillAsked.current || fRef.current.nationality || fRef.current.dateOfBirth) return;
+    prefillAsked.current = true;
+    listApplications().then((apps) => {
+      const w = apps.map((a) => a.notes?.wizard as Partial<WizardForm> | undefined).find((x) => x && x.nationality);
+      if (!w) return;
+      const values: Partial<WizardForm> = {};
+      for (const k of PREFILL_KEYS) { const v = (w as any)[k]; if (v !== undefined && v !== null && v !== "") (values as any)[k] = v; }
+      if (Object.keys(values).length) setPrefill({ values, name: [w.firstName, w.lastName].filter(Boolean).join(" ") || String(w.nationality) });
+    }).catch(() => {});
+  }, [hydrated, session]);
+  const usePrefill = () => {
+    if (!prefill) return; tap();
+    const nf = cleanAfterPrefill({ ...fRef.current, ...Object.fromEntries(Object.entries(prefill.values).filter(([k]) => !(fRef.current as any)[k] || k === "phoneCountry")) } as WizardForm);
+    setForm(nf); setPrefill(null); const u = firstUnanswered(nf); if (u) goTo(`q:${u.id}`, 1);
+  };
+
+  // Link values: from = nationality, to = destination (aliases nationality/destination/country), dates.
+  const linkValues = (): Partial<WizardForm> => {
+    const dest = matchCountry(p.to ?? p.destination, SCHENGEN) ?? (p.country ? fromSlug(p.country) : null);
+    const natRaw = p.from ?? p.nationality;
+    // Only nationals who need a Schengen visa; a visa-exempt or unknown nationality in the link is ignored.
+    const nat = natRaw ? matchCountry(natRaw, SCHENGEN_VISA_REQUIRED) ?? null : null;
+    const start = isoDate(p.travelStartDate), end = isoDate(p.travelEndDate);
+    // Residence is UAE only (RESIDENCE_COUNTRIES); a city in the link is kept only if it is one of the emirates.
+    const city = matchEmirate(p.city ?? p.cityOfResidence);
+    return { countryOfResidence: DEFAULT_RESIDENCE, ...(city && { cityOfResidence: city }), ...(dest && { destination: dest }), ...(nat && { nationality: nat }), ...(start && { travelStartDate: start }), ...(end && { travelEndDate: end }) };
+  };
+  // On open: offer to restore an in-progress application (like the site); link values always win.
+  useEffect(() => {
+    if (!hydrated || started.current) return;
+    started.current = true;
+    let had = hasAnswers(fRef.current);
+    const v = linkValues();
+    // Opening a different country than the draft in progress: switch to that country's own saved draft, or a new one.
+    // The other draft stays saved on this phone (Home lists every draft).
+    if (had && v.destination && fRef.current.destination && v.destination !== fRef.current.destination) {
+      const other = drafts.find((d) => d.form.destination === v.destination);
+      const nf = other ? openDraft(other.key)! : startNew(); fRef.current = nf; had = !!other;
+    }
+    if (!p.resume && !submitted && savedAt && had && !v.destination) setResumeAsk(true);
+    if (Object.keys(v).length) {
+      const nf = { ...fRef.current, ...v }; setForm(nf);
+      if (!had && !p.step) { const u = firstUnanswered(nf); if (u) setPage(`q:${u.id}`); }
+    }
+  }, [hydrated]);
+  useEffect(() => {
+    if (!hydrated || !started.current) return;
+    const v = linkValues();
+    if (Object.keys(v).length) setForm((x) => ({ ...x, ...v }));
+  }, [p.to, p.destination, p.country, p.from, p.nationality, p.travelStartDate, p.travelEndDate]);
+  // ?step=<slug> opens that step's first question (unknown -> personal; documents -> review; spouse only when it applies).
+  useEffect(() => {
+    if (!hydrated) return;
+    if (lastSlug.current !== undefined && p.step === lastSlug.current) return;
+    if (p.step === undefined) { if (lastSlug.current === undefined) lastSlug.current = stepOfPage(page); return; }
+    let s = parseStep(p.step);
+    if (s === "spouse" && !showSpouse(fRef.current)) s = "trip-details";
+    lastSlug.current = s; setDir(-1); setPage(pageForStep(s, fRef.current)); setShowErr(false); setEditing(null);
+  }, [hydrated, p.step]);
+  // Keep ?step= in sync with the current step, like the site.
+  useEffect(() => { if (hydrated && navReady && lastSlug.current !== undefined && step !== lastSlug.current) { lastSlug.current = step; router.setParams({ step }); } }, [step, navReady, hydrated]);
+  // Signed-in users: prefill email and names (as the site does).
+  useEffect(() => {
+    const u = session?.user; if (!u) return;
+    const full = (u.user_metadata?.full_name as string | undefined) ?? "";
+    setForm((x) => ({ ...x, email: x.email || u.email || "", firstName: x.firstName || (u.user_metadata?.first_name as string) || full.split(" ")[0] || "", lastName: x.lastName || (u.user_metadata?.last_name as string) || full.split(" ").slice(1).join(" ") || "" }));
+  }, [session]);
+  // Every answer: save the account draft right away (local autosave runs on every change in lib/form.tsx).
+  useEffect(() => { if (hydrated && session && !submitted) flushDraft(); }, [page]);
+  // Funnel analytics (lib/analytics.ts): question ids, step names and the destination only; never answers.
+  useEffect(() => { track("wizard_open"); return () => track("wizard_close"); }, []);
+  useEffect(() => { if (hydrated && !submitted) track("wizard_page", { page: page.replace(/^q:/, ""), signedIn: !!session, ...(f.destination && { destination: f.destination }) }); }, [page, hydrated]);
+  const seenStep = useRef<string | null>(null);
+  useEffect(() => {
+    if (!hydrated || submitted) return;
+    const s = page === REVIEW ? "review" : step; const prev = seenStep.current;
+    if (s === prev) return;
+    seenStep.current = s;
+    if (prev && dir > 0) track("wizard_step_completed", { step: prev as any });
+    track("wizard_step_viewed", { step: s as any });
+  }, [page, hydrated]);
+  useEffect(() => { if (submitted) { track("wizard_step_completed", { step: "review" }); track("wizard_submit", { guest: !!submitted.guestEmail }); } }, [!!submitted]);
+  // New question: move VoiceOver focus to its title.
+  useEffect(() => {
+    setShowErr(false);
+    if (Platform.OS === "web") return;
+    const tm = setTimeout(() => { const h = titleRef.current ? findNodeHandle(titleRef.current) : null; if (h) AccessibilityInfo.setAccessibilityFocus(h); }, 350);
+    return () => clearTimeout(tm);
+  }, [page]);
+  useEffect(() => () => { if (auto.current) clearTimeout(auto.current); }, []);
+
+  const patch = (x: Partial<WizardForm>) => { setForm((y) => ({ ...y, ...x })); if (submitted) setSubmitted(null); };
+  const goTo = (pg: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setPage(pg); setShowErr(false); };
+
+  const advance = (nf: WizardForm = fRef.current) => {
+    if (!q) return;
+    const e = firstError(q, nf);
+    if (e) { hError(); setShowErr(true); setErrTick((n) => n + 1); AccessibilityInfo.announceForAccessibility(t(e)); return; }
+    tap();
+    const list = activeQuestions(nf);
+    if (editing) {
+      const fresh = list.find((x) => !editing.has(x.id)); // became relevant because of this edit (e.g. married -> spouse questions)
+      const bad = firstInvalid(nf);
+      const target = bad && bad.id !== q.id ? bad : fresh;
+      if (target) { const s = new Set(editing); s.add(target.id); setEditing(s); goTo(`q:${target.id}`, 1); return; }
+      setEditing(null); goTo(REVIEW, 1); return;
+    }
+    const i = list.findIndex((x) => x.id === q.id);
+    goTo(list[i + 1] ? `q:${list[i + 1].id}` : REVIEW, 1);
+  };
+  /** Tap on a choice / Yes-No / country: save, then auto-advance (unless the website shows a warning for that answer). */
+  const pick = (v: string) => {
+    if (!q) return;
+    if (v === OTHER_NATIONALITY && q.allNames) { select(); setAllMode(true); return; }
+    const changes = { [q.keys[0]]: v, ...(q.onPick?.(v, fRef.current) ?? {}) } as Partial<WizardForm>;
+    const nf = { ...fRef.current, ...changes }; fRef.current = nf; patch(changes);
+    const note = q.note?.(nf);
+    if (note && note.tone !== "green") return;
+    if (auto.current) clearTimeout(auto.current);
+    auto.current = setTimeout(() => advance(nf), reduce ? 80 : AUTO_MS);
+  };
+  const back = () => {
+    tap();
+    if (allMode) { setAllMode(false); return; }
+    if (editing) { setEditing(null); goTo(REVIEW, -1); return; }
+    const list = activeQuestions(f);
+    if (page === REVIEW) { goTo(`q:${list[list.length - 1].id}`, -1); return; }
+    const i = list.findIndex((x) => x.id === q?.id);
+    if (i > 0) goTo(`q:${list[i - 1].id}`, -1); else close();
+  };
+  const close = () => {
+    if (hasAnswers(fRef.current) && !submitted) scheduleDraftReminder(t("Continue your application"), t("Your answers are saved."));
+    if (router.canGoBack()) router.back(); else router.replace("/");
+  };
+  const edit = (id: string) => { tap(); setEditing(new Set(activeQuestions(f).map((x) => x.id))); goTo(`q:${id}`, -1); };
+
+  const spouse = showSpouse(f);
+  // Price only from the server (check-payment quote for the saved row, or the create-payment response); never computed here.
+  const quote = useQuote(submitted?.applicationId ?? (session ? draftId : null), page);
+  const paying = usePaying();
+  const invalid = firstInvalid(f);
+  /** Submit once: button disabled + in-flight guard + the same draft row updated idempotently (lib/data.ts). */
+  const submit = async () => {
+    if (inFlight.current) return;
+    if (invalid) { hError(); edit(invalid.id); return; }
+    inFlight.current = true; setBusy(true); setErr(null);
+    try {
+      if (!session) { // guest checkout: pay first, sign in with the same email afterwards
+        const g = await guestSubmit(f); success(); cancelDraftReminder();
+        setSubmitted({ applicationId: g.id, reference: g.reference, destination: f.destination, spouse, guestEmail: g.email }); clearDraft(); return;
+      }
+      // Submit only what the server confirmed: an unsaved or changed-elsewhere draft is never submitted.
+      const id = await flushDraft();
+      if (!id) { hError(); if (sync !== "conflict") setErr(offline ? t("You're offline. Connect to submit.") : t("Not saved yet. Check your connection and try again.")); return; }
+      const a = await submitApplication(f, id, baseAt()); success(); cancelDraftReminder();
+      setSubmitted({ applicationId: a.id, reference: a.reference, destination: a.destination_country, spouse }); clearDraft();
+    } catch (e: any) { hError(); if (e instanceof DraftConflictError) checkRemote(); else setErr(e?.message ?? String(e)); }
+    finally { inFlight.current = false; setBusy(false); }
+  };
+
+  if (!hydrated) return <View style={{ flex: 1, backgroundColor: c.bg }} />;
+  const top = Platform.OS === "ios" ? S.sm : insets.top + S.xs;
+
+  if (submitted) return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.md, padding: S.xl }}>
+        <SuccessCheck />
+        <Text variant="largeTitle" center accessibilityRole="header" style={{ marginTop: S.md }}>{t("Submitted")}</Text>
+        <Text variant="title3" tone="secondary" tabular center>{submitted.reference}</Text>
+      </View>
+      <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
+        <InlineError text={err} />
+        <Button title={paying ? t("Opening secure payment…") : quote ? t("Pay {amount}", { amount: money(quote) }) : t("Pay securely")} icon="creditcard.fill" loading={busy || paying} disabled={busy || paying} onPress={async () => {
+          if (inFlight.current || paying) return; inFlight.current = true; setBusy(true); setErr(null);
+          const id = submitted.applicationId;
+          const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned } }); setTimeout(() => setSubmitted(null), 400); };
+          try { track("payment_started"); const o = await startPayment(id); result(o.returned); }
+          catch (e: any) { if (e?.busy) return; if (e?.alreadyPaid) { result("success"); return; } hError(); setErr(e?.message ?? String(e)); }
+          finally { inFlight.current = false; setBusy(false); }
+        }} />
+        {submitted.guestEmail && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead" testID="guest-note">{paidGuest ? t("Next: sign in with {e} to add your details and upload documents.", { e: submitted.guestEmail }) : t("After paying, sign in with {e} to continue.", { e: submitted.guestEmail })}</Text></Note>}
+        {submitted.guestEmail ? <Button title={t("Sign in to continue")} variant={paidGuest ? "primary" : "secondary"} onPress={() => { router.replace({ pathname: "/auth", params: { mode: "signup", email: submitted.guestEmail } }); setTimeout(() => setSubmitted(null), 400); }} /> :
+        <Button title={t("Plan my trip")} icon="map.fill" variant="secondary" onPress={() => { const id = submitted.applicationId; router.navigate(`/applications/${id}`); setTimeout(() => { router.push(`/trip/${id}`); setSubmitted(null); }, 350); }} />}
+        <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference}.`)} />
+        {!submitted.guestEmail && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications"); setTimeout(() => setSubmitted(null), 400); }} />}
+      </View>
+    </View>
+  );
+
+  const entering = slideIn(dir, isRTL, reduce);
+  const header = (
+    <View style={{ paddingTop: top, paddingHorizontal: S.lg, gap: S.md, paddingBottom: S.sm }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
+        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={editing ? t("Back to review") : t("Back")} onPress={back} /></View>
+        <View style={{ flex: 1, alignItems: "center" }}>
+          {milestone ? <Text variant="caption" weight="600" color={c.green} testID="milestone">{"✓ " + milestone}</Text> : <SyncIndicator hasAnswers={hasAnswers(f)} />}
+        </View>
+        <CircleButton icon="xmark" label={t("Close")} onPress={() => { tap(); close(); }} />
+      </View>
+      <Progress f={f} page={page} />
+    </View>
+  );
+
+  // ---------------- Review ----------------
+  if (page === REVIEW) {
+    const qs = activeQuestions(f);
+    const groups = (["personal", "spouse", "employment", "trip-details"] as const).map((s) => ({ s, qs: qs.filter((x) => x.step === s) })).filter((g) => g.qs.length);
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg }}>
+        {header}
+        <ScrollView contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.lg }}>
+          <Animated.View entering={entering} style={{ gap: S.lg }}>
+            <View style={{ gap: S.xxs }}>
+              <Text ref={titleRef} variant="largeTitle" accessibilityRole="header">{t("Review")}</Text>
+              <Text variant="subhead" tone="secondary">{t("Tap an answer to change it.")}</Text>
+            </View>
+            {!!invalid && <View style={{ gap: S.sm }} testID="review-gaps">
+              <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead">{t("{n} answers missing", { n: qs.filter((x) => firstError(x, f)).length })}</Text></Note>
+              <Button title={t("Fix next")} variant="secondary" size="M" icon="arrow.right" onPress={() => edit(invalid.id)} />
+            </View>}
+            {offline && <Note tone="amber" icon="wifi.slash"><Text variant="subhead">{t("You're offline. Your answers are saved on this phone and will save to your account when you're back online.")}</Text></Note>}
+            {groups.map((g) => (
+              <View key={g.s} style={{ gap: S.xs }}>
+                <Text variant="footnote" tone="secondary" weight="600" accessibilityRole="header">{t(STEP_TITLES[g.s].title)}</Text>
+                <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden" }, curve]}>
+                  {g.qs.map((x, i) => {
+                    const e = firstError(x, f); const v = displayValue(x, f, t, fmt);
+                    return (
+                      <PressScale key={x.id} onPress={() => edit(x.id)} accessibilityRole="button" accessibilityLabel={`${t(x.label)}: ${v || (e ? t("Missing") : t("Not answered"))}`} accessibilityHint={t("Edit")} testID={`review-${x.id}`}
+                        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 56, opacity: pressed ? 0.6 : 1,
+                          borderTopWidth: i ? 1 : 0, borderTopColor: c.separator })}>
+                        <View style={{ flex: 1, gap: S.xxs }}>
+                          <Text variant="footnote" tone="secondary">{t(x.label)}</Text>
+                          {e ? <Text variant="subhead" tone="red" weight="500">{t("Missing")}</Text>
+                            : <Text variant="body" weight="500">{v || t("Not answered")}</Text>}
+                        </View>
+                        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" /></View>
+                      </PressScale>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+            <View style={[{ borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.xs }, curve]} testID="review-total">
+              {quote && spouse && <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Text variant="subhead" tone="secondary">{t("Including Accompanying Spouse")}</Text></View>}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+                <Text variant="headline">{t("Total Fee")}</Text>
+                {quote ? <Text variant="title2" tone="tint" tabular>{money(quote)}</Text> : <Text variant="subhead" tone="secondary">{t("Shown at checkout")}</Text>}
+              </View>
+              <Text variant="footnote" tone="secondary">{t("Embassy fees are paid at the appointment.")}</Text>
+            </View>
+            {!session && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead">{t("No account needed to pay. Afterwards, sign in with {e} to continue.", { e: f.email.trim() })}</Text></Note>}
+            <InlineError text={err} />
+          </Animated.View>
+        </ScrollView>
+        <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg }}>
+          <Button title={!SUPABASE_ENABLED ? t("Unavailable") : busy ? t("Submitting...") : t("Submit application")} icon={session ? "lock.fill" : undefined}
+            loading={busy} disabled={!SUPABASE_ENABLED || busy || (offline && !!session)} onPress={submit} />
+        </View>
+        <DraftConflictSheet />
+      </View>
+    );
+  }
+
+  // ---------------- One question ----------------
+  if (!q) return null;
+  const liveErr = firstError(q, f);
+  const hasInput = q.kind === "phone" ? !!f.phoneLocal.trim() : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
+  const e = showErr || (settled && hasInput) ? liveErr : undefined;
+  const note = q.note?.(f);
+  const answered = isAnswered(q, f);
+  const days = q.id === "travelEndDate" ? tripDays(f) : 0;
+  const title = (
+    <View style={{ gap: S.xs }}>
+      {!q.required && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
+        {<View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
+      </View>}
+      <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(q.label)}</Text>
+      {!!prefill && !allMode && <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} />}
+      {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
+    </View>
+  );
+  const errBox = e ? <Shake on={`${e}|${errTick}`}><View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View></Shake> : null;
+  const noteBox = note ? <Note tone={note.tone}>{t(note.text)}</Note> : null;
+  const tp = q.text ?? {};
+  const body = (() => {
+    switch (q.kind) {
+      case "choice": return <ChoiceList label={t(q.label)} options={q.options!} flag={q.flag} value={f[q.keys[0]] as string} onPick={pick} />;
+      case "yesno": return <YesNoTiles label={t(q.label)} value={f[q.keys[0]] as string} onPick={pick} />;
+      case "text": case "textarea": return (
+        <View style={{ gap: S.sm }}>
+        <TextInput ref={inputRef} value={String(f[q.keys[0]] ?? "")} onChangeText={(v) => patch({ [q.keys[0]]: tp.upper ? v.toUpperCase() : v } as Partial<WizardForm>)}
+          placeholder={t(q.placeholder ?? "")} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(q.label)} autoFocus
+          keyboardType={tp.keyboard ?? "default"} autoCapitalize={tp.caps ?? "sentences"} autoCorrect={q.kind === "textarea"} spellCheck={q.kind === "textarea"}
+          textContentType={tp.contentType as any} autoComplete={tp.autoComplete as any} multiline={q.kind === "textarea"} textAlignVertical={q.kind === "textarea" ? "top" : "center"}
+          returnKeyType={q.kind === "textarea" ? "default" : "next"} onSubmitEditing={q.kind === "textarea" ? undefined : () => advance()} blurOnSubmit={false} testID="question-input"
+          style={[q.kind === "textarea" ? T.body : T.title3, { color: c.label, minHeight: q.kind === "textarea" ? 150 : 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm,
+            borderWidth: e ? 1.5 : 0, borderColor: c.red, textAlign: isRTL ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+          {q.id === "spouseLastName" && !!f.lastName.trim() && f.spouseLastName !== f.lastName && (
+            <View style={{ alignSelf: "flex-start" }}><Button title={t("Use {v}", { v: f.lastName.trim() })} variant="secondary" size="M" icon="person.2.fill" onPress={() => { tap(); patch({ spouseLastName: f.lastName.trim() }); }} /></View>)}
+        </View>
+      );
+      case "pair": {
+        const qe = questionErrors(q, f); const show = !!e;
+        const field = (k: "jobTitle" | "companyName", label: string, ph: string, ct: string, first: boolean) => (
+          <View style={{ gap: S.xs }}>
+            <Text variant="footnote" weight="600" tone="secondary">{t(label)}</Text>
+            <TextInput ref={first ? inputRef : input2Ref} value={f[k]} onChangeText={(v) => patch({ [k]: v } as Partial<WizardForm>)} placeholder={t(ph)} placeholderTextColor={c.secondaryLabel}
+              accessibilityLabel={t(label)} autoFocus={first} autoCapitalize="words" autoCorrect={false} textContentType={ct as any}
+              returnKeyType={first ? "next" : "done"} blurOnSubmit={false} onSubmitEditing={() => (first ? input2Ref.current?.focus() : advance())} testID={first ? "question-input" : "question-input-2"}
+              style={[T.title3, { color: c.label, minHeight: 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm,
+                borderWidth: show && qe[k] ? 1.5 : 0, borderColor: c.red, textAlign: isRTL ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+          </View>
+        );
+        return <View style={{ gap: S.md }}>{field("jobTitle", "Job Title", "Enter job title", "jobTitle", true)}{field("companyName", "Company Name", "Enter company name", "organizationName", false)}</View>;
+      }
+      case "date": return (
+        <View style={{ gap: S.md }}>
+          {q.id === "travelEndDate" && !!f.travelStartDate && (
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.xs }} accessibilityRole="radiogroup" accessibilityLabel={t("Trip length")} testID="date-quickpicks">
+              {([[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const).map(([n, l]) => {
+                const [y, m, d] = f.travelStartDate.split("-").map(Number); const v = isoLocal(new Date(y, m - 1, d + n)); const on = f.travelEndDate === v;
+                return <PressScale key={n} onPress={() => { select(); patch({ travelEndDate: v }); }} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t(l)}
+                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? c.tintFill : c.card }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? c.tint : c.label}>{t(l)}</Text></PressScale>;
+              })}
+            </View>
+          )}
+          <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />
+        </View>
+      );
+      case "phone": return (
+        <View style={{ gap: S.sm }}>
+          <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />
+          <Checkbox label={t("Receive application updates via WhatsApp")} value={f.whatsappOptIn} onChange={(v) => patch({ whatsappOptIn: v })} icon="logo.whatsapp" iconColor="#25D366" />
+        </View>
+      );
+      case "countries": return <AdditionalCountries f={f} onChange={(v) => patch({ additionalCountries: v })} />;
+      default: return null;
+    }
+  })();
+  const auto_ = q.kind === "choice" || q.kind === "yesno" || q.kind === "country";
+  const showBtn = !auto_ || answered || !q.required;
+  const btnTitle = !q.required && !answered ? t("Skip") : editing ? t("Save") : t("Continue");
+  const bar = showBtn ? (
+    <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg }}>
+      <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} disabled={!!liveErr && (q.required || answered)} onPress={() => advance()} />
+    </View>
+  ) : <View style={{ height: Math.max(insets.bottom, S.md) }} />;
+
+  return (
+    <Animated.View style={[{ flex: 1, backgroundColor: c.bg }, kbPad]}>
+      {header}
+      <Animated.View key={page} entering={entering} style={{ flex: 1 }}>
+        {q.kind === "country" ? (
+          <CountryList key={allMode && q.allNames ? "all" : "top"} names={allMode && q.allNames ? q.allNames.filter((n) => !q.names!.includes(n)) : q.names!} searchAll={allMode ? undefined : q.allNames} value={f[q.keys[0]] as string} onPick={pick} searchPlaceholder={q.searchPlaceholder ?? "Search country..."} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
+        ) : (
+          <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+            {title}
+            {body}
+            {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" tone="secondary">{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
+            {noteBox}
+            {errBox}
+          </ScrollView>
+        )}
+      </Animated.View>
+      {bar}
+      <DraftConflictSheet />
+      <Modal visible={resumeAsk} transparent animationType="fade" onRequestClose={() => setResumeAsk(false)}>
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
+          <View style={[{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.md }, curve]} accessibilityViewIsModal>
+            <Text variant="title3" accessibilityRole="header">{t("Continue Application?")}</Text>
+            <Text variant="subhead" tone="secondary">{t("Pick up where you left off, or start fresh.")}</Text>
+            <View style={{ flexDirection: "row", gap: S.sm }}>
+              <View style={{ flex: 1 }}><Button title={t("Start Fresh")} variant="secondary" onPress={() => { setResumeAsk(false); startNew(); const v = linkValues(); setForm((x) => ({ ...x, ...v })); setEditing(null); }} /></View>
+              <View style={{ flex: 1 }}><Button title={t("Continue")} onPress={() => setResumeAsk(false)} /></View>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </Animated.View>
+  );
+}

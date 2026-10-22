@@ -1,0 +1,47 @@
+Starting Metro Bundler
+
+iOS Bundled 32176ms node_modules/expo-router/entry.js (1939 modules)
+
+› Assets (57):
+assets/countries/austria.jpg (82KB)
+assets/countries/belgium.jpg (78KB)
+assets/countries/bulgaria.jpg (48KB)
+assets/countries/croatia.jpg (67KB)
+assets/countries/czech-republic.jpg (52KB)
+assets/countries/denmark.jpg (78KB)
+assets/countries/estonia.jpg (37KB)
+assets/countries/finland.jpg (78KB)
+assets/countries/france.jpg (45KB)
+assets/countries/germany.jpg (48KB)
+assets/countries/greece.jpg (48KB)
+assets/countries/hungary.jpg (59KB)
+assets/countries/iceland.jpg (70KB)
+assets/countries/italy.jpg (62KB)
+assets/countries/latvia.jpg (42KB)
+assets/countries/liechtenstein.jpg (73KB)
+assets/countries/lithuania.jpg (80KB)
+assets/countries/luxembourg.jpg (78KB)
+assets/countries/malta.jpg (55KB)
+assets/countries/netherlands.jpg (72KB)
+assets/countries/norway.jpg (54KB)
+assets/countries/poland.jpg (76KB)
+assets/countries/portugal.jpg (73KB)
+assets/countries/romania.jpg (61KB)
+assets/countries/slovakia.jpg (99KB)
+assets/countries/slovenia.jpg (52KB)
+assets/countries/spain.jpg (88KB)
+assets/countries/sweden.jpg (76KB)
+assets/countries/switzerland.jpg (81KB)
+assets/logo-dark.png (27KB)
+assets/logo.png (26KB)
+assets/splash-icon-dark.png (65KB)
+assets/splash-icon.png (68KB)
+
+› ios bundles (1):
+_expo/static/js/ios/entry-6f418d8790faeaf3194c0f97cc4b1875.hbc (5.3MB)
+
+› Files (1):
+metadata.json (3.7KB)
+
+Exported: <scratch>/export-ios
+ios EXIT 0

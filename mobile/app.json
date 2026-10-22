@@ -1,0 +1,102 @@
+{
+  "expo": {
+    "name": "EZvisa",
+    "slug": "ezvisa",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "net.ezvisa.app",
+      "usesAppleSignIn": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "net.ezvisa.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-web-browser",
+      "@react-native-community/datetimepicker",
+      "expo-font",
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "backgroundColor": "#000000",
+            "image": "./assets/splash-icon-dark.png"
+          }
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true
+        }
+      ],
+      "expo-apple-authentication",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Unlock EZvisa with Face ID."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Take photos of your visa documents.",
+          "photosPermission": "Choose photos of your visa documents."
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "Add your visa appointment to your calendar."
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#0436DC"
+        }
+      ]
+    ],
+    "scheme": "ezvisa",
+    "owner": "kirolosedward1",
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "a9cb0b0a-4ac8-41c4-a3b3-e4ae3ee1f243"
+      },
+      "supportsRTL": true
+    },
+    "primaryColor": "#0436DC",
+    "updates": {
+      "url": "https://u.expo.dev/a9cb0b0a-4ac8-41c4-a3b3-e4ae3ee1f243"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    }
+  }
+}

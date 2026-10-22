@@ -1,3 +1,4 @@
+import { SITE_URL } from "@/lib/site-url"
 export interface ApplicationData {
   firstName: string
   lastName: string
@@ -170,7 +171,7 @@ export const getPaymentSuccessEmail = (data: ApplicationData, paymentAmount: num
                   <li>Proof of residence</li>
                   <li>Bank statements (if applicable)</li>
                 </ul>
-                <p style="margin: 15px 0 0 0;"><a href="${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://www.ezvisa.net'}/dashboard" style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Dashboard & Upload</a></p>
+                <p style="margin: 15px 0 0 0;"><a href="${SITE_URL}/dashboard" style="background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">View Dashboard & Upload</a></p>
               </div>
               ` : ''}
               

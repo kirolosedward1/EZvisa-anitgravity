@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
-import { isValidRedirectUrl } from "@/lib/sanitize"
+import { SITE_URL, siteUrl } from "@/lib/site-url"
 import { CURRENCIES } from "@/lib/currency"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -17,12 +17,13 @@ export async function POST(request: NextRequest) {
   try {
     // Origin validation for CSRF protection
     const origin = request.headers.get("origin")
+    const isDev = process.env.NODE_ENV === "development"
     const allowedOrigins = [
-      process.env.NEXT_PUBLIC_APP_URL,
-      "http://localhost:3000",
+      SITE_URL,
       "https://ezvisa.net",
       "https://www.ezvisa.net",
-    ].filter(Boolean)
+      ...(isDev ? ["http://localhost:3000"] : []),
+    ]
     
     if (origin && !allowedOrigins.some(allowed => origin.startsWith(allowed as string))) {
       return NextResponse.json({ error: "Invalid origin" }, { status: 403 })
@@ -51,14 +52,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid application" }, { status: 400 })
     }
 
-    // Validate redirect URLs to prevent open redirects
-    const allowedDomains = ['ezvisa.net', 'localhost', 'vercel.app', 'vusercontent.net']
-    if (success_url && !isValidRedirectUrl(success_url, allowedDomains)) {
-      return NextResponse.json({ error: "Invalid success URL" }, { status: 400 })
+    // No open redirects: whatever the client sends, Ziina returns the customer to the official domain.
+    const toSite = (u: string | undefined, fallbackPath: string) => {
+      if (!u) return siteUrl(fallbackPath)
+      try {
+        const parsed = new URL(u, SITE_URL)
+        return isDev && parsed.hostname === "localhost" ? parsed.toString() : siteUrl(parsed.pathname + parsed.search)
+      } catch {
+        return siteUrl(fallbackPath)
+      }
     }
-    if (cancel_url && !isValidRedirectUrl(cancel_url, allowedDomains)) {
-      return NextResponse.json({ error: "Invalid cancel URL" }, { status: 400 })
-    }
+    const successUrl = toSite(success_url, "/payment-success")
+    const cancelUrl = toSite(cancel_url, "/payment-failed")
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
@@ -104,8 +109,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         amount: amountInFils, // server-computed, smallest currency unit
         currency_code: validCurrency,
-        success_url,
-        cancel_url,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         test,
       }),
     })

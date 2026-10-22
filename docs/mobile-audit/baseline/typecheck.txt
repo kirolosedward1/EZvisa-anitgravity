@@ -1,0 +1,13 @@
+migrations/functions/delete-account/index.ts(3,30): error TS2307: Cannot find module 'jsr:@supabase/supabase-js@2' or its corresponding type declarations.
+migrations/functions/delete-account/index.ts(6,1): error TS2304: Cannot find name 'Deno'.
+migrations/functions/delete-account/index.ts(11,30): error TS2304: Cannot find name 'Deno'.
+migrations/functions/delete-account/index.ts(11,61): error TS2304: Cannot find name 'Deno'.
+migrations/functions/delete-account/index.ts(19,37): error TS7006: Parameter 'a' implicitly has an 'any' type.
+migrations/functions/delete-account/index.ts(26,278): error TS7006: Parameter 'a' implicitly has an 'any' type.
+migrations/functions/notify-status/index.ts(4,30): error TS2307: Cannot find module 'jsr:@supabase/supabase-js@2' or its corresponding type declarations.
+migrations/functions/notify-status/index.ts(7,1): error TS2304: Cannot find name 'Deno'.
+migrations/functions/notify-status/index.ts(9,30): error TS2304: Cannot find name 'Deno'.
+migrations/functions/notify-status/index.ts(9,61): error TS2304: Cannot find name 'Deno'.
+migrations/functions/notify-status/index.ts(24,49): error TS7006: Parameter 't' implicitly has an 'any' type.
+migrations/functions/notify-status/index.ts(26,17): error TS2304: Cannot find name 'Deno'.
+EXIT 2
