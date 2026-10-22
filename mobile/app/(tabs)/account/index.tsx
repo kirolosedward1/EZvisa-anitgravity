@@ -23,11 +23,12 @@ import { lastCrash } from "../../../lib/crash";
 import { startupHistory } from "../../../lib/perf";
 import { pendingEvents } from "../../../lib/analytics";
 import Constants from "expo-constants";
+import { useForm } from "../../../lib/form";
 
 export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true); const { signOut: endSession } = useAuth();
-  const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT();
+  const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT(); const { saveBeforeSignOut } = useForm();
   const [del, setDel] = useState(false); const [delStep, setDelStep] = useState<"ask" | "sure" | "failed">("ask"); const [delErr, setDelErr] = useState<string | null>(null); const [deleting, setDeleting] = useState(false);
   /** Calls the delete-account edge function with the user's own session; WhatsApp / email stay as the fallback. */
   const deleteNow = async () => {
@@ -147,10 +148,13 @@ export default function Account() {
   const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
   const paidApps = (apps ?? []).filter((a) => isPaid(a));
   const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
-  /** Ends this phone's session and wipes the person's data from it (lib/auth.tsx). Unsent uploads are named first. */
-  const signOut = () => {
+  /** Ends this phone's session and wipes the person's data from it (lib/auth.tsx). Unsaved answers are saved first;
+   *  what still couldn't be saved (offline) and unsent uploads are named before the wipe. */
+  const signOut = async () => {
+    const saved = await saveBeforeSignOut().catch(() => false);
     const n = pendingUploads();
-    const note = n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : t("Your applications stay in your account.");
+    const note = [!saved && t("Your latest answers aren't saved to your account yet. Signing out removes them from this phone."),
+      n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : saved && t("Your applications stay in your account.")].filter(Boolean).join("\n\n");
     if (Platform.OS === "web") { endSession(); return; }
     Alert.alert(t("Sign out?"), note, [{ text: t("Cancel"), style: "cancel" }, { text: t("Sign out"), style: "destructive", onPress: () => { endSession(); } }]);
   };

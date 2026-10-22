@@ -525,4 +525,14 @@ export const AR: Record<string, string> = {
   "Open the link on the phone where you asked for it, or ask for a new one here.": "افتح الرابط على الهاتف الذي طلبته منه، أو اطلب رابطًا جديدًا هنا.",
   "Your session ended. Please sign in again.": "انتهت جلستك. يرجى تسجيل الدخول مجددًا.", "This sign-in option isn't available right now.": "طريقة تسجيل الدخول هذه غير متاحة حاليًا.",
   "Something went wrong. Try again.": "حدث خطأ. حاول مجددًا.",
+  // ---- drafts: autosave status + newer copy (lib/form.tsx, components/wizard/sync.tsx) ----
+  "Saved": "تم الحفظ", "Not saved": "لم يُحفظ", "Not saved · Offline": "لم يُحفظ · غير متصل", "Not saved · Retrying": "لم يُحفظ · إعادة المحاولة", "Not saved · Tap to retry": "لم يُحفظ · اضغط لإعادة المحاولة",
+  "on the website": "على الموقع", "on another device": "على جهاز آخر",
+  "Newer version found": "توجد نسخة أحدث", "This application was changed {where} ({when}).": "تم تعديل هذا الطلب {where} ({when}).", "Load newer version": "تحميل النسخة الأحدث", "Keep this version": "الاحتفاظ بهذه النسخة",
+  "Application in progress": "طلب قيد الإعداد", "You already have a {c} application saved to your account.": "لديك بالفعل طلب {c} محفوظ في حسابك.", "Continue it": "متابعته", "Start a separate one": "بدء طلب منفصل",
+  "Already submitted": "تم الإرسال بالفعل", "This application was submitted {where}.": "تم إرسال هذا الطلب {where}.", "Open application": "فتح الطلب",
+  "Draft removed": "تم حذف المسودة", "This draft was discarded {where}.": "تم تجاهل هذه المسودة {where}.", "Save as new": "حفظ كطلب جديد",
+  "You're offline. Connect to submit.": "أنت غير متصل. اتصل بالإنترنت للإرسال.", "Not saved yet. Check your connection and try again.": "لم يُحفظ بعد. تحقق من الاتصال وحاول مجددًا.",
+  "You're offline. Your answers are saved on this phone and will save to your account when you're back online.": "أنت غير متصل. إجاباتك محفوظة على هذا الهاتف وستُحفظ في حسابك عند عودة الاتصال.",
+  "Your latest answers aren't saved to your account yet. Signing out removes them from this phone.": "آخر إجاباتك لم تُحفظ في حسابك بعد. تسجيل الخروج يحذفها من هذا الهاتف.",
 };

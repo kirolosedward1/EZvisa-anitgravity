@@ -25,8 +25,9 @@ import { useT } from "../../lib/i18n";
 import { SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp } from "../../lib/api";
 import { money, startPayment, usePaying, useQuote } from "../../lib/payments";
-import { submitApplication, guestSubmit, listApplications, listRequirements, type Requirement } from "../../lib/data";
+import { submitApplication, guestSubmit, listApplications, listRequirements, DraftConflictError, type Requirement } from "../../lib/data";
 import { PrefillOffer } from "../../components/wizard/extras";
+import { SyncIndicator, DraftConflictSheet } from "../../components/wizard/sync";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
@@ -73,7 +74,7 @@ export default function Apply() {
   const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
   const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
   const p = useLocalSearchParams<Params>();
-  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, cloudSavedAt, flushDraft, drafts, openDraft, startNew } = useForm();
+  const { form: f, setForm, submitted, setSubmitted, page: rawPage, setPage, hydrated, savedAt, clearDraft, draftId, flushDraft, baseAt, sync, checkRemote, drafts, openDraft, startNew } = useForm();
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   const [dir, setDir] = useState(1);
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
@@ -261,10 +262,12 @@ export default function Apply() {
         const g = await guestSubmit(f); success(); cancelDraftReminder();
         setSubmitted({ applicationId: g.id, reference: g.reference, destination: f.destination, spouse, guestEmail: g.email }); clearDraft(); return;
       }
-      const id = (await flushDraft()) ?? draftId;
-      const a = await submitApplication(f, id); success(); cancelDraftReminder();
+      // Submit only what the server confirmed: an unsaved or changed-elsewhere draft is never submitted.
+      const id = await flushDraft();
+      if (!id) { hError(); if (sync !== "conflict") setErr(offline ? t("You're offline. Connect to submit.") : t("Not saved yet. Check your connection and try again.")); return; }
+      const a = await submitApplication(f, id, baseAt()); success(); cancelDraftReminder();
       setSubmitted({ applicationId: a.id, reference: a.reference, destination: a.destination_country, spouse }); clearDraft();
-    } catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
+    } catch (e: any) { hError(); if (e instanceof DraftConflictError) checkRemote(); else setErr(e?.message ?? String(e)); }
     finally { inFlight.current = false; setBusy(false); }
   };
 
@@ -298,13 +301,12 @@ export default function Apply() {
   );
 
   const entering = slideIn(dir, isRTL, reduce);
-  const saved = !!savedAt && hasAnswers(f);
   const header = (
     <View style={{ paddingTop: top, paddingHorizontal: S.lg, gap: S.md, paddingBottom: S.sm }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={editing ? t("Back to review") : t("Back")} onPress={back} /></View>
         <View style={{ flex: 1, alignItems: "center" }}>
-          {milestone ? <Text variant="caption" weight="600" color={c.green} testID="milestone">{"✓ " + milestone}</Text> : saved && <Text variant="caption" weight="500" color={c.secondaryLabel} testID="saved-indicator">{cloudSavedAt && session ? t("✓ Saved to your account") : t("✓ Saved on this phone")}</Text>}
+          {milestone ? <Text variant="caption" weight="600" color={c.green} testID="milestone">{"✓ " + milestone}</Text> : <SyncIndicator hasAnswers={hasAnswers(f)} />}
         </View>
         <CircleButton icon="xmark" label={t("Close")} onPress={() => { tap(); close(); }} />
       </View>
@@ -329,7 +331,7 @@ export default function Apply() {
               <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead">{t("{n} answers missing", { n: qs.filter((x) => firstError(x, f)).length })}</Text></Note>
               <Button title={t("Fix next")} variant="secondary" size="M" icon="arrow.right" onPress={() => edit(invalid.id)} />
             </View>}
-            {offline && <Note tone="amber" icon="wifi.slash"><Text variant="subhead">{t("You're offline. Your answers are saved on this phone.")}</Text></Note>}
+            {offline && <Note tone="amber" icon="wifi.slash"><Text variant="subhead">{t("You're offline. Your answers are saved on this phone and will save to your account when you're back online.")}</Text></Note>}
             {groups.map((g) => (
               <View key={g.s} style={{ gap: S.xs }}>
                 <Text variant="footnote" tone="secondary" weight="600" accessibilityRole="header">{t(STEP_TITLES[g.s].title)}</Text>
@@ -368,6 +370,7 @@ export default function Apply() {
           <Button title={!SUPABASE_ENABLED ? t("Unavailable") : busy ? t("Submitting...") : t("Submit application")} icon={session ? "lock.fill" : undefined}
             loading={busy} disabled={!SUPABASE_ENABLED || busy || (offline && !!session)} onPress={submit} />
         </View>
+        <DraftConflictSheet />
       </View>
     );
   }
@@ -474,6 +477,7 @@ export default function Apply() {
         )}
       </Animated.View>
       {bar}
+      <DraftConflictSheet />
       <Modal visible={resumeAsk} transparent animationType="fade" onRequestClose={() => setResumeAsk(false)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
           <View style={[{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.md }, curve]} accessibilityViewIsModal>

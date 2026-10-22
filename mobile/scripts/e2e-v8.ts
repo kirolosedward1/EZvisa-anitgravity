@@ -14,10 +14,10 @@ const log = (ok: boolean, step: string, info = "") => { console.log(`${ok ? "PAS
   const before = await listApplications(); log(before.length === 1, "account has exactly one row", `${before.length} row(s)`);
   const row = before[0]; const id = row.id;
   const f = { ...emptyForm, ...(row.notes.wizard ?? {}) };
-  // 1. autosave with the id of an already-submitted case must NOT insert a second row
-  const sid = await saveDraft(f, "trip-details", id, "q:hotelCategory"); log(sid === id, "saveDraft on a submitted row returns the same id (no insert)");
+  // 1. autosave with the id of an already-submitted case must NOT insert a second row (and must not write)
+  const sr = await saveDraft(f, "trip-details", id, row.updated_at, "q:hotelCategory", [], false); log(!sr.ok && sr.reason === "closed", "saveDraft on a submitted row reports closed (no insert, no write)");
   // 2. double submit (two taps at once) -> same row, still one row
-  const [a1, a2] = await Promise.all([submitApplication(f, id), submitApplication(f, id)]);
+  const [a1, a2] = await Promise.all([submitApplication(f, id, row.updated_at), submitApplication(f, id, row.updated_at)]);
   log(a1.id === id && a2.id === id && a1.status === "submitted", "double submit is idempotent", `${a1.reference} ${a1.status}`);
   // 3. itinerary into additional_notes (RLS: own row while draft/submitted; guard trigger ignores additional_notes)
   const plan = { v: 1, generatedAt: new Date().toISOString(), label: "Ideas, not bookings", days: [{ day: 1, title: "e2e check", items: [{ id: "x", time: "Morning", text: "e2e" }] }] };

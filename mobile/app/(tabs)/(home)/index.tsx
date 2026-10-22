@@ -115,7 +115,7 @@ function HeroSkeleton() {
  *  applications, most recently updated first. Only drafts and unpaid cases can be discarded. */
 type Item = { key: string; country: string; status: string; at: number; open: () => void; remove?: () => void; tone?: "accent" | "secondary"; draft?: string };
 function useItems(apps: Application[] | null): Item[] | null {
-  const { t } = useT(); const { hydrated, drafts, openDraft, removeDraft } = useForm();
+  const { t } = useT(); const { hydrated, drafts, openDraft, removeDraft, openServerDraft } = useForm();
   if (!hydrated) return null;
   const server = apps ?? [];
   const linked = new Set(server.map((a) => a.id));
@@ -128,7 +128,9 @@ function useItems(apps: Application[] | null): Item[] | null {
       const status = a.status === "draft" ? t("Draft") : paid && ["submitted", "draft", "reviewing"].includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) ? t("Continue application")
         : a.status === "submitted" && !paid ? `${t("Submitted")} · ${t("Payment due")}` : paid && a.status === "submitted" ? t("Paid") : t(STATUS_LABEL[a.status] ?? a.status);
       return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : "secondary",
-        open: () => router.push(status === t("Continue application") ? `/continue/${a.id}` : `/applications/${a.id}`, { withAnchor: true }),
+        // A draft saved from the website or another device opens in the wizard, at the question it was left on.
+        open: a.status === "draft" ? () => { openServerDraft(a.id).then((ok) => router.push(ok ? { pathname: "/apply", params: { resume: "1" } } : `/applications/${a.id}`)).catch(() => router.push(`/applications/${a.id}`)); }
+          : () => router.push(status === t("Continue application") ? `/continue/${a.id}` : `/applications/${a.id}`, { withAnchor: true }),
         remove: isAbandoned(a) ? () => askDiscard(() => { discardApplication(a).catch(() => {}); }, t) : undefined,
         draft: a.status === "draft" ? SERVER_STEP[a.notes?.wizardStep ?? ""] ?? "Personal" : undefined };
     }),
