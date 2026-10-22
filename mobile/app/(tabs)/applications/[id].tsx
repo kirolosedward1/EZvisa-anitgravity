@@ -90,7 +90,7 @@ export default function ApplicationDetail() {
     }
   };
 
-  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={() => load()} />} /></View>;
+  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title={t("Retry")} variant="secondary" onPress={() => load()} />} /></View>;
   if (!a) return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: S.lg, gap: S.md }}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg } }} />
