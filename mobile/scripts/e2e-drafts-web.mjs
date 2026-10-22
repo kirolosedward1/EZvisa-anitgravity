@@ -82,7 +82,10 @@ log(!!back && afterQ !== offlineQ, "back online: the offline answer is saved", `
 const cur = (await drafts())[0]; const n = notes(cur);
 await fetch(`${DB}/__db/edit`, { method: "POST", body: JSON.stringify({ id, patch: { additional_notes: JSON.stringify({ ...n, lastEditedOn: "website", wizardStep: "personal", wizardQuestion: undefined, wizard: { ...n.wizard, firstName: "WebEdit" } }) } }) });
 const webVersion = (await drafts())[0].updated_at;
-await A.page.getByRole("radio").first().click().catch(() => {}); await A.page.waitForTimeout(400);
+// Change an answer on whatever screen the wizard is on (a choice, or the name screen since 8651059 merged first + last name).
+if (await A.page.getByRole("radio").count()) await A.page.getByRole("radio").first().click().catch(() => {});
+else await A.page.getByTestId("question-input").first().fill("Changed").catch(() => {});
+await A.page.waitForTimeout(400);
 await A.page.getByRole("button", { name: "Continue" }).click().catch(() => {});
 const sheet = await until(async () => A.page.getByTestId("draft-conflict").isVisible().catch(() => false), 8000);
 log(!!sheet, "newer server copy: the app asks instead of saving");
