@@ -77,7 +77,7 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header, s
     return pool.filter((n) => n.toLowerCase().includes(s) || t(n).toLowerCase().includes(s));
   }, [q, names, value, t, searchAll]);
   return (
-    <FlatList data={list} keyExtractor={(n) => n} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" initialNumToRender={14} windowSize={7}
+    <FlatList data={list} keyExtractor={(n) => n} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" initialNumToRender={14} maxToRenderPerBatch={12} windowSize={7} removeClippedSubviews={Platform.OS === "android"}
       contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.xs }}
       ListHeaderComponent={<View style={{ gap: S.md, marginBottom: S.xs }}>
         {header}

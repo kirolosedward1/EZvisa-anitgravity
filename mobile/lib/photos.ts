@@ -29,3 +29,19 @@ export const PHOTOS: Record<string, any> = {
   "sweden": require("../assets/countries/sweden.jpg"),
   "switzerland": require("../assets/countries/switzerland.jpg"),
 };
+
+/** 204 px square crops (68 pt @3x) for the Home story circles only: ~9 KB each instead of decoding a 720 px photo.
+ *  Keep in sync with STORIES in app/(tabs)/(home)/index.tsx; other countries fall back to PHOTOS. */
+export const THUMBS: Record<string, number> = {
+  "france": require("../assets/countries/thumbs/france.jpg"),
+  "germany": require("../assets/countries/thumbs/germany.jpg"),
+  "italy": require("../assets/countries/thumbs/italy.jpg"),
+  "spain": require("../assets/countries/thumbs/spain.jpg"),
+  "switzerland": require("../assets/countries/thumbs/switzerland.jpg"),
+  "greece": require("../assets/countries/thumbs/greece.jpg"),
+  "netherlands": require("../assets/countries/thumbs/netherlands.jpg"),
+  "portugal": require("../assets/countries/thumbs/portugal.jpg"),
+  "austria": require("../assets/countries/thumbs/austria.jpg"),
+  "croatia": require("../assets/countries/thumbs/croatia.jpg"),
+  "czech-republic": require("../assets/countries/thumbs/czech-republic.jpg"),
+};

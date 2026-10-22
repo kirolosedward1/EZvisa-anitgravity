@@ -27,7 +27,7 @@ export function CountrySheet({ visible, title, onClose, onPick, selected, select
         <View style={{ paddingHorizontal: S.lg, paddingVertical: S.sm }}>
           <Field placeholder={searchPlaceholder} value={q} onChangeText={setQ} autoCorrect={false} autoFocus={Platform.OS !== "web"} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />} />
         </View>
-        <FlatList data={list} keyExtractor={(w) => w.iso2} keyboardShouldPersistTaps="handled" initialNumToRender={20} windowSize={7}
+        <FlatList data={list} keyExtractor={(w) => w.iso2} keyboardShouldPersistTaps="handled" initialNumToRender={20} maxToRenderPerBatch={12} windowSize={7} removeClippedSubviews={Platform.OS === "android"}
           contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: insets.bottom + S.lg }}
           ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>No country found.</Text>}
           renderItem={({ item: w }) => {

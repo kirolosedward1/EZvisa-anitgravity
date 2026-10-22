@@ -1,5 +1,6 @@
 import { PressScale } from "./ui";
-import { Image, Pressable, ScrollView, View, useWindowDimensions, Platform } from "react-native";
+import { Pressable, ScrollView, View, useWindowDimensions, Platform } from "react-native";
+import { Image } from "expo-image";
 import { Stack, router, useLocalSearchParams, useSegments } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
@@ -30,7 +31,7 @@ export default function CountryDetail() {
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView contentContainerStyle={{ paddingBottom: S.xl }} showsVerticalScrollIndicator={false}>
-        <Image source={PHOTOS[slug!]} style={{ width: "100%", height: heroH, backgroundColor: c.card }} resizeMode="cover" accessibilityIgnoresInvertColors />
+        <Image source={PHOTOS[slug!]} style={{ width: "100%", height: heroH, backgroundColor: c.card }} contentFit="cover" cachePolicy="memory" accessibilityIgnoresInvertColors />
         <View style={[{ marginTop: -S.xxl, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: c.bg, paddingHorizontal: S.lg, paddingTop: S.xl }, curve]}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}>
             <Flag country={name} size={56} />
