@@ -67,5 +67,12 @@ log(imgs > 0, "the photo replaces the Account icon in the tab bar", `images in t
 log((await p.getByRole("button", { name: "Edit photo" }).count()) > 0, "the avatar button becomes Edit photo once a photo is set");
 await p.reload(); await p.waitForTimeout(3000);
 log((await p.locator('[role="tablist"] img, [role="tablist"] [style*="background-image"]').count()) > 0, "photo still there after reopening");
+// 7. Account: email hidden; details on their own page
+log((await p.getByText(EMAIL, { exact: true }).locator("visible=true").count()) === 0, "Account does not show the email");
+await p.getByText("Account details", { exact: true }).first().click(); await p.waitForTimeout(1500);
+log(new URL(p.url()).pathname === "/account/details" && (await p.getByText(EMAIL, { exact: true }).locator("visible=true").count()) > 0, "Account details opens its own page with the email", p.url());
+await p.screenshot({ path: `${OUT}/ui-account-details.png` });
+await p.getByTestId("header-back").locator("visible=true").first().click(); await p.waitForTimeout(1200);
+log(new URL(p.url()).pathname === "/account", "Back returns to Account", p.url());
 log(!errs.length, "no page errors", errs.join(" | ").slice(0, 300));
 await b.close(); console.log(fails ? `${fails} FAILED` : "ALL PASS"); process.exit(fails ? 1 : 0);
