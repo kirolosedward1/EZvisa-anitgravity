@@ -3,12 +3,13 @@ import { ScrollView, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COUNTRY_LIST, POPULAR, toSlug } from "../../../lib/countries";
-import { EmptyState, Flag, Icon, Input, ListGroup, ListRow, PressScale, Text, useTabInset, LIST_INSET } from "../../../components/ui";
+import { EmptyState, Flag, Icon, ListGroup, ListRow, PressScale, Text, useTabInset } from "../../../components/ui";
+import { Field } from "../../../components/AuthForm";
 import { useColors, S, ICON } from "../../../lib/theme";
 import { select } from "../../../lib/haptics";
 import { useT } from "../../../lib/i18n";
 
-const INSET = LIST_INSET.flag; // separator starts under the name
+const INSET = S.md + 28 + S.md; // separator starts under the name (flag is 28)
 /** The A-Z index starts below the title and search field. */
 const INDEX_TOP = 180;
 const Row = ({ name }: { name: string }) => { const { t } = useT(); return (
@@ -35,7 +36,7 @@ export default function Countries() {
         contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb + S.xl, paddingHorizontal: S.gutter }}>
         <Text variant="largeTitle" accessibilityRole="header">{tr("Countries")}</Text>
         <Text variant="subhead" tone="secondary" style={{ marginBottom: S.xl }}>{tr("{n} Schengen destinations", { n: COUNTRY_LIST.length })}</Text>
-        <Input placeholder={tr("Search")} value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={ICON.md} color={c.textSecondary} />} />
+        <Field placeholder={tr("Search")} value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={ICON.md} color={c.textSecondary} />} />
         <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.gutter, paddingEnd: !t && !rtl ? S.xs : 0, marginTop: S.xl }}>
           {t ? (
             results.length ? <ListGroup inset={INSET}>{results.map((n) => <Row key={n} name={n} />)}</ListGroup> : <EmptyState icon="magnifyingglass" title={tr("No results")} />
