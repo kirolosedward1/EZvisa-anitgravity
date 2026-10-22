@@ -515,6 +515,9 @@ export const AR: Record<string, string> = {
   "You're offline. Your answers are saved on this phone and will save to your account when you're back online.": "أنت غير متصل. إجاباتك محفوظة على هذا الهاتف وستُحفظ في حسابك عند عودة الاتصال.",
   "Your latest answers aren't saved to your account yet. Signing out removes them from this phone.": "آخر إجاباتك لم تُحفظ في حسابك بعد. تسجيل الخروج يحذفها من هذا الهاتف.",
   // ---- chat 09: documents ----
+  "Passport and employment": "الجواز والعمل",
+  "Add your passport number and employment details.": "أضف رقم جوازك وبيانات عملك.",
+  "Next, add your passport number and employment details, then upload your documents.": "التالي: أضف رقم جوازك وبيانات عملك ثم ارفع مستنداتك.",
   "Re-upload": "أعد الرفع",
   "Stored securely": "محفوظ بأمان",
   "Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing.": "استلمنا ملفك وهو محفوظ بشكل خاص لدى EZvisa. يراجعه فريقنا وسنتواصل معك إذا احتاج أي شيء إلى استبدال.",

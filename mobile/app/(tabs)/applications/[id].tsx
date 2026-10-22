@@ -1,12 +1,11 @@
 import { AppointmentCard } from "../../../components/Appointment";
-import { employmentComplete } from "../../../lib/wizard";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
-import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES } from "../../../lib/data";
+import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, needsContinue } from "../../../lib/data";
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
@@ -139,9 +138,9 @@ export default function ApplicationDetail() {
             : <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : quote ? t("Pay {amount}", { amount: money(quote) }) : t("Pay securely")} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />}
         </ListGroup>
       )}
-      {paid && EDITABLE.includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) && (
+      {needsContinue(a) && (
         <ListGroup header={t("Next step")} footer={t("Then upload your documents below.")} inset={58}>
-          <ListRow icon="briefcase.fill" iconColor={c.tint} title={t("Continue application")} subtitle={t("Add your employment details.")} onPress={() => router.push(`/continue/${a.id}`)} />
+          <ListRow icon="briefcase.fill" iconColor={c.tint} title={t("Continue application")} subtitle={t("Add your passport number and employment details.")} onPress={() => router.push(`/continue/${a.id}`)} />
         </ListGroup>
       )}
       <ListGroup header={t("Trip")} inset={16}>

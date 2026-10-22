@@ -13,11 +13,10 @@ import { Button, Icon, Skeleton, Text, type IconName } from "../../components/ui
 import { useColors, S, R } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { useAuth } from "../../lib/auth";
-import { getApplication } from "../../lib/data";
+import { getApplication, needsContinue } from "../../lib/data";
 import { whatsapp } from "../../lib/api";
 import { forgetPayment, intentStatus, knownPayment, serverStatus, startPayment, usePaying, type ServerStatus } from "../../lib/payments";
 import { setupPush } from "../../lib/push";
-import { employmentComplete } from "../../lib/wizard";
 import { success, error as hError } from "../../lib/haptics";
 import { track } from "../../lib/analytics";
 
@@ -57,7 +56,7 @@ export default function PaymentResult() {
     const p = await knownPayment(id!);
     const [server, db, intent] = await Promise.all([
       attempt(() => serverStatus(id!)),
-      session ? attempt(async () => { const a = await getApplication(id!); setNeedsEmp(!employmentComplete((a.notes?.wizard ?? {}) as any)); return a.payment_status; }) : Promise.resolve(undefined),
+      session ? attempt(async () => { const a = await getApplication(id!); setNeedsEmp(needsContinue(a)); return a.payment_status; }) : Promise.resolve(undefined),
       p ? attempt(() => intentStatus(p.paymentId)) : Promise.resolve(undefined),
     ]);
     return { server, db, intent, offline: asked > 0 && failed === asked };
@@ -101,7 +100,7 @@ export default function PaymentResult() {
   const guest = !session;
   const V: Record<State, { icon: IconName | null; color: string; title: string; body: string }> = {
     checking: { icon: null, color: c.tint, title: t("Checking your payment…"), body: t("This takes a few seconds.") },
-    paid: { icon: "checkmark.circle.fill", color: c.green, title: t("Payment received"), body: guest ? t("Sign in with the email you used to continue your application.") : needsEmp ? t("Next, add your employment details, then upload your documents.") : t("You can upload your documents now.") },
+    paid: { icon: "checkmark.circle.fill", color: c.green, title: t("Payment received"), body: guest ? t("Sign in with the email you used to continue your application.") : needsEmp ? t("Next, add your passport number and employment details, then upload your documents.") : t("You can upload your documents now.") },
     confirming: { icon: "checkmark.circle.fill", color: c.green, title: t("Payment received"), body: guest ? t("Sign in with the email you used to continue your application.") : t("Updating your application. This can take a minute.") },
     pending: { icon: "clock.fill", color: c.tint, title: t("Payment not confirmed yet"), body: guest ? t("Sign in with the email you used to see the latest status.") : t("If you paid, it can take a minute to show. We'll update your application automatically.") },
     failed: { icon: "exclamationmark.circle.fill", color: c.red, title: t("Payment didn't go through"), body: t("You weren't charged. Try again or pay on WhatsApp.") },

@@ -8,7 +8,7 @@ import { AppointmentCard } from "../../../components/Appointment";
 import { useColors, S, R, curve, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { PHOTOS, THUMBS } from "../../../lib/photos";
-import { STATUS_LABEL, getApplication, isPaid, requirementsFor, type Application } from "../../../lib/data";
+import { STATUS_LABEL, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
 import { useApps } from "../../../lib/useApps";
 import { tap, error as hError } from "../../../lib/haptics";
 import { useEffect, useRef, useState } from "react";
@@ -18,7 +18,7 @@ import { buildTimeline, doneCount, isUserDiscarded, chooseHero } from "../../../
 import { paymentToResume, startPayment } from "../../../lib/payments";
 import { useAuth } from "../../../lib/auth";
 import { useForm, type LocalDraft } from "../../../lib/form";
-import { hasAnswers, employmentComplete } from "../../../lib/wizard";
+import { hasAnswers } from "../../../lib/wizard";
 import { Q_BY_ID } from "../../../lib/questions";
 import { useT } from "../../../lib/i18n";
 import { countdown } from "../../../lib/countdown";
@@ -125,7 +125,7 @@ function useItems(apps: Application[] | null): Item[] | null {
       open: () => { openDraft(d.key); router.push({ pathname: "/apply", params: { resume: "1" } }); }, remove: () => askDiscard(() => removeDraft(d.key), t) })),
     ...server.filter((a) => !(a.status === "draft" && drafts.some((d) => d.draftId === a.id)) && !isUserDiscarded(a)).map((a): Item => {
       const paid = isPaid(a);
-      const status = a.status === "draft" ? t("Draft") : paid && ["submitted", "draft", "reviewing"].includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) ? t("Continue application")
+      const status = a.status === "draft" ? t("Draft") : needsContinue(a) ? t("Continue application")
         : a.status === "submitted" && !paid ? `${t("Submitted")} · ${t("Payment due")}` : paid && a.status === "submitted" ? t("Paid") : t(STATUS_LABEL[a.status] ?? a.status);
       return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : "secondary",
         // A draft saved from the website or another device opens in the wizard, at the question it was left on.
