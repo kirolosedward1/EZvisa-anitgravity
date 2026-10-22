@@ -69,7 +69,8 @@
         {
           "calendarPermission": "Add your visa appointment to your calendar."
         }
-      ]
+      ],
+      "expo-secure-store"
     ],
     "scheme": "ezvisa",
     "owner": "kirolosedward1",
