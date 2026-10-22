@@ -25,7 +25,7 @@ import { countdown } from "../../../lib/countdown";
 import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
-import { SwipeToDiscard } from "../../../components/SwipeToDiscard";
+import { SwipeToDiscard, SwipeLock } from "../../../components/SwipeToDiscard";
 import { useAvatar } from "../../../lib/avatar";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 
@@ -207,6 +207,7 @@ export default function Home() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
   const { session, apps, unread, refreshing, refresh, err, load } = useApps(true, true);
   const photo = useAvatar(session?.user.id);
+  const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
   useResumePayment();
   const scroll = useRef<ScrollView>(null); const apptY = useRef<number | null>(null);
   const name = (session?.user.user_metadata?.full_name as string | undefined)?.split(" ")[0];
@@ -227,7 +228,8 @@ export default function Home() {
   };
 
   return (
-    <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} ref={scroll} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xs, paddingBottom: pb }}
+    <SwipeLock.Provider value={setSwiping}>
+    <ScrollView scrollEnabled={!swiping} onScroll={onTabScroll} scrollEventThrottle={16} ref={scroll} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xs, paddingBottom: pb }}
       refreshControl={session ? <RefreshControl refreshing={refreshing} onRefresh={() => { tap(); refresh(); }} tintColor={c.tint} /> : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: S.lg, minHeight: 48 }}>
@@ -275,5 +277,6 @@ export default function Home() {
         {STORIES.map((n) => <Story key={n} name={n} />)}
       </ScrollView>
     </ScrollView>
+    </SwipeLock.Provider>
   );
 }

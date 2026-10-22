@@ -12,7 +12,7 @@ import { tap } from "../../../lib/haptics";
 import { askDiscard, isAbandoned } from "../../../lib/discard";
 import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
-import { SwipeToDiscard } from "../../../components/SwipeToDiscard";
+import { SwipeToDiscard, SwipeLock } from "../../../components/SwipeToDiscard";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 
 const fmt = (s?: string | null) => (s ? new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
@@ -55,9 +55,11 @@ export default function Applications() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
   const { session, apps, err, refreshing, refresh, discard } = useApps();
   const [tab, setTab] = useState<"active" | "past">("active");
+  const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
   const list = (apps ?? []).filter((a) => (tab === "active" ? ACTIVE(a.status) : !ACTIVE(a.status)));
   return (
-    <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb, paddingHorizontal: S.lg, flexGrow: 1 }}
+    <SwipeLock.Provider value={setSwiping}>
+    <ScrollView scrollEnabled={!swiping} onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb, paddingHorizontal: S.lg, flexGrow: 1 }}
       refreshControl={session ? <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.tint} /> : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: S.lg }}>
@@ -81,5 +83,6 @@ export default function Applications() {
           : <AppCard a={a} />}</Animated.View>)}</View>
       </>)}
     </ScrollView>
+    </SwipeLock.Provider>
   );
 }
