@@ -1,204 +1,206 @@
 # EZvisa app: QA and release readiness (chat 15)
 
-Date: 22 Oct 2026. Code: `mobile/` on branch `claude/vibrant-wright-ez44ch` = `origin/mobile-app` @ `5efe21f` (chats 02–14, merged in) + the chat 15 commits in section 6. `mobile-app` can fast-forward to it.
-Note: chats 02–14 landed on `mobile-app` (09:19–09:45 UTC) while this QA was running. Every check below was **re-run on the merged code**.
+Date: 22 Oct 2026. Code verified: `mobile/` on branch `claude/vibrant-wright-ez44ch` = **`origin/mobile-app` @ `463000b`** (chats 02–14, then 03, 06, 08, 09, 11 and `main`, all merged in) + the chat 15 commits in §7. `mobile-app` can fast-forward to it.
 Expo SDK 57.0.30, React Native 0.86.3, expo-router 57.
 
-## 0. Read this first: what could and could not be tested here
+> Chats 02–14, 03, 06, 08, 09 and 11 landed on `mobile-app` **while this QA was running** (09:19–10:30 UTC). This branch merged them three times, and every result below is from the **last merge**. Commits pushed to `mobile-app` after `463000b` are not covered.
 
-This QA ran in a cloud container with **no iPhone, no simulator, no EXPO_TOKEN**. The network policy also **denies** `api.expo.dev`, `u.expo.dev`, `*.supabase.co` and `www.ezvisa.net` (proxy answers 403). The Supabase connector only sees the old project `rjbgteqgqaxalcfnksjc` and returns "permission denied" for `dravvaykssrbktztmrlj`.
+## 0. What could and could not be tested here
+
+This QA ran in a cloud container with **no iPhone, no simulator and no `EXPO_TOKEN`**. The network policy **denies** `api.expo.dev`, `u.expo.dev`, `*.supabase.co` and `www.ezvisa.net` (the proxy answers 403). The Supabase connector sees only the old project `rjbgteqgqaxalcfnksjc`; it returns "permission denied" for `dravvaykssrbktztmrlj`.
 
 | Method | Used for |
 |---|---|
-| **Static review** of the code (file:line below) | logic, wizard rules, keys, fake data, RLS-dependent paths |
-| `npx tsc --noEmit`, `npx eslint .` | type-check and lint |
-| `npx expo export` (ios + android + web) | the bundle builds; bundle contents grep |
-| `npx expo config --type introspect` | the final iOS Info.plist (permission strings, privacy manifest) |
-| `node scripts/run-test-privacy.mjs`, `node scripts/run-upload-tests.mjs` (from chats 10/14) | privacy scrubbing / opt-out (24/24 pass), upload queue offline, mid-upload loss, duplicates, kill + restart, sign-out wipe (23/23 pass) |
-| **Playwright on the web build** (react-native-web) at **390×844 and 430×932**, light + dark, English + Arabic, plus a "largest text" run (the app's `__FONT_SCALE__` simulation, ×3 capped per role like iOS) | layout, RTL, translations, wizard flow, offline banner. 190 automated checks, 0 failures (`docs/qa/web-checks.json`) |
+| Static review of the code (file:line below) | logic, wizard rules, keys, fake data, RLS-dependent paths |
+| `npx tsc --noEmit`, `npx eslint .` | type-check, lint |
+| `npx expo export --clear` (ios + android + web) | the bundles build; bundle contents grep |
+| `npx expo config --type introspect` | the final iOS Info.plist |
+| Node tests in `scripts/` (stubbed native modules, no network) | privacy scrubbing, upload queue, SecureStore adapter, Home timeline |
+| Playwright e2e on the web build with **mocked** Supabase / ezvisa.net (`auth-e2e-web.mjs`, `pay-e2e.cjs`, `e2e-drafts-web.mjs`) | sign-in/session, payment result, drafts across devices and web↔app |
+| Playwright walk on the web build at **390×844 and 430×932**, light + dark, English + Arabic, plus "largest text" (the app's `__FONT_SCALE__` simulation, capped per role like iOS) | layout, RTL, translations, wizard flow, offline banner, Review |
 
-**Not possible here, so marked NOT RUN:** real iPhones, VoiceOver, iOS Dynamic Type, Face ID, camera/scanner, push, Ziina payment, uploads, sign-in, drafts across devices, expired session, and live cross-account queries. Web rendering is an approximation of iOS, not a substitute. Nothing below is reported as passing on a device.
+**NOT RUN (needs a device or the live services):** real iPhones, VoiceOver, iOS Dynamic Type, Face ID, camera/scanner, push, a real Ziina payment, real uploads, the live database (including the live cross-account test). Web rendering approximates iOS; it doesn't replace it. Nothing below claims a device pass.
 
-Legend: **PASS** verified by the method named · **FAIL** verified broken · **NOT RUN** needs a device or the live services · **BLOCKED** cannot run until something outside the app is fixed.
+Legend: **PASS** verified by the method named · **FAIL** verified broken · **NOT RUN** needs a device or live services · **BLOCKED** needs something outside the app fixed first.
 
-## 1. Test matrix
+## 1. Results at a glance (final run)
+
+| Check | Result |
+|---|---|
+| `npx tsc --noEmit` | 0 errors |
+| `npx eslint .` | 0 errors (157 warnings) |
+| `npm ci` | passes (the lock file had been missing `expo-calendar`; fixed) |
+| iOS / Android bundle (`--clear`) | 1986 / 2081 modules, 5.4 / 5.6 MB. grep: `rjbgte` 0, `service_role` 0, `sb_secret` 0, `vercel.app` 0 |
+| `run-test-privacy.mjs` | 24/24 |
+| `run-upload-tests.mjs` (offline, lost response, duplicate, kill + restart, sign-out wipe) | 24/24 |
+| `secure-storage-test.cjs` | 12/12 |
+| `run-check.ts timeline-check.ts` | ALL PASS |
+| `auth-e2e-web.mjs` (mocked GoTrue) | 29/29 |
+| `pay-e2e.cjs` (mocked API) | **17/20 → 20/20** after the fix in `1a50987` |
+| `e2e-drafts-web.mjs` (mock Supabase) | 17/17 |
+| Web walk, 10 runs (8 combos + 2 largest-text), clean `--clear` build without keys | 235 checks, 0 failed (`docs/qa/web-checks.json`) |
+| Review with "To get later", 8 combos | 8/8 |
+
+## 2. Test matrix
 
 | # | Area | Case | Result | Evidence |
 |---|---|---|---|---|
-| 1 | Sign in | Email + password against live auth | NOT RUN | `supabase.co` denied from this container. Code: `components/AuthForm.tsx` |
-| 2 | Sign in | Google / Apple buttons hidden while the provider is off | PASS (static) | `AuthForm.tsx` reads `googleEnabled()` / `appleEnabled()`; fixed a use-before-declare of `apple` state |
-| 3 | Wizard (pre-payment) | Destination → Nationality (visa-required only) → Residence (UAE only) → City (7 emirates, no flags) → Emirates ID → name, email, phone, DOB → Valid passport → Passport number → Expiry | PASS (web, 10 runs) | `web-checks.json` ids `wizard-order`, `residence-uae-only`, `city-emirates`, `city-no-flags`; sheets `docs/qa/wizard-04.jpg`, `wizard-11.jpg`, `wizard-12.jpg` |
-| 4 | Wizard | Valid passport "No" → note "You can continue… add it later", Continue moves to Marital Status; Back + "Yes" → Passport Number | PASS (web, 10 runs) | ids `passport-no-note`, `passport-no-continues`, `back-to-passport`, `passport-number-after-valid`; sheet `wizard-11-no.jpg` |
-| 5 | Wizard | Review lists "To get later: Valid passport, Emirates ID" and has no missing-answer errors | PASS (web, 8 combos) | `docs/qa/review.jpg` (button reads "Unavailable" only because this build has no Supabase key) |
-| 6 | Wizard (employed) | Continue application: job title + company, start date, salary, NOC (optional; "No" → "add it later") | PASS (static) / NOT RUN (device) | `app/continue/[id].tsx:83-99`; needs a paid application to render |
-| 7 | Wizard (self-employed) | Company + average income, **no NOC** question, NOC removed from checklist | PASS (static) | `continue/[id].tsx:46` (`hasNOC: emp ? … : ""`), `lib/questions.ts:77` (`applies: EMP`), `lib/data.ts:73` (`listRequirements` drops `nocCertificate`) |
-| 8 | Drafts web ↔ app | Draft row (`application_status='draft'`) resumes on another device | NOT RUN | live DB unreachable. Logic `lib/form.tsx`; last live pass was chat 13 (`HANDOFF.md` §3) |
-| 9 | Drafts (local) | Several local drafts, kill and reopen at the same question | NOT RUN (device) | `lib/form.tsx` |
-| 10 | Payment | Ziina in-app auth session, app-return, DB-verified result | BLOCKED | `www.ezvisa.net` denied here. `HANDOFF.md` §3 says `/api/create-payment` returned 500 (no `ZIINA_API_KEY` on Vercel); not re-verified |
-| 11 | Uploads | Website route, then direct bucket fallback, 5 MB limit | PASS (node tests, stubbed network) / NOT RUN (live) | `scripts/run-upload-tests.mjs` 23/23; live route unreachable from here |
-| 12 | Checklist | Per-document state from `document_reviews`, NOC hidden for non-employed | PASS (static) | `lib/checklist.ts`, `app/(tabs)/applications/[id].tsx` CheckRow (labels now translated) |
-| 13 | Scanner | Camera / library capture + quality checks | NOT RUN (device) | `lib/capture.ts` |
-| 14 | Offline queue | Waits offline, survives a kill, no duplicates, sign-out empties it | PASS (node tests) / NOT RUN (device) | `scripts/run-upload-tests.mjs` 23/23 |
-| 15 | Offline use | Offline banner appears; wizard keeps answers on the phone | PASS (web) | id `offline-banner` (10/10); `docs/qa/offline.jpg`. Banner now translated |
-| 16 | Home timeline | Real timestamps only | PASS (static), see issue S3-4 | `lib/data.ts:111-113` |
-| 17 | Notifications | Screen opens; signed-out empty state; Arabic | PASS (web) | `docs/qa/notifications.jpg`; screen was fully English in Arabic mode before this chat (fixed) |
-| 18 | Push | Token saved in `device_tokens`, tap opens the application | NOT RUN (needs a dev build / device) | `lib/push.ts`, `migrations/0006` |
-| 19 | Arabic RTL | `dir=rtl`, Arabic text on every screen tested | PASS (web) | ids `*:rtl` (40/40); every `t("…")` key in app/components/lib has an Arabic entry (scan: 803 keys, 0 missing) |
-| 20 | Dark mode | All tested screens, both widths | PASS (web) | every sheet in `docs/qa/` has dark columns |
-| 21 | VoiceOver | Labels and roles | PASS (static) / NOT RUN (device) | scan of all 68 tappables: each has `accessibilityRole` and a label or visible text. Wizard moves focus to the question title (`app/apply/index.tsx:189`) and announces errors (`:200`) |
-| 22 | Largest text | Text wraps, nothing clipped, buttons reachable | PASS (web simulation) / NOT RUN (iOS) | `docs/qa/*-largest-text.jpg` (390 EN light, 430 AR dark) |
-| 23 | Hit targets ≥ 44pt | All tappables | PASS after fix | password eye (~38pt) and search clear (~36pt) fixed. 36pt buttons have `hitSlop` 8–12 (≥ 52pt). Countries A–Z index letters are smaller, like the native iOS index (issue S3-3) |
-| 24 | Expired session | Refresh / sign-out path | NOT RUN | `lib/supabase.ts` uses `autoRefreshToken` + `persistSession` |
-| 25 | Double taps | Submit is idempotent; + button debounced 800 ms | PASS (static) | `lib/form.tsx` ref-based draft id; `components/nav/TabBar.tsx` `last.current < 800` |
-| 26 | Cross-account access | Account B cannot read or change account A's application, documents or tokens | **NOT VERIFIED LIVE** (see §2) | static review only |
-| 27 | Layout 390 / 430 | No horizontal scroll | PASS (web) | ids `*:no-hscroll` (60/60) |
-| 28 | Build | `npm ci` from the lock file | PASS | was broken (lock file lacked `expo-calendar`); fixed in both lines of work (`aa29cce` on mobile-app, `3267d83` here). `npm ci` passes on the merged lock file |
-| 29 | Build | iOS + Android bundles | PASS | merged code: `expo export --clear --platform ios --platform android`: 1980 / 2065 modules, 5.3 / 5.4 MB, exit 0 |
-| 30 | Type-check / lint | `npx tsc --noEmit`, `npx eslint .` | PASS | merged code: 0 errors; lint 0 errors (warnings only, see §5) |
+| 1 | Sign in | Email + password, wrong password, unconfirmed email, rate limit, no internet, double tap, magic link, reset password | PASS (mocked) / NOT RUN (live) | `auth-e2e-web.mjs` 29/29 |
+| 2 | Sign in | Signed-out start shows Welcome; guest can continue without an account | PASS (web) | walk check `welcome-signed-out`; `docs/qa/welcome.jpg` |
+| 3 | Wizard (pre-payment) | Destination → Nationality (visa-required) → Residence (UAE only) → City (7 emirates, no flags) → Emirates ID → name, email, phone, DOB → Valid passport → Passport number → Expiry | PASS (web, 10 runs) | checks `wizard-order`, `residence-uae-only`, `city-emirates`, `city-no-flags`; `wizard-04.jpg`, `wizard-11.jpg`, `wizard-12.jpg` |
+| 4 | Wizard | Valid passport "No" → "You can continue… add it later", Continue goes to Marital Status; Back + "Yes" → Passport Number | PASS (web, 10 runs) | `passport-no-note`, `passport-no-continues`, `back-to-passport`, `passport-number-after-valid`; `wizard-11-no.jpg` |
+| 5 | Wizard | Review shows "To get later: Valid passport, Emirates ID" and no missing-answer error | PASS (web, 8/8) | `review.jpg` (the button reads "Unavailable" only because this build has no Supabase key) |
+| 6 | Wizard (employed) | Continue application: job title + company, start date, salary, NOC optional ("No" → "add it later") | PASS (static) / NOT RUN | `app/continue/[id].tsx`; needs a paid application to render |
+| 7 | Wizard (self-employed) | Company + income, **no NOC**, NOC not in the checklist | PASS (static) | `continue/[id].tsx` (`hasNOC: emp ? … : ""`), `lib/questions.ts` (`applies: EMP`), `lib/data.ts listRequirements` |
+| 8 | Drafts web ↔ app | Autosave to one row, resume on a second device, conflicts, offline | PASS (mock) / NOT RUN (live) | `e2e-drafts-web.mjs` 17/17 |
+| 9 | Payment | Result only from the server (webhook delay, cancel, forged deep link, forged payment id, closed, timeout, offline on return), one open payment per application, no client price | PASS (mock) after fix / NOT RUN (live Ziina) | `pay-e2e.cjs` 20/20. **Bug found and fixed:** a guest whose app restarted during checkout landed on Welcome instead of the result (`1a50987`) |
+| 10 | Uploads | Allowed types after payment, session token, real progress, offline queue, restart, no duplicates | PASS (node) / NOT RUN (live) | `run-upload-tests.mjs` 24/24 |
+| 11 | Checklist | Per-document status from `document_reviews`; NOC hidden for non-employed; no invented dossier file | PASS (static) | `lib/checklist.ts`, `lib/data.ts` (audit H4 fixed in chat 09 and here) |
+| 12 | Scanner | Camera / library capture, crop, rotate, PDF | NOT RUN (device) | `lib/capture.ts`, `components/CropBox.tsx` |
+| 13 | Offline use | Offline banner; wizard keeps answers on the phone | PASS (web) | check `offline-banner` 10/10; `offline.jpg` |
+| 14 | Home timeline | Steps and next action only from the live row | PASS (node) | `timeline-check.ts` ALL PASS |
+| 15 | Notifications | Push token, tap opens the application | NOT RUN (device / dev build) | `lib/push.ts`, `migrations/0006` |
+| 16 | Arabic RTL | `dir=rtl`, Arabic everywhere tested | PASS (web) | checks `*:rtl`; every `t("…")` key in app/components/lib has an Arabic entry (scan: 0 missing) |
+| 17 | Dark mode | All tested screens, both widths | PASS (web) | dark columns in every sheet |
+| 18 | VoiceOver | Roles and labels; focus to the question title; errors announced | PASS (static) / NOT RUN (device) | every tappable has a role and a label or text; `app/apply/index.tsx` (`setAccessibilityFocus`, `announceForAccessibility`) |
+| 19 | Largest text | Wraps, no clipping, buttons reachable | PASS (web simulation) / NOT RUN (iOS) | `*-largest-text.jpg` |
+| 20 | Hit targets ≥ 44pt | All tappables | PASS after fixes | password eye on the old form and on the chat 03 sign-in screen (~38pt), search clear (~36pt). 36pt buttons have `hitSlop` 8–12. The countries A–Z index is smaller, like the native index |
+| 21 | Expired session | Expired access token refreshes; revoked or deleted user is signed out with a message | PASS (mocked) | `auth-e2e-web.mjs` |
+| 22 | Double taps | One sign-in request; one payment intent; idempotent submit; + button debounced | PASS | auth e2e, pay e2e, `lib/form.tsx`, `TabBar.tsx` |
+| 23 | Cross-account | Account B can't read or change account A's data | **App side PASS (mocked); live RLS NOT VERIFIED** | auth e2e "second account sees only its own data"; see §3 |
+| 24 | Layout 390 / 430 | No horizontal scroll | PASS (web) | checks `*:no-hscroll` |
 
-## 2. Cross-account access (static review)
+## 3. Cross-account access
 
-Not run live: no database access from here. What the code and migrations say:
+- **App side (PASS, mocked):** `auth-e2e-web.mjs` "second account sees only its own data". After sign-out, local user data is wiped ("sign out clears session + cached user data"). Every read by id also filters by the signed-in email (`lib/data.ts`).
+- **Database side (NOT VERIFIED):** the real guard is RLS on the live project, and I can't reach it from here. The repo's notes disagree on what is live (audit B1/H8). Ownership is "row email = JWT email", which is safe only while **email confirmation is required**. If it isn't, anyone can sign up with someone else's email and read their applications, passport numbers included.
+- **To close it (owner, about 10 minutes):** run the read-only queries in `docs/mobile-audit.md` §12 item 1, check `GET /auth/v1/settings` → `mailer_autoconfirm: false`, and after 0011 run `migrations/0011_check_document_access.sql` (rolls back). Then do two `+ezvisa-app-test` accounts: as B, select A's row by id (0 rows), update it (0 rows), list A's storage folder (empty).
 
-- **App queries** always go through the user's Supabase session (anon key + JWT). Every read by id also filters `.eq("email", u.email)` (`lib/data.ts:132, 168, 208, 223, 270`). Most writes do too (`:226, 268, 325`). Four follow-up writes filter by id only, right after an email-filtered read of the same row (`:171, 211, 214, 273`), so for those RLS is the only guard. RLS is the real guard everywhere.
-- **RLS on `visa_applications`** (migrations 0002 / 0007, marked APPLIED): update only where `lower(email) = lower(auth.jwt()->>'email')`. The select policy "Users can view own submissions" (same email rule) is in `db/proposed-live-changes.sql` block 3. `AUDIT-V2.md` §2 (19 Oct, read-only check) says it is live, but I could not re-check it.
-- **`device_tokens`**: `user_id = auth.uid()` on select, insert, update and delete (0006).
-- **Storage `visa_documents`**: own-folder policies (`foldername[1]` = an application id whose email = JWT email).
-- **Risk to verify (S1):** ownership is by **email in the JWT**. That is only safe while **email confirmation is required** (Supabase Auth → "Confirm email" ON). If it is off, anyone can sign up with someone else's email and read their applications, including passport numbers. Guest checkout makes this more likely, because rows exist before the owner has an account.
-
-**To run live (5 min, needs the owner):**
-1. In the SQL editor, `select policyname, cmd, qual, with_check from pg_policies where tablename in ('visa_applications','device_tokens') or (schemaname='storage' and tablename='objects');`
-2. Check `GET https://dravvaykssrbktztmrlj.supabase.co/auth/v1/settings` → `mailer_autoconfirm` must be `false`.
-3. Two test accounts (`+ezvisa-app-test` emails): as B, `select * from visa_applications where id = '<A's id>'` returns 0 rows; `update … set additional_notes='{}' where id='<A's id>'` updates 0 rows; `storage.from('visa_documents').list('<A's id>')` returns nothing.
-
-## 3. App Store readiness
+## 4. App Store readiness
 
 | Item | Status | Notes |
 |---|---|---|
-| App icon 1024×1024, no alpha | PASS | `assets/icon.png` RGB 1024² |
-| Splash light + dark | PASS | `splash-icon.png` / `splash-icon-dark.png` 600², white / black background |
-| Permission strings | PASS after fix | Camera, Photos, Face ID, Calendar have specific strings. **Removed** the generic Microphone string (image picker never records video) and Reminders string (only the system add-event sheet is used). Verified with `expo config --type introspect` |
-| Arabic permission strings | OPEN (S3) | Info.plist strings are English only; needs `locales` in app.json |
-| Privacy manifest | ADDED | `ios.privacyManifests`: tracking false + required-reason APIs (UserDefaults CA92.1, FileTimestamp C617.1, SystemBootTime 35F9.1, DiskSpace E174.1) |
-| App privacy labels (App Store Connect) | OWNER | Declare: name, email, phone, DOB, passport number, documents (photos/files), purchase history; linked to the user; not used for tracking |
+| App icon 1024², no alpha | PASS | `assets/icon.png` RGB |
+| Splash light + dark | PASS | `splash-icon*.png`, white / black |
+| Permission strings | PASS after fix | Camera, Photos, Face ID, Calendar are specific. **Removed** the generic Microphone (never records video) and Reminders (only the system add-event sheet is used) strings. Verified by `expo config --type introspect` |
+| Arabic permission strings | OPEN (S3) | English only; needs `locales` in app.json |
+| Privacy manifest | ADDED | tracking false + required-reason APIs (UserDefaults CA92.1, FileTimestamp C617.1, SystemBootTime 35F9.1, DiskSpace E174.1) |
+| App privacy labels (App Store Connect) | OWNER | name, email, phone, DOB, passport number, documents, purchases; linked to the user; no tracking. Diagnostics (crash, usage) if Sentry is approved |
 | Export compliance | ADDED | `ITSAppUsesNonExemptEncryption: false` |
-| Account deletion in-app (5.1.1(v)) | PASS (static) | Account → Delete account → two-step confirm → `delete-account` edge function (header says deployed 21 Oct, owner-approved), WhatsApp/email fallback. Not run live |
-| Sign in with Apple (4.8) | **BLOCKER if Google ships** | Apple is hidden until the provider is enabled. If Google sign-in is on in the release, Apple must be too |
-| No placeholder content | PASS after fix | removed the unused web-port review (it had a "readiness score"); receipts now use only the stored `payment_amount`. grep for lorem/mock/fake/98%/5,000/testimonial: none in shipped code |
-| iPad | DECISION | `supportsTablet: true` means App Review tests on iPad and needs iPad screenshots. Set it to `false` unless iPad layouts are QA'd |
-| eas.json | ADDED | development / preview (channel `preview`) / production (channel `production`, autoIncrement). Build-time only |
-| Store listing, screenshots, support URL, privacy policy URL | OWNER | https://www.ezvisa.net/privacy-policy exists on the website |
-| Native build | NOT DONE | everything above takes effect in the first `eas build`; Expo Go ignores it |
+| Account deletion (5.1.1(v)) | PASS (static) | two-step confirm → `delete-account` edge function (header: deployed 21 Oct), WhatsApp/email fallback |
+| Sign in with Apple (4.8) | **BLOCKER if Google ships** | Apple is hidden until the provider is enabled |
+| Placeholder / fake content | PASS after fixes | unused web-port review removed (it had a "readiness score"); receipts use only `payment_amount`; no invented dossier file |
+| iPad | DECISION | `supportsTablet: true` means App Review tests on iPad. Set `false` unless iPad is QA'd |
+| `eas.json` | ADDED | preview → channel `preview`, production → `production` (build-time only) |
+| Store listing, screenshots, support URL | OWNER | privacy policy: https://www.ezvisa.net/privacy-policy |
+| Native build | NOT DONE | all native config takes effect in the first `eas build`; Expo Go ignores it |
 
-## 4. Hard rules re-check
+## 5. Hard rules
 
 | Rule | Result | Evidence |
 |---|---|---|
-| Expo SDK 57 | PASS | `expo@57.0.30`; no new libraries in chat 15 (after the merge, the lint tooling is mobile-app's: `eslint ^9`, `eslint-config-expo ~57.0.2`, `esbuild` for test scripts) |
-| Publishable key only | PASS | grep `service_role\|SERVICE_ROLE\|sb_secret\|eyJhbGciOi` in app/components/lib/scripts/app.json/eas.json: none. iOS + Android bundles: no `service_role`, no old DB ref `rjbgte`, no `vercel.app`. The one `http://localhost:3000` string is expo-router's own default (`node_modules/expo-router/build/head/url.js`), not app config. `.env` / `.expo-token` git-ignored and untracked |
-| No fake data | PASS after fix | see §3. Open question S2-2 (the "24–48h processing" tile) |
-| Nationality: one choice, visa-required list | PASS | `lib/questions.ts:41-42` (`SCHENGEN_VISA_REQUIRED`), `lib/wizard.ts:125` |
-| Residence UAE only | PASS | `RESIDENCE_COUNTRIES = ["United Arab Emirates"]`, `coerceResidence` |
-| City = 7 emirates, no flags | PASS | `UAE_EMIRATES`; web check `city-no-flags` |
-| Valid passport before passport number | PASS | question order `lib/questions.ts:52-57`; web check `passport-number-after-valid` |
-| No NOC for self-employed | PASS | see matrix #7 |
-| "No" to a document never blocks (new, owner request in this chat) | PASS (web) | matrix #4 / #5 |
-| Branch is mobile-app | PARTIAL | work is based on `origin/mobile-app` and pushed to `claude/vibrant-wright-ez44ch` (the only branch this session may push). `mobile-app` can fast-forward to it. Nothing was merged into `main` |
+| Expo SDK 57 | PASS | `expo@57.0.30`; chat 15 added no libraries |
+| Publishable key only | PASS | grep in app/components/lib/scripts/app.json/eas.json: no service-role or secret key; bundles clean (§1); `.env*` git-ignored |
+| No fake data | PASS after fixes | §4; open question S2-2 |
+| Nationality single, visa-required | PASS | `lib/questions.ts`, `lib/wizard.ts` `SCHENGEN_VISA_REQUIRED` |
+| Residence UAE only; city = 7 emirates, no flags | PASS | web checks |
+| Valid passport before passport number | PASS | question order + web check |
+| No NOC for self-employed | PASS | matrix #7 |
+| "No" to a document never blocks (owner, chat 15) | PASS | matrix #4/#5 |
+| Branch is mobile-app | PARTIAL | work is based on `mobile-app` and pushed to `claude/vibrant-wright-ez44ch` (this session can push only there). PR [#13](https://github.com/kirolosedward1/EZvisa-anitgravity/pull/13) was opened against **`main`**; it should target `mobile-app` (see WAITING FOR APPROVAL) |
 
-## 5. Open issues (not fixed here)
+## 6. Open issues
 
 **S1 (blocks release or risks data)**
-1. **Cross-account safety not verified live.** Depends on email confirmation being ON (see §2). Must be checked before production testing.
-2. **EAS Update not published** (see §7). The preview channel still serves group `e866e894…`, which per `HANDOFF.md` points at the **old DB** `rjbgteqgqaxalcfnksjc`. Testers on `preview` today are not testing this code.
-3. **Website server env.** Per `HANDOFF.md` §3 (19 Oct, not re-checked): `/api/upload-document` and `/api/create-payment` returned 500 (missing Supabase service role / Ziina key on Vercel), and the Supabase Auth Site URL was `http://localhost:3000`. If still true, payment and the upload route fail. (The direct bucket upload path is the fallback.)
+1. Live RLS / email confirmation not verified (§3, audit B1).
+2. **EAS Update not published** (§8). Preview still serves `e866e894…`, which points at the **old DB**.
+3. Website fixes live on `mobile-app`, not on `main`/production: the upload route now requires session + own case + payment (`3656b4b`, audit B2), and `main` was merged into `mobile-app`. Production (`main`) still has the open route. Needs a reviewed PR to `main` with the web files only.
+4. Ziina webhook secret / Vercel env unknown (audit B3); last known (19 Oct): create-payment and upload returned 500.
 
-**S2 (strong friction or a decision needed)**
-1. Sign in with Apple must be enabled if Google ships on iOS (App Store 4.8).
-2. Country page tile "24–48h · processing" appears for every country. It matches the website's file-turnaround claim, but it can be read as embassy processing (15–30 days per the website FAQ). Suggest relabelling it "file ready", or removing it.
-3. `migrations/0007_customer_discard.sql` says "NOT APPLIED" in its header, but commit `d3af779` says it was applied. Confirm which is true.
-4. The website `/apply` (main, `429c03d`) still blocks on valid passport "No". The app now continues. Decide whether the website should match.
-5. Pre-ticked "Receive application updates via WhatsApp" on the phone question. Consent is usually opt-in (unticked).
+**S2**
+1. Sign in with Apple required if Google ships.
+2. Country page "24–48h · processing" for every country matches the website's file-turnaround claim but can be read as embassy time (15–30 days per the website FAQ). Relabel ("file ready") or remove.
+3. `0007` header says NOT APPLIED; commit `d3af779` says applied. Confirm.
+4. The website `/apply` (`main`) still blocks on valid passport "No"; the app now continues. Decide parity.
+5. "Receive application updates via WhatsApp" is pre-ticked; consent is usually opt-in.
+6. Guest mode is in memory only, so a cold start while signed out always shows Welcome. The payment result is now reachable (fixed); other deep links (e.g. `/applications/<id>` from a push) still need sign-in, which is expected.
 
-**S3 (polish)**
-1. Lint warnings only (unused vars, duplicate imports, hook deps, React Compiler-only rules set to warn because the compiler is not enabled). No errors.
-2. Info.plist permission strings are English only.
-3. Countries A–Z index letters are smaller than 44pt (same as the native iOS index).
-4. The timeline uses `updated_at` as the time of the current status; any autosave moves it. The receipt "Date" is also `updated_at`. A real status-change timestamp needs a column or trigger (DB change, needs approval).
-5. The offline banner overlaps the country page's floating back button (visual only; the banner passes taps through).
-6. The manual "Add document" sheet lists "NOC / employment" even for self-employed applicants.
-7. `HANDOFF.md` §1–3 describe the 19 Oct state (e.g. "no notifications / push tables") and are stale. Chat 15 adds a status section on top.
-8. Passport rule text (audit M4): the hint says "6 months from your travel date", but validation checks "3 months after return". The new "add it later" note follows the hint. Pick one rule.
+**S3**
+1. Lint warnings (157; no errors).
+2. English-only Info.plist permission strings.
+3. Countries A–Z index letters below 44pt (like the native index).
+4. Receipt date and Home times use `updated_at` (status history = proposed 0009).
+5. Offline banner overlaps the country page's back button (visual only).
+6. "Add document" sheet lists NOC for self-employed.
+7. Passport rule text "6 months from travel" vs validation "3 months after return" (audit M4). The new note follows the hint.
+8. Web builds must use `expo export --clear`: Metro's cache reused an earlier build's `EXPO_PUBLIC_SUPABASE_URL` in this QA. The publish command in §8 already uses `--clear`; keep it.
+9. Dead code left: `DateRow`, `DateField`, `DateCard`, `NATIONALITIES`.
 
-## 5b. Earlier open issues (`docs/mobile-audit.md` §10, chat 01): status after chats 02–15
+### Earlier open issues (`docs/mobile-audit.md` §10): status now
+| # | Status |
+|---|---|
+| B1 RLS/storage unverified | OPEN (§3) |
+| B2 upload route without auth | fixed on `mobile-app` (`3656b4b`), **not on `main`** |
+| B3 webhook secret | OPEN (owner) |
+| B4 preview update on the old DB | OPEN (§8) |
+| H2 payment intent overwrite | app side: one open payment per application (chat 08, pay e2e). Website side OPEN |
+| H3 receipt from the payment record | amount FIXED (chat 15); date OPEN (S3-4) |
+| H4 synthesised dossier | FIXED (chat 09 + chat 15) |
+| H5 PII left after sign-out | FIXED (chat 03, auth e2e; chat 10 upload copies) |
+| H6 guest rows under any email | OPEN (insert policy) |
+| H7 no submitted email / HubSpot lead for app cases | OPEN (website) |
+| H8 docs disagree on what is live | OPEN (S2-3) |
+| H9 check-payment validation | OPEN (website) |
+| M1/M2 lint config, `eas.json` | FIXED |
+| M6 phone-computed price | FIXED (chat 08: server price only; pay e2e "no 249 AED in page") |
+| M7 timeline times | proposed `0009` |
+| M9 i18n gaps | FIXED for all `t()` keys and the screens in §7; receipt PDF and some native `Alert`s still English |
+| M11 dark mode | supported and passing; `PRODUCT.md` says "dropped". Decide |
+| M12 double query | FIXED (chat 14) |
+| L1 dead code | `steps.tsx`, `payment.tsx` removed; others remain |
+| L3 `supportsTablet` | OPEN (decision) |
+| L6 use-before-declare | FIXED |
 
-| # | Issue | Status now |
-|---|---|---|
-| B1 | Live RLS / storage policies unverified; old `scripts/003`/`005` policies may let any user read every application and passport | **OPEN**: still not verifiable from here (§2). Owner runs the audit §12 queries |
-| B2 | Website `/api/upload-document` accepts files for any application id, no auth | **OPEN** (website `main` PR; `c761bda` only changed object naming) |
-| B3 | Ziina webhook unauthenticated unless `ZIINA_WEBHOOK_SECRET` is set | **OPEN** (owner: Vercel env) |
-| B4 | EAS `preview` update points at the old DB | **OPEN**: not republished (§7) |
-| H1 | `mobile-app` carries an older website copy that differs from `main` | OPEN (never merge mobile-app → main) |
-| H2 | Each create-payment overwrites `payment_id` | OPEN (website) |
-| H3 | Receipt amount/date not from the payment record | amount **FIXED** (`d6c14ee`); date still `updated_at` (S3-4) |
-| H4 | Synthesised "Your EZvisa dossier" document | **FIXED** in chat 15 (no invented file; status from the DB) |
-| H5 | Sign-out leaves PII on the phone | upload queue + copies **FIXED** (chat 10, `7116578`); wizard drafts / passport expiry: check `lib/form.tsx` on device |
-| H6 | Guest checkout inserts rows under any email | OPEN (RLS/insert policy, owner) |
-| H7 | No "application submitted" email / HubSpot lead for app cases | OPEN (website) |
-| H8 | Docs disagree on what is live | OPEN (S2-3) |
-| H9 | `check-payment` unvalidated id | OPEN (website) |
-| M1/M2 | No lint config / no `eas.json` | **FIXED** (lint chat 02/14 + here; `eas.json` here) |
-| M4 | Passport rule text vs validation | OPEN (S3-8) |
-| M6 | Displayed price computed on the phone | OPEN (needs a server price) |
-| M7 | Timeline uses `updated_at` | OPEN (S3-4, needs status history: DB change) |
-| M9 | i18n gaps | **FIXED** for every `t()` key and the screens listed in §6. Remaining English: receipt PDF and some native `Alert` texts |
-| M11 | Dark mode decision | Code supports light + dark and both pass here; `PRODUCT.md` still says "dropped". Decide |
-| M12 | Double applications query | FIXED (chat 14) |
-| L1 | Dead code | `steps.tsx`, `payment.tsx` **removed**; `DateRow`, `DateField`, `DateCard`, `NATIONALITIES` remain |
-| L3 | `supportsTablet: true` | OPEN (decision, §3) |
-| L6 | AuthForm use-before-declare | FIXED |
-
-## 6. Commits in this chat (all in `mobile/`)
+## 7. Chat 15 commits (`mobile/`)
 
 | Commit | Change |
 |---|---|
-| `3267d83` | lock file synced (`npm ci` works), eslint config, Deno functions excluded from tsc |
-| `78a71a0` | removed unused web-port `components/wizard/steps.tsx` + `payment.tsx` |
-| `386f5cf` | Arabic: notifications, checklist rows, offline banner, country page, app card, tab-bar label, Discard dialog (+16 keys) |
-| `4f08096` | lint 0 errors |
-| `9c19e97` | 44pt password-eye and search-clear buttons |
+| `3267d83` | `npm ci` fixed (lock file), eslint, Deno functions out of tsc |
+| `78a71a0` | removed unused web-port `steps.tsx` / `payment.tsx` |
+| `386f5cf`, `3ed5349`, `8495817` | Arabic: notifications, checklist rows, offline banner, country page (name, capital, facts, documents, mirrored back), app card, tab label, Discard, country search, Google button |
+| `4f08096`, `cd8ed72` | lint 0 errors (incl. `.cjs` scripts) |
+| `9c19e97`, `949dd4e` | 44pt password eye (old form and chat 03 screen) and search clear |
 | `490d4f1` | privacy manifest, unused permissions removed, export compliance, `eas.json` |
-| `d6c14ee` | receipts only from the stored `payment_amount` |
-| `3ed5349` | country page fully Arabic + mirrored back chevron |
-| `9ea8e91` | valid passport "No" message shown once |
-| `af81f75` | "No" to a document continues, with "To get later" on the question, Review and the application page; saved as `additional_notes.missingDocuments` |
-| `d4b6ebe` | QA report + evidence sheets |
-| `e73b8ea` | merge of `origin/mobile-app` (chats 02–14); conflicts resolved (see the commit message) |
-| `8495817` | Arabic for the country search empty state and the Google button |
-| `0bc7870` | no invented dossier file when status is ready |
-| (this commit) | QA report and sheets re-run on the merged code |
+| `d6c14ee` | receipts only from `payment_amount` |
+| `9ea8e91`, `af81f75` | document "No" continues; "To get later" on the question, Review and the application page; `additional_notes.missingDocuments` |
+| `0bc7870` | no invented dossier file (superseded by chat 09's version in the merge) |
+| `d679575` | node checks build again after chat 03 (`expo-secure-store` stub) |
+| `1a50987` | **payment result reachable signed out** (guest whose app restarted) |
+| `e73b8ea`, `b47d7fe`, `cdce290` | merges of `mobile-app` (chats 02–14; 03, 08, 11; 06, 09 + main) |
+| `d4b6ebe`, this commit | QA report, evidence sheets, handoff |
 
-## 7. EAS Update (preview)
+## 8. EAS Update (preview)
 
-**Not published.** No `EXPO_TOKEN` is in this environment, and `api.expo.dev` / `u.expo.dev` are denied by the network policy. **No EAS Update ID was produced.**
+**Not published. No EAS Update ID exists for this code.** There is no `EXPO_TOKEN` here, and `api.expo.dev` / `u.expo.dev` are denied.
 
-Configured command (from `HANDOFF.md` §3/§4 and the new `eas.json`; preview channel only, never production):
-
+Command (preview channel only; `eas.json` maps profile `preview` → channel `preview`):
 ```bash
 cd mobile
-# 1. EAS → Project → Environment variables → preview: EXPO_PUBLIC_SUPABASE_URL=https://dravvaykssrbktztmrlj.supabase.co,
-#    EXPO_PUBLIC_SUPABASE_ANON_KEY=<publishable key>, EXPO_PUBLIC_SITE_URL=https://www.ezvisa.net; delete EXPO_PUBLIC_WEB_URL
-npx eas-cli@latest env:pull --environment preview      # writes .env.local
-npx expo export --clear --platform ios --platform android --output-dir dist
+# EAS → Environment variables → preview: EXPO_PUBLIC_SUPABASE_URL=https://dravvaykssrbktztmrlj.supabase.co,
+#   EXPO_PUBLIC_SUPABASE_ANON_KEY=<publishable key>, EXPO_PUBLIC_SITE_URL=https://www.ezvisa.net; delete EXPO_PUBLIC_WEB_URL
+npx eas-cli@latest env:pull --environment preview            # writes .env.local (git-ignored)
+npx expo export --clear --platform ios --platform android --output-dir dist   # --clear is required (S3-8)
 grep -c dravvaykssrbktztmrlj dist/_expo/static/js/ios/*.hbc   # must be >= 1
 grep -c rjbgteqgqaxalcfnksjc dist/_expo/static/js/ios/*.hbc   # must be 0
 EXPO_TOKEN=… npx eas-cli@latest update --branch preview --environment preview --skip-bundler --input-dir dist --platform all \
-  --message "chat 15 QA: Arabic fixes, document 'get later', 44pt targets, receipts"
+  --message "chat 15 QA"
 ```
+The command prints the update group ID; record it in `HANDOFF.md`.
 
-## 8. Final status
+## 9. Final status
 
 **NOT READY FOR PRODUCTION TESTING.** Blockers:
-1. EAS Update not published; the preview channel still serves a bundle that points at the old database (S1-2).
-2. Cross-account access not verified on the live project, and it depends on email confirmation being on (S1-1).
-3. Payment and the website upload route were last seen failing because of missing server env on Vercel (S1-3).
-4. No real-device pass yet: VoiceOver, Dynamic Type, Face ID, camera, push, uploads and payment need one run on a 390pt and a 430pt iPhone using `QA-CHECKLIST.md`.
+1. EAS Update not published; preview serves a bundle that points at the old database.
+2. Live RLS and email confirmation not verified, so cross-account safety on the real database is unproven.
+3. Website fixes (upload auth B2) and env (Ziina key, webhook secret) are not in production.
+4. No real-device pass: VoiceOver, Dynamic Type, Face ID, camera, push, real upload and real payment need one run on a 390pt and a 430pt iPhone (`QA-CHECKLIST.md`).

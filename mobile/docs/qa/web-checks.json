@@ -1,5 +1,17 @@
 [
  {
+  "id": "welcome-signed-out",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "390-dark-ar",
   "ok": true,
@@ -10,6 +22,12 @@
   "tag": "390-dark-ar",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "countries:route",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -24,6 +42,12 @@
   "note": "dir=rtl"
  },
  {
+  "id": "account:route",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "390-dark-ar",
   "ok": true,
@@ -34,6 +58,12 @@
   "tag": "390-dark-ar",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "applications:route",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -48,16 +78,10 @@
   "note": "dir=rtl"
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "390-dark-ar",
   "ok": true,
-  "note": ""
- },
- {
-  "id": "notifications:rtl",
-  "tag": "390-dark-ar",
-  "ok": true,
-  "note": "dir=rtl"
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -132,10 +156,28 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "390-dark-en",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "countries:route",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -144,10 +186,22 @@
   "note": ""
  },
  {
+  "id": "account:route",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "390-dark-en",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "applications:route",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -156,10 +210,10 @@
   "note": ""
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "390-dark-en",
   "ok": true,
-  "note": ""
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -228,6 +282,18 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "390-light-ar",
   "ok": true,
@@ -238,6 +304,12 @@
   "tag": "390-light-ar",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "countries:route",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -252,6 +324,12 @@
   "note": "dir=rtl"
  },
  {
+  "id": "account:route",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "390-light-ar",
   "ok": true,
@@ -262,6 +340,12 @@
   "tag": "390-light-ar",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "applications:route",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -276,16 +360,10 @@
   "note": "dir=rtl"
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "390-light-ar",
   "ok": true,
-  "note": ""
- },
- {
-  "id": "notifications:rtl",
-  "tag": "390-light-ar",
-  "ok": true,
-  "note": "dir=rtl"
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -360,10 +438,28 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "390-light-en-ax3",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "countries:route",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -372,10 +468,22 @@
   "note": ""
  },
  {
+  "id": "account:route",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "390-light-en-ax3",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "applications:route",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -384,10 +492,10 @@
   "note": ""
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "390-light-en-ax3",
   "ok": true,
-  "note": ""
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -456,10 +564,28 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "390-light-en",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "countries:route",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -468,10 +594,22 @@
   "note": ""
  },
  {
+  "id": "account:route",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "390-light-en",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "applications:route",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -480,10 +618,10 @@
   "note": ""
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "390-light-en",
   "ok": true,
-  "note": ""
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -552,6 +690,18 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "430-dark-ar-ax3",
   "ok": true,
@@ -562,6 +712,12 @@
   "tag": "430-dark-ar-ax3",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "countries:route",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -576,6 +732,12 @@
   "note": "dir=rtl"
  },
  {
+  "id": "account:route",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "430-dark-ar-ax3",
   "ok": true,
@@ -586,6 +748,12 @@
   "tag": "430-dark-ar-ax3",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "applications:route",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -600,16 +768,10 @@
   "note": "dir=rtl"
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "430-dark-ar-ax3",
   "ok": true,
-  "note": ""
- },
- {
-  "id": "notifications:rtl",
-  "tag": "430-dark-ar-ax3",
-  "ok": true,
-  "note": "dir=rtl"
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -684,6 +846,18 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "430-dark-ar",
   "ok": true,
@@ -694,6 +868,12 @@
   "tag": "430-dark-ar",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "countries:route",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -708,6 +888,12 @@
   "note": "dir=rtl"
  },
  {
+  "id": "account:route",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "430-dark-ar",
   "ok": true,
@@ -718,6 +904,12 @@
   "tag": "430-dark-ar",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "applications:route",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -732,16 +924,10 @@
   "note": "dir=rtl"
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "430-dark-ar",
   "ok": true,
-  "note": ""
- },
- {
-  "id": "notifications:rtl",
-  "tag": "430-dark-ar",
-  "ok": true,
-  "note": "dir=rtl"
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -816,10 +1002,28 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "430-dark-en",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "countries:route",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -828,10 +1032,22 @@
   "note": ""
  },
  {
+  "id": "account:route",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "430-dark-en",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "applications:route",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -840,10 +1056,10 @@
   "note": ""
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "430-dark-en",
   "ok": true,
-  "note": ""
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -912,6 +1128,18 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "430-light-ar",
   "ok": true,
@@ -922,6 +1150,12 @@
   "tag": "430-light-ar",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "countries:route",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -936,6 +1170,12 @@
   "note": "dir=rtl"
  },
  {
+  "id": "account:route",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "430-light-ar",
   "ok": true,
@@ -946,6 +1186,12 @@
   "tag": "430-light-ar",
   "ok": true,
   "note": "dir=rtl"
+ },
+ {
+  "id": "applications:route",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -960,16 +1206,10 @@
   "note": "dir=rtl"
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "430-light-ar",
   "ok": true,
-  "note": ""
- },
- {
-  "id": "notifications:rtl",
-  "tag": "430-light-ar",
-  "ok": true,
-  "note": "dir=rtl"
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
@@ -1044,10 +1284,28 @@
   "note": ""
  },
  {
+  "id": "welcome-signed-out",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:route",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/"
+ },
+ {
   "id": "home:no-hscroll",
   "tag": "430-light-en",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "countries:route",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/countries"
  },
  {
   "id": "countries:no-hscroll",
@@ -1056,10 +1314,22 @@
   "note": ""
  },
  {
+  "id": "account:route",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/account"
+ },
+ {
   "id": "account:no-hscroll",
   "tag": "430-light-en",
   "ok": true,
   "note": ""
+ },
+ {
+  "id": "applications:route",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": "http://127.0.0.1:8765/applications"
  },
  {
   "id": "applications:no-hscroll",
@@ -1068,10 +1338,10 @@
   "note": ""
  },
  {
-  "id": "notifications:no-hscroll",
+  "id": "country:route",
   "tag": "430-light-en",
   "ok": true,
-  "note": ""
+  "note": "http://127.0.0.1:8765/destination/france"
  },
  {
   "id": "country:no-hscroll",
