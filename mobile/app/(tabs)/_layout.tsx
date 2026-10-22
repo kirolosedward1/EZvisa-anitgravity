@@ -1,15 +1,14 @@
-import { Redirect, Tabs } from "expo-router";
+import { Tabs } from "expo-router";
 import { View } from "react-native";
 import { useColors } from "../../lib/theme";
 import { TabBar } from "../../components/nav/TabBar";
-import { useWelcomed } from "../../lib/onboarding";
 import { useAuth } from "../../lib/auth";
 import { useT } from "../../lib/i18n";
 
 export default function TabsLayout() {
-  const c = useColors(); const welcomed = useWelcomed(); const { session, loading } = useAuth(); const { t } = useT();
-  if (welcomed === null || loading) return <View style={{ flex: 1, backgroundColor: c.bg }} />;
-  if (!welcomed && !session) return <Redirect href="/welcome" />;
+  const c = useColors(); const { loading } = useAuth(); const { t } = useT();
+  // Only signed-in users and guests get here (route protection in app/_layout.tsx); this covers the splash period.
+  if (loading) return <View style={{ flex: 1, backgroundColor: c.bg }} />;
   return (
     <Tabs tabBar={(p) => <TabBar {...p} />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: c.bg } }}>
       <Tabs.Screen name="(home)" options={{ title: t("Home") }} />

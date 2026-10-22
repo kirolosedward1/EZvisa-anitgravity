@@ -14,7 +14,6 @@ import { View } from "react-native";
 import { NetworkBanner } from "../components/NetworkBanner";
 import { BootOverlay } from "../components/Boot";
 import { LockGate } from "../lib/lock";
-import { useWelcomed } from "../lib/onboarding";
 import { startUploadQueue } from "../lib/uploads";
 import { startReminderRouting } from "../lib/reminders";
 
@@ -22,10 +21,37 @@ export default function Root() {
   return <AppearanceProvider><I18nProvider><Themed /></I18nProvider></AppearanceProvider>;
 }
 
-/** The splash stays until the things the first screen needs are loaded (no fixed delay). */
+/** The splash stays until the things the first screen needs are loaded (no fixed delay), so the stored session is known
+ *  before anything is shown: no flash of the sign-in screen for a signed-in user, or of Home for a signed-out one. */
 function Boot() {
-  const { ready: a } = useAppearance(); const { ready: l } = useT(); const { loading } = useAuth(); const { hydrated } = useForm(); const welcomed = useWelcomed();
-  return <BootOverlay ready={a && l && !loading && hydrated && welcomed !== null} />;
+  const { ready: a } = useAppearance(); const { ready: l } = useT(); const { loading } = useAuth(); const { hydrated } = useForm();
+  return <BootOverlay ready={a && l && !loading && hydrated} />;
+}
+
+/** Route protection. Signed out: Welcome (sign in / create account / continue without an account). Signed in or guest: the app.
+ *  While the session loads, the app side stays mounted under the splash, so a signed-in start never passes through Welcome.
+ *  /auth/* (sign-in screens, email-link callback, new password) and /payment-return are reachable in every state. */
+function Routes() {
+  const c = useColors(); const { session, guest, loading } = useAuth();
+  const inApp = loading || !!session || guest;
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
+      <Stack.Protected guard={inApp}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="apply" options={{ presentation: "modal" }} />
+        <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
+        <Stack.Screen name="continue/[id]" options={{ presentation: "modal" }} />
+        <Stack.Screen name="payment/[id]" options={{ presentation: "modal", gestureEnabled: false }} />
+        {/* full screen: a swipe-to-dismiss sheet would fight the crop handles */}
+        <Stack.Screen name="upload/[id]" options={{ presentation: "fullScreenModal", gestureEnabled: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={!inApp}>
+        <Stack.Screen name="welcome" options={{ animation: "fade", gestureEnabled: false }} />
+      </Stack.Protected>
+      <Stack.Screen name="auth" options={{ presentation: "modal" }} />
+      <Stack.Screen name="payment-return" />
+    </Stack>
+  );
 }
 
 function Themed() {
@@ -37,17 +63,7 @@ function Themed() {
       <AuthProvider><FormProvider>
         <View style={{ flex: 1, backgroundColor: c.bg }}>
           <StatusBar style={dark ? "light" : "dark"} />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="welcome" options={{ animation: "fade", gestureEnabled: false }} />
-            <Stack.Screen name="auth" options={{ presentation: "modal" }} />
-            <Stack.Screen name="apply" options={{ presentation: "modal" }} />
-            <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
-            <Stack.Screen name="continue/[id]" options={{ presentation: "modal" }} />
-            <Stack.Screen name="payment/[id]" options={{ presentation: "modal", gestureEnabled: false }} />
-            {/* full screen: a swipe-to-dismiss sheet would fight the crop handles */}
-            <Stack.Screen name="upload/[id]" options={{ presentation: "fullScreenModal", gestureEnabled: false }} />
-          </Stack>
+          <Routes />
           <NetworkBanner />
           <LockGate />
           <Boot />

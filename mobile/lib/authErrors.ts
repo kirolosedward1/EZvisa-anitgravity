@@ -12,7 +12,7 @@ export const AUTH_MESSAGE: Record<AuthIssue, string> = {
   unconfirmed: "Confirm your email first. Check your inbox for the link.",
   "rate-limited": "Too many tries. Wait a minute, then try again.",
   exists: "This email already has an account. Sign in instead.",
-  "weak-password": "Use at least 8 characters, with letters and numbers.",
+  "weak-password": "Choose a stronger password (at least 8 characters).",
   "same-password": "Choose a password you haven't used before.",
   "link-expired": "This link has expired or was already used. Ask for a new one.",
   "other-device": "Open the link on the phone where you asked for it, or ask for a new one here.",

@@ -1,68 +1,94 @@
-import { PressScale } from "./ui";
-import { useEffect, useState } from "react";
-import { Pressable, TextInput, TextInputProps, View, Platform } from "react-native";
-import { Button, Icon, Text, InlineError } from "./ui";
+// Email + password sign-in and sign-up against the website's Supabase project (same accounts as www.ezvisa.net).
+// The website offers: password sign-in, email magic link, sign-up and forgot password (app/login, app/signup,
+// app/forgot-password in the web repo). Google and Apple only appear when the provider is enabled on the project.
+import { useEffect, useRef, useState } from "react";
+import { View } from "react-native";
+import { router } from "expo-router";
+import * as AppleAuthentication from "expo-apple-authentication";
+import { Button, Text, InlineError } from "./ui";
 import { GoogleButton } from "./GoogleButton";
-import { useColors, T, S, R } from "../lib/theme";
+import { EmailField, PasswordField, TextLink, EmailSent, useCooldown, isOffline } from "./auth/AuthShell";
+import { useColors, S } from "../lib/theme";
 import { supabase } from "../lib/supabase";
 import { signInWithGoogle, googleEnabled } from "../lib/google";
 import { appleEnabled, signInWithApple } from "../lib/apple";
-import * as AppleAuthentication from "expo-apple-authentication";
-import { siteUrl } from "../lib/config";
+import { authRedirect } from "../lib/authLinks";
+import { AUTH_MESSAGE, classifyAuthError, EMAIL_RE, MIN_PASSWORD, type AuthIssue } from "../lib/authErrors";
 import { success, error as hError } from "../lib/haptics";
 import { useT } from "../lib/i18n";
+export { Field } from "./auth/AuthShell";
 
-export function Field({ trailing, ...p }: TextInputProps & { trailing?: React.ReactNode }) {
-  const c = useColors();
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: c.card, borderRadius: R.input, minHeight: 56, paddingHorizontal: S.md, gap: S.xs }}>
-      <TextInput placeholderTextColor={c.secondaryLabel} maxFontSizeMultiplier={1.6} accessibilityLabel={p.placeholder} {...p}
-        style={[T.body, { flex: 1, color: c.label, minHeight: 56, paddingVertical: 0 }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
-      {trailing}
-    </View>
-  );
-}
+type Busy = "" | "pw" | "google" | "apple" | "resend";
 
-/** Email + password and Continue with Google. Errors render inline. */
 export function AuthForm({ mode, onMode, initialEmail }: { mode: "signin" | "signup"; onMode: (m: "signin" | "signup") => void; initialEmail?: string }) {
   const c = useColors(); const { t } = useT();
-  const [mail, setMail] = useState(initialEmail ?? ""); const [pw, setPw] = useState(""); const [show, setShow] = useState(false);
-  const [busy, setBusy] = useState<"" | "pw" | "google" | "apple" | "link" | "reset">("");
-  const [err, setErr] = useState<string | null>(null); const [info, setInfo] = useState<string | null>(null); const [forgot, setForgot] = useState(false);
-  // Same links the website sends (official domain only): confirm -> /auth/callback, reset -> /auth/callback?type=recovery.
-  const confirmTo = siteUrl("/auth/callback?next=/dashboard"); const resetTo = siteUrl("/auth/callback?type=recovery");
-  const [google, setGoogle] = useState(false);
+  const [mail, setMail] = useState(initialEmail ?? ""); const [pw, setPw] = useState("");
+  const [busy, setBusy] = useState<Busy>(""); const inFlight = useRef(false); // a ref, so a double tap can't send twice
+  const [err, setErr] = useState<string | null>(null); const [issue, setIssue] = useState<AuthIssue | null>(null);
+  const [sent, setSent] = useState(false); const cool = useCooldown();
+  const [google, setGoogle] = useState(false); const [apple, setApple] = useState(false);
   useEffect(() => { googleEnabled().then(setGoogle); appleEnabled().then(setApple); }, []);
-  const [apple, setApple] = useState(false);
-  const check = (needPw: boolean) => {
-    if (!/^\S+@\S+\.\S+$/.test(mail.trim())) { hError(); setErr(t("Enter a valid email.")); return false; }
-    if (needPw && pw.length < 8) { hError(); setErr(t("Password must be at least 8 characters.")); return false; }
+  const email = mail.trim().toLowerCase();
+
+  const fail = (e: unknown | AuthIssue) => {
+    if ((e as { isFriendly?: boolean })?.isFriendly) { hError(); setIssue("unknown"); setErr(t((e as Error).message)); return; } // Google/Apple helpers
+    const k = typeof e === "string" && e in AUTH_MESSAGE ? (e as AuthIssue) : classifyAuthError(e);
+    hError(); setIssue(k); setErr(t(AUTH_MESSAGE[k]));
+  };
+  /** Runs one request at a time; checks the connection first so airplane mode answers instantly. */
+  const guard = async (kind: Busy, fn: () => Promise<void>) => {
+    if (inFlight.current) return;
+    inFlight.current = true; setErr(null); setIssue(null); setBusy(kind);
+    try { if (await isOffline()) { fail("offline"); return; } await fn(); }
+    catch (e) { fail(e); }
+    finally { inFlight.current = false; setBusy(""); }
+  };
+  const valid = () => {
+    if (!EMAIL_RE.test(email)) { fail("invalid-email"); return false; }
+    if (pw.length < (mode === "signup" ? MIN_PASSWORD : 1)) { hError(); setErr(mode === "signup" ? t(AUTH_MESSAGE["weak-password"]) : t("Enter your password.")); return false; }
     return true;
   };
-  const run = async (kind: typeof busy, fn: () => Promise<{ error: any }>, ok?: string) => {
-    setErr(null); setInfo(null); setBusy(kind);
-    try { const { error } = await fn(); if (error) throw error; success(); if (ok) setInfo(ok); }
-    catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
-    finally { setBusy(""); }
-  };
-  const onGoogle = async () => {
-    setErr(null); setInfo(null); setBusy("google");
-    try { const r = await signInWithGoogle(); if (r === "ok") success(); }
-    catch (e: any) { hError(); setErr(e?.message ?? "Google sign-in failed."); }
-    finally { setBusy(""); }
-  };
-  const onApple = async () => {
-    setErr(null); setInfo(null); setBusy("apple");
-    try { const r = await signInWithApple(); if (r === "ok") success(); }
-    catch (e: any) { hError(); setErr(e?.message ?? "Apple sign-in failed."); }
-    finally { setBusy(""); }
-  };
+
   const submit = () => {
-    if (!check(true)) return;
-    if (mode === "signin") run("pw", () => supabase!.auth.signInWithPassword({ email: mail.trim(), password: pw }));
-    else run("pw", () => supabase!.auth.signUp({ email: mail.trim(), password: pw, options: { emailRedirectTo: confirmTo } }), "Check your email and tap the confirmation link, then sign in here with the same email and password.");
+    if (!supabase || inFlight.current || !valid()) return;
+    const sb = supabase;
+    guard("pw", async () => {
+      if (mode === "signin") {
+        const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+        if (error) throw error;
+        success(); // the auth screen closes when the session arrives
+        return;
+      }
+      const { data, error } = await sb.auth.signUp({ email, password: pw, options: { emailRedirectTo: authRedirect("signup") } });
+      if (error) throw error;
+      // With email confirmation on, an existing address returns a user with no identities (no email is sent).
+      if (data.user && data.user.identities?.length === 0) { fail("exists"); return; }
+      success();
+      if (!data.session) { setSent(true); cool.start(); }
+    });
   };
-  if (!supabase) return <Text variant="body" tone="secondary" center>{"Sign-in isn't configured."}</Text>;
+  const resend = () => {
+    if (!supabase) return;
+    const sb = supabase;
+    guard("resend", async () => {
+      const { error } = await sb.auth.resend({ type: "signup", email, options: { emailRedirectTo: authRedirect("signup") } });
+      if (error) throw error;
+      success(); cool.start(); if (!sent) { setSent(true); }
+    });
+  };
+  const onGoogle = () => guard("google", async () => { if ((await signInWithGoogle()) === "ok") success(); });
+  const onApple = () => guard("apple", async () => { if ((await signInWithApple()) === "ok") success(); });
+
+  if (!supabase) return <Text variant="body" tone="secondary" center>{t("Sign-in isn't configured.")}</Text>;
+  if (sent) return (
+    <EmailSent email={email} note={t("Open it on this phone to confirm your account. Then you're signed in.")} onResend={resend} resending={busy === "resend"} left={cool.left}
+      onChangeEmail={() => { setSent(false); setErr(null); }} />
+  );
+  const divider = (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginVertical: S.xs }}>
+      <View style={{ flex: 1, height: 1, backgroundColor: c.card }} /><Text variant="footnote" tone="secondary">{t("or")}</Text><View style={{ flex: 1, height: 1, backgroundColor: c.card }} />
+    </View>
+  );
   return (
     <View style={{ gap: S.sm }}>
       {apple && (
@@ -70,36 +96,25 @@ export function AuthForm({ mode, onMode, initialEmail }: { mode: "signin" | "sig
           buttonStyle={c.label === "#FFFFFF" ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
           style={{ height: 56, width: "100%" }} onPress={onApple} />
       )}
-      {(google || apple) && !google && (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginVertical: S.xs }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: c.card }} /><Text variant="footnote" tone="secondary">{t("or")}</Text><View style={{ flex: 1, height: 1, backgroundColor: c.card }} />
-        </View>
-      )}
-      {google && (<>
-      <GoogleButton onPress={onGoogle} loading={busy === "google"} />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginVertical: S.xs }}>
-        <View style={{ flex: 1, height: 1, backgroundColor: c.card }} /><Text variant="footnote" tone="secondary">{t("or")}</Text><View style={{ flex: 1, height: 1, backgroundColor: c.card }} />
+      {google && <GoogleButton onPress={onGoogle} loading={busy === "google"} />}
+      {(google || apple) && divider}
+      <EmailField value={mail} onChangeText={(v) => { setMail(v); setErr(null); }} />
+      <PasswordField isNew={mode === "signup"} value={pw} onChangeText={(v) => { setPw(v); setErr(null); }} onSubmitEditing={submit} returnKeyType="go" />
+      {mode === "signup" && !err && <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.xs }}>{t("At least 8 characters.")}</Text>}
+      <InlineError text={err} />
+      {issue === "unconfirmed" && <TextLink title={t("Send the confirmation link again")} tone="tint" onPress={resend} testID="resend-confirm" />}
+      {issue === "exists" && mode === "signup" && <TextLink title={t("Sign in instead")} tone="tint" onPress={() => { setErr(null); setIssue(null); onMode("signin"); }} />}
+      <View style={{ marginTop: S.xs }}>
+        <Button title={mode === "signin" ? t("Sign in") : t("Create account")} loading={busy === "pw"} disabled={!!busy && busy !== "pw"} onPress={submit} />
       </View>
+      {mode === "signin" && (<>
+        <Button title={t("Email me a sign-in link")} variant="secondary" disabled={!!busy} onPress={() => router.push({ pathname: "/auth/magic-link", params: email ? { email } : {} })} />
+        <TextLink title={t("Forgot password?")} onPress={() => router.push({ pathname: "/auth/forgot", params: email ? { email } : {} })} testID="forgot-link" />
       </>)}
-      <Field placeholder={t("Email")} value={mail} onChangeText={(t) => { setMail(t); setErr(null); }} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="username" autoComplete="email" />
-      <Field placeholder={t("Password")} value={pw} onChangeText={(t) => { setPw(t); setErr(null); }} secureTextEntry={!show} textContentType={mode === "signup" ? "newPassword" : "password"} autoComplete={mode === "signup" ? "new-password" : "password"} onSubmitEditing={submit}
-        trailing={<PressScale onPress={() => setShow(!show)} accessibilityRole="button" accessibilityLabel={show ? t("Hide password") : t("Show password")} hitSlop={10}><Icon name={show ? "eye.slash" : "eye"} size={18} color={c.secondaryLabel} /></PressScale>} />
-      {!!err && <InlineError text={err} />}
-      {!!info && <Text variant="footnote" tone="green" style={{ marginHorizontal: S.xs }} accessibilityLiveRegion="polite">{info}</Text>}
-      <View style={{ marginTop: S.xs }}><Button title={mode === "signin" ? t("Sign in") : t("Create account")} loading={busy === "pw"} onPress={submit} /></View>
-      {mode === "signin" && (
-        <PressScale onPress={() => setForgot(!forgot)} accessibilityRole="button" accessibilityState={{ expanded: forgot }} style={{ minHeight: 44, alignItems: "center", justifyContent: "center" }}>
-          <Text variant="subhead" tone="secondary" weight="500">{t("Forgot password?")}</Text>
-        </PressScale>
-      )}
-      {forgot && mode === "signin" && (
-        <View style={{ flexDirection: "row", gap: S.xs }}>
-          <View style={{ flex: 1 }}><Button title={t("Reset password")} variant="secondary" size="M" loading={busy === "reset"} onPress={() => check(false) && run("reset", () => supabase!.auth.resetPasswordForEmail(mail.trim(), { redirectTo: resetTo }), "We sent a reset link. Set a new password on ezvisa.net, then sign in here.")} /></View>
-        </View>
-      )}
-      <PressScale onPress={() => { setErr(null); setInfo(null); setForgot(false); onMode(mode === "signin" ? "signup" : "signin"); }} accessibilityRole="button" style={{ minHeight: 44, alignItems: "center", justifyContent: "center", marginTop: S.xs }}>
-        <Text variant="subhead" tone="secondary">{mode === "signin" ? t("New here?") + " " : t("Have an account?") + " "}<Text variant="subhead" tone="tint" weight="600">{mode === "signin" ? t("Create account") : t("Sign in")}</Text></Text>
-      </PressScale>
+      <View style={{ marginTop: S.xs }}>
+        <TextLink title={mode === "signin" ? t("New here? Create account") : t("Have an account? Sign in")} tone="tint"
+          onPress={() => { setErr(null); setIssue(null); onMode(mode === "signin" ? "signup" : "signin"); }} testID="mode-toggle" />
+      </View>
     </View>
   );
 }

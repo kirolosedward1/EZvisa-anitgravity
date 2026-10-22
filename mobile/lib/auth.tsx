@@ -107,6 +107,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const uid = session?.user.id;
   useEffect(() => { if (uid) setupPush().then(setPushStatus); }, [uid]);
 
+  const continueAsGuest = useCallback(() => setGuest(true), []);
+  const clearNotice = useCallback(() => setNotice(null), []);
   const signOut = useCallback(async () => {
     if (!supabase) return;
     leaving.current = true;
@@ -117,7 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <C.Provider value={{ session, loading, pushStatus, guest, continueAsGuest: () => setGuest(true), notice, clearNotice: () => setNotice(null), recovery, setRecovery, signOut, epoch }}>
+    <C.Provider value={{ session, loading, pushStatus, guest, continueAsGuest, notice, clearNotice, recovery, setRecovery, signOut, epoch }}>
       {children}
     </C.Provider>
   );
