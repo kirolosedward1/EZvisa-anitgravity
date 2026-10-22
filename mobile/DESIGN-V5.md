@@ -10,11 +10,11 @@ References studied (Oct 2026):
 
 | Area | Rule |
 |---|---|
-| Canvas | Light #FFFFFF, dark #000000. Cards are flat fills (#F4F4F6 light, #1C1C1E dark) with no borders and no card shadows. |
+| Canvas | Light #FFFFFF, dark #000000. Cards are flat fills (#F5F5F7 light, #1C1C1E dark) with no borders and no card shadows. |
 | Depth | Shadows only on floating chrome (tab capsule, action button, sticky CTA). |
-| Accent | Brand #0436DC (dark mode #4D6BFF). Used for the primary action, selection, progress and the active-application pass card. |
+| Accent | Brand #0436DC (dark mode #8CA2FF for text/icons, #3D5AFE for fills). Used for the primary action, selection, progress and the active-application pass card. |
 | Type | System SF. On the web build the stack is -apple-system, then Inter. Display 40/800 (-1.2), large title 34/800 (-0.9), title 28/700 (-0.6), headline 17/600. |
 | Radii | Cards 24, tiles 20, inputs 16, buttons are 56pt pills, flags are circles. |
-| Spacing | 4pt grid. Screen margin 20, section gap 36. |
+| Spacing | 8pt grid (4 and 12 for fine detail). Screen margin 16, section gap 32. Current tokens: `docs/design-system.md`. |
 | Motion | Spring press (scale 0.97), slide-in steps, animated progress width, haptic on choices and primary actions. Reduce Motion is respected. |
 | Copy | One line per screen at most; questions as titles; no sales copy. |
