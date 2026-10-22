@@ -552,5 +552,13 @@ export const AR: Record<string, string> = {
   "You'll need a valid passport (at least 6 months validity from your travel date) before your visa appointment. Our team will contact you.": "ستحتاج إلى جواز سفر ساري المفعول (صلاحية 6 أشهر على الأقل من تاريخ السفر) قبل موعد التأشيرة. سيتواصل معك فريقنا.",
   "Kept on this phone": "محفوظ على هذا الهاتف", "Not set": "غير محدد", "Closes the date picker": "يغلق منتقي التاريخ",
   "Discard this application?": "تجاهل هذا الطلب؟", "It will be removed from your list.": "ستتم إزالته من قائمتك.",
+  "Schengen visa assistance": "المساعدة في تأشيرة شنغن",
+  "STAY": "الإقامة",
+  "90 DAYS": "90 يومًا",
+  "List": "قائمة",
+  "Grid": "شبكة",
+  "Google sign-in isn't set up yet. Please use email for now.": "تسجيل الدخول عبر Google غير متاح بعد. يرجى استخدام البريد الإلكتروني الآن.",
+  "This app isn't allowed to receive Google sign-ins yet. Please use email for now.": "هذا التطبيق غير مسموح له بتسجيل الدخول عبر Google بعد. يرجى استخدام البريد الإلكتروني الآن.",
+  "Google sign-in didn't complete. Please try again.": "لم يكتمل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.",
   "Edit photo": "تعديل الصورة", "Add photo": "إضافة صورة", "Remove photo": "إزالة الصورة", "Remove photo?": "إزالة الصورة؟", "Profile photo": "صورة الملف الشخصي",
 };
