@@ -103,16 +103,16 @@ for (const width of [390, 430]) {
   await page.goto(`${BASE}/apply?to=France`); await page.waitForTimeout(2500);
   const vals = {};
   await walk(page, width, "Passport Expiry Date",
-    { "Nationality": "01-nationality-prefilled", "First Name": "02-first-name-prefilled", "Phone Number": "03-phone-prefilled", "Date of Birth": "04-dob-prefilled", "Passport Number": "05-passport-prefilled", "Passport Expiry Date": "06-passport-expired-flagged" },
+    { "Nationality": "01-nationality-prefilled", "First Name": "02-first-name-prefilled", "Phone Number": "03-phone-prefilled", "Date of Birth": "04-dob-prefilled", "Passport Expiry Date": "06-passport-expired-flagged" },
     {
       "First Name": async (chip) => { vals.first = await page.getByTestId("question-input").inputValue(); vals.firstChip = chip; },
       "Phone Number": async (chip) => { vals.phone = await page.getByLabel("Phone number").inputValue(); vals.phoneChip = chip; await page.getByLabel("Phone number").fill("100 999 0000"); },
-      "Passport Number": async (chip) => { vals.pass = await page.getByTestId("question-input").inputValue(); },
       "Passport Expiry Date": async () => { await page.waitForTimeout(900); vals.expErr = await page.getByTestId("question-error").innerText().catch(() => ""); },
     });
   ok(vals.first === "Amira" && vals.firstChip > 0, `A: first name prefilled with "From your profile" (${vals.first})`);
   ok(vals.phone === "100 123 4567" && vals.phoneChip > 0, `A: phone prefilled (${vals.phone})`);
-  ok(vals.pass === "A1234567", `A: passport number prefilled (${vals.pass})`);
+  const draft = JSON.parse((await localData(page))["ezvisa.wizard.v1"] || "{}").form || {};
+  ok(draft.hasValidPassport === "yes" && !draft.passportNumber, `A: passport validity prefilled, number left for after payment ("${draft.passportNumber ?? ""}")`);
   ok(/expired/i.test(vals.expErr), `A: expired passport is prefilled and flagged ("${vals.expErr}")`);
   await page.screenshot({ path: `${OUT}/06-passport-expired-flagged-${width}.png` });
   ok(!w.log.some((l) => l.method === "PUT" && l.path === "/auth/v1/user"), "A: profile not touched before confirmation");

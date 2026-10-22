@@ -1,5 +1,4 @@
-import { isPaid, type Application } from "./data";
-import { employmentComplete } from "./wizard";
+import { isPaid, needsContinue, type Application } from "./data";
 import type { CheckItem } from "./checklist";
 import { appointmentOf } from "./appointment";
 import type { IconName } from "../components/ui";
@@ -16,8 +15,8 @@ export function nextAction(a: Application, checklist: CheckItem[] | null): NextA
   if (a.status === "draft") return { icon: "doc.text.fill", title: "Draft", body: "Not submitted yet.", cta: "Continue draft", kind: "draft", tone: "tint" };
   // Before payment, Pay is the only next action (documents unlock after payment).
   if (a.status !== "draft" && !isPaid(a)) return { icon: "creditcard.fill", title: a.total_amount != null ? `Pay ${money(a.total_amount, a.currency)}` : "Pay securely", body: a.payment_status === "failed" ? "The last payment didn't go through." : "Documents unlock after payment.", cta: "Pay now", kind: "pay", tone: "orange" };
-  // Paid: employment details are asked now (moved out of the pre-payment wizard).
-  if (isPaid(a) && ["submitted", "draft", "reviewing"].includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any)) return { icon: "briefcase.fill", title: "Continue application", body: "Add your employment details.", cta: "Continue", kind: "continue", tone: "tint" };
+  // Paid: passport number and employment details are asked now (moved out of the pre-payment wizard).
+  if (needsContinue(a)) return { icon: "briefcase.fill", title: "Continue application", body: "Add your passport number and employment details.", cta: "Continue", kind: "continue", tone: "tint" };
   if (rejected.length) return { icon: "exclamationmark.circle.fill", title: rejected.length === 1 ? `Re-upload ${rejected[0].req.title}` : `Re-upload ${rejected.length} documents`, body: rejected[0].reason || "A document needs to be replaced.", cta: "Fix now", kind: "upload", tone: "red" };
   if (missing.length) return { icon: "arrow.up.circle.fill", title: "Upload documents", body: missing.slice(0, 3).map((i) => i.req.title).join(", "), cta: "Upload", kind: "upload", tone: "tint" };
   // Appointment entered by staff: upcoming -> view it (date, place, calendar, directions); passed -> the decision is next.

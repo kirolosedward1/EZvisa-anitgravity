@@ -11,7 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
 import { siteUrl } from "./config";
 import type { Database } from "./database.types";
-import { emptyForm, type WizardForm } from "./wizard";
+import { emptyForm, continueComplete, type WizardForm } from "./wizard";
 
 export type VisaRow = Database["public"]["Tables"]["visa_applications"]["Row"];
 type VisaUpdate = Database["public"]["Tables"]["visa_applications"]["Update"];
@@ -113,7 +113,7 @@ export function toApplication(r: VisaRow): Application {
   const status = r.application_status ?? "submitted";
   const name = r.destination_country || "";
   const w = n.wizard ?? {};
-  const applicants: Applicant[] = [{ id: `${r.id}-p`, is_primary: true, first_name: w.firstName ?? r.full_name.split(" ")[0] ?? "", last_name: w.lastName ?? r.full_name.split(" ").slice(1).join(" "), passport_number: r.passport_number, passport_expiry_date: null }];
+  const applicants: Applicant[] = [{ id: `${r.id}-p`, is_primary: true, first_name: w.firstName ?? r.full_name.split(" ")[0] ?? "", last_name: w.lastName ?? r.full_name.split(" ").slice(1).join(" "), passport_number: r.passport_number ?? (w.passportNumber || null), passport_expiry_date: null }];
   if (spouse && w.spouseFirstName) applicants.push({ id: `${r.id}-s`, is_primary: false, first_name: w.spouseFirstName, last_name: w.spouseLastName ?? "", passport_number: null, passport_expiry_date: null });
   const total = r.payment_amount != null ? Number(r.payment_amount) : null;
   const history = [{ to_status: "submitted", created_at: r.created_at ?? "" }];
@@ -294,6 +294,28 @@ export async function patchNotes(applicationId: string, patch: Partial<Notes>): 
   if (ce) throw ce;
   const n = { ...parseNotes(cur.additional_notes), ...patch };
   const { data, error } = await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n) }).eq("id", applicationId).eq("email", u.email).select("id");
+  if (error) throw error;
+  return { synced: !!data?.length };
+}
+
+/** The answers asked after payment, from this row: the wizard notes, with the passport_number column as fallback
+ *  (rows from the website, or from before the number moved after payment). */
+export function continueForm(a: Pick<Application, "notes" | "passport_number">): Partial<WizardForm> {
+  const w = (a.notes?.wizard ?? {}) as Partial<WizardForm>; const n = a.notes as any;
+  return { ...w, employmentStatus: w.employmentStatus ?? n?.employmentStatus, passportNumber: w.passportNumber || a.passport_number || "" };
+}
+/** Paid, still open, and the after-payment answers (passport number, employment) are not all there yet. */
+export const needsContinue = (a: Application) => isPaid(a) && ["submitted", "draft", "reviewing"].includes(a.status) && !continueComplete(continueForm(a));
+
+/** Saves the Continue application answers: additional_notes (wizard + the website's employment keys) and the
+ *  passport_number column staff read. While the case is in review the guard trigger (migrations/0002) keeps only the
+ *  notes, so the number is then kept in additional_notes.wizard. `synced` is false when the row was not writable. */
+export async function saveContinueAnswers(applicationId: string, patch: Partial<Notes>, passportNumber: string): Promise<{ synced: boolean }> {
+  const sb = need(); const u = await me();
+  const { data: cur, error: ce } = await sb.from("visa_applications").select("additional_notes").eq("id", applicationId).eq("email", u.email).single();
+  if (ce) throw ce;
+  const n = { ...parseNotes(cur.additional_notes), ...patch };
+  const { data, error } = await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n), passport_number: passportNumber.trim() || null }).eq("id", applicationId).eq("email", u.email).select("id");
   if (error) throw error;
   return { synced: !!data?.length };
 }

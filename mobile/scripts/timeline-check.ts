@@ -95,6 +95,11 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 
 // M. Paid but employment answers missing -> Continue application.
 { ok(next(row({ payment_status: "paid" }, { ...app })).kind === "continue", "M paid, employment missing: Continue application"); }
+// N. The passport number is asked after payment too: employment done but no number (column or wizard) -> Continue application.
+{ ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: { ...selfEmployed, hasValidPassport: "yes" } })).kind === "continue", "N paid, passport number missing: Continue application");
+  ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: { ...selfEmployed, hasValidPassport: "yes", passportNumber: "N1234567" } })).kind !== "continue", "N paid, number in the wizard notes: no Continue");
+  ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { ...app, wizard: selfEmployed })).kind !== "continue", "N paid, number only in the passport_number column (website row): no Continue");
+  ok(next(row({ payment_status: "pending", passport_number: null }, { ...app, wizard: selfEmployed })).kind === "pay", "N unpaid, no number: still Pay, never Continue"); }
 
 // N. Draft -> Continue draft.
 { const a = row({ application_status: "draft" }, { ...app }); const s = buildTimeline(a);

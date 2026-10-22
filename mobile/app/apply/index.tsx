@@ -41,7 +41,7 @@ const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Da
 const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
 const AUTO_MS = 260;
 /** Other stable answers the user can reuse from the last application with one tap (trip answers are never copied).
- *  The profile fields (name, nationality, date of birth, passport, phone) are prefilled on their own, see lib/profile.ts. */
+ *  The profile fields (name, nationality, date of birth, passport validity and expiry, phone) are prefilled on their own, see lib/profile.ts. */
 const PREFILL_KEYS: (keyof WizardForm)[] = ["cityOfResidence", "hasEmiratesId", "maritalStatus",
   "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
 const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });

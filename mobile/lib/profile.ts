@@ -16,8 +16,9 @@ import { needsSchengenVisa, type WizardForm } from "./wizard";
 
 export type ProfileKey = "firstName" | "lastName" | "email" | "phone" | "phoneCountry" | "phoneLocal" | "nationality" | "dateOfBirth" | "hasValidPassport" | "passportNumber" | "passportExpiry";
 export type Profile = Partial<Pick<WizardForm, ProfileKey>>;
-/** Wizard fields that are prefilled from the profile (the rest of the application is never copied automatically). */
-export const PROFILE_KEYS: ProfileKey[] = ["firstName", "lastName", "email", "phone", "phoneCountry", "phoneLocal", "nationality", "dateOfBirth", "hasValidPassport", "passportNumber", "passportExpiry"];
+/** Wizard fields that are prefilled from the profile (the rest of the application is never copied automatically).
+ *  The passport number is not one of them: the wizard asks it only after payment (Continue application). */
+export const PROFILE_KEYS: ProfileKey[] = ["firstName", "lastName", "email", "phone", "phoneCountry", "phoneLocal", "nationality", "dateOfBirth", "hasValidPassport", "passportExpiry"];
 /** Fields the user may save back to their profile (user_metadata) after confirming on Review. */
 export const SAVABLE: { key: keyof WizardForm; label: string }[] = [
   { key: "firstName", label: "First Name" }, { key: "lastName", label: "Last Name" }, { key: "phone", label: "Phone Number" },

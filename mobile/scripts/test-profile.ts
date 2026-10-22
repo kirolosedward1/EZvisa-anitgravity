@@ -33,7 +33,8 @@ db.rows = [
 
   // ---- expired passport: still prefilled, validation flags it ----
   const { form, filled } = applyProfile({ ...emptyForm, destination: "France", nationality: "" }, p);
-  ok(form.passportExpiry === "2025-01-31" && filled.includes("passportExpiry"), "expired passport expiry is prefilled");
+  ok(form.passportExpiry === "2025-01-31" && filled.includes("passportExpiry") && form.hasValidPassport === "yes", "expired passport expiry is prefilled");
+  ok(form.passportNumber === "" && !filled.includes("passportNumber" as any), "passport number is not prefilled (asked after payment)");
   ok(/expired/i.test(validatePersonal(form).passportExpiry ?? ""), `validation flags the expired passport ("${validatePersonal(form).passportExpiry}")`);
   ok(validatePersonal({ ...form, passportExpiry: inYears(5) }).passportExpiry === undefined, "a valid future expiry passes");
 

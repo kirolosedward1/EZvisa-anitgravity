@@ -9,10 +9,11 @@ const STUB: Record<string, string> = {
   "react-native-url-polyfill/auto": `${dir}/stubs/empty.js`,
   "expo-calendar/legacy": `${dir}/stubs/calendar.js`,
   "expo-crypto": `${dir}/stubs/crypto.js`,
+  "expo-secure-store": `${dir}/stubs/secure-store.js`,
 };
 const entry = process.argv[2];
 const out = await Bun.build({
-  entrypoints: [entry], target: "node", format: "esm",
+  entrypoints: [entry], target: "node", format: "esm", define: { __DEV__: "false" },
   plugins: [{ name: "stubs", setup(b: any) { b.onResolve({ filter: /.*/ }, (a: any) => (STUB[a.path] ? { path: STUB[a.path] } : undefined)); } }],
 });
 if (!out.success) { console.error(out.logs); process.exit(1); }

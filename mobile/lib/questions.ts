@@ -53,7 +53,7 @@ export const QUESTIONS: Question[] = [
     hint: "Your passport should have at least 6 months validity from your travel date.",
     onPick: (v) => (v === "no" ? { passportNumber: "", passportExpiry: "" } : {}),
     note: (f) => (f.hasValidPassport === "no" ? { tone: "amber", text: "You need a valid passport (at least 6 months validity from your travel date) before applying." } : null) },
-  { id: "passportNumber", step: "personal", keys: ["passportNumber"], label: "Passport Number", required: true, kind: "text", placeholder: "e.g. A1234567", text: { caps: "characters", upper: true }, applies: (f) => f.hasValidPassport === "yes" },
+  // Passport Number is asked after payment (Continue application, app/continue/[id].tsx), after the validity answer above.
   { id: "passportExpiry", step: "personal", keys: ["passportExpiry"], label: "Passport Expiry Date", required: true, kind: "date", placeholder: "Select expiry date", applies: (f) => f.hasValidPassport === "yes",
     min: () => todayIso(), dateStyle: "wheel", defaultDate: () => { const d = new Date(); return iso(new Date(d.getFullYear() + 3, d.getMonth(), d.getDate())); } },
   { id: "maritalStatus", step: "personal", keys: ["maritalStatus"], label: "Marital Status", required: true, kind: "choice", options: MARITAL,
@@ -125,6 +125,7 @@ const LEGACY: Record<string, WizardStep> = { destination: "personal", nationalit
 export function normalizePage(p: string | null | undefined, f: WizardForm): string {
   if (!p) return `q:${activeQuestions(f)[0].id}`;
   if (p === "q:nationalityOther") return "q:nationality"; // removed free-text question
+  if (p === "q:passportNumber") p = "q:passportExpiry"; // asked after payment now: resume at the next question
   if (p === "q:jobTitle" || (p === "q:companyName" && f.employmentStatus === "employed")) p = "q:jobCompany"; // merged screen (v9.5)
   if (p === REVIEW || p === "payment" || p === "documents") return REVIEW;
   if (p.startsWith("q:")) { const q = Q_BY_ID[p.slice(2)]; if (q && activeQuestions(f).includes(q)) return p; if (q) return pageForStep(q.step, f); }

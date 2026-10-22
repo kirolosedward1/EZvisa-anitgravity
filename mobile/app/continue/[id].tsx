@@ -1,5 +1,6 @@
-// Continue application (after payment): the employment answers, moved out of the pre-payment wizard.
-// Same fields and website rules (validateEmployment); saved into the same additional_notes keys the website reads.
+// Continue application (after payment): the passport number and the employment answers, moved out of the pre-payment
+// wizard. Same fields and website rules (validatePassportNumber, validateEmployment); saved into the same additional_notes
+// keys the website reads, and the passport number also into the passport_number column.
 import { useEffect, useRef, useState } from "react";
 import { ScrollView, TextInput, View, Platform, I18nManager } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -11,12 +12,12 @@ import { ChoiceList, YesNoTiles, DateAnswer } from "../../components/wizard/answ
 import { Note } from "../../components/wizard/fields";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
-import { getApplication, patchNotes, type Application } from "../../lib/data";
-import { EMPLOYMENT, SALARY, emptyForm, validateEmployment, iso, type WizardForm } from "../../lib/wizard";
+import { getApplication, saveContinueAnswers, continueForm, type Application } from "../../lib/data";
+import { EMPLOYMENT, SALARY, emptyForm, validateEmployment, validatePassportNumber, iso, type WizardForm } from "../../lib/wizard";
 import { success, error as hError, tap } from "../../lib/haptics";
 
-type Emp = Pick<WizardForm, "employmentStatus" | "jobTitle" | "companyName" | "employmentStartDate" | "monthlySalary" | "hasNOC" | "averageMonthlyIncome">;
-const KEYS: (keyof Emp)[] = ["employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "hasNOC", "averageMonthlyIncome"];
+type Emp = Pick<WizardForm, "passportNumber" | "employmentStatus" | "jobTitle" | "companyName" | "employmentStartDate" | "monthlySalary" | "hasNOC" | "averageMonthlyIncome">;
+const KEYS: (keyof Emp)[] = ["passportNumber", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "hasNOC", "averageMonthlyIncome"];
 
 export default function ContinueApplication() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,12 +29,13 @@ export default function ContinueApplication() {
   const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
   useEffect(() => {
     getApplication(id!).then((app) => {
-      setA(app); const w = (app.notes?.wizard ?? {}) as Partial<WizardForm>; const n = app.notes as any;
-      setF(Object.fromEntries(KEYS.map((k) => [k, (w as any)[k] ?? n?.[k] ?? (emptyForm as any)[k]])) as Emp);
+      setA(app); const w = continueForm(app); const n = app.notes as any;
+      setF(Object.fromEntries(KEYS.map((k) => [k, (w as any)[k] || n?.[k] || (emptyForm as any)[k]])) as Emp);
     }).catch((e) => setErr(e?.message ?? String(e)));
   }, [id]);
   const set = (p: Partial<Emp>) => setF((x) => (x ? { ...x, ...p } : x));
-  const errs = f ? validateEmployment({ ...emptyForm, ...f } as WizardForm) : {};
+  const hasValidPassport = ((a?.notes?.wizard ?? {}) as Partial<WizardForm>).hasValidPassport ?? "";
+  const errs = f ? { ...validatePassportNumber({ hasValidPassport, passportNumber: f.passportNumber }), ...validateEmployment({ ...emptyForm, ...f } as WizardForm) } : {};
   const valid = !!f && Object.keys(errs).length === 0;
   const show = (k: keyof Emp) => (tried || !!String(f?.[k] ?? "").trim()) && errs[k];
   const emp = f?.employmentStatus === "employed"; const biz = f?.employmentStatus === "business" || f?.employmentStatus === "freelancer";
@@ -42,20 +44,20 @@ export default function ContinueApplication() {
     if (!f || !a) return; setTried(true); if (!valid) { hError(); return; }
     setBusy(true); setErr(null);
     try {
-      const clean: Emp = { ...f, jobTitle: emp ? f.jobTitle.trim() : "", companyName: emp || biz ? f.companyName.trim() : "", employmentStartDate: emp ? f.employmentStartDate : "",
+      const clean: Emp = { ...f, passportNumber: f.passportNumber.trim().toUpperCase(), jobTitle: emp ? f.jobTitle.trim() : "", companyName: emp || biz ? f.companyName.trim() : "", employmentStartDate: emp ? f.employmentStartDate : "",
         monthlySalary: emp ? f.monthlySalary : "", hasNOC: emp ? f.hasNOC : "", averageMonthlyIncome: biz ? f.averageMonthlyIncome.trim() : "" };
       const w = (a.notes?.wizard ?? {}) as Partial<WizardForm>;
-      const r = await patchNotes(a.id, { wizard: { ...w, ...clean } as any, employmentStatus: clean.employmentStatus, jobTitle: clean.jobTitle, companyName: clean.companyName, monthlySalary: clean.monthlySalary } as any);
+      const r = await saveContinueAnswers(a.id, { wizard: { ...w, ...clean } as any, employmentStatus: clean.employmentStatus, jobTitle: clean.jobTitle, companyName: clean.companyName, monthlySalary: clean.monthlySalary } as any, clean.passportNumber);
       if (!r.synced) throw new Error(t("Your application is already in review, so it can't be changed here. Please message us on WhatsApp."));
       success(); router.replace(`/applications/${a.id}`);
     } catch (e: any) { hError(); setErr(e?.message ?? String(e)); } finally { setBusy(false); }
   };
 
-  const input = (k: "jobTitle" | "companyName" | "averageMonthlyIncome", label: string, ph: string, opts: { ref?: React.RefObject<TextInput | null>; next?: () => void; ct?: string; first?: boolean }) => (
+  const input = (k: "passportNumber" | "jobTitle" | "companyName" | "averageMonthlyIncome", label: string, ph: string, opts: { ref?: React.RefObject<TextInput | null>; next?: () => void; ct?: string; first?: boolean; caps?: "words" | "characters" }) => (
     <View style={{ gap: S.xs }}>
       <Text variant="footnote" weight="600" tone="secondary">{t(label)}</Text>
-      <TextInput ref={opts.ref as any} value={f![k]} onChangeText={(v) => set({ [k]: v } as Partial<Emp>)} placeholder={t(ph)} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(label)}
-        autoCapitalize="words" autoCorrect={false} textContentType={opts.ct as any} returnKeyType={opts.next ? "next" : "done"} blurOnSubmit={!opts.next} onSubmitEditing={opts.next} testID={`continue-${k}`}
+      <TextInput ref={opts.ref as any} value={f![k]} onChangeText={(v) => set({ [k]: opts.caps === "characters" ? v.toUpperCase() : v } as Partial<Emp>)} placeholder={t(ph)} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(label)}
+        autoCapitalize={opts.caps ?? "words"} autoCorrect={false} textContentType={opts.ct as any} returnKeyType={opts.next ? "next" : "done"} blurOnSubmit={!opts.next} onSubmitEditing={opts.next} testID={`continue-${k}`}
         style={[T.title3, { color: c.label, minHeight: 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: show(k) ? 1.5 : 0, borderColor: c.red, textAlign: isRTL ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
       {!!show(k) && <Text variant="footnote" tone="red">{t(errs[k]!)}</Text>}
     </View>
@@ -73,8 +75,9 @@ export default function ContinueApplication() {
         <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.lg }}>
           <View style={{ gap: S.xs }}>
             <Text variant="title1" accessibilityRole="header" testID="continue-title">{t("Continue application")}</Text>
-            <Text variant="subhead" tone="secondary">{t("Employment")}</Text>
+            <Text variant="subhead" tone="secondary">{t("Passport and employment")}</Text>
           </View>
+          {hasValidPassport !== "no" && input("passportNumber", "Passport Number", "e.g. A1234567", { caps: "characters" })}
           <View style={{ gap: S.xs }}>
             <Text variant="footnote" weight="600" tone="secondary">{t("Employment Status")}</Text>
             <ChoiceList label={t("Employment Status")} options={EMPLOYMENT} value={f.employmentStatus} onPick={(v) => set({ employmentStatus: v as Emp["employmentStatus"], ...(v !== "employed" ? { hasNOC: "" } : {}) })} />
