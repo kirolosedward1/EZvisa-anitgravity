@@ -1,6 +1,7 @@
 import { Stack, router } from "expo-router";
 import { Pressable } from "react-native";
-import { useColors, useIsDark, isIOS } from "./theme";
+import { useColors, useIsDark, isIOS, HIT, ICON } from "./theme";
+import { useT } from "./i18n";
 import { Icon } from "../components/ui";
 
 const ROOTS = ["index", "countries"];
@@ -8,11 +9,11 @@ const ROOT_OF: Record<string, string> = { "[id]": "/applications", "notification
 
 /** iOS back chevron for a detail screen that was opened without a screen under it (deep link, push, cross-tab). */
 export function HeaderBack({ fallback }: { fallback: string }) {
-  const c = useColors();
+  const c = useColors(); const { t, rtl } = useT();
   return (
-    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace(fallback as any))} hitSlop={12} accessibilityRole="button" accessibilityLabel="Back" testID="header-back"
-      style={{ minWidth: 36, height: 36, alignItems: "center", justifyContent: "center" }}>
-      <Icon name="chevron.left" size={20} color={c.tint} weight="semibold" />
+    <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace(fallback as any))} hitSlop={HIT / 4} accessibilityRole="button" accessibilityLabel={t("Back")} testID="header-back"
+      style={({ pressed }) => ({ minWidth: HIT, height: HIT, alignItems: "center", justifyContent: "center", opacity: pressed ? 0.5 : 1 })}>
+      <Icon name={rtl ? "chevron.right" : "chevron.left"} size={ICON.lg - 2} color={c.accent} weight="semibold" />
     </Pressable>
   );
 }

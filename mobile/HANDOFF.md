@@ -4,6 +4,14 @@ Expo SDK 57 · expo-router · TypeScript · iOS / Android (web works for testing
 This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`, on the branch `mobile-app`.
 **Never merge to `main` without review.** Vercel builds `main`.
 
+## 0. Status on 2026-10-22 (chat 15, QA): read this before sections 1-3
+- **Final QA status: NOT READY FOR PRODUCTION TESTING.** Report and evidence: `docs/qa-report.md`, `docs/qa/*.jpg`, `docs/qa/web-checks.json`.
+- Verified code: branch `claude/vibrant-wright-ez44ch` = `mobile-app` @ `89c1b26` (merged in) + chat 15 commits; PR #13 targets `mobile-app`; `mobile-app` can fast-forward to it. Later `mobile-app` commits are not covered.
+- Results: tsc 0 errors, lint 0 errors; node tests privacy 24/24, upload 24/24, secure storage 12/12, timeline ALL PASS; mocked e2e auth 29/29, payment 20/20, drafts 17/17; web walk 235/235 checks at 390/430, light/dark, EN/AR, largest text.
+- Chat 15 fixes: payment result reachable signed out (guest whose app restarted; `app/_layout.tsx`), document "No" never blocks + "To get later" (owner rule; `lib/wizard.ts missingDocs()`, saved as `additional_notes.missingDocuments`), Arabic gaps, 44pt targets, receipts from `payment_amount` only, privacy manifest / unused permissions / export compliance, `eas.json`, `npm ci`.
+- EAS Update NOT published (no token; expo.dev blocked from the container). Preview still serves `e866e894…` (old DB). Command: `docs/qa-report.md` §8. **Always `expo export --clear`**: Metro reused a stale `EXPO_PUBLIC_SUPABASE_URL` during this QA.
+- Sections 1-3 below are the 19 Oct state and partly stale (since then: migrations 0002-0006 applied, push, delete-account, chat 03 auth, chat 08 payments, chat 09 documents).
+
 ## 1. What the app talks to
 
 | Thing | Value |
@@ -49,12 +57,12 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - screenshots in `screenshots/v8/`
 
 ## 2c. v9 design system and polish (2026-10-19)
-- Tokens live in `lib/theme.ts`; screens must not hand-code numbers.
-  - Spacing: `S` = 0/4/8/12/16/20/24/32/40/48/64/80.
+- Tokens live in `theme/` (re-exported by `lib/theme.ts`); screens must not hand-code numbers. Full reference: `docs/design-system.md` (chat 02).
+  - Spacing: `S` = 0/4/8/12/16/24/32/40/48/64/80 on an 8pt grid (`S.gutter` = 16 screen margin; `S.lg` is a deprecated alias of 16).
   - Radius: `R` = 4/8/12/16/20/24/32/round.
   - Elevation: `elevation(0-3)`, plus `card()` = background + hairline + layered boxShadow (light mode only).
   - Type: `T` + `TYPE_SCALE` (Dynamic Type caps per role).
-  - Colour: one accent `accent`/`accentFill` + neutrals + status colours.
+  - Colour: semantic names (`background`, `surface`, `text`, `textSecondary`, `border`, `accent`, `success`, `warning`, `danger`, …), light and dark; old names are aliases.
   - Motion: `DUR`, `SPRING`, `PRESS`.
 - Motion helpers are in `lib/motion.ts`: spring slides, Reduce Motion fallbacks, `useShake`.
 - Primitives:
@@ -75,12 +83,13 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 
 ## 2e. Chat 14: analytics, crashes, performance (2026-10-22)
 - **Events** (`lib/analytics.ts`): typed catalogue + runtime allowlist (ids, enums, numbers, booleans; no free text). Wizard step viewed/completed, wizard finished (`wizard_submit`), payment started/finished (outcome from the DB-verified result screen), upload done (doc type + ok), app_start (ms). Offline outbox in AsyncStorage, one batched insert per flush, retried on reconnect/foreground.
-  Sent to `public.wizard_events` (0004, live): only `wizard_open/page/submit/close` today. The other events stay on the phone until **`migrations/0008_wizard_events_funnel.sql` (PROPOSED, not applied)** is approved; then add them to `SERVER_EVENTS`.
-- **Crash capture** (`lib/crash.ts` + `lib/scrub.ts`): reports are scrubbed before they are stored (patterns + the exact names/passport/email typed in the wizard). `setCrashSink()` is the hook for a crash service (Sentry proposed, **not added**, waiting for approval and a DSN).
+  Sent to `public.wizard_events`. **Analytics = Supabase, approved 2026-10-22.** The funnel events need **`migrations/0008_wizard_events_funnel.sql` (APPROVED, NOT YET RUN on ezvisa-uae**: the Supabase connector in chat 14 could not see that project; run it in the SQL editor). Until then the server rejects them and the app falls back by itself: it keeps sending the 4 original events and retries the funnel every 24 h (`ezvisa.funnel.v1`), so no app update is needed after 0008 runs.
+- **Crash capture** (`lib/crash.ts` + `lib/scrub.ts`): reports are scrubbed before they are stored (patterns + the exact names/passport/email typed in the wizard + the signed-in account's name/email). The handler is installed at module load in `app/_layout.tsx`.
+- **Crash service = Sentry, approved 2026-10-22** (`lib/sentry.ts`): a built-in envelope client (no SDK), because `@sentry/react-native` measured +1.4 MB bundle and +160-260 ms cold start and only reports JS errors in Expo Go. Off until `EXPO_PUBLIC_SENTRY_DSN` is set (`.env` + EAS preview environment). Queue `ezvisa.crashq.v1` (offline / app killed). Account › Privacy › long-press Version › "Send test error" sends a scrubbed test report. **With the first development build**, switch to `@sentry/react-native` (`npx expo install`) for native crashes and source maps.
 - **Opt-out** (`lib/privacy.ts`, Account › Privacy "Share usage data", on by default): off = no events, no crash reports leave the phone, queued data deleted.
 - **Diagnostics**: Account › Privacy › long-press "Version" = last 5 cold-start times, queued events, last scrubbed error.
 - **Performance**: see `docs/PERFORMANCE-CHAT14.md`. Audit M12 fixed (one applications query per focus), Home story thumbnails, expo-image, memoised Flag, FlatList batch settings, quantized PNGs.
-- **Tooling**: `npx tsc --noEmit` passes (Deno functions excluded); ESLint = eslint-config-expo 57 (`npx eslint .`, 0 errors, React Compiler rules as warnings); `node scripts/run-test-privacy.mjs` (24 checks); `scripts/bench-web.mjs`.
+- **Tooling**: `npx tsc --noEmit` passes (Deno functions excluded); ESLint = eslint-config-expo 57 (`npx eslint .`, 0 errors, React Compiler rules as warnings); `node scripts/run-test-privacy.mjs` (41 checks: scrubbing, allowlist, test session, offline outbox, 0008 fallback, Sentry envelope + queue, forced crash, opt-out); `scripts/bench-web.mjs`.
 - **Launch screen**: unchanged config (`expo-splash-screen` plugin: 180 pt mark, #FFFFFF / #000000, light + dark images). In Expo Go the native launch screen is Expo Go's own; the app's boot overlay (`components/Boot.tsx`) then shows the same mark. The real native launch screen appears only in a development/production build.
 ## 2g. Auth and session (chat 03, 2026-10-22)
 - **Website methods (verified in web code):** `app/login` (password + "Email Magic Link"), `app/signup`, `app/forgot-password`, `app/reset-password`. No Apple or Google button on the website, so the app adds neither. The existing Google/Apple code stays dormant: it shows only if the provider is enabled on the project (`/auth/v1/settings`).
@@ -114,7 +123,22 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   nothing until `migrations/0009` (approved 2026-10-22, not yet confirmed applied) adds the table to `supabase_realtime`.
 - **Calendar** (`lib/appointment.ts`): `expo-calendar/legacy` `createEventInCalendarAsync` (SDK 57.0.6). iOS 17+ shows the
   system sheet without permission; older iOS requests access and explains a denial (Open Settings).
-- **Checks**: `bun scripts/run-check.ts scripts/timeline-check.ts` (34 checks, live row shape, no network).
+- **Checks**: `bun scripts/run-check.ts scripts/timeline-check.ts` (53 checks, live row shape, no network) and
+  `bun scripts/run-check.ts scripts/appointment-check.ts` (18: appointment rows, Apple Maps URL, add to calendar on iOS 17+,
+  iOS 16 granted/denied, Android, web, sheet error).
+- **QA pass (2026-10-22, chat 11)** fixed, each with a check that failed first:
+  - Non-employed applicants whose row came from the website were asked for a NOC on Home and the application page:
+    `employmentOf()` reads the wizard or the website's top-level `employmentStatus` (checks P, Q).
+  - Staff reviews of documents known only from the website's `has_*` flags were dropped, because those documents took
+    `updated_at` as their upload time and the review write moves `updated_at`. They now have no upload time (check R).
+  - Upload / Re-upload was offered when uploads are closed (status ready etc.); now only in `UPLOAD_STATUSES` (check S).
+  - Refunded / part-refunded cases were asked to pay again (check T).
+  - "Continue application" relabelled website rows as `source: "mobile-app"`, which dropped their real Submitted time and
+    asked Continue a second time with the app's full question set. `keepOrigin()` keeps them website rows (check U).
+- **Known gaps (not fixed, need a decision or data)**: website rows can never show the residency copy as uploaded (no
+  `has_*` flag for it), so Documents stays open for them until staff move the file on; an app `residencyCopy` upload hides a
+  website `has_passport` flag; Paid and Decision have no time until 0009; after a failed refresh the last loaded data stays
+  on screen without a notice.
   `npm run lint` (eslint-config-expo 57) and `npx tsc --noEmit` pass. Screenshots: `docs/screenshots/v11/` (fixture rows
   in a Playwright harness against a fake Supabase host, not production data).
 ## 2h. Drafts & autosave (chat 06, 2026-10-22)
@@ -124,6 +148,8 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **App** (`lib/form.tsx`, `lib/data.ts` `saveDraft/getDraft/findOpenDraft/submitApplication`, `components/wizard/sync.tsx`): debounce 800 ms + immediate save when the question changes; saves on background, checks for a newer copy on launch / foreground / draft open; NetInfo + web `online` events flush on reconnect; retries with backoff (`lib/uploads.ts backoffMs`). Indicator: *Saving… / Saved* (server-confirmed only) / *Saved on this phone* (signed out or nothing answered) / *Not saved · Offline | Retrying | Tap to retry*. Saved to the account once signed in and the first question is answered. Local drafts carry `owner` (email): another account on the same phone never sees or syncs them. Sign-out (which wipes the phone, section 2g) tries to save first and warns if answers would be lost. Home opens a server draft from another device in the wizard (`openServerDraft`). Submit only goes ahead after the server confirmed the exact answers, and is version-checked.
 - **Website** (branch `claude/nice-faraday-r722ry`, based on `main`, NOT on mobile-app): `lib/draft-sync.ts` (same rules), `components/apply/draft-status.tsx`, `/apply` wiring, `/api/submit-application` turns the signed-in user's draft row into the application (token-verified, version-checked, idempotent) instead of inserting a second row, Supabase browser/server clients also read `NEXT_PUBLIC_ezvisaSUPABASE_*`.
 - **Tests (no live DB):** `scripts/mock-supabase.mjs` (REST + Auth stand-in with updated_at trigger, RLS by email, 23505), `scripts/e2e-drafts-web.mjs` (17 checks, app web build), `scripts/e2e-drafts-cross.mjs` (10 checks, website ↔ app). Screenshots: `docs/screenshots/drafts/`. Read-only SQL checks + optional trigger: `migrations/0010_draft_autosave_checks.sql` (not applied).
+- **QA pass (2026-10-22)** fixed, each with a check that failed on the code before: *Keep this version* now writes the phone's copy (it only said Saved); a save whose reply was lost no longer counts as confirmed (Back to the last screen saves again before Saved); a network error while checking the session retries instead of "Please sign in first"; guest submit reuses one id per application (no second row on retry); discarding a local draft cancels its server draft; sign-out waits at most 4 s for a last save and also warns about other unsaved drafts. Checks: `scripts/e2e-drafts-qa.mjs` (7, app web build + mock DB) and `bun scripts/run-check.ts scripts/drafts-check.ts`. Website fixes are on its branch (`mobile/scripts/e2e-web-qa.mjs` there, 15 checks): server-side wizard rules and draft ownership in `/api/submit-application`, Pay twice → one application, account switch clears answers, open-redirect in `/login?next=`.
+- **Open (need a decision):** client inserts can still set any column (needs an RLS/BEFORE INSERT guard — approval); the Ziina price comes from editable notes; email matching is case-sensitive; `/apply/continue` has no version check; the website still asks trip details before payment while the app asks them after (parity choice for the owner).
 
 ## 2i. Chat 09: document checklist and uploads (2026-10-22)
 - **Checklist** (`lib/data.ts` `REQS` + `lib/checklist.ts`): unchanged rules. Shown only when `payment_status` is paid/completed (from the DB); NOC hidden unless `employmentStatus` is `employed`; states from `additional_notes.uploads`, `has_*` flags and staff `document_reviews` (uploaded · under review · approved · rejected + reason). Rows and alerts are now translated (Arabic).
@@ -195,6 +221,9 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 - Don't touch the other Supabase projects on that account (BrokersConnect/brokerconnect, brokerscareers, openmatsae, topsuite_tracker, supabase-*).
 - Don't push to `main` or change Vercel settings from this work; use the `mobile-app` branch and PRs.
 - Keep test data minimal and labelled (`+ezvisa-app-test` emails).
+- **Owner rule (2026-10-22): deploy and merge after every edit.** Once type-check, lint and the checks pass, fast-forward the
+  work into `mobile-app` right away (never into `main`). That push is the deploy: `.github/workflows/eas-update.yml` publishes
+  it to the Expo Go `preview` channel. Confirm the workflow run succeeded before reporting the edit as done.
 
 ## 6. Next tasks
 1. Owner: set the Vercel env vars (Supabase URL/anon/service role, Ziina key and webhook secret), fix the Supabase Auth URL config, approve `proposed-live-changes.sql`. Then re-run `scripts/e2e-live.mjs`: upload, payment and `payment_id` should pass.

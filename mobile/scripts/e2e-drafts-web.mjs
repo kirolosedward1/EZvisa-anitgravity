@@ -35,6 +35,13 @@ async function signIn(d) {
 const indicator = async (d) => (await d.page.getByTestId("saved-indicator").first().textContent({ timeout: 3000 }).catch(() => null))?.trim() ?? null;
 const title = async (d) => (await d.page.getByTestId("question-title").first().textContent({ timeout: 4000 }).catch(() => null))?.trim() ?? null;
 const shot = (d, file) => d.page.screenshot({ path: `${OUT}/${file}.png` });
+/** Changes the current answer: types into a text question, otherwise picks an option (works whatever the question order). */
+async function answerCurrent(d) {
+  const input = d.page.getByTestId("question-input");
+  if (await input.count()) { await input.first().fill(`Edit${Date.now() % 1000}`); if (await d.page.getByTestId("question-input-2").count()) await d.page.getByTestId("question-input-2").fill("Test"); }
+  else await d.page.getByRole("radio").nth(1).click().catch(() => {});
+  await d.page.waitForTimeout(400);
+}
 async function pick(d, name) { await d.page.getByRole("radio", { name, exact: true }).first().click(); await d.page.waitForTimeout(700); }
 
 await fetch(`${DB}/__db/reset`, { method: "POST" });
@@ -82,7 +89,7 @@ log(!!back && afterQ !== offlineQ, "back online: the offline answer is saved", `
 const cur = (await drafts())[0]; const n = notes(cur);
 await fetch(`${DB}/__db/edit`, { method: "POST", body: JSON.stringify({ id, patch: { additional_notes: JSON.stringify({ ...n, lastEditedOn: "website", wizardStep: "personal", wizardQuestion: undefined, wizard: { ...n.wizard, firstName: "WebEdit" } }) } }) });
 const webVersion = (await drafts())[0].updated_at;
-await A.page.getByRole("radio").first().click().catch(() => {}); await A.page.waitForTimeout(400);
+await answerCurrent(A); // a real change on whatever question is showing
 await A.page.getByRole("button", { name: "Continue" }).click().catch(() => {});
 const sheet = await until(async () => A.page.getByTestId("draft-conflict").isVisible().catch(() => false), 8000);
 log(!!sheet, "newer server copy: the app asks instead of saving");

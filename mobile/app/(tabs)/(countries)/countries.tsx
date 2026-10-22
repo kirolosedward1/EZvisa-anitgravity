@@ -5,13 +5,15 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COUNTRY_LIST, POPULAR, toSlug } from "../../../lib/countries";
 import { EmptyState, Flag, Icon, ListGroup, ListRow, PressScale, Text, useTabInset } from "../../../components/ui";
 import { Field } from "../../../components/AuthForm";
-import { useColors, S } from "../../../lib/theme";
-import { tap } from "../../../lib/haptics";
+import { useColors, S, ICON } from "../../../lib/theme";
+import { select } from "../../../lib/haptics";
 import { useT } from "../../../lib/i18n";
 
-const ROW = 52; const INSET = S.md + 28 + S.md; // separator starts under the name
+const INSET = S.md + 28 + S.md; // separator starts under the name (flag is 28)
+/** The A-Z index starts below the title and search field. */
+const INDEX_TOP = 180;
 const Row = ({ name }: { name: string }) => { const { t } = useT(); return (
-  <ListRow title={t(name)} leading={<Flag country={name} size={28} />} minHeight={ROW} onPress={() => router.push(`/country/${toSlug(name)}`)} />
+  <ListRow title={t(name)} leading={<Flag country={name} />} onPress={() => router.push(`/country/${toSlug(name)}`)} />
 ); };
 
 export default function Countries() {
@@ -28,20 +30,20 @@ export default function Countries() {
   }, [rtl, tr]);
   const scroll = useRef<ScrollView>(null); const ys = useRef<Record<string, number>>({}); const allY = useRef(0); const wrapY = useRef(0);
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg }}>
+    <View style={{ flex: 1, backgroundColor: c.background }}>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" testID="countries-list"
-        contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb + S.xl, paddingHorizontal: S.lg }}>
+        contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb + S.xl, paddingHorizontal: S.gutter }}>
         <Text variant="largeTitle" accessibilityRole="header">{tr("Countries")}</Text>
-        <Text variant="subhead" tone="secondary" style={{ marginBottom: S.lg }}>{tr("{n} Schengen destinations", { n: COUNTRY_LIST.length })}</Text>
-        <Field placeholder={tr("Search")} value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />} />
-        <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.md, marginTop: S.xl }}>
+        <Text variant="subhead" tone="secondary" style={{ marginBottom: S.xl }}>{tr("{n} Schengen destinations", { n: COUNTRY_LIST.length })}</Text>
+        <Field placeholder={tr("Search")} value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={ICON.md} color={c.textSecondary} />} />
+        <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.gutter, paddingEnd: !t && !rtl ? S.xs : 0, marginTop: S.xl }}>
           {t ? (
             results.length ? <ListGroup inset={INSET}>{results.map((n) => <Row key={n} name={n} />)}</ListGroup> : <EmptyState icon="magnifyingglass" title={tr("No results")} />
           ) : (<>
             <ListGroup header={tr("Popular")} inset={INSET}>{popular.map((n) => <Row key={n} name={n} />)}</ListGroup>
             <View onLayout={(e) => { allY.current = e.nativeEvent.layout.y; }}>
-              <Text variant="title3" accessibilityRole="header" style={{ marginHorizontal: S.lg, marginBottom: S.xs }}>{tr("All countries")}</Text>
+              <Text variant="title3" accessibilityRole="header" style={{ marginHorizontal: S.gutter, marginBottom: S.xs }}>{tr("All countries")}</Text>
               {sections.map(([k, names]) => (
                 <View key={k} onLayout={(e) => { ys.current[k] = e.nativeEvent.layout.y; }}>
                   <ListGroup header={k || undefined} inset={INSET} style={{ marginBottom: S.md }}>{names.map((n) => <Row key={n} name={n} />)}</ListGroup>
@@ -52,13 +54,13 @@ export default function Countries() {
         </View>
       </ScrollView>
       {!t && !rtl && (
-        <View pointerEvents="box-none" style={{ position: "absolute", [rtl ? "left" : "right"]: 2, top: insets.top + 180, bottom: pb, justifyContent: "center" }}>
+        <View pointerEvents="box-none" style={{ position: "absolute", end: S.xxs, top: insets.top + INDEX_TOP, bottom: pb, justifyContent: "center" }}>
           <View accessibilityLabel="Section index" style={{ alignItems: "center" }}>
             {sections.map(([k]) => (
-              <PressScale key={k} hitSlop={{ left: 12, right: 4 }} accessibilityRole="button" accessibilityLabel={tr("Jump to {k}", { k })}
-                onPress={() => { tap(); scroll.current?.scrollTo({ y: wrapY.current + allY.current + (ys.current[k] ?? 0) - insets.top, animated: false }); }}
-                style={{ paddingHorizontal: S.xxs, paddingVertical: 1 }}>
-                <Text variant="caption2" weight="600" color={c.tint}>{k}</Text>
+              <PressScale key={k} hitSlop={{ top: 0, bottom: 0, left: S.sm, right: S.sm }} accessibilityRole="button" accessibilityLabel={tr("Jump to {k}", { k })}
+                onPress={() => { select(); scroll.current?.scrollTo({ y: wrapY.current + allY.current + (ys.current[k] ?? 0) - insets.top, animated: false }); }}
+                style={{ paddingHorizontal: S.xxs }}>
+                <Text variant="caption2" weight="600" color={c.accent}>{k}</Text>
               </PressScale>
             ))}
           </View>
