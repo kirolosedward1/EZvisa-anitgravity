@@ -158,7 +158,7 @@ export default function Account() {
       {privacy}
     </ScrollView>
   );
-  const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
+  const u = session.user;
   /** Profile photo: choose one from Photos, or remove it (kept on this phone, lib/avatar.ts). */
   const editPhoto = () => {
     const choose = () => { pickAvatar(u.id).catch((e) => Alert.alert(t("Couldn't load"), e?.message ?? String(e))); };
@@ -194,16 +194,11 @@ export default function Account() {
             <Icon name={photo ? "pencil" : "plus"} size={ICON.sm} color={c.onAccent} weight="bold" />
           </View>
         </PressScale>
-        <View style={{ alignItems: "center", gap: S.xs }} accessible accessibilityLabel={`${full}, ${u.email}`}>
-          <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
-          <Text variant="subhead" tone="secondary">{u.email}</Text>
-        </View>
+        <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
       </View>
-      <ListGroup header={t("Account details")} inset={16}>
-        <ListRow title={t("Name")} value={full} />
-        <ListRow title={t("Email")} value={u.email ?? ""} />
-        <ListRow title={t("Sign-in method")} value={t(provider === "google" ? "Google" : provider === "apple" ? "Apple" : "Email")} />
-        {!!u.created_at && <ListRow title={t("Member since")} value={new Date(u.created_at).toLocaleDateString(lang === "ar" ? "ar" : undefined, { month: "long", year: "numeric" })} />}
+      {/* Name, email, sign-in method and member since live on their own page (account/details). */}
+      <ListGroup inset={58}>
+        <ListRow icon="person.text.rectangle" iconColor={c.tint} title={t("Account details")} onPress={() => router.push("/account/details")} />
       </ListGroup>
       {!!apps?.length && (
         <ListGroup header={t("Application history")} inset={S.md + 28 + S.md}>
