@@ -1,6 +1,7 @@
 # EZvisa mobile app: codebase audit and plan (chat 01)
 
 Date: 2026-10-22. Branch: `mobile-app` (base `591aced`). Read-and-report only; the one build fix is listed in §9.
+This describes the code at commit `0451206`. Later chats changed a lot (see §13 for what a QA pass found on `main` afterwards, and the corrections made to this document).
 
 Contents
 1. [Where the code lives](#1-where-the-code-lives)
@@ -15,6 +16,7 @@ Contents
 10. [Ranked issues](#10-ranked-issues)
 11. [Plan for chats 02–15](#11-plan-for-chats-0215)
 12. [Waiting for approval](#12-waiting-for-approval)
+13. [QA review](#13-qa-review-2026-10-22-later-the-same-day)
 
 Evidence is quoted as `path:line` on the `mobile-app` branch. Website references are to **`main`** (what Vercel deploys), not the copy of the website on `mobile-app` (see §1).
 
@@ -58,7 +60,7 @@ Supabase project used by app and website: **ezvisa-uae, ref `dravvaykssrbktztmrl
 | @react-native-community/datetimepicker | 9.1.0 | 9.1.0 | 9.1.0 | OK |
 | @react-native-community/netinfo | 12.0.1 | 12.0.1 | 12.0.1 | OK |
 | @react-native-picker/picker | 2.11.4 | 2.11.4 | 2.11.4 | OK |
-| expo-apple-authentication … expo-web-browser (29 `expo-*` modules) | ~57.0.x | 57.0.x | ~57.0.x | all OK (expo-calendar 57.0.6, expo-symbols 57.0.3 included) |
+| expo-apple-authentication … expo-web-browser (27 `expo-*` modules) | ~57.0.x | 57.0.x | ~57.0.x | all OK (expo-calendar 57.0.6, expo-symbols 57.0.3 included) |
 | react / react-dom | 19.2.3 | 19.2.3 | 19.2.3 | OK |
 | react-native | 0.86.3 | 0.86.3 | 0.86.3 | OK |
 | react-native-reanimated | 4.5.1 | 4.5.1 | 4.5.1 | OK |
@@ -109,8 +111,8 @@ app/_layout.tsx                    Root: Appearance → I18n → Theme → Auth 
 ```
 
 Reachability check (every `router.push/replace/navigate`, `href`, push `data.url`, reminder `url` was traced):
-- Every route file is reachable. `apply/review.tsx` and `payment-return.tsx` are redirect-only, as intended.
-- No link points to a route that doesn't exist (`/account`, `/applications`, `/countries`, `/apply`, `/applications/:id`, `/continue/:id`, `/trip/:id`, `/payment/:id`, `/destination/:slug`, `/country/:slug`, `/account/notifications`, `/auth`, `/welcome`).
+- Every screen is reachable from inside the app except two redirect-only routes: `apply/review.tsx` (legacy; only a typed or old deep link reaches it) and `payment-return.tsx` (reached from `www.ezvisa.net/app-return`).
+- No in-app link points to a route that doesn't exist (`/account`, `/applications`, `/countries`, `/apply`, `/applications/:id`, `/continue/:id`, `/trip/:id`, `/payment/:id`, `/destination/:slug`, `/country/:slug`, `/account/notifications`, `/auth`, `/welcome`). One redirect has no screen: Google sign-in returns to `ezvisa://auth/callback` (`lib/google.ts:18`) and there is no `app/auth/callback` route. It works only because `openAuthSessionAsync` catches the redirect; if the OS hands the link to the app instead, the router shows "not found".
 - Deep links: scheme `ezvisa://` (`app.json`), `exp://…/--/payment-return` in Expo Go (`lib/api.ts:31`). Push taps open `/applications/:id` only (`lib/push.ts:16`). There is no handler for an auth email link: confirm/reset emails go to the website (`components/AuthForm.tsx:33`).
 
 ### 3.2 Folders
@@ -131,8 +133,9 @@ Reachability check (every `router.push/replace/navigate`, `href`, push `data.url
  UI screens ──► lib/form.tsx (wizard state) ──► AsyncStorage  ezvisa.wizard.v1 / ezvisa.drafts.v2   (every change, 250 ms)
      │                    └──────────────────► lib/data.ts saveDraft ─► visa_applications (status 'draft')  (signed in + personal step valid, 1.5 s)
      │
-     ├─► lib/data.ts ──► supabase-js (publishable key, user JWT) ──► visa_applications / device_tokens / wizard_events / storage visa_documents
-     │                                                            └► functions/v1/delete-account
+     ├─► lib/data.ts ──► supabase-js (publishable key, user JWT) ──► visa_applications / device_tokens / storage visa_documents
+     │                                                            └► functions/v1/delete-account (called from app/(tabs)/account/index.tsx)
+     ├─► lib/analytics.ts ──► supabase-js ──► wizard_events (insert only)
      ├─► lib/api.ts ───► https://www.ezvisa.net/api/create-payment ─► Ziina checkout (in-app auth session)
      │                   https://www.ezvisa.net/api/check-payment, /api/upload-document, /app-return → ezvisa://payment-return
      ├─► lib/uploads.ts (queue in AsyncStorage + file copy in documents dir) ─► lib/data.ts uploadDocument
@@ -180,7 +183,7 @@ Not verified live (see §1). "Live status" comes from the migration headers in `
 | `storage.visa_documents` | bucket | upload `<applicationId>/<documentType>_<rand8>.<ext>`, `upsert:true` (fallback when the website route fails) | `lib/data.ts:234,259-265` |
 | `delete-account` | edge function (deployed) | `functions.invoke('delete-account', {confirm:'DELETE'})`; inside: service role, removes files under each app id, anonymises rows, deletes auth user | `app/(tabs)/account/index.tsx:29`; source `migrations/functions/delete-account/index.ts` |
 | `notify-status` | edge function (deployed) | not called by the app; called by trigger `visa_applications_notify` via `pg_net` with a Vault secret; reads `visa_applications`, `device_tokens`, sends Expo push | `migrations/0006_push_notifications.sql`, `migrations/functions/notify-status/index.ts` |
-| `ezvisa_notify_hook_ok(text)` | RPC (service role only) | used by `notify-status` | `0006:44-49` |
+| `ezvisa_notify_hook_ok(text)` | RPC (service role only) | used by `notify-status` | `0006:38-43` |
 | Triggers/functions | DB | `visa_applications_guard_customer_update` (freezes payment/email/status for customers; allows discard), `visa_applications_guard_appointment` (freezes `appointment_*`, `document_reviews`), `visa_applications_notify` | `0002`, `0003`, `0005`, `0006`, `0007` |
 | Auth | Supabase Auth | `getSession, onAuthStateChange, signUp, signInWithPassword, resetPasswordForEmail, exchangeCodeForSession, signInWithOAuth(google), signInWithIdToken(apple), updateUser, signOut, getUser`; `GET /auth/v1/settings` to detect providers | `lib/auth.tsx`, `components/AuthForm.tsx`, `lib/google.ts`, `lib/apple.ts` |
 | Views / other RPCs | none | — | — |
@@ -246,7 +249,7 @@ Website reads `tracking_token` and `preferred_language` (only added by `supabase
 
 ### 6.4 Documents
 - Locked until `isPaid(a)`; upload allowed while status in `draft, submitted, reviewing, awaiting_documents` (`app/(tabs)/applications/[id].tsx:27,101-102`).
-- Checklist = static `REQS` (`lib/data.ts:62-69`), NOC hidden unless employed (`:72-74`); states from `additional_notes.uploads`, `has_*` flags and `document_reviews` (`lib/data.ts:77-100`).
+- Checklist = static `REQS` (`lib/data.ts:62-69`). NOC is hidden only when an employment status is set and is not `employed` (`:72-74`); while the status is empty (every paid case before `/continue` is done, and website rows, whose status sits at top-level `notes.employmentStatus`, not `notes.wizard`, read at `app/(tabs)/applications/[id].tsx:41`) NOC shows as mandatory. States come from `additional_notes.uploads`, `has_*` flags and `document_reviews` (`lib/data.ts:77-100`).
 - Capture: camera / library / files / multi-page scan → PDF via `expo-print`; 5 MB hard limit, resolution/size warnings (`lib/capture.ts`).
 - Queue: AsyncStorage `ezvisa.uploads.v1`, file copied into `Documents/uploads`, backoff 2 s→60 s, 6 attempts, offline wait (`lib/uploads.ts`).
 - Upload: (1) `POST https://www.ezvisa.net/api/upload-document` multipart `file, applicationId, documentType` (**no auth header**; the website route checks only that the id exists); (2) fallback: direct upload to `visa_documents/<appId>/<type>_<rand8>.<ext>` with the user JWT and set the `has_*` flag; then append to `additional_notes.uploads` (`lib/data.ts:242-277`).
@@ -270,7 +273,7 @@ Website = `main` `/apply` (`components/apply/*`). App = `mobile/lib/questions.ts
 | 6 | firstName / lastName | Text, required | Text, required, "As on your passport." | Yes |
 | 7 | email | Regex + typo list | Same rules; prefilled from session | Yes |
 | 8 | phone | Free `tel`, 7–15 digits (error text says 8–15) | Country picker + local number, 7–15 digits | Rule yes; input differs |
-| 9 | whatsappOptIn | Checkbox, default on | Checkbox, default on | Yes (neither stores it) |
+| 9 | whatsappOptIn | Checkbox, default on; not stored | Checkbox, default on; stored in `additional_notes.wizard` (`lib/data.ts:156`) | UI yes; storage differs |
 | 10 | dateOfBirth | Native date, `max` today−18y (browser only) | Wheel, `max` today−18y, validated | Yes (app stricter) |
 | 11 | hasValidPassport | Before passport no.; "No" blocks Continue | Before passport no.; "No" blocks with note | Yes |
 | 12 | passportNumber | Text, upper-case, required if valid | Same | Yes |
@@ -327,7 +330,7 @@ Website = `main` `/apply` (`components/apply/*`). App = `mobile/lib/questions.ts
 | Document types → `has_*` | `lib/data.ts:51-59` `DOC_FLAG`, `DOC_TYPES`, `REQS`; edge fn `notify-status` `DOC` labels | `upload-document:105-116` (twice), track/dashboard/HubSpot upload pages | Same keys (dashboard adds `passportPhoto`) |
 | Status labels | `lib/data.ts:319`, edge fn `LABEL`, `lib/nextAction.ts` | `app/track`, admin UI | App lists statuses nobody writes |
 | Reference `EZ-xxxxxxxx` | `lib/data.ts:47`, edge fn `notify-status` | none (uses `tracking_token`) | |
-| 5 MB + mime list | `lib/capture.ts:8`, proposed bucket limit | `upload-document:7-8` | Same |
+| 5 MB + mime list | `lib/capture.ts:8` (5 MB); picker types `lib/capture.ts:49` include `image/heic`, `image/webp` | `upload-document:7-8` (pdf/jpeg/jpg/png only) | **Differs**: HEIC/WebP from Files is refused with 400, and a 400 is final in the app (`lib/data.ts:256`), so the upload fails with no fallback (M15) |
 
 Recommendation (chat 02/04): one `mobile/lib/rules/` module (lists, options, validation, price display, doc types) with unit tests, and a script that checks the website copies for drift. A shared npm package is not needed yet.
 
@@ -343,6 +346,7 @@ Recommendation (chat 02/04): one `mobile/lib/rules/` module (lists, options, val
 | Static checklist `REQS` | `lib/data.ts:62-69` | Real website checklist, fine. |
 | Quick facts, capitals, photos, flags | `lib/facts.ts`, `lib/capitals.ts`, `lib/photos.ts` | Static reference data with sources, fine. |
 | Trip plan | `lib/itinerary.ts` | Deterministic template, labelled "Ideas, not bookings", no venues/prices. Fine. |
+| "24–48h · processing" tile on every country page | `components/CountryDetail.tsx:13` | Same hard-coded value for all 29 countries. The website uses "24-48h **File Prep**" (EZvisa's preparation time); "processing" reads as the embassy's visa processing time, which is much longer. Misleading claim (M16); wording is a product decision. |
 | Statuses `awaiting_documents`, `appointment_booked`, `completed` handled in UI | `lib/data.ts:319`, `lib/nextAction.ts:14,25,27` | No one writes them; dead branches. |
 | Support numbers | `lib/config.ts:14-15` (`971547109533`, `support@ezvisa.net`) | Real contact data, keep in one place. |
 | No mock timelines, sample receipts, placeholder applications or fake approval rates found in shipped screens. | | |
@@ -377,11 +381,12 @@ Severity: **Blocker** = stops release or exposes customer data; **High** = wrong
 | B2 | **Upload route accepts files for any application id without auth or payment check** (the app relies on it). Anyone with an application UUID can write into that case's folder and flip `has_*` flags; `documentType` and extension go unvalidated into the object key. | `app/api/upload-document/route.ts:23-121` (main); app call `mobile/lib/data.ts:249-256` | Security / data integrity |
 | B3 | **Ziina webhook is unauthenticated unless `ZIINA_WEBHOOK_SECRET` is set**, and create-payment returns the intent id to any caller: a user could mark their own case paid. Whether the secret is set is unknown. | `app/api/webhooks/ziina/route.ts:16-34`, `create-payment/route.ts:139` (main) | Payments |
 | B4 | **The published EAS `preview` update may still point at the old DB** (`rjbgteqgqaxalcfnksjc`) per `HANDOFF.md`; nothing later says it was republished. Testers in Expo Go would write to the wrong project. | `mobile/HANDOFF.md` §3 "EAS Update status" | Build / data |
+| B5 | **Any client can insert an application that is already "paid" or "ready".** Inserts carry client-built columns (`lib/data.ts:176,187`); the insert policy checks only the email (`db/proposed-live-changes.sql:108-112`; website `scripts/003:71-72` is `WITH CHECK (true)`); the guard trigger runs `before update` only (`proposed-live-changes.sql:104-105`). A modified client can insert `payment_status:'paid'`, which unlocks documents and receipts in the app and shows as paid in the admin. (Found in the QA review; `main`'s later `scripts/006_tighten_visa_applications_rls.sql` explicitly leaves INSERT policies out.) | `lib/data.ts:176,187`; `db/proposed-live-changes.sql:104-112` | Security / payments (needs owner check) |
 
 ### High
 | # | Issue | Evidence | Area |
 |---|---|---|---|
-| H1 | `mobile-app` carries an older website copy that undoes `main`'s server-side price fix, the wizard rules and `/app-return`. Any merge to `main` would be a regression; diffs also add noise to every PR. | §1; `git diff origin/main origin/mobile-app -- app/api/create-payment/route.ts` | Build / process |
+| H1 | `mobile-app` carries an older website copy. Its own website edits are limited to `create-payment/route.ts`, `lib/email-templates.tsx`, `lib/email/templates/index.ts`, `lib/site-url.ts`, `tsconfig.json` (`git diff --stat cae9f63 591aced -- . ':!mobile'`). A merge keeps `main`'s wizard rules and `/app-return` (only `main` changed them), but `create-payment` was edited on both sides, so a careless conflict resolution there could drop the server-side price. | §1; `git diff cae9f63 591aced -- app/api/create-payment/route.ts` | Build / process |
 | H2 | Each create-payment call overwrites `payment_id`; paying an earlier checkout (two taps, retry, two devices) is then never matched by the webhook, so a real payment stays "pending". The app opens new intents on retry. | `create-payment/route.ts:135`, `webhooks/ziina/route.ts:74-82` (main); `mobile/app/payment/[id].tsx:46-51` | Payments |
 | H3 | Receipt shows `payment_amount ?? phone-computed total` and `updated_at` as the date. | `mobile/app/(tabs)/account/index.tsx:193-198` | No-fake-data rule |
 | H4 | Synthesised "Your EZvisa dossier" document when status = `ready`; no file check, can't be opened. | `mobile/lib/data.ts:97-98,281` | No-fake-data rule |
@@ -408,6 +413,8 @@ Severity: **Blocker** = stops release or exposes customer data; **High** = wrong
 | M12 | `useApps(true)` runs `listApplications` twice per focus (once directly, once inside `listNotifications`). | `lib/useApps.ts:19`, `lib/data.ts:288` | Performance |
 | M13 | Website nationality list (10, incl. UAE) disagrees with the app (visa-required only); website stores almost none of the wizard answers. App/website cases look different to staff. | §7 | Parity |
 | M14 | `/app-return` allows `exp://` / `exps://` in production (needed for Expo Go testing, but lets an ezvisa.net link open any Expo Go project). | `app/app-return/page.tsx:6` (main) | Security (low impact) |
+| M15 | File picker offers HEIC/WebP but the website upload route accepts only PDF/JPEG/PNG; the app treats the 400 as final, so those uploads always fail. | `lib/capture.ts:49`, `lib/data.ts:256`; website `upload-document/route.ts:8` | Uploads |
+| M16 | Hard-coded "24–48h processing" on every country page (see §8.2). | `components/CountryDetail.tsx:13` | No-fake-data rule |
 
 ### Low
 | # | Issue | Evidence |
@@ -471,3 +478,26 @@ Nothing below was changed. Each item needs your decision.
 5. **Website PRs to `main`** for B2, B3, H2, H7, H9 (upload auth, webhook strictness, intent reuse, submitted email/lead for app cases, check-payment validation).
 6. **Possible schema additions later** (proposals only, written when their chat comes): status history (M7), `passport_expiry_date` (`0001`, M8), profile table (chat 07).
 7. **Network access for this environment**: `api.expo.dev`, `exp.host`, `www.ezvisa.net` are blocked here, so online `expo install --check`, `expo-doctor` and live API checks can't run from the cloud session.
+8. **B5 (insert as paid)**: an insert-side guard (column grants, or a `before insert` trigger forcing `payment_status='pending'`, `application_status in ('draft','submitted')`, null `payment_*`/`appointment_*`/`document_reviews`). **RLS/trigger change: approval needed.**
+
+---
+
+## 13. QA review (2026-10-22, later the same day)
+
+A second pass checked this document against the audited code (`0451206`) and the website (`main@45bf6e0`) with an independent reviewer, re-ran every check, and looked at `main` after the merges (PRs #7, #9, #15, #18, #20).
+
+**Corrections made to this document:** `expo-*` count 29 → 27 (§2); route reachability wording and the missing `ezvisa://auth/callback` screen (§3.1); `wizard_events` is written by `lib/analytics.ts` (§3.3); `0006:44-49` → `0006:38-43` (§5.1); NOC shows while employment status is empty (§6.4); the app does store `whatsappOptIn` (§7.1); upload type lists differ, HEIC/WebP fail (§8.1, M15); hard-coded "24–48h processing" (§8.2, M16); H1 was overstated (a merge keeps `main`'s wizard rules and `/app-return`; only `create-payment` conflicts); new blocker B5 (client can insert a row as paid).
+
+**Checks re-run** (outputs in the QA session, not committed):
+
+| Check | `0451206` (audited) | `main` `1934aee` | `mobile-app` `8651059` |
+|---|---|---|---|
+| `npm ci` | pass | pass | pass |
+| `npx tsc --noEmit` | 12 errors (Deno files only) | **28 errors** (14 in `app/apply/index.tsx`, 14 in `scripts/wizard-rules.test.ts`) | **0** |
+| `npm run lint` | no config | 0 errors, 111 warnings | not run |
+| `expo export` iOS / web | pass / pass | pass / pass | not run |
+| Website `pnpm build` (`main`) | — | pass (2 pre-existing `tsc` errors, `ignoreBuildErrors`) | — |
+
+**Regression found on `main` (not from this chat's commits):** commit `de75fd8` (PR #15, "wizard rebuild") changed `mobile/app/apply/index.tsx` to import `SheetAnswer`, `FixedValue`, `cleanForm`, `NATIONALITY_OPTIONS`, `reviewQuestions`, `answer`, `employmentQuestions`, but the files that export them were not in the commit. Metro still bundles it, but in the browser the first wizard question renders **no answers and a disabled Continue**: nobody can start an application from `main`'s mobile code. A fix exists on branch `claude/festive-goodall-8qekxb` (`c87580f`, no PR yet): 0 type errors, and the wizard renders its destination picker. `mobile-app` (which CI publishes to the EAS `preview` channel) does not contain `de75fd8` and type-checks clean. `main` and `mobile-app` have diverged; neither contains the other.
+
+**Still open from §10 on `main`:** B3 (webhook secret optional), B4 (EAS preview DB), B5, H3 (receipt fallback), M15, M16. Fixed on `main` by later chats: B2 (upload auth + paid check), H4 (synthesised dossier row removed), H5 (SecureStore session + wipe on sign-out), M1 (ESLint), M2 (`eas.json`); B1 has a script (`scripts/006_tighten_visa_applications_rls.sql`), not confirmed applied.
