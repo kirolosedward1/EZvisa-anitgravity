@@ -184,7 +184,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           scrolled ? "py-2" : "py-4"
         }`}
       >
-        <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-6xl">
+        <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-7xl">
           <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
             scrolled || forceBackground || isWizardPage
               ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
@@ -202,7 +202,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
             </Link>
 
             {!isWizardPage && !hideNavigation && (
-              <nav className="hidden lg:flex items-center gap-1.5 px-1">
+              <nav className="hidden xl:flex items-center gap-1.5 px-1">
                 {navItems.map((item) => (
                   <div 
                     key={item.id} 
@@ -380,7 +380,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className={`${
-                  isWizardPage ? "flex" : "lg:hidden"
+                  isWizardPage ? "flex" : "xl:hidden"
                 } h-10 w-10 rounded-full transition-colors flex items-center justify-center border ${
                   isMenuOpen ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-secondary"
                 }`}
