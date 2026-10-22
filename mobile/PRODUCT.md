@@ -34,7 +34,8 @@ People prepare each file. The app collects only what those people need, in the o
 - Expo SDK 57 with expo-router. The app must keep running in Expo Go, so it can't add new native modules without a planned new build.
 - Price: 249 AED, or 498 AED with a spouse. The server sets it; the app never decides the amount.
 - Nationality: one choice, limited to nationalities that need a Schengen visa. Country of residence is fixed to the UAE, and the city is one of the 7 emirates (no flags).
-- The app asks "Do you have a valid passport?" before the passport number. If the answer is No, it shows a note that they need a new passport.
+- The app asks "Do you have a valid passport?" before the passport number. If the answer is No, the application continues with a note to get the passport and add it later.
+- Any "No" to a document question (valid passport, Emirates ID, spouse's passport, NOC) never blocks: the app shows "add it later", lists it under "To get later" on Review and on the application page, and saves it as `additional_notes.missingDocuments` for the team.
 - Self-employed applicants are not asked for a NOC.
 - Employment questions (job title and company on one page) and document upload come after payment.
 - Home shows all of the user's applications. At most the 10 most recent failed or unpaid ones appear, each with Discard plus a confirmation.
