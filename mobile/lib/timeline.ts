@@ -6,7 +6,7 @@
 //  - uploads: additional_notes.uploads[].at (written when the file was stored) and the website's has_* flags (no time).
 //  - appointment_* columns (migrations/0003, staff only).
 //  - created_at / updated_at only. updated_at changes on any edit, so it is never shown as a step time.
-// migrations/0008 (proposed, not applied) adds a server-side history so every step gets a real time.
+// migrations/0009 (proposed, not applied) adds a server-side history so every step gets a real time.
 import { isPaid, requirementsFor, type Application } from "./data";
 import { buildChecklist } from "./checklist";
 import { appointmentOf } from "./appointment";

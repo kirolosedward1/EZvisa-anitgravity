@@ -10,7 +10,7 @@ import { useDiscarded, visibleApps, discardApplication } from "./discard";
 /** Loads the signed-in user's applications (and unread count) on focus.
  *  live: also reload when the app returns to the foreground, and on Supabase Realtime changes to the user's own rows
  *  (filtered by email, the same ownership rule as the query; RLS applies to Realtime too). Realtime only delivers once
- *  visa_applications is in the supabase_realtime publication (migrations/0008, waiting for approval); until then the
+ *  visa_applications is in the supabase_realtime publication (migrations/0009, waiting for approval); until then the
  *  focus / foreground / pull-to-refresh reloads keep the screen current. */
 export function useApps(withUnread = false, live = false) {
   const { session } = useAuth();
