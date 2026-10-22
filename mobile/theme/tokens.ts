@@ -22,7 +22,7 @@ export const R = {
 /** Minimum hit target (Apple HIG). */
 export const HIT = 44;
 /** Control heights. */
-export const SIZE = { buttonL: 56, buttonM: HIT, input: 56, row: 52, rowTall: 64, grabber: 36 } as const;
+export const SIZE = { buttonL: 56, buttonM: HIT, input: 56, row: 52, rowTall: 64, iconTile: 32, dot: 8, grabberW: 36, grabberH: 5, sheetDismiss: 96 } as const;
 /** Icon sizes (SF Symbols / Ionicons), same weights everywhere. */
 export const ICON = { xs: 11, sm: 13, md: 17, lg: 22, xl: 28, hero: 40 } as const;
 /** Flag / avatar diameters. */
