@@ -49,7 +49,7 @@ function NewAppButton() {
         <Pressable onPress={open} onPressIn={() => { press.value = withSpring(reduce ? 0.96 : 0.9, SPRING.press); }} onPressOut={() => { press.value = withSpring(1, SPRING.press); }}
           accessibilityRole="button" accessibilityLabel="New application" testID="tab-new-application" hitSlop={S.xxs}
           style={{ flex: 1, borderRadius: FAB / 2, alignItems: "center", justifyContent: "center" }}>
-          <Icon name="plus" size={ICON.lg} color={c.onAccent} weight="bold" />
+          <Icon name="airplane" size={ICON.lg} color={c.onAccent} />
         </Pressable>
       </Animated.View>
     </View>
