@@ -7,7 +7,7 @@ import { Picker } from "@react-native-picker/picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Flag, Icon, Text, type IconName } from "../ui";
 import { CountrySheet } from "../CountryPicker";
-import { useColors, useIsDark, S, R, T } from "../../lib/theme";
+import { useColors, useIsDark, S, R, T, ICON } from "../../lib/theme";
 import { select } from "../../lib/haptics";
 
 const H = 56;
@@ -124,8 +124,8 @@ export function DateField({ label, value, onChange, min, max, placeholder = "Sel
       {Platform.OS === "android" && open && <DateTimePicker value={initial} mode="date" minimumDate={minD} maximumDate={maxD} onChange={(e, d) => { setOpen(false); if (e.type === "set" && d) onChange(iso(d)); }} />}
       {Platform.OS === "ios" && (
         <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-          <Pressable style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.35)" }} onPress={() => setOpen(false)} accessibilityLabel="Close date picker" accessibilityRole="button" />
-          <View style={{ backgroundColor: c.bg, borderTopLeftRadius: R.sheet, borderTopRightRadius: R.sheet, paddingBottom: insets.bottom + S.sm, paddingHorizontal: S.md }}>
+          <Pressable style={{ flex: 1, backgroundColor: c.overlay }} onPress={() => setOpen(false)} accessibilityLabel="Close date picker" accessibilityRole="button" />
+          <View style={{ backgroundColor: c.bg, borderTopStartRadius: R.sheet, borderTopEndRadius: R.sheet, paddingBottom: insets.bottom + S.sm, paddingHorizontal: S.md }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: 52 }}>
               <Pressable onPress={() => setOpen(false)} accessibilityRole="button" style={{ minHeight: 44, minWidth: 44, justifyContent: "center" }}><Text variant="body" tone="secondary">Cancel</Text></Pressable>
               <Text variant="headline" accessibilityRole="header">{label.replace(/ \*$/, "")}</Text>
@@ -164,9 +164,9 @@ export function Checkbox({ label, value, onChange, icon, iconColor }: { label: s
     <Pressable onPress={() => { select(); onChange(!value); }} accessibilityRole="checkbox" accessibilityState={{ checked: value }} aria-checked={value} accessibilityLabel={label}
       style={{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 44 }}>
       <View style={{ width: 20, height: 20, borderRadius: R.xs, borderWidth: 1.5, borderColor: value ? c.whatsapp : c.tertiaryLabel, backgroundColor: value ? c.whatsapp : "transparent", alignItems: "center", justifyContent: "center" }}>
-        {value && <Icon name="checkmark" size={12} color="#fff" weight="bold" />}
+        {value && <Icon name="checkmark" size={S.sm} color={c.onAccent} weight="bold" />}
       </View>
-      {!!icon && <Icon name={icon} size={14} color={iconColor ?? c.secondaryLabel} />}
+      {!!icon && <Icon name={icon} size={ICON.sm + 1} color={iconColor ?? (icon === "logo.whatsapp" ? c.whatsapp : c.secondaryLabel)} />}
       <Text variant="footnote" tone="secondary" style={{ flex: 1 }}>{label}</Text>
     </Pressable>
   );
@@ -176,7 +176,7 @@ export function Checkbox({ label, value, onChange, icon, iconColor }: { label: s
 export function Note({ tone, children, icon = "info.circle" }: { tone: "green" | "amber" | "blue" | "red"; children: React.ReactNode; icon?: IconName }) {
   const c = useColors(); const dark = useIsDark();
   const col = tone === "green" ? c.green : tone === "amber" ? c.orange : tone === "red" ? c.red : c.tint;
-  const bg = { green: dark ? "rgba(48,209,88,0.10)" : "rgba(26,127,55,0.06)", amber: dark ? "rgba(255,159,10,0.10)" : "rgba(201,52,0,0.05)", blue: dark ? "rgba(123,147,255,0.10)" : "rgba(4,54,220,0.05)", red: dark ? "rgba(255,105,97,0.10)" : "rgba(215,0,21,0.05)" }[tone];
+  const bg = { green: c.successSoft, amber: c.warningSoft, blue: c.accentSoft, red: c.dangerSoft }[tone];
   return (
     <View style={{ flexDirection: "row", gap: S.xs, padding: S.sm, borderRadius: R.input, borderWidth: 1, borderColor: col + "40", backgroundColor: bg, alignItems: "flex-start" }}>
       <Icon name={icon} size={17} color={col} style={{ marginTop: S.none }} />

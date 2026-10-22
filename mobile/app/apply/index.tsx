@@ -508,7 +508,7 @@ export default function Apply() {
       case "phone": return (
         <View style={{ gap: S.sm }}>
           <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />
-          <Checkbox label={t("Receive application updates via WhatsApp")} value={f.whatsappOptIn} onChange={(v) => patch({ whatsappOptIn: v })} icon="logo.whatsapp" iconColor="#25D366" />
+          <Checkbox label={t("Receive application updates via WhatsApp")} value={f.whatsappOptIn} onChange={(v) => patch({ whatsappOptIn: v })} icon="logo.whatsapp" />
         </View>
       );
       case "countries": return <AdditionalCountries f={f} onChange={(v) => patch({ additionalCountries: v })} />;
@@ -543,7 +543,7 @@ export default function Apply() {
       {bar}
       <DraftConflictSheet />
       <Modal visible={resumeAsk} transparent animationType="fade" onRequestClose={() => setResumeAsk(false)}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
+        <View style={{ flex: 1, backgroundColor: c.overlay, justifyContent: "center", padding: S.gutter }}>
           <View style={[{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.md }, curve]} accessibilityViewIsModal>
             <Text variant="title3" accessibilityRole="header">{t("Continue Application?")}</Text>
             <Text variant="subhead" tone="secondary">{t("Pick up where you left off, or start fresh.")}</Text>

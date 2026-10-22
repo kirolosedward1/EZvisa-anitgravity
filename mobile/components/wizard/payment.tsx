@@ -1,7 +1,7 @@
 // Step 5: Review & Payment (web repo components/apply/payment-step.tsx + dossier-readiness-card.tsx).
 import { View } from "react-native";
 import { Text, Icon, Button } from "../ui";
-import { useColors, S, R } from "../../lib/theme";
+import { useColors, S, R, ICON } from "../../lib/theme";
 import { STEP_TITLES, label, EMPLOYMENT, PURPOSES, COMPANIONS, FUNDING, BALANCE, HOTELS, tripDays, showSpouse, type WizardForm, type WizardStep } from "../../lib/wizard";
 import { fmtShort, Note } from "./fields";
 
@@ -61,7 +61,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
       )}
       <Card tone="blue">
         <View style={{ flexDirection: "row", gap: S.sm, alignItems: "center" }}>
-          <View style={{ width: 40, height: 40, borderRadius: R.lg, backgroundColor: c.tintFill, alignItems: "center", justifyContent: "center" }}><Icon name="sparkles" size={20} color="#fff" /></View>
+          <View style={{ width: S.x3, height: S.x3, borderRadius: R.lg, backgroundColor: c.tintFill, alignItems: "center", justifyContent: "center" }}><Icon name="sparkles" size={ICON.lg - 2} color={c.onAccent} /></View>
           <View style={{ flex: 1 }}>
             <Text variant="footnote" weight="700" style={{ textTransform: "uppercase", letterSpacing: 0.6 }}>Pre-Flight File Readiness Score</Text>
             <Text variant="caption" tone="secondary">Automated procedural audit based on official Schengen consular criteria</Text>
@@ -133,7 +133,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
         {[["Applicant", `${f.firstName} ${f.lastName}`.trim()], ["Nationality", f.nationality], ["Destination", f.destination]].map(([k, v]) => (
           <View key={k} style={{ flexDirection: "row", justifyContent: "space-between", gap: S.sm, borderBottomWidth: 1, borderBottomColor: c.separator, paddingBottom: S.sm }}>
             <Text variant="caption" tone="secondary" weight="500" style={{ textTransform: "uppercase", letterSpacing: 0.8 }}>{k}</Text>
-            <Text variant="subhead" weight="600" style={{ flexShrink: 1, textAlign: "right" }}>{v}</Text>
+            <Text variant="subhead" weight="600" style={{ flexShrink: 1 }}>{v}</Text>
           </View>
         ))}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderBottomColor: c.separator, paddingBottom: S.sm }}>
