@@ -2,17 +2,23 @@
 // AsyncStorage (debounced) and restored on launch. In addition, once the signed-in user has completed the
 // personal step, the draft is saved to the live visa_applications table (application_status "draft") so it can be
 // resumed on another device and is visible to EZvisa staff; submitting turns that same row into "submitted".
+// Drafts on the phone belong to the account that wrote them (`uid`; guest drafts have none and are adopted on sign-in).
+// After sign-out or an account switch nothing of the previous account stays on this phone (see the purge effect).
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { coerceResidence, emptyForm, validatePersonal, hasAnswers, needsSchengenVisa, type WizardForm } from "./wizard";
 import { normalizePage, stepOfPage } from "./questions";
 import { useAuth } from "./auth";
 import { saveDraft, latestDraft } from "./data";
+import { clearPrefillFlags } from "./profile";
+import { setPassportExpiry } from "./reminders";
 export { emptyForm } from "./wizard";
 
 const KEY = "ezvisa.wizard.v1"; // the open (active) draft, same format as before + `key`
 const DRAFTS = "ezvisa.drafts.v2"; // every unfinished application saved on this phone (the active one included)
-export type LocalDraft = { key: string; form: WizardForm; page: string; savedAt: number; draftId: string | null };
+const OWNER = "ezvisa.owner.v1"; // the account last signed in on this phone (to clean up after it)
+/** uid: owning account, null = guest, undefined = saved before owners were recorded (claimed on first launch). */
+export type LocalDraft = { key: string; form: WizardForm; page: string; savedAt: number; draftId: string | null; uid?: string | null };
 const newKey = () => `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
 /** Old saves could hold "Other" + free text (or a visa-exempt country from a link). Clear it so the user re-picks from the visa-required list. */
 function cleanNationality(f: WizardForm): WizardForm {
@@ -35,7 +41,10 @@ const C = createContext<Ctx>(null as any);
 
 
 export function FormProvider({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
+  const { session, loading: authLoading } = useAuth();
+  const uid = session?.user.id ?? null; const uidRef = useRef(uid); // read by the save timers below
+  useEffect(() => { uidRef.current = uid; }, [uid]);
+  const ownerRef = useRef<string | null | undefined>(undefined); // owner of the active draft as loaded from storage
   const [form, setForm] = useState<WizardForm>(emptyForm); const [page, setPage] = useState("q:destination");
   const [submitted, setSubmitted] = useState<Submitted>(null);
   const [hydrated, setHydrated] = useState(false); const [savedAt, setSavedAt] = useState<number | null>(null);
@@ -69,7 +78,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
         setForm(f); setPage(pg);
         if (f.nationality !== d.form.nationality || "nationalityOther" in d.form) // persist the cleanup right away
           AsyncStorage.setItem(KEY, JSON.stringify({ ...d, form: f, page: pg })).catch(() => {});
-        setSavedAt(d.savedAt ?? null); setPromptDismissed(!!d.promptDismissed); setDraft(d.draftId ?? null);
+        setSavedAt(d.savedAt ?? null); setPromptDismissed(!!d.promptDismissed); setDraft(d.draftId ?? null); ownerRef.current = d.uid;
       }
     }).catch(() => {}).finally(() => setHydrated(true));
   }, []);
@@ -80,9 +89,10 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
       const at = Date.now();
-      AsyncStorage.setItem(KEY, JSON.stringify({ v: 1, key: keyRef.current, form, page, savedAt: at, promptDismissed, draftId })).then(() => setSavedAt(at)).catch(() => {});
+      const owner = uidRef.current;
+      AsyncStorage.setItem(KEY, JSON.stringify({ v: 1, key: keyRef.current, form, page, savedAt: at, promptDismissed, draftId, uid: owner })).then(() => setSavedAt(at)).catch(() => {});
       const rest = draftsRef.current.filter((x) => x.key !== keyRef.current);
-      writeDrafts(hasAnswers(form) ? [{ key: keyRef.current, form, page, savedAt: at, draftId }, ...rest] : rest);
+      writeDrafts(hasAnswers(form) ? [{ key: keyRef.current, form, page, savedAt: at, draftId, uid: owner }, ...rest] : rest);
     }, 250);
     return () => { if (timer.current) clearTimeout(timer.current); };
   }, [form, page, promptDismissed, hydrated, draftId]);
@@ -135,9 +145,25 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     const k = d?.key ?? newKey(); keyRef.current = k; setActiveKey(k);
     setForm(f); setPage(pg); setDraft(d?.draftId ?? null); setSavedAt(d?.savedAt ?? null); setCloudSavedAt(null); setPromptDismissed(false);
     latest.current = { form: f, page: pg };
-    AsyncStorage.setItem(KEY, JSON.stringify({ v: 1, key: k, form: f, page: pg, savedAt: d?.savedAt ?? null, promptDismissed: false, draftId: d?.draftId ?? null })).catch(() => {});
+    AsyncStorage.setItem(KEY, JSON.stringify({ v: 1, key: k, form: f, page: pg, savedAt: d?.savedAt ?? null, promptDismissed: false, draftId: d?.draftId ?? null, uid: uidRef.current })).catch(() => {});
     return f;
   };
+  // Sign-out / account switch (also after a relaunch): drop every draft owned by another account from memory and
+  // storage, reset the open one if it was theirs, and forget the previous account's prefill flags and the passport
+  // expiry kept on this phone. Waits for the stored session to load so a slow start never wipes the owner's drafts.
+  useEffect(() => {
+    if (!hydrated || authLoading) return;
+    const foreign = (o: string | null | undefined) => !!o && o !== uid;
+    const list = draftsRef.current.map((d) => (d.uid === undefined ? { ...d, uid } : d)); // pre-owner saves: claimed now
+    const kept = list.filter((d) => !foreign(d.uid));
+    if (kept.length !== list.length || list.some((d, i) => d !== draftsRef.current[i])) writeDrafts(kept);
+    if (foreign(ownerRef.current)) { setSubmitted(null); clearDraft(); }
+    ownerRef.current = uid;
+    AsyncStorage.getItem(OWNER).then(async (prev) => {
+      if (prev && prev !== uid) await Promise.all([clearPrefillFlags(), setPassportExpiry("").catch(() => {})]);
+      await (uid ? AsyncStorage.setItem(OWNER, uid) : AsyncStorage.removeItem(OWNER));
+    }).catch(() => {});
+  }, [hydrated, authLoading, uid, clearDraft]);
   const openDraft = useCallback((key: string) => { const d = draftsRef.current.find((x) => x.key === key); return d ? load(d) : null; }, []);
   const startNew = useCallback((seed?: Partial<WizardForm>) => load(null, seed), []);
   const removeDraft = useCallback((key: string) => {

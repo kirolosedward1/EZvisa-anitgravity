@@ -16,11 +16,12 @@ import { useColors, S, R } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
 import { whatsapp, email as mailSupport } from "../../../lib/api";
 import { useApps } from "../../../lib/useApps";
+import { useForm } from "../../../lib/form";
 
 export default function Account() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true);
-  const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT();
+  const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT(); const { flushDraft } = useForm();
   const [del, setDel] = useState(false); const [delStep, setDelStep] = useState<"ask" | "sure" | "failed">("ask"); const [delErr, setDelErr] = useState<string | null>(null); const [deleting, setDeleting] = useState(false);
   /** Calls the delete-account edge function with the user's own session; WhatsApp / email stay as the fallback. */
   const deleteNow = async () => {
@@ -123,9 +124,10 @@ export default function Account() {
   const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
   const paidApps = (apps ?? []).filter((a) => isPaid(a));
   const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
+  // Save the open draft to the account first: signing out removes this account's drafts from the phone (lib/form.tsx).
   const signOut = () => {
-    if (Platform.OS === "web") { supabase?.auth.signOut(); return; }
-    const out = () => unregisterPushToken().finally(() => supabase?.auth.signOut());
+    if (Platform.OS === "web") { flushDraft().catch(() => null).finally(() => supabase?.auth.signOut()); return; }
+    const out = () => flushDraft().catch(() => null).then(() => unregisterPushToken()).finally(() => supabase?.auth.signOut());
     Alert.alert("Sign out?", undefined, [{ text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: out }]);
   };
   return (
