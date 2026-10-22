@@ -22,6 +22,7 @@ import { useUsageSharing } from "../../../lib/privacy";
 import { lastCrash } from "../../../lib/crash";
 import { startupHistory } from "../../../lib/perf";
 import { pendingEvents } from "../../../lib/analytics";
+import { SENTRY_ENABLED, sendTestError } from "../../../lib/sentry";
 import Constants from "expo-constants";
 import NetInfo from "@react-native-community/netinfo";
 import { useForm } from "../../../lib/form";
@@ -49,7 +50,10 @@ export default function Account() {
   const diagnostics = async () => {
     const [st, cr, q] = await Promise.all([startupHistory(), lastCrash(), pendingEvents()]);
     const times = st.slice(-5).map((s) => `${s.native ?? s.js} ms`).join(", ") || "-";
-    Alert.alert(t("Diagnostics"), `${t("Startup")}: ${times}\n${t("Queued events")}: ${q}\n${t("Last error")}: ${cr ? `${new Date(cr.at).toLocaleString()} · ${cr.message}` : "-"}`);
+    const u = session?.user;
+    const test = () => { sendTestError([u?.user_metadata?.full_name as string | undefined, u?.email].filter(Boolean) as string[]); Alert.alert(t("Test error sent")); };
+    Alert.alert(t("Diagnostics"), `${t("Startup")}: ${times}\n${t("Queued events")}: ${q}\n${t("Last error")}: ${cr ? `${new Date(cr.at).toLocaleString()} · ${cr.message}` : "-"}`,
+      SENTRY_ENABLED && usage ? [{ text: t("Send test error"), onPress: test }, { text: "OK", style: "cancel" }] : undefined);
   };
   const [rem, setRem] = useState(false); const [remNote, setRemNote] = useState<string | null>(null);
   const [pp, setPp] = useState(""); const [lock, setLock] = useState(false); const [bio, setBio] = useState<string | null>(null); const [lockNote, setLockNote] = useState<string | null>(null);
@@ -99,15 +103,15 @@ export default function Account() {
       </View>
       <View style={{ padding: S.sm, gap: S.xs }} testID="passport-expiry">
         <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.xs }}>{t("Passport expiry (kept on this phone)")}</Text>
-        <DateAnswer label={t("Passport expiry")} value={pp} onChange={onPp} style="wheel" placeholder="Select date" min={new Date().toISOString().slice(0, 10)} />
+        <DateAnswer label={t("Passport expiry")} value={pp} onChange={onPp} style="wheel" placeholder={t("Select date")} min={new Date().toISOString().slice(0, 10)} />
       </View>
-      {!!remNote && Platform.OS !== "web" && <ListRow title="Open Settings" tint chevron={false} onPress={() => Linking.openSettings()} />}
+      {!!remNote && Platform.OS !== "web" && <ListRow title={t("Open Settings")} tint chevron={false} onPress={() => Linking.openSettings()} />}
     </ListGroup>
   );
   const appearance = (
     <ListGroup header={t("Appearance")}>
       <View style={{ padding: S.sm }} testID="appearance">
-        <SegmentedControl label="Appearance" value={pref} onChange={(v) => setPref(v as AppearancePref)}
+        <SegmentedControl label={t("Appearance")} value={pref} onChange={(v) => setPref(v as AppearancePref)}
           options={[{ value: "system", label: t("System") }, { value: "light", label: t("Light") }, { value: "dark", label: t("Dark") }]} />
       </View>
     </ListGroup>
@@ -147,7 +151,8 @@ export default function Account() {
     </ScrollView>
   );
   const u = session.user; const provider = (u.app_metadata?.provider as string | undefined) ?? "email";
-  const paidApps = (apps ?? []).filter((a) => isPaid(a));
+  // Receipts need the amount Ziina actually recorded; a paid row without payment_amount gets no receipt.
+  const paidApps = (apps ?? []).filter((a) => isPaid(a) && a.payment_amount != null);
   const full = (u.user_metadata?.full_name as string | undefined) ?? (u.email ?? "").split("@")[0];
   /** Ends this phone's session and wipes the person's data from it (lib/auth.tsx). Unsaved answers are saved first;
    *  what still couldn't be saved (offline) and unsent uploads are named before the wipe. */
@@ -159,7 +164,8 @@ export default function Account() {
     const note = [!saved && t("Your latest answers aren't saved to your account yet. Signing out removes them from this phone."),
       n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : saved && t("Your applications stay in your account."),
       offline && t("You're offline, so this phone may still get this account's notifications.")].filter(Boolean).join("\n\n");
-    if (Platform.OS === "web") { endSession(); return; }
+    // Web (testing build): the same warning through the browser dialog, only when something would be lost.
+    if (Platform.OS === "web") { if (saved || window.confirm(`${t("Sign out?")}\n\n${note}`)) endSession(); return; }
     Alert.alert(t("Sign out?"), note, [{ text: t("Cancel"), style: "cancel" }, { text: t("Sign out"), style: "destructive", onPress: () => { endSession(); } }]);
   };
   return (
@@ -185,7 +191,7 @@ export default function Account() {
       {!!paidApps.length && (
         <ListGroup header={t("Receipts")} footer={t("From your payment record. Tap to save or share a PDF.")} inset={58}>
           {paidApps.map((a) => <ListRow key={a.id} icon="doc.text.fill" iconColor={c.green} title={`${t("Receipt")} · ${a.reference}`} subtitle={t(a.countries?.name ?? a.destination_country ?? "")}
-            value={`${Number(a.payment_amount ?? a.total_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => shareReceipt(a, full, u.email ?? "")} />)}
+            value={`${Number(a.payment_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => shareReceipt(a, full, u.email ?? "")} />)}
         </ListGroup>
       )}
       <ListGroup inset={58}>
@@ -226,7 +232,7 @@ export default function Account() {
 const esc = (x: string) => x.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));
 /** Receipt built only from the stored payment record (no invented fields). */
 async function shareReceipt(a: Application, name: string, mail: string) {
-  const amount = `${Number(a.payment_amount ?? a.total_amount).toFixed(2)} ${a.currency || "AED"}`;
+  const amount = `${Number(a.payment_amount).toFixed(2)} ${a.currency || "AED"}`;
   const rows: [string, string][] = [["Reference", a.reference], ["Destination", a.countries?.name ?? a.destination_country ?? ""], ["Customer", name], ["Email", mail],
     ["Amount paid", amount], ["Status", a.payment_status ?? ""], ...(a.payment_id ? [["Payment ID", a.payment_id] as [string, string]] : []), ["Date", new Date(a.updated_at ?? a.created_at ?? Date.now()).toLocaleDateString()]];
   const html = `<html><body style="font-family:-apple-system,Helvetica;padding:32px"><h1 style="margin:0">EZvisa</h1><p style="color:#666">Payment receipt · EZvisa visa application service</p>

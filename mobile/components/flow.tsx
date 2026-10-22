@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 import { Platform, Pressable, Switch, TextInput, View, useWindowDimensions } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useColors, useIsDark, S, R, T, curve, SPRING } from "../lib/theme";
+import { useColors, useIsDark, S, R, T, HIT, ICON, curve, SPRING } from "../lib/theme";
 import { Icon, IconName, PressScale, Text, Flag, InlineError } from "./ui";
 import { select } from "../lib/haptics";
+// Haptics: selection tick on choices/toggles only; CircleButton (back, close, help) is navigation and stays silent.
 
 export function FlowProgress({ value }: { value: number }) {
   const c = useColors(); const w = useSharedValue(value);
@@ -16,7 +17,7 @@ export function FlowProgress({ value }: { value: number }) {
 
 export function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const c = useColors();
-  return <PressScale onPress={() => { select(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={{ width: 44, height: 44, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={15} color={c.label} weight="bold" /></PressScale>;
+  return <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={S.xxs} style={{ width: HIT, height: HIT, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={ICON.sm + 2} color={c.label} weight="bold" /></PressScale>;
 }
 
 /** Full-width selectable row with a leading icon or flag. */
@@ -25,12 +26,12 @@ export function ChoiceRow({ label, sub, icon, country, selected, onPress }: { la
   return (
     <PressScale onPress={() => { select(); onPress(); }} accessibilityRole="radio" accessibilityState={{ checked: !!selected }} aria-checked={!!selected} accessibilityLabel={sub ? `${label}, ${sub}` : label}
       style={[{ minHeight: 64, borderRadius: R.tile, paddingHorizontal: S.md, flexDirection: "row", alignItems: "center", gap: S.sm, backgroundColor: selected ? c.tintFill : c.card }, curve]}>
-      {country ? <Flag country={country} size={36} /> : icon ? <Icon name={icon} size={20} color={selected ? "#fff" : c.label} /> : null}
+      {country ? <Flag country={country} size={36} /> : icon ? <Icon name={icon} size={ICON.lg - 2} color={selected ? c.onAccent : c.label} /> : null}
       <View style={{ flex: 1 }}>
-        <Text variant="headline" color={selected ? "#fff" : undefined}>{label}</Text>
-        {!!sub && <Text variant="subhead" color={selected ? "rgba(255,255,255,0.8)" : c.secondaryLabel}>{sub}</Text>}
+        <Text variant="headline" color={selected ? c.onAccent : undefined}>{label}</Text>
+        {!!sub && <Text variant="subhead" color={selected ? c.onAccentSecondary : c.secondaryLabel}>{sub}</Text>}
       </View>
-      {selected && <Icon name="checkmark" size={16} color="#fff" weight="bold" />}
+      {selected && <Icon name="checkmark" size={ICON.md} color={c.onAccent} weight="bold" />}
     </PressScale>
   );
 }
@@ -41,8 +42,8 @@ export function ChoiceTile({ label, icon, selected, onPress }: { label: string; 
   return (
     <PressScale onPress={() => { select(); onPress(); }} accessibilityRole="radio" accessibilityState={{ checked: !!selected }} aria-checked={!!selected} accessibilityLabel={label}
       style={[{ width: w, minHeight: 112, gap: S.sm, borderRadius: R.card, padding: S.md, justifyContent: "space-between", backgroundColor: selected ? c.tintFill : c.card }, curve]}>
-      <Icon name={icon} size={26} color={selected ? "#fff" : c.tint} />
-      <Text variant="headline" color={selected ? "#fff" : undefined}>{label}</Text>
+      <Icon name={icon} size={ICON.xl} color={selected ? c.onAccent : c.tint} />
+      <Text variant="headline" color={selected ? c.onAccent : undefined}>{label}</Text>
     </PressScale>
   );
 }

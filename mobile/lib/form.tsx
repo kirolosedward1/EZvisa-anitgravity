@@ -14,7 +14,7 @@ import * as Crypto from "expo-crypto";
 import { coerceResidence, emptyForm, hasAnswers, needsSchengenVisa, type WizardForm } from "./wizard";
 import { normalizePage, stepOfPage } from "./questions";
 import { useAuth } from "./auth";
-import { saveDraft, latestDraft, getDraft, fingerprint, sameVersion, type ServerDraft } from "./data";
+import { saveDraft, latestDraft, getDraft, fingerprint, sameVersion, cancelApplication, type ServerDraft } from "./data";
 import { backoffMs } from "./uploads";
 import { registerSecrets } from "./scrub";
 export { emptyForm } from "./wizard";
@@ -23,12 +23,13 @@ const KEY = "ezvisa.wizard.v1"; // the open (active) draft, same format as befor
 const DRAFTS = "ezvisa.drafts.v2"; // every unfinished application saved on this phone (the active one included)
 const DEBOUNCE_MS = 800;
 const MAX_FAILED = 5; // non-network failures before autosave stops and asks for a tap (network failures retry forever)
+const SIGN_OUT_SAVE_MS = 4000; // longest wait for a last save before sign-out
 /** Sync metadata kept with each local draft so a killed app resumes exactly where the server copy stands. */
 type Meta = {
   draftId: string | null; // server row id (made on the phone before the first insert)
   baseAt?: string | null; // server updated_at this phone last confirmed
   syncedFp?: string | null; // fingerprint of the content last confirmed by the server
-  inflightFp?: string | null; // fingerprint of a save that was sent but not confirmed (e.g. app killed)
+  inflightFp?: string | null; // fingerprints of saves sent but not confirmed (e.g. app killed), "|"-separated, last 5
   owner?: string | null; // account email the draft is saved to; hidden from other accounts on this phone
 };
 export type LocalDraft = { key: string; form: WizardForm; page: string; savedAt: number } & Meta;
@@ -63,6 +64,8 @@ type Ctx = {
   /** "server": load the server copy (newer / existing) · "mine": keep this phone's answers (newer: overwrite after the
    *  user chose it; existing: create a separate application; gone: save as a new draft) · "discard": drop this draft. */
   resolveConflict: (choice: "server" | "mine" | "discard") => void;
+  /** True while a newer/closed/gone copy waits for the user's choice (read after an await, unlike `sync`). */
+  hasConflict: () => boolean;
   /** Compares the open draft with the server copy; shows `conflict` when it changed elsewhere. */
   checkRemote: () => Promise<void>;
   /** Before sign-out (which wipes the phone): tries to save; false when the account is still missing changes. */
@@ -115,6 +118,8 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     writeDrafts(hasAnswers(f) ? [{ key: keyRef.current, form: f, page: p, savedAt: at, ...m }, ...rest] : rest);
   };
   const dirty = () => fpOf(latest.current.form, latest.current.page) !== syncedFp.current;
+  /** Content this phone sent but never got a confirmation for (any of these may be on the server). */
+  const pending = () => (inflightFp.current ?? "").split("|").filter(Boolean);
   /** The open draft goes to the account: signed in, the first question answered (or already on the server), and not
    *  another account's draft. */
   const eligible = () => {
@@ -148,8 +153,12 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   }, []);
   // Personal answers are removed from crash reports (lib/scrub.ts) by exact match.
   useEffect(() => {
-    registerSecrets([form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails, session?.user.email]);
-  }, [form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails, session?.user.email]);
+    registerSecrets([form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails]);
+  }, [form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails]);
+  useEffect(() => {
+    const u = session?.user; const md = (u?.user_metadata ?? {}) as Record<string, unknown>;
+    registerSecrets([u?.email, md.full_name as string, md.first_name as string, md.last_name as string, md.name as string, u?.phone], "account");
+  }, [session?.user]);
   // Local autosave (every change).
   useEffect(() => {
     if (!hydrated) return;
@@ -176,7 +185,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   }, [epoch]);
 
   /** Server copy changed elsewhere since our last confirmed save? (Our own writes are recognised by fingerprint.) */
-  const outdated = (s: ServerDraft) => !sameVersion(s.updatedAt, baseRef.current) && ![syncedFp.current, inflightFp.current].includes(s.fingerprint);
+  const outdated = (s: ServerDraft) => !sameVersion(s.updatedAt, baseRef.current) && ![syncedFp.current, ...pending()].includes(s.fingerprint);
   /** Show a server copy in the wizard and treat it as the confirmed version (nothing is written until the next answer). */
   const applyServer = (s: ServerDraft) => {
     clearTimers(); failed.current = 0;
@@ -199,8 +208,8 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     if (!idRef.current) setDraft(Crypto.randomUUID());
     if (!ownerRef.current) ownerRef.current = emailRef.current;
     // Content this phone wrote or is writing: confirmed, a save cut off earlier, and this one.
-    const known = [syncedFp.current, inflightFp.current, fp].filter(Boolean) as string[];
-    inflightFp.current = fp; persistActive();
+    const known = [syncedFp.current, ...pending(), fp].filter(Boolean) as string[];
+    inflightFp.current = [...pending().filter((x) => x !== fp), fp].slice(-5).join("|"); persistActive();
     setSync("saving"); if (retryTimer.current) { clearTimeout(retryTimer.current); retryTimer.current = null; }
     const id = idRef.current!;
     const run = saveDraft(f, stepOfPage(p), id, baseRef.current, p.startsWith("q:") ? p : undefined, known, !baseRef.current && !allowNew.current)
@@ -213,6 +222,9 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
         setSync("saved"); return id;
       })
       .catch((e: any) => {
+        // The write may still have reached the server (reply lost): what the server holds is unknown now, so the next
+        // attempt must write what is on screen even if the user went back to the last confirmed answers.
+        if (idRef.current === id && fp !== syncedFp.current) syncedFp.current = null;
         const net = isNetworkError(e) || !online.current; setSyncError(e?.message ?? String(e));
         failed.current += 1;
         if (!online.current) setSync("offline"); // NetInfo saves again on reconnect
@@ -229,14 +241,21 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   const checkRemote = useCallback(async () => {
     if (!emailRef.current || !idRef.current || !baseRef.current || conflictRef.current || saving.current) return;
     if (ownerRef.current && ownerRef.current !== emailRef.current) return;
-    const id = idRef.current;
+    const id = idRef.current; const base = baseRef.current;
     try {
       const s = await getDraft(id);
-      if (idRef.current !== id || conflictRef.current) return;
+      // A save that started or finished meanwhile makes this reply stale: the next check or save decides.
+      if (idRef.current !== id || conflictRef.current || saving.current || baseRef.current !== base) return;
       if (!s) setConflict({ reason: "gone", server: null });
       else if (s.status !== "draft") setConflict({ reason: "closed", server: s });
       else if (outdated(s)) setConflict({ reason: "newer", server: s });
-      else if (!sameVersion(s.updatedAt, baseRef.current)) { baseRef.current = s.updatedAt; persistActive(); } // our own write
+      else if (!sameVersion(s.updatedAt, baseRef.current)) {
+        // Our own write whose reply never came: the server holds that content, so the screen is saved only if it matches.
+        baseRef.current = s.updatedAt;
+        if (pending().includes(s.fingerprint)) { syncedFp.current = s.fingerprint; inflightFp.current = null; }
+        persistActive();
+        if (eligible() && dirty()) flushRef.current();
+      }
     } catch { /* offline: checked again on the next save */ }
   }, []);
 
@@ -245,7 +264,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     if (!hydrated || authLoading) return;
     if (!eligible()) { if (!conflictRef.current) setSync("local"); return; }
     if (conflictRef.current) return;
-    if (!dirty()) { if (idRef.current && baseRef.current) setSync("saved"); return; }
+    if (!dirty()) { if (idRef.current && baseRef.current && !saving.current) setSync("saved"); return; }
     setSync(online.current ? "saving" : "offline");
     if (cloudTimer.current) clearTimeout(cloudTimer.current);
     cloudTimer.current = setTimeout(() => { flushDraft(); }, DEBOUNCE_MS);
@@ -274,7 +293,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   // session that changes without one), so the wizard starts empty.
   useEffect(() => {
     if (!hydrated || authLoading) return;
-    if (ownerRef.current && ownerRef.current !== email) load(null);
+    if (ownerRef.current && email && ownerRef.current !== email) load(null);
     else if (email) checkRemote(); // launch after a kill / sign-in: is the server copy newer?
   }, [hydrated, authLoading, email]);
   // Resume: nothing on this phone -> load the account's latest draft (e.g. started on the website or another device).
@@ -318,6 +337,9 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   const openDraft = useCallback((key: string) => { const d = draftsRef.current.find((x) => x.key === key); return d ? load(d) : null; }, []);
   const startNew = useCallback((seed?: Partial<WizardForm>) => load(null, seed), []);
   const removeDraft = useCallback((key: string) => {
+    // Its server draft is discarded too (unpaid drafts only, migration 0007), or "resume" would bring it back.
+    const d = draftsRef.current.find((x) => x.key === key);
+    if (d?.draftId && emailRef.current && (!d.owner || d.owner === emailRef.current)) cancelApplication(d.draftId).catch(() => {});
     if (key === keyRef.current) { clearDraft(); return; }
     writeDrafts(draftsRef.current.filter((x) => x.key !== key));
   }, [clearDraft]);
@@ -342,7 +364,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     // "mine": an explicit choice, never automatic.
-    if (c.reason === "newer" && c.server) baseRef.current = c.server.updatedAt; // overwrite the copy the user has seen
+    if (c.reason === "newer" && c.server) { baseRef.current = c.server.updatedAt; syncedFp.current = null; } // overwrite the copy the user has seen
     else if (c.reason === "existing") allowNew.current = true;
     else { setDraft(null); baseRef.current = null; syncedFp.current = null; inflightFp.current = null; } // gone / closed: a new draft
     failed.current = 0; setConflict(null); persistActive(); flushDraft();
@@ -350,12 +372,17 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
 
   const retrySync = useCallback(() => { failed.current = 0; flushDraft(); }, [flushDraft]);
   const saveBeforeSignOut = useCallback(async () => {
-    if (!eligible() || !dirty()) return true;
-    if (!conflictRef.current) await flushDraft();
-    return !dirty();
+    // At most a few seconds: with the server unreachable the client retries for a long time, and the Sign out button
+    // must answer. Not saved by then = unsaved (the warning says so).
+    if (eligible() && dirty() && !conflictRef.current) await Promise.race([flushDraft(), new Promise((r) => setTimeout(r, SIGN_OUT_SAVE_MS))]);
+    const openUnsaved = eligible() && dirty();
+    // Other drafts on this phone: only the open one can be saved here; the others count as unsaved when their answers
+    // were never confirmed by the server (sign-out wipes them from the phone).
+    const othersUnsaved = draftsRef.current.some((d) => d.key !== keyRef.current && hasAnswers(d.form) && (!d.owner || d.owner === emailRef.current) && d.syncedFp !== fpOf(d.form, d.page));
+    return !openUnsaved && !othersUnsaved;
   }, [flushDraft]);
 
   const visible = drafts.filter((d) => !d.owner || d.owner === email);
-  return <C.Provider value={{ form, setForm, page, setPage, submitted, setSubmitted, hydrated, savedAt, clearDraft, promptDismissed, dismissPrompt: () => setPromptDismissed(true), draftId, baseAt: () => baseRef.current, sync, syncError, conflict, flushDraft, retrySync, resolveConflict, checkRemote, saveBeforeSignOut, drafts: visible, activeKey, openDraft, startNew, removeDraft, openServerDraft }}>{children}</C.Provider>;
+  return <C.Provider value={{ form, setForm, page, setPage, submitted, setSubmitted, hydrated, savedAt, clearDraft, promptDismissed, dismissPrompt: () => setPromptDismissed(true), draftId, baseAt: () => baseRef.current, sync, syncError, conflict, flushDraft, retrySync, resolveConflict, checkRemote, hasConflict: () => !!conflictRef.current, saveBeforeSignOut, drafts: visible, activeKey, openDraft, startNew, removeDraft, openServerDraft }}>{children}</C.Provider>;
 }
 export const useForm = () => useContext(C);

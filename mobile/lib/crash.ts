@@ -1,7 +1,7 @@
 // Crash capture. The last JS error is kept on this phone, scrubbed of personal data (lib/scrub.ts) BEFORE it is stored,
 // so the note a user can attach to a support email never carries names, emails, passport numbers or file names.
-// A crash service (e.g. Sentry, pending approval) plugs in with setCrashSink(); it receives the same scrubbed report and
-// only when "Share anonymous usage data" is on.
+// The crash service (Sentry, lib/sentry.ts) plugs in with setCrashSink(); it receives the same scrubbed report and
+// only when "Share usage data" is on.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { scrubText } from "./scrub";
 import { usageSharingAllowed } from "./privacy";

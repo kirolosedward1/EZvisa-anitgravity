@@ -3,7 +3,7 @@
 export const AR: Record<string, string> = {
   // ---- privacy / diagnostics (chat 14) ----
   "Privacy": "الخصوصية", "Share usage data": "مشاركة بيانات الاستخدام", "Anonymous app usage and crash reports. Never your name, passport or email.": "استخدام مجهول للتطبيق وتقارير الأعطال. لا يشمل أبدًا اسمك أو جوازك أو بريدك.",
-  "Version": "الإصدار", "Long press for diagnostics": "اضغط مطولًا للتشخيص", "Diagnostics": "التشخيص", "Startup": "بدء التشغيل", "Queued events": "أحداث في الانتظار", "Last error": "آخر خطأ",
+  "Version": "الإصدار", "Long press for diagnostics": "اضغط مطولًا للتشخيص", "Diagnostics": "التشخيص", "Startup": "بدء التشغيل", "Queued events": "أحداث في الانتظار", "Last error": "آخر خطأ", "Send test error": "إرسال خطأ تجريبي", "Test error sent": "تم إرسال الخطأ التجريبي",
   "Scan pages (PDF)": "مسح الصفحات (PDF)", "Passport Expiry Date": "تاريخ انتهاء جواز السفر", "Select expiry date": "اختر تاريخ الانتهاء",
   "Passport must be valid at least 3 months after your return date": "يجب أن يكون الجواز ساريًا 3 أشهر على الأقل بعد تاريخ العودة", "Please select your passport expiry date": "يرجى اختيار تاريخ انتهاء الجواز",
   "1 week": "أسبوع", "2 weeks": "أسبوعان", "3 weeks": "3 أسابيع", "1 month": "شهر", "Your application": "طلبك", "No application yet": "لا يوجد طلب بعد", "Start an application to track it here.": "ابدأ طلبًا لمتابعته هنا.", "Start application": "ابدأ الطلب",
@@ -436,6 +436,17 @@ export const AR: Record<string, string> = {
   "Sign in with the email you used to see the latest status.": "سجّل الدخول بالبريد الذي استخدمته لرؤية آخر حالة.",
   "Check again": "تحقق مجددًا",
   "Try again": "حاول مجددًا",
+  "Some answers are filled in from your profile. Check them and edit if needed.": "بعض الإجابات مأخوذة من ملفك الشخصي. راجعها وعدّلها إذا لزم الأمر.",
+  "From your profile": "من ملفك الشخصي",
+  "Update your profile too?": "تحديث ملفك الشخصي أيضًا؟",
+  "You changed details that came from your profile. Save them for your next application?": "لقد غيّرت بيانات مأخوذة من ملفك الشخصي. هل تريد حفظها لطلبك القادم؟",
+  "{field}: {to}, profile has {from}": "{field}: {to}، والملف الشخصي فيه {from}",
+  "Profile: {v}": "الملف الشخصي: {v}",
+  "Keep profile": "إبقاء الملف كما هو",
+  "Update profile": "تحديث الملف",
+  "Profile updated.": "تم تحديث الملف الشخصي.",
+  "This passport has expired. Enter the expiry date of your current passport.": "انتهت صلاحية جواز السفر هذا. أدخل تاريخ انتهاء جواز سفرك الحالي.",
+  "You're signed in to a different account now. Your profile was not changed.": "أنت مسجّل الدخول بحساب آخر الآن. لم يتم تغيير ملفك الشخصي.",
   // v10: scanner, upload preview, offline queue
   "Add page": "إضافة صفحة",
   "Clear": "مسح",
@@ -528,4 +539,15 @@ export const AR: Record<string, string> = {
   "Documents can be uploaded after payment.": "يمكن رفع المستندات بعد الدفع.",
   "This application can't take new documents.": "لا يقبل هذا الطلب مستندات جديدة.",
   "Please sign in to upload documents": "سجّل الدخول لرفع المستندات",
+  // ---- before / after payment split ----
+  "Your Name": "اسمك",
+  "Email & Phone Number": "البريد الإلكتروني ورقم الهاتف",
+  "Passport & Residence": "الجواز والإقامة",
+  "Passport and UAE residence": "الجواز والإقامة في الإمارات",
+  "Spouse Name": "اسم الزوج/الزوجة",
+  "As on your spouse's passport.": "كما في جواز سفر الزوج/الزوجة.",
+  "{step}, {i} of {n}": "{step}، {i} من {n}",
+  "Is your UAE residence visa valid at least 3 months after your return date?": "هل تأشيرة إقامتك في الإمارات سارية لمدة 3 أشهر على الأقل بعد تاريخ عودتك؟",
+  "Most embassies need your UAE residence visa to be valid at least 3 months after you return. Renew it before your appointment; our team will guide you.": "تشترط معظم السفارات أن تكون إقامتك في الإمارات سارية لمدة 3 أشهر على الأقل بعد عودتك. جدّدها قبل موعدك، وسيرشدك فريقنا.",
+  "You'll need a valid passport (at least 6 months validity from your travel date) before your visa appointment. Our team will contact you.": "ستحتاج إلى جواز سفر ساري المفعول (صلاحية 6 أشهر على الأقل من تاريخ السفر) قبل موعد التأشيرة. سيتواصل معك فريقنا.",
 };

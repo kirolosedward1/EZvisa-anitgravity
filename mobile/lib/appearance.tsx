@@ -1,11 +1,11 @@
-// App-wide Appearance preference (System / Light / Dark), persisted in AsyncStorage.
+// App-wide Appearance preference (System / Light / Dark), persisted in AsyncStorage. Light is the default until the user picks another.
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { Appearance, Platform, useColorScheme } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type AppearancePref = "system" | "light" | "dark";
 const KEY = "ezvisa.appearance.v1";
-const Ctx = createContext<{ pref: AppearancePref; setPref: (p: AppearancePref) => void; ready: boolean }>({ pref: "system", setPref: () => {}, ready: true });
+const Ctx = createContext<{ pref: AppearancePref; setPref: (p: AppearancePref) => void; ready: boolean }>({ pref: "light", setPref: () => {}, ready: true });
 
 /** Pushes the override to native so system UI (status bar, pickers, glass, blur, alerts) follows too. */
 function applyNative(p: AppearancePref) {
@@ -14,11 +14,12 @@ function applyNative(p: AppearancePref) {
 }
 
 export function AppearanceProvider({ children }: { children: React.ReactNode }) {
-  const [pref, setState] = useState<AppearancePref>("system"); const [ready, setReady] = useState(false);
+  const [pref, setState] = useState<AppearancePref>("light"); const [ready, setReady] = useState(false);
   useEffect(() => {
     AsyncStorage.getItem(KEY).then((v) => {
-      if (v === "light" || v === "dark" || v === "system") { setState(v); applyNative(v); }
-    }).catch(() => {}).finally(() => setReady(true));
+      const p: AppearancePref = v === "dark" || v === "system" ? v : "light";
+      setState(p); applyNative(p);
+    }).catch(() => applyNative("light")).finally(() => setReady(true));
   }, []);
   const setPref = useCallback((p: AppearancePref) => { setState(p); applyNative(p); AsyncStorage.setItem(KEY, p).catch(() => {}); }, []);
   return <Ctx.Provider value={{ pref, setPref, ready }}>{children}</Ctx.Provider>;

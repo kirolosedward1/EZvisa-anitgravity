@@ -1,118 +1,143 @@
-// Continue application (after payment): the passport number and the employment answers, moved out of the pre-payment
-// wizard. Same fields and website rules (validatePassportNumber, validateEmployment); saved into the same additional_notes
-// keys the website reads, and the passport number also into the passport_number column.
+// Continue application (after payment): every question that is not needed to pay (trip details, passport & residence,
+// spouse, employment), one per screen, with the same screen as the wizard (components/wizard/QuestionView). Only the
+// questions still missing are asked (rows from the website already have most answers). Each answer is saved to the
+// application row as you go (saveAfterPayment); the last one returns to the application.
 import { useEffect, useRef, useState } from "react";
-import { ScrollView, TextInput, View, Platform, I18nManager } from "react-native";
+import { View, Platform, AccessibilityInfo, I18nManager } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
+import { useReducedMotion, useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Text, Skeleton, InlineError, EmptyState } from "../../components/ui";
+import { Text, Skeleton, InlineError, EmptyState } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
-import { ChoiceList, YesNoTiles, DateAnswer } from "../../components/wizard/answers";
-import { Note } from "../../components/wizard/fields";
-import { useColors, S, R, T, curve } from "../../lib/theme";
+import { QuestionView } from "../../components/wizard/QuestionView";
+import { useColors, S, R, SPRING } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
-import { getApplication, saveContinueAnswers, continueForm, type Application } from "../../lib/data";
-import { EMPLOYMENT, SALARY, emptyForm, validateEmployment, validatePassportNumber, iso, type WizardForm } from "../../lib/wizard";
-import { success, error as hError, tap } from "../../lib/haptics";
+import { slideIn } from "../../lib/motion";
+import { getApplication, saveAfterPayment, continueForm, isWebsiteRow } from "../../lib/data";
+import { STEP_TITLES, OTHER_NATIONALITY, emptyForm, type WizardForm } from "../../lib/wizard";
+import { continueQuestions, continueError, Q_BY_ID, type Question } from "../../lib/questions";
+import { success, error as hError, tap, select } from "../../lib/haptics";
 
-type Emp = Pick<WizardForm, "passportNumber" | "employmentStatus" | "jobTitle" | "companyName" | "employmentStartDate" | "monthlySalary" | "hasNOC" | "averageMonthlyIncome">;
-const KEYS: (keyof Emp)[] = ["passportNumber", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "hasNOC", "averageMonthlyIncome"];
+const AUTO_MS = 260;
+
+function Bar({ fill }: { fill: number }) {
+  const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
+  useEffect(() => { w.value = reduce ? fill : withSpring(fill, SPRING.enter); }, [fill, reduce]);
+  const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
+  return <View style={{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
+}
 
 export default function ContinueApplication() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
-  const [a, setA] = useState<Application | null>(null); const [f, setF] = useState<Emp | null>(null);
-  const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null); const [tried, setTried] = useState(false);
-  const companyRef = useRef<TextInput>(null);
-  const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
-  const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
+  const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL; const reduce = useReducedMotion();
+  const [f, setF] = useState<WizardForm | null>(null); const fRef = useRef<WizardForm | null>(null); fRef.current = f;
+  const [qid, setQid] = useState<string | null>(null); const [dir, setDir] = useState(1); const [website, setWebsite] = useState(false);
+  const [loadErr, setLoadErr] = useState<string | null>(null); const [err, setErr] = useState<string | null>(null);
+  const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); const [allMode, setAllMode] = useState(false);
+  const [settled, setSettled] = useState(true); const [busy, setBusy] = useState(false);
+  const auto = useRef<ReturnType<typeof setTimeout> | null>(null); const titleRef = useRef<any>(null);
+  /** Saves run one after another, so an older answer set can never land after a newer one. */
+  const saving = useRef<Promise<void>>(Promise.resolve());
+  /** The answers as loaded from the row (a saved departure date stays valid as the trip gets closer). */
+  const saved = useRef<WizardForm>(emptyForm);
+  /** Questions this screen pre-filled (not answered by the customer yet): still shown once, with that choice selected. */
+  const preset = useRef<Set<string>>(new Set());
+  /** Still to ask: missing or invalid, pre-filled here, or optional and unanswered. */
+  const pending = (x: Question, nf: WizardForm) => !!continueError(x, nf, saved.current) || preset.current.has(x.id)
+    || (!x.required && !x.keys.some((k) => !!String((nf as any)[k] ?? "").trim()));
+  useEffect(() => { setSettled(false); const tm = setTimeout(() => setSettled(true), 700); return () => clearTimeout(tm); }, [f]);
+  useEffect(() => () => { if (auto.current) clearTimeout(auto.current); }, []);
+
   useEffect(() => {
     getApplication(id!).then((app) => {
-      setA(app); const w = continueForm(app); const n = app.notes as any;
-      setF(Object.fromEntries(KEYS.map((k) => [k, (w as any)[k] || n?.[k] || (emptyForm as any)[k]])) as Emp);
-    }).catch((e) => setErr(e?.message ?? String(e)));
+      const form = continueForm(app); saved.current = form;
+      const web = isWebsiteRow(app);
+      // The spouse travels with them: "Who are you traveling with?" starts on With Spouse (still asked: children may come too).
+      if (!web && form.spouseAccompanying === "yes" && !form.travelingWith) { form.travelingWith = "spouse"; preset.current.add("travelingWith"); }
+      setWebsite(web); setF(form);
+      const first = continueQuestions(form, web).find((x) => !!continueError(x, form, saved.current) || preset.current.has(x.id));
+      if (first) setQid(first.id); else router.replace(`/applications/${id}`);
+    }).catch((e) => setLoadErr(e?.message ?? String(e)));
   }, [id]);
-  const set = (p: Partial<Emp>) => setF((x) => (x ? { ...x, ...p } : x));
-  const hasValidPassport = ((a?.notes?.wizard ?? {}) as Partial<WizardForm>).hasValidPassport ?? "";
-  const errs = f ? { ...validatePassportNumber({ hasValidPassport, passportNumber: f.passportNumber }), ...validateEmployment({ ...emptyForm, ...f } as WizardForm) } : {};
-  const valid = !!f && Object.keys(errs).length === 0;
-  const show = (k: keyof Emp) => (tried || !!String(f?.[k] ?? "").trim()) && errs[k];
-  const emp = f?.employmentStatus === "employed"; const biz = f?.employmentStatus === "business" || f?.employmentStatus === "freelancer";
 
-  const save = async () => {
-    if (!f || !a) return; setTried(true); if (!valid) { hError(); return; }
-    setBusy(true); setErr(null);
-    try {
-      const clean: Emp = { ...f, passportNumber: f.passportNumber.trim().toUpperCase(), jobTitle: emp ? f.jobTitle.trim() : "", companyName: emp || biz ? f.companyName.trim() : "", employmentStartDate: emp ? f.employmentStartDate : "",
-        monthlySalary: emp ? f.monthlySalary : "", hasNOC: emp ? f.hasNOC : "", averageMonthlyIncome: biz ? f.averageMonthlyIncome.trim() : "" };
-      const w = (a.notes?.wizard ?? {}) as Partial<WizardForm>;
-      const r = await saveContinueAnswers(a.id, { wizard: { ...w, ...clean } as any, employmentStatus: clean.employmentStatus, jobTitle: clean.jobTitle, companyName: clean.companyName, monthlySalary: clean.monthlySalary } as any, clean.passportNumber);
+  const q: Question | null = qid ? Q_BY_ID[qid] ?? null : null;
+  const list = f ? continueQuestions(f, website) : [];
+  const idx = q ? list.findIndex((x) => x.id === q.id) : -1;
+  const patch = (x: Partial<WizardForm>) => setF((y) => (y ? { ...y, ...x } : y));
+  const goTo = (next: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setQid(next); setShowErr(false); setAllMode(false); setErr(null); };
+  const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`); };
+
+  /** Save what we have, queued behind earlier saves (best effort while moving on; awaited on the last question). */
+  const save = (nf: WizardForm) => {
+    const run = saving.current.catch(() => {}).then(async () => {
+      const r = await saveAfterPayment(id!, nf);
       if (!r.synced) throw new Error(t("Your application is already in review, so it can't be changed here. Please message us on WhatsApp."));
-      success(); router.replace(`/applications/${a.id}`);
-    } catch (e: any) { hError(); setErr(e?.message ?? String(e)); } finally { setBusy(false); }
+    });
+    saving.current = run;
+    return run;
+  };
+  const advance = async (nf: WizardForm | null = fRef.current) => {
+    if (!q || !nf || busy) return;
+    const e = continueError(q, nf, saved.current);
+    if (e) { hError(); setShowErr(true); setErrTick((n) => n + 1); AccessibilityInfo.announceForAccessibility(t(e)); return; }
+    tap(); preset.current.delete(q.id);
+    const qs = continueQuestions(nf, website); const i = qs.findIndex((x) => x.id === q.id);
+    // Next question that still needs an answer (answers already on the row are not asked again).
+    const next = qs.slice(i + 1).find((x) => pending(x, nf));
+    if (next) { save(nf).catch(() => {}); goTo(next.id, 1); return; }
+    setBusy(true); setErr(null);
+    try { await save(nf); success(); router.replace(`/applications/${id}`); }
+    catch (x: any) { hError(); setErr(x?.message ?? String(x)); }
+    finally { setBusy(false); }
+  };
+  const pick = (v: string) => {
+    if (!q || !fRef.current) return;
+    if (v === OTHER_NATIONALITY && q.allNames) { select(); setAllMode(true); return; }
+    const changes = { [q.keys[0]]: v, ...(q.onPick?.(v, fRef.current) ?? {}) } as Partial<WizardForm>;
+    const nf = { ...fRef.current, ...changes }; fRef.current = nf; patch(changes);
+    const note = q.note?.(nf);
+    if (note && note.tone !== "green") return;
+    if (auto.current) clearTimeout(auto.current);
+    auto.current = setTimeout(() => advance(nf), reduce ? 80 : AUTO_MS);
+  };
+  const back = () => {
+    tap();
+    if (allMode) { setAllMode(false); return; }
+    if (idx > 0) goTo(list[idx - 1].id, -1); else close();
   };
 
-  const input = (k: "passportNumber" | "jobTitle" | "companyName" | "averageMonthlyIncome", label: string, ph: string, opts: { ref?: React.RefObject<TextInput | null>; next?: () => void; ct?: string; first?: boolean; caps?: "words" | "characters" }) => (
-    <View style={{ gap: S.xs }}>
-      <Text variant="footnote" weight="600" tone="secondary">{t(label)}</Text>
-      <TextInput ref={opts.ref as any} value={f![k]} onChangeText={(v) => set({ [k]: opts.caps === "characters" ? v.toUpperCase() : v } as Partial<Emp>)} placeholder={t(ph)} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(label)}
-        autoCapitalize={opts.caps ?? "words"} autoCorrect={false} textContentType={opts.ct as any} returnKeyType={opts.next ? "next" : "done"} blurOnSubmit={!opts.next} onSubmitEditing={opts.next} testID={`continue-${k}`}
-        style={[T.title3, { color: c.label, minHeight: 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: show(k) ? 1.5 : 0, borderColor: c.red, textAlign: isRTL ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
-      {!!show(k) && <Text variant="footnote" tone="red">{t(errs[k]!)}</Text>}
+  const top = Platform.OS === "ios" ? S.sm : insets.top + S.xs;
+  const header = (
+    <View style={{ paddingTop: top, paddingHorizontal: S.lg, gap: S.md, paddingBottom: S.sm }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
+        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={t("Back")} onPress={back} /></View>
+        <View style={{ flex: 1, alignItems: "center" }}><Text variant="subhead" weight="600" testID="continue-title">{t("Continue application")}</Text></View>
+        <CircleButton icon="xmark" label={t("Close")} onPress={close} />
+      </View>
+      {q && list.length > 0 && (
+        <View accessible accessibilityRole="progressbar" accessibilityLabel={t("{step}, {i} of {n}", { step: t(STEP_TITLES[q.step].title), i: idx + 1, n: list.length })} style={{ gap: S.xs }}>
+          <Bar fill={(idx + 1) / list.length} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+            <Text variant="caption" weight="600" tone="secondary">{t(STEP_TITLES[q.step].title)}</Text>
+            <Text variant="caption" tone="secondary" tabular>{t("{i} of {n}", { i: idx + 1, n: list.length })}</Text>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+
+  if (!f || !q) return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      {header}
+      {loadErr ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={loadErr} /></View>
+        : <View style={{ padding: S.lg, gap: S.md }}><Skeleton w="60%" h={28} /><Skeleton h={60} r={R.tile} /><Skeleton h={60} r={R.tile} /></View>}
     </View>
   );
 
   return (
-    <Animated.View style={[{ flex: 1, backgroundColor: c.bg }, kbPad]}>
-      <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: S.lg, paddingTop: Platform.OS === "ios" ? S.sm : insets.top + S.xs, paddingBottom: S.sm }}>
-        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={t("Back")} onPress={() => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`); }} /></View>
-        <View style={{ flex: 1 }} />
-      </View>
-      {!f ? (
-        err ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} /></View> : <View style={{ padding: S.lg, gap: S.md }}>{ <><Skeleton w="60%" h={28} /><Skeleton h={60} r={R.tile} /><Skeleton h={60} r={R.tile} /></>}</View>
-      ) : (
-        <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.lg }}>
-          <View style={{ gap: S.xs }}>
-            <Text variant="title1" accessibilityRole="header" testID="continue-title">{t("Continue application")}</Text>
-            <Text variant="subhead" tone="secondary">{t("Passport and employment")}</Text>
-          </View>
-          {hasValidPassport !== "no" && input("passportNumber", "Passport Number", "e.g. A1234567", { caps: "characters" })}
-          <View style={{ gap: S.xs }}>
-            <Text variant="footnote" weight="600" tone="secondary">{t("Employment Status")}</Text>
-            <ChoiceList label={t("Employment Status")} options={EMPLOYMENT} value={f.employmentStatus} onPick={(v) => set({ employmentStatus: v as Emp["employmentStatus"], ...(v !== "employed" ? { hasNOC: "" } : {}) })} />
-            {tried && !!errs.employmentStatus && <Text variant="footnote" tone="red">{t(errs.employmentStatus)}</Text>}
-          </View>
-          {emp && <>
-            {/* Job title + company together */}
-            {input("jobTitle", "Job Title", "Enter job title", { next: () => companyRef.current?.focus(), ct: "jobTitle" })}
-            {input("companyName", "Company Name", "Enter company name", { ref: companyRef, ct: "organizationName" })}
-            <View style={{ gap: S.xs }}>
-              <Text variant="footnote" weight="600" tone="secondary">{t("Employment Start Date")}</Text>
-              <DateAnswer label={t("Employment Start Date")} value={f.employmentStartDate} onChange={(v) => set({ employmentStartDate: v })} max={iso(new Date())} style="wheel" placeholder="Select start date" />
-            </View>
-            <View style={{ gap: S.xs }}>
-              <Text variant="footnote" weight="600" tone="secondary">{t("Monthly Salary Range")}</Text>
-              <ChoiceList label={t("Monthly Salary Range")} options={SALARY} value={f.monthlySalary} onPick={(v) => set({ monthlySalary: v })} />
-              {tried && !!errs.monthlySalary && <Text variant="footnote" tone="red">{t(errs.monthlySalary)}</Text>}
-            </View>
-            <View style={{ gap: S.xs }}>
-              <Text variant="footnote" weight="600" tone="secondary">{t("Do you have a No Objection Certificate?")} · {t("Optional")}</Text>
-              <YesNoTiles label={t("Do you have a No Objection Certificate?")} value={f.hasNOC} onPick={(v) => set({ hasNOC: v as Emp["hasNOC"] })} />
-            </View>
-          </>}
-          {biz && <>
-            {input("companyName", "Company Name", "Enter company name", { next: () => companyRef.current?.focus(), ct: "organizationName" })}
-            {input("averageMonthlyIncome", "Average Monthly Income", "e.g., 15,000 AED", { ref: companyRef })}
-          </>}
-          <InlineError text={err} />
-        </ScrollView>
-      )}
-      {!!f && (
-        <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: barBottom, backgroundColor: c.bg }}>
-          <Button title={busy ? t("Saving…") : t("Save and continue")} loading={busy} disabled={!valid || busy} onPress={save} />
-        </View>
-      )}
-    </Animated.View>
+    <QuestionView q={q} f={f} patch={patch} pick={pick} advance={() => advance()} showErr={showErr} errTick={errTick} settled={settled}
+      header={header} entering={slideIn(dir, isRTL, reduce)} pageKey={q.id} titleRef={titleRef} allMode={allMode}
+      doneLabel={busy ? t("Saving…") : undefined} errorOf={(x, y) => continueError(x, y, saved.current)} belowTitle={err ? <InlineError text={err} /> : undefined} />
   );
 }

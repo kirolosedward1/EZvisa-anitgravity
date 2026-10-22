@@ -5,8 +5,9 @@
 // - A ring buffer on this phone (drop-off diagnostics, last 300 events).
 // - An outbox (AsyncStorage) that is flushed to public.wizard_events (migrations/0004: insert-only, anonymous session id)
 //   when online. Offline events wait in the outbox and are sent later; the outbox survives restarts.
-// - Only events the live table accepts are queued for sending (SERVER_EVENTS). The newer events are recorded on the
-//   phone only until migrations/0008 is approved and applied; then add them to SERVER_EVENTS.
+// - The 4 original events always work. The funnel events (step viewed/completed, payment, upload, app_start) need
+//   migrations/0008 (approved 2026-10-22). If the server rejects them (0008 not applied yet), the app drops them, re-sends
+//   the original events alone and tries the funnel again 24 hours later, so it starts working without an app update.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import { AppState, Platform } from "react-native";
@@ -37,8 +38,10 @@ export type Events = {
 export type EventName = keyof Events;
 
 const LEGACY = new Set<EventName>(["wizard_open", "wizard_page", "wizard_submit", "wizard_close"]);
-// After migrations/0008 is applied, add: "wizard_step_viewed", "wizard_step_completed", "payment_started", "payment_finished", "upload_done", "app_start".
-const SERVER_EVENTS = new Set<EventName>([...LEGACY]);
+const FUNNEL_KEY = "ezvisa.funnel.v1"; const FUNNEL_RETRY_MS = 24 * 3600_000;
+/** null until loaded; false for 24 h after the server rejected funnel events (table without migrations/0008). */
+let funnelOn: boolean | null = null;
+const loadFunnel = () => AsyncStorage.getItem(FUNNEL_KEY).then((v) => { funnelOn = !(v && Date.now() - Number(v) < FUNNEL_RETRY_MS); }, () => { funnelOn = true; });
 const STEPS = new Set(["personal", "spouse", "employment", "trip-details", "payment", "review"]);
 const DOCS = new Set(["passportCopy", "residencyCopy", "photo", "bankStatement", "nocCertificate", "salaryCertificate"]);
 const OUTCOMES = new Set(["paid", "pending", "failed", "cancelled"]);
@@ -91,7 +94,14 @@ export async function flush() {
   try {
     const { error, status } = await supabase.from("wizard_events" as any).insert(batch as any);
     if (!error) { outbox = q.slice(batch.length); failures = 0; await saveOut(); if (outbox.length) scheduleFlush(500); return; }
-    if (status >= 400 && status < 500 && status !== 408 && status !== 429) { outbox = q.slice(batch.length); await saveOut(); return; } // rejected: don't retry forever
+    if (status >= 400 && status < 500 && status !== 408 && status !== 429) {
+      if (batch.some((r) => !LEGACY.has(r.event as EventName))) {
+        // The table doesn't take the funnel events yet: keep the original events, retry the funnel tomorrow.
+        funnelOn = false; AsyncStorage.setItem(FUNNEL_KEY, String(Date.now())).catch(() => {});
+        outbox = q.filter((r) => LEGACY.has(r.event as EventName)).map(({ outcome: _o, ms: _m, ...r }) => r); await saveOut(); if (outbox.length) scheduleFlush(500); return;
+      }
+      outbox = q.slice(batch.length); await saveOut(); return; // rejected: don't retry forever
+    }
     throw error;
   } catch {
     failures++; scheduleFlush(Math.min(5 * 60_000, 2000 * 2 ** failures));
@@ -107,7 +117,7 @@ export function track<E extends EventName>(e: E, p?: Events[E]) {
     b.push({ e, at: Date.now(), ...(Object.keys(props).length ? { p: props } : {}) }); if (b.length > MAX) b.splice(0, b.length - MAX);
     if (saveT) clearTimeout(saveT); saveT = setTimeout(() => AsyncStorage.setItem(KEY, JSON.stringify(b)).catch(() => {}), 500);
   });
-  if (!SERVER_EVENTS.has(e)) return;
+  if (!LEGACY.has(e) && funnelOn === false) return; // phone only until the table takes funnel events
   const row: Row = { session_id: session, event: e, page: ((props.page ?? props.step ?? props.docType) as string) ?? null, destination: (props.destination as string) ?? null,
     platform: Platform.OS === "ios" || Platform.OS === "android" ? Platform.OS : "web", app_version: (Constants.expoConfig?.version ?? "").slice(0, 32) || null,
     signed_in: typeof props.signedIn === "boolean" ? props.signedIn : null };
@@ -126,6 +136,7 @@ let started = false;
 /** Called once from the root layout: loads the user's choice, flushes on reconnect and when the app comes to the front. */
 export function startAnalytics() {
   if (started) return; started = true;
+  loadFunnel();
   loadUsageSharing().then((on) => { if (on) flush(); else clearAnalytics(); });
   onUsageSharingChange((on) => { if (!on) clearAnalytics(); });
   let online = true;

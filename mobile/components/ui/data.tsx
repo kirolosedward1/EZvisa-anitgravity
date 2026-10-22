@@ -58,9 +58,9 @@ export function journeyIndex(status: string, payment?: string | null) {
   return 0;
 }
 export function MiniProgress({ status, payment }: { status: string; payment?: string | null }) {
-  const c = useColors(); const idx = journeyIndex(status, payment);
+  const c = useColors(); const { t } = useT(); const idx = journeyIndex(status, payment);
   return (
-    <View style={{ flexDirection: "row", alignItems: "center" }} accessible accessibilityLabel={`Step ${idx + 1} of 4`}>
+    <View style={{ flexDirection: "row", alignItems: "center" }} accessible accessibilityLabel={t("Step {i} of {n}", { i: idx + 1, n: 4 })}>
       {JOURNEY.map((_, i) => (
         <React.Fragment key={i}>
           <View style={{ width: 10, height: 10, borderRadius: R.xs, backgroundColor: i <= idx ? c.tint : c.fill }} />
@@ -158,19 +158,19 @@ export function CountryRow({ name, onPress }: { name: string; onPress: () => voi
 }
 
 export function StatusHeroCard({ a }: { a: Application }) {
-  const c = useColors(); const name = a.countries?.name ?? "";
+  const c = useColors(); const { t } = useT(); const name = a.countries?.name ?? ""; const status = t(STATUS_LABEL[a.status] ?? a.status);
   return (
-    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${name} application ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}. View`}
+    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${status}`}
       style={[{ backgroundColor: c.card, borderRadius: R.card, padding: S.md, marginHorizontal: S.md, gap: S.md }, curve]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={40} />
-        <View style={{ flex: 1 }}><Text variant="headline">{name}</Text><Text variant="subhead" tone="secondary" tabular>{a.reference}</Text></View>
+        <View style={{ flex: 1 }}><Text variant="headline">{t(name)}</Text><Text variant="subhead" tone="secondary" tabular>{a.reference}</Text></View>
         <StatusPill v={a.status} />
       </View>
       <MiniProgress status={a.status} payment={a.payment_status} />
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <Text variant="subhead" tone="secondary">{STATUS_LABEL[a.status] ?? a.status}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xxs }}><Text variant="subhead" tone="tint" weight="600">View</Text><Icon name="chevron.right" size={12} color={c.tint} weight="semibold" /></View>
+        <Text variant="subhead" tone="secondary">{status}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xxs }}><Text variant="subhead" tone="tint" weight="600">{t("View")}</Text><Icon name="chevron.right" size={12} color={c.tint} weight="semibold" /></View>
       </View>
     </PressScale>
   );

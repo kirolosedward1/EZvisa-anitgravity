@@ -16,15 +16,17 @@ const PATTERNS: [RegExp, string][] = [
   [/[^\s/\\'"`]+\.(pdf|jpe?g|png|heic|webp|docx?)\b/gi, "[file]"],
 ];
 
-let secrets: string[] = [];
-/** Exact values to remove (wizard answers that are personal). Values shorter than 3 characters are ignored. */
-export function registerSecrets(values: (string | null | undefined)[]) {
+let secrets: string[] = []; const groups = new Map<string, Set<string>>();
+/** Exact values to remove, per source ("form" = wizard answers, "account" = the signed-in user's name and email).
+ *  Each call replaces that source's values. Values shorter than 3 characters are ignored. */
+export function registerSecrets(values: (string | null | undefined)[], source = "form") {
   const next = new Set<string>();
   for (const v of values) {
     const s = typeof v === "string" ? v.trim() : "";
     if (s.length >= 3) { next.add(s); s.split(/\s+/).forEach((w) => { if (w.length >= 3) next.add(w); }); }
   }
-  secrets = [...next].sort((a, b) => b.length - a.length);
+  groups.set(source, next);
+  secrets = [...new Set([...groups.values()].flatMap((g) => [...g]))].sort((a, b) => b.length - a.length);
 }
 
 const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -47,4 +49,23 @@ export function scrubDeep<T>(v: T, depth = 0): T {
     return out as T;
   }
   return v;
+}
+
+/** Cleans a crash-service event (Sentry shape) before it leaves the phone: no user, request, device name or IP;
+ *  every message, exception value, stack-frame path, breadcrumb, tag and extra is scrubbed. */
+export function scrubCrashEvent<T extends Record<string, any>>(event: T): T {
+  const e: Record<string, any> = { ...event };
+  delete e.user; delete e.request; delete e.server_name;
+  if (typeof e.message === "string") e.message = scrubText(e.message, 1000);
+  if (e.logentry?.message) e.logentry = { ...e.logentry, message: scrubText(e.logentry.message, 1000), params: undefined };
+  if (e.exception?.values) e.exception = { ...e.exception, values: e.exception.values.map((v: any) => ({ ...v, value: scrubText(v.value ?? "", 1000),
+    stacktrace: v.stacktrace?.frames ? { ...v.stacktrace, frames: v.stacktrace.frames.map((f: any) => ({ ...f, vars: undefined, abs_path: f.abs_path && scrubText(f.abs_path, 300), filename: f.filename && scrubText(f.filename, 300) })) } : v.stacktrace })) };
+  if (Array.isArray(e.breadcrumbs)) e.breadcrumbs = e.breadcrumbs.map(scrubBreadcrumb);
+  if (e.contexts) { const c = scrubDeep(e.contexts) as Record<string, any>; if (c.device) { delete c.device.name; delete c.device.id; } delete c.profile; e.contexts = c; }
+  if (e.tags) e.tags = scrubDeep(e.tags);
+  if (e.extra) e.extra = scrubDeep(e.extra);
+  return e as T;
+}
+export function scrubBreadcrumb<T extends Record<string, any>>(b: T): T {
+  return { ...b, message: typeof b.message === "string" ? scrubText(b.message, 500) : b.message, data: b.data ? scrubDeep(b.data) : b.data };
 }

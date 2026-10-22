@@ -137,7 +137,7 @@ export default function TripPlan() {
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       {header(<PressScale onPress={() => { tap(); setEditing(!editing); }} accessibilityRole="button" accessibilityLabel={editing ? t("Done editing") : t("Edit plan")} testID="trip-edit"
         style={{ minHeight: 44, paddingHorizontal: S.md, borderRadius: R.round, backgroundColor: editing ? c.tintFill : c.card, flexDirection: "row", alignItems: "center", gap: S.xs }}>
-        <Icon name={editing ? "checkmark" : "pencil"} size={14} color={editing ? "#fff" : c.label} weight="semibold" /><Text variant="subhead" weight="600" color={editing ? "#fff" : c.label}>{editing ? t("Done") : t("Edit")}</Text></PressScale>)}
+        <Icon name={editing ? "checkmark" : "pencil"} size={14} color={editing ? c.onAccent : c.label} weight="semibold" /><Text variant="subhead" weight="600" color={editing ? c.onAccent : c.label}>{editing ? t("Done") : t("Edit")}</Text></PressScale>)}
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.md }}>
         <View style={{ gap: S.xs }}>
           <Text variant="largeTitle" accessibilityRole="header">{t("Trip plan")}</Text>
@@ -192,8 +192,8 @@ function Chip({ label, on, icon, onPress, a11y, checkbox }: { label: string; on?
   return (
     <PressScale onPress={() => { select(); onPress(); }} accessibilityRole={checkbox ? "checkbox" : "button"} accessibilityState={checkbox ? { checked: !!on } : undefined} aria-checked={checkbox ? !!on : undefined} accessibilityLabel={a11y}
       style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 48, paddingHorizontal: S.md, borderRadius: R.round, backgroundColor: on ? c.tintFill : c.card, opacity: pressed ? 0.75 : 1 }, curve]}>
-      {!!icon && <Icon name={icon} size={15} color={on ? "#fff" : c.tint} />}
-      <Text variant="subhead" weight="600" color={on ? "#fff" : c.label}>{label}</Text>
+      {!!icon && <Icon name={icon} size={15} color={on ? c.onAccent : c.tint} />}
+      <Text variant="subhead" weight="600" color={on ? c.onAccent : c.label}>{label}</Text>
     </PressScale>
   );
 }

@@ -1,9 +1,8 @@
-import { PressScale } from "./ui";
 import { useState } from "react";
-import { Platform, Pressable, View } from "react-native";
+import { Platform, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useColors, useIsDark, T, S, R } from "../lib/theme";
-import { IconTile, IconName, Text } from "./ui";
+import { useColors, useIsDark, T, S, R, SIZE } from "../lib/theme";
+import { IconTile, IconName, PressScale, Text } from "./ui";
 import { select } from "../lib/haptics";
 
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -22,7 +21,7 @@ export function DateRow({ label, value, onChange, min, max, icon, error }: { lab
       {!!error && <Text variant="footnote" tone="red">{error}</Text>}
     </View>
   );
-  const row = { minHeight: 52, paddingHorizontal: S.md, flexDirection: "row" as const, alignItems: "center" as const, gap: S.sm };
+  const row = { minHeight: SIZE.row, paddingHorizontal: S.md, flexDirection: "row" as const, alignItems: "center" as const, gap: S.sm };
   if (Platform.OS === "web") return (
     <View style={row}>
       {lead}{title}

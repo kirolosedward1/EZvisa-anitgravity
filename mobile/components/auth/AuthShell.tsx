@@ -63,7 +63,7 @@ export function PasswordField({ isNew, ...p }: TextInputProps & { isNew?: boolea
   return (
     <Field placeholder={isNew ? t("New password") : t("Password")} secureTextEntry={!show} autoCapitalize="none" autoCorrect={false}
       textContentType={isNew ? "newPassword" : "password"} autoComplete={isNew ? "new-password" : "current-password"} passwordRules="minlength: 8;" testID="auth-password" {...p}
-      trailing={<PressScale onPress={() => setShow(!show)} accessibilityRole="button" accessibilityLabel={show ? t("Hide password") : t("Show password")} hitSlop={10}><Icon name={show ? "eye.slash" : "eye"} size={18} color={c.secondaryLabel} /></PressScale>} />
+      trailing={<PressScale onPress={() => setShow(!show)} accessibilityRole="button" accessibilityLabel={show ? t("Hide password") : t("Show password")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}><Icon name={show ? "eye.slash" : "eye"} size={18} color={c.secondaryLabel} /></PressScale>} />
   );
 }
 

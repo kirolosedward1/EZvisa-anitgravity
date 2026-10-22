@@ -11,7 +11,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
 import { siteUrl } from "./config";
 import type { Database } from "./database.types";
-import { emptyForm, continueComplete, type WizardForm } from "./wizard";
+import { emptyForm, type WizardForm } from "./wizard";
+import { POST_KEYS, continueNeeded } from "./questions";
 
 export type VisaRow = Database["public"]["Tables"]["visa_applications"]["Row"];
 type VisaUpdate = Database["public"]["Tables"]["visa_applications"]["Update"];
@@ -41,7 +42,9 @@ export type Application = VisaRow & {
 
 const need = () => { if (!supabase) throw new Error("Backend not configured"); return supabase; };
 async function me() {
-  const { data } = await need().auth.getUser();
+  const { data, error } = await need().auth.getUser();
+  // Offline / server unreachable: keep the original (retryable) error so autosave keeps retrying instead of giving up.
+  if (error && error.name === "AuthRetryableFetchError") throw error;
   if (!data.user?.email) throw new Error("Please sign in first");
   return { id: data.user.id, email: data.user.email.toLowerCase() };
 }
@@ -72,6 +75,9 @@ const REQS: Requirement[] = [
   { id: "req-noc", document_type: "nocCertificate", title: "NOC / employment proof", description: null, is_mandatory: true, provided_by_ezvisa: false, sort_order: 5, country_id: null },
   { id: "req-dossier", document_type: "final_package", title: "Cover letter, itinerary & bookings", description: null, is_mandatory: false, provided_by_ezvisa: true, sort_order: 6, country_id: null },
 ];
+/** Employment status of a row: the app's wizard notes, else the website's top-level additional_notes key (rows the
+ *  website created have no wizard), same rule as continueForm. Drives whether the NOC is required. */
+export const employmentOf = (a: { notes?: Notes | null }) => a.notes?.wizard?.employmentStatus || a.notes?.employmentStatus || null;
 /** The website has no requirements table; this is the website's upload checklist. */
 /** NOC applies only to employees (the wizard asks it only for "employed"); self-employed / other statuses never get it. */
 export function requirementsFor(employmentStatus?: string | null): Requirement[] {
@@ -91,7 +97,9 @@ function docsOf(r: VisaRow, n: Notes): Doc[] {
   }
   const flagDoc: [keyof VisaRow, string][] = [["has_passport", "passportCopy"], ["has_photos", "photo"], ["has_bank_statements", "bankStatement"], ["has_employment_proof", "nocCertificate"]];
   for (const [col, type] of flagDoc) if (r[col] === true && !seen.has(col as string))
-    out.push({ id: `flag-${col}`, document_type: type, requirement_id: REQS.find((q) => q.document_type === type)?.id ?? null, status: "uploaded", source: "customer", storage_path: "", file_name: null, rejection_reason: null, created_at: r.updated_at ?? r.created_at ?? "" });
+    // No upload time is known for a website upload (only the flag), so none is given: updated_at moves on every edit,
+    // including the staff edit that writes document_reviews, and would make every review look older than the file.
+    out.push({ id: `flag-${col}`, document_type: type, requirement_id: REQS.find((q) => q.document_type === type)?.id ?? null, status: "uploaded", source: "customer", storage_path: "", file_name: null, rejection_reason: null, created_at: "" });
   // Staff review per document (document_reviews column, migrations/0005). A newer upload than the review resets it to "uploaded".
   const reviews = ((r as any).document_reviews ?? {}) as Record<string, { status?: string; reason?: string | null; at?: string }>;
   for (const [type, rv] of Object.entries(reviews)) {
@@ -248,11 +256,11 @@ export async function saveDraft(f: WizardForm, step: string, id: string, base: s
 /** Guest checkout (no account yet): RLS "Allow public submissions" lets anon INSERT, but anon cannot SELECT the row back,
  *  so the id is made on the phone and nothing is returned. Payment then goes through /api/create-payment (links payment_id
  *  server-side) and the Ziina webhook marks it paid. Signing in later with the same email makes the row visible (SELECT by email). */
-export async function guestSubmit(f: WizardForm): Promise<{ id: string; reference: string; email: string }> {
+export async function guestSubmit(f: WizardForm, id: string = Crypto.randomUUID()): Promise<{ id: string; reference: string; email: string }> {
   const sb = need(); const email = f.email.trim().toLowerCase();
-  const id = Crypto.randomUUID();
   const { error } = await sb.from("visa_applications").insert({ id, ...(columns(f, email, "payment", { submittedAt: new Date().toISOString() }) as any), application_status: "submitted", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false });
-  if (error) throw error;
+  // Same id again (the caller keeps it per submit): the earlier attempt landed and only its reply was lost.
+  if (error && error.code !== "23505") throw error;
   return { id, reference: referenceOf(id), email };
 }
 
@@ -298,26 +306,82 @@ export async function patchNotes(applicationId: string, patch: Partial<Notes>): 
   return { synced: !!data?.length };
 }
 
-/** The answers asked after payment, from this row: the wizard notes, with the passport_number column as fallback
- *  (rows from the website, or from before the number moved after payment). */
-export function continueForm(a: Pick<Application, "notes" | "passport_number">): Partial<WizardForm> {
+/** Every answer of this row as a form: the wizard notes, with the website's columns as fallback (rows from the website,
+ *  or answers written by staff), so Continue application only asks what is really missing. */
+export function continueForm(a: Pick<Application, "notes"> & Partial<VisaRow>): WizardForm {
   const w = (a.notes?.wizard ?? {}) as Partial<WizardForm>; const n = a.notes as any;
-  return { ...w, employmentStatus: w.employmentStatus ?? n?.employmentStatus, passportNumber: w.passportNumber || a.passport_number || "" };
+  const yn = (b: boolean | null | undefined): WizardForm["previousRefusals"] => (b === true ? "yes" : b === false ? "no" : "");
+  const passportNumber = w.passportNumber || a.passport_number || "";
+  return {
+    ...emptyForm, ...w,
+    // A stored passport number means they have one (the website keeps no answer to "Do you have a valid passport?").
+    hasValidPassport: w.hasValidPassport || (passportNumber ? "yes" : ""),
+    employmentStatus: w.employmentStatus || n?.employmentStatus || "", jobTitle: w.jobTitle || n?.jobTitle || "", companyName: w.companyName || n?.companyName || "",
+    monthlySalary: w.monthlySalary || n?.monthlySalary || "", maritalStatus: w.maritalStatus || n?.maritalStatus || "", spouseAccompanying: w.spouseAccompanying || n?.spouseAccompanying || "",
+    passportNumber, dateOfBirth: w.dateOfBirth || a.date_of_birth || "",
+    travelStartDate: w.travelStartDate || a.entry_date || "", travelEndDate: w.travelEndDate || a.exit_date || "", purposeOfTrip: w.purposeOfTrip || a.travel_purpose || "",
+    // App rows store previous_rejections = false before the question is asked, so only a website row's column is an answer.
+    previousRefusals: w.previousRefusals || (!isWebsiteRow(a) || a.previous_rejections == null ? "" : yn(a.previous_rejections)),
+    refusalDetails: w.refusalDetails || a.rejection_details || "",
+  } as WizardForm;
 }
-/** Paid, still open, and the after-payment answers (passport number, employment) are not all there yet. */
-export const needsContinue = (a: Application) => isPaid(a) && ["submitted", "draft", "reviewing"].includes(a.status) && !continueComplete(continueForm(a));
+/** Paid, still open, and the answers asked after payment are not all there yet. */
+export const needsContinue = (a: Application) =>
+  isPaid(a) && ["submitted", "draft", "reviewing"].includes(a.status) && continueNeeded(continueForm(a), isWebsiteRow(a));
+/** Applications made on the website (not by this app). Continue application asks them only passport number + employment. */
+export const isWebsiteRow = (a: Pick<Application, "notes">) => a.notes?.source !== "mobile-app";
 
-/** Saves the Continue application answers: additional_notes (wizard + the website's employment keys) and the
- *  passport_number column staff read. While the case is in review the guard trigger (migrations/0002) keeps only the
- *  notes, so the number is then kept in additional_notes.wizard. `synced` is false when the row was not writable. */
-export async function saveContinueAnswers(applicationId: string, patch: Partial<Notes>, passportNumber: string): Promise<{ synced: boolean }> {
-  const sb = need(); const u = await me();
-  const { data: cur, error: ce } = await sb.from("visa_applications").select("additional_notes").eq("id", applicationId).eq("email", u.email).single();
-  if (ce) throw ce;
-  const n = { ...parseNotes(cur.additional_notes), ...patch };
-  const { data, error } = await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n), passport_number: passportNumber.trim() || null }).eq("id", applicationId).eq("email", u.email).select("id");
-  if (error) throw error;
-  return { synced: !!data?.length };
+/** A row keeps where it came from. Rows the website created have no `source`, and saveAfterPayment never writes one, so
+ *  they stay website rows (isWebsiteRow). Kept for callers that rebuild a website row's notes. */
+export const keepOrigin = (prev: Notes): Notes => ({ ...prev, source: prev.source ?? "website" });
+/** Saves the answers asked after payment (Continue application). Writes ONLY what those questions own: their keys in
+ *  additional_notes.wizard, the website's employment keys, and the matching columns (dates, purpose, date of birth,
+ *  passport number, refusals) where an answer exists. Name, contact, nationality, destination, source and payment are
+ *  never touched, so a website row keeps its data. While the case is in review the guard trigger (migrations/0002)
+ *  keeps only additional_notes, which hold every answer. `synced` is false when the row was not writable. */
+export async function saveAfterPayment(applicationId: string, f: WizardForm): Promise<{ synced: boolean }> {
+  const u = await me();
+  const t = (v: string) => (v ?? "").trim();
+  const answers = Object.fromEntries(POST_KEYS.map((k) => [k, f[k]])) as Partial<WizardForm>;
+  const cols: VisaUpdate = {};
+  if (f.dateOfBirth) cols.date_of_birth = f.dateOfBirth;
+  if (f.travelStartDate) cols.entry_date = f.travelStartDate;
+  if (f.travelEndDate) cols.exit_date = f.travelEndDate;
+  if (f.travelStartDate && f.travelEndDate) cols.duration_days = days(f.travelStartDate, f.travelEndDate);
+  if (t(f.purposeOfTrip)) cols.travel_purpose = t(f.purposeOfTrip);
+  if (t(f.passportNumber)) cols.passport_number = t(f.passportNumber).toUpperCase();
+  if (f.isFirstSchengenVisa) cols.previous_schengen_visa = f.isFirstSchengenVisa === "no";
+  if (f.previousRefusals) { cols.previous_rejections = f.previousRefusals === "yes"; cols.rejection_details = f.previousRefusals === "yes" ? t(f.refusalDetails) || null : null; }
+  const synced = await updateWithNotes(applicationId, u.email, (prev) => ({
+    ...cols,
+    additional_notes: JSON.stringify({
+      ...prev, wizard: { ...(prev.wizard ?? {}), ...answers },
+      employmentStatus: f.employmentStatus, jobTitle: t(f.jobTitle), companyName: t(f.companyName), monthlySalary: f.monthlySalary,
+    } satisfies Notes),
+  }));
+  return { synced };
+}
+
+/** Read-modify-write of a row's additional_notes with updated_at as the version (as the drafts do): when another write
+ *  lands in between (an upload finishing during Continue application), it reads again and re-applies, so neither one
+ *  erases the other. `build` returns the update for the current notes, or null for nothing to write. False when the
+ *  row is not writable (status, RLS). */
+async function updateWithNotes(id: string, email: string, build: (prev: Notes) => VisaUpdate | null): Promise<boolean> {
+  const sb = need();
+  for (let i = 0; i < 3; i++) {
+    const { data: cur, error: ce } = await sb.from("visa_applications").select("additional_notes, updated_at").eq("id", id).eq("email", email).single();
+    if (ce) throw ce;
+    const patch = build(parseNotes(cur.additional_notes));
+    if (!patch) return true;
+    let q = sb.from("visa_applications").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id).eq("email", email);
+    if (cur.updated_at) q = q.eq("updated_at", cur.updated_at);
+    const { data, error } = await q.select("id");
+    if (error) throw error;
+    if (data?.length) return true;
+    const { data: now } = await sb.from("visa_applications").select("updated_at").eq("id", id).eq("email", email).single();
+    if (!now || now.updated_at === cur.updated_at) return false; // nothing changed in between: the row is not writable
+  }
+  return false;
 }
 
 export class UploadError extends Error { constructor(message: string, public network: boolean) { super(message); } }
@@ -396,12 +460,9 @@ export async function uploadDocument(applicationId: string, file: { uri: string;
       const col = DOC_FLAG[documentType];
       if (col) await sb.from("visa_applications").update({ [col]: true } as VisaUpdate).eq("id", applicationId).eq("email", u.email);
     }
-    const { data: cur } = await sb.from("visa_applications").select("additional_notes").eq("id", applicationId).eq("email", u.email).single();
-    const n = parseNotes(cur?.additional_notes ?? null);
-    if (!(n.uploads ?? []).some((x) => x.path === path)) {
-      n.uploads = [...(n.uploads ?? []), { type: documentType, path, name: file.name, at: new Date().toISOString() }];
-      await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n) }).eq("id", applicationId);
-    }
+    // Best effort as before (the file and its has_* flag are already saved); versioned so a Continue save can't erase it.
+    await updateWithNotes(applicationId, u.email, (n) => (n.uploads ?? []).some((x) => x.path === path) ? null
+      : { additional_notes: JSON.stringify({ ...n, uploads: [...(n.uploads ?? []), { type: documentType, path, name: file.name, at: new Date().toISOString() }] }) }).catch(() => false);
   } catch (e: any) {
     if (e instanceof UploadError) throw e;
     throw new UploadError(e?.message ?? String(e), isNetwork(e));
