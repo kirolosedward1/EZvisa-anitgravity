@@ -49,7 +49,7 @@ export function DraftConflictDialog({ conflict, onChoose }: { conflict: DraftCon
       : conflict.reason === "existing"
         ? { title: "Application in progress", body: `You already have a ${String(s?.wizard.destination ?? "")} application saved to your account.`, main: "Continue it", alt: "Start a separate one" }
         : conflict.reason === "closed"
-          ? { title: "Already submitted", body: `This application was submitted ${where}. You can follow it in your dashboard.`, main: "OK", alt: null }
+          ? { title: "Already submitted", body: `This application was submitted ${where}.`, main: "Open dashboard", alt: null }
           : { title: "Draft removed", body: `This draft was discarded ${where}.`, main: "Save as new", alt: "Discard" }
   const main = () => onChoose(conflict.reason === "gone" ? "mine" : "server")
   const alt = () => onChoose(conflict.reason === "gone" ? "discard" : "mine")

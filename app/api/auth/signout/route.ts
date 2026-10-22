@@ -16,7 +16,8 @@ async function handleSignOut(request: Request) {
     // Graceful fallback
   }
 
-  return NextResponse.redirect(new URL("/login", request.url), {
+  // signed_out=1: the login page clears this browser's wizard answers (same as the app wiping the phone on sign-out).
+  return NextResponse.redirect(new URL("/login?signed_out=1", request.url), {
     status: 302,
   })
 }

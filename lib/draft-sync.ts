@@ -12,6 +12,14 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { createBrowserClient } from "@/lib/supabase/client"
 
 const META_KEY = "visa_wizard_draft_meta"
+const WIZARD_KEY = "visa_wizard_data"
+/** Sign-out: the next person on this browser sees none of the previous person's answers (the app does the same). */
+export function clearWizardData() {
+  try {
+    localStorage.removeItem(WIZARD_KEY)
+    localStorage.removeItem(META_KEY)
+  } catch {}
+}
 const DEBOUNCE_MS = 800
 const COLS = "id, application_status, additional_notes, updated_at"
 
@@ -160,10 +168,12 @@ function readMeta(): Meta {
 /**
  * @param form   the wizard answers (files are ignored)
  * @param step   the current step slug (personal | spouse | employment | trip-details | payment)
- * @param ready  the wizard finished restoring local data
- * @param onLoad called with a server copy to show (resume, or the user picked the newer copy)
+ * @param ready    the wizard finished restoring local data
+ * @param answered the user has answered something (link pre-fill and profile auto-fill don't count). Like the app,
+ *                 a draft row is created only after a real answer; a draft already on the server keeps saving.
+ * @param onLoad   called with a server copy to show (resume, or the user picked the newer copy)
  */
-export function useDraftSync({ form, step, ready, onLoad }: { form: object; step: string; ready: boolean; onLoad: (d: ServerDraft) => void }) {
+export function useDraftSync({ form, step, ready, answered, onLoad }: { form: object; step: string; ready: boolean; answered: boolean; onLoad: (d: ServerDraft) => void }) {
   const sb = useRef<SupabaseClient | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [status, setStatus] = useState<DraftSyncStatus>("local")
@@ -174,6 +184,8 @@ export function useDraftSync({ form, step, ready, onLoad }: { form: object; step
   latest.current = { w: serializableAnswers(form), step }
   const emailRef = useRef<string | null>(null)
   emailRef.current = email
+  const answeredRef = useRef(answered)
+  answeredRef.current = answered
   const saving = useRef<Promise<string | null> | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const retry = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -196,7 +208,7 @@ export function useDraftSync({ form, step, ready, onLoad }: { form: object; step
   const dirty = () => fpNow() !== meta.current.syncedFp
   const eligible = () => {
     const owner = meta.current.owner
-    return !!emailRef.current && !!str(latest.current.w.destination) && (!owner || owner === emailRef.current)
+    return !!emailRef.current && !!str(latest.current.w.destination) && (answeredRef.current || !!meta.current.baseAt) && (!owner || owner === emailRef.current)
   }
   const outdated = (s: ServerDraft) => !sameVersion(s.updatedAt, meta.current.baseAt) && ![meta.current.syncedFp, meta.current.inflightFp].includes(fingerprint(s.wizard, s.step))
 
@@ -344,7 +356,7 @@ export function useDraftSync({ form, step, ready, onLoad }: { form: object; step
     return () => {
       if (timer.current) clearTimeout(timer.current)
     }
-  }, [fp, ready, email])
+  }, [fp, ready, email, answered])
   // Back online: save. Tab visible again: look for a newer copy (or save what is waiting).
   useEffect(() => {
     const online = () => {

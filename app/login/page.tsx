@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { useState, useEffect, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -10,10 +10,15 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
+import { clearWizardData } from "@/lib/draft-sync"
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const signedOut = searchParams.get("signed_out") === "1"
+  useEffect(() => {
+    if (signedOut) clearWizardData()
+  }, [signedOut])
   const rawNext = searchParams.get("next") || "/dashboard"
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
   const urlError = searchParams.get("error")
