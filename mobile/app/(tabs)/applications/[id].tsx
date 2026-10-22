@@ -7,13 +7,13 @@ import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
 import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL } from "../../../lib/data";
-import { enqueueUpload, retryUpload, removeUpload, useUploads } from "../../../lib/uploads";
+import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
 import { whatsapp, startPayment, checkPayment } from "../../../lib/api";
 import { Linking } from "react-native";
 import { success, error as hError } from "../../../lib/haptics";
-import { chooseSource, pickFrom, checkQuality, confirmWarnings } from "../../../lib/capture";
+import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
 import { useT } from "../../../lib/i18n";
 import { FACTS, localTime, diffFromUae, UAE_PLUG } from "../../../lib/facts";
 import { router } from "expo-router";
@@ -45,15 +45,16 @@ export default function ApplicationDetail() {
   const onDone = useCallback(() => { success(); load(); }, [load]);
   const queue = useUploads(id, onDone);
 
+  /** Pick → reject wrong types here with a clear message → crop/compress and confirm on the preview screen → queue. */
   const pickFile = async (docType: string, requirementId?: string) => {
     setPicking(false); setUpErr(null);
     try {
       const src = await chooseSource(lang); if (!src) return;
-      const f = await pickFrom(src); if (!f) return;
-      const q = checkQuality(f, lang);
-      if (q.error) { hError(); setUpErr(q.error); return; }
-      if (!(await confirmWarnings(q.warnings, lang))) return;
-      await enqueueUpload(id!, { uri: f.uri, name: f.name, mimeType: f.mimeType, size: f.size }, docType, requirementId);
+      const f = await pickFrom(src, lang); if (!f) return;
+      const v = await validateFile(f, lang);
+      if ("error" in v) { hError(); setUpErr(v.error); return; }
+      const title = reqs?.find((r) => r.document_type === docType)?.title ?? DOC_TYPES.find((d) => d.value === docType)?.label ?? "Document";
+      router.push({ pathname: "/upload/[id]", params: { id: id!, docType, reqId: requirementId ?? "", title, source: src, uri: f.uri, name: f.name, mimeType: f.mimeType ?? "", size: f.size != null ? String(f.size) : "", width: f.width ? String(f.width) : "", height: f.height ? String(f.height) : "" } });
     } catch (e: any) { hError(); setUpErr(e?.message ?? String(e)); }
   };
   const addDocument = () => {
@@ -97,7 +98,7 @@ export default function ApplicationDetail() {
   const matched = new Set((list ? [...list.customer, ...list.ezvisa] : []).map((i) => i.doc?.id).filter(Boolean));
   const others = docs.filter((d) => !matched.has(d.id));
   const done = list ? list.customer.filter((i) => !isOpen(i)).length : 0;
-  const busyType = (t: string) => queue.some((j) => j.documentType === t && j.state !== "failed");
+  const busyType = (t: string) => queue.some((j) => j.documentType === t && (j.state === "queued" || j.state === "uploading"));
   const paid = isPaid(a); const locked = a.status !== "draft" && !paid;
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
@@ -155,19 +156,9 @@ export default function ApplicationDetail() {
         )}
       </>) : <View style={{ marginHorizontal: S.lg, marginBottom: S.xl }}><Skeleton h={120} r={R.card} /></View>}
       {!locked && !!queue.length && (
-        <ListGroup header={t("Uploads")} footer={queue.some((j) => j.state === "queued" || j.state === "waiting") ? t("Queued uploads continue automatically when you're online.") : undefined} inset={58}>
-          {queue.map((j) => (
-            <View key={j.id}>
-              <ListRow icon={j.state === "failed" ? "exclamationmark.circle.fill" : j.state === "waiting" ? "wifi.slash" : "arrow.up.circle.fill"} iconColor={j.state === "failed" ? c.red : j.state === "waiting" ? c.orange ?? c.secondaryLabel : c.tint} title={j.name}
-                subtitle={j.state === "uploading" ? t("Uploading…") : j.state === "failed" ? `${t("Failed")} · ${j.error ?? ""}` : j.state === "waiting" ? (j.error ?? t("Waiting to upload")) : t("Queued")} />
-              {j.state === "uploading" ? <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar /></View> : (
-                <View style={{ flexDirection: "row", gap: S.sm, paddingHorizontal: S.md, paddingBottom: S.sm }}>
-                  <View style={{ flex: 1 }}><Button title={t("Retry")} size="M" variant="secondary" onPress={() => retryUpload(j.id)} /></View>
-                  <View style={{ flex: 1 }}><Button title={t("Remove")} size="M" variant="secondary" onPress={() => removeUpload(j.id)} /></View>
-                </View>
-              )}
-            </View>
-          ))}
+        <ListGroup header={t("Uploads")} action={queue.some((j) => j.state === "done") ? t("Clear") : undefined} onAction={() => clearDone(a.id)}
+          footer={queue.some((j) => j.state === "queued") ? t("Queued uploads continue automatically when you're online.") : undefined} inset={58}>
+          {queue.map((j) => <UploadRow key={j.id} j={j} />)}
         </ListGroup>
       )}
       {!locked && <ListGroup header={list ? t("Other documents") : t("Documents")} inset={58}>
@@ -184,6 +175,29 @@ export default function ApplicationDetail() {
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>
     </ScrollView>
+  );
+}
+
+/** One queue item: queued (waiting for connection / retrying) · uploading · done · failed. */
+function UploadRow({ j }: { j: UploadJob }) {
+  const c = useColors(); const { t } = useT();
+  const v = j.state === "done" ? { icon: "checkmark.circle.fill" as const, color: c.green, sub: t("Uploaded") }
+    : j.state === "failed" ? { icon: "exclamationmark.circle.fill" as const, color: c.red, sub: `${t("Failed")} · ${t(j.error ?? "")}` }
+    : j.state === "uploading" ? { icon: "arrow.up.circle.fill" as const, color: c.tint, sub: t("Uploading…") }
+    : j.offline ? { icon: "wifi.slash" as const, color: c.orange, sub: t("Waiting for connection") }
+    : j.nextAt ? { icon: "clock.fill" as const, color: c.orange, sub: t("Connection problem · retrying ({n}/{max})", { n: j.attempts, max: 6 }) }
+    : { icon: "clock.fill" as const, color: c.secondaryLabel, sub: t("Queued") };
+  return (
+    <View testID={`upload-${j.state}`}>
+      <ListRow icon={v.icon} iconColor={v.color} title={j.name} subtitle={v.sub} />
+      {j.state === "uploading" && <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar /></View>}
+      {(j.state === "failed" || j.state === "queued") && (
+        <View style={{ flexDirection: "row", gap: S.sm, paddingHorizontal: S.md, paddingBottom: S.sm }}>
+          {j.state === "failed" && <View style={{ flex: 1 }}><Button title={t("Retry")} size="M" variant="secondary" onPress={() => retryUpload(j.id)} /></View>}
+          <View style={{ flex: 1 }}><Button title={t("Remove")} size="M" variant="secondary" onPress={() => removeUpload(j.id)} /></View>
+        </View>
+      )}
+    </View>
   );
 }
 

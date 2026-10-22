@@ -43,6 +43,8 @@ function Themed() {
             <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
             <Stack.Screen name="continue/[id]" options={{ presentation: "modal" }} />
             <Stack.Screen name="payment/[id]" options={{ presentation: "modal", gestureEnabled: false }} />
+            {/* full screen: a swipe-to-dismiss sheet would fight the crop handles */}
+            <Stack.Screen name="upload/[id]" options={{ presentation: "fullScreenModal", gestureEnabled: false }} />
           </Stack>
           <NetworkBanner />
           <LockGate />
