@@ -59,12 +59,12 @@ await p.getByTestId("passport-expiry").getByRole("button").first().click(); awai
 log((await p.getByTestId("passport-expiry-picker").count()) === 0, "tapping again hides it");
 // 6. profile photo
 const fc = p.waitForEvent("filechooser", { timeout: 8000 });
-await p.getByTestId("avatar-edit").getByRole("button").first().click();
+await p.getByTestId("avatar-edit").click();
 await (await fc).setFiles(process.argv[3]); await p.waitForTimeout(2500);
 const imgs = await p.locator('[role="tablist"] img, [role="tablist"] [style*="background-image"]').count();
 await p.screenshot({ path: `${OUT}/ui-avatar.png` });
 log(imgs > 0, "the photo replaces the Account icon in the tab bar", `images in tab bar: ${imgs}`);
-log((await p.getByText("Edit photo").count()) > 0, "Account offers Edit photo once a photo is set");
+log((await p.getByRole("button", { name: "Edit photo" }).count()) > 0, "the avatar button becomes Edit photo once a photo is set");
 await p.reload(); await p.waitForTimeout(3000);
 log((await p.locator('[role="tablist"] img, [role="tablist"] [style*="background-image"]').count()) > 0, "photo still there after reopening");
 log(!errs.length, "no page errors", errs.join(" | ").slice(0, 300));

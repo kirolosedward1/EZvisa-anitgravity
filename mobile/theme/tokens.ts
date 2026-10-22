@@ -27,7 +27,7 @@ export const SIZE = { buttonL: 56, buttonM: HIT, input: 56, row: 52, rowTall: 64
 export const ICON = { xs: 11, sm: 13, md: 17, lg: 22, xl: 28, hero: 40 } as const;
 /** Flag / avatar diameters. */
 export const AVATAR = { sm: 28, md: 40, lg: 56, xl: 72, xxl: 88 } as const;
-export const TAB_BAR_HEIGHT = 64;
+export const TAB_BAR_HEIGHT = 56;
 
 export const isIOS = Platform.OS === "ios";
 /** iOS continuous (squircle) corners. */
