@@ -174,7 +174,7 @@ export function Checkbox({ label, value, onChange, icon, iconColor }: { label: s
 
 /** Tinted info box (web: emerald / amber / blue / red notes). */
 export function Note({ tone, children, icon = "info.circle" }: { tone: "green" | "amber" | "blue" | "red"; children: React.ReactNode; icon?: IconName }) {
-  const c = useColors(); const dark = useIsDark();
+  const c = useColors();
   const col = tone === "green" ? c.green : tone === "amber" ? c.orange : tone === "red" ? c.red : c.tint;
   const bg = { green: c.successSoft, amber: c.warningSoft, blue: c.accentSoft, red: c.dangerSoft }[tone];
   return (

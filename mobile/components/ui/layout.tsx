@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { KeyboardAvoidingView, Modal, PanResponder, Platform, Pressable, ScrollView, ScrollViewProps, StyleProp, View, ViewStyle, useWindowDimensions } from "react-native";
+import React, { useEffect, useState } from "react";
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, ScrollViewProps, StyleProp, View, ViewStyle, useWindowDimensions } from "react-native";
 import Animated, { runOnJS, useAnimatedStyle, useReducedMotion, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors, S, R, SIZE, DUR, SPRING, curve } from "../../lib/theme";
@@ -37,21 +37,17 @@ export function Screen({ children, scroll = true, edges = ["top", "bottom"], tab
  *  or dragging the grabber down. `onClose` fires when the user dismisses; the parent then sets `visible` to false. */
 export function Sheet({ visible, onClose, title, children, closeLabel = "Close", testID }: { visible: boolean; onClose: () => void; title?: string; children: React.ReactNode; closeLabel?: string; testID?: string }) {
   const c = useColors(); const i = useSafeAreaInsets(); const reduce = useReducedMotion(); const { height } = useWindowDimensions();
+  // Stay mounted while the exit animation runs; mount immediately when opened (state set during render, not in an effect).
   const [mounted, setMounted] = useState(visible);
+  if (visible && !mounted) setMounted(true);
   const p = useSharedValue(0); const drag = useSharedValue(0);
   useEffect(() => {
-    if (visible) { setMounted(true); drag.value = 0; p.value = reduce ? withTiming(1, { duration: DUR.fast }) : withSpring(1, SPRING.enter); }
-    else if (mounted) p.value = withTiming(0, { duration: DUR.fast }, (done) => { if (done) runOnJS(setMounted)(false); });
-  }, [visible, reduce]);
-  const close = useRef(onClose); close.current = onClose;
-  const pan = useRef(PanResponder.create({
-    onMoveShouldSetPanResponder: (_, g) => g.dy > 6 && Math.abs(g.dy) > Math.abs(g.dx),
-    onPanResponderMove: (_, g) => { drag.value = Math.max(0, g.dy); },
-    onPanResponderRelease: (_, g) => { if (g.dy > SIZE.sheetDismiss || g.vy > 0.8) close.current(); else drag.value = withSpring(0, SPRING.press); },
-    onPanResponderTerminate: () => { drag.value = withSpring(0, SPRING.press); },
-  })).current;
-  const backdrop = useAnimatedStyle(() => ({ opacity: p.value }));
-  const panel = useAnimatedStyle(() => (reduce ? { opacity: p.value, transform: [{ translateY: drag.value }] } : { transform: [{ translateY: (1 - p.value) * height + drag.value }] }));
+    if (visible) { drag.set(0); p.set(reduce ? withTiming(1, { duration: DUR.fast }) : withSpring(1, SPRING.enter)); }
+    else p.set(withTiming(0, { duration: DUR.fast }, (done) => { if (done) runOnJS(setMounted)(false); }));
+  }, [visible, reduce, p, drag]);
+  const startY = useSharedValue(0);
+  const backdrop = useAnimatedStyle(() => ({ opacity: p.get() }));
+  const panel = useAnimatedStyle(() => (reduce ? { opacity: p.get(), transform: [{ translateY: drag.get() }] } : { transform: [{ translateY: (1 - p.get()) * height + drag.get() }] }));
   if (!mounted) return null;
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
@@ -60,7 +56,12 @@ export function Sheet({ visible, onClose, title, children, closeLabel = "Close",
           <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityRole="button" accessibilityLabel={closeLabel} />
         </Animated.View>
         <Animated.View accessibilityViewIsModal testID={testID} style={[{ backgroundColor: c.surfaceRaised, borderTopStartRadius: R.sheet, borderTopEndRadius: R.sheet, paddingHorizontal: S.gutter, paddingBottom: Math.max(i.bottom, S.md) + S.xs, maxHeight: height - i.top - S.xl }, curve, panel]}>
-          <View {...pan.panHandlers} style={{ paddingTop: S.xs, paddingBottom: S.sm }}>
+          <View style={{ paddingTop: S.xs, paddingBottom: S.sm }}
+            onStartShouldSetResponder={() => true}
+            onResponderGrant={(e) => { startY.set(e.nativeEvent.pageY); }}
+            onResponderMove={(e) => { drag.set(Math.max(0, e.nativeEvent.pageY - startY.get())); }}
+            onResponderRelease={() => { if (drag.get() > SIZE.sheetDismiss) onClose(); else drag.set(withSpring(0, SPRING.press)); }}
+            onResponderTerminate={() => { drag.set(withSpring(0, SPRING.press)); }}>
             <View style={{ alignSelf: "center", width: SIZE.grabberW, height: SIZE.grabberH, borderRadius: R.round, backgroundColor: c.fill }} />
             {!!title && (
               <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginTop: S.sm }}>
