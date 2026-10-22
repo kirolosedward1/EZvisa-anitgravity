@@ -48,10 +48,11 @@ export const elevation = (level: Level, dark: boolean): ViewStyle => {
 };
 
 // ---- Motion: springs settle in ~200-350 ms; Reduce Motion falls back to short fades (lib/motion.ts) ----
-export const DUR = { instant: 120, fast: 200, base: 260, slow: 350 } as const;
+export const DUR = { instant: 120, fast: 200, base: 260, slow: 350, /** looping skeleton shimmer */ shimmer: 1300, /** indeterminate progress sweep */ sweep: 1100 } as const;
 export const SPRING = {
   press: { damping: 20, stiffness: 420, mass: 0.6 },   // ~200 ms
   pop: { damping: 14, stiffness: 260, mass: 0.7 },     // ~320 ms, slight overshoot
   enter: { damping: 22, stiffness: 240, mass: 0.8 },   // ~300 ms
 } as const;
-export const PRESS = { scale: 0.97, dim: 0.85, lift: -1, disabled: 0.4 } as const;
+/** Pressed state: scale (large surfaces shrink less, small targets more), dim, card lift, disabled opacity. */
+export const PRESS = { scale: 0.97, scaleLarge: 0.985, scaleSmall: 0.92, dim: 0.85, lift: -1, disabled: 0.4 } as const;
