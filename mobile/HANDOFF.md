@@ -137,6 +137,13 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **Proposed, not applied**: `migrations/0011_document_storage_policies.sql` (+ `0011_check_document_access.sql`, a rolled-back two-user check).
 - Tests: `node scripts/run-upload-tests.mjs` (24 checks, incl. type allow-list). Screenshots: `docs/screenshots/chat09/` (Expo web with intercepted fixtures, 390/430, light/dark, Arabic).
 
+## 2j. Passport number after payment (2026-10-22)
+- The pre-payment wizard asks "Do you have a valid passport?" and the expiry date, but **not the number**. The number is the first field of **Continue application** (`app/continue/[id].tsx`), with the employment answers.
+- Rules: `validatePassportNumber` (required unless the answer was "no"), `continueComplete` = passport number + employment (`lib/wizard.ts`). `needsContinue(a)` / `continueForm(a)` in `lib/data.ts` drive Home, the application screen, the next action and the payment result. The number counts as present if it is in `additional_notes.wizard` or in the `passport_number` column (website rows).
+- Saving: `saveContinueAnswers` writes `additional_notes` and `passport_number` in one update. While the case is `reviewing`, the guard trigger (0002) keeps only the notes, so the number is then only in `additional_notes.wizard`.
+- Old drafts saved on the removed screen resume at Passport Expiry. The website (`main`) still asks the number before payment; only the app changed.
+- Checks: `bun scripts/run-check.ts scripts/passport-later-check.ts` (10), `bun scripts/run-check.ts scripts/timeline-check.ts` (incl. 4 new cases). Screenshots: `docs/screenshots/passport-later/`.
+
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
 Not working, because of server config outside the app:
