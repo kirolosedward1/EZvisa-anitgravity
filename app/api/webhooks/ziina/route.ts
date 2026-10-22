@@ -1,20 +1,18 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
 import { logger } from "@/lib/logger"
+import { applyIntentStatus, fetchIntent, serviceClient } from "@/lib/ziina"
 import crypto from "crypto"
-
-// Initialize Supabase client
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
 
 /**
  * Ziina Payment Webhook Handler
- * Receives payment status updates from Ziina and updates the database
+ * Ziina posts { event, data } (docs.ziina.com/api-reference/webhook), signed with X-Hmac-Signature when a secret is set.
+ * The body is only a hint: the payment intent is re-fetched from Ziina with our API key and that status is stored,
+ * so a forged request cannot mark an application as paid.
  */
 export async function POST(request: Request) {
   try {
     const rawBody = await request.text()
-    const signature = request.headers.get("x-ziina-signature")
+    const signature = request.headers.get("x-hmac-signature") || request.headers.get("x-ziina-signature")
     const webhookSecret = process.env.ZIINA_WEBHOOK_SECRET
 
     if (webhookSecret) {
@@ -24,7 +22,7 @@ export async function POST(request: Request) {
       }
 
       const computed = crypto.createHmac("sha256", webhookSecret).update(rawBody).digest("hex")
-      const sigBuffer = Buffer.from(signature)
+      const sigBuffer = Buffer.from(signature.toLowerCase())
       const compBuffer = Buffer.from(computed)
 
       if (sigBuffer.length !== compBuffer.length || !crypto.timingSafeEqual(sigBuffer, compBuffer)) {
@@ -33,112 +31,75 @@ export async function POST(request: Request) {
       }
     }
 
-    const payload = JSON.parse(rawBody)
-    
-    logger.log("Ziina webhook received", payload, { prefix: "WEBHOOK" })
+    let payload: any
+    try { payload = JSON.parse(rawBody) } catch { return NextResponse.json({ error: "Invalid payload" }, { status: 400 }) }
 
-    // Extract payment information
-    const {
-      id: paymentId,
-      status,
-      amount,
-      currency_code,
-      metadata,
-      created_at,
-      completed_at,
-    } = payload
-
-    if (!paymentId || !status) {
-      logger.error("Invalid webhook payload - missing required fields", payload, { prefix: "WEBHOOK" })
+    // Documented shape: { event: "payment_intent.status.updated", data: { id, status, ... } }; legacy: { id, status }.
+    const event = typeof payload?.event === "string" ? payload.event : "payment_intent.status.updated"
+    if (event !== "payment_intent.status.updated") {
+      return NextResponse.json({ success: true, message: "Event ignored", event })
+    }
+    const intentId = payload?.data?.id ?? payload?.id
+    if (typeof intentId !== "string" || !intentId) {
+      logger.error("Invalid webhook payload - missing payment intent id", undefined, { prefix: "WEBHOOK" })
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 })
     }
 
-    // Map Ziina status to our payment status
-    const paymentStatusMap: Record<string, string> = {
-      "completed": "paid",
-      "pending": "pending",
-      "failed": "failed",
-      "cancelled": "cancelled",
-      "expired": "expired",
-      "refunded": "refunded",
-      "partially_refunded": "partially_refunded",
+    const supabase = serviceClient()
+    if (!supabase) {
+      logger.error("Supabase not configured", undefined, { prefix: "WEBHOOK" })
+      return NextResponse.json({ error: "Not configured" }, { status: 500 })
     }
 
-    const mappedStatus = paymentStatusMap[status.toLowerCase()] || status.toLowerCase()
+    const intent = await fetchIntent(intentId)
+    if (!intent) {
+      // Unknown to Ziina (forged id) or Ziina unreachable: store nothing; a non-2xx makes Ziina retry.
+      logger.error("Could not verify payment intent with Ziina", { intentId }, { prefix: "WEBHOOK" })
+      return NextResponse.json({ error: "Could not verify payment" }, { status: 502 })
+    }
 
-    // Update database if Supabase is configured
-    if (supabaseUrl && supabaseKey) {
-      const supabase = createClient(supabaseUrl, supabaseKey)
+    const result = await applyIntentStatus(supabase, intent)
+    if (result.error) {
+      logger.error("Database update failed", result.error, { prefix: "WEBHOOK" })
+      return NextResponse.json({ error: "Database update failed" }, { status: 500 })
+    }
+    if (!result.row) {
+      logger.warn("No application found for payment ID", { paymentId: intent.id }, { prefix: "WEBHOOK" })
+      return NextResponse.json({ success: true, message: "No linked application", paymentId: intent.id })
+    }
+    logger.log("Payment status verified", { paymentId: intent.id, status: result.status, changed: result.changed }, { prefix: "WEBHOOK" })
 
-      // Find application by payment_id and update status
-      const { data, error } = await supabase
-        .from("visa_applications")
-        .update({
-          payment_status: mappedStatus,
-          payment_amount: amount ? amount / 100 : null, // Convert from fils to currency
-          updated_at: new Date().toISOString(),
+    // Email once, on the transition only (Ziina retries and check-payment can apply the same status).
+    if (result.changed && (result.status === "paid" || result.status === "failed") && result.row.email) {
+      try {
+        const { EmailService } = await import("@/lib/email/service")
+        const application = result.row
+        await EmailService.sendEvent({
+          event: result.status === "paid" ? "payment.completed" : "payment.failed",
+          entityId: application.id,
+          recipient: application.email,
+          language: application.preferred_language || "en",
+          data: {
+            id: application.id,
+            trackingToken: application.tracking_token,
+            firstName: application.full_name?.split(" ")[0] || "Customer",
+            destination: application.destination_country || "",
+            paymentAmount: typeof intent.amount === "number" ? intent.amount / 100 : 0,
+            currency: intent.currency_code || "AED",
+          },
         })
-        .eq("payment_id", paymentId)
-        .select()
-
-      if (error) {
-        logger.error("Database update failed", error, { prefix: "WEBHOOK" })
-        // Don't return error - webhook should still acknowledge receipt
-      } else if (data && data.length > 0) {
-        logger.log(`Payment status updated for application`, { paymentId, status: mappedStatus }, { prefix: "WEBHOOK" })
-
-        if ((mappedStatus === "paid" || mappedStatus === "failed") && data[0].email) {
-          try {
-            const { EmailService } = await import("@/lib/email/service");
-            const eventName = mappedStatus === "paid" ? "payment.completed" : "payment.failed";
-            const application = data[0];
-            
-            await EmailService.sendEvent({
-              event: eventName,
-              entityId: application.id,
-              recipient: application.email,
-              language: application.preferred_language || "en",
-              data: {
-                id: application.id,
-                trackingToken: application.tracking_token,
-                firstName: application.full_name?.split(" ")[0] || "Customer",
-                destination: application.destination_country || "",
-                paymentAmount: amount ? amount / 100 : 0,
-                currency: currency_code || "AED"
-              }
-            });
-            logger.log(`Payment email sent via webhook: ${eventName}`, { email: application.email }, { prefix: "WEBHOOK" });
-          } catch (emailError) {
-            logger.error("Failed to send payment email", emailError, { prefix: "WEBHOOK" });
-          }
-        }
-      } else {
-        logger.warn("No application found for payment ID", { paymentId }, { prefix: "WEBHOOK" })
+      } catch (emailError) {
+        logger.error("Failed to send payment email", emailError, { prefix: "WEBHOOK" })
       }
-    } else {
-      logger.warn("Supabase not configured - skipping database update", undefined, { prefix: "WEBHOOK" })
     }
 
-    // Always return success to acknowledge webhook receipt
-    return NextResponse.json({
-      success: true,
-      message: "Webhook processed",
-      paymentId,
-      status: mappedStatus,
-    })
+    return NextResponse.json({ success: true, message: "Webhook processed", paymentId: intent.id, status: result.status })
   } catch (error) {
     logger.error("Webhook processing error", error, { prefix: "WEBHOOK" })
-    
-    // Return 200 to prevent webhook retries for processing errors
-    return NextResponse.json({
-      success: false,
-      message: "Webhook processing error",
-      error: error instanceof Error ? error.message : "Unknown error",
-    })
+    return NextResponse.json({ success: false, message: "Webhook processing error" }, { status: 500 })
   }
 }
 
-// Verify webhook signature (if Ziina provides one)
 export async function GET() {
   return NextResponse.json({
     status: "ok",
