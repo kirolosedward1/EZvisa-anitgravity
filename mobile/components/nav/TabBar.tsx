@@ -133,11 +133,15 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         {/* specular rim: a 1pt light edge just inside the outer hairline */}
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: H / 2, borderWidth: 1, borderColor: rim }]} />
         <View {...pan.panHandlers} style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 6 }} accessibilityRole="tablist">
-          <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 6, height: H - 12, borderRadius: (H - 12) / 2, overflow: "hidden",
-            backgroundColor: dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)", borderWidth: 1, borderColor: dark ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.95)" },
-            dark ? null : { shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }, lens]}>
-            {glass && <GlassView glassEffectStyle="clear" style={StyleSheet.absoluteFill} />}
-          </Animated.View>
+          {/* Slot x values from onLayout are physical (from the left). Pinning this layer to LTR keeps `left: 0` on the left in
+              Arabic too (RN swaps left/right under RTL), so the lens sits under the right tab and drags the right way. */}
+          <View pointerEvents="none" style={[StyleSheet.absoluteFill, { direction: "ltr" }]}>
+            <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 6, height: H - 12, borderRadius: (H - 12) / 2, overflow: "hidden",
+              backgroundColor: dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)", borderWidth: 1, borderColor: dark ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.95)" },
+              dark ? null : { shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }, lens]}>
+              {glass && <GlassView glassEffectStyle="clear" style={StyleSheet.absoluteFill} />}
+            </Animated.View>
+          </View>
           {state.routes.map((route, i) => {
             const label = (descriptors[route.key].options.title ?? route.name) as string;
             return (

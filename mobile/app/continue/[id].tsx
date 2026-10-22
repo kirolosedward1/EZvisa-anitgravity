@@ -64,7 +64,7 @@ export default function ContinueApplication() {
   return (
     <Animated.View style={[{ flex: 1, backgroundColor: c.bg }, kbPad]}>
       <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: S.lg, paddingTop: Platform.OS === "ios" ? S.sm : insets.top + S.xs, paddingBottom: S.sm }}>
-        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={t("Back")} onPress={() => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`); }} /></View>
+        <CircleButton icon="chevron.left" label={t("Back")} onPress={() => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`); }} />
         <View style={{ flex: 1 }} />
       </View>
       {!f ? (

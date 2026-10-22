@@ -91,7 +91,7 @@ export default function TripPlan() {
     const titles: Record<QStep, string> = { cities: "Which cities?", budget: "What's your budget?", who: "Who's travelling?", interests: "What do you enjoy?" };
     return (
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        {header(<View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={t("Back")} onPress={back} /></View>)}
+        {header(<CircleButton icon="chevron.left" label={t("Back")} onPress={back} />)}
         <View style={{ paddingHorizontal: S.lg, flexDirection: "row", gap: S.xxs }} accessible accessibilityRole="progressbar" accessibilityLabel={t("{i} of {n}", { i: i + 1, n: QS.length })}>
           {QS.map((_, k) => <View key={k} style={{ flex: 1, height: 4, borderRadius: R.xs, backgroundColor: k <= i ? c.tintFill : c.fill }} />)}
         </View>
