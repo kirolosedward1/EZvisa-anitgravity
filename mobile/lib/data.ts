@@ -41,7 +41,9 @@ export type Application = VisaRow & {
 
 const need = () => { if (!supabase) throw new Error("Backend not configured"); return supabase; };
 async function me() {
-  const { data } = await need().auth.getUser();
+  const { data, error } = await need().auth.getUser();
+  // Offline / server unreachable: keep the original (retryable) error so autosave keeps retrying instead of giving up.
+  if (error && error.name === "AuthRetryableFetchError") throw error;
   if (!data.user?.email) throw new Error("Please sign in first");
   return { id: data.user.id, email: data.user.email.toLowerCase() };
 }
@@ -253,11 +255,11 @@ export async function saveDraft(f: WizardForm, step: string, id: string, base: s
 /** Guest checkout (no account yet): RLS "Allow public submissions" lets anon INSERT, but anon cannot SELECT the row back,
  *  so the id is made on the phone and nothing is returned. Payment then goes through /api/create-payment (links payment_id
  *  server-side) and the Ziina webhook marks it paid. Signing in later with the same email makes the row visible (SELECT by email). */
-export async function guestSubmit(f: WizardForm): Promise<{ id: string; reference: string; email: string }> {
+export async function guestSubmit(f: WizardForm, id: string = Crypto.randomUUID()): Promise<{ id: string; reference: string; email: string }> {
   const sb = need(); const email = f.email.trim().toLowerCase();
-  const id = Crypto.randomUUID();
   const { error } = await sb.from("visa_applications").insert({ id, ...(columns(f, email, "payment", { submittedAt: new Date().toISOString() }) as any), application_status: "submitted", payment_status: "pending", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false });
-  if (error) throw error;
+  // Same id again (the caller keeps it per submit): the earlier attempt landed and only its reply was lost.
+  if (error && error.code !== "23505") throw error;
   return { id, reference: referenceOf(id), email };
 }
 
