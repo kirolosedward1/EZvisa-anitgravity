@@ -84,6 +84,31 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **Tooling**: `npx tsc --noEmit` passes (Deno functions excluded); ESLint = eslint-config-expo 57 (`npx eslint .`, 0 errors, React Compiler rules as warnings); `node scripts/run-test-privacy.mjs` (24 checks); `scripts/bench-web.mjs`.
 - **Launch screen**: unchanged config (`expo-splash-screen` plugin: 180 pt mark, #FFFFFF / #000000, light + dark images). In Expo Go the native launch screen is Expo Go's own; the app's boot overlay (`components/Boot.tsx`) then shows the same mark. The real native launch screen appears only in a development/production build.
 
+## 2f. v11 Home dashboard and timeline (2026-10-22, chat 11)
+- **Home** (`app/(tabs)/(home)/index.tsx`): hero = most recent active application (destination, trip dates, status,
+  5-segment progress), else the newest draft (`Continue draft`), else the latest finished case; the rest under
+  "Other applications". One next action (`lib/nextAction.ts`). Appointment card under the hero only when staff entered one.
+  Skeleton while loading, error card with Try again, empty state, pull to refresh.
+- **Timeline** (`lib/timeline.ts`, `Timeline` in `components/ui/data.tsx`, also on the application page):
+  Submitted, Paid, Documents, Appointment, Decision. Data sources (live `visa_applications`, verified from the code + types):
+  | Step | Done when | Time shown |
+  |---|---|---|
+  | Submitted | status is not draft (cancelled only with evidence) | `additional_notes.submittedAt` (new, written at submit) or `created_at` for website rows; none for older app rows |
+  | Paid | `payment_status` paid/completed (Ziina webhook); refunded shows "Refunded" | none: no paid-at column |
+  | Documents | every mandatory customer document in and none rejected, or status ready/approved/completed | latest `additional_notes.uploads[].at` |
+  | Appointment | `appointment_at` set (migrations/0003) | the appointment time |
+  | Decision | status `completed` (granted) / `rejected` (refused) / `cancelled` | none: no decision time column |
+  `updated_at` is never used as a step time. The website admin can only set submitted/reviewing/ready/cancelled, so
+  "Visa granted/refused" appear only if staff set `completed`/`rejected` some other way.
+- **Live updates** (`lib/useApps.ts`, `useApps(true, true)` on Home): reload on focus, on app foreground, on pull to refresh,
+  and on Supabase Realtime `postgres_changes` for `visa_applications` filtered `email=eq.<own email>`. Realtime delivers
+  nothing until `migrations/0009` (waiting for approval) adds the table to `supabase_realtime`.
+- **Calendar** (`lib/appointment.ts`): `expo-calendar/legacy` `createEventInCalendarAsync` (SDK 57.0.6). iOS 17+ shows the
+  system sheet without permission; older iOS requests access and explains a denial (Open Settings).
+- **Checks**: `bun scripts/run-check.ts scripts/timeline-check.ts` (34 checks, live row shape, no network).
+  `npm run lint` (eslint-config-expo 57) and `npx tsc --noEmit` pass. Screenshots: `docs/screenshots/v11/` (fixture rows
+  in a Playwright harness against a fake Supabase host, not production data).
+
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
 Not working, because of server config outside the app:
