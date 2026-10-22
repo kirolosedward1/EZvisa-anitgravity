@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import { useColors, S, R, curve, SPRING } from "../../lib/theme";
 import { FLAG_SVG } from "../../assets/flags";
 import { STATUS_LABEL, type Application } from "../../lib/data";
+import { buildTimeline, type Step } from "../../lib/timeline";
 import { useT } from "../../lib/i18n";
 import { tap, success as hSuccess } from "../../lib/haptics";
 import { Text } from "./Text";
@@ -48,7 +49,6 @@ export function StatusPill({ v }: { v: string }) {
 // Customer-facing journey, from the live columns only: application_status (website/admin: submitted -> reviewing -> ready |
 // cancelled) and payment_status (set by the Ziina webhook). Dates are shown only where the row really has one.
 export const JOURNEY = ["submitted", "paid", "reviewing", "ready"] as const;
-const JOURNEY_LABEL = ["Submitted", "Paid", "In review", "File ready"];
 const PAID = (p?: string | null) => p === "paid" || p === "completed";
 export function journeyIndex(status: string, payment?: string | null) {
   if (status === "draft") return -1;
@@ -71,30 +71,39 @@ export function MiniProgress({ status, payment }: { status: string; payment?: st
   );
 }
 
-const fmtDT = (s: string) => new Date(s).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-export function Timeline({ a, t = (s: string) => s }: { a: Application; t?: (s: string) => string }) {
-  const c = useColors(); const idx = journeyIndex(a.status, a.payment_status);
-  const cancelled = a.status === "cancelled" || a.status === "rejected";
-  // Real timestamps only: created_at for "Submitted"; updated_at for the latest reached step (we don't know earlier ones).
-  const when = (i: number) => (i === 0 ? a.created_at : i === idx && idx > 0 ? a.updated_at : null);
-  const steps = cancelled ? [...JOURNEY.slice(0, Math.max(1, idx + 1)).map((_, i) => JOURNEY_LABEL[i]), a.status === "rejected" ? "Refused" : "Cancelled"] : JOURNEY_LABEL;
-  const cur = cancelled ? steps.length - 1 : idx;
+const fmtDT = (s: string, lang?: string) => new Date(s).toLocaleString(lang === "ar" ? "ar" : undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const fmtAppt = (s: string, lang?: string) => new Date(s).toLocaleString(lang === "ar" ? "ar" : undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+/** Five-step status timeline (lib/timeline.ts). A step shows as done only when the row says so, and a time only when
+ *  the row has a real one; there is no placeholder or estimated date. */
+export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
+  const c = useColors(); const { t, lang } = useT();
+  const steps = buildTimeline(a);
+  const tone = (st: Step["state"], key: Step["key"]) => (st === "done" || st === "current" ? c.tint : st === "attention" ? c.orange : st === "failed" ? (key === "decision" && a.status === "cancelled" ? c.secondaryLabel : c.red) : c.tertiaryLabel);
   return (
     <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} testID="timeline">
-      {steps.map((label, i) => {
-        const done = i <= cur; const last = i === steps.length - 1; const at = cancelled && last ? a.updated_at : when(i);
-        const tone = cancelled && last ? c.red : c.tint;
+      {steps.map((s, i) => {
+        const last = i === steps.length - 1; const col = tone(s.state, s.key); const filled = s.state === "done" || s.state === "attention" || s.state === "failed";
+        const when = s.at ? (s.scheduled ? fmtAppt(s.at, lang) : fmtDT(s.at, lang)) : null;
+        const reached = s.state !== "todo";
+        const stateWord = s.state === "done" ? t("done") : s.state === "current" ? t("in progress") : s.state === "attention" ? t("needs attention") : s.state === "todo" ? t("not yet") : "";
         return (
-          <View key={i} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 28 : 52 }} accessible accessibilityLabel={`${t(label)}${done ? `, ${t("done")}` : ""}${at && done ? `, ${fmtDT(at)}` : ""}`}>
+          <View key={s.key} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 28 : 52 }} accessible testID={`step-${s.key}`}
+            accessibilityLabel={[t(s.label), stateWord, s.note && t(s.note), when].filter(Boolean).join(", ")}>
             <View style={{ alignItems: "center", width: 16 }}>
-              <View style={{ width: 14, height: 14, borderRadius: R.sm, marginTop: S.xxs, backgroundColor: done ? tone : "transparent", borderWidth: 2, borderColor: done ? tone : c.tertiaryLabel, alignItems: "center", justifyContent: "center" }}>
-                {done && <Icon name={cancelled && last ? "xmark" : "checkmark"} size={8} color="#fff" weight="bold" />}
+              <View style={{ width: 16, height: 16, borderRadius: R.sm, marginTop: S.xxs, backgroundColor: filled ? col : "transparent", borderWidth: 2, borderColor: col, alignItems: "center", justifyContent: "center" }}>
+                {s.state === "done" && <Icon name="checkmark" size={8} color="#fff" weight="bold" />}
+                {s.state === "failed" && <Icon name="xmark" size={8} color="#fff" weight="bold" />}
+                {s.state === "attention" && <Icon name="exclamationmark" size={8} color="#fff" weight="bold" />}
+                {s.state === "current" && <View style={{ width: 6, height: 6, borderRadius: R.xs, backgroundColor: col }} />}
               </View>
-              {!last && <View style={{ flex: 1, width: 2, marginVertical: S.xxs, backgroundColor: i < cur ? c.tint : c.fill }} />}
+              {!last && <View style={{ flex: 1, width: 2, marginVertical: S.xxs, backgroundColor: s.state === "done" ? c.tint : c.fill }} />}
             </View>
-            <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-between", gap: S.xs }}>
-              <Text variant="body" weight={i === cur ? "600" : "400"} tone={done ? "label" : "secondary"} style={{ flex: 1 }}>{t(label)}</Text>
-              {!!at && done && <Text variant="footnote" tone="secondary" tabular>{fmtDT(at)}</Text>}
+            <View style={{ flex: 1, paddingBottom: last ? 0 : S.sm }}>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: S.xs }}>
+                <Text variant="body" weight={s.state === "current" || s.state === "attention" ? "600" : "400"} tone={reached ? "label" : "secondary"} color={s.state === "attention" || s.state === "failed" ? col : undefined} style={{ flex: 1 }}>{t(s.label)}</Text>
+                {!!when && <Text variant="footnote" tone="secondary" tabular>{when}</Text>}
+              </View>
+              {!!s.note && <Text variant="footnote" tone="secondary" numberOfLines={2}>{t(s.note)}</Text>}
             </View>
           </View>
         );

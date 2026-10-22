@@ -484,4 +484,11 @@ export const AR: Record<string, string> = {
   "Connection problem · retrying ({n}/{max})": "مشكلة في الاتصال · إعادة المحاولة ({n}/{max})",
   "This photo is too large to upload, even after compressing. Try again closer to the document.": "هذه الصورة كبيرة جدًا للرفع حتى بعد الضغط. حاول مجددًا بالاقتراب من المستند.",
   "The upload timed out.": "انتهت مهلة الرفع.",
+  // ---- v11 Home dashboard & timeline ----
+  "{n} of {total} steps done": "اكتمل {n} من {total} خطوات", "Not submitted yet.": "لم يُرسل بعد.", "Continue draft": "متابعة المسودة", "Discard": "تجاهل",
+  "Couldn't load your applications.": "تعذّر تحميل طلباتك.", "Check your connection and try again.": "تحقق من اتصالك وحاول مجددًا.", "Other applications": "طلبات أخرى",
+  "Calendar access is off": "الوصول إلى التقويم متوقف", "Allow calendar access in Settings to add this appointment.": "اسمح بالوصول إلى التقويم من الإعدادات لإضافة هذا الموعد.",
+  "Couldn't open the calendar.": "تعذّر فتح التقويم.", "Please try again.": "يرجى المحاولة مجددًا.",
+  "in progress": "قيد التنفيذ", "needs attention": "يحتاج إلى إجراء", "not yet": "ليس بعد", "Visa granted": "مُنحت التأشيرة", "Decision": "القرار",
+  "View appointment": "عرض الموعد", "Awaiting decision": "بانتظار القرار", "Re-upload needed": "يلزم إعادة الرفع",
 };
