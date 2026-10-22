@@ -1,9 +1,10 @@
-import { PressScale } from "../ui";
-// iOS 26-style navigation: a floating Liquid Glass capsule with the tabs. The old floating Apply button beside it was
-// removed (it overlapped the bar and content); "Start application" lives on Home and in the Applications header.
+// Liquid Glass tab bar (iOS 26/27 style): floating translucent capsule, thin specular rim, and a glass "lens" pill that
+// springs between tabs (stretching in flight, settling back) and can be dragged across tabs. All motion runs on the UI
+// thread via Reanimated shared values; the drag uses PanResponder (no new native module, so it works in Expo Go).
+// Material: native Liquid Glass (expo-glass-effect GlassView) on iOS 26+, expo-blur elsewhere; translucent fill on Android.
 import React, { useEffect, useRef, useState } from "react";
-import { Keyboard, Platform, Pressable, StyleSheet, View } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, useReducedMotion } from "react-native-reanimated";
+import { Keyboard, PanResponder, Platform, Pressable, StyleSheet, View, type LayoutChangeEvent } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withSequence, withTiming, useReducedMotion, interpolate, type SharedValue } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
@@ -24,8 +25,8 @@ function Material({ radius }: { radius: number }) {
   const c = useColors(); const dark = useIsDark();
   const st = [StyleSheet.absoluteFill, { borderRadius: radius, overflow: "hidden" as const }];
   if (glass) return <GlassView glassEffectStyle="regular" style={st} />;
-  if (Platform.OS === "android") return <View style={[st, { backgroundColor: dark ? "#1C1C1E" : "#FFFFFF" }]} />;
-  return <BlurView intensity={60} tint={dark ? "systemChromeMaterialDark" : "systemChromeMaterialLight"} style={[st, { backgroundColor: c.glassTint }]} />;
+  if (Platform.OS === "android") return <View style={[st, { backgroundColor: dark ? "rgba(28,28,30,0.94)" : "rgba(255,255,255,0.94)" }]} />;
+  return <BlurView intensity={70} tint={dark ? "systemChromeMaterialDark" : "systemChromeMaterialLight"} style={[st, { backgroundColor: c.glassTint }]} />;
 }
 
 /** Centre "+" (between Countries and Applications): starts a new application via /apply, like the old floating button. */
@@ -36,7 +37,7 @@ function NewAppButton() {
   const open = () => { const now = Date.now(); if (now - last.current < 800) return; last.current = now; tap(); router.push("/apply"); };
   return (
     <View style={{ width: FAB + S.xs, alignItems: "center", justifyContent: "center" }}>
-      <Animated.View style={[{ width: FAB, height: FAB, borderRadius: FAB / 2, backgroundColor: c.tint, shadowColor: "#000", shadowOpacity: 0.16, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 }, a]}>
+      <Animated.View style={[{ width: FAB, height: FAB, borderRadius: FAB / 2, backgroundColor: c.brand, shadowColor: "#000", shadowOpacity: 0.16, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 }, a]}>
         <Pressable onPress={open} onPressIn={() => { press.value = withSpring(reduce ? 0.96 : 0.9, SPRING.press); }} onPressOut={() => { press.value = withSpring(1, SPRING.press); }}
           accessibilityRole="button" accessibilityLabel="New application" testID="tab-new-application" hitSlop={6}
           style={{ flex: 1, borderRadius: FAB / 2, alignItems: "center", justifyContent: "center" }}>
@@ -47,8 +48,35 @@ function NewAppButton() {
   );
 }
 
+const LENS = { damping: 18, stiffness: 260, mass: 0.7 };      // droplet travel: quick with a soft settle
+const SETTLE = { damping: 12, stiffness: 320, mass: 0.6 };    // stretch / squash recovery
+
+/** One tab: icon + label crossfade between outline/filled and grey/tint, with a spring scale. */
+function Tab({ label, icons, on, progress, reduce, onPress, onLayout, testID }: { label: string; icons: [IconName, IconName]; on: boolean; progress: SharedValue<number>; reduce: boolean; onPress: () => void; onLayout: (e: LayoutChangeEvent) => void; testID: string }) {
+  const c = useColors();
+  useEffect(() => { progress.value = reduce ? withTiming(on ? 1 : 0, { duration: 120 }) : withSpring(on ? 1 : 0, SPRING.pop); }, [on, reduce]);
+  const scale = useAnimatedStyle(() => ({ transform: [{ scale: reduce ? 1 : interpolate(progress.value, [0, 1], [1, 1.08]) }] }));
+  const onA = useAnimatedStyle(() => ({ opacity: progress.value }));
+  const offA = useAnimatedStyle(() => ({ opacity: 1 - progress.value }));
+  const both = (name: IconName, color: string, st: any, w: "600" | "500") => (
+    <Animated.View style={[StyleSheet.absoluteFill, { alignItems: "center", justifyContent: "center", gap: S.xxs }, st]}>
+      <Icon name={name} size={ICON.lg} color={color} />
+      <Text variant="caption2" weight={w} color={color} numberOfLines={1}>{label}</Text>
+    </Animated.View>
+  );
+  return (
+    <Pressable onPress={onPress} onLayout={onLayout} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label} testID={testID}
+      style={{ flex: 1, height: H - 12 }}>
+      <Animated.View style={[{ flex: 1 }, scale]}>
+        {both(icons[0], c.label, offA, "500")}
+        {both(icons[1], c.tint, onA, "600")}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets();
+  const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const reduce = !!useReducedMotion();
   const [kb, setKb] = useState(false);
   useEffect(() => {
     const a = Keyboard.addListener(Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow", () => setKb(true));
@@ -62,24 +90,61 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const hidden = kb || (nested?.index ?? 0) > 0 || (!!top && !["index", "countries"].includes(top));
   const bottom = insets.bottom > 0 ? Math.max(insets.bottom - 10, 8) : 14;
   const ty = useSharedValue(0);
-  useEffect(() => { ty.value = withSpring(hidden ? H + bottom + 30 : 0, SPRING.press); }, [hidden, bottom]);
+  useEffect(() => { ty.value = withSpring(hidden ? H + bottom + 40 : 0, SPRING.press); }, [hidden, bottom]);
   const a = useAnimatedStyle(() => ({ transform: [{ translateY: ty.value }] }));
+
+  // Lens geometry: tab slots measured on layout; x / w spring to the selected slot.
+  const slots = useRef<{ x: number; w: number }[]>([]);
+  const x = useSharedValue(0); const w = useSharedValue(0); const sx = useSharedValue(1); const sy = useSharedValue(1); const shown = useSharedValue(0);
+  const progress = [useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0)];
+  const moveTo = (i: number, animate = true) => {
+    const s = slots.current[i]; if (!s) return;
+    if (!animate || reduce || !shown.value) { x.value = reduce && shown.value ? withTiming(s.x, { duration: 160 }) : s.x; w.value = s.w; shown.value = 1; return; }
+    const far = Math.abs(s.x - x.value) > 4;
+    x.value = withSpring(s.x, LENS); w.value = withSpring(s.w, LENS);
+    if (far) { sx.value = withSequence(withSpring(1.22, { damping: 20, stiffness: 600 }), withSpring(1, SETTLE)); sy.value = withSequence(withSpring(0.86, { damping: 20, stiffness: 600 }), withSpring(1, SETTLE)); }
+  };
+  useEffect(() => { moveTo(state.index); }, [state.index, reduce]);
+  const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; slots.current[i] = { x: lx + 2, w: width - 4 }; if (i === state.index) moveTo(i, false); };
+  const lens = useAnimatedStyle(() => ({ opacity: shown.value, width: w.value, transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
+
+  const go = (i: number) => {
+    const route = state.routes[i]; const on = state.index === i;
+    const e = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+    if (!e.defaultPrevented && !on) { select(); navigation.navigate(route.name, route.params); } else moveTo(state.index);
+  };
+  // Drag the lens across tabs (horizontal pans only, so taps and vertical scrolls are untouched); release snaps + selects.
+  const nearest = (cx: number) => { let best = state.index, d = 1e9; slots.current.forEach((s, i) => { if (!s) return; const dd = Math.abs(s.x + s.w / 2 - cx); if (dd < d) { d = dd; best = i; } }); return best; };
+  const live = useRef({ go, nearest, moveTo, idx: state.index }); live.current = { go, nearest, moveTo, idx: state.index };
+  const startX = useRef(0);
+  const pan = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onPanResponderGrant: () => { startX.current = x.value; if (!reduce) { sx.value = withSpring(1.12, SETTLE); sy.value = withSpring(0.92, SETTLE); } },
+    onPanResponderMove: (_, g) => { const max = Math.max(...slots.current.filter(Boolean).map((s) => s.x)); x.value = Math.min(Math.max(startX.current + g.dx, 0), max); },
+    onPanResponderRelease: () => { sx.value = withSpring(1, SETTLE); sy.value = withSpring(1, SETTLE); live.current.go(live.current.nearest(x.value + w.value / 2)); },
+    onPanResponderTerminate: () => { sx.value = withSpring(1, SETTLE); sy.value = withSpring(1, SETTLE); live.current.moveTo(live.current.idx); },
+  })).current;
+  // PanResponder callbacks are created once; keep the latest closures reachable.
+    const rim = dark ? "rgba(255,255,255,0.16)" : "rgba(255,255,255,0.75)";
   return (
-    <Animated.View pointerEvents={hidden ? "none" : "box-none"} style={[{ position: "absolute", left: S.md, right: S.md, bottom, height: H, flexDirection: "row", gap: S.sm }, a]}>
-      <View style={[{ flex: 1, height: H, borderRadius: H / 2 }, elevation(3, dark), { borderWidth: 1, borderColor: c.hairline }]}>
+    <Animated.View pointerEvents={hidden ? "none" : "box-none"} style={[{ position: "absolute", left: S.md, right: S.md, bottom, height: H }, a]}>
+      <View style={[{ flex: 1, height: H, borderRadius: H / 2 }, elevation(3, dark), { borderWidth: StyleSheet.hairlineWidth, borderColor: c.hairline }]}>
         <Material radius={H / 2} />
-        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: S.xs }} accessibilityRole="tablist">
+        {/* specular rim: a 1pt light edge just inside the outer hairline */}
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: H / 2, borderWidth: 1, borderColor: rim }]} />
+        <View {...pan.panHandlers} style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 6 }} accessibilityRole="tablist">
+          <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: 6, height: H - 12, borderRadius: (H - 12) / 2, overflow: "hidden",
+            backgroundColor: dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)", borderWidth: 1, borderColor: dark ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.95)" },
+            dark ? null : { shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 6, shadowOffset: { width: 0, height: 2 } }, lens]}>
+            {glass && <GlassView glassEffectStyle="clear" style={StyleSheet.absoluteFill} />}
+          </Animated.View>
           {state.routes.map((route, i) => {
-            const on = state.index === i; const label = (descriptors[route.key].options.title ?? route.name) as string;
-            const [off, onI] = ICONS[route.name] ?? ["circle", "circle"];
-            const press = () => { const e = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true }); if (!e.defaultPrevented && !on) { select(); navigation.navigate(route.name, route.params); } };
+            const label = (descriptors[route.key].options.title ?? route.name) as string;
             return (
               <React.Fragment key={route.key}>{i === 2 && <NewAppButton />}
-              <PressScale onPress={press} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label} testID={`tab-${route.name}`}
-                style={{ flex: 1, height: H - 12, borderRadius: (H - 12) / 2, alignItems: "center", justifyContent: "center", gap: S.xxs, backgroundColor: on ? (dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)") : "transparent" }}>
-                <Icon name={on ? onI : off} size={ICON.lg} color={on ? c.tint : c.label} />
-                <Text variant="caption2" weight={on ? "600" : "500"} color={on ? c.tint : c.label} numberOfLines={1}>{label}</Text>
-              </PressScale></React.Fragment>
+                <Tab label={label} icons={ICONS[route.name] ?? ["circle", "circle"]} on={state.index === i} progress={progress[i]} reduce={reduce}
+                  onPress={() => live.current.go(i)} onLayout={onSlot(i)} testID={`tab-${route.name}`} />
+              </React.Fragment>
             );
           })}
         </View>
