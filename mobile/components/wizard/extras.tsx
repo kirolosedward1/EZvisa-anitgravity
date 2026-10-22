@@ -1,12 +1,11 @@
 // Wizard helpers (WIZARD-IDEAS.md top 8): route preview, document checklist, prefill offer.
-// Content only from existing definitions: answers, PRICE_AED, the website upload checklist (lib/data.ts REQS).
+// Content only from existing definitions: answers and the website upload checklist (lib/data.ts REQS).
 import { useState } from "react";
 import { View, Modal, ScrollView } from "react-native";
 import { Text, Icon, Flag, Button } from "../ui";
 import { PressScale } from "../ui";
 import { useColors, S, R, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
-import { PRICE_AED } from "../../lib/config";
 import type { Requirement } from "../../lib/data";
 
 const Card = ({ children, testID }: { children: React.ReactNode; testID?: string }) => {
@@ -22,10 +21,10 @@ export function RoutePreview({ destination, nationality, residence, left }: { de
   );
   return (
     <Card testID="route-preview">
-      <View accessible accessibilityLabel={`${t(nationality)} → ${t(destination)}. ${t("Resident in {c}", { c: t(residence) })}. ${t("{n} questions left", { n: left })}. ${PRICE_AED} AED`} style={{ gap: S.sm }}>
+      <View accessible accessibilityLabel={`${t(nationality)} → ${t(destination)}. ${t("Resident in {c}", { c: t(residence) })}. ${t("{n} questions left", { n: left })}`} style={{ gap: S.sm }}>
         {row(nationality, `${t(nationality)} ${arrow} ${t(destination)}`)}
         {row(residence, t("Resident in {c}", { c: t(residence) }))}
-        <Text variant="footnote" tone="secondary" tabular>{t("{n} questions left", { n: left })} · {PRICE_AED} AED</Text>
+        <Text variant="footnote" tone="secondary" tabular>{t("{n} questions left", { n: left })}</Text>
       </View>
     </Card>
   );

@@ -9,7 +9,7 @@ import * as Crypto from "expo-crypto";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
-import { siteUrl, PRICE_AED } from "./config";
+import { siteUrl } from "./config";
 import type { Database } from "./database.types";
 import { emptyForm, type WizardForm } from "./wizard";
 
@@ -31,9 +31,10 @@ export type Application = VisaRow & {
   status: AppStatus; reference: string; country_id: string | null;
   countries: { name: string; slug: string; flag_emoji: string | null } | null;
   applicants: Applicant[]; documents: Doc[];
-  payments: { id: string; status: string; amount: number; currency: string; created_at: string }[];
+  payments: { id: string; status: string; amount: number | null; currency: string; created_at: string }[];
   application_status_history: { to_status: string; created_at: string; note?: string | null }[];
-  total_amount: number; currency: string; notes: Notes;
+  /** Amount from the server record (payment_amount) only; null until Ziina reports it. Never a client-side price. */
+  total_amount: number | null; currency: string; notes: Notes;
 };
 
 const need = () => { if (!supabase) throw new Error("Backend not configured"); return supabase; };
@@ -112,7 +113,7 @@ export function toApplication(r: VisaRow): Application {
   const w = n.wizard ?? {};
   const applicants: Applicant[] = [{ id: `${r.id}-p`, is_primary: true, first_name: w.firstName ?? r.full_name.split(" ")[0] ?? "", last_name: w.lastName ?? r.full_name.split(" ").slice(1).join(" "), passport_number: r.passport_number, passport_expiry_date: null }];
   if (spouse && w.spouseFirstName) applicants.push({ id: `${r.id}-s`, is_primary: false, first_name: w.spouseFirstName, last_name: w.spouseLastName ?? "", passport_number: null, passport_expiry_date: null });
-  const total = r.payment_amount != null ? Number(r.payment_amount) : PRICE_AED * (spouse ? 2 : 1);
+  const total = r.payment_amount != null ? Number(r.payment_amount) : null;
   const history = [{ to_status: "submitted", created_at: r.created_at ?? "" }];
   if (status !== "submitted" && status !== "draft") history.push({ to_status: status, created_at: r.updated_at ?? "" });
   return {

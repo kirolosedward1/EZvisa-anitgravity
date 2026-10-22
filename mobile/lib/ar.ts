@@ -491,4 +491,13 @@ export const AR: Record<string, string> = {
   "Couldn't open the calendar.": "تعذّر فتح التقويم.", "Please try again.": "يرجى المحاولة مجددًا.",
   "in progress": "قيد التنفيذ", "needs attention": "يحتاج إلى إجراء", "not yet": "ليس بعد", "Visa granted": "مُنحت التأشيرة", "Decision": "القرار",
   "View appointment": "عرض الموعد", "Awaiting decision": "بانتظار القرار", "Re-upload needed": "يلزم إعادة الرفع",
+  // chat 08: payment result
+  "Updating your application. This can take a minute.": "جارٍ تحديث طلبك. قد يستغرق ذلك دقيقة.",
+  "Updating your application…": "جارٍ تحديث طلبك…",
+  "You're offline": "أنت غير متصل",
+  "We'll check your payment when you're back online.": "سنتحقق من الدفع عند عودة الاتصال.",
+  "Pay securely": "ادفع بأمان",
+  "Shown at checkout": "يظهر عند الدفع",
+  "Payment processing": "الدفع قيد المعالجة",
+  "Card payment": "دفع بالبطاقة",
 };

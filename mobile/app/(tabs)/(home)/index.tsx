@@ -8,14 +8,15 @@ import { AppointmentCard } from "../../../components/Appointment";
 import { useColors, S, R, curve, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { PHOTOS, THUMBS } from "../../../lib/photos";
-import { STATUS_LABEL, isPaid, requirementsFor, type Application } from "../../../lib/data";
+import { STATUS_LABEL, getApplication, isPaid, requirementsFor, type Application } from "../../../lib/data";
 import { useApps } from "../../../lib/useApps";
 import { tap, error as hError } from "../../../lib/haptics";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { buildChecklist } from "../../../lib/checklist";
 import { nextAction } from "../../../lib/nextAction";
 import { buildTimeline, doneCount, isUserDiscarded, chooseHero } from "../../../lib/timeline";
-import { startPayment } from "../../../lib/api";
+import { paymentToResume, startPayment } from "../../../lib/payments";
+import { useAuth } from "../../../lib/auth";
 import { useForm, type LocalDraft } from "../../../lib/form";
 import { hasAnswers, employmentComplete } from "../../../lib/wizard";
 import { Q_BY_ID } from "../../../lib/questions";
@@ -50,8 +51,9 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
       case "appointment": onShowAppointment(); return;
       case "pay":
         setPaying(true);
-        startPayment(a, a.applicants.length > 1).then((o) => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned, pid: o.paymentId ?? "" } }))
-          .catch(() => { hError(); open(); }).finally(() => setPaying(false));
+        startPayment(a.id).then((o) => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }))
+          .catch((e) => { if (e?.busy) return; if (e?.alreadyPaid) { router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } }); return; } hError(); open(); })
+          .finally(() => setPaying(false));
         return;
       default: open();
     }
@@ -179,9 +181,23 @@ function Story({ name }: { name: string }) {
   );
 }
 
+/** Once per launch: if a checkout opened on this device was paid (or is processing) while the app was closed,
+ *  show its result screen, which reads the status from the server. */
+let resumeChecked = false;
+function useResumePayment() {
+  const { loading, session } = useAuth();
+  useEffect(() => {
+    if (loading || resumeChecked) return; resumeChecked = true;
+    paymentToResume(async (id) => (session ? isPaid(await getApplication(id)) : null))
+      .then((id) => { if (id) router.push({ pathname: "/payment/[id]", params: { id, returned: "success" } }); })
+      .catch(() => {});
+  }, [loading, session]);
+}
+
 export default function Home() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
   const { session, apps, unread, refreshing, refresh, err, load } = useApps(true, true);
+  useResumePayment();
   const scroll = useRef<ScrollView>(null); const apptY = useRef<number | null>(null);
   const name = (session?.user.user_metadata?.full_name as string | undefined)?.split(" ")[0];
   const items = useItems(session ? apps : null);

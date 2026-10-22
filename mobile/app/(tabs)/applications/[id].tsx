@@ -1,6 +1,6 @@
 import { AppointmentCard } from "../../../components/Appointment";
 import { employmentComplete } from "../../../lib/wizard";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -10,7 +10,8 @@ import { isPaid, getApplication, listRequirements, openDocumentUrl, Application,
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
-import { whatsapp, startPayment, checkPayment } from "../../../lib/api";
+import { whatsapp } from "../../../lib/api";
+import { intentStatus, knownPayment, money, startPayment, usePaying, useQuote } from "../../../lib/payments";
 import { Linking } from "react-native";
 import { success, error as hError } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
@@ -66,16 +67,21 @@ export default function ApplicationDetail() {
     try { const url = path ? await openDocumentUrl(path) : null; if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert("Stored securely", "Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing."); }
     catch (e: any) { Alert.alert("Can't open file", e?.message); }
   };
-  const [paying, setPaying] = useState(false); const [ziina, setZiina] = useState<string | null>(null);
+  const paying = usePaying(); const [ziina, setZiina] = useState<string | null>(null);
+  const unpaid = !!a && !isPaid(a);
+  const quote = useQuote(unpaid ? a!.id : null, a?.updated_at);
+  // Ziina status of the checkout this device opened (server proxy), so a paid-but-not-yet-recorded payment shows as confirming.
+  useEffect(() => { let on = true; if (unpaid) knownPayment(a!.id).then((p) => p && intentStatus(p.paymentId)).then((s) => on && setZiina(s ?? null)).catch(() => {}); return () => { on = false; }; }, [a?.id, a?.payment_status]);
   const pay = async () => {
-    if (!a) return; setPaying(true); setUpErr(null);
-    try { const o = await startPayment(a, a.applicants.length > 1); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned, pid: o.paymentId ?? "" } }); }
+    if (!a || paying) return; setUpErr(null);
+    try { const o = await startPayment(a.id); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }); }
     catch (e: any) {
+      if (e?.busy) return;
+      if (e?.alreadyPaid) { router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } }); return; }
       hError();
-      if (e?.fallbackWhatsApp) Alert.alert("Payment", e.message, [{ text: "Cancel", style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${a.reference} (${Number(a.total_amount).toFixed(0)} ${a.currency}).`) }]);
+      if (e?.fallbackWhatsApp) Alert.alert("Payment", e.message, [{ text: "Cancel", style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${a.reference}.`) }]);
       else setUpErr(e?.message ?? String(e));
     }
-    finally { setPaying(false); }
   };
 
   if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={load} />} /></View>;
@@ -121,7 +127,9 @@ export default function ApplicationDetail() {
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
       {locked && (
         <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
-          <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : t("Pay {amount}", { amount: `${Number(a.total_amount).toFixed(0)} ${a.currency}` })} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />
+          {ziina === "completed" || ziina === "pending"
+            ? <ListRow icon="clock.fill" iconColor={c.tint} title={ziina === "completed" ? t("Payment received") : t("Payment processing")} subtitle={t("Updating your application…")} onPress={() => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } })} />
+            : <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : quote ? t("Pay {amount}", { amount: money(quote) }) : t("Pay securely")} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />}
         </ListGroup>
       )}
       {paid && EDITABLE.includes(a.status) && !employmentComplete((a.notes?.wizard ?? {}) as any) && (
@@ -132,7 +140,7 @@ export default function ApplicationDetail() {
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
         <ListRow title={t("Dates")} value={`${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />
-        <ListRow title={t("Total")} value={`${Number(a.total_amount).toFixed(0)} ${a.currency}`} />
+        {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
         {a.status !== "cancelled" && <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />}
@@ -170,7 +178,7 @@ export default function ApplicationDetail() {
       </ListGroup>}
       <InlineError text={upErr} />
       <ListGroup inset={58}>
-        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={`${Number(p.amount).toFixed(0)} ${p.currency}`} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
+        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>

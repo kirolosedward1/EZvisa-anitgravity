@@ -22,8 +22,9 @@ import { fromSlug } from "../../lib/countries";
 import { useForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
 import { useT } from "../../lib/i18n";
-import { PRICE_AED, SUPABASE_ENABLED } from "../../lib/config";
-import { whatsapp, startPayment } from "../../lib/api";
+import { SUPABASE_ENABLED } from "../../lib/config";
+import { whatsapp } from "../../lib/api";
+import { money, startPayment, usePaying, useQuote } from "../../lib/payments";
 import { submitApplication, guestSubmit, listApplications, listRequirements, type Requirement } from "../../lib/data";
 import { PrefillOffer } from "../../components/wizard/extras";
 import { useNetInfo } from "@react-native-community/netinfo";
@@ -246,7 +247,9 @@ export default function Apply() {
   const edit = (id: string) => { tap(); setEditing(new Set(activeQuestions(f).map((x) => x.id))); goTo(`q:${id}`, -1); };
 
   const spouse = showSpouse(f);
-  const amount = submitted?.amount ?? PRICE_AED * (spouse ? 2 : 1);
+  // Price only from the server (check-payment quote for the saved row, or the create-payment response); never computed here.
+  const quote = useQuote(submitted?.applicationId ?? (session ? draftId : null), page);
+  const paying = usePaying();
   const invalid = firstInvalid(f);
   /** Submit once: button disabled + in-flight guard + the same draft row updated idempotently (lib/data.ts). */
   const submit = async () => {
@@ -256,11 +259,11 @@ export default function Apply() {
     try {
       if (!session) { // guest checkout: pay first, sign in with the same email afterwards
         const g = await guestSubmit(f); success(); cancelDraftReminder();
-        setSubmitted({ applicationId: g.id, reference: g.reference, amount, destination: f.destination, spouse, guestEmail: g.email }); clearDraft(); return;
+        setSubmitted({ applicationId: g.id, reference: g.reference, destination: f.destination, spouse, guestEmail: g.email }); clearDraft(); return;
       }
       const id = (await flushDraft()) ?? draftId;
       const a = await submitApplication(f, id); success(); cancelDraftReminder();
-      setSubmitted({ applicationId: a.id, reference: a.reference, amount, destination: a.destination_country, spouse }); clearDraft();
+      setSubmitted({ applicationId: a.id, reference: a.reference, destination: a.destination_country, spouse }); clearDraft();
     } catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
     finally { inFlight.current = false; setBusy(false); }
   };
@@ -277,16 +280,18 @@ export default function Apply() {
       </View>
       <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
         <InlineError text={err} />
-        <Button title={t("Pay {a} AED securely", { a: amount })} icon="creditcard.fill" loading={busy} onPress={async () => {
-          if (inFlight.current) return; inFlight.current = true; setBusy(true); setErr(null);
-          try { track("payment_started"); const o = await startPayment({ id: submitted.applicationId, destination_country: submitted.destination ?? null, total_amount: amount }, !!submitted.spouse); const id = submitted.applicationId; router.replace({ pathname: "/payment/[id]", params: { id, returned: o.returned, pid: o.paymentId ?? "" } }); setTimeout(() => setSubmitted(null), 400); }
-          catch (e: any) { hError(); setErr(e?.message ?? String(e)); }
+        <Button title={paying ? t("Opening secure payment…") : quote ? t("Pay {amount}", { amount: money(quote) }) : t("Pay securely")} icon="creditcard.fill" loading={busy || paying} disabled={busy || paying} onPress={async () => {
+          if (inFlight.current || paying) return; inFlight.current = true; setBusy(true); setErr(null);
+          const id = submitted.applicationId;
+          const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned } }); setTimeout(() => setSubmitted(null), 400); };
+          try { track("payment_started"); const o = await startPayment(id); result(o.returned); }
+          catch (e: any) { if (e?.busy) return; if (e?.alreadyPaid) { result("success"); return; } hError(); setErr(e?.message ?? String(e)); }
           finally { inFlight.current = false; setBusy(false); }
         }} />
         {submitted.guestEmail && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead" testID="guest-note">{paidGuest ? t("Next: sign in with {e} to add your details and upload documents.", { e: submitted.guestEmail }) : t("After paying, sign in with {e} to continue.", { e: submitted.guestEmail })}</Text></Note>}
         {submitted.guestEmail ? <Button title={t("Sign in to continue")} variant={paidGuest ? "primary" : "secondary"} onPress={() => { router.replace({ pathname: "/auth", params: { mode: "signup", email: submitted.guestEmail } }); setTimeout(() => setSubmitted(null), 400); }} /> :
         <Button title={t("Plan my trip")} icon="map.fill" variant="secondary" onPress={() => { const id = submitted.applicationId; router.navigate(`/applications/${id}`); setTimeout(() => { router.push(`/trip/${id}`); setSubmitted(null); }, 350); }} />}
-        <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference} (${amount} AED).`)} />
+        <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference}.`)} />
         {!submitted.guestEmail && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications"); setTimeout(() => setSubmitted(null), 400); }} />}
       </View>
     </View>
@@ -348,10 +353,10 @@ export default function Apply() {
               </View>
             ))}
             <View style={[{ borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.xs }, curve]} testID="review-total">
-              {spouse && <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Text variant="subhead" tone="secondary">{t("Including Accompanying Spouse")}</Text><Text variant="subhead" tone="secondary">x2</Text></View>}
+              {quote && spouse && <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Text variant="subhead" tone="secondary">{t("Including Accompanying Spouse")}</Text></View>}
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
                 <Text variant="headline">{t("Total Fee")}</Text>
-                <Text variant="title2" tone="tint" tabular>{amount} AED</Text>
+                {quote ? <Text variant="title2" tone="tint" tabular>{money(quote)}</Text> : <Text variant="subhead" tone="secondary">{t("Shown at checkout")}</Text>}
               </View>
               <Text variant="footnote" tone="secondary">{t("Embassy fees are paid at the appointment.")}</Text>
             </View>
