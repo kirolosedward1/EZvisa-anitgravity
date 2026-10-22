@@ -6,6 +6,7 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors, useIsDark, T, S, R, HIT, ICON, curve, elevation, card, SPRING, PRESS, DUR, TAB_BAR_HEIGHT, type Level } from "../../lib/theme";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { useShake } from "../../lib/motion";
 import { tap, select } from "../../lib/haptics";
 import { Text } from "./Text";
@@ -262,8 +263,11 @@ export function ProgressBar({ value, label = "Uploading" }: { value?: number; la
   return <View accessibilityRole="progressbar" accessibilityLabel={label} accessibilityValue={known ? { min: 0, max: 100, now: Math.round((value ?? 0) * 100) } : undefined} style={{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ position: "absolute", top: 0, bottom: 0, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
 }
 
-export function Avatar({ name, size = 56 }: { name: string; size?: number }) {
+/** The profile photo (lib/avatar.ts) when there is one, else the initials. */
+export function Avatar({ name, size = 56, uri }: { name: string; size?: number; uri?: string | null }) {
   const c = useColors();
   const ini = name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("") || "?";
-  return <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.fill, borderWidth: 1, borderColor: c.hairline, alignItems: "center", justifyContent: "center" }} accessibilityElementsHidden><Text variant={size > 48 ? "title3" : "headline"}>{ini}</Text></View>;
+  const box = { width: size, height: size, borderRadius: size / 2, backgroundColor: c.fill, borderWidth: 1, borderColor: c.hairline, alignItems: "center" as const, justifyContent: "center" as const, overflow: "hidden" as const };
+  if (uri) return <View style={box} accessibilityElementsHidden><Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" accessibilityIgnoresInvertColors /></View>;
+  return <View style={box} accessibilityElementsHidden><Text variant={size > 48 ? "title3" : "headline"}>{ini}</Text></View>;
 }

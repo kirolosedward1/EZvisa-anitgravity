@@ -8,6 +8,7 @@ import { Field } from "../../../components/AuthForm";
 import { useColors, S, ICON } from "../../../lib/theme";
 import { select } from "../../../lib/haptics";
 import { useT } from "../../../lib/i18n";
+import { onTabScroll } from "../../../lib/tabBarScroll";
 
 const INSET = S.md + 28 + S.md; // separator starts under the name (flag is 28)
 /** The A-Z index starts below the title and search field. */
@@ -32,7 +33,7 @@ export default function Countries() {
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" testID="countries-list"
+      <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} ref={scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" testID="countries-list"
         contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb + S.xl, paddingHorizontal: S.gutter }}>
         <Text variant="largeTitle" accessibilityRole="header">{tr("Countries")}</Text>
         <Text variant="subhead" tone="secondary" style={{ marginBottom: S.xl }}>{tr("{n} Schengen destinations", { n: COUNTRY_LIST.length })}</Text>
