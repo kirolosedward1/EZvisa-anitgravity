@@ -47,7 +47,7 @@ export default function CountryDetail() {
               </View>
             ))}
           </View>
-          <Text variant="title3" style={{ marginTop: S.xxl, marginBottom: S.xs }} accessibilityRole="header">What you'll need</Text>
+          <Text variant="title3" style={{ marginTop: S.xxl, marginBottom: S.xs }} accessibilityRole="header">{"What you'll need"}</Text>
           {DOCS.map(([i, d]) => (
             <View key={d} style={{ flexDirection: "row", alignItems: "center", gap: S.md, minHeight: 52 }}>
               <View style={{ width: 36, height: 36, borderRadius: R.xl, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={i} size={16} color={c.tint} /></View>
