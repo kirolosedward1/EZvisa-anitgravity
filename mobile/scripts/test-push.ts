@@ -92,8 +92,13 @@ async function tokens() {
     eq(F.ops.map((o) => o[0]), ["rpc", "insert"]); F.rpcError = null;
   });
   await check("fallback insert hits the existing row (23505) -> updated_at bumped instead", async () => {
-    F.ops = []; F.rpcError = { code: "PGRST202" }; F.insertError = { code: "23505" }; await registerPushToken("ExpoPushToken[t2]");
-    eq(F.ops.map((o) => o[0]), ["rpc", "insert", "update"]); F.rpcError = null; F.insertError = null;
+    F.ops = []; F.rpcError = { code: "PGRST202" }; F.insertError = { code: "23505" }; const before = Date.now();
+    await registerPushToken("ExpoPushToken[t2]"); F.rpcError = null; F.insertError = null;
+    eq(F.ops.map((o) => o[0]), ["rpc", "insert", "update"]);
+    // notify-status picks a shared token's latest owner by updated_at, so the bump must be a fresh time on this token's row.
+    const [, table, values, col, val] = F.ops[2] as [string, string, { updated_at?: string }, string, string];
+    eq([table, Object.keys(values), col, val], ["device_tokens", ["updated_at"], "token", "ExpoPushToken[t2]"], "update");
+    const at = Date.parse(values.updated_at ?? ""); if (!(at >= before - 1000 && at <= Date.now() + 1000)) throw new Error(`updated_at ${values.updated_at} is not now`);
   });
   await check("any other server error: setupPush reports it and does not throw", async () => {
     F.rpcError = { code: "57014" }; const s = await setupPush(true); F.rpcError = null;
