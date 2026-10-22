@@ -59,10 +59,6 @@ export default function Applications() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: S.lg }}>
         <Text variant="largeTitle" accessibilityRole="header">{t("Applications")}</Text>
-        <PressScale onPress={() => { tap(); router.push("/apply"); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Start application")} testID="apply-new"
-          style={{ width: 36, height: 36, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}>
-          <Icon name="plus" size={18} color={c.tint} weight="semibold" />
-        </PressScale>
       </View>
       {!session ? (
         <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}>

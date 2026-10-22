@@ -1,7 +1,7 @@
 import { PressScale } from "../ui";
 // iOS 26-style navigation: a floating Liquid Glass capsule with the tabs. The old floating Apply button beside it was
 // removed (it overlapped the bar and content); "Start application" lives on Home and in the Applications header.
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Keyboard, Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,7 +10,7 @@ import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
 import { router } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/tabs";
 import { useColors, useIsDark, elevation, SPRING, TAB_BAR_HEIGHT, S, R, T, ICON } from "../../lib/theme";
-import { select, medium } from "../../lib/haptics";
+import { select, tap } from "../../lib/haptics";
 import { Icon, IconName, Text } from "../ui";
 
 const ICONS: Record<string, [IconName, IconName]> = {
@@ -26,6 +26,25 @@ function Material({ radius }: { radius: number }) {
   if (glass) return <GlassView glassEffectStyle="regular" style={st} />;
   if (Platform.OS === "android") return <View style={[st, { backgroundColor: dark ? "#1C1C1E" : "#FFFFFF" }]} />;
   return <BlurView intensity={60} tint={dark ? "systemChromeMaterialDark" : "systemChromeMaterialLight"} style={[st, { backgroundColor: c.glassTint }]} />;
+}
+
+/** Centre "+" (between Countries and Applications): starts a new application via /apply, like the old floating button. */
+const FAB = 56;
+function NewAppButton() {
+  const c = useColors(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0);
+  const a = useAnimatedStyle(() => ({ transform: [{ translateY: -12 }, { scale: press.value }] }));
+  const open = () => { const now = Date.now(); if (now - last.current < 800) return; last.current = now; tap(); router.push("/apply"); };
+  return (
+    <View style={{ width: FAB + S.xs, alignItems: "center", justifyContent: "center" }}>
+      <Animated.View style={[{ width: FAB, height: FAB, borderRadius: FAB / 2, backgroundColor: c.tint, shadowColor: "#000", shadowOpacity: 0.16, shadowRadius: 8, shadowOffset: { width: 0, height: 4 }, elevation: 4 }, a]}>
+        <Pressable onPress={open} onPressIn={() => { press.value = withSpring(reduce ? 0.96 : 0.9, SPRING.press); }} onPressOut={() => { press.value = withSpring(1, SPRING.press); }}
+          accessibilityRole="button" accessibilityLabel="New application" testID="tab-new-application" hitSlop={6}
+          style={{ flex: 1, borderRadius: FAB / 2, alignItems: "center", justifyContent: "center" }}>
+          <Icon name="plus" size={26} color="#fff" weight="bold" />
+        </Pressable>
+      </Animated.View>
+    </View>
+  );
 }
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
@@ -55,11 +74,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             const [off, onI] = ICONS[route.name] ?? ["circle", "circle"];
             const press = () => { const e = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true }); if (!e.defaultPrevented && !on) { select(); navigation.navigate(route.name, route.params); } };
             return (
-              <PressScale key={route.key} onPress={press} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label} testID={`tab-${route.name}`}
+              <React.Fragment key={route.key}>{i === 2 && <NewAppButton />}
+              <PressScale onPress={press} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label} testID={`tab-${route.name}`}
                 style={{ flex: 1, height: H - 12, borderRadius: (H - 12) / 2, alignItems: "center", justifyContent: "center", gap: S.xxs, backgroundColor: on ? (dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.06)") : "transparent" }}>
                 <Icon name={on ? onI : off} size={ICON.lg} color={on ? c.tint : c.label} />
                 <Text variant="caption2" weight={on ? "600" : "500"} color={on ? c.tint : c.label} numberOfLines={1}>{label}</Text>
-              </PressScale>
+              </PressScale></React.Fragment>
             );
           })}
         </View>
