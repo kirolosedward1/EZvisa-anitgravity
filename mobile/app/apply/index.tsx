@@ -21,6 +21,7 @@ import { useColors, S, R, curve, SPRING } from "../../lib/theme";
 import { fromSlug } from "../../lib/countries";
 import { useForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
+import { needsSchengenVisa } from "../../lib/wizard";
 import { useT } from "../../lib/i18n";
 import { SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp } from "../../lib/api";
@@ -77,6 +78,9 @@ export default function Apply() {
   const guestId = useRef<string | null>(null); // one id per guest submit: a retry after a lost reply can't add a second row
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   setAccountEmail(session?.user.email); // before any activeQuestions() below: signed in = no email question
+  // Citizenship saved in Account details prefills the nationality step (only if it is still empty and visa-required).
+  const citizenship = session?.user.user_metadata?.citizenship as string | undefined;
+  useEffect(() => { if (hydrated && citizenship && needsSchengenVisa(citizenship)) setForm((x) => (x.nationality ? x : { ...x, nationality: citizenship })); }, [hydrated, citizenship]);
   const uid = session?.user.id ?? null;
   const [dir, setDir] = useState(1);
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue

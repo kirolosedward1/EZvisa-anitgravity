@@ -152,7 +152,6 @@ export default function Account() {
           <Button title={t("Create account")} variant="plain" color={c.label} onPress={() => router.push({ pathname: "/auth", params: { mode: "signup" } })} />
         </View>
       </View>
-      {appearance}
       {language}
       {reminders}
       {support}
@@ -217,7 +216,6 @@ export default function Account() {
         <ListRow icon="bell.fill" iconColor={c.red} title={t("Notifications")} value={unread ? String(unread) : undefined} onPress={() => router.push("/account/notifications")} />
         <ListRow icon="doc.text.fill" iconColor={c.tint} title={t("Applications")} onPress={() => router.navigate("/applications")} />
       </ListGroup>
-      {appearance}
       {language}
       {security}
       {reminders}

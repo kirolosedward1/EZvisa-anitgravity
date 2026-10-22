@@ -1,3 +1,4 @@
+import { useT } from "../../lib/i18n";
 // Liquid Glass tab bar (iOS 26/27 style): floating translucent capsule, thin specular rim, and a glass "lens" pill that
 // springs between tabs (stretching in flight, settling back) and can be dragged across tabs. All motion runs on the UI
 // thread via Reanimated shared values; the drag uses PanResponder (no new native module, so it works in Expo Go).
@@ -40,14 +41,14 @@ function Material({ radius }: { radius: number }) {
 /** Centre "+" (between Countries and Applications): starts a new application via /apply, like the old floating button. */
 const FAB = SIZE.buttonM;
 function NewAppButton() {
-  const c = useColors(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0);
+  const c = useColors(); const { t } = useT(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: press.value }] }));
   const open = () => { const now = Date.now(); if (now - last.current < 800) return; last.current = now; tap(); router.push("/apply"); };
   return (
     <View style={{ width: FAB + S.xs, alignItems: "center", justifyContent: "center" }}>
       <Animated.View style={[{ width: FAB, height: FAB, borderRadius: FAB / 2, backgroundColor: c.accentFill, shadowColor: c.shadow, shadowOpacity: 0.16, shadowRadius: S.xs, shadowOffset: { width: 0, height: S.xxs }, elevation: 4 }, a]}>
         <Pressable onPress={open} onPressIn={() => { press.value = withSpring(reduce ? 0.96 : 0.9, SPRING.press); }} onPressOut={() => { press.value = withSpring(1, SPRING.press); }}
-          accessibilityRole="button" accessibilityLabel="New application" testID="tab-new-application" hitSlop={S.xxs}
+          accessibilityRole="button" accessibilityLabel={t("New application")} testID="tab-new-application" hitSlop={S.xxs}
           style={{ flex: 1, borderRadius: FAB / 2, alignItems: "center", justifyContent: "center" }}>
           <Icon name="airplane" size={ICON.lg} color={c.onAccent} />
         </Pressable>

@@ -126,7 +126,8 @@ export type Errors = Partial<Record<keyof WizardForm, string>>;
 export function validatePersonal(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.destination) e.destination = "Please select a destination";
-  if (!needsSchengenVisa(f.nationality)) e.nationality = "Please select your nationality";
+  if (!f.nationality) e.nationality = "Please select your nationality";
+  else if (!needsSchengenVisa(f.nationality)) e.nationality = "Citizens of this country don't need a Schengen visa for short visits, so we can't apply for one. Choose another nationality if you hold one.";
   if (!RESIDENCE_COUNTRIES.includes(f.countryOfResidence)) e.countryOfResidence = "Please select your country of residence";
   if (!f.cityOfResidence.trim()) e.cityOfResidence = "City is required";
   else if (f.countryOfResidence === "United Arab Emirates" && !UAE_EMIRATES.includes(f.cityOfResidence)) e.cityOfResidence = "Please select your emirate";
