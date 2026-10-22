@@ -7,7 +7,8 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 ## 0. Status on 2026-10-22 (chat 15, QA): read this before sections 1-3
 - **Final QA status: NOT READY FOR PRODUCTION TESTING.** Full report and evidence: `docs/qa-report.md`, `docs/qa/*.jpg`, `docs/qa/web-checks.json`.
 - Sections 1-3 below describe 19 Oct. Since then (per migration headers and commits): migrations 0002-0006 applied (0007 header says NOT APPLIED, commit d3af779 says applied; confirm), `device_tokens` + `notify-status` push, `delete-account` edge function deployed, Ziina in-app auth session + app-return page.
-- Chat 15 work is on branch `claude/vibrant-wright-ez44ch` = `mobile-app` + 11 commits (fast-forward). `npm ci` was broken (lock file); fixed.
+- Chat 15 work is on branch `claude/vibrant-wright-ez44ch` = `mobile-app` @ `5efe21f` (chats 02-14, merged in) + the chat 15 commits; `mobile-app` can fast-forward to it. All checks were re-run after the merge.
+- Chat 15 also fixed audit H4 (no invented dossier file), the H3 amount, Arabic gaps, two sub-44pt buttons, and the App Store config (privacy manifest, unused permissions, export compliance).
 - New rule (owner, chat 15): a "No" to a document question (valid passport, Emirates ID, spouse's passport, NOC) never blocks. The app shows "add it later", lists it under "To get later" (Review + application page) and saves `additional_notes.missingDocuments`. `lib/wizard.ts missingDocs()`.
 - EAS Update was NOT published in chat 15 (no token; expo.dev blocked from the container). The preview channel still serves `e866e894…` (old DB). Command: `docs/qa-report.md` §7.
 - `eas.json` now exists (preview → channel `preview`, production → `production`). Lint: `npx eslint .` (0 errors).

@@ -1,6 +1,7 @@
 # EZvisa app: QA and release readiness (chat 15)
 
-Date: 22 Oct 2026. Code: `mobile/` on branch `claude/vibrant-wright-ez44ch`, which is `origin/mobile-app` @ `591aced` plus the commits listed in section 6 (fast-forwardable onto `mobile-app`).
+Date: 22 Oct 2026. Code: `mobile/` on branch `claude/vibrant-wright-ez44ch` = `origin/mobile-app` @ `5efe21f` (chats 02–14, merged in) + the chat 15 commits in section 6. `mobile-app` can fast-forward to it.
+Note: chats 02–14 landed on `mobile-app` (09:19–09:45 UTC) while this QA was running. Every check below was **re-run on the merged code**.
 Expo SDK 57.0.30, React Native 0.86.3, expo-router 57.
 
 ## 0. Read this first: what could and could not be tested here
@@ -13,6 +14,7 @@ This QA ran in a cloud container with **no iPhone, no simulator, no EXPO_TOKEN**
 | `npx tsc --noEmit`, `npx eslint .` | type-check and lint |
 | `npx expo export` (ios + android + web) | the bundle builds; bundle contents grep |
 | `npx expo config --type introspect` | the final iOS Info.plist (permission strings, privacy manifest) |
+| `node scripts/run-test-privacy.mjs`, `node scripts/run-upload-tests.mjs` (from chats 10/14) | privacy scrubbing / opt-out (24/24 pass), upload queue offline, mid-upload loss, duplicates, kill + restart, sign-out wipe (23/23 pass) |
 | **Playwright on the web build** (react-native-web) at **390×844 and 430×932**, light + dark, English + Arabic, plus a "largest text" run (the app's `__FONT_SCALE__` simulation, ×3 capped per role like iOS) | layout, RTL, translations, wizard flow, offline banner. 190 automated checks, 0 failures (`docs/qa/web-checks.json`) |
 
 **Not possible here, so marked NOT RUN:** real iPhones, VoiceOver, iOS Dynamic Type, Face ID, camera/scanner, push, Ziina payment, uploads, sign-in, drafts across devices, expired session, and live cross-account queries. Web rendering is an approximation of iOS, not a substitute. Nothing below is reported as passing on a device.
@@ -33,26 +35,26 @@ Legend: **PASS** verified by the method named · **FAIL** verified broken · **N
 | 8 | Drafts web ↔ app | Draft row (`application_status='draft'`) resumes on another device | NOT RUN | live DB unreachable. Logic `lib/form.tsx`; last live pass was chat 13 (`HANDOFF.md` §3) |
 | 9 | Drafts (local) | Several local drafts, kill and reopen at the same question | NOT RUN (device) | `lib/form.tsx` |
 | 10 | Payment | Ziina in-app auth session, app-return, DB-verified result | BLOCKED | `www.ezvisa.net` denied here. `HANDOFF.md` §3 says `/api/create-payment` returned 500 (no `ZIINA_API_KEY` on Vercel); not re-verified |
-| 11 | Uploads | Website route, then direct bucket fallback, 5 MB limit | NOT RUN | `lib/data.ts uploadDocument`, `lib/uploads.ts` |
+| 11 | Uploads | Website route, then direct bucket fallback, 5 MB limit | PASS (node tests, stubbed network) / NOT RUN (live) | `scripts/run-upload-tests.mjs` 23/23; live route unreachable from here |
 | 12 | Checklist | Per-document state from `document_reviews`, NOC hidden for non-employed | PASS (static) | `lib/checklist.ts`, `app/(tabs)/applications/[id].tsx` CheckRow (labels now translated) |
 | 13 | Scanner | Camera / library capture + quality checks | NOT RUN (device) | `lib/capture.ts` |
-| 14 | Offline queue | Upload queue waits offline, backoff with jitter, retry/remove | NOT RUN (device) | `lib/uploads.ts` |
+| 14 | Offline queue | Waits offline, survives a kill, no duplicates, sign-out empties it | PASS (node tests) / NOT RUN (device) | `scripts/run-upload-tests.mjs` 23/23 |
 | 15 | Offline use | Offline banner appears; wizard keeps answers on the phone | PASS (web) | id `offline-banner` (10/10); `docs/qa/offline.jpg`. Banner now translated |
 | 16 | Home timeline | Real timestamps only | PASS (static), see issue S3-4 | `lib/data.ts:111-113` |
 | 17 | Notifications | Screen opens; signed-out empty state; Arabic | PASS (web) | `docs/qa/notifications.jpg`; screen was fully English in Arabic mode before this chat (fixed) |
 | 18 | Push | Token saved in `device_tokens`, tap opens the application | NOT RUN (needs a dev build / device) | `lib/push.ts`, `migrations/0006` |
 | 19 | Arabic RTL | `dir=rtl`, Arabic text on every screen tested | PASS (web) | ids `*:rtl` (40/40); every `t("…")` key in app/components/lib has an Arabic entry (scan: 803 keys, 0 missing) |
 | 20 | Dark mode | All tested screens, both widths | PASS (web) | every sheet in `docs/qa/` has dark columns |
-| 21 | VoiceOver | Labels and roles | PASS (static) / NOT RUN (device) | scan of all 67 tappables: each has `accessibilityRole` and a label or visible text. Wizard moves focus to the question title (`app/apply/index.tsx:189`) and announces errors (`:200`) |
+| 21 | VoiceOver | Labels and roles | PASS (static) / NOT RUN (device) | scan of all 68 tappables: each has `accessibilityRole` and a label or visible text. Wizard moves focus to the question title (`app/apply/index.tsx:189`) and announces errors (`:200`) |
 | 22 | Largest text | Text wraps, nothing clipped, buttons reachable | PASS (web simulation) / NOT RUN (iOS) | `docs/qa/*-largest-text.jpg` (390 EN light, 430 AR dark) |
 | 23 | Hit targets ≥ 44pt | All tappables | PASS after fix | password eye (~38pt) and search clear (~36pt) fixed. 36pt buttons have `hitSlop` 8–12 (≥ 52pt). Countries A–Z index letters are smaller, like the native iOS index (issue S3-3) |
 | 24 | Expired session | Refresh / sign-out path | NOT RUN | `lib/supabase.ts` uses `autoRefreshToken` + `persistSession` |
 | 25 | Double taps | Submit is idempotent; + button debounced 800 ms | PASS (static) | `lib/form.tsx` ref-based draft id; `components/nav/TabBar.tsx` `last.current < 800` |
 | 26 | Cross-account access | Account B cannot read or change account A's application, documents or tokens | **NOT VERIFIED LIVE** (see §2) | static review only |
 | 27 | Layout 390 / 430 | No horizontal scroll | PASS (web) | ids `*:no-hscroll` (60/60) |
-| 28 | Build | `npm ci` from the lock file | **FAIL → fixed** | the lock file lacked `expo-calendar`, so `npm ci` (what EAS Build runs) failed. Fixed in `3267d83` |
-| 29 | Build | iOS + Android bundles | PASS | `expo export --platform ios --platform android`: 1939 / 2026 modules, exit 0 |
-| 30 | Type-check / lint | `npx tsc --noEmit`, `npx eslint .` | PASS | 0 errors (lint: 0 errors, 140 warnings, see §5) |
+| 28 | Build | `npm ci` from the lock file | PASS | was broken (lock file lacked `expo-calendar`); fixed in both lines of work (`aa29cce` on mobile-app, `3267d83` here). `npm ci` passes on the merged lock file |
+| 29 | Build | iOS + Android bundles | PASS | merged code: `expo export --clear --platform ios --platform android`: 1980 / 2065 modules, 5.3 / 5.4 MB, exit 0 |
+| 30 | Type-check / lint | `npx tsc --noEmit`, `npx eslint .` | PASS | merged code: 0 errors; lint 0 errors (warnings only, see §5) |
 
 ## 2. Cross-account access (static review)
 
@@ -92,7 +94,7 @@ Not run live: no database access from here. What the code and migrations say:
 
 | Rule | Result | Evidence |
 |---|---|---|
-| Expo SDK 57 | PASS | `expo@57.0.30`; new dev deps only: `eslint ^9.39.5`, `eslint-config-expo ~57.0.0`, `globals ^14.0.0` (lint tooling, not bundled) |
+| Expo SDK 57 | PASS | `expo@57.0.30`; no new libraries in chat 15 (after the merge, the lint tooling is mobile-app's: `eslint ^9`, `eslint-config-expo ~57.0.2`, `esbuild` for test scripts) |
 | Publishable key only | PASS | grep `service_role\|SERVICE_ROLE\|sb_secret\|eyJhbGciOi` in app/components/lib/scripts/app.json/eas.json: none. iOS + Android bundles: no `service_role`, no old DB ref `rjbgte`, no `vercel.app`. The one `http://localhost:3000` string is expo-router's own default (`node_modules/expo-router/build/head/url.js`), not app config. `.env` / `.expo-token` git-ignored and untracked |
 | No fake data | PASS after fix | see §3. Open question S2-2 (the "24–48h processing" tile) |
 | Nationality: one choice, visa-required list | PASS | `lib/questions.ts:41-42` (`SCHENGEN_VISA_REQUIRED`), `lib/wizard.ts:125` |
@@ -118,13 +120,42 @@ Not run live: no database access from here. What the code and migrations say:
 5. Pre-ticked "Receive application updates via WhatsApp" on the phone question. Consent is usually opt-in (unticked).
 
 **S3 (polish)**
-1. Lint: 140 warnings (unused vars, duplicate imports, hook deps, React Compiler-only rules downgraded to warnings because the compiler is not enabled). No errors.
+1. Lint warnings only (unused vars, duplicate imports, hook deps, React Compiler-only rules set to warn because the compiler is not enabled). No errors.
 2. Info.plist permission strings are English only.
 3. Countries A–Z index letters are smaller than 44pt (same as the native iOS index).
 4. The timeline uses `updated_at` as the time of the current status; any autosave moves it. The receipt "Date" is also `updated_at`. A real status-change timestamp needs a column or trigger (DB change, needs approval).
 5. The offline banner overlaps the country page's floating back button (visual only; the banner passes taps through).
 6. The manual "Add document" sheet lists "NOC / employment" even for self-employed applicants.
 7. `HANDOFF.md` §1–3 describe the 19 Oct state (e.g. "no notifications / push tables") and are stale. Chat 15 adds a status section on top.
+8. Passport rule text (audit M4): the hint says "6 months from your travel date", but validation checks "3 months after return". The new "add it later" note follows the hint. Pick one rule.
+
+## 5b. Earlier open issues (`docs/mobile-audit.md` §10, chat 01): status after chats 02–15
+
+| # | Issue | Status now |
+|---|---|---|
+| B1 | Live RLS / storage policies unverified; old `scripts/003`/`005` policies may let any user read every application and passport | **OPEN**: still not verifiable from here (§2). Owner runs the audit §12 queries |
+| B2 | Website `/api/upload-document` accepts files for any application id, no auth | **OPEN** (website `main` PR; `c761bda` only changed object naming) |
+| B3 | Ziina webhook unauthenticated unless `ZIINA_WEBHOOK_SECRET` is set | **OPEN** (owner: Vercel env) |
+| B4 | EAS `preview` update points at the old DB | **OPEN**: not republished (§7) |
+| H1 | `mobile-app` carries an older website copy that differs from `main` | OPEN (never merge mobile-app → main) |
+| H2 | Each create-payment overwrites `payment_id` | OPEN (website) |
+| H3 | Receipt amount/date not from the payment record | amount **FIXED** (`d6c14ee`); date still `updated_at` (S3-4) |
+| H4 | Synthesised "Your EZvisa dossier" document | **FIXED** in chat 15 (no invented file; status from the DB) |
+| H5 | Sign-out leaves PII on the phone | upload queue + copies **FIXED** (chat 10, `7116578`); wizard drafts / passport expiry: check `lib/form.tsx` on device |
+| H6 | Guest checkout inserts rows under any email | OPEN (RLS/insert policy, owner) |
+| H7 | No "application submitted" email / HubSpot lead for app cases | OPEN (website) |
+| H8 | Docs disagree on what is live | OPEN (S2-3) |
+| H9 | `check-payment` unvalidated id | OPEN (website) |
+| M1/M2 | No lint config / no `eas.json` | **FIXED** (lint chat 02/14 + here; `eas.json` here) |
+| M4 | Passport rule text vs validation | OPEN (S3-8) |
+| M6 | Displayed price computed on the phone | OPEN (needs a server price) |
+| M7 | Timeline uses `updated_at` | OPEN (S3-4, needs status history: DB change) |
+| M9 | i18n gaps | **FIXED** for every `t()` key and the screens listed in §6. Remaining English: receipt PDF and some native `Alert` texts |
+| M11 | Dark mode decision | Code supports light + dark and both pass here; `PRODUCT.md` still says "dropped". Decide |
+| M12 | Double applications query | FIXED (chat 14) |
+| L1 | Dead code | `steps.tsx`, `payment.tsx` **removed**; `DateRow`, `DateField`, `DateCard`, `NATIONALITIES` remain |
+| L3 | `supportsTablet: true` | OPEN (decision, §3) |
+| L6 | AuthForm use-before-declare | FIXED |
 
 ## 6. Commits in this chat (all in `mobile/`)
 
@@ -140,7 +171,11 @@ Not run live: no database access from here. What the code and migrations say:
 | `3ed5349` | country page fully Arabic + mirrored back chevron |
 | `9ea8e91` | valid passport "No" message shown once |
 | `af81f75` | "No" to a document continues, with "To get later" on the question, Review and the application page; saved as `additional_notes.missingDocuments` |
-| (this commit) | QA report + evidence sheets in `docs/qa/` |
+| `d4b6ebe` | QA report + evidence sheets |
+| `e73b8ea` | merge of `origin/mobile-app` (chats 02–14); conflicts resolved (see the commit message) |
+| `8495817` | Arabic for the country search empty state and the Google button |
+| `0bc7870` | no invented dossier file when status is ready |
+| (this commit) | QA report and sheets re-run on the merged code |
 
 ## 7. EAS Update (preview)
 
