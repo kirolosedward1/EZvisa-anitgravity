@@ -1,3 +1,5 @@
+import type { ApplicationStatus, PaymentStatus } from "@/lib/shared/wizard-contract"
+
 export interface VisaApplication {
   id?: string
 
@@ -6,46 +8,55 @@ export interface VisaApplication {
   email: string
   phone: string
   nationality: string
-  passport_number?: string
-  date_of_birth?: string
+  passport_number?: string | null
+  date_of_birth?: string | null
 
   // Travel Details
   destination_country: string
   travel_purpose: string
-  entry_date?: string
-  exit_date?: string
+  entry_date?: string | null
+  exit_date?: string | null
   travel_start_date?: string
   travel_end_date?: string
-  duration_days?: number
+  duration_days?: number | null
 
   // Documents Status
-  has_passport?: boolean
-  has_photos?: boolean
-  has_bank_statements?: boolean
-  has_employment_proof?: boolean
-  has_accommodation?: boolean
-  has_travel_insurance?: boolean
-  has_flight_booking?: boolean
+  has_passport?: boolean | null
+  has_photos?: boolean | null
+  has_bank_statements?: boolean | null
+  has_employment_proof?: boolean | null
+  has_accommodation?: boolean | null
+  has_travel_insurance?: boolean | null
+  has_flight_booking?: boolean | null
 
   // Additional Information
-  previous_schengen_visa?: boolean
-  previous_rejections?: boolean
-  rejection_details?: string
-  additional_notes?: string
+  previous_schengen_visa?: boolean | null
+  previous_rejections?: boolean | null
+  rejection_details?: string | null
+  /** JSON text, see ApplicationNotes in lib/shared/wizard-contract.ts */
+  additional_notes?: string | null
 
-  // Payment & Status
-  payment_status?: "pending" | "paid" | "processing" | "completed"
-  payment_amount?: number
-  payment_id?: string
-  application_status?: "submitted" | "reviewing" | "approved" | "ready" | "rejected"
-  tracking_token?: string
+  // Payment & Status (plain text columns; the vocabulary is shared with the app)
+  payment_status?: PaymentStatus | (string & {}) | null
+  payment_amount?: number | null
+  payment_id?: string | null
+  application_status?: ApplicationStatus | (string & {}) | null
+  /** Not present on every database; the case reference is derived from the id (referenceOf). */
+  tracking_token?: string | null
+  preferred_language?: string | null
+
+  // Appointment (set by staff)
+  appointment_at?: string | null
+  appointment_centre?: string | null
+  appointment_address?: string | null
+  appointment_reference?: string | null
 
   // Metadata
-  submission_ip?: string
-  user_agent?: string
-  referrer?: string
-  created_at?: string
-  updated_at?: string
+  submission_ip?: string | null
+  user_agent?: string | null
+  referrer?: string | null
+  created_at?: string | null
+  updated_at?: string | null
 }
 
 export interface VisaApplicationForm {

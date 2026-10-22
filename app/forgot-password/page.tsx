@@ -1,83 +1,86 @@
 "use client"
-import { useState } from "react"
+
+// Password reset email. The link returns to /auth/callback?type=recovery, which signs the user in and opens /reset-password.
+import { useRef, useState, Suspense } from "react"
 import Link from "next/link"
+import { useSearchParams } from "next/navigation"
+import { Loader2 } from "lucide-react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2 } from "lucide-react"
+import { AuthCard } from "@/components/auth/auth-card"
+import { EmailSent, useCooldown } from "@/components/auth/email-sent"
+import { AUTH_MESSAGE, classifyAuthError, EMAIL_RE } from "@/lib/auth/errors"
+import { authCallbackUrl } from "@/lib/auth/redirect"
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
+function ForgotPasswordForm() {
+  const searchParams = useSearchParams()
+  const [email, setEmail] = useState(searchParams.get("email") ?? "")
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const inFlight = useRef(false)
+  const cooldown = useCooldown()
+  const cleanEmail = email.trim().toLowerCase()
 
-  const supabase = createBrowserClient()
-
-
-  const handleReset = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const send = async () => {
+    if (inFlight.current) return
+    if (!EMAIL_RE.test(cleanEmail)) { setError(AUTH_MESSAGE["invalid-email"]); return }
+    inFlight.current = true
+    setBusy(true)
     setError("")
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
-    })
-
-    if (error) {
-      setError(error.message)
-      setIsLoading(false)
-    } else {
-      setSuccess(true)
-      setIsLoading(false)
+    try {
+      const supabase = createBrowserClient()
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, { redirectTo: authCallbackUrl({ type: "recovery" }) })
+      if (error) throw error
+      setSent(true)
+      cooldown.start()
+    } catch (e) {
+      setError(AUTH_MESSAGE[classifyAuthError(e)])
+    } finally {
+      inFlight.current = false
+      setBusy(false)
     }
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Reset password</h2>
-          <p className="text-muted-foreground mt-2">Enter your email to receive a reset link</p>
-        </div>
-
-        {success ? (
-          <div className="space-y-4">
-            <Alert className="bg-emerald-50 text-emerald-900 border-emerald-200">
-              <AlertDescription>We've sent a password reset link to your email.</AlertDescription>
+    <AuthCard title={sent ? "Check your email" : "Reset password"} subtitle={sent ? undefined : "We'll email you a link to choose a new one."}>
+      {sent ? (
+        <EmailSent email={cleanEmail} note="If there's an account for this email, the link is on its way. Open it in this browser." onResend={send} resending={busy} left={cooldown.left} onChangeEmail={() => { setSent(false); setError("") }} />
+      ) : (
+        <form onSubmit={(e) => { e.preventDefault(); send() }} className="flex flex-col gap-4" noValidate>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/login">Back to login</Link>
-            </Button>
+          )}
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="email" className="text-xs font-semibold">Email address</Label>
+            <Input id="email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={email} onChange={(e) => { setEmail(e.target.value); setError("") }} required autoFocus={!email} />
           </div>
-        ) : (
-          <form onSubmit={handleReset} className="space-y-6">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</> : "Send reset link"}
-            </Button>
-          </form>
-        )}
+          <Button type="submit" className="w-full h-11 text-sm font-semibold rounded-xl" disabled={busy}>
+            {busy ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending…</>) : "Send reset link"}
+          </Button>
+        </form>
+      )}
+      {error && sent && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      <div className="text-center text-xs text-muted-foreground">
+        <Link href={cleanEmail ? `/login?email=${encodeURIComponent(cleanEmail)}` : "/login"} className="font-semibold text-primary hover:underline">Back to sign in</Link>
       </div>
-    </div>
+    </AuthCard>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-[100dvh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <ForgotPasswordForm />
+    </Suspense>
   )
 }

@@ -1,222 +1,211 @@
 "use client"
 
-import { useState, Suspense } from "react"
+// Sign in: email + password, or a one-time email link. Google / Apple appear when enabled on the Supabase project.
+// Same accounts and the same messages as the EZvisa app (mobile/components/AuthForm.tsx).
+import { useRef, useState, Suspense } from "react"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { Loader2 } from "lucide-react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2 } from "lucide-react"
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
+import { SocialButtons } from "@/components/auth/social-buttons"
+import { AuthCard } from "@/components/auth/auth-card"
+import { EmailSent, useCooldown } from "@/components/auth/email-sent"
+import { AUTH_MESSAGE, classifyAuthError, EMAIL_RE, isAuthIssue, type AuthIssue } from "@/lib/auth/errors"
+import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
+
+function callbackNotice(error: string | null, type: string | null): { tone: "error" | "info"; text: string } | null {
+  if (!error) return null
+  if (!isAuthIssue(error)) return { tone: "error", text: AUTH_MESSAGE.unknown }
+  // A sign-up link opened in another browser still confirms the email on the server; only the sign-in part needs this one.
+  if (type === "signup" && error === "other-device") return { tone: "info", text: "Email confirmed. Sign in with your email and password." }
+  return { tone: "error", text: AUTH_MESSAGE[error] }
+}
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const rawNext = searchParams.get("next") || "/dashboard"
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
-  const urlError = searchParams.get("error")
+  const next = safeNext(searchParams.get("next"))
+  const notice = callbackNotice(searchParams.get("error"), searchParams.get("type"))
 
-  const [mode, setMode] = useState<"password" | "magic-link">("password")
-  const [email, setEmail] = useState("")
+  const [mode, setMode] = useState<"password" | "magic-link">(searchParams.get("type") === "magiclink" ? "magic-link" : "password")
+  const [email, setEmail] = useState(searchParams.get("email") ?? "")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState(urlError || "")
+  const [error, setError] = useState<string>(notice?.tone === "error" ? notice.text : "")
+  const [info, setInfo] = useState<string>(notice?.tone === "info" ? notice.text : "")
+  const [issue, setIssue] = useState<AuthIssue | null>(null)
   const [magicLinkSent, setMagicLinkSent] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [busy, setBusy] = useState<"" | "password" | "magic" | "resend">("")
+  const inFlight = useRef(false)
+  const cooldown = useCooldown()
 
-  const supabase = createBrowserClient()
-
-  const handlePasswordLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+  const cleanEmail = email.trim().toLowerCase()
+  const fail = (e: unknown) => {
+    const k = classifyAuthError(e)
+    setIssue(k)
+    setError(AUTH_MESSAGE[k])
+  }
+  /** One request at a time; a double click can't send twice. */
+  const guard = async (kind: typeof busy, fn: () => Promise<void>) => {
+    if (inFlight.current) return
+    inFlight.current = true
+    setBusy(kind)
     setError("")
+    setInfo("")
+    setIssue(null)
+    try {
+      await fn()
+    } catch (e) {
+      fail(e)
+    } finally {
+      inFlight.current = false
+      setBusy("")
+    }
+  }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setError(error.message)
-      setIsLoading(false)
-    } else {
-      router.push(next)
+  const handlePasswordLogin = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!EMAIL_RE.test(cleanEmail)) { setError(AUTH_MESSAGE["invalid-email"]); return }
+    if (!password) { setError("Enter your password."); return }
+    guard("password", async () => {
+      const supabase = createBrowserClient()
+      const { error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password })
+      if (error) throw error
+      router.replace(next)
       router.refresh()
-    }
+    })
   }
 
-  const handleMagicLinkLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setMagicLinkSent(false)
-
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      },
+  const sendMagicLink = (kind: "magic" | "resend") =>
+    guard(kind, async () => {
+      if (!EMAIL_RE.test(cleanEmail)) { setError(AUTH_MESSAGE["invalid-email"]); return }
+      const supabase = createBrowserClient()
+      // An unknown email gets a new account (shouldCreateUser defaults to true), same as the app.
+      const { error } = await supabase.auth.signInWithOtp({ email: cleanEmail, options: { emailRedirectTo: authCallbackUrl({ type: "magiclink", next }) } })
+      if (error) throw error
+      setMagicLinkSent(true)
+      cooldown.start()
     })
 
-    if (error) {
-      setError(error.message)
-      setIsLoading(false)
-    } else {
-      setMagicLinkSent(true)
-      setIsLoading(false)
-    }
-  }
+  const resendConfirmation = () =>
+    guard("resend", async () => {
+      const supabase = createBrowserClient()
+      const { error } = await supabase.auth.resend({ type: "signup", email: cleanEmail, options: { emailRedirectTo: authCallbackUrl({ type: "signup", next }) } })
+      if (error) throw error
+      setInfo("Confirmation email sent again. Check your inbox.")
+      cooldown.start()
+    })
 
   return (
-    <div className="w-full max-w-md space-y-6 p-8 bg-card rounded-2xl shadow-xl border border-border/60">
-      <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Customer Portal</h2>
-        <p className="text-muted-foreground text-xs md:text-sm mt-1.5">
-          Sign in to track your visa cases, upload documents, and download completed files
-        </p>
-      </div>
+    <AuthCard title="Welcome back" subtitle="Sign in to track your visa cases, upload documents and download your file. Use the same account as the EZvisa app.">
+      <SocialButtons next={next} disabled={!!busy} onError={(m) => { setError(m); setInfo("") }} />
 
-      {/* Mode Switcher Tabs */}
-      <div className="flex rounded-xl bg-muted/50 p-1 text-xs font-semibold">
+      <div className="flex rounded-xl bg-muted/50 p-1 text-xs font-semibold" role="tablist" aria-label="Sign-in method">
         <button
           type="button"
-          onClick={() => { setMode("password"); setError(""); }}
+          role="tab"
+          aria-selected={mode === "password"}
+          onClick={() => { setMode("password"); setError(""); setIssue(null) }}
           className={`flex-1 py-2 rounded-lg transition-all ${mode === "password" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
         >
-          Password Sign In
+          Password
         </button>
         <button
           type="button"
-          onClick={() => { setMode("magic-link"); setError(""); }}
+          role="tab"
+          aria-selected={mode === "magic-link"}
+          onClick={() => { setMode("magic-link"); setError(""); setIssue(null) }}
           className={`flex-1 py-2 rounded-lg transition-all ${mode === "magic-link" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"}`}
         >
-          Email Magic Link
+          Email me a link
         </button>
       </div>
 
       {error && (
         <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            {error}
+            {issue === "unconfirmed" && (
+              <button type="button" className="block mt-1 font-semibold text-primary hover:underline" onClick={resendConfirmation} disabled={busy === "resend" || cooldown.left > 0}>
+                {cooldown.left > 0 ? `Send the confirmation link again (${cooldown.left}s)` : "Send the confirmation link again"}
+              </button>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+      {info && (
+        <Alert>
+          <AlertDescription>{info}</AlertDescription>
         </Alert>
       )}
 
-      {magicLinkSent ? (
-        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-5 text-center space-y-3">
-          <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto">
-            ✓
-          </div>
-          <h3 className="font-bold text-sm text-foreground">Check your email</h3>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            We sent a secure 1-click sign-in link to <strong>{email}</strong>. Click the link in your inbox to access your dashboard instantly.
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setMagicLinkSent(false)}
-            className="text-xs text-primary"
-          >
-            Resend or use another email
-          </Button>
-        </div>
-      ) : mode === "password" ? (
-        <form onSubmit={handlePasswordLogin} className="space-y-4">
-          <div className="space-y-2">
+      {mode === "password" ? (
+        <form onSubmit={handlePasswordLogin} className="flex flex-col gap-4" noValidate>
+          <div className="flex flex-col gap-2">
             <Label htmlFor="email" className="text-xs font-semibold">Email address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+            <Input id="email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={email} onChange={(e) => { setEmail(e.target.value); setError("") }} required />
           </div>
-
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password" className="text-xs font-semibold">Password</Label>
-              <Link
-                href="/forgot-password"
-                className="text-xs font-medium text-primary hover:underline"
-              >
+              <Link href={cleanEmail ? `/forgot-password?email=${encodeURIComponent(cleanEmail)}` : "/forgot-password"} className="text-xs font-medium text-primary hover:underline">
                 Forgot password?
               </Link>
             </div>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <Input id="password" type="password" autoComplete="current-password" value={password} onChange={(e) => { setPassword(e.target.value); setError("") }} required />
           </div>
-
-          <Button type="submit" className="w-full h-11 text-sm font-semibold rounded-xl" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Signing in...
-              </>
-            ) : (
-              "Sign In to Dashboard"
-            )}
+          <Button type="submit" className="w-full h-11 text-sm font-semibold rounded-xl" disabled={!!busy}>
+            {busy === "password" ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in…</>) : "Sign in"}
           </Button>
         </form>
+      ) : magicLinkSent ? (
+        <EmailSent
+          email={cleanEmail}
+          note="Open it in this browser to sign in. The link works once and expires after a while."
+          onResend={() => sendMagicLink("resend")}
+          resending={busy === "resend"}
+          left={cooldown.left}
+          onChangeEmail={() => { setMagicLinkSent(false); setError("") }}
+        />
       ) : (
-        <form onSubmit={handleMagicLinkLogin} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="magic-email" className="text-xs font-semibold">Your Application Email</Label>
-            <Input
-              id="magic-email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <p className="text-[11px] text-muted-foreground">
-              Enter the email address you used when applying. We will send you an instant login link—no password needed.
+        <form onSubmit={(e) => { e.preventDefault(); sendMagicLink("magic") }} className="flex flex-col gap-4" noValidate>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="magic-email" className="text-xs font-semibold">Your application email</Label>
+            <Input id="magic-email" type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" value={email} onChange={(e) => { setEmail(e.target.value); setError("") }} required />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Use the email from your application. We send a one-time sign-in link, no password needed.
             </p>
           </div>
-
-          <Button type="submit" className="w-full h-11 text-sm font-semibold rounded-xl" disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending Magic Link...
-              </>
-            ) : (
-              "Send Magic Sign-In Link"
-            )}
+          <Button type="submit" className="w-full h-11 text-sm font-semibold rounded-xl" disabled={!!busy}>
+            {busy === "magic" ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending link…</>) : "Send sign-in link"}
           </Button>
         </form>
       )}
 
-      {/* 1-Click Demo Logins for Dashboard Area */}
       <DemoLoginButtons next={next} />
 
       <div className="pt-2 border-t border-border/60 text-center text-xs text-muted-foreground">
-        Don&apos;t have an account?{" "}
+        New here?{" "}
         <Link href={`/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-primary hover:underline">
-          Sign up
+          Create account
         </Link>
         {" · "}
         <Link href="/apply" className="font-semibold text-primary hover:underline">
-          Start New Application
+          Start an application
         </Link>
       </div>
-    </div>
+    </AuthCard>
   )
 }
 
-
 export default function LoginPage() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
-      <Suspense fallback={<div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-        <LoginForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className="min-h-[100dvh] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <LoginForm />
+    </Suspense>
   )
 }

@@ -8,8 +8,10 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname, useRouter } from "next/navigation"
 import { destinations } from "@/lib/destinations"
+import { FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
 
-const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+// Same nationality list as the wizard and the app (website ↔ app contract).
+const nationalities = FEATURED_NATIONALITIES
 
 interface SiteHeaderProps {
   hideNavigation?: boolean
@@ -515,7 +517,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                         <div className="flex items-center gap-3">
                           <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                             <Image
-                              src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                              src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-")}.png`}
                               alt=""
                               fill
                               className="object-cover"
@@ -549,7 +551,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                               <div className="flex items-center gap-3">
                                 <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                                   <Image
-                                    src={`/flags/${nationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                    src={`/flags/${nationality.toLowerCase().replace(/\s+/g, "-")}.png`}
                                     alt=""
                                     fill
                                     className="object-cover"

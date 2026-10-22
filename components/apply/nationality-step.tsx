@@ -1,16 +1,23 @@
 "use client"
 
-import { DEFAULT_RESIDENCE, UAE_EMIRATES } from "@/lib/residence"
+// Step 1: Personal Information. Fields, order, option lists and validation come from the website ↔ app contract
+// (lib/shared/wizard-contract.ts), so the app's wizard (mobile/lib/questions.ts) asks exactly the same things.
+// The passport NUMBER is asked after payment ("Continue application"); validity and expiry are asked here.
 import type React from "react"
-import Image from "next/image"
+import { useMemo, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown, Info, Loader2, Globe, User } from "lucide-react"
-import { useState, useEffect } from "react"
+import { Check, ChevronsUpDown, Info, Loader2, ArrowLeft } from "lucide-react"
+import { CustomDatePicker } from "@/components/ui/custom-date-picker"
+import { CountryFlag } from "@/components/apply/country-flag"
 import { cn } from "@/lib/utils"
-import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
+import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { trackEvent } from "@/lib/analytics"
+import {
+  SCHENGEN, UAE_NATIONALITIES, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, DEFAULT_RESIDENCE, UAE_EMIRATES, MARITAL,
+  validatePersonal, adultMax, iso, type Errors,
+} from "@/lib/shared/wizard-contract"
 
 interface NationalityStepProps {
   formData: FormData
@@ -18,62 +25,6 @@ interface NationalityStepProps {
   onNext: () => void
   isLoading?: boolean
 }
-
-const nationalityCountries = [
-  { name: "Egypt", flag: "🇪🇬" },
-  { name: "India", flag: "🇮🇳" },
-  { name: "Jordan", flag: "🇯🇴" },
-  { name: "Pakistan", flag: "🇵🇰" },
-  { name: "Russian Federation", flag: "🇷🇺" },
-  { name: "Syria", flag: "🇸🇾" },
-  { name: "United Arab Emirates", flag: "🇦🇪" },
-  { name: "Saudi Arabia", flag: "🇸🇦" },
-  { name: "Philippines", flag: "🇵🇭" },
-  { name: "Bangladesh", flag: "🇧🇩" },
-]
-
-const residenceCountries = [
-  { name: "United Arab Emirates", flag: "🇦🇪" },
-  { name: "Saudi Arabia", flag: "🇸🇦" },
-  { name: "Qatar", flag: "🇶🇦" },
-  { name: "Kuwait", flag: "🇰🇼" },
-  { name: "Bahrain", flag: "🇧🇭" },
-  { name: "Oman", flag: "🇴🇲" },
-  { name: "Egypt", flag: "🇪🇬" },
-  { name: "Jordan", flag: "🇯🇴" },
-]
-
-const schengenCountries = [
-  { name: "Austria", flag: "🇦🇹" },
-  { name: "Belgium", flag: "🇧🇪" },
-  { name: "Bulgaria", flag: "🇧🇬" },
-  { name: "Croatia", flag: "🇭🇷" },
-  { name: "Czech Republic", flag: "🇨🇿" },
-  { name: "Denmark", flag: "🇩🇰" },
-  { name: "Estonia", flag: "🇪🇪" },
-  { name: "Finland", flag: "🇫🇮" },
-  { name: "France", flag: "🇫🇷" },
-  { name: "Germany", flag: "🇩🇪" },
-  { name: "Greece", flag: "🇬🇷" },
-  { name: "Hungary", flag: "🇭🇺" },
-  { name: "Iceland", flag: "🇮🇸" },
-  { name: "Italy", flag: "🇮🇹" },
-  { name: "Latvia", flag: "🇱🇻" },
-  { name: "Liechtenstein", flag: "🇱🇮" },
-  { name: "Lithuania", flag: "🇱🇹" },
-  { name: "Luxembourg", flag: "🇱🇺" },
-  { name: "Malta", flag: "🇲🇹" },
-  { name: "Netherlands", flag: "🇳🇱" },
-  { name: "Norway", flag: "🇳🇴" },
-  { name: "Poland", flag: "🇵🇱" },
-  { name: "Portugal", flag: "🇵🇹" },
-  { name: "Romania", flag: "🇷🇴" },
-  { name: "Slovakia", flag: "🇸🇰" },
-  { name: "Slovenia", flag: "🇸🇮" },
-  { name: "Spain", flag: "🇪🇸" },
-  { name: "Sweden", flag: "🇸🇪" },
-  { name: "Switzerland", flag: "🇨🇭" },
-]
 
 // Shared style constants
 const inputStyles =
@@ -85,9 +36,13 @@ const toggleActiveStyles =
   "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
+const errorStyles = "border-destructive bg-destructive/5 focus:ring-destructive/10"
+
+const ALL_NATIONALITIES = [...SCHENGEN_VISA_REQUIRED].sort((a, b) => a.localeCompare(b))
 
 export function NationalityStep({ formData, updateFormData, onNext, isLoading }: NationalityStepProps) {
   const [nationalityOpen, setNationalityOpen] = useState(false)
+  const [showAllNationalities, setShowAllNationalities] = useState(false)
   const [destinationOpen, setDestinationOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
@@ -100,6 +55,9 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
     window.addEventListener("resize", checkMobile)
     return () => window.removeEventListener("resize", checkMobile)
   }, [])
+
+  const errors: Errors = useMemo(() => validatePersonal(formData), [formData])
+  const isFormValid = Object.keys(errors).length === 0
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -117,69 +75,19 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
     onNext()
   }
 
-  const isValidEmail = (email: string) => {
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-    if (!emailRegex.test(email)) return false
-    
-    const parts = email.split("@")
-    if (parts.length !== 2) return false
-    
-    const [localPart, domain] = parts
-    if (localPart.length < 2 || !domain.includes(".")) return false
-    
-    const domainLower = domain.toLowerCase()
-    const invalidDomains = ["gmial.com", "yahooo.com", "hotmial.com", "gmai.com"]
-    if (invalidDomains.includes(domainLower)) return false
-    
-    return true
+  const set = (data: FormDataUpdate) => {
+    updateFormData(data)
+    setShowErrors(false)
   }
+  const errorClass = (field: keyof FormData) => (showErrors && errors[field] ? errorStyles : "")
+  const errorText = (field: keyof FormData) =>
+    showErrors && errors[field] ? (
+      <p className="text-xs text-red-600 mt-1" role="alert">
+        {errors[field]}
+      </p>
+    ) : null
 
-  const isValidPhone = (phone: string) => {
-    const cleaned = phone.trim()
-    const digitsOnly = cleaned.replace(/[^\d]/g, "")
-    
-    if (digitsOnly.length < 7 || digitsOnly.length > 15) return false
-
-    const allSameDigit = /^(\d)\1+$/.test(digitsOnly)
-    if (allSameDigit) return false
-
-    if (digitsOnly.length >= 8) {
-      const isSequential = digitsOnly
-        .split("")
-        .every((digit, i, arr) => i === 0 || Number.parseInt(digit) === Number.parseInt(arr[i - 1]) + 1)
-      if (isSequential) return false
-    }
-
-    return true
-  }
-
-  const isFormValid =
-    formData.nationality &&
-    formData.destination &&
-    formData.countryOfResidence &&
-    formData.cityOfResidence &&
-    formData.firstName &&
-    formData.lastName &&
-    formData.email &&
-    isValidEmail(formData.email) &&
-    formData.phone &&
-    isValidPhone(formData.phone) &&
-    formData.dateOfBirth &&
-    formData.hasValidPassport === "yes" &&
-    formData.passportNumber &&
-    formData.maritalStatus &&
-    (formData.maritalStatus !== "married" ||
-      formData.spouseAccompanying === "yes" ||
-      formData.spouseAccompanying === "no") &&
-    (formData.countryOfResidence !== "United Arab Emirates" || formData.hasEmiratesId === "yes" || formData.hasEmiratesId === "no")
-
-  const getErrorClass = (fieldValue: FieldValue) => {
-    return showErrors && !fieldValue ? "border-destructive bg-destructive/5 focus:ring-destructive/10" : ""
-  }
-
-  const handleFieldChange = (field: string, value: string) => {
-    updateFormData({ [field]: value })
-  }
+  const nationalityList = showAllNationalities ? ALL_NATIONALITIES : UAE_NATIONALITIES
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
@@ -195,13 +103,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
         >
           <Info className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div className="flex-1">
-            {!isValidEmail(formData.email || "") && formData.email ? (
-              <span>Please enter a valid email address. Check for typos in the domain.</span>
-            ) : formData.phone && !isValidPhone(formData.phone) ? (
-              <span>Please enter a valid phone number (8-15 digits, not all same or sequential).</span>
-            ) : (
-              <span>Please fill in all required fields before continuing.</span>
-            )}
+            <span>{Object.values(errors)[0] ?? "Please fill in all required fields before continuing."}</span>
           </div>
         </div>
       )}
@@ -216,22 +118,11 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
                 variant="outline"
                 role="combobox"
                 aria-expanded={destinationOpen}
-                className={cn(
-                  inputStyles,
-                  "w-full justify-between font-medium",
-                  getErrorClass(formData.destination),
-                )}
+                className={cn(inputStyles, "w-full justify-between font-medium", errorClass("destination"))}
               >
                 {formData.destination ? (
                   <div className="flex items-center gap-2">
-                    <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
-                      <Image
-                        src={`/flags/${formData.destination.toLowerCase().replace(/\s+/g, "-")}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
+                    <CountryFlag country={formData.destination} />
                     <span className="font-medium text-foreground">{formData.destination}</span>
                   </div>
                 ) : (
@@ -246,33 +137,20 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
                 <CommandList>
                   <CommandEmpty>No country found.</CommandEmpty>
                   <CommandGroup>
-                    {schengenCountries.map((country) => (
+                    {SCHENGEN.map((country) => (
                       <CommandItem
-                        key={country.name}
-                        value={country.name}
+                        key={country}
+                        value={country}
                         className="rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
                         onSelect={() => {
-                          updateFormData({ destination: country.name })
+                          set({ destination: country })
                           setDestinationOpen(false)
-                          setShowErrors(false)
-                          trackEvent("destination_selected", { destination: country.name })
+                          trackEvent("destination_selected", { destination: country })
                         }}
                       >
-                        <Check
-                          className={cn(
-                             "mr-2 h-4 w-4 text-blue-600",
-                            formData.destination === country.name ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block mr-2 flex-shrink-0 border border-border/50">
-                          <Image
-                            src={`/flags/${country.name.toLowerCase().replace(/\s+/g, "-")}.png`}
-                            alt=""
-                            fill
-                            className="object-cover"
-                          />
-                        </span>
-                        <span className="text-foreground">{country.name}</span>
+                        <Check className={cn("mr-2 h-4 w-4 text-blue-600", formData.destination === country ? "opacity-100" : "opacity-0")} />
+                        <CountryFlag country={country} className="mr-2" />
+                        <span className="text-foreground">{country}</span>
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -280,33 +158,29 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
               </Command>
             </PopoverContent>
           </Popover>
+          {errorText("destination")}
         </div>
 
-        {/* Nationality */}
+        {/* Nationality: the top UAE resident nationalities, then "Other nationality" opens the full visa-required list */}
         <div>
           <label className={labelStyles}>Nationality *</label>
-          <Popover open={nationalityOpen} onOpenChange={setNationalityOpen}>
+          <Popover
+            open={nationalityOpen}
+            onOpenChange={(open) => {
+              setNationalityOpen(open)
+              if (!open) setShowAllNationalities(false)
+            }}
+          >
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 role="combobox"
                 aria-expanded={nationalityOpen}
-                className={cn(
-                  inputStyles,
-                  "w-full justify-between font-medium",
-                  getErrorClass(formData.nationality),
-                )}
+                className={cn(inputStyles, "w-full justify-between font-medium", errorClass("nationality"))}
               >
                 {formData.nationality ? (
                   <div className="flex items-center gap-2">
-                    <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
-                      <Image
-                        src={`/flags/${formData.nationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
+                    <CountryFlag country={formData.nationality} />
                     <span className="font-medium text-foreground">{formData.nationality}</span>
                   </div>
                 ) : (
@@ -321,33 +195,41 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
                 <CommandList>
                   <CommandEmpty>No nationality found.</CommandEmpty>
                   <CommandGroup>
-                    {nationalityCountries.map((country) => (
+                    {showAllNationalities && (
                       <CommandItem
-                        key={country.name}
-                        value={country.name}
+                        value="Back to common nationalities"
+                        className="rounded-lg text-primary font-medium cursor-pointer"
+                        onSelect={() => setShowAllNationalities(false)}
+                      >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to common nationalities
+                      </CommandItem>
+                    )}
+                    {nationalityList.map((country) => (
+                      <CommandItem
+                        key={country}
+                        value={country}
                         className="rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
                         onSelect={() => {
-                          updateFormData({ nationality: country.name })
+                          if (country === OTHER_NATIONALITY) {
+                            setShowAllNationalities(true)
+                            return
+                          }
+                          set({ nationality: country })
                           setNationalityOpen(false)
-                          setShowErrors(false)
-                          trackEvent("nationality_selected", { nationality: country.name })
+                          setShowAllNationalities(false)
+                          trackEvent("nationality_selected", { nationality: country })
                         }}
                       >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4 text-blue-600",
-                            formData.nationality === country.name ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block mr-2 flex-shrink-0 border border-border/50">
-                          <Image
-                            src={`/flags/${country.name.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                            alt=""
-                            fill
-                            className="object-cover"
-                          />
-                        </span>
-                        <span className="text-foreground">{country.name}</span>
+                        <Check className={cn("mr-2 h-4 w-4 text-blue-600", formData.nationality === country ? "opacity-100" : "opacity-0")} />
+                        {country === OTHER_NATIONALITY ? (
+                          <span className="text-primary font-medium">{country}</span>
+                        ) : (
+                          <>
+                            <CountryFlag country={country} className="mr-2" />
+                            <span className="text-foreground">{country}</span>
+                          </>
+                        )}
                       </CommandItem>
                     ))}
                   </CommandGroup>
@@ -355,15 +237,15 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
               </Command>
             </PopoverContent>
           </Popover>
+          {errorText("nationality")}
+          <p className="text-xs text-muted-foreground mt-1.5">Only nationalities that need a Schengen visa are listed.</p>
         </div>
 
-        {/* Country of Residence (UAE only: lib/residence.ts) */}
+        {/* Country of Residence (UAE only, from the shared contract) */}
         <div>
           <span className={labelStyles}>Country of Residence *</span>
-          <div className={cn(inputStyles, "w-full flex items-center gap-2 font-medium")} aria-label="Country of Residence: United Arab Emirates">
-            <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
-              <Image src="/flags/united-arab-emirates.png" alt="" fill className="object-cover" />
-            </span>
+          <div className={cn(inputStyles, "w-full flex items-center gap-2 font-medium")} aria-label={`Country of Residence: ${DEFAULT_RESIDENCE}`}>
+            <CountryFlag country={DEFAULT_RESIDENCE} />
             <span className="font-medium text-foreground">{formData.countryOfResidence || DEFAULT_RESIDENCE}</span>
           </div>
         </div>
@@ -376,16 +258,14 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           <select
             id="cityOfResidence"
             value={formData.cityOfResidence || ""}
-            onChange={(e) => {
-              handleFieldChange("cityOfResidence", e.target.value)
-              setShowErrors(false)
-            }}
+            onChange={(e) => set({ cityOfResidence: e.target.value })}
             required
-            className={cn(inputStyles, "w-full", getErrorClass(formData.cityOfResidence), !formData.cityOfResidence && "text-muted-foreground/60")}
+            className={cn(selectStyles, "w-full", errorClass("cityOfResidence"), !formData.cityOfResidence && "text-muted-foreground/60")}
           >
             <option value="" disabled>Select emirate</option>
             {UAE_EMIRATES.map((e) => <option key={e} value={e}>{e}</option>)}
           </select>
+          {errorText("cityOfResidence")}
         </div>
 
         {/* Emirates ID - Next to City of Residence */}
@@ -393,36 +273,22 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           <div>
             <label className={labelStyles}>Do you have an Emirates ID? *</label>
             <div className="flex gap-3 mt-1">
-              <button
-                type="button"
-                className={cn("flex-1", formData.hasEmiratesId === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
-                onClick={() => {
-                  updateFormData({ hasEmiratesId: "yes" })
-                  setShowErrors(false)
-                }}
-              >
+              <button type="button" className={cn("flex-1", formData.hasEmiratesId === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ hasEmiratesId: "yes" })}>
                 Yes
               </button>
-              <button
-                type="button"
-                className={cn("flex-1", formData.hasEmiratesId === "no" ? toggleActiveStyles : toggleInactiveStyles)}
-                onClick={() => {
-                  updateFormData({ hasEmiratesId: "no" })
-                  setShowErrors(false)
-                }}
-              >
+              <button type="button" className={cn("flex-1", formData.hasEmiratesId === "no" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ hasEmiratesId: "no" })}>
                 No
               </button>
             </div>
+            {errorText("hasEmiratesId")}
           </div>
         )}
 
-        {/* Contact Information Section */}
         {/* Divider */}
         <div className="md:col-span-2 my-2">
           <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
-        
+
         {/* First Name */}
         <div>
           <label htmlFor="firstName" className={labelStyles}>
@@ -432,14 +298,12 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
             id="firstName"
             autoComplete="given-name"
             value={formData.firstName || ""}
-            onChange={(e) => {
-              handleFieldChange("firstName", e.target.value)
-              setShowErrors(false)
-            }}
+            onChange={(e) => set({ firstName: e.target.value })}
             placeholder="Enter first name"
             required
-            className={cn(inputStyles, "w-full", getErrorClass(formData.firstName))}
+            className={cn(inputStyles, "w-full", errorClass("firstName"))}
           />
+          <p className="text-xs text-muted-foreground mt-1.5">As on your passport.</p>
         </div>
 
         {/* Last Name */}
@@ -451,13 +315,10 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
             id="lastName"
             autoComplete="family-name"
             value={formData.lastName || ""}
-            onChange={(e) => {
-              handleFieldChange("lastName", e.target.value)
-              setShowErrors(false)
-            }}
+            onChange={(e) => set({ lastName: e.target.value })}
             placeholder="Enter last name"
             required
-            className={cn(inputStyles, "w-full", getErrorClass(formData.lastName))}
+            className={cn(inputStyles, "w-full", errorClass("lastName"))}
           />
         </div>
 
@@ -472,17 +333,12 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
             inputMode="email"
             autoComplete="email"
             value={formData.email || ""}
-            onChange={(e) => {
-              handleFieldChange("email", e.target.value)
-              setShowErrors(false)
-            }}
+            onChange={(e) => set({ email: e.target.value })}
             placeholder="your.email@example.com"
             required
-            className={cn(inputStyles, "w-full", getErrorClass(formData.email))}
+            className={cn(inputStyles, "w-full", errorClass("email"))}
           />
-          {showErrors && formData.email && !isValidEmail(formData.email) && (
-            <p className="text-xs text-red-600 mt-1">Please enter a valid email address</p>
-          )}
+          {errorText("email")}
         </div>
 
         {/* Phone */}
@@ -496,21 +352,17 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
             inputMode="tel"
             autoComplete="tel"
             value={formData.phone || ""}
-            onChange={(e) => {
-              const value = e.target.value.replace(/[^\d+\-() ]/g, "")
-              handleFieldChange("phone", value)
-              setShowErrors(false)
-            }}
+            onChange={(e) => set({ phone: e.target.value.replace(/[^\d+\-() ]/g, "") })}
             placeholder="+971 50 123 4567"
             required
             aria-required="true"
-            aria-invalid={showErrors && !isValidPhone(formData.phone || "")}
-            aria-describedby={showErrors && !isValidPhone(formData.phone || "") ? "phone-error" : undefined}
-            className={cn(inputStyles, "w-full", getErrorClass(formData.phone))}
+            aria-invalid={showErrors && !!errors.phone}
+            aria-describedby={showErrors && errors.phone ? "phone-error" : undefined}
+            className={cn(inputStyles, "w-full", errorClass("phone"))}
           />
-          {showErrors && formData.phone && !isValidPhone(formData.phone) && (
+          {showErrors && errors.phone && (
             <p id="phone-error" className="text-xs text-red-600 mt-1" role="alert">
-              Please enter a valid phone number (8-15 digits)
+              {errors.phone}
             </p>
           )}
           <div className="flex items-center gap-2 mt-2">
@@ -522,7 +374,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
               className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20 accent-[#25D366]"
             />
             <label htmlFor="whatsappOptIn" className="text-xs text-muted-foreground flex items-center gap-1.5 cursor-pointer select-none">
-              <svg className="w-3.5 h-3.5 text-[#25D366] shrink-0" viewBox="0 0 24 24" fill="currentColor">
+              <svg className="w-3.5 h-3.5 text-[#25D366] shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
               </svg>
               <span>Receive application updates via WhatsApp</span>
@@ -530,7 +382,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           </div>
         </div>
 
-        {/* Date of Birth */}
+        {/* Date of Birth (18+) */}
         <div>
           <label htmlFor="dateOfBirth" className={labelStyles}>
             Date of Birth *
@@ -538,84 +390,61 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           <input
             id="dateOfBirth"
             type="date"
-            max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]} // Must be 18+
+            max={iso(adultMax())}
             value={formData.dateOfBirth || ""}
-            onChange={(e) => {
-              handleFieldChange("dateOfBirth", e.target.value)
-              setShowErrors(false)
-            }}
+            onChange={(e) => set({ dateOfBirth: e.target.value })}
             required
-            className={cn(inputStyles, "w-full", getErrorClass(formData.dateOfBirth))}
+            className={cn(inputStyles, "w-full", errorClass("dateOfBirth"))}
           />
-          {showErrors && !formData.dateOfBirth && (
-            <p className="text-xs text-red-600 mt-1">Please select your date of birth (must be 18+)</p>
-          )}
+          {errorText("dateOfBirth")}
         </div>
 
         {/* Valid Passport */}
         <div>
           <label className={labelStyles}>Do you have a valid passport? *</label>
           <div className="flex gap-3 mt-1">
-            <button
-              type="button"
-              className={cn("flex-1", formData.hasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => {
-                updateFormData({ hasValidPassport: "yes" })
-                setShowErrors(false)
-              }}
-            >
+            <button type="button" className={cn("flex-1", formData.hasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ hasValidPassport: "yes" })}>
               Yes
             </button>
             <button
               type="button"
               className={cn("flex-1", formData.hasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => {
-                updateFormData({ hasValidPassport: "no", passportNumber: "" })
-                setShowErrors(false)
-              }}
+              onClick={() => set({ hasValidPassport: "no", passportNumber: "", passportExpiry: "" })}
             >
               No
             </button>
           </div>
+          {showErrors && errors.hasValidPassport && formData.hasValidPassport !== "no" && errorText("hasValidPassport")}
           {formData.hasValidPassport === "yes" && (
             <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
               <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Your passport should have at least 6 months validity from your travel date.</span>
+              <span>Your passport should have at least 6 months validity from your travel date. We will ask for the passport number after payment.</span>
             </p>
           )}
           {formData.hasValidPassport === "no" && (
-            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/20">
+            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/20" role="alert">
               <Info className="w-4.5 h-4.5 text-amber-500 shrink-0 mt-0.5" />
               <span>You need a valid passport (at least 6 months validity from your travel date) before applying.</span>
             </p>
           )}
         </div>
 
-        {/* Passport Number (only with a valid passport) */}
+        {/* Passport Expiry Date (only with a valid passport) */}
         {formData.hasValidPassport === "yes" && (
-        <div>
-          <label htmlFor="passportNumber" className={labelStyles}>
-            Passport Number *
-          </label>
-          <input
-            id="passportNumber"
-            type="text"
-            value={formData.passportNumber || ""}
-            onChange={(e) => {
-              handleFieldChange("passportNumber", e.target.value.toUpperCase())
-              setShowErrors(false)
-            }}
-            placeholder="e.g. A1234567"
-            required
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            className={cn(inputStyles, "w-full uppercase", getErrorClass(formData.passportNumber))}
-          />
-          {showErrors && !formData.passportNumber && (
-            <p className="text-xs text-red-600 mt-1">Please enter your passport number</p>
-          )}
-        </div>
+          <div>
+            <label htmlFor="passportExpiry" className={labelStyles}>
+              Passport Expiry Date *
+            </label>
+            <CustomDatePicker
+              id="passportExpiry"
+              placeholder="Select expiry date"
+              min={iso(new Date())}
+              value={formData.passportExpiry || ""}
+              onChange={(val) => set({ passportExpiry: val })}
+              className={cn(errorClass("passportExpiry"))}
+            />
+            {errorText("passportExpiry")}
+          </div>
         )}
 
         {/* Marital Status */}
@@ -627,18 +456,20 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
             id="maritalStatus"
             value={formData.maritalStatus || ""}
             onChange={(e) => {
-              handleFieldChange("maritalStatus", e.target.value)
-              setShowErrors(false)
+              const v = e.target.value as FormData["maritalStatus"]
+              set({ maritalStatus: v, ...(v !== "married" ? { spouseAccompanying: "" } : {}) })
             }}
-            className={cn(selectStyles, "w-full", getErrorClass(formData.maritalStatus))}
+            className={cn(selectStyles, "w-full", errorClass("maritalStatus"))}
             required
           >
             <option value="">Select status</option>
-            <option value="single">Single</option>
-            <option value="married">Married</option>
-            <option value="divorced">Divorced</option>
-            <option value="widowed">Widowed</option>
+            {MARITAL.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
+          {errorText("maritalStatus")}
         </div>
 
         {/* Spouse Accompanying */}
@@ -646,33 +477,14 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           <div>
             <label className={labelStyles}>Will your spouse accompany you? *</label>
             <div className="flex gap-3 mt-1">
-              <button
-                type="button"
-                className={cn(
-                  "flex-1",
-                  formData.spouseAccompanying === "yes" ? toggleActiveStyles : toggleInactiveStyles,
-                )}
-                onClick={() => {
-                  updateFormData({ spouseAccompanying: "yes" })
-                  setShowErrors(false)
-                }}
-              >
+              <button type="button" className={cn("flex-1", formData.spouseAccompanying === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ spouseAccompanying: "yes" })}>
                 Yes
               </button>
-              <button
-                type="button"
-                className={cn(
-                  "flex-1",
-                  formData.spouseAccompanying === "no" ? toggleActiveStyles : toggleInactiveStyles,
-                )}
-                onClick={() => {
-                  updateFormData({ spouseAccompanying: "no" })
-                  setShowErrors(false)
-                }}
-              >
+              <button type="button" className={cn("flex-1", formData.spouseAccompanying === "no" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ spouseAccompanying: "no" })}>
                 No
               </button>
             </div>
+            {errorText("spouseAccompanying")}
           </div>
         )}
       </div>
@@ -689,7 +501,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
               Processing...
             </>
           ) : (
-            "Continue to Employment"
+            "Continue"
           )}
         </Button>
       </div>

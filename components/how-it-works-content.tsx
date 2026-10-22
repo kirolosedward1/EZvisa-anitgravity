@@ -10,17 +10,10 @@ import { WhatYouGetSection } from "@/components/what-you-get-section"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 
-// Nationality list from hero component
-const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+import { FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
 
-const fromCountryFlags: Record<string, string> = {
-  Egypt: "🇪🇬",
-  India: "🇮🇳",
-  Jordan: "🇯🇴",
-  Pakistan: "🇵🇰",
-  "Russian Federation": "🇷🇺",
-  Syria: "🇸🇾",
-}
+// Same nationality list as the wizard and the app (website ↔ app contract).
+const fromCountries = FEATURED_NATIONALITIES
 
 const steps = [
   {
@@ -210,7 +203,7 @@ export function HowItWorksContent() {
                         <div className="flex items-center gap-3">
                           <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                             <Image
-                              src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                              src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-")}.png`}
                               alt=""
                               fill
                               className="object-cover"
@@ -255,7 +248,7 @@ export function HowItWorksContent() {
                               <div className="flex items-center gap-3 w-full">
                                 <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                                   <Image
-                                    src={`/flags/${country.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                    src={`/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`}
                                     alt=""
                                     fill
                                     className="object-cover"

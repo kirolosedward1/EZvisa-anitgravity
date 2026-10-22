@@ -240,7 +240,30 @@ pnpm lint         # eslint
 
 ---
 
-## 10. What NOT to Do
+## 10. Website ↔ App sync (IMPORTANT)
+
+The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this repo (never merged into `main`;
+`tsconfig.json` excludes `mobile/`). Both clients share one Supabase table, one Ziina checkout and one set of rules.
+
+- **`lib/shared/wizard-contract.ts` is the single source of truth** (zero imports): price rule, country/option
+  lists, wizard answers + step order + validators, statuses and labels, document types → `has_*` flags, the
+  `additional_notes` JSON shape (`applicationColumns`), the `EZ-XXXXXXXX` reference. The app mirrors it in
+  `mobile/lib/wizard.ts`. Never add a private copy of a list or rule in a component or route: import it.
+- **`lib/auth/errors.ts`** mirrors `mobile/lib/authErrors.ts` (same sign-in messages). `lib/applications.ts`
+  reads applications the way the app does (ownership = row email equals the signed-in email).
+- **`pnpm sync:check`** (`scripts/check-app-sync.mts`) compares the contract with the app's files and exits 1 on
+  drift; `.github/workflows/app-sync.yml` runs it on every push/PR to `main` and `mobile-app`. Run it before
+  committing a change to anything in the contract.
+- **`GET /api/app-config`** serves the contract as JSON for the app to fetch at launch.
+- Routes the app depends on (keep on `main`): `/api/create-payment`, `/api/check-payment`, `/api/webhooks/ziina`,
+  `/api/upload-document` (Bearer + `applicationId` + `uploadId`), `/api/continue-application`, `/app-return`.
+- Journey on both platforms: wizard (personal → spouse → trip → payment) → pay → **continue application**
+  (passport number + employment: `/dashboard/continue`, `/track/[token]/continue`) → upload documents → track.
+- Change procedure, auth/Supabase configuration and known leftovers: `docs/APP_WEB_SYNC.md`, `docs/AUTH_SETUP.md`.
+
+---
+
+## 11. What NOT to Do
 
 - Don't reintroduce serif/italic display headings, glassmorphism, `bg-mesh`/`bg-grain`, or decorative gradient blobs.
 - Don't use purple/violet prominently.
@@ -254,4 +277,4 @@ pnpm lint         # eslint
 
 ---
 
-_Last updated: 2026-05-30 — reflects the current Poppins + bright-blue (Atlys-style) design system and the redesigned header/hero._
+_Last updated: 2026-10-22 — adds the website ↔ app contract (`lib/shared`), the sync check and the shared auth flow; design system unchanged (Poppins + bright-blue, Atlys-style)._

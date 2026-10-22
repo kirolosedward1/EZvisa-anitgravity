@@ -9,42 +9,10 @@ import Link from "next/link"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
+import { FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
 
-const fromCountries = [
-  "Egypt",
-  "India",
-  "Jordan",
-  "Pakistan",
-  "Russian Federation",
-  "Syria",
-  "Turkey",
-  "United Arab Emirates",
-  "Saudi Arabia",
-  "Philippines",
-  "Bangladesh",
-  "Sri Lanka",
-  "Nigeria",
-  "Kenya",
-  "South Africa",
-]
-
-const fromCountryFlags: Record<string, string> = {
-  Egypt: "🇪🇬",
-  India: "🇮🇳",
-  Jordan: "🇯🇴",
-  Pakistan: "🇵🇰",
-  "Russian Federation": "🇷🇺",
-  Syria: "🇸🇾",
-  Turkey: "🇹🇷",
-  "United Arab Emirates": "🇦🇪",
-  "Saudi Arabia": "🇸🇦",
-  Philippines: "🇵🇭",
-  Bangladesh: "🇧🇩",
-  "Sri Lanka": "🇱🇰",
-  Nigeria: "🇳🇬",
-  Kenya: "🇰🇪",
-  "South Africa": "🇿🇦",
-}
+// Same nationality list as the wizard and the app (website ↔ app contract): only nationalities that need a visa.
+const fromCountries = FEATURED_NATIONALITIES
 
 export function StartApplicationBox() {
   const [selectedNationality, setSelectedNationality] = useState("")
@@ -101,7 +69,7 @@ export function StartApplicationBox() {
                   <div className="flex items-center gap-3">
                     <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                       <Image
-                        src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                        src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-")}.png`}
                         alt=""
                         fill
                         className="object-cover"
@@ -146,7 +114,7 @@ export function StartApplicationBox() {
                         <div className="flex items-center gap-3 w-full">
                           <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                             <Image
-                              src={`/flags/${country.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                              src={`/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`}
                               alt=""
                               fill
                               className="object-cover"

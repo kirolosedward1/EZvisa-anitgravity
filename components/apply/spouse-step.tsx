@@ -1,11 +1,13 @@
 "use client"
 
+// Step 2 (only when married and the spouse travels): same fields and rules as the app (lib/shared/wizard-contract.ts).
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Info, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
+import type { FormData, FormDataUpdate } from "@/lib/form-types"
+import { validateSpouse, type Errors } from "@/lib/shared/wizard-contract"
 
 interface SpouseStepProps {
   formData: FormData
@@ -22,23 +24,17 @@ const toggleActiveStyles =
   "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
+const errorStyles = "border-destructive bg-destructive/5 focus:ring-destructive/10"
 
 export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading }: SpouseStepProps) {
-  const [isMobile, setIsMobile] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
 
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768 || "ontouchstart" in window)
-    }
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
-  }, [])
+  const errors: Errors = useMemo(() => validateSpouse(formData), [formData])
+  const isFormValid = Object.keys(errors).length === 0
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!isFormValid) {
       setShowErrors(true)
       setTimeout(() => {
@@ -52,19 +48,17 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
     onNext()
   }
 
-  const handleFieldChange = (field: keyof FormData, value: string) => {
-    updateFormData({ [field]: value })
+  const set = (data: FormDataUpdate) => {
+    updateFormData(data)
     setShowErrors(false)
   }
-
-  const isFormValid =
-    formData.spouseFirstName &&
-    formData.spouseLastName &&
-    formData.spouseHasValidPassport
-
-  const getErrorClass = (fieldValue: FieldValue) => {
-    return showErrors && !fieldValue ? "border-destructive bg-destructive/5 focus:ring-destructive/10" : ""
-  }
+  const errorClass = (field: keyof FormData) => (showErrors && errors[field] ? errorStyles : "")
+  const errorText = (field: keyof FormData) =>
+    showErrors && errors[field] ? (
+      <p className="text-xs text-red-600 mt-1" role="alert">
+        {errors[field]}
+      </p>
+    ) : null
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
@@ -72,7 +66,7 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
       <div className="flex items-start gap-3.5 p-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl shadow-sm">
         <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Please provide your spouse's information for the visa application.
+          Please provide your spouse&apos;s information for the visa application.
         </p>
       </div>
 
@@ -98,11 +92,12 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           <input
             id="spouseFirstName"
             value={formData.spouseFirstName || ""}
-            onChange={(e) => handleFieldChange("spouseFirstName", e.target.value)}
+            onChange={(e) => set({ spouseFirstName: e.target.value })}
             placeholder="Enter first name"
             required
-            className={cn(inputStyles, "w-full", getErrorClass(formData.spouseFirstName))}
+            className={cn(inputStyles, "w-full", errorClass("spouseFirstName"))}
           />
+          {errorText("spouseFirstName")}
         </div>
 
         {/* Last Name */}
@@ -113,11 +108,12 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           <input
             id="spouseLastName"
             value={formData.spouseLastName || ""}
-            onChange={(e) => handleFieldChange("spouseLastName", e.target.value)}
+            onChange={(e) => set({ spouseLastName: e.target.value })}
             placeholder="Enter last name"
             required
-            className={cn(inputStyles, "w-full", getErrorClass(formData.spouseLastName))}
+            className={cn(inputStyles, "w-full", errorClass("spouseLastName"))}
           />
+          {errorText("spouseLastName")}
         </div>
 
         {/* Valid Passport */}
@@ -126,35 +122,24 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           <div className="flex gap-3 mt-1">
             <button
               type="button"
-              className={cn(
-                "flex-1",
-                formData.spouseHasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles
-              )}
-              onClick={() => {
-                updateFormData({ spouseHasValidPassport: "yes" })
-                setShowErrors(false)
-              }}
+              className={cn("flex-1", formData.spouseHasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
+              onClick={() => set({ spouseHasValidPassport: "yes" })}
             >
               Yes
             </button>
             <button
               type="button"
-              className={cn(
-                "flex-1",
-                formData.spouseHasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles
-              )}
-              onClick={() => {
-                updateFormData({ spouseHasValidPassport: "no" })
-                setShowErrors(false)
-              }}
+              className={cn("flex-1", formData.spouseHasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
+              onClick={() => set({ spouseHasValidPassport: "no" })}
             >
               No
             </button>
           </div>
+          {errorText("spouseHasValidPassport")}
           {formData.spouseHasValidPassport === "yes" && (
             <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
               <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Your spouse's passport should have at least 6 months validity from your travel date.</span>
+              <span>Your spouse&apos;s passport should have at least 6 months validity from your travel date.</span>
             </p>
           )}
           {formData.spouseHasValidPassport === "no" && (
@@ -173,7 +158,7 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           <input
             id="spouseOccupation"
             value={formData.spouseOccupation || ""}
-            onChange={(e) => handleFieldChange("spouseOccupation", e.target.value)}
+            onChange={(e) => set({ spouseOccupation: e.target.value })}
             placeholder="Enter occupation"
             className={cn(inputStyles, "w-full")}
           />
@@ -202,7 +187,7 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
               Processing...
             </>
           ) : (
-            "Continue"
+            "Continue to Trip Details"
           )}
         </Button>
       </div>

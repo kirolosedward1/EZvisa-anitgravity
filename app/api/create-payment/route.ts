@@ -1,27 +1,35 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
-import { isValidRedirectUrl } from "@/lib/sanitize"
+import { SITE_URL, siteUrl } from "@/lib/site-url"
 import { applyIntentStatus, fetchIntent, isPaidStatus, OPEN_INTENT_STATUSES, priceForApplication, UUID_RE } from "@/lib/ziina"
 
+/**
+ * POST /api/create-payment  { applicationId, success_url?, cancel_url? }
+ * Used by the website payment step and by the EZvisa mobile app (mobile/lib/payments.ts). The price is always
+ * computed here from the stored application (lib/ziina priceForApplication); amount/currency/test in the body are ignored.
+ * Return URLs are forced onto the official domain: the app passes https://www.ezvisa.net/app-return?to=ezvisa://…,
+ * which hands control back to the app, and the website passes /payment-success and /payment-failed.
+ */
 export async function POST(request: NextRequest) {
   try {
-    // Origin validation for CSRF protection
+    // Origin validation for CSRF protection (native app requests carry no Origin header).
     const origin = request.headers.get("origin")
+    const isDev = process.env.NODE_ENV === "development"
     const allowedOrigins = [
-      process.env.NEXT_PUBLIC_APP_URL,
-      "http://localhost:3000",
+      SITE_URL,
       "https://ezvisa.net",
       "https://www.ezvisa.net",
-    ].filter(Boolean)
-    
+      ...(isDev ? ["http://localhost:3000"] : []),
+    ]
+
     if (origin && !allowedOrigins.some(allowed => origin.startsWith(allowed as string))) {
       return NextResponse.json({ error: "Invalid origin" }, { status: 403 })
     }
-    
+
     // Rate limiting - strict for payment routes (Redis-based)
     const clientIp = getClientIp(request)
     const rateLimitResult = await checkRateLimit(`payment:${clientIp}`, RATE_LIMITS.strict)
-    
+
     if (!rateLimitResult.success) {
       console.log("[v0] Rate limit exceeded for payment")
       return NextResponse.json(
@@ -41,14 +49,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid application" }, { status: 400 })
     }
 
-    // Validate redirect URLs to prevent open redirects
-    const allowedDomains = ['ezvisa.net', 'localhost', 'vercel.app', 'vusercontent.net']
-    if (success_url && !isValidRedirectUrl(success_url, allowedDomains)) {
-      return NextResponse.json({ error: "Invalid success URL" }, { status: 400 })
+    // No open redirects: whatever the client sends, Ziina returns the customer to the official domain.
+    const toSite = (u: unknown, fallbackPath: string) => {
+      if (typeof u !== "string" || !u) return siteUrl(fallbackPath)
+      try {
+        const parsed = new URL(u, SITE_URL)
+        return isDev && parsed.hostname === "localhost" ? parsed.toString() : siteUrl(parsed.pathname + parsed.search)
+      } catch {
+        return siteUrl(fallbackPath)
+      }
     }
-    if (cancel_url && !isValidRedirectUrl(cancel_url, allowedDomains)) {
-      return NextResponse.json({ error: "Invalid cancel URL" }, { status: 400 })
-    }
+    const successUrl = toSite(success_url, "/payment-success")
+    const cancelUrl = toSite(cancel_url, "/payment-failed")
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
@@ -91,7 +103,7 @@ export async function POST(request: NextRequest) {
         OPEN_INTENT_STATUSES.includes(existing.status) &&
         existing.redirect_url &&
         existing.amount === amountInFils &&
-        (!existing.success_url || !success_url || existing.success_url === success_url)
+        (!existing.success_url || existing.success_url === successUrl)
       ) {
         return NextResponse.json({ ...existing, reused: true })
       }
@@ -113,8 +125,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         amount: amountInFils, // server-computed, smallest currency unit
         currency_code: validCurrency,
-        success_url,
-        cancel_url,
+        success_url: successUrl,
+        cancel_url: cancelUrl,
         test,
       }),
     })

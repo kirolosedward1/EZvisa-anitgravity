@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import Link from "next/link"
 import Image from "next/image"
 import { SCHENGEN_COUNTRIES, countryFlags, getCountryUrl } from "@/lib/countries"
+import { FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
 import { motion } from "framer-motion"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -20,6 +21,11 @@ import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 
 interface DocumentRequirementsPageProps {
   initialCountry: string
+  /** Visa-centre facts from lib/visa-rules.ts (shown in the page's structured data; accepted here for the route). */
+  provider?: string
+  processingTime?: { minDays: number; maxDays: number; note: string }
+  fee?: { eur: number; aed: number; note: string }
+  lastReviewed?: string
 }
 
 // Country background images mapping
@@ -132,17 +138,8 @@ const getDocumentRequirements = (country: string) => ({
   ],
 })
 
-// Nationality list from hero component
-const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
-
-const fromCountryFlags: Record<string, string> = {
-  Egypt: "🇪🇬",
-  India: "🇮🇳",
-  Jordan: "🇯🇴",
-  Pakistan: "🇵🇰",
-  "Russian Federation": "🇷🇺",
-  Syria: "🇸🇾",
-}
+// Same nationality list as the wizard and the app (website ↔ app contract).
+const fromCountries = FEATURED_NATIONALITIES
 
 export function DocumentRequirementsPage({ initialCountry }: DocumentRequirementsPageProps) {
   const router = useRouter()
@@ -426,7 +423,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                             <div className="flex items-center gap-3">
                               <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                                 <Image
-                                  src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                  src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-")}.png`}
                                   alt=""
                                   fill
                                   className="object-cover"
@@ -471,7 +468,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                                   <div className="flex items-center gap-3 w-full">
                                     <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                                       <Image
-                                        src={`/flags/${country.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                        src={`/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`}
                                         alt=""
                                         fill
                                         className="object-cover"

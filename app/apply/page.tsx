@@ -1,232 +1,93 @@
 "use client"
 
-import { DEFAULT_RESIDENCE, coerceResidence } from "@/lib/residence"
+// The visa application wizard. Steps, fields, option lists and validation are shared with the EZvisa app through
+// lib/shared/wizard-contract.ts: Personal → Spouse (if the spouse travels) → Trip Details → Review & Payment.
+// Employment details and the passport number are asked after payment (dashboard "Continue application"), and a
+// signed-in user's answers autosave to the same visa_applications draft row the app reads (lib/draft-sync.ts).
 import { useState, Suspense, useCallback, useMemo, useEffect, useRef } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { NationalityStep } from "@/components/apply/nationality-step"
 import { TripDetailsStep } from "@/components/apply/trip-details-step"
-import { DocumentsStep } from "@/components/apply/documents-step"
 import { PaymentStep } from "@/components/apply/payment-step"
-import { EmploymentStep } from "@/components/apply/employment-step"
 import { SpouseStep } from "@/components/apply/spouse-step"
 import { CheckCircle2, ChevronDown } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { useSearchParams, useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { trackEvent } from "@/lib/analytics"
-import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
+import { getStepSlug, getStepNumber, isValidStep, STEP_TO_NUMBER, STEP_TITLES, visibleSteps } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { useDraftSync, type ServerDraft } from "@/lib/draft-sync"
 import { DraftStatus, DraftConflictDialog } from "@/components/apply/draft-status"
+import type { FormData } from "@/lib/form-types"
+import { emptyAnswers, coerceAnswers, matchCountry, SCHENGEN, SCHENGEN_VISA_REQUIRED, type WizardStep } from "@/lib/shared/wizard-contract"
 
 const WIZARD_STORAGE_KEY = "visa_wizard_data"
 const AUTO_SAVE_DELAY = 300
 
-interface WizardFormData {
-  // Step 1: Personal & Profile Information
-  nationality: string
-  countryOfResidence: string
-  cityOfResidence: string
-  firstName: string
-  lastName: string
-  email: string
-  phone: string
-  whatsappOptIn?: boolean
-  dateOfBirth: string
-  passportNumber: string
-  maritalStatus: "single" | "married" | "divorced" | "widowed" | ""
-  employmentStatus: "employed" | "business" | "freelancer" | "student" | "unemployed" | "retired" | ""
-  spouseNationality?: string
-  hasValidPassport: "yes" | "no" | undefined
-  // Conditional employment fields
-  jobTitle: string
-  companyName: string
-  employmentStartDate: string
-  monthlySalary: string
-  hasNOC: "yes" | "no" | undefined
-  industry: string
-  yearsOfExperience: string
-  averageMonthlyIncome: string
-  // Step 2: Employment
-  employmentDetails: string
-  // Step 2/3: Spouse Information (if married and accompanying)
-  spouseFirstName: string
-  spouseLastName: string
-  spouseHasValidPassport: "yes" | "no" | undefined
-  spouseOccupation: string
-  // Step 3: Trip Details & Travel Intent
-  destination: string
-  purposeOfTrip: string
-  isFirstSchengenVisa: string
-  previousTravel: string[]
-  travelingWith: string
-  travelStyle: string
-  preferredCities: string[]
-  travelStartDate: string
-  travelEndDate: string
-  datesFlexible: string
-  // Step 4: Accommodation, Budget & Documents
-  hotelCategory: string
-  roomType: string
-  preferredLocation: string
-  hasBankStatement: string
-  balanceRange: string
-  fundingSource: string
-  previousRefusals: string
-  refusalDetails?: string
-  passportCopy: File | null
-  residencyCopy: File | null
-  photo: File | null
-  nocSalaryCertificate: File | null
-  previousVisas: File | null
-  spouseAccompanying: "yes" | "no" | undefined
-  willVisitOtherCountries?: "yes" | "no"
-  // Additional countries for itinerary
-  additionalCountries: Array<{ country: string; arrivalDate: string; departureDate: string }>
-  itinerary: string
-  // Step 5: Declaration
-  declarationAccepted: boolean
-  documentsUploadLater?: boolean
+const defaultFormData: FormData = { ...emptyAnswers }
 
-  // Missing fields for steps types compatibility
-  hasEmiratesId: "yes" | "no" | undefined
-  passportPhoto: File | null
-  passportFront: File | null
-  passportBack: File | null
-  bankStatement: File | null
-  nocCertificate: File | null
-  salaryCertificate: File | null
-  spousePassportPhoto: File | null
-  spousePassportFront: File | null
-  spousePassportBack: File | null
-  spouseBankStatement: File | null
-  spouseNocCertificate: File | null
-  spouseSalaryCertificate: File | null
-  spousePhoto: File | null
-}
-
-const defaultFormData: WizardFormData = {
-  nationality: "",
-  countryOfResidence: DEFAULT_RESIDENCE,
-  cityOfResidence: "",
-  firstName: "",
-  lastName: "",
-  email: "",
-  phone: "",
-  whatsappOptIn: true,
-  dateOfBirth: "",
-  passportNumber: "",
-  maritalStatus: "",
-  employmentStatus: "",
-  jobTitle: "",
-  companyName: "",
-  employmentStartDate: "",
-  monthlySalary: "",
-  hasNOC: undefined,
-  industry: "",
-  yearsOfExperience: "",
-  averageMonthlyIncome: "",
-  spouseNationality: "",
-  hasValidPassport: undefined,
-  spouseFirstName: "",
-  spouseLastName: "",
-  spouseHasValidPassport: undefined,
-  spouseOccupation: "",
-  employmentDetails: "",
-  destination: "",
-  purposeOfTrip: "",
-  isFirstSchengenVisa: "",
-  previousTravel: [],
-  travelingWith: "",
-  travelStyle: "",
-  preferredCities: [],
-  travelStartDate: "",
-  travelEndDate: "",
-  datesFlexible: "",
-  hotelCategory: "",
-  roomType: "",
-  preferredLocation: "",
-  hasBankStatement: "",
-  balanceRange: "",
-  fundingSource: "",
-  previousRefusals: "",
-  passportCopy: null,
-  residencyCopy: null,
-  photo: null,
-  nocSalaryCertificate: null,
-  previousVisas: null,
-  spouseAccompanying: undefined,
-  additionalCountries: [],
-  itinerary: "",
-  declarationAccepted: false,
-  documentsUploadLater: false,
-
-  // Missing fields initialization
-  hasEmiratesId: undefined,
-  passportPhoto: null,
-  passportFront: null,
-  passportBack: null,
-  bankStatement: null,
-  nocCertificate: null,
-  salaryCertificate: null,
-  spousePassportPhoto: null,
-  spousePassportFront: null,
-  spousePassportBack: null,
-  spouseBankStatement: null,
-  spouseNocCertificate: null,
-  spouseSalaryCertificate: null,
-  spousePhoto: null,
+/** Answers prefilled from the URL (homepage selector, destination pages, shared links), validated against the shared lists. */
+function paramsToAnswers(searchParams: URLSearchParams): Partial<FormData> {
+  const from = matchCountry(searchParams.get("from") || searchParams.get("nationality"), SCHENGEN_VISA_REQUIRED)
+  const to = matchCountry(searchParams.get("to") || searchParams.get("destination"), SCHENGEN)
+  const travelStartDate = searchParams.get("travelStartDate") || ""
+  const travelEndDate = searchParams.get("travelEndDate") || ""
+  return {
+    ...(from && { nationality: from }),
+    ...(to && { destination: to }),
+    ...(/^\d{4}-\d{2}-\d{2}$/.test(travelStartDate) && { travelStartDate }),
+    ...(/^\d{4}-\d{2}-\d{2}$/.test(travelEndDate) && { travelEndDate }),
+  }
 }
 
 function ApplyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const [formData, setFormData] = useState<WizardFormData>(defaultFormData)
+  const [formData, setFormData] = useState<FormData>(defaultFormData)
   const [isInitialized, setIsInitialized] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [direction, setDirection] = useState(0)
   const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [isTransitioning, setIsTransitioning] = useState(false)
+  const [isTransitioning] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
   const [showResumeModal, setShowResumeModal] = useState(false)
-  const [pendingSavedData, setPendingSavedData] = useState<Partial<WizardFormData> | null>(null)
+  const [pendingSavedData, setPendingSavedData] = useState<Partial<FormData> | null>(null)
 
   // Signed-in users: answers also autosave to their draft row, shared with the EZvisa app (lib/draft-sync.ts).
+  // ?draft=<id> opens a specific draft (dashboard "Continue draft", or one started in the app).
+  const openDraftId = searchParams.get("draft")
   const handleServerDraft = useCallback((d: ServerDraft) => {
-    setFormData(coerceResidence({ ...defaultFormData, ...(d.wizard as Partial<WizardFormData>) }))
+    setFormData(coerceAnswers({ ...defaultFormData, ...(d.wizard as Partial<FormData>) }))
     setCurrentStep(getStepNumber(d.step))
   }, [])
-  const draft = useDraftSync({ form: formData, step: getStepSlug(currentStep), ready: isInitialized && !showResumeModal, onLoad: handleServerDraft })
+  const draft = useDraftSync({ form: formData, step: getStepSlug(currentStep), ready: isInitialized && !showResumeModal, onLoad: handleServerDraft, openId: openDraftId })
 
   const isUpdatingUrl = useRef(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const wizardContainerRef = useRef<HTMLDivElement>(null)
   const isMounted = useRef(false)
 
-  // Residence UAE only, city = emirate: coerce restored drafts and links (invalid city is cleared).
+  // Coerce restored drafts and links to the shared rules (residence UAE only, visa-required nationality, …).
   useEffect(() => {
-    const c = coerceResidence(formData)
-    if (c.countryOfResidence !== formData.countryOfResidence || c.cityOfResidence !== formData.cityOfResidence) setFormData(c)
+    const c = coerceAnswers(formData)
+    if (
+      c.countryOfResidence !== formData.countryOfResidence ||
+      c.cityOfResidence !== formData.cityOfResidence ||
+      c.nationality !== formData.nationality ||
+      c.hasNOC !== formData.hasNOC ||
+      c.passportExpiry !== formData.passportExpiry
+    ) {
+      setFormData(c)
+    }
   }, [formData])
 
   const handleContinuePrevious = useCallback(() => {
     if (pendingSavedData) {
-      const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
-      const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
-      const travelStartDate = searchParams.get("travelStartDate") || ""
-      const travelEndDate = searchParams.get("travelEndDate") || ""
-      
-      setFormData({
-        ...defaultFormData,
-        ...pendingSavedData,
-        ...(fromCountry && { nationality: fromCountry }),
-        ...(toCountry && { destination: toCountry }),
-        ...(travelStartDate && { travelStartDate }),
-        ...(travelEndDate && { travelEndDate }),
-      })
+      setFormData(coerceAnswers({ ...defaultFormData, ...pendingSavedData, ...paramsToAnswers(searchParams) }))
     }
     setShowResumeModal(false)
   }, [pendingSavedData, searchParams])
@@ -234,26 +95,16 @@ function ApplyPageContent() {
   const handleStartFresh = useCallback(() => {
     localStorage.removeItem(WIZARD_STORAGE_KEY)
     draft.forget()
-    const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
-    const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
-    const travelStartDate = searchParams.get("travelStartDate") || ""
-    const travelEndDate = searchParams.get("travelEndDate") || ""
-    
-    setFormData({
-      ...defaultFormData,
-      ...(fromCountry && { nationality: fromCountry }),
-      ...(toCountry && { destination: toCountry }),
-      ...(travelStartDate && { travelStartDate }),
-      ...(travelEndDate && { travelEndDate }),
-    })
-    
+    const seeded = paramsToAnswers(searchParams)
+    setFormData({ ...defaultFormData, ...seeded })
+
     const slug = getStepSlug(1)
     setCurrentStep(1)
     router.replace(
-      `/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`,
+      `/apply?step=${slug}${seeded.nationality ? `&from=${encodeURIComponent(seeded.nationality)}` : ""}${seeded.destination ? `&to=${encodeURIComponent(seeded.destination)}` : ""}`,
       { scroll: false }
     )
-    
+
     setShowResumeModal(false)
   }, [router, searchParams, draft.forget])
 
@@ -276,55 +127,49 @@ function ApplyPageContent() {
     }
 
     window.scrollTo({ top: 0, behavior: "smooth" })
-
-    setTimeout(() => {
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-    }, 100)
   }, [])
+
+  // The steps shown before payment, exactly like the app (spouse only when married and the spouse travels).
+  const steps = useMemo(
+    () => visibleSteps(formData).map((slug) => ({ slug, number: STEP_TO_NUMBER[slug], ...STEP_TITLES[slug] })),
+    [formData.maritalStatus, formData.spouseAccompanying], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+
+  const moveTo = useCallback(
+    (slug: WizardStep) => {
+      setCurrentStep(STEP_TO_NUMBER[slug])
+      scrollToWizardTop()
+    },
+    [scrollToWizardTop],
+  )
 
   const handleNext = useCallback(() => {
     trackEvent("application_step_completed", { step: currentStep, destination: formData.destination })
     setDirection(1)
-    setCurrentStep((prevStep) => {
-      const nextStep = prevStep + 1
-      const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-      
-      // Skip spouse step (step 2) if not needed
-      if (nextStep === 2 && !shouldShowSpouse) {
-        return 3 // Skip to employment
-      }
-      
-      return Math.min(nextStep, 5)
-    })
-    scrollToWizardTop()
-  }, [formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
+    const order = visibleSteps(formData)
+    const idx = order.indexOf(getStepSlug(currentStep))
+    moveTo(order[Math.min(idx + 1, order.length - 1)] ?? "payment")
+  }, [currentStep, formData, moveTo])
 
   const handleBack = useCallback(() => {
     setDirection(-1)
-    setCurrentStep((prevStep) => {
-      const previousStep = prevStep - 1
-      const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-      
-      // Skip spouse step (step 2) when going back if not needed
-      if (previousStep === 2 && !shouldShowSpouse) {
-        return 1 // Skip back to personal
-      }
-      
-      return Math.max(previousStep, 1)
-    })
-    scrollToWizardTop()
-  }, [formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
+    const order = visibleSteps(formData)
+    const idx = order.indexOf(getStepSlug(currentStep))
+    moveTo(order[Math.max(idx - 1, 0)] ?? "personal")
+  }, [currentStep, formData, moveTo])
 
-  const handleStepClick = useCallback((stepNumber: number) => {
-    // Only allow navigation to completed steps (steps before current step)
-    if (stepNumber < currentStep) {
-      setDirection(stepNumber < currentStep ? -1 : 1)
-      setCurrentStep(stepNumber)
-      scrollToWizardTop()
-      setIsMobileDropdownOpen(false)
-    }
-  }, [currentStep, scrollToWizardTop])
+  const handleStepClick = useCallback(
+    (stepNumber: number) => {
+      // Only allow navigation to completed steps (steps before current step)
+      if (stepNumber < currentStep) {
+        setDirection(-1)
+        setCurrentStep(stepNumber)
+        scrollToWizardTop()
+        setIsMobileDropdownOpen(false)
+      }
+    },
+    [currentStep, scrollToWizardTop],
+  )
 
   useEffect(() => {
     if (typeof window === "undefined" || isInitialized) return
@@ -332,13 +177,9 @@ function ApplyPageContent() {
     isMounted.current = true
 
     try {
-      const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
-      const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
-      const travelStartDate = searchParams.get("travelStartDate") || ""
-      const travelEndDate = searchParams.get("travelEndDate") || ""
-      
-      if (toCountry) {
-        trackEvent("application_started", { destination: toCountry })
+      const seeded = paramsToAnswers(searchParams)
+      if (seeded.destination) {
+        trackEvent("application_started", { destination: seeded.destination })
       }
       const stepSlug = searchParams.get("step") || ""
       const isRetry = searchParams.get("retry") === "true"
@@ -348,7 +189,7 @@ function ApplyPageContent() {
         setPaymentError("Your previous payment was not completed. Please try again.")
       }
 
-      let savedData: Partial<WizardFormData> = {}
+      let savedData: Partial<FormData> = {}
       const saved = localStorage.getItem(WIZARD_STORAGE_KEY)
       let hasPreviousProgress = false
       if (saved) {
@@ -360,7 +201,6 @@ function ApplyPageContent() {
             savedData.email ||
             savedData.phone ||
             savedData.maritalStatus ||
-            savedData.employmentStatus ||
             savedData.destination ||
             savedData.nationality
           )
@@ -369,46 +209,21 @@ function ApplyPageContent() {
         }
       }
 
-      if (hasPreviousProgress) {
+      if (hasPreviousProgress && !openDraftId) {
         setPendingSavedData(savedData)
         setShowResumeModal(true)
-        setFormData({
-          ...defaultFormData,
-          ...(fromCountry && { nationality: fromCountry }),
-          ...(toCountry && { destination: toCountry }),
-          ...(travelStartDate && { travelStartDate }),
-          ...(travelEndDate && { travelEndDate }),
-        })
+        setFormData(coerceAnswers({ ...defaultFormData, ...seeded }))
       } else {
-        setFormData({
-          ...defaultFormData,
-          ...savedData,
-          ...(fromCountry && { nationality: fromCountry }),
-          ...(toCountry && { destination: toCountry }),
-          ...(travelStartDate && { travelStartDate }),
-          ...(travelEndDate && { travelEndDate }),
-        })
+        setFormData(coerceAnswers({ ...defaultFormData, ...(openDraftId ? {} : savedData), ...seeded }))
       }
 
       if (stepSlug && isValidStep(stepSlug)) {
-        const stepNumber = getStepNumber(stepSlug)
-        setCurrentStep(stepNumber)
-      } else if (stepSlug) {
-        // Invalid step, redirect to personal step
-        const slug = getStepSlug(1)
-        if (isMounted.current) {
-          router.replace(
-            `/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`,
-          )
-        }
-      } else {
-        // No step in URL, set default
-        const slug = getStepSlug(1)
-        if (isMounted.current) {
-          router.replace(
-            `/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`,
-          )
-        }
+        setCurrentStep(getStepNumber(stepSlug))
+      } else if (isMounted.current) {
+        // No or invalid step in the URL: start at the first step
+        const params = new URLSearchParams(searchParams.toString())
+        params.set("step", getStepSlug(1))
+        router.replace(`/apply?${params.toString()}`)
       }
 
       setIsInitialized(true)
@@ -434,38 +249,18 @@ function ApplyPageContent() {
             phone: prev.phone || (user.user_metadata?.phone || ""),
           }))
         }
-      } catch (err) {
+      } catch {
         // Non-blocking
       }
     }
     loadAuthenticatedUser()
   }, [])
 
-  const steps = useMemo(() => {
-    const shouldShowSpouseStep = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-
-    if (shouldShowSpouseStep) {
-      return [
-        { number: 1, title: "Personal Information", description: "Profile & contact details" },
-        { number: 2, title: "Spouse Information", description: "Spouse details" },
-        { number: 3, title: "Employment", description: "Work & income details" },
-        { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
-        { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
-      ]
-    }
-
-    return [
-      { number: 1, title: "Personal Information", description: "Profile & contact details" },
-      { number: 3, title: "Employment", description: "Work & income details" },
-      { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
-      { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
-    ]
-  }, [formData.maritalStatus, formData.spouseAccompanying])
-
   const totalSteps = steps.length
   const currentVisualStep = Math.max(1, steps.findIndex((s) => s.number === currentStep) + 1)
   const progressPercentage = ((currentVisualStep - 1) / (totalSteps - 1)) * 100
 
+  // Keep the URL in sync with the current step (keeps from/to/draft parameters).
   useEffect(() => {
     if (!isInitialized || isUpdatingUrl.current || !isMounted.current) return
 
@@ -474,13 +269,12 @@ function ApplyPageContent() {
 
     if (currentSlug !== expectedSlug) {
       isUpdatingUrl.current = true
-      const fromCountry = searchParams.get("from") || ""
-      const toCountry = searchParams.get("to") || ""
-
       const params = new URLSearchParams()
       params.set("step", expectedSlug)
-      if (fromCountry) params.set("from", fromCountry)
-      if (toCountry) params.set("to", toCountry)
+      for (const key of ["from", "to", "draft"]) {
+        const v = searchParams.get(key)
+        if (v) params.set(key, v)
+      }
 
       router.replace(`/apply?${params.toString()}`, { scroll: false })
 
@@ -501,6 +295,17 @@ function ApplyPageContent() {
       }
     }
   }, [searchParams, currentStep, isInitialized])
+
+  // If the spouse step disappears while we are on it (marital status changed), move on.
+  useEffect(() => {
+    if (!isInitialized) return
+    const slug = getStepSlug(currentStep)
+    if (!visibleSteps(formData).includes(slug)) setCurrentStep(STEP_TO_NUMBER["trip-details"])
+  }, [formData, currentStep, isInitialized])
+
+  const updateFormData = useCallback((data: Partial<FormData>) => {
+    setFormData((prev) => ({ ...prev, ...data }))
+  }, [])
 
   const renderStepContent = () => {
     if (!isInitialized) {
@@ -529,16 +334,6 @@ function ApplyPageContent() {
             isLoading={isTransitioning}
           />
         )
-      case "employment":
-        return (
-          <EmploymentStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-            onBack={handleBack}
-            isLoading={isTransitioning}
-          />
-        )
       case "trip-details":
         return (
           <TripDetailsStep
@@ -550,16 +345,11 @@ function ApplyPageContent() {
           />
         )
       case "payment":
-      case "documents":
         return <PaymentStep formData={formData} onBack={handleBack} isLoading={isTransitioning} paymentError={paymentError} prepareSubmit={draft.prepareSubmit} onSubmitted={draft.forget} />
       default:
         return null
     }
   }
-
-  const updateFormData = useCallback((data: Partial<WizardFormData>) => {
-    setFormData((prev) => ({ ...prev, ...data }))
-  }, [])
 
   useEffect(() => {
     if (!isInitialized) return
@@ -584,21 +374,16 @@ function ApplyPageContent() {
     }
   }, [formData, isInitialized])
 
+  const currentTitle = steps.find((s) => s.number === currentStep) ?? steps[0]
+
   return (
     <div className="min-h-[100dvh] flex flex-col">
       <SiteHeader />
 
       <div className="flex-1 relative overflow-hidden bg-background">
-        {/* Aurora Mesh Gradient Background - Lighter */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none transform-gpu">
-          {/* Static gradient orbs - Optimized for GPU/Battery by removing continuous pulse animations */}
-          <div className="absolute -top-[40%] -right-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-blue-400/15 via-indigo-400/10 to-purple-400/5 blur-3xl" />
-          <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tr from-violet-400/12 via-blue-300/8 to-cyan-300/5 blur-3xl" />
+          <div className="absolute -top-[40%] -right-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-blue-400/15 via-indigo-400/10 to-primary/5 blur-3xl" />
           <div className="absolute top-[60%] right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-indigo-400/10 via-blue-400/8 to-primary/5 blur-3xl" />
-          
-          {/* Mesh overlay for texture */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.03),transparent_50%)] opacity-40" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-15" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4 pt-28 md:pt-36 pb-16 md:pb-24" ref={wizardContainerRef}>
@@ -623,7 +408,7 @@ function ApplyPageContent() {
               </div>
               <div className="h-1.5 bg-border/40 rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-[0_0_10px_rgba(59,130,246,0.3)] rounded-full"
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercentage}%` }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
@@ -632,7 +417,7 @@ function ApplyPageContent() {
             </div>
           </motion.div>
 
-          <div className="mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8" style={{ maxWidth: '1312px' }}>
+          <div className="mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8 max-w-7xl">
             <div className="w-full lg:w-80 shrink-0">
               {/* Desktop: Title, Progress, and Steps in Left Column */}
               <motion.div
@@ -641,8 +426,8 @@ function ApplyPageContent() {
                 transition={{ duration: 0.6 }}
                 className="hidden lg:block mb-6"
               >
-                <h1 className="text-3xl text-foreground mb-2 font-medium tracking-tight">Visa Application</h1>
-                
+                <h1 className="text-3xl text-foreground mb-2 font-semibold tracking-tight">Visa Application</h1>
+
                 <div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                     <div className="flex items-center gap-2">
@@ -653,7 +438,7 @@ function ApplyPageContent() {
                   </div>
                   <div className="h-1.5 bg-border/40 rounded-full overflow-hidden">
                     <motion.div
-                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-[0_0_10px_rgba(59,130,246,0.3)] rounded-full"
+                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full"
                       initial={{ width: 0 }}
                       animate={{ width: `${progressPercentage}%` }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
@@ -661,26 +446,26 @@ function ApplyPageContent() {
                   </div>
                 </div>
               </motion.div>
-              
+
               {/* Mobile: Dropdown steps */}
               <div className="lg:hidden mb-4">
-                <div
+                <button
+                  type="button"
                   onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
-                  className="flex items-center justify-between p-4 rounded-md bg-white dark:bg-slate-900 border border-border/80 shadow-sm cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:dark:bg-slate-950"
+                  aria-expanded={isMobileDropdownOpen}
+                  className="w-full flex items-center justify-between p-4 rounded-md bg-card border border-border/80 shadow-sm cursor-pointer transition-all duration-200 hover:bg-secondary text-left"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-sm flex items-center justify-center font-bold bg-primary text-white shadow-sm ring-2 ring-primary/20 shrink-0">
+                    <div className="w-10 h-10 rounded-sm flex items-center justify-center font-bold bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20 shrink-0">
                       {currentVisualStep}
                     </div>
                     <div>
-                      <p className="font-bold text-sm tracking-tight text-foreground">{steps.find((s) => s.number === currentStep)?.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {steps.find((s) => s.number === currentStep)?.description}
-                      </p>
+                      <p className="font-bold text-sm tracking-tight text-foreground">{currentTitle?.title}</p>
+                      <p className="text-xs text-muted-foreground">{currentTitle?.description}</p>
                     </div>
                   </div>
                   <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${isMobileDropdownOpen ? "rotate-180" : ""}`} />
-                </div>
+                </button>
 
                 <AnimatePresence>
                   {isMobileDropdownOpen && (
@@ -689,27 +474,29 @@ function ApplyPageContent() {
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="overflow-hidden mt-2 space-y-1 bg-white dark:bg-slate-900 rounded-md shadow-lg border border-border/80 p-1"
+                      className="overflow-hidden mt-2 space-y-1 bg-card rounded-md shadow-lg border border-border/80 p-1"
                     >
                       {steps.map((step, index) => (
-                        <div
-                          key={step.number}
+                        <button
+                          type="button"
+                          key={step.slug}
                           onClick={() => handleStepClick(step.number)}
-                          className={`flex items-start gap-4 p-3 rounded-md transition-all ${
+                          disabled={step.number > currentStep}
+                          className={`w-full flex items-start gap-4 p-3 rounded-md transition-all text-left ${
                             currentStep === step.number
-                                ? "bg-slate-50 dark:bg-slate-950 text-foreground font-bold"
-                                : currentStep > step.number
-                                  ? "cursor-pointer hover:bg-slate-50 hover:dark:bg-slate-950"
-                                  : "cursor-not-allowed opacity-50"
+                              ? "bg-secondary text-foreground font-bold"
+                              : currentStep > step.number
+                                ? "cursor-pointer hover:bg-secondary"
+                                : "cursor-not-allowed opacity-50"
                           }`}
                         >
                           <div
                             className={`w-8 h-8 rounded-sm flex items-center justify-center font-bold text-xs shrink-0 ${
                               currentStep === step.number
-                                ? "bg-primary text-white"
+                                ? "bg-primary text-primary-foreground"
                                 : currentStep > step.number
                                   ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
+                                  : "bg-secondary text-muted-foreground border border-border"
                             }`}
                           >
                             {currentStep > step.number ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
@@ -718,7 +505,7 @@ function ApplyPageContent() {
                             <p className="font-semibold text-sm text-foreground">{step.title}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
                           </div>
-                        </div>
+                        </button>
                       ))}
                     </motion.div>
                   )}
@@ -728,27 +515,29 @@ function ApplyPageContent() {
               {/* Desktop: Vertical steps sidebar */}
               <div className="hidden lg:block space-y-3">
                 {steps.map((step, index) => (
-                  <motion.div
-                    key={step.number}
+                  <motion.button
+                    type="button"
+                    key={step.slug}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.05 }}
                     onClick={() => handleStepClick(step.number)}
-                    className={`flex items-start gap-4 p-4 rounded-md transition-all duration-300 ${
+                    disabled={step.number > currentStep}
+                    className={`w-full flex items-start gap-4 p-4 rounded-md transition-all duration-300 text-left ${
                       currentStep === step.number
-                        ? "bg-white dark:bg-slate-900 border border-border/80 shadow-md text-foreground font-medium scale-[1.02] relative pl-5 after:absolute after:left-0 after:top-3 after:bottom-3 after:w-[3px] after:bg-primary after:rounded-r-sm"
+                        ? "bg-card border border-border/80 shadow-md text-foreground font-medium scale-[1.02] relative pl-5 after:absolute after:left-0 after:top-3 after:bottom-3 after:w-[3px] after:bg-primary after:rounded-r-sm"
                         : currentStep > step.number
-                          ? "bg-slate-50 dark:bg-slate-950/50 border border-border/40 cursor-pointer hover:bg-slate-100 hover:dark:bg-slate-900 text-foreground/80 hover:shadow-sm"
+                          ? "bg-secondary/60 border border-border/40 cursor-pointer hover:bg-secondary text-foreground/80 hover:shadow-sm"
                           : "bg-transparent border border-transparent cursor-not-allowed opacity-50 text-muted-foreground"
                     }`}
                   >
                     <div
                       className={`w-9 h-9 rounded-sm flex items-center justify-center font-bold text-sm shrink-0 transition-all ${
                         currentStep === step.number
-                          ? "bg-primary text-white shadow-sm ring-2 ring-primary/20"
+                          ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20"
                           : currentStep > step.number
                             ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                            : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
+                            : "bg-secondary text-muted-foreground border border-border"
                       }`}
                     >
                       {currentStep > step.number ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
@@ -757,14 +546,17 @@ function ApplyPageContent() {
                       <p className="font-bold text-sm tracking-tight">{step.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
                     </div>
-                  </motion.div>
+                  </motion.button>
                 ))}
+                <p className="px-4 pt-2 text-xs text-muted-foreground leading-relaxed">
+                  After payment: passport number and employment details, then your documents. The same steps as in the EZvisa app.
+                </p>
               </div>
             </div>
 
             {/* Step Content */}
-            <div className="flex-1 pb-8">
-              <Card className="border border-border/80 bg-white dark:bg-slate-900 shadow-xl rounded-md overflow-hidden transition-all duration-300">
+            <div className="flex-1 pb-8 min-w-0">
+              <Card className="border border-border/80 bg-card shadow-xl rounded-md overflow-hidden transition-all duration-300">
                 <CardContent className="p-6 md:p-8 overflow-hidden">
                   <AnimatePresence mode="wait" custom={direction}>
                     <motion.div
@@ -805,15 +597,15 @@ function ApplyPageContent() {
       <DraftConflictDialog conflict={draft.conflict} onChoose={draft.resolveConflict} />
 
       {showResumeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 md:backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-border/80 shadow-xl rounded-md p-6 md:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col gap-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 md:backdrop-blur-md animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-labelledby="resume-title">
+          <div className="bg-card border border-border/80 shadow-xl rounded-md p-6 md:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col gap-5">
             <div className="space-y-2">
-              <h3 className="text-xl font-semibold tracking-tight text-foreground">Continue Application?</h3>
+              <h3 id="resume-title" className="text-xl font-semibold tracking-tight text-foreground">Continue Application?</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 We found a previous in-progress visa application. Would you like to restore your details or start fresh?
               </p>
             </div>
-            
+
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 type="button"

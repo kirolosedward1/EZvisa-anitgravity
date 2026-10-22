@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useRef, useState } from "react"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { applicationColumns, pickAnswers, type WizardAnswers } from "@/lib/shared/wizard-contract"
 
 const META_KEY = "visa_wizard_draft_meta"
 const DEBOUNCE_MS = 800
@@ -36,15 +37,9 @@ const sameVersion = (a?: string | null, b?: string | null) => !!a && !!b && (a =
 const backoffMs = (n: number) => Math.min(60_000, 2000 * 2 ** (n - 1)) * (0.8 + Math.random() * 0.4)
 const isNetworkError = (e: unknown) => /network|fetch|timeout|offline|abort/i.test(String((e as Error)?.message ?? e))
 
-/** Answers only: files are uploaded after payment and can't be stored in the draft. */
+/** Answers only (the shared WizardAnswers keys): website-only fields are never stored in the draft. */
 export function serializableAnswers(form: object): Record<string, unknown> {
-  const out: Record<string, unknown> = {}
-  for (const [k, v] of Object.entries(form)) {
-    if (v === undefined || typeof v === "function") continue
-    if (typeof File !== "undefined" && v instanceof File) continue
-    out[k] = v
-  }
-  return JSON.parse(JSON.stringify(out))
+  return JSON.parse(JSON.stringify(pickAnswers(form as Record<string, unknown>)))
 }
 function stable(v: unknown): string {
   if (Array.isArray(v)) return `[${v.map(stable).join(",")}]`
@@ -71,50 +66,12 @@ function toServerDraft(r: Row): ServerDraft {
     editedOn: n.lastEditedOn ?? (n.source === "mobile-app" ? "app" : null),
   }
 }
-const days = (a: string, b: string) => Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / 86400000)
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "")
 
-/** Column mapping of /api/submit-application, plus the answers and step for resume (same keys as the app). */
+/** Column mapping shared with the app and /api/submit-application (lib/shared/wizard-contract.ts applicationColumns). */
 function columns(w: Record<string, unknown>, email: string, step: string, prev: Record<string, any>) {
-  const prevWizard = (prev.wizard ?? {}) as Record<string, unknown>
-  // Keep app-only keys (e.g. passportExpiry); if the phone number changed here, drop the app's split phone fields.
-  const keep = { ...prevWizard }
-  if (str(prevWizard.phone) !== str(w.phone)) {
-    delete keep.phoneLocal
-    delete keep.phoneCountry
-  }
-  const start = str(w.travelStartDate)
-  const end = str(w.travelEndDate)
-  return {
-    full_name: `${str(w.firstName)} ${str(w.lastName)}`.trim() || "Draft",
-    email,
-    phone: str(w.phone),
-    nationality: str(w.nationality),
-    destination_country: str(w.destination),
-    date_of_birth: str(w.dateOfBirth) || null,
-    entry_date: start || null,
-    exit_date: end || null,
-    travel_purpose: str(w.purposeOfTrip),
-    passport_number: str(w.passportNumber) || null,
-    duration_days: start && end ? days(start, end) : null,
-    previous_schengen_visa: w.isFirstSchengenVisa ? w.isFirstSchengenVisa === "no" : false,
-    previous_rejections: w.previousRefusals === "yes",
-    rejection_details: w.previousRefusals === "yes" ? str(w.refusalDetails) || null : null,
-    additional_notes: JSON.stringify({
-      ...prev,
-      maritalStatus: w.maritalStatus,
-      employmentStatus: w.employmentStatus,
-      jobTitle: str(w.jobTitle),
-      companyName: str(w.companyName),
-      monthlySalary: w.monthlySalary,
-      spouseAccompanying: w.spouseAccompanying || "no",
-      source: prev.source ?? "website",
-      lastEditedOn: "website",
-      wizardStep: step,
-      wizardQuestion: undefined, // the website resumes per step; the app then starts at that step's first question
-      wizard: { ...keep, ...w },
-    }),
-  }
+  // The website resumes per step; the app then starts at that step's first question (no wizardQuestion).
+  return applicationColumns(w as Partial<WizardAnswers>, email, step, prev, { platform: "web", source: "website" })
 }
 
 type SaveResult = { ok: true; updatedAt: string } | { ok: false; reason: DraftConflict["reason"]; server: ServerDraft | null }
@@ -163,7 +120,7 @@ function readMeta(): Meta {
  * @param ready  the wizard finished restoring local data
  * @param onLoad called with a server copy to show (resume, or the user picked the newer copy)
  */
-export function useDraftSync({ form, step, ready, onLoad }: { form: object; step: string; ready: boolean; onLoad: (d: ServerDraft) => void }) {
+export function useDraftSync({ form, step, ready, onLoad, openId }: { form: object; step: string; ready: boolean; onLoad: (d: ServerDraft) => void; openId?: string | null }) {
   const sb = useRef<SupabaseClient | null>(null)
   const [email, setEmail] = useState<string | null>(null)
   const [status, setStatus] = useState<DraftSyncStatus>("local")
@@ -315,6 +272,14 @@ export function useDraftSync({ form, step, ready, onLoad }: { form: object; step
       persist()
     }
     const hasLocal = Object.entries(latest.current.w).some(([k, v]) => ["destination", "firstName", "nationality", "phone"].includes(k) && !!v)
+    // A specific draft was asked for (dashboard "Continue draft", or a draft started in the app): open that row.
+    if (openId && /^[0-9a-f-]{36}$/i.test(openId) && meta.current.draftId !== openId) {
+      sb.current.from("visa_applications").select(COLS).eq("id", openId).eq("email", email).eq("application_status", "draft").maybeSingle<Row>()
+        .then(({ data }) => {
+          if (data) apply(toServerDraft(data))
+        })
+      return
+    }
     if (meta.current.draftId) {
       checkRemote()
       return
@@ -324,7 +289,7 @@ export function useDraftSync({ form, step, ready, onLoad }: { form: object; step
       .then(({ data }) => {
         if (data?.[0] && !meta.current.draftId && !noResume.current) apply(toServerDraft(data[0] as Row))
       })
-  }, [ready, email, apply, checkRemote])
+  }, [ready, email, apply, checkRemote, openId])
   // Debounced save after each change.
   const fp = fingerprint(latest.current.w, latest.current.step)
   useEffect(() => {

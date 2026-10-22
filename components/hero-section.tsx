@@ -10,6 +10,7 @@ import Image from "next/image"
 import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
+import { SCHENGEN, FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
 
 const countryFlags: Record<string, string> = {
   Austria: "🇦🇹", Belgium: "🇧🇪", Croatia: "🇭🇷", "Czech Republic": "🇨🇿",
@@ -24,15 +25,9 @@ const countryFlags: Record<string, string> = {
   "Russian Federation": "🇷🇺", Syria: "🇸🇾",
 }
 
-const schengenCountries = [
-  "Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark",
-  "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland",
-  "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta",
-  "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia",
-  "Slovenia", "Spain", "Sweden", "Switzerland",
-]
-
-const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+// Destinations and nationalities come from the website ↔ app contract (same lists as the app's wizard).
+const schengenCountries = SCHENGEN
+const fromCountries = FEATURED_NATIONALITIES
 
 function getApprovalRate(from: string, to: string) {
   if (!from || !to) return "98.0%";
@@ -251,7 +246,7 @@ export function HeroSection() {
                               <div className="flex items-center gap-2">
                                 <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                                   <Image
-                                    src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                    src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-")}.png`}
                                     alt=""
                                     fill
                                     sizes="24px"
@@ -288,7 +283,7 @@ export function HeroSection() {
                                   <div className="flex items-center gap-3">
                                     <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                                       <Image
-                                        src={`/flags/${country.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                        src={`/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`}
                                         alt=""
                                         fill
                                         className="object-cover"
@@ -415,7 +410,7 @@ export function HeroSection() {
                           <div className="flex items-center -space-x-2.5 flex-shrink-0 mt-1">
                             <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-xs border border-background z-10 bg-secondary/50">
                               <Image
-                                src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-")}.png`}
                                 alt={fromCountry}
                                 fill
                                 className="object-cover"
@@ -423,7 +418,7 @@ export function HeroSection() {
                             </div>
                             <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-xs border border-background bg-secondary/50">
                               <Image
-                                src={`/flags/${toCountry.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                src={`/flags/${toCountry.toLowerCase().replace(/\s+/g, "-")}.png`}
                                 alt={toCountry}
                                 fill
                                 className="object-cover"

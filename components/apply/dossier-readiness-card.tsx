@@ -2,78 +2,16 @@
 
 import { useMemo } from "react"
 import { ShieldCheck, CheckCircle2, AlertTriangle, Sparkles } from "lucide-react"
-import { FormData } from "@/lib/form-types"
+import type { FormData } from "@/lib/form-types"
+import { readiness } from "@/lib/shared/wizard-contract"
 
 interface DossierReadinessCardProps {
   formData: FormData
 }
 
+/** Same score and wording as the app's review step (lib/shared/wizard-contract.ts readiness). */
 export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
-  const readiness = useMemo(() => {
-    let score = 70 // Baseline score with personal & trip details filled
-    const checks: { label: string; passed: boolean; note?: string }[] = []
-
-    // 1. Duration check
-    if (formData.travelStartDate && formData.travelEndDate) {
-      const start = new Date(formData.travelStartDate)
-      const end = new Date(formData.travelEndDate)
-      const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-      if (days > 0 && days <= 90) {
-        score += 8
-        checks.push({ label: `Stay duration (${days} days) within Schengen 90-day legal limit`, passed: true })
-      } else {
-        checks.push({ label: `Stay duration exceeds 90 days`, passed: false, note: "Schengen tourist visas cannot exceed 90 days" })
-      }
-
-      // 2. Buffer check
-      const today = new Date()
-      const daysUntilTrip = Math.round((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-      if (daysUntilTrip >= 15) {
-        score += 7
-        checks.push({ label: `Lead time (${daysUntilTrip} days) provides safe consular processing buffer`, passed: true })
-      } else {
-        checks.push({ label: `Departure is in ${daysUntilTrip} days (embassy turnaround is typically 10-15 days)`, passed: false })
-      }
-    }
-
-    // 3. Document checks
-    const hasPassport = !!(formData.passportFront || formData.passportNumber)
-    const hasBank = !!formData.bankStatement
-    const hasPhoto = !!(formData.photo || formData.passportPhoto)
-    const hasNoc = !!(formData.salaryCertificate || formData.nocCertificate)
-
-    if (hasPassport) {
-      score += 4
-      checks.push({ label: "Passport bio page / number recorded", passed: true })
-    } else {
-      checks.push({ label: "Passport copy can be uploaded securely after checkout", passed: true })
-    }
-
-    if (hasBank) {
-      score += 4
-      checks.push({ label: "UAE bank statements attached", passed: true })
-    } else {
-      checks.push({ label: "Bank statements can be uploaded securely after checkout", passed: true })
-    }
-
-    if (hasNoc || formData.employmentStatus === "business") {
-      score += 4
-      checks.push({ label: "Employment / business proof categorized", passed: true })
-    }
-
-    // 4. Spouse accompanying
-    if (formData.maritalStatus === "married" && formData.spouseAccompanying === "yes") {
-      score += 3
-      checks.push({ label: "Accompanying spouse details integrated into dossier calculation", passed: true })
-    }
-
-    const finalScore = Math.min(score, 98) // Never say 100% because visa decisions rest with embassies
-
-    return {
-      score: finalScore,
-      checks
-    }
-  }, [formData])
+  const result = useMemo(() => readiness(formData), [formData])
 
   return (
     <div className="bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-500/20 rounded-3xl p-6 space-y-4 shadow-sm">
@@ -95,24 +33,24 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
         <div className="flex items-center gap-2 self-start sm:self-auto bg-background/80 border border-border/60 px-3.5 py-1.5 rounded-full shadow-xs">
           <ShieldCheck className="w-4 h-4 text-emerald-500" />
           <span className="text-xs font-bold text-foreground">
-            {readiness.score}/100 Readiness
+            {result.score}/100 Readiness
           </span>
         </div>
       </div>
 
       {/* Progress meter */}
       <div className="space-y-1.5">
-        <div className="w-full bg-muted/40 h-2 rounded-full overflow-hidden">
+        <div className="w-full bg-muted/40 h-2 rounded-full overflow-hidden" role="progressbar" aria-valuenow={result.score} aria-valuemin={0} aria-valuemax={100} aria-label="Readiness">
           <div
             className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-500"
-            style={{ width: `${readiness.score}%` }}
+            style={{ width: `${result.score}%` }}
           />
         </div>
       </div>
 
       {/* Checklist items */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-        {readiness.checks.map((c, i) => (
+        {result.checks.map((c, i) => (
           <div key={i} className="flex items-start gap-2 text-muted-foreground">
             {c.passed ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
