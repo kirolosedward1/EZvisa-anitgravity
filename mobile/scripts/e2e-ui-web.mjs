@@ -50,6 +50,16 @@ const btn = card2.getByTestId("swipe-discard"); const vb = await btn.boundingBox
 await p.mouse.click(vb.x + vb.width / 2, vb.y + vb.height / 2); await p.waitForTimeout(1500);
 log((await cancelled()) === c0 + 3, "short swipe shows Discard; tapping it discards", `cancelled=${await cancelled()}`);
 log(new URL(p.url()).pathname === "/applications", "swiping did not open the application", p.url());
+// 4b. while a row is being swiped the list does not scroll; after release it scrolls again
+const scroller = () => p.getByTestId("app-swipe").first().evaluate((el) => { let n = el.parentElement; while (n && !(n.scrollHeight > n.clientHeight + 2 && /(auto|scroll|hidden)/.test(getComputedStyle(n).overflowY))) n = n.parentElement; return n ? { top: n.scrollTop, oy: getComputedStyle(n).overflowY } : null; });
+const r3 = await p.getByTestId("app-swipe").locator("visible=true").first().boundingBox();
+await p.mouse.move(r3.x + r3.width - 40, r3.y + 40); await p.mouse.down(); for (let i = 1; i <= 3; i++) await p.mouse.move(r3.x + r3.width - 40 - i * 20, r3.y + 41); await p.waitForTimeout(300);
+const during = await scroller(); await p.mouse.wheel(0, 400); await p.waitForTimeout(300); const during2 = await scroller();
+await p.mouse.move(r3.x + r3.width - 40, r3.y + 41); await p.mouse.up(); await p.waitForTimeout(800);
+log(!!during && during.oy === "hidden" && during2.top === during.top, "no scrolling while swiping a row", JSON.stringify([during, during2]));
+const after = await scroller(); await p.mouse.move(195, 500); await p.mouse.wheel(0, 300); await p.waitForTimeout(500); const after2 = await scroller();
+log(!!after && after.oy !== "hidden" && after2.top > after.top, "scrolling works again after the swipe", JSON.stringify([after, after2]));
+await p.mouse.wheel(0, -3000); await p.waitForTimeout(500);
 // 5. account: passport expiry picker hidden until tapped
 await p.getByRole("tab", { name: "Account" }).first().click(); await p.waitForTimeout(2000);
 log((await p.getByTestId("passport-expiry-picker").count()) === 0, "passport expiry: picker hidden at first");
