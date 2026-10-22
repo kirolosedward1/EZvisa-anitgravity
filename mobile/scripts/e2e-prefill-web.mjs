@@ -102,22 +102,25 @@ for (const width of [390, 430]) {
   await signIn(page, "a+ezvisa-app-test@example.com");
   await page.goto(`${BASE}/apply?to=France`); await page.waitForTimeout(2500);
   const vals = {};
-  await walk(page, width, "Passport Expiry Date",
-    { "Nationality": "01-nationality-prefilled", "First Name": "02-first-name-prefilled", "Phone Number": "03-phone-prefilled", "Date of Birth": "04-dob-prefilled", "Passport Expiry Date": "06-passport-expired-flagged" },
+  // Before payment the wizard asks: nationality, city, name (first + last), phone (signed in), marital status.
+  await walk(page, width, "Marital Status",
+    { "Nationality": "01-nationality-prefilled", "Your Name": "02-name-prefilled", "Phone Number": "03-phone-prefilled" },
     {
-      "First Name": async (chip) => { vals.first = await page.getByTestId("question-input").inputValue(); vals.firstChip = chip; },
+      "Nationality": async (chip) => { vals.natChip = chip; vals.nat = await page.locator('[aria-checked="true"]').first().innerText().catch(() => ""); },
+      "Your Name": async (chip) => { vals.first = await page.getByTestId("question-input").inputValue(); vals.last = await page.getByTestId("question-input-2").inputValue(); vals.firstChip = chip; },
       "Phone Number": async (chip) => { vals.phone = await page.getByLabel("Phone number").inputValue(); vals.phoneChip = chip; await page.getByLabel("Phone number").fill("100 999 0000"); },
-      "Passport Expiry Date": async () => { await page.waitForTimeout(900); vals.expErr = await page.getByTestId("question-error").innerText().catch(() => ""); },
     });
-  ok(vals.first === "Amira" && vals.firstChip > 0, `A: first name prefilled with "From your profile" (${vals.first})`);
+  ok(/Egypt/.test(vals.nat) && vals.natChip > 0, `A: nationality prefilled with "From your profile" (${vals.nat})`);
+  ok(vals.first === "Amira" && vals.last === "Hassan" && vals.firstChip > 0, `A: name prefilled with "From your profile" (${vals.first} ${vals.last})`);
   ok(vals.phone === "100 123 4567" && vals.phoneChip > 0, `A: phone prefilled (${vals.phone})`);
+  await page.getByText("Single", { exact: true }).first().click(); await page.waitForTimeout(1500);
   const draft = JSON.parse((await localData(page))["ezvisa.wizard.v1"] || "{}").form || {};
-  ok(draft.hasValidPassport === "yes" && !draft.passportNumber, `A: passport validity prefilled, number left for after payment ("${draft.passportNumber ?? ""}")`);
-  ok(/expired/i.test(vals.expErr), `A: expired passport is prefilled and flagged ("${vals.expErr}")`);
-  await page.screenshot({ path: `${OUT}/06-passport-expired-flagged-${width}.png` });
+  ok(!draft.dateOfBirth && !draft.hasValidPassport && !draft.passportExpiry && !draft.passportNumber,
+    `A: nothing prefilled that is asked only after payment (dob "${draft.dateOfBirth ?? ""}", passport "${draft.hasValidPassport ?? ""}/${draft.passportExpiry ?? ""}")`);
   ok(!w.log.some((l) => l.method === "PUT" && l.path === "/auth/v1/user"), "A: profile not touched before confirmation");
 
   await page.goto(`${BASE}/apply?step=payment`); await page.getByTestId("profile-ask").waitFor({ timeout: 8000 }).catch(() => {});
+  await page.waitForTimeout(2500); // the boot splash stays >= 1.6 s (components/Boot.tsx) and covers the page until it fades
   const ask = await page.getByTestId("profile-ask").innerText().catch(() => "");
   ok(/Phone Number/.test(ask) && /100 999 0000/.test(ask) && !/First Name|Passport/.test(ask), "A: review asks once, listing only the edited profile field");
   await page.screenshot({ path: `${OUT}/07-review-confirm-prompt-${width}.png` });
@@ -142,7 +145,7 @@ for (const width of [390, 430]) {
   const mark = w.log.length;
   await signIn(page, "b+ezvisa-app-test@example.com");
   await page.goto(`${BASE}/apply?to=Italy`); await page.waitForTimeout(2500);
-  const seenB = {}; await walk(page, width, "First Name", { "Nationality": "09-new-user-nationality-empty", "First Name": "10-new-user-first-name-empty" }, { "First Name": async (chip) => { seenB.first = await page.getByTestId("question-input").inputValue(); seenB.chip = chip; } });
+  const seenB = {}; await walk(page, width, "Your Name", { "Nationality": "09-new-user-nationality-empty", "Your Name": "10-new-user-name-empty" }, { "Your Name": async (chip) => { seenB.first = await page.getByTestId("question-input").inputValue(); seenB.chip = chip; } });
   ok(seenB.first === "" && seenB.chip === 0, `B (new user): empty fields, no profile chip (first name "${seenB.first}")`);
   const html = await page.content(); const store = JSON.stringify(await localData(page));
   ok(!/Amira|Hassan|A1234567/.test(html + store), "B: no trace of A on screen or in storage");
@@ -157,6 +160,13 @@ for (const width of [390, 430]) {
   await signIn(page, "a+ezvisa-app-test@example.com"); await page.goto(`${BASE}/apply?to=Spain`); await page.waitForTimeout(2500);
   const again = {}; await walk(page, width, "Phone Number", {}, { "Phone Number": async () => { again.phone = await page.getByLabel("Phone number").inputValue(); } });
   ok(again.phone === "100 999 0000", `A again: new draft uses the confirmed profile phone (${again.phone})`);
+  // An answer already in the draft is never replaced by the profile: change the name, reload, it stays.
+  await page.goto(`${BASE}/apply?step=personal`); await page.waitForTimeout(1500);
+  await walk(page, width, "Your Name", {}, { "Your Name": async () => { await page.getByTestId("question-input").fill("Mina"); await page.waitForTimeout(1200); } });
+  await page.reload(); await page.waitForTimeout(2500);
+  if (await page.getByText("Continue", { exact: true }).count() && await page.getByText("Continue Application?").count()) { await page.getByText("Continue", { exact: true }).last().click(); await page.waitForTimeout(800); }
+  const kept = {}; await walk(page, width, "Your Name", {}, { "Your Name": async () => { kept.first = await page.getByTestId("question-input").inputValue(); } });
+  ok(kept.first === "Mina", `A: an answer already in the draft is not overwritten by the profile after a reload ("${kept.first}")`);
   await browser.close();
 }
 console.log(fail ? `\n${fail} FAILED` : "\nALL PASSED"); process.exit(fail ? 1 : 0);

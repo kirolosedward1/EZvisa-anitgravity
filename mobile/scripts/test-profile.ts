@@ -2,8 +2,9 @@
 // Run: node scripts/run-test-profile.mjs
 // @ts-ignore plain JS stub
 import { db as fake } from "./stubs/supabase.js";
-import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, splitPhone, markPrefilled, markAsked, shouldAsk } from "../lib/profile";
-import { emptyForm, validatePersonal, iso, type WizardForm } from "../lib/wizard";
+import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, splitPhone, markPrefilled, markAsked, shouldAsk, OFFER_KEYS, PRE_PAYMENT_KEYS, SAVABLE } from "../lib/profile";
+import { emptyForm, validatePassport, visibleSteps, iso, type WizardForm } from "../lib/wizard";
+import { QUESTIONS, activeQuestions, firstError } from "../lib/questions";
 declare const process: any;
 const db: any = fake;
 
@@ -31,12 +32,20 @@ db.rows = [
   ok(p.phoneCountry === "EG" && p.phoneLocal === "100 123 4567", "phone split into country + local");
   ok(p.email === A.email, "email is the account email");
 
-  // ---- expired passport: still prefilled, validation flags it ----
+  // ---- only answers asked before payment are prefilled (nothing hidden that Continue would then skip) ----
+  const preKeys = new Set(QUESTIONS.filter((q) => visibleSteps(emptyForm).includes(q.step)).flatMap((q) => q.keys as string[]));
   const { form, filled } = applyProfile({ ...emptyForm, destination: "France", nationality: "" }, p);
-  ok(form.passportExpiry === "2025-01-31" && filled.includes("passportExpiry") && form.hasValidPassport === "yes", "expired passport expiry is prefilled");
-  ok(form.passportNumber === "" && !filled.includes("passportNumber" as any), "passport number is not prefilled (asked after payment)");
-  ok(/expired/i.test(validatePersonal(form).passportExpiry ?? ""), `validation flags the expired passport ("${validatePersonal(form).passportExpiry}")`);
-  ok(validatePersonal({ ...form, passportExpiry: inYears(5) }).passportExpiry === undefined, "a valid future expiry passes");
+  ok(filled.length > 0 && filled.every((k) => preKeys.has(k)), `prefill fills only pre-payment answers (filled: ${filled.join(",")})`);
+  ok(!form.dateOfBirth && !form.hasValidPassport && !form.passportExpiry && !form.passportNumber, "date of birth and passport are not prefilled before payment");
+  const askedAfter = activeQuestions({ ...form, travelEndDate: inYears(1) }, "post").filter((q) => !!firstError(q, { ...form, travelEndDate: inYears(1) })).map((q) => q.id);
+  ok(["dateOfBirth", "hasValidPassport"].every((id) => askedAfter.includes(id)), `Continue (after payment) still asks date of birth and passport (asks: ${askedAfter.join(",")})`);
+  ok(OFFER_KEYS.every((k) => preKeys.has(k)) && OFFER_KEYS.includes("maritalStatus") && !OFFER_KEYS.some((k) => /^(employment|jobTitle|companyName|spouse|monthly|average)/.test(k)),
+    `"Use details from your last application" offers only pre-payment answers (${OFFER_KEYS.join(",")})`);
+  ok([...PRE_PAYMENT_KEYS].every((k) => preKeys.has(k)) && SAVABLE.every((x) => preKeys.has(x.key)), "profile save-back lists only fields shown on the pre-payment Review");
+  // ---- expired passport: flagged where the passport is asked now (Continue, validatePassport) ----
+  const expired = { ...emptyForm, hasValidPassport: "yes" as const, passportNumber: "A1234567", passportExpiry: "2025-01-31" };
+  ok(/expired/i.test(validatePassport(expired).passportExpiry ?? ""), `an expired passport is flagged ("${validatePassport(expired).passportExpiry}")`);
+  ok(validatePassport({ ...expired, passportExpiry: inYears(5) }).passportExpiry === undefined, "a valid future expiry passes");
 
   // ---- never over answers already in a draft ----
   const draft = { ...emptyForm, firstName: "Mina", nationality: "India" };
@@ -45,15 +54,15 @@ db.rows = [
   ok(!isFreshDraft(draft) && isFreshDraft({ ...emptyForm, destination: "Italy", nationality: "Egypt" }), "isFreshDraft: identity answers make a draft non-new; link values don't");
 
   // ---- edits -> profile question (only edited prefilled, savable fields) ----
-  const edited = { ...form, phone: "+20 100 999 0000", phoneLocal: "100 999 0000", passportNumber: "B7654321", passportExpiry: inYears(5) };
+  const edited = { ...form, phone: "+20 100 999 0000", phoneLocal: "100 999 0000", dateOfBirth: "1992-05-05", passportNumber: "B7654321", passportExpiry: inYears(5) };
   const ch = profileChanges(edited, p);
   ok(ch.length === 1 && ch[0].key === "phone", `only the edited savable field is offered (got ${ch.map((c) => c.key).join(",")})`);
   ok(profileChanges(form, p).length === 0, "no question when nothing was edited");
   ok(profileChanges({ ...form, phone: "+20 1001234567" }, p).length === 0, "phone formatting differences are not a change");
 
   // ---- update only after confirmation, only for the same account ----
+  ok(!db.calls.some((c: any) => c.updateUser), "nothing written before confirmation (load, prefill and diff never write)");
   db.calls = [];
-  ok(!db.calls.some((c: any) => c.updateUser), "nothing written before confirmation");
   await saveProfile(A.id, edited, ch);
   const w = db.calls.find((c: any) => c.updateUser);
   ok(!!w && w.updateUser === A.id && w.data.phone === "+20 100 999 0000" && Object.keys(w.data).sort().join() === "phone,phone_country", "confirmed: only the changed field is written to the user's own profile");

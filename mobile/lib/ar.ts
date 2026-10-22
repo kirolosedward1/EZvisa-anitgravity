@@ -442,7 +442,7 @@ export const AR: Record<string, string> = {
   "You changed details that came from your profile. Save them for your next application?": "لقد غيّرت بيانات مأخوذة من ملفك الشخصي. هل تريد حفظها لطلبك القادم؟",
   "{field}: {to}, profile has {from}": "{field}: {to}، والملف الشخصي فيه {from}",
   "Profile: {v}": "الملف الشخصي: {v}",
-  "Keep profile": "إبقاء الملف كما هو",
+  "Keep profile": "إبقاء الملف",
   "Update profile": "تحديث الملف",
   "Profile updated.": "تم تحديث الملف الشخصي.",
   "This passport has expired. Enter the expiry date of your current passport.": "انتهت صلاحية جواز السفر هذا. أدخل تاريخ انتهاء جواز سفرك الحالي.",

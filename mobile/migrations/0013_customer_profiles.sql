@@ -1,4 +1,4 @@
--- 0012: a real customer profile (one row per account) for prefilling new applications.  NOT APPLIED (needs owner approval).
+-- 0013: a real customer profile (one row per account) for prefilling new applications.  NOT APPLIED (needs owner approval).
 -- Today the app (lib/profile.ts) reads the profile from Supabase Auth user_metadata (name, phone, nationality, date of
 -- birth; the same place the website prefills from) and the passport number/expiry from the user's latest
 -- visa_applications row. Passport details are deliberately NOT written to user_metadata, because user_metadata is
@@ -20,9 +20,13 @@ revoke all on public.customer_profiles from anon;
 grant select, insert, update, delete on public.customer_profiles to authenticated;
 
 -- Owner-only: a user can see and change exactly one row, their own. Staff use the service role (bypasses RLS).
+drop policy if exists "customer_profiles own select" on public.customer_profiles;
 create policy "customer_profiles own select" on public.customer_profiles for select to authenticated using (user_id = (select auth.uid()));
+drop policy if exists "customer_profiles own insert" on public.customer_profiles;
 create policy "customer_profiles own insert" on public.customer_profiles for insert to authenticated with check (user_id = (select auth.uid()));
+drop policy if exists "customer_profiles own update" on public.customer_profiles;
 create policy "customer_profiles own update" on public.customer_profiles for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "customer_profiles own delete" on public.customer_profiles;
 create policy "customer_profiles own delete" on public.customer_profiles for delete to authenticated using (user_id = (select auth.uid()));
 
 create or replace function public.customer_profiles_touch() returns trigger language plpgsql set search_path to 'public' as $$

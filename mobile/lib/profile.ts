@@ -5,25 +5,33 @@
 //     already prefills from (web app/apply/page.tsx). Only the signed-in user can read or change their own metadata.
 //  2. The user's own latest application (visa_applications .eq("email", me), like listApplications) for anything the
 //     metadata lacks, incl. passport number and expiry. Passport details are never written to user_metadata: that is
-//     copied into every access token. A real profile table for them is proposed in migrations/0012_customer_profiles.sql (not applied).
+//     copied into every access token. A real profile table for them is proposed in migrations/0013_customer_profiles.sql (not applied).
 // Nothing here is cached: the profile is fetched when needed and kept in component state only. The only thing stored
 // on the phone is a per-draft flag (no personal data) so the "update your profile?" question is asked once.
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
 import { WORLD } from "./world";
 import { parseNotes } from "./data";
-import { needsSchengenVisa, type WizardForm } from "./wizard";
+import { emptyForm, needsSchengenVisa, visibleSteps, type WizardForm } from "./wizard";
+import { QUESTIONS } from "./questions";
 
 export type ProfileKey = "firstName" | "lastName" | "email" | "phone" | "phoneCountry" | "phoneLocal" | "nationality" | "dateOfBirth" | "hasValidPassport" | "passportNumber" | "passportExpiry";
 export type Profile = Partial<Pick<WizardForm, ProfileKey>>;
+/** Answers the wizard asks before payment. Only these are prefilled: anything else would sit in the draft unseen, and
+ *  Continue application (after payment) skips questions that already have a valid answer. */
+export const PRE_PAYMENT_KEYS = new Set<string>(QUESTIONS.filter((q) => visibleSteps(emptyForm).includes(q.step)).flatMap((q) => q.keys as string[]));
+const prePayment = <T extends string>(keys: T[]) => keys.filter((k) => PRE_PAYMENT_KEYS.has(k));
 /** Wizard fields that are prefilled from the profile (the rest of the application is never copied automatically).
- *  The passport number is not one of them: the wizard asks it only after payment (Continue application). */
-export const PROFILE_KEYS: ProfileKey[] = ["firstName", "lastName", "email", "phone", "phoneCountry", "phoneLocal", "nationality", "dateOfBirth", "hasValidPassport", "passportExpiry"];
-/** Fields the user may save back to their profile (user_metadata) after confirming on Review. */
+ *  Date of birth and passport are loaded but asked only after payment, so today they are not prefilled. */
+export const PROFILE_KEYS: ProfileKey[] = prePayment<ProfileKey>(["firstName", "lastName", "email", "phone", "phoneCountry", "phoneLocal", "nationality", "dateOfBirth", "hasValidPassport", "passportExpiry"]);
+/** Other stable answers offered from the last application ("Use details from your last application?"), same rule. */
+export const OFFER_KEYS = prePayment<keyof WizardForm & string>(["cityOfResidence", "hasEmiratesId", "maritalStatus",
+  "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"]);
+/** Fields the user may save back to their profile (user_metadata) after confirming on Review (only ones shown there). */
 export const SAVABLE: { key: keyof WizardForm; label: string }[] = [
-  { key: "firstName", label: "First Name" }, { key: "lastName", label: "Last Name" }, { key: "phone", label: "Phone Number" },
-  { key: "nationality", label: "Nationality" }, { key: "dateOfBirth", label: "Date of Birth" },
-];
+  { key: "firstName" as const, label: "First Name" }, { key: "lastName" as const, label: "Last Name" }, { key: "phone" as const, label: "Phone Number" },
+  { key: "nationality" as const, label: "Nationality" }, { key: "dateOfBirth" as const, label: "Date of Birth" },
+].filter((x) => PRE_PAYMENT_KEYS.has(x.key));
 export type ProfileChange = { key: keyof WizardForm; label: string; from: string; to: string };
 
 const s = (v: unknown) => (typeof v === "string" ? v.trim() : "");

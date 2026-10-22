@@ -28,7 +28,7 @@ import { submitApplication, guestSubmit, listRequirements, DraftConflictError, t
 import { PrefillOffer } from "../../components/wizard/extras";
 import { QuestionView } from "../../components/wizard/QuestionView";
 import { SyncIndicator, DraftConflictSheet } from "../../components/wizard/sync";
-import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, markPrefilled, markAsked, shouldAsk, type ProfileChange } from "../../lib/profile";
+import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, markPrefilled, markAsked, shouldAsk, OFFER_KEYS, type ProfileChange } from "../../lib/profile";
 import { useNetInfo } from "@react-native-community/netinfo";
 import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
@@ -40,10 +40,6 @@ const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
 const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
 const AUTO_MS = 260;
-/** Other stable answers the user can reuse from the last application with one tap (trip answers are never copied).
- *  The profile fields (name, nationality, date of birth, passport validity and expiry, phone) are prefilled on their own, see lib/profile.ts. */
-const PREFILL_KEYS: (keyof WizardForm)[] = ["cityOfResidence", "hasEmiratesId", "maritalStatus",
-  "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
 const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });
 const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
@@ -130,8 +126,8 @@ export default function Apply() {
       }
       const w = r.last; if (!w) return;
       const values: Partial<WizardForm> = {};
-      for (const k of PREFILL_KEYS) { const v = (w as any)[k]; if (v !== undefined && v !== null && v !== "" && !(nf as any)[k]) (values as any)[k] = v; }
-      // Subtitle = what "Use" fills (e.g. "Dubai · Single · Employed"), so it is not mistaken for the profile prefill.
+      for (const k of OFFER_KEYS) { const v = (w as any)[k]; if (v !== undefined && v !== null && v !== "" && !(nf as any)[k]) (values as any)[k] = v; }
+      // Subtitle = what "Use" fills (e.g. "Dubai · Single"), so it is not mistaken for the profile prefill.
       const vf = { ...emptyForm, ...values } as WizardForm;
       const what = ["cityOfResidence", "maritalStatus", "employmentStatus", "jobCompany", "companyName"].map((id) => (Q_BY_ID[id] ? displayValue(Q_BY_ID[id], vf, t, fmt) : "")).filter(Boolean);
       if (Object.keys(values).length) setPrefill({ values, name: [...new Set(what)].join(" · ") || [w.firstName, w.lastName].filter(Boolean).join(" ") });
@@ -371,7 +367,8 @@ export default function Apply() {
                 <Text variant="headline" accessibilityRole="header">{t("Update your profile too?")}</Text>
                 <Text variant="subhead" tone="secondary">{t("You changed details that came from your profile. Save them for your next application?")}</Text>
                 {profileAsk.changes.map((ch) => {
-                  const show = (v: string) => (ch.key === "dateOfBirth" ? fmt(v) : ch.key === "nationality" ? t(v) : v);
+                  // Phone numbers are isolated as left-to-right so Arabic (RTL) text never reorders their digit groups.
+                  const show = (v: string) => (ch.key === "dateOfBirth" ? fmt(v) : ch.key === "nationality" ? t(v) : ch.key === "phone" ? `\u2066${v}\u2069` : v);
                   return (
                     <View key={ch.key} style={{ gap: S.xxs }} accessible accessibilityLabel={t("{field}: {to}, profile has {from}", { field: t(ch.label), to: show(ch.to), from: show(ch.from) })}>
                       <Text variant="footnote" tone="secondary">{t(ch.label)}</Text>
