@@ -68,26 +68,28 @@ export default function PaymentResult() {
     show("checking");
     const started = Date.now(); let until = started + (returned.current === "success" ? POLL_FOR : POLL_SHORT);
     for (;;) {
-      if ((await NetInfo.fetch()).isConnected === false) { if (run.current === me) show("offline"); return; }
       const s = await read();
       if (run.current !== me) return;
+      if (s.offline) { show("offline"); return; } // every request failed: no network (re-checked below)
       const done = settled(s);
       if (done === "paid") { show("paid"); success(); forgetPayment(id!); if (session) setupPush(true).catch(() => {}); return; }
       if (done === "failed") { show("failed"); hError(); forgetPayment(id!); return; }
       if (s.intent === "completed" && stateRef.current !== "confirming") { show("confirming"); success(); }
       if (s.intent && (s.intent === "completed" || PROCESSING.includes(s.intent))) until = Math.max(until, started + POLL_FOR);
-      if (Date.now() > until) { show(s.offline ? "offline" : unsettled(s, returned.current)); return; }
+      if (Date.now() > until) { show(unsettled(s, returned.current)); return; }
       await new Promise((r) => setTimeout(r, POLL_MS));
     }
   };
 
   useEffect(() => { const h = setTimeout(verify, 0); return () => { clearTimeout(h); run.current++; }; }, [id, !!session]);
-  // Back online, or back from another app (e.g. a banking app for 3-D Secure): check again if not settled.
+  // Back online (NetInfo, plus a light 5 s retry while offline), or back from another app (e.g. a banking app for
+  // 3-D Secure): check again if not settled.
   useEffect(() => {
     const again = () => { if (["pending", "confirming", "offline"].includes(stateRef.current)) verify(); };
     const net = NetInfo.addEventListener((n) => { if (n.isConnected && stateRef.current === "offline") verify(); });
     const app = AppState.addEventListener("change", (a) => { if (a === "active") again(); });
-    return () => { net(); app.remove(); };
+    const tick = setInterval(() => { if (stateRef.current === "offline") verify(); }, 5000);
+    return () => { net(); app.remove(); clearInterval(tick); };
   }, [id, !!session]);
 
   const retry = async () => {
