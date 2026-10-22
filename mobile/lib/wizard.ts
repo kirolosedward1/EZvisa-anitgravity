@@ -1,5 +1,14 @@
 // Mirrors the website wizard (ezvisa.net/apply, web repo lib/wizard-steps.ts + components/apply/*):
 // same step slugs, order, fields, options and validation rules.
+// Option sources: where the website keeps a list in a plain module, the app imports that module from the repo root
+// (../../lib, served to Metro via metro.config.js watchFolders) instead of keeping its own copy:
+//   Schengen destinations  -> lib/countries.ts SCHENGEN_COUNTRIES
+//   residence + emirates   -> lib/residence.ts RESIDENCE_COUNTRIES, UAE_EMIRATES, coerceResidence
+// The website keeps the other option lists inline in components/apply/*.tsx (not importable), so they are mirrored below
+// with the same values and labels. There is no options table in the live Supabase project.
+import { SCHENGEN_COUNTRIES } from "../../lib/countries";
+import { RESIDENCE_COUNTRIES, DEFAULT_RESIDENCE, UAE_EMIRATES, matchEmirate, coerceResidence } from "../../lib/residence";
+export { RESIDENCE_COUNTRIES, DEFAULT_RESIDENCE, UAE_EMIRATES, matchEmirate, coerceResidence };
 
 export type WizardStep = "personal" | "spouse" | "employment" | "trip-details" | "payment";
 export type YesNo = "yes" | "no" | "";
@@ -33,9 +42,7 @@ export const emptyForm: WizardForm = {
 };
 
 type Opt = { value: string; label: string };
-export const SCHENGEN = ["Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland", "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland"];
-export const NATIONALITIES = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria", "United Arab Emirates", "Saudi Arabia", "Philippines", "Bangladesh"];
-/** Largest UAE expat nationalities that need a Schengen visa (visa-exempt passports such as UAE, UK, US are left out). "Other" opens a free-text field. */
+export const SCHENGEN: string[] = [...SCHENGEN_COUNTRIES];
 // Nationals who NEED a Schengen short-stay visa: Regulation (EU) 2018/1806, Annex I (1. States + 2. the Palestinian Authority),
 // consolidated version 02018R1806-20251230 (in force 30.12.2025, last amended by Reg. (EU) 2025/2441).
 // Source: https://eur-lex.europa.eu/legal-content/EN/TXT/HTML/?uri=CELEX%3A02018R1806-20251230 (checked 2026-10-19).
@@ -43,24 +50,13 @@ export const NATIONALITIES = ["Egypt", "India", "Jordan", "Pakistan", "Russian F
 // Annex II (visa-exempt, e.g. UAE, UK, US, Canada, Japan, Australia, Brazil) and EU/EEA/Swiss nationals are deliberately absent.
 export const SCHENGEN_VISA_REQUIRED: string[] = ["Afghanistan", "Algeria", "Angola", "Armenia", "Azerbaijan", "Bahrain", "Bangladesh", "Belarus", "Belize", "Benin", "Bhutan", "Bolivia", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Central African Republic", "Chad", "China", "Comoros", "Congo", "Cuba", "Côte d'Ivoire", "DR Congo", "Djibouti", "Dominican Republic", "Ecuador", "Egypt", "Equatorial Guinea", "Eritrea", "Eswatini", "Ethiopia", "Fiji", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "India", "Indonesia", "Iran", "Iraq", "Jamaica", "Jordan", "Kazakhstan", "Kenya", "Kuwait", "Kyrgyzstan", "Laos", "Lebanon", "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Maldives", "Mali", "Mauritania", "Mongolia", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nepal", "Niger", "Nigeria", "North Korea", "Oman", "Pakistan", "Palestine", "Papua New Guinea", "Philippines", "Qatar", "Russian Federation", "Rwanda", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Sri Lanka", "Sudan", "Suriname", "Syria", "Tajikistan", "Tanzania", "Thailand", "Togo", "Tunisia", "Turkey", "Turkmenistan", "Uganda", "Uzbekistan", "Vanuatu", "Vietnam", "Yemen", "Zambia", "Zimbabwe"];
 export const needsSchengenVisa = (n?: string | null) => !!n && SCHENGEN_VISA_REQUIRED.includes(n);
-export const OTHER_NATIONALITY = "Other nationality";
-/** Top UAE resident nationalities (all in Annex I), then "Other nationality" which opens the full visa-required list. */
-export const UAE_NATIONALITIES: string[] = ["India", "Pakistan", "Bangladesh", "Philippines", "Egypt", "Nepal", "Sri Lanka", "China", "Jordan", "Lebanon", "Syria", "Palestine", "Sudan", "Iran", "Iraq", "Yemen", "Afghanistan", "Morocco", "Tunisia", "Algeria", "Nigeria", "Kenya", "Ethiopia", "Uganda", "Ghana", "Cameroon", "South Africa", "Indonesia", "Vietnam", "Thailand", "Russian Federation", "Turkey", "Kazakhstan", "Uzbekistan", "Azerbaijan", OTHER_NATIONALITY];
-/** Countries of residence offered in the wizard. UAE only for now; add names (as in lib/world.ts) to re-enable others. */
-export const RESIDENCE_COUNTRIES: string[] = ["United Arab Emirates"];
-export const DEFAULT_RESIDENCE = RESIDENCE_COUNTRIES[0];
-/** City of residence = one of the 7 UAE emirates (stored as the English name). */
-export const UAE_EMIRATES: string[] = ["Abu Dhabi", "Dubai", "Sharjah", "Ajman", "Umm Al Quwain", "Ras Al Khaimah", "Fujairah"];
+/** Nationality options = the website's list (components/apply/nationality-step.tsx `nationalityCountries`, same order)
+ *  minus United Arab Emirates, whose nationals don't need a Schengen visa (owner decision, 22 Oct 2026).
+ *  Every entry is also in SCHENGEN_VISA_REQUIRED (checked in scripts/wizard-rules.test.ts). */
+export const NATIONALITY_OPTIONS: string[] = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria", "Saudi Arabia", "Philippines", "Bangladesh"];
+export const isNationalityOption = (n?: string | null) => !!n && NATIONALITY_OPTIONS.includes(n) && needsSchengenVisa(n);
+/** City of residence = one of the 7 UAE emirates (website lib/residence.ts), shown without flags. */
 export const EMIRATE_OPTIONS = UAE_EMIRATES.map((e) => ({ value: e, label: e }));
-const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
-export const matchEmirate = (v?: string | null) => (v ? UAE_EMIRATES.find((e) => norm(e) === norm(v)) ?? "" : "");
-/** Coerce residence fields (old drafts, deep links) to the allowed values. */
-export function coerceResidence<T extends { countryOfResidence: string; cityOfResidence: string; hasEmiratesId: YesNo }>(f: T): T {
-  const country = RESIDENCE_COUNTRIES.includes(f.countryOfResidence) ? f.countryOfResidence : DEFAULT_RESIDENCE;
-  const city = country === "United Arab Emirates" ? matchEmirate(f.cityOfResidence) : f.cityOfResidence;
-  return { ...f, countryOfResidence: country, cityOfResidence: city, hasEmiratesId: country === "United Arab Emirates" ? f.hasEmiratesId : "" };
-}
-export const RESIDENCES = ["United Arab Emirates", "Saudi Arabia", "Qatar", "Kuwait", "Bahrain", "Oman", "Egypt", "Jordan"];
 export const MARITAL: Opt[] = [{ value: "single", label: "Single" }, { value: "married", label: "Married" }, { value: "divorced", label: "Divorced" }, { value: "widowed", label: "Widowed" }];
 export const EMPLOYMENT: Opt[] = [{ value: "employed", label: "Employed" }, { value: "business", label: "Business Owner" }, { value: "freelancer", label: "Freelancer" }, { value: "student", label: "Student" }, { value: "unemployed", label: "Unemployed" }, { value: "retired", label: "Retired" }];
 export const SALARY: Opt[] = [{ value: "under-5000", label: "Under 5,000 AED" }, { value: "5000-10000", label: "5,000 - 10,000 AED" }, { value: "10000-15000", label: "10,000 - 15,000 AED" }, { value: "15000-plus", label: "15,000+ AED" }];
@@ -130,7 +126,7 @@ export type Errors = Partial<Record<keyof WizardForm, string>>;
 export function validatePersonal(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.destination) e.destination = "Please select a destination";
-  if (!needsSchengenVisa(f.nationality)) e.nationality = "Please select your nationality";
+  if (!isNationalityOption(f.nationality)) e.nationality = "Please select your nationality";
   if (!RESIDENCE_COUNTRIES.includes(f.countryOfResidence)) e.countryOfResidence = "Please select your country of residence";
   if (!f.cityOfResidence.trim()) e.cityOfResidence = "City is required";
   else if (f.countryOfResidence === "United Arab Emirates" && !UAE_EMIRATES.includes(f.cityOfResidence)) e.cityOfResidence = "Please select your emirate";
@@ -208,5 +204,13 @@ export function matchCountry(raw: string | undefined, list: string[]): string | 
   return hit ?? null;
 }
 
+/** Bring a saved or linked form in line with the current wizard rules (also used for prefill and server drafts):
+ *  nationality must be one of NATIONALITY_OPTIONS (old saves could hold "Other" + free text or a country from the old
+ *  long list: cleared, the user re-picks), residence UAE + an emirate, no passport number or expiry without a valid
+ *  passport, and no NOC answer unless employed. */
+export function cleanForm(f: WizardForm): WizardForm {
+  const { nationalityOther: _drop, ...rest } = f as WizardForm & { nationalityOther?: string };
+  return coerceResidence({ ...(rest as WizardForm), nationality: isNationalityOption(rest.nationality) ? rest.nationality : "", ...(rest.hasValidPassport === "no" && { passportNumber: "", passportExpiry: "" }), ...(rest.employmentStatus && rest.employmentStatus !== "employed" && { hasNOC: "" }) });
+}
 /** True when the user has typed or picked anything (used for autosave/resume). */
 export const hasAnswers = (f: WizardForm) => (Object.keys(emptyForm) as (keyof WizardForm)[]).some((k) => k !== "email" && JSON.stringify(f[k]) !== JSON.stringify(emptyForm[k]));

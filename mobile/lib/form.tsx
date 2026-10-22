@@ -11,13 +11,13 @@ import { AppState, Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from "@react-native-community/netinfo";
 import * as Crypto from "expo-crypto";
-import { coerceResidence, emptyForm, hasAnswers, needsSchengenVisa, type WizardForm } from "./wizard";
+import { cleanForm, emptyForm, hasAnswers, type WizardForm } from "./wizard";
 import { normalizePage, stepOfPage } from "./questions";
 import { useAuth } from "./auth";
 import { saveDraft, latestDraft, getDraft, fingerprint, sameVersion, type ServerDraft } from "./data";
 import { backoffMs } from "./uploads";
 import { registerSecrets } from "./scrub";
-export { emptyForm } from "./wizard";
+export { emptyForm, cleanForm } from "./wizard";
 
 const KEY = "ezvisa.wizard.v1"; // the open (active) draft, same format as before + `key` + sync metadata
 const DRAFTS = "ezvisa.drafts.v2"; // every unfinished application saved on this phone (the active one included)
@@ -37,11 +37,6 @@ export type LocalDraft = { key: string; form: WizardForm; page: string; savedAt:
 export type SyncStatus = "local" | "saving" | "saved" | "retrying" | "offline" | "error" | "conflict";
 export type DraftConflict = { reason: "newer" | "existing" | "closed" | "gone"; server: ServerDraft | null };
 const newKey = () => `d${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
-/** Old saves could hold "Other" + free text (or a visa-exempt country from a link). Clear it so the user re-picks from the visa-required list. */
-function cleanNationality(f: WizardForm): WizardForm {
-  const { nationalityOther: _drop, ...rest } = f as WizardForm & { nationalityOther?: string };
-  return coerceResidence({ ...(rest as WizardForm), nationality: needsSchengenVisa(rest.nationality) ? rest.nationality : "", ...(rest.hasValidPassport === "no" && { passportNumber: "", passportExpiry: "" }), ...(rest.employmentStatus && rest.employmentStatus !== "employed" && { hasNOC: "" }) });
-}
 /** What a save of this screen writes: answers, step and question. */
 const fpOf = (f: WizardForm, p: string) => fingerprint(f, stepOfPage(p), p.startsWith("q:") ? p : null);
 const isNetworkError = (e: any) => /network|fetch|timeout|timed out|offline|abort/i.test(String(e?.message ?? e));
@@ -127,15 +122,15 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.multiGet([KEY, DRAFTS]).then(([[, raw], [, rawList]]) => {
       const d = raw ? JSON.parse(raw) : null;
       let list: LocalDraft[] = [];
-      try { list = rawList ? (JSON.parse(rawList) as LocalDraft[]).filter((x) => x?.key && x.form).map((x) => ({ ...x, form: cleanNationality({ ...emptyForm, ...x.form }) })) : []; } catch { list = []; }
+      try { list = rawList ? (JSON.parse(rawList) as LocalDraft[]).filter((x) => x?.key && x.form).map((x) => ({ ...x, form: cleanForm({ ...emptyForm, ...x.form }) })) : []; } catch { list = []; }
       const k = (d?.key as string | undefined) ?? newKey(); setActiveKey(k); keyRef.current = k;
       // Migration from the single-draft format: the existing saved draft becomes the first entry of the list.
       if (!rawList && d?.v === 1 && d.form && hasAnswers({ ...emptyForm, ...d.form }))
-        list = [{ key: k, form: cleanNationality({ ...emptyForm, ...d.form }), page: typeof d.page === "string" ? d.page : "q:destination", savedAt: d.savedAt ?? Date.now(), draftId: d.draftId ?? null }];
+        list = [{ key: k, form: cleanForm({ ...emptyForm, ...d.form }), page: typeof d.page === "string" ? d.page : "q:destination", savedAt: d.savedAt ?? Date.now(), draftId: d.draftId ?? null }];
       writeDrafts(list);
       if (!d) return;
       if (d?.v === 1 && d.form) {
-        const f = cleanNationality({ ...emptyForm, ...d.form });
+        const f = cleanForm({ ...emptyForm, ...d.form });
         const pg = normalizePage(typeof d.page === "string" ? d.page : null, f);
         setForm(f); setPage(pg); latest.current = { form: f, page: pg };
         if (f.nationality !== d.form.nationality || "nationalityOther" in d.form) // persist the cleanup right away
@@ -180,7 +175,7 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   /** Show a server copy in the wizard and treat it as the confirmed version (nothing is written until the next answer). */
   const applyServer = (s: ServerDraft) => {
     clearTimers(); failed.current = 0;
-    const f = cleanNationality({ ...emptyForm, ...s.form }); const pg = normalizePage(s.question ? `q:${s.question}` : s.step, f);
+    const f = cleanForm({ ...emptyForm, ...s.form }); const pg = normalizePage(s.question ? `q:${s.question}` : s.step, f);
     setForm(f); setPage(pg); latest.current = { form: f, page: pg };
     setMeta({ draftId: s.id, baseAt: s.updatedAt, syncedFp: fpOf(f, pg), inflightFp: null, owner: emailRef.current });
     setConflict(null); setSync("saved"); setSyncError(null);

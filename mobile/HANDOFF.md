@@ -60,7 +60,7 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - Primitives:
   - `PressScale`: scale 0.97 + dim, used by every tappable.
   - `Shake`, `SavedCheck`, shimmer `Skeleton`, animated `ProgressSegments`.
-- Nationality (v8.3): `SCHENGEN_VISA_REQUIRED` in `lib/wizard.ts` (Reg. (EU) 2018/1806 Annex I). No free text.
+- Nationality (v8.3): `SCHENGEN_VISA_REQUIRED` in `lib/wizard.ts` (Reg. (EU) 2018/1806 Annex I). No free text. Since v10 the options are `NATIONALITY_OPTIONS` (website list minus UAE), each checked against that list.
 - Performance: long lists stay FlatList (country pickers, nationality list) with flat E0 rows (no shadow/blur). Shadows only on short card stacks (Home hero, application cards, trip days) and the floating tab bar.
 
 ## 2d. v10 scanner + offline upload queue (2026-10-22, chat 10)
@@ -162,6 +162,16 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - iOS Expo Go only warns in the SDK 57 code, but Expo does not support push there. Real delivery must be tested on a development build (`eas build --profile development --platform ios`, APNs key managed by EAS credentials, never in the repo).
   - Tap routing and the permission prompt can be tested in Expo Go with a local reminder.
 - Checks: `node scripts/check-push.mjs` (route allow-list, message text and data, token ownership). Device test steps: QA-CHECKLIST §11.
+
+## 2l. v10 wizard rebuild (chat 04, 2026-10-22; merged into `main` after 2j)
+Owner decisions (22 Oct): employment stays **after payment** (Continue screen); nationality = **the website's 10 options minus UAE** (9); the phone country-code picker stays (same stored `phone` string). The chat 04 branch also dropped the passport expiry question; that was superseded by 2j (passport **number** after payment, validity and expiry still in the wizard), so the merged wizard keeps `passportExpiry` and never asks the number before payment.
+- **One config** `lib/questions.ts`: every screen with id, question (web label), input kind, options + `source`, `applies` (conditions), `onPick` (dependent answers it clears). `activeQuestions(f)` = screens in order (progress counts exactly these), `reviewQuestions(f)` = also fixed values, `employmentQuestions(f)` = Continue screen, `answer(q, v, f)` = one answer plus what it clears.
+- **Option sources**: the app imports the website's own plain modules from the repo root: `lib/countries.ts` (`SCHENGEN_COUNTRIES`) and `lib/residence.ts` (`RESIDENCE_COUNTRIES`, `UAE_EMIRATES`, `coerceResidence`). `metro.config.js` adds `../lib` to `watchFolders`; those files must stay dependency-free. The website keeps nationality / employment / salary / trip options inline in `components/apply/*.tsx`, so they stay mirrored in `lib/wizard.ts`. The live DB has no options table (`lib/database.types.ts`: `blog_posts`, `visa_applications`).
+- **Kinds**: `choice` (big tap rows; nationality rows show their own flag, emirates none), `yesno`, `sheet` (field that opens the searchable bottom sheet `components/CountryPicker.tsx` `CountrySheet`; iOS page sheet, Android back closes it), `fixed` (Country of Residence: shown locked above the emirates and in Review, never asked, not counted).
+- **Search** `lib/search.ts`: partial words in any order ("rus fed"), accents ("cote"), short names (uae, czechia, holland, ksa), Arabic names from `lib/ar.ts` with or without hamza ("المانيا"), whatever the app language.
+- **Store**: still `lib/form.tsx` `useForm()` (one store). `cleanForm()` (in `lib/wizard.ts`) normalises any saved/linked/prefilled form: nationality not in the 9 → cleared (old drafts with e.g. Nepal re-ask it), residence → UAE + emirate, no passport number or expiry when "no", no NOC unless employed.
+- **Tests**: `npm test` (`scripts/wizard-rules.test.ts`, Node 22.18+ type stripping via `scripts/ts-hooks.mjs`): order vs the website, passport validity before expiry (number after payment), 9 nationalities all visa-required, UAE-only fixed residence, 7 emirates without flags, self-employed never see NOC, NOC cleared on employment change, progress with skipped questions, search, Arabic labels. `npm run typecheck` (= `npx tsc --noEmit`) excludes `scripts/*.test.ts` (Node test files) and `migrations/functions` (Deno).
+- **Screens checked** (web build, Playwright, 390/430, light/dark, married + single paths): `docs/screenshots/wizard-v10-*.png`. Not checked here: a real iPhone, Dynamic Type at the largest size, Android.
 
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.

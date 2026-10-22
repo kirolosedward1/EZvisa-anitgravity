@@ -1,17 +1,18 @@
 import { PressScale } from "../ui";
-// Answer controls for the one-question-per-screen wizard: big tappable choices, Yes / No tiles, an inline searchable
-// country list, native date pickers (iOS inline calendar / wheel, Android dialog, web date input) and the website's
+// Answer controls for the one-question-per-screen wizard: big tappable choices, Yes / No tiles, a field that opens the
+// searchable bottom-sheet picker for long lists, a fixed (read-only) value row, native date pickers (iOS inline calendar / wheel, Android dialog, web date input) and the website's
 // "additional countries" editor. All controls are VoiceOver-labelled and grow with Dynamic Type (no fixed heights).
-import { useEffect, useMemo, useState } from "react";
-import { FlatList, Platform, Pressable, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Platform, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Flag, Icon, Text, Button } from "../ui";
-import { useColors, useIsDark, S, R, T, curve, ICON } from "../../lib/theme";
+import { useColors, useIsDark, S, R, curve, ICON } from "../../lib/theme";
 import { select } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 import { SCHENGEN, iso, type WizardForm } from "../../lib/wizard";
 import type { Opt } from "../../lib/questions";
 import { Note } from "./fields";
+import { CountrySheet } from "../CountryPicker";
 
 const parse = (s: string) => (s ? new Date(s + "T12:00:00") : undefined);
 export const useFmtDate = () => {
@@ -35,11 +36,12 @@ export function AnswerRow({ label, selected, onPress, country, testID }: { label
   );
 }
 
-export function ChoiceList({ label, options, value, onPick, flag }: { label: string; options: Opt[]; value: string; onPick: (v: string) => void; flag?: string }) {
+/** Short lists: one big tap row per option. `flags`: the options are countries, each row shows its own flag. */
+export function ChoiceList({ label, options, value, onPick, flags }: { label: string; options: Opt[]; value: string; onPick: (v: string) => void; flags?: boolean }) {
   const { t } = useT();
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: S.xs }}>
-      {options.map((o) => <AnswerRow key={o.value} label={t(o.label)} selected={value === o.value} country={flag} onPress={() => onPick(o.value)} />)}
+      {options.map((o) => <AnswerRow key={o.value} label={t(o.label)} selected={value === o.value} country={flags ? o.value : undefined} onPress={() => onPick(o.value)} testID={`answer-${o.value}`} />)}
     </View>
   );
 }
@@ -64,32 +66,36 @@ export function YesNoTiles({ label, value, onPick }: { label: string; value: str
   );
 }
 
-/** Inline searchable country list (flags). Fills the remaining screen; picking auto-advances. */
-/** `searchAll`: a wider list that typing also searches (nationality: the full visa-required list behind "Other nationality"). */
-export function CountryList({ names, value, onPick, searchPlaceholder, header, searchAll }: { names: string[]; value: string; onPick: (n: string) => void; searchPlaceholder: string; header: React.ReactElement; searchAll?: string[] }) {
-  const c = useColors(); const { t } = useT(); const [q, setQ] = useState("");
-  const list = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    const known = value && (names.includes(value) || searchAll?.includes(value));
-    const base = known ? [value, ...names.filter((n) => n !== value)] : names;
-    if (!s) return base;
-    const pool = searchAll ? [...base.filter((n) => !searchAll.includes(n) ? false : true), ...searchAll.filter((n) => !base.includes(n))] : base;
-    return pool.filter((n) => n.toLowerCase().includes(s) || t(n).toLowerCase().includes(s));
-  }, [q, names, value, t, searchAll]);
+/** Long lists: a large field showing the answer; tapping opens the searchable bottom sheet. Picking closes it. */
+export function SheetAnswer({ label, names, value, onPick, placeholder, searchPlaceholder, error }: { label: string; names: string[]; value: string; onPick: (n: string) => void; placeholder: string; searchPlaceholder: string; error?: boolean }) {
+  const c = useColors(); const { t } = useT(); const [open, setOpen] = useState(false);
   return (
-    <FlatList data={list} keyExtractor={(n) => n} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" initialNumToRender={14} maxToRenderPerBatch={12} windowSize={7} removeClippedSubviews={Platform.OS === "android"}
-      contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.xs }}
-      ListHeaderComponent={<View style={{ gap: S.md, marginBottom: S.xs }}>
-        {header}
-        {(names.length > 1 || !!searchAll) && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 52, borderRadius: R.round, backgroundColor: c.card, paddingHorizontal: S.md }}>
-          <Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />
-          <TextInput value={q} onChangeText={setQ} placeholder={t(searchPlaceholder)} placeholderTextColor={c.secondaryLabel} autoCorrect={false} returnKeyType="search" accessibilityLabel={t(searchPlaceholder)}
-            style={[T.body, { flex: 1, color: c.label, paddingVertical: S.sm }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
-          {!!q && <PressScale onPress={() => setQ("")} accessibilityRole="button" accessibilityLabel={t("Clear search")} hitSlop={10}><Icon name="xmark.circle.fill" size={16} color={c.tertiaryLabel} /></PressScale>}
-        </View>}
-      </View>}
-      ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>{t("No country found.")}</Text>}
-      renderItem={({ item }) => <AnswerRow label={t(item)} country={item === "Other" || item === "Other nationality" ? undefined : item} selected={item === value} onPress={() => onPick(item)} />} />
+    <>
+      <PressScale onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? t(value) : t("not set")}`} accessibilityHint={t("Opens a searchable list")} testID="sheet-field"
+        style={({ pressed }) => [{ minHeight: 64, borderRadius: R.tile, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm, backgroundColor: c.card,
+          borderWidth: error ? 1.5 : 0, borderColor: c.red, opacity: pressed ? 0.8 : 1 }, curve]}>
+        {value ? <Flag country={value} size={32} /> : <Icon name="magnifyingglass" size={18} color={c.secondaryLabel} />}
+        <Text variant="headline" weight={value ? "600" : "400"} color={value ? c.label : c.secondaryLabel} style={{ flex: 1 }}>{value ? t(value) : t(placeholder)}</Text>
+        <Icon name="chevron.up.chevron.down" size={14} color={c.secondaryLabel} />
+      </PressScale>
+      <CountrySheet visible={open} title={label} names={names} selectedName={value} searchPlaceholder={searchPlaceholder}
+        onClose={() => setOpen(false)} onPick={(_, name) => { setOpen(false); onPick(name); }} />
+    </>
+  );
+}
+
+/** A value the user can't change (e.g. Country of Residence: United Arab Emirates). Not a control. */
+export function FixedValue({ label, value }: { label: string; value: string }) {
+  const c = useColors(); const { t } = useT();
+  return (
+    <View accessible accessibilityLabel={`${label}: ${t(value)}`} testID="fixed-value"
+      style={{ minHeight: 52, borderRadius: R.tile, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm, backgroundColor: c.fill }}>
+      <View style={{ flex: 1, gap: S.xxs }}>
+        <Text variant="footnote" tone="secondary">{label}</Text>
+        <Text variant="body" weight="600">{t(value)}</Text>
+      </View>
+      <Icon name="lock.fill" size={14} color={c.secondaryLabel} />
+    </View>
   );
 }
 

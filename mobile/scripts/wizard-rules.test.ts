@@ -12,13 +12,14 @@ const form = (x: Partial<WizardForm> = {}): WizardForm => ({ ...emptyForm, ...x 
 const ids = (f: WizardForm) => activeQuestions(f).map((q) => q.id);
 const EMPLOYED = form({ employmentStatus: "employed", hasNOC: "yes" });
 
-test("personal questions follow the website order; valid passport comes before passport number", () => {
+test("personal questions follow the website order; valid passport comes before passport expiry (the number is asked after payment)", () => {
   const f = form({ hasValidPassport: "yes", maritalStatus: "married" });
   assert.deepEqual(reviewQuestions(f).filter((q) => q.step === "personal").map((q) => q.id), [
     "destination", "nationality", "countryOfResidence", "cityOfResidence", "hasEmiratesId", "firstName", "lastName", "email", "phone",
-    "dateOfBirth", "hasValidPassport", "passportNumber", "maritalStatus", "spouseAccompanying",
+    "dateOfBirth", "hasValidPassport", "passportExpiry", "maritalStatus", "spouseAccompanying",
   ]);
-  assert.ok(ids(f).indexOf("hasValidPassport") < ids(f).indexOf("passportNumber"));
+  assert.ok(ids(f).indexOf("hasValidPassport") < ids(f).indexOf("passportExpiry"));
+  assert.equal(Q_BY_ID.passportNumber, undefined, "the passport number is asked after payment (app/continue/[id].tsx)");
 });
 
 test("trip questions follow the website order", () => {
@@ -29,13 +30,15 @@ test("trip questions follow the website order", () => {
   ]);
 });
 
-test("passport number only after 'yes'; 'no' clears it and blocks", () => {
-  assert.ok(!ids(form()).includes("passportNumber"));
-  assert.ok(!ids(form({ hasValidPassport: "no" })).includes("passportNumber"));
-  assert.ok(ids(form({ hasValidPassport: "yes" })).includes("passportNumber"));
-  assert.deepEqual(answer(Q_BY_ID.hasValidPassport, "no", form({ hasValidPassport: "yes", passportNumber: "A1" })), { hasValidPassport: "no", passportNumber: "" });
+test("passport expiry only after 'yes'; 'no' clears the number and expiry and blocks", () => {
+  assert.ok(!ids(form()).includes("passportExpiry"));
+  assert.ok(!ids(form({ hasValidPassport: "no" })).includes("passportExpiry"));
+  assert.ok(ids(form({ hasValidPassport: "yes" })).includes("passportExpiry"));
+  assert.deepEqual(answer(Q_BY_ID.hasValidPassport, "no", form({ hasValidPassport: "yes", passportNumber: "A1", passportExpiry: "2030-01-01" })), { hasValidPassport: "no", passportNumber: "", passportExpiry: "" });
+  const cleaned = cleanForm(form({ hasValidPassport: "no", passportNumber: "A1", passportExpiry: "2030-01-01" }));
+  assert.equal(cleaned.passportNumber, ""); assert.equal(cleaned.passportExpiry, "");
   assert.ok(validatePersonal(form({ hasValidPassport: "no" })).hasValidPassport);
-  assert.equal(Q_BY_ID.passportExpiry, undefined, "passport expiry was removed (owner decision)");
+  assert.ok(validatePersonal(form({ hasValidPassport: "yes" })).passportExpiry, "expiry is required with a valid passport");
 });
 
 test("nationality: single choice from the website list minus UAE, all visa-required", () => {
@@ -89,9 +92,9 @@ test("changing employment after NOC was answered removes the NOC answer", () => 
 });
 
 test("going back keeps answers: navigation never changes the form", () => {
-  const f = form({ destination: "France", nationality: "India", hasValidPassport: "yes", passportNumber: "A1" });
+  const f = form({ destination: "France", nationality: "India", hasValidPassport: "yes", passportExpiry: "2030-01-01" });
   const before = JSON.stringify(f);
-  activeQuestions(f); progressOf(f, "q:passportNumber"); normalizePage("q:nationality", f);
+  activeQuestions(f); progressOf(f, "q:passportExpiry"); normalizePage("q:nationality", f);
   assert.equal(JSON.stringify(f), before);
 });
 
@@ -101,7 +104,7 @@ test("progress counts only the screens that apply", () => {
   const ps = progressOf(single, "q:destination"), pm = progressOf(married, "q:destination");
   assert.deepEqual(ps.steps, ["personal", "trip-details", "payment"]);
   assert.deepEqual(pm.steps, ["personal", "spouse", "trip-details", "payment"]);
-  // single: no passport number, no spouse question, no residence screen
+  // single: no passport expiry, no spouse question, no residence screen
   assert.equal(ps.segs[0].count, activeQuestions(single).filter((q) => q.step === "personal").length);
   assert.equal(ps.segs[0].count, 11);
   assert.equal(pm.segs[0].count, 13);
@@ -114,7 +117,7 @@ test("progress counts only the screens that apply", () => {
 });
 
 test("old pages map to live ones", () => {
-  assert.equal(normalizePage("q:passportExpiry", form({ hasValidPassport: "yes" })), "q:passportNumber");
+  assert.equal(normalizePage("q:passportNumber", form({ hasValidPassport: "yes" })), "q:passportExpiry");
   assert.equal(normalizePage("q:nationalityOther", form()), "q:nationality");
 });
 

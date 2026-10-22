@@ -1,5 +1,7 @@
 import { PressScale } from "./ui";
-// Searchable country list (ISO 3166, circle flags) in a sheet. Used for the phone calling code.
+// Searchable country list (ISO 3166, circle flags) in a bottom sheet (iOS page sheet: swipe down to close; Android:
+// hardware back closes it). Used for the phone calling code and the wizard's long lists (destination). Search matches
+// partial words, Arabic names and short names (lib/search.ts); names are shown in the app language.
 import { useMemo, useState } from "react";
 import { FlatList, Modal, Platform, Pressable, View, TextInput } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,34 +11,40 @@ import { CircleButton } from "./flow";
 import { useColors, S, R, T, curve } from "../lib/theme";
 import { WORLD } from "../lib/world";
 import { select } from "../lib/haptics";
+import { searchCountries } from "../lib/search";
+import { useT } from "../lib/i18n";
 
 export function CountrySheet({ visible, title, onClose, onPick, selected, selectedName, showDial, names, searchPlaceholder = "Search country or code" }: { visible: boolean; title: string; onClose: () => void; onPick: (iso2: string, name: string) => void; selected?: string; selectedName?: string; showDial?: boolean; names?: string[]; searchPlaceholder?: string }) {
-  const c = useColors(); const insets = useSafeAreaInsets(); const [q, setQ] = useState("");
+  const c = useColors(); const insets = useSafeAreaInsets(); const [q, setQ] = useState(""); const { t } = useT();
   const list = useMemo(() => {
-    const t = q.trim().toLowerCase().replace(/^\+/, "");
+    const s = q.trim().replace(/^\+/, "");
     const base = names ? names.map((n) => WORLD.find((w) => w.name === n) ?? { name: n, iso2: n, dial: 0 }) : showDial ? WORLD.filter((w) => w.dial > 0) : WORLD;
-    return t ? base.filter((w) => w.name.toLowerCase().includes(t) || String(w.dial).startsWith(t) || w.iso2.toLowerCase() === t) : base;
+    if (!s) return base;
+    const byName = searchCountries(base.map((w) => w.name), s);
+    const extra = showDial ? base.filter((w) => !byName.includes(w.name) && (String(w.dial).startsWith(s) || w.iso2.toLowerCase() === s.toLowerCase())) : [];
+    return [...byName.map((n) => base.find((w) => w.name === n)!), ...extra];
   }, [q, showDial, names]);
+  const close = () => { setQ(""); onClose(); };
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle={Platform.OS === "ios" ? "pageSheet" : undefined} onRequestClose={onClose} transparent={false}>
+    <Modal visible={visible} animationType="slide" presentationStyle={Platform.OS === "ios" ? "pageSheet" : undefined} onRequestClose={close} transparent={false}>
       <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: Platform.OS === "ios" ? S.md : insets.top + S.xs }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: S.lg, minHeight: 44 }}>
           <Text variant="headline" accessibilityRole="header">{title}</Text>
-          <CircleButton icon="xmark" label="Close" onPress={onClose} />
+          <CircleButton icon="xmark" label={t("Close")} onPress={close} />
         </View>
         <View style={{ paddingHorizontal: S.lg, paddingVertical: S.sm }}>
-          <Field placeholder={searchPlaceholder} value={q} onChangeText={setQ} autoCorrect={false} autoFocus={Platform.OS !== "web"} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />} />
+          <Field placeholder={t(searchPlaceholder)} value={q} onChangeText={setQ} autoCorrect={false} autoFocus={Platform.OS !== "web"} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />} />
         </View>
-        <FlatList data={list} keyExtractor={(w) => w.iso2} keyboardShouldPersistTaps="handled" initialNumToRender={20} maxToRenderPerBatch={12} windowSize={7} removeClippedSubviews={Platform.OS === "android"}
+        <FlatList data={list} keyExtractor={(w) => w.iso2} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets initialNumToRender={20} maxToRenderPerBatch={12} windowSize={7} removeClippedSubviews={Platform.OS === "android"}
           contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: insets.bottom + S.lg }}
-          ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>No country found.</Text>}
+          ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>{t("No country found.")}</Text>}
           renderItem={({ item: w }) => {
             const on = selectedName ? w.name === selectedName : w.iso2 === selected;
             return (
-              <PressScale onPress={() => { select(); onPick(w.iso2, w.name); setQ(""); }} accessibilityRole="button" accessibilityState={{ selected: on }} aria-selected={on} accessibilityLabel={showDial ? `${w.name}, plus ${w.dial}` : w.name}
+              <PressScale onPress={() => { select(); onPick(w.iso2, w.name); setQ(""); }} accessibilityRole="button" accessibilityState={{ selected: on }} aria-selected={on} accessibilityLabel={showDial ? `${t(w.name)}, plus ${w.dial}` : t(w.name)}
                 style={({ pressed }) => [{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: S.sm, paddingVertical: S.xs, opacity: pressed ? 0.6 : 1 }]}>
                 <Flag country={w.name} size={28} />
-                <Text variant="body" style={{ flex: 1 }}>{w.name}</Text>
+                <Text variant="body" style={{ flex: 1 }}>{t(w.name)}</Text>
                 {showDial && <Text variant="body" tone="secondary" tabular>+{w.dial}</Text>}
                 {on && <Icon name="checkmark" size={15} color={c.tint} weight="bold" />}
               </PressScale>

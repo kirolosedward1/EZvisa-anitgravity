@@ -1,23 +1,32 @@
-// One question per screen, built ONLY from the website wizard (lib/wizard.ts mirrors web lib/wizard-steps.ts +
-// components/apply/*): the same fields, labels, options, order and validation. Each question owns one or more form keys;
-// its errors are exactly validateStep(step) filtered to those keys, so the rules can never drift from the web.
-import { WORLD } from "./world";
+// THE wizard config: one entry per screen, in the website's order (web /apply: components/apply/*), built ONLY from the
+// website's fields, labels and options (lib/wizard.ts). Each entry says:
+//   id        stable question id (page id "q:<id>", saved with drafts)
+//   label     the question (the website's field label)
+//   kind      input type: "choice" (big tap rows), "yesno" (two tiles), "sheet" (searchable bottom-sheet picker for long
+//             lists), "text" / "textarea" / "pair" / "phone" / "date" / "countries", or "fixed" (a value the user can't
+//             change: shown, never asked, never counted in progress)
+//   options / names + source   the option list and where it comes from
+//   applies   the condition for showing it (e.g. NOC only when employed); answers of hidden questions are cleared by onPick
+// Each question owns one or more form keys; its errors are exactly validateStep(step) filtered to those keys, so the rules
+// can never drift from the web. Validation beyond "an answer is required" is kept as it was (chat 05 owns it).
 import {
-  SCHENGEN, UAE_NATIONALITIES, RESIDENCE_COUNTRIES, EMIRATE_OPTIONS, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
+  SCHENGEN, NATIONALITY_OPTIONS, DEFAULT_RESIDENCE, EMIRATE_OPTIONS, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
   visibleSteps, validateStep, adultMax, earliestDeparture, iso, label as optLabel, type WizardForm, type WizardStep, type Errors,
 } from "./wizard";
 
 export type Opt = { value: string; label: string };
-export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "phone" | "textarea" | "countries" | "pair";
+export type QKind = "sheet" | "fixed" | "choice" | "yesno" | "text" | "date" | "phone" | "textarea" | "countries" | "pair";
 export type Question = {
   id: string; step: Exclude<WizardStep, "payment">; keys: (keyof WizardForm)[];
   /** The website's field label (without the trailing " *"). */
   label: string; required: boolean; kind: QKind;
-  placeholder?: string; searchPlaceholder?: string; options?: Opt[]; names?: string[]; allNames?: string[];
+  placeholder?: string; searchPlaceholder?: string; options?: Opt[]; names?: string[];
+  /** Where the options come from (documentation; see lib/wizard.ts header). */
+  source?: string;
+  /** "choice" rows that are countries: show each option's own flag (nationality). Emirates never get flags. */
+  flags?: boolean;
   /** Short friendly line under the title (also from the website's notes where there is one). */
   hint?: string;
-  /** Country whose flag is shown on the title and answer rows (instead of the destination flag). */
-  flag?: string;
   applies?: (f: WizardForm) => boolean;
   /** Extra changes the website makes when this answer changes (e.g. clearing dependent fields). */
   onPick?: (v: string, f: WizardForm) => Partial<WizardForm>;
@@ -30,19 +39,20 @@ export type Question = {
   note?: (f: WizardForm) => { tone: "green" | "amber" | "blue" | "red"; text: string } | null;
 };
 
-const WORLD_NAMES = WORLD.map((w) => w.name);
 const todayIso = () => iso(new Date());
 export const BIZ = (f: WizardForm) => f.employmentStatus === "business" || f.employmentStatus === "freelancer";
 const EMP = (f: WizardForm) => f.employmentStatus === "employed";
 
 export const QUESTIONS: Question[] = [
   // ---- Personal Information (nationality-step.tsx) ----
-  { id: "destination", step: "personal", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "country", names: SCHENGEN, searchPlaceholder: "Search country..." },
-  { id: "nationality", step: "personal", keys: ["nationality"], label: "Nationality", required: true, kind: "country", names: UAE_NATIONALITIES, searchPlaceholder: "Search nationality...",
-    allNames: SCHENGEN_VISA_REQUIRED },
-  { id: "countryOfResidence", step: "personal", keys: ["countryOfResidence"], label: "Country of Residence", required: true, kind: "country", names: RESIDENCE_COUNTRIES, searchPlaceholder: "Search country...", flag: "United Arab Emirates",
-    onPick: (v) => (v !== "United Arab Emirates" ? { hasEmiratesId: "" } : {}) },
-  { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "City of Residence", required: true, kind: "choice", options: EMIRATE_OPTIONS },
+  { id: "destination", step: "personal", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "sheet", names: SCHENGEN, source: "web lib/countries.ts SCHENGEN_COUNTRIES",
+    placeholder: "Select destination country", searchPlaceholder: "Search country..." },
+  { id: "nationality", step: "personal", keys: ["nationality"], label: "Nationality", required: true, kind: "choice", flags: true,
+    options: NATIONALITY_OPTIONS.map((n) => ({ value: n, label: n })), source: "web nationality-step.tsx list minus UAE (visa-exempt)" },
+  // UAE only: shown as a fixed value on the emirate screen and in Review, never asked.
+  { id: "countryOfResidence", step: "personal", keys: ["countryOfResidence"], label: "Country of Residence", required: true, kind: "fixed", source: "web lib/residence.ts DEFAULT_RESIDENCE",
+    applies: (f) => f.countryOfResidence === DEFAULT_RESIDENCE },
+  { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "City of Residence", required: true, kind: "choice", options: EMIRATE_OPTIONS, source: "web lib/residence.ts UAE_EMIRATES" },
   { id: "hasEmiratesId", step: "personal", keys: ["hasEmiratesId"], label: "Do you have an Emirates ID?", required: true, kind: "yesno", applies: (f) => f.countryOfResidence === "United Arab Emirates" },
   { id: "firstName", step: "personal", keys: ["firstName"], label: "First Name", required: true, kind: "text", placeholder: "Enter first name", hint: "As on your passport.", text: { caps: "words", contentType: "givenName", autoComplete: "given-name" } },
   { id: "lastName", step: "personal", keys: ["lastName"], label: "Last Name", required: true, kind: "text", placeholder: "Enter last name", hint: "As on your passport.", text: { caps: "words", contentType: "familyName", autoComplete: "family-name" } },
@@ -66,7 +76,8 @@ export const QUESTIONS: Question[] = [
     hint: "Your spouse's passport should have at least 6 months validity from your travel date.",
     note: (f) => (f.spouseHasValidPassport === "no" ? { tone: "amber", text: "Your spouse will need to obtain a valid passport before applying for a visa." } : null) },
   { id: "spouseOccupation", step: "spouse", keys: ["spouseOccupation"], label: "Spouse Occupation", required: false, kind: "text", placeholder: "Enter occupation", text: { caps: "sentences" } },
-  // ---- Employment (employment-step.tsx) ----
+  // ---- Employment (employment-step.tsx). Asked after payment on the Continue screen (app/continue/[id].tsx), which
+  // shows exactly employmentQuestions(f): NOC only for "employed", never for business owners / freelancers. ----
   { id: "employmentStatus", step: "employment", keys: ["employmentStatus"], label: "Employment Status", required: true, kind: "choice", options: EMPLOYMENT,
     onPick: (v) => (v !== "employed" ? { hasNOC: "" } : {}) },
   // Employed: Job Title + Company Name on one screen (same fields, same rules). Business owner / freelancer: company name only, as before.
@@ -102,11 +113,19 @@ export const QUESTIONS: Question[] = [
 export const Q_BY_ID: Record<string, Question> = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 export const REVIEW = "review";
 
-/** Questions that apply to this form, in the website's order (spouse questions only when the spouse step is visible). */
-export function activeQuestions(f: WizardForm): Question[] {
+const applies = (q: Question, f: WizardForm) => !q.applies || q.applies(f);
+/** Every question that applies, fixed values included, in the website's order (what Review lists). */
+export function reviewQuestions(f: WizardForm): Question[] {
   const steps = visibleSteps(f);
-  return QUESTIONS.filter((q) => steps.includes(q.step) && (!q.applies || q.applies(f)));
+  return QUESTIONS.filter((q) => steps.includes(q.step) && applies(q, f));
 }
+/** The screens the user goes through (no fixed values), in order. Progress counts exactly these. */
+export const activeQuestions = (f: WizardForm): Question[] => reviewQuestions(f).filter((q) => q.kind !== "fixed");
+/** The changes one answer makes: the answer itself plus the dependent answers it clears (the question's onPick),
+ *  e.g. employment other than "employed" removes the NOC answer, "no valid passport" removes the passport number and expiry. */
+export const answer = (q: Question, v: string, f: WizardForm): Partial<WizardForm> => ({ [q.keys[0]]: v, ...(q.onPick?.(v, f) ?? {}) } as Partial<WizardForm>);
+/** Employment questions that apply (Continue screen after payment). */
+export const employmentQuestions = (f: WizardForm): Question[] => QUESTIONS.filter((q) => q.step === "employment" && applies(q, f));
 /** Errors for one question: the website's step validation, limited to this question's fields. */
 export function questionErrors(q: Question, f: WizardForm): Errors {
   const all = validateStep(q.step, f); const out: Errors = {};
@@ -124,8 +143,9 @@ export const firstUnanswered = (f: WizardForm) => activeQuestions(f).find((q) =>
 const LEGACY: Record<string, WizardStep> = { destination: "personal", nationality: "personal", residence: "personal", contact: "personal", passport: "personal", marital: "personal", work: "employment", purpose: "trip-details", dates: "trip-details", history: "trip-details", stay: "trip-details", funds: "trip-details" };
 export function normalizePage(p: string | null | undefined, f: WizardForm): string {
   if (!p) return `q:${activeQuestions(f)[0].id}`;
-  if (p === "q:nationalityOther") return "q:nationality"; // removed free-text question
-  if (p === "q:passportNumber") p = "q:passportExpiry"; // asked after payment now: resume at the next question
+  // Removed screens: the free-text "Other nationality", the fixed residence value, and the passport number (asked after payment now).
+  const moved: Record<string, string> = { "q:nationalityOther": "q:nationality", "q:countryOfResidence": "q:cityOfResidence", "q:passportNumber": "q:passportExpiry" };
+  if (moved[p]) p = moved[p];
   if (p === "q:jobTitle" || (p === "q:companyName" && f.employmentStatus === "employed")) p = "q:jobCompany"; // merged screen (v9.5)
   if (p === REVIEW || p === "payment" || p === "documents") return REVIEW;
   if (p.startsWith("q:")) { const q = Q_BY_ID[p.slice(2)]; if (q && activeQuestions(f).includes(q)) return p; if (q) return pageForStep(q.step, f); }
@@ -164,7 +184,7 @@ export function displayValue(q: Question, f: WizardForm, t: (s: string) => strin
     case "phone": return f.phone || "";
     case "pair": return [f.jobTitle, f.companyName].map((x) => x.trim()).filter(Boolean).join(" · ");
     case "countries": return f.additionalCountries.map((a) => `${t(a.country)} (${fmtDate(a.arrivalDate)} – ${fmtDate(a.departureDate)})`).join("\n");
-    case "country": return v ? t(v) : "";
+    case "sheet": case "fixed": return v ? t(v) : "";
     default: return String(v ?? "");
   }
 }

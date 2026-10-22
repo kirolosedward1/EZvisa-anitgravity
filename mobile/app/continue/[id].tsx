@@ -14,6 +14,7 @@ import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { getApplication, saveContinueAnswers, continueForm, type Application } from "../../lib/data";
 import { EMPLOYMENT, SALARY, emptyForm, validateEmployment, validatePassportNumber, iso, type WizardForm } from "../../lib/wizard";
+import { employmentQuestions, answer, Q_BY_ID } from "../../lib/questions";
 import { success, error as hError, tap } from "../../lib/haptics";
 
 type Emp = Pick<WizardForm, "passportNumber" | "employmentStatus" | "jobTitle" | "companyName" | "employmentStartDate" | "monthlySalary" | "hasNOC" | "averageMonthlyIncome">;
@@ -39,13 +40,15 @@ export default function ContinueApplication() {
   const valid = !!f && Object.keys(errs).length === 0;
   const show = (k: keyof Emp) => (tried || !!String(f?.[k] ?? "").trim()) && errs[k];
   const emp = f?.employmentStatus === "employed"; const biz = f?.employmentStatus === "business" || f?.employmentStatus === "freelancer";
+  // Which employment questions show comes from the wizard config (lib/questions.ts): NOC only when employed.
+  const shown = new Set(f ? employmentQuestions({ ...emptyForm, ...f } as WizardForm).map((q) => q.id) : []);
 
   const save = async () => {
     if (!f || !a) return; setTried(true); if (!valid) { hError(); return; }
     setBusy(true); setErr(null);
     try {
       const clean: Emp = { ...f, passportNumber: f.passportNumber.trim().toUpperCase(), jobTitle: emp ? f.jobTitle.trim() : "", companyName: emp || biz ? f.companyName.trim() : "", employmentStartDate: emp ? f.employmentStartDate : "",
-        monthlySalary: emp ? f.monthlySalary : "", hasNOC: emp ? f.hasNOC : "", averageMonthlyIncome: biz ? f.averageMonthlyIncome.trim() : "" };
+        monthlySalary: emp ? f.monthlySalary : "", hasNOC: shown.has("hasNOC") ? f.hasNOC : "", averageMonthlyIncome: biz ? f.averageMonthlyIncome.trim() : "" };
       const w = (a.notes?.wizard ?? {}) as Partial<WizardForm>;
       const r = await saveContinueAnswers(a.id, { wizard: { ...w, ...clean } as any, employmentStatus: clean.employmentStatus, jobTitle: clean.jobTitle, companyName: clean.companyName, monthlySalary: clean.monthlySalary } as any, clean.passportNumber);
       if (!r.synced) throw new Error(t("Your application is already in review, so it can't be changed here. Please message us on WhatsApp."));
@@ -80,7 +83,7 @@ export default function ContinueApplication() {
           {hasValidPassport !== "no" && input("passportNumber", "Passport Number", "e.g. A1234567", { caps: "characters" })}
           <View style={{ gap: S.xs }}>
             <Text variant="footnote" weight="600" tone="secondary">{t("Employment Status")}</Text>
-            <ChoiceList label={t("Employment Status")} options={EMPLOYMENT} value={f.employmentStatus} onPick={(v) => set({ employmentStatus: v as Emp["employmentStatus"], ...(v !== "employed" ? { hasNOC: "" } : {}) })} />
+            <ChoiceList label={t("Employment Status")} options={EMPLOYMENT} value={f.employmentStatus} onPick={(v) => set(answer(Q_BY_ID.employmentStatus, v, { ...emptyForm, ...f } as WizardForm) as Partial<Emp>)} />
             {tried && !!errs.employmentStatus && <Text variant="footnote" tone="red">{t(errs.employmentStatus)}</Text>}
           </View>
           {emp && <>
@@ -96,10 +99,10 @@ export default function ContinueApplication() {
               <ChoiceList label={t("Monthly Salary Range")} options={SALARY} value={f.monthlySalary} onPick={(v) => set({ monthlySalary: v })} />
               {tried && !!errs.monthlySalary && <Text variant="footnote" tone="red">{t(errs.monthlySalary)}</Text>}
             </View>
-            <View style={{ gap: S.xs }}>
+            {shown.has("hasNOC") && <View style={{ gap: S.xs }} testID="continue-noc">
               <Text variant="footnote" weight="600" tone="secondary">{t("Do you have a No Objection Certificate?")} · {t("Optional")}</Text>
               <YesNoTiles label={t("Do you have a No Objection Certificate?")} value={f.hasNOC} onPick={(v) => set({ hasNOC: v as Emp["hasNOC"] })} />
-            </View>
+            </View>}
           </>}
           {biz && <>
             {input("companyName", "Company Name", "Enter company name", { next: () => companyRef.current?.focus(), ct: "organizationName" })}
