@@ -92,7 +92,7 @@ export const QUESTIONS: Question[] = [
     hint: "Your passport should have at least 6 months validity from your travel date.",
     onPick: (v) => (v === "no" ? { passportNumber: "", passportExpiry: "" } : {}),
     note: (f) => (f.hasValidPassport === "no" ? { tone: "amber", text: "You'll need a valid passport (at least 6 months validity from your travel date) before your visa appointment. Our team will contact you." } : null) },
-  { id: "passportNumber", step: "passport", keys: ["passportNumber"], label: "Passport Number", required: true, kind: "text", placeholder: "e.g. A1234567", applies: (f) => f.hasValidPassport === "yes",
+  { id: "passportNumber", step: "passport", keys: ["passportNumber"], label: "Passport Number", required: true, kind: "text", placeholder: "e.g. A1234567", applies: (f) => f.hasValidPassport !== "no",
     text: { caps: "characters", upper: true } },
   { id: "passportExpiry", step: "passport", keys: ["passportExpiry"], label: "Passport Expiry Date", required: true, kind: "date", placeholder: "Select expiry date", applies: (f) => f.hasValidPassport === "yes",
     min: () => todayIso(), dateStyle: "wheel", defaultDate: () => { const d = new Date(); return iso(new Date(d.getFullYear() + 3, d.getMonth(), d.getDate())); } },
@@ -115,6 +115,8 @@ export const QUESTIONS: Question[] = [
   { id: "averageMonthlyIncome", step: "employment", keys: ["averageMonthlyIncome"], label: "Average Monthly Income", required: true, kind: "text", placeholder: "e.g., 15,000 AED", applies: BIZ },
 ];
 export const Q_BY_ID: Record<string, Question> = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
+/** Form keys asked after payment: the only answers Continue application may write (lib/data.ts saveAfterPayment). */
+export const POST_KEYS: (keyof WizardForm)[] = [...new Set(QUESTIONS.filter((q) => q.step !== "personal").flatMap((q) => q.keys))];
 export const REVIEW = "review";
 
 export type Phase = "pre" | "post";
@@ -123,6 +125,22 @@ export function activeQuestions(f: WizardForm, phase: Phase = "pre"): Question[]
   const steps = phase === "pre" ? visibleSteps(f) : postSteps(f);
   return steps.flatMap((s) => QUESTIONS.filter((q) => q.step === s && (!q.applies || q.applies(f))));
 }
+/** The questions Continue application asks for this row. Applications made on the website asked everything else
+ *  there, so only passport (valid? + number) and employment are asked for them: the website clears the number on a
+ *  "No" and does not store that answer. Shared by the screen and needsContinue. */
+export function continueQuestions(f: WizardForm, website: boolean): Question[] {
+  const qs = activeQuestions(f, "post");
+  return website ? qs.filter((x) => x.step === "employment" || x.id === "hasValidPassport" || x.id === "passportNumber") : qs;
+}
+const TOO_SOON = "Departure must be at least 15 days from today";
+/** firstError for Continue application. The 15-day minimum applies when the departure date is picked: a date already
+ *  saved on the row (`saved`) stays an answer as the trip gets closer, so a finished application is not reopened. */
+export const continueError = (q: Question, f: WizardForm, saved: WizardForm) => {
+  const e = firstError(q, f);
+  return e === TOO_SOON && !!saved.travelStartDate && f.travelStartDate === saved.travelStartDate ? undefined : e;
+};
+/** True when Continue application still has a required question to ask (f = the answers on the row). */
+export const continueNeeded = (f: WizardForm, website: boolean) => continueQuestions(f, website).some((q) => !!continueError(q, f, f));
 /** Errors for one question: the website's step validation, limited to this question's fields. */
 export function questionErrors(q: Question, f: WizardForm): Errors {
   const all = validateStep(q.step, f); const out: Errors = {};

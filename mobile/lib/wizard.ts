@@ -89,13 +89,6 @@ export const visibleSteps = (_f: WizardForm): WizardStep[] => ["personal", "paym
 /** Steps asked AFTER payment (app/continue/[id].tsx), in order. Spouse only when married and the spouse travels. */
 export const postSteps = (f: Partial<WizardForm>): WizardStep[] =>
   showSpouse({ ...emptyForm, ...f } as WizardForm) ? ["trip-details", "passport", "spouse", "employment"] : ["trip-details", "passport", "employment"];
-/** Employment answers complete (website rules, validateEmployment). */
-export const employmentComplete = (f: Partial<WizardForm>) => Object.keys(validateEmployment({ ...emptyForm, ...f } as WizardForm)).length === 0;
-/** Everything the app asks after payment (Continue application) is answered and valid. */
-export const continueComplete = (f: Partial<WizardForm>) => {
-  const full = { ...emptyForm, ...f } as WizardForm;
-  return postSteps(full).every((s) => Object.keys(validateStep(s, full)).length === 0);
-};
 /** URL step slug -> wizard step. Only "personal" and "payment" are asked before payment; anything else opens personal. */
 export function parseStep(s?: string): WizardStep {
   return s === "payment" || s === "documents" ? "payment" : "personal";
@@ -157,8 +150,9 @@ export function validatePassport(f: WizardForm): Errors {
     if (!f.passportExpiry) e.passportExpiry = "Please select your passport expiry date";
     else if (f.passportExpiry < iso(new Date())) e.passportExpiry = "This passport has expired. Enter the expiry date of your current passport.";
     else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date";
-    if (!f.passportNumber.trim()) e.passportNumber = "Passport number is required";
   }
+  // Required unless the answer is "No" (website rows don't store the validity answer, only the number column).
+  if (f.hasValidPassport !== "no" && !f.passportNumber.trim()) e.passportNumber = "Passport number is required";
   return e;
 }
 export function validateSpouse(f: WizardForm): Errors {

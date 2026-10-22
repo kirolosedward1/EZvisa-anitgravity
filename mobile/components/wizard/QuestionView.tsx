@@ -28,13 +28,15 @@ type Props = {
   chips?: React.ReactNode; belowTitle?: React.ReactNode;
   /** Button title when answered (default "Continue"; "Save" when editing from Review). */
   doneLabel?: string;
+  /** This screen's error rule (default firstError; Continue application keeps a saved departure date valid). */
+  errorOf?: (q: Question, f: WizardForm) => string | undefined;
   children?: React.ReactNode;
 };
 
 const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean) =>
   [T.title3, { color: c.label, minHeight: 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: err ? 1.5 : 0, borderColor: c.red, textAlign: rtl ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)] as any;
 
-export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, children }: Props) {
+export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, children }: Props) {
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
   const inputRef = useRef<TextInput>(null); const input2Ref = useRef<TextInput>(null);
   // Lift the screen (and its Continue bar) above the iOS keyboard; S.md between button and keyboard.
@@ -42,7 +44,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
   const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
   const account = getAccountEmail();
 
-  const liveErr = firstError(q, f);
+  const liveErr = errorOf(q, f);
   const hasInput = q.kind === "contact" ? !!f.phoneLocal.trim() && (!!account || !!f.email.trim()) : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
   const e = showErr || (settled && hasInput) ? liveErr : undefined;
   const note = q.note?.(f);

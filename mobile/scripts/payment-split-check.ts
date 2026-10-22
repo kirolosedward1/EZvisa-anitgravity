@@ -1,7 +1,7 @@
 // Node-only checks: which questions are asked before payment (wizard) and which after (Continue application).
 // Run: bun scripts/run-check.ts scripts/payment-split-check.ts
-import { activeQuestions, normalizePage, setAccountEmail, firstInvalid } from "../lib/questions";
-import { emptyForm, validatePersonal, continueComplete, postSteps, type WizardForm } from "../lib/wizard";
+import { activeQuestions, normalizePage, setAccountEmail, firstInvalid, continueNeeded, continueQuestions } from "../lib/questions";
+import { emptyForm, validatePersonal, postSteps, type WizardForm } from "../lib/wizard";
 declare const process: any;
 
 let fail = 0;
@@ -24,7 +24,7 @@ for (const id of ["purposeOfTrip", "travelStartDate", "travelEndDate", "travelin
 ok(!post.includes("itinerary") && !post.includes("spouseOccupation") && !post.includes("hasEmiratesId"), "removed: itinerary, spouse occupation, Emirates ID");
 ok(!postSteps({ ...emptyForm }).includes("spouse") && postSteps({ ...emptyForm, maritalStatus: "married", spouseAccompanying: "yes" }).includes("spouse"), "post: spouse questions only when the spouse travels");
 ok(!ids({ ...emptyForm, hasEmiratesId: "yes" }, "post").includes("residenceVisaValid"), "website rows that answered Emirates ID are not asked the residence question");
-ok(!continueComplete(pre), "after paying, the trip/passport/employment answers are still missing");
+ok(continueNeeded(pre, false), "after paying, the trip/passport/employment answers are still missing");
 ok(normalizePage("q:firstName", emptyForm) === "q:name" && normalizePage("q:phone", emptyForm) === "q:contact", "old drafts resume on the merged screens");
 ok(normalizePage("q:travelStartDate", pre) === "review", "an old draft on a moved question goes to Review when the pre-payment part is done");
 console.log(fail ? `${fail} FAILED` : "ALL PASS");

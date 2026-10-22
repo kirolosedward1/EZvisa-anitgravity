@@ -3,7 +3,7 @@
 // @ts-ignore plain JS stub
 import { db as fake } from "./stubs/supabase.js";
 import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, splitPhone, markPrefilled, markAsked, shouldAsk } from "../lib/profile";
-import { emptyForm, validatePersonal, iso, type WizardForm } from "../lib/wizard";
+import { emptyForm, validatePassport, iso, type WizardForm } from "../lib/wizard";
 declare const process: any;
 const db: any = fake;
 
@@ -35,8 +35,9 @@ db.rows = [
   const { form, filled } = applyProfile({ ...emptyForm, destination: "France", nationality: "" }, p);
   ok(form.passportExpiry === "2025-01-31" && filled.includes("passportExpiry") && form.hasValidPassport === "yes", "expired passport expiry is prefilled");
   ok(form.passportNumber === "" && !filled.includes("passportNumber" as any), "passport number is not prefilled (asked after payment)");
-  ok(/expired/i.test(validatePersonal(form).passportExpiry ?? ""), `validation flags the expired passport ("${validatePersonal(form).passportExpiry}")`);
-  ok(validatePersonal({ ...form, passportExpiry: inYears(5) }).passportExpiry === undefined, "a valid future expiry passes");
+  // Passport validity is asked after payment now (validatePassport, Continue application).
+  ok(/expired/i.test(validatePassport(form).passportExpiry ?? ""), `validation flags the expired passport ("${validatePassport(form).passportExpiry}")`);
+  ok(validatePassport({ ...form, passportExpiry: inYears(5) }).passportExpiry === undefined, "a valid future expiry passes");
 
   // ---- never over answers already in a draft ----
   const draft = { ...emptyForm, firstName: "Mina", nationality: "India" };

@@ -11,7 +11,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
 import { siteUrl } from "./config";
 import type { Database } from "./database.types";
-import { emptyForm, continueComplete, employmentComplete, type WizardForm } from "./wizard";
+import { emptyForm, type WizardForm } from "./wizard";
+import { POST_KEYS, continueNeeded } from "./questions";
 
 export type VisaRow = Database["public"]["Tables"]["visa_applications"]["Row"];
 type VisaUpdate = Database["public"]["Tables"]["visa_applications"]["Update"];
@@ -303,38 +304,74 @@ export async function patchNotes(applicationId: string, patch: Partial<Notes>): 
 export function continueForm(a: Pick<Application, "notes"> & Partial<VisaRow>): WizardForm {
   const w = (a.notes?.wizard ?? {}) as Partial<WizardForm>; const n = a.notes as any;
   const yn = (b: boolean | null | undefined): WizardForm["previousRefusals"] => (b === true ? "yes" : b === false ? "no" : "");
+  const passportNumber = w.passportNumber || a.passport_number || "";
   return {
     ...emptyForm, ...w,
+    // A stored passport number means they have one (the website keeps no answer to "Do you have a valid passport?").
+    hasValidPassport: w.hasValidPassport || (passportNumber ? "yes" : ""),
     employmentStatus: w.employmentStatus || n?.employmentStatus || "", jobTitle: w.jobTitle || n?.jobTitle || "", companyName: w.companyName || n?.companyName || "",
     monthlySalary: w.monthlySalary || n?.monthlySalary || "", maritalStatus: w.maritalStatus || n?.maritalStatus || "", spouseAccompanying: w.spouseAccompanying || n?.spouseAccompanying || "",
-    passportNumber: w.passportNumber || a.passport_number || "", dateOfBirth: w.dateOfBirth || a.date_of_birth || "",
+    passportNumber, dateOfBirth: w.dateOfBirth || a.date_of_birth || "",
     travelStartDate: w.travelStartDate || a.entry_date || "", travelEndDate: w.travelEndDate || a.exit_date || "", purposeOfTrip: w.purposeOfTrip || a.travel_purpose || "",
-    previousRefusals: w.previousRefusals || (a.previous_rejections == null ? "" : yn(a.previous_rejections)),
+    // App rows store previous_rejections = false before the question is asked, so only a website row's column is an answer.
+    previousRefusals: w.previousRefusals || (!isWebsiteRow(a) || a.previous_rejections == null ? "" : yn(a.previous_rejections)),
     refusalDetails: w.refusalDetails || a.rejection_details || "",
   } as WizardForm;
 }
 /** Paid, still open, and the answers asked after payment are not all there yet. */
-export const needsContinue = (a: Application) => {
-  if (!isPaid(a) || !["submitted", "draft", "reviewing"].includes(a.status)) return false;
-  const f = continueForm(a);
-  // Rows from the website asked everything before payment there; only the passport number and employment may be missing.
-  if (a.notes?.source !== "mobile-app") return !employmentComplete(f) || (f.hasValidPassport !== "no" && !f.passportNumber.trim());
-  return !continueComplete(f);
-};
+export const needsContinue = (a: Application) =>
+  isPaid(a) && ["submitted", "draft", "reviewing"].includes(a.status) && continueNeeded(continueForm(a), isWebsiteRow(a));
+/** Applications made on the website (not by this app). Continue application asks them only passport number + employment. */
+export const isWebsiteRow = (a: Pick<Application, "notes">) => a.notes?.source !== "mobile-app";
 
-/** Saves the answers asked after payment (Continue application): the same columns the website reads (dates, purpose,
- *  date of birth, passport number, refusals ...) and additional_notes (wizard + the website's keys). While the case is in
- *  review the guard trigger (migrations/0002) keeps only additional_notes, which also hold every answer (wizard).
- *  `synced` is false when the row was not writable. */
+/** Saves the answers asked after payment (Continue application). Writes ONLY what those questions own: their keys in
+ *  additional_notes.wizard, the website's employment keys, and the matching columns (dates, purpose, date of birth,
+ *  passport number, refusals) where an answer exists. Name, contact, nationality, destination, source and payment are
+ *  never touched, so a website row keeps its data. While the case is in review the guard trigger (migrations/0002)
+ *  keeps only additional_notes, which hold every answer. `synced` is false when the row was not writable. */
 export async function saveAfterPayment(applicationId: string, f: WizardForm): Promise<{ synced: boolean }> {
-  const sb = need(); const u = await me();
-  const { data: cur, error: ce } = await sb.from("visa_applications").select("email, additional_notes").eq("id", applicationId).eq("email", u.email).single();
-  if (ce) throw ce;
-  const prev = parseNotes(cur.additional_notes);
-  const { user_agent: _ua, referrer: _ref, ...cols } = columns(f, cur.email ?? u.email, prev.wizardStep ?? "payment", prev) as any;
-  const { data, error } = await sb.from("visa_applications").update({ ...cols, updated_at: new Date().toISOString() }).eq("id", applicationId).eq("email", u.email).select("id");
-  if (error) throw error;
-  return { synced: !!data?.length };
+  const u = await me();
+  const t = (v: string) => (v ?? "").trim();
+  const answers = Object.fromEntries(POST_KEYS.map((k) => [k, f[k]])) as Partial<WizardForm>;
+  const cols: VisaUpdate = {};
+  if (f.dateOfBirth) cols.date_of_birth = f.dateOfBirth;
+  if (f.travelStartDate) cols.entry_date = f.travelStartDate;
+  if (f.travelEndDate) cols.exit_date = f.travelEndDate;
+  if (f.travelStartDate && f.travelEndDate) cols.duration_days = days(f.travelStartDate, f.travelEndDate);
+  if (t(f.purposeOfTrip)) cols.travel_purpose = t(f.purposeOfTrip);
+  if (t(f.passportNumber)) cols.passport_number = t(f.passportNumber).toUpperCase();
+  if (f.isFirstSchengenVisa) cols.previous_schengen_visa = f.isFirstSchengenVisa === "no";
+  if (f.previousRefusals) { cols.previous_rejections = f.previousRefusals === "yes"; cols.rejection_details = f.previousRefusals === "yes" ? t(f.refusalDetails) || null : null; }
+  const synced = await updateWithNotes(applicationId, u.email, (prev) => ({
+    ...cols,
+    additional_notes: JSON.stringify({
+      ...prev, wizard: { ...(prev.wizard ?? {}), ...answers },
+      employmentStatus: f.employmentStatus, jobTitle: t(f.jobTitle), companyName: t(f.companyName), monthlySalary: f.monthlySalary,
+    } satisfies Notes),
+  }));
+  return { synced };
+}
+
+/** Read-modify-write of a row's additional_notes with updated_at as the version (as the drafts do): when another write
+ *  lands in between (an upload finishing during Continue application), it reads again and re-applies, so neither one
+ *  erases the other. `build` returns the update for the current notes, or null for nothing to write. False when the
+ *  row is not writable (status, RLS). */
+async function updateWithNotes(id: string, email: string, build: (prev: Notes) => VisaUpdate | null): Promise<boolean> {
+  const sb = need();
+  for (let i = 0; i < 3; i++) {
+    const { data: cur, error: ce } = await sb.from("visa_applications").select("additional_notes, updated_at").eq("id", id).eq("email", email).single();
+    if (ce) throw ce;
+    const patch = build(parseNotes(cur.additional_notes));
+    if (!patch) return true;
+    let q = sb.from("visa_applications").update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id).eq("email", email);
+    if (cur.updated_at) q = q.eq("updated_at", cur.updated_at);
+    const { data, error } = await q.select("id");
+    if (error) throw error;
+    if (data?.length) return true;
+    const { data: now } = await sb.from("visa_applications").select("updated_at").eq("id", id).eq("email", email).single();
+    if (!now || now.updated_at === cur.updated_at) return false; // nothing changed in between: the row is not writable
+  }
+  return false;
 }
 
 export class UploadError extends Error { constructor(message: string, public network: boolean) { super(message); } }
@@ -413,12 +450,9 @@ export async function uploadDocument(applicationId: string, file: { uri: string;
       const col = DOC_FLAG[documentType];
       if (col) await sb.from("visa_applications").update({ [col]: true } as VisaUpdate).eq("id", applicationId).eq("email", u.email);
     }
-    const { data: cur } = await sb.from("visa_applications").select("additional_notes").eq("id", applicationId).eq("email", u.email).single();
-    const n = parseNotes(cur?.additional_notes ?? null);
-    if (!(n.uploads ?? []).some((x) => x.path === path)) {
-      n.uploads = [...(n.uploads ?? []), { type: documentType, path, name: file.name, at: new Date().toISOString() }];
-      await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n) }).eq("id", applicationId);
-    }
+    // Best effort as before (the file and its has_* flag are already saved); versioned so a Continue save can't erase it.
+    await updateWithNotes(applicationId, u.email, (n) => (n.uploads ?? []).some((x) => x.path === path) ? null
+      : { additional_notes: JSON.stringify({ ...n, uploads: [...(n.uploads ?? []), { type: documentType, path, name: file.name, at: new Date().toISOString() }] }) }).catch(() => false);
   } catch (e: any) {
     if (e instanceof UploadError) throw e;
     throw new UploadError(e?.message ?? String(e), isNetwork(e));

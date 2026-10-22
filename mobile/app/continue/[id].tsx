@@ -14,14 +14,12 @@ import { QuestionView } from "../../components/wizard/QuestionView";
 import { useColors, S, R, SPRING } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { slideIn } from "../../lib/motion";
-import { getApplication, saveAfterPayment, continueForm } from "../../lib/data";
-import { STEP_TITLES, OTHER_NATIONALITY, type WizardForm } from "../../lib/wizard";
-import { activeQuestions, firstError, Q_BY_ID, type Question } from "../../lib/questions";
+import { getApplication, saveAfterPayment, continueForm, isWebsiteRow } from "../../lib/data";
+import { STEP_TITLES, OTHER_NATIONALITY, emptyForm, type WizardForm } from "../../lib/wizard";
+import { continueQuestions, continueError, Q_BY_ID, type Question } from "../../lib/questions";
 import { success, error as hError, tap, select } from "../../lib/haptics";
 
 const AUTO_MS = 260;
-/** Applications made on the website asked everything else there: only the passport number and employment are asked here. */
-const scoped = (qs: Question[], website: boolean) => (website ? qs.filter((x) => x.step === "employment" || x.id === "passportNumber") : qs);
 
 function Bar({ fill }: { fill: number }) {
   const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
@@ -39,40 +37,54 @@ export default function ContinueApplication() {
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); const [allMode, setAllMode] = useState(false);
   const [settled, setSettled] = useState(true); const [busy, setBusy] = useState(false);
   const auto = useRef<ReturnType<typeof setTimeout> | null>(null); const titleRef = useRef<any>(null);
+  /** Saves run one after another, so an older answer set can never land after a newer one. */
+  const saving = useRef<Promise<void>>(Promise.resolve());
+  /** The answers as loaded from the row (a saved departure date stays valid as the trip gets closer). */
+  const saved = useRef<WizardForm>(emptyForm);
+  /** Questions this screen pre-filled (not answered by the customer yet): still shown once, with that choice selected. */
+  const preset = useRef<Set<string>>(new Set());
+  /** Still to ask: missing or invalid, pre-filled here, or optional and unanswered. */
+  const pending = (x: Question, nf: WizardForm) => !!continueError(x, nf, saved.current) || preset.current.has(x.id)
+    || (!x.required && !x.keys.some((k) => !!String((nf as any)[k] ?? "").trim()));
   useEffect(() => { setSettled(false); const tm = setTimeout(() => setSettled(true), 700); return () => clearTimeout(tm); }, [f]);
   useEffect(() => () => { if (auto.current) clearTimeout(auto.current); }, []);
 
   useEffect(() => {
     getApplication(id!).then((app) => {
-      const form = continueForm(app);
-      // The spouse travels with them: start "Who are you traveling with?" on With Spouse.
-      if (form.spouseAccompanying === "yes" && !form.travelingWith) form.travelingWith = "spouse";
-      const web = app.notes?.source !== "mobile-app"; setWebsite(web); setF(form);
-      const first = scoped(activeQuestions(form, "post"), web).find((x) => !!firstError(x, form));
+      const form = continueForm(app); saved.current = form;
+      const web = isWebsiteRow(app);
+      // The spouse travels with them: "Who are you traveling with?" starts on With Spouse (still asked: children may come too).
+      if (!web && form.spouseAccompanying === "yes" && !form.travelingWith) { form.travelingWith = "spouse"; preset.current.add("travelingWith"); }
+      setWebsite(web); setF(form);
+      const first = continueQuestions(form, web).find((x) => !!continueError(x, form, saved.current) || preset.current.has(x.id));
       if (first) setQid(first.id); else router.replace(`/applications/${id}`);
     }).catch((e) => setLoadErr(e?.message ?? String(e)));
   }, [id]);
 
   const q: Question | null = qid ? Q_BY_ID[qid] ?? null : null;
-  const list = f ? scoped(activeQuestions(f, "post"), website) : [];
+  const list = f ? continueQuestions(f, website) : [];
   const idx = q ? list.findIndex((x) => x.id === q.id) : -1;
   const patch = (x: Partial<WizardForm>) => setF((y) => (y ? { ...y, ...x } : y));
   const goTo = (next: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setQid(next); setShowErr(false); setAllMode(false); setErr(null); };
   const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`); };
 
-  /** Save what we have (best effort while moving on; awaited on the last question). */
-  const save = async (nf: WizardForm) => {
-    const r = await saveAfterPayment(id!, nf);
-    if (!r.synced) throw new Error(t("Your application is already in review, so it can't be changed here. Please message us on WhatsApp."));
+  /** Save what we have, queued behind earlier saves (best effort while moving on; awaited on the last question). */
+  const save = (nf: WizardForm) => {
+    const run = saving.current.catch(() => {}).then(async () => {
+      const r = await saveAfterPayment(id!, nf);
+      if (!r.synced) throw new Error(t("Your application is already in review, so it can't be changed here. Please message us on WhatsApp."));
+    });
+    saving.current = run;
+    return run;
   };
   const advance = async (nf: WizardForm | null = fRef.current) => {
     if (!q || !nf || busy) return;
-    const e = firstError(q, nf);
+    const e = continueError(q, nf, saved.current);
     if (e) { hError(); setShowErr(true); setErrTick((n) => n + 1); AccessibilityInfo.announceForAccessibility(t(e)); return; }
-    tap();
-    const qs = scoped(activeQuestions(nf, "post"), website); const i = qs.findIndex((x) => x.id === q.id);
+    tap(); preset.current.delete(q.id);
+    const qs = continueQuestions(nf, website); const i = qs.findIndex((x) => x.id === q.id);
     // Next question that still needs an answer (answers already on the row are not asked again).
-    const next = qs.slice(i + 1).find((x) => !!firstError(x, nf) || (!x.required && !x.keys.some((k) => !!String((nf as any)[k] ?? "").trim())));
+    const next = qs.slice(i + 1).find((x) => pending(x, nf));
     if (next) { save(nf).catch(() => {}); goTo(next.id, 1); return; }
     setBusy(true); setErr(null);
     try { await save(nf); success(); router.replace(`/applications/${id}`); }
@@ -126,6 +138,6 @@ export default function ContinueApplication() {
   return (
     <QuestionView q={q} f={f} patch={patch} pick={pick} advance={() => advance()} showErr={showErr} errTick={errTick} settled={settled}
       header={header} entering={slideIn(dir, isRTL, reduce)} pageKey={q.id} titleRef={titleRef} allMode={allMode}
-      doneLabel={busy ? t("Saving…") : undefined} belowTitle={err ? <InlineError text={err} /> : undefined} />
+      doneLabel={busy ? t("Saving…") : undefined} errorOf={(x, y) => continueError(x, y, saved.current)} belowTitle={err ? <InlineError text={err} /> : undefined} />
   );
 }
