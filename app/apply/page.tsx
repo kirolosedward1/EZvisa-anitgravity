@@ -7,7 +7,6 @@ import { NationalityStep } from "@/components/apply/nationality-step"
 import { TripDetailsStep } from "@/components/apply/trip-details-step"
 import { DocumentsStep } from "@/components/apply/documents-step"
 import { PaymentStep } from "@/components/apply/payment-step"
-import { EmploymentStep } from "@/components/apply/employment-step"
 import { SpouseStep } from "@/components/apply/spouse-step"
 import { CheckCircle2, ChevronDown } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
@@ -298,10 +297,10 @@ function ApplyPageContent() {
       const nextStep = prevStep + 1
       const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
       
-      // Skip spouse step (step 2) if not needed
-      if (nextStep === 2 && !shouldShowSpouse) {
-        return 3 // Skip to employment
-      }
+      // Skip spouse step (step 2) if not needed. Employment (step 3) is asked after payment, as in the app
+      // (/apply/continue/[id]), so it is always skipped here.
+      if (nextStep === 2 && !shouldShowSpouse) return 4
+      if (nextStep === 3) return 4
       
       return Math.min(nextStep, 5)
     })
@@ -311,9 +310,10 @@ function ApplyPageContent() {
   const handleBack = useCallback(() => {
     setDirection(-1)
     setCurrentStep((prevStep) => {
-      const previousStep = prevStep - 1
+      let previousStep = prevStep - 1
       const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
       
+      if (previousStep === 3) previousStep = 2 // employment is asked after payment
       // Skip spouse step (step 2) when going back if not needed
       if (previousStep === 2 && !shouldShowSpouse) {
         return 1 // Skip back to personal
@@ -449,6 +449,11 @@ function ApplyPageContent() {
     loadAuthenticatedUser()
   }, [])
 
+  // Employment moved after payment (as in the app): an old ?step=employment link or draft opens Trip Details.
+  useEffect(() => {
+    if (currentStep === 3) setCurrentStep(4)
+  }, [currentStep])
+
   const steps = useMemo(() => {
     const shouldShowSpouseStep = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
 
@@ -456,7 +461,6 @@ function ApplyPageContent() {
       return [
         { number: 1, title: "Personal Information", description: "Profile & contact details" },
         { number: 2, title: "Spouse Information", description: "Spouse details" },
-        { number: 3, title: "Employment", description: "Work & income details" },
         { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
         { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
       ]
@@ -464,7 +468,6 @@ function ApplyPageContent() {
 
     return [
       { number: 1, title: "Personal Information", description: "Profile & contact details" },
-      { number: 3, title: "Employment", description: "Work & income details" },
       { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
       { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
     ]
@@ -530,16 +533,6 @@ function ApplyPageContent() {
       case "spouse":
         return (
           <SpouseStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-            onBack={handleBack}
-            isLoading={isTransitioning}
-          />
-        )
-      case "employment":
-        return (
-          <EmploymentStep
             formData={formData}
             updateFormData={updateFormData}
             onNext={handleNext}

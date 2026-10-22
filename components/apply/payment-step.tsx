@@ -233,7 +233,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError, prepare
               {/* Row 4: Employment */}
               <div>
                 <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Employment Status</span>
-                <span className="font-medium text-foreground">{formatEnumValue(formData.employmentStatus)}</span>
+                <span className="font-medium text-foreground">{formData.employmentStatus ? formatEnumValue(formData.employmentStatus) : "Added after payment"}</span>
                 {formData.employmentStatus === "employed" && (
                   <span className="text-xs text-muted-foreground block">
                     {formData.jobTitle} at {formData.companyName}

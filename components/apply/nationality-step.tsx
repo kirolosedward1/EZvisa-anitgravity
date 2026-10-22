@@ -155,7 +155,6 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
     isValidPhone(formData.phone) &&
     formData.dateOfBirth &&
     formData.hasValidPassport === "yes" &&
-    formData.passportNumber &&
     formData.passportExpiry &&
     passportCoversTrip(formData) &&
     formData.maritalStatus &&
@@ -568,34 +567,8 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           )}
         </div>
 
-        {/* Passport Number (only with a valid passport) */}
-        {formData.hasValidPassport === "yes" && (
-        <div>
-          <label htmlFor="passportNumber" className={labelStyles}>
-            Passport Number *
-          </label>
-          <input
-            id="passportNumber"
-            type="text"
-            value={formData.passportNumber || ""}
-            onChange={(e) => {
-              handleFieldChange("passportNumber", e.target.value.toUpperCase())
-              setShowErrors(false)
-            }}
-            placeholder="e.g. A1234567"
-            required
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            className={cn(inputStyles, "w-full uppercase", getErrorClass(formData.passportNumber))}
-          />
-          {showErrors && !formData.passportNumber && (
-            <p className="text-xs text-red-600 mt-1">Please enter your passport number</p>
-          )}
-        </div>
-        )}
-
-        {/* Passport Expiry Date (same rule as the app: valid 3+ months after the return date) */}
+        {/* Passport Expiry Date (same rule as the app: valid 3+ months after the return date). The passport number
+            is asked after payment (/apply/continue/[id]), as in the app. */}
         {formData.hasValidPassport === "yes" && (
         <div>
           <label htmlFor="passportExpiry" className={labelStyles}>
@@ -693,7 +666,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
               Processing...
             </>
           ) : (
-            "Continue to Employment"
+            "Continue"
           )}
         </Button>
       </div>
