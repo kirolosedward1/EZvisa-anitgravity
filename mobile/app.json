@@ -70,7 +70,13 @@
           "calendarPermission": "Add your visa appointment to your calendar."
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "color": "#0436DC"
+        }
+      ]
     ],
     "scheme": "ezvisa",
     "owner": "kirolosedward1",
