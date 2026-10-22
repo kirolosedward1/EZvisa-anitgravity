@@ -1,17 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { isValidRedirectUrl } from "@/lib/sanitize"
-import { CURRENCIES } from "@/lib/currency"
-
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
-/** Server price: base AED price (lib/currency, 249) per traveller; x2 when the spouse travels too (same rule as payment-step). */
-function priceForApplication(notesRaw: unknown): { amount: number; currency: "AED" } {
-  let notes: any = {}
-  try { notes = typeof notesRaw === "string" ? JSON.parse(notesRaw) : notesRaw ?? {} } catch { notes = {} }
-  const spouse = (notes?.spouseAccompanying ?? notes?.wizard?.spouseAccompanying) === "yes"
-  return { amount: CURRENCIES.AED.basePrice * (spouse ? 2 : 1), currency: "AED" }
-}
+import { applyIntentStatus, fetchIntent, isPaidStatus, OPEN_INTENT_STATUSES, priceForApplication, UUID_RE } from "@/lib/ziina"
 
 export async function POST(request: NextRequest) {
   try {
@@ -70,7 +60,7 @@ export async function POST(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseKey)
     const { data: app, error: appError } = await supabase
       .from("visa_applications")
-      .select("id, payment_status, application_status, additional_notes")
+      .select("id, payment_id, payment_status, application_status, additional_notes")
       .eq("id", applicationId)
       .maybeSingle()
     if (appError) {
@@ -78,7 +68,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Could not load application" }, { status: 500 })
     }
     if (!app) return NextResponse.json({ error: "Application not found" }, { status: 404 })
-    if (["paid", "completed"].includes(String(app.payment_status ?? "").toLowerCase())) {
+    if (isPaidStatus(app.payment_status)) {
       return NextResponse.json({ error: "Application is already paid" }, { status: 409 })
     }
     if (["cancelled", "rejected"].includes(String(app.application_status ?? "").toLowerCase())) {
@@ -87,6 +77,25 @@ export async function POST(request: NextRequest) {
 
     const { amount: serverAmount, currency: validCurrency } = priceForApplication(app.additional_notes)
     const amountInFils = Math.round(serverAmount * 100)
+
+    // One open payment per application: reuse the linked intent while it can still be paid, so a double tap,
+    // a retry or a second device never creates a second charge (and never unlinks an intent that is being paid).
+    if (app.payment_id) {
+      const existing = await fetchIntent(app.payment_id)
+      if (existing?.status === "completed") {
+        await applyIntentStatus(supabase, existing)
+        return NextResponse.json({ error: "Application is already paid" }, { status: 409 })
+      }
+      if (
+        existing &&
+        OPEN_INTENT_STATUSES.includes(existing.status) &&
+        existing.redirect_url &&
+        existing.amount === amountInFils &&
+        (!existing.success_url || !success_url || existing.success_url === success_url)
+      ) {
+        return NextResponse.json({ ...existing, reused: true })
+      }
+    }
 
     const apiKey = process.env.ZIINA_API_KEY
     if (!apiKey) {
