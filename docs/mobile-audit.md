@@ -497,6 +497,9 @@ A second pass checked this document against the audited code (`0451206`) and the
 | `npm run lint` | no config | 0 errors, 111 warnings | not run |
 | `expo export` iOS / web | pass / pass | pass / pass | not run |
 | Website `pnpm build` (`main`) | — | pass (2 pre-existing `tsc` errors, `ignoreBuildErrors`) | — |
+| `scripts/wizard-rules.test.ts` (`node --test`) | — | **fails**: `'../lib/wizard' does not provide an export named 'NATIONALITY_OPTIONS'` | not present |
+
+Re-checked in a second QA pass: `main` unchanged at `1934aee` (same 28 errors, same empty first wizard question in the browser); `mobile-app` moved to `fc47e6e` and still type-checks with 0 errors (lint 0 errors / 105 warnings); the fix branch below passes `npm test` 14/14.
 
 **Regression found on `main` (not from this chat's commits):** commit `de75fd8` (PR #15, "wizard rebuild") changed `mobile/app/apply/index.tsx` to import `SheetAnswer`, `FixedValue`, `cleanForm`, `NATIONALITY_OPTIONS`, `reviewQuestions`, `answer`, `employmentQuestions`, but the files that export them were not in the commit. Metro still bundles it, but in the browser the first wizard question renders **no answers and a disabled Continue**: nobody can start an application from `main`'s mobile code. A fix exists on branch `claude/festive-goodall-8qekxb` (`c87580f`, no PR yet): 0 type errors, and the wizard renders its destination picker. `mobile-app` (which CI publishes to the EAS `preview` channel) does not contain `de75fd8` and type-checks clean. `main` and `mobile-app` have diverged; neither contains the other.
 
