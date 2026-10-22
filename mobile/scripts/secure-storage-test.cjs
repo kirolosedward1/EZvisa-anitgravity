@@ -1,4 +1,5 @@
 // node scripts/secure-storage-test.cjs - unit test for lib/secureStorage.ts on the native path, with SecureStore and AsyncStorage faked.
+/* global __dirname, Buffer */ // node-only test script
 const path = require("path"); const ROOT = path.resolve(__dirname, "..");
 const ts = require(path.join(ROOT, "node_modules/typescript"));
 const fs = require("fs"); const Module = require("module");
