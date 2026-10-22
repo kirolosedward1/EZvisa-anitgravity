@@ -9,8 +9,8 @@ import { Button, Icon, Text } from "../../components/ui";
 import { useColors, S } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { useAuth } from "../../lib/auth";
-import { getApplication, isPaid } from "../../lib/data";
-import { checkPayment, startPayment, whatsapp } from "../../lib/api";
+import { getApplication, isPaid, referenceOf } from "../../lib/data";
+import { checkPayment, startPayment, whatsapp, appTag } from "../../lib/api";
 import { setupPush } from "../../lib/push";
 import { employmentComplete } from "../../lib/wizard";
 import { success, error as hError } from "../../lib/haptics";
@@ -71,7 +71,7 @@ export default function PaymentResult() {
         {(state === "guest-paid" || state === "guest-pending") && <Button title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} />}
         {state === "pending" && <Button title={t("Check again")} variant="secondary" onPress={verify} />}
         {(state === "failed" || state === "cancelled") && <Button title={busy ? t("Opening secure payment…") : t("Try again")} loading={busy} disabled={busy} onPress={retry} />}
-        {(state === "failed" || state === "pending") && <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp("Hi EZvisa, I need help paying for my application.")} />}
+        {(state === "failed" || state === "pending") && <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(id ? `Hi EZvisa, I need help paying for application ${appTag({ id: String(id), reference: referenceOf(String(id)) })}.` : "Hi EZvisa, I need help paying for my application.")} />}
         {state !== "checking" && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => router.replace(session ? `/applications/${id}` : "/")} />}
       </View>
     </View>

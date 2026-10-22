@@ -23,7 +23,7 @@ import { useForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
 import { useT } from "../../lib/i18n";
 import { PRICE_AED, SUPABASE_ENABLED } from "../../lib/config";
-import { whatsapp, startPayment } from "../../lib/api";
+import { whatsapp, startPayment, appTag } from "../../lib/api";
 import { submitApplication, guestSubmit, listApplications, listRequirements, type Requirement } from "../../lib/data";
 import { PrefillOffer } from "../../components/wizard/extras";
 import { useNetInfo } from "@react-native-community/netinfo";
@@ -277,7 +277,7 @@ export default function Apply() {
         {submitted.guestEmail && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead" testID="guest-note">{paidGuest ? t("Next: sign in with {e} to add your details and upload documents.", { e: submitted.guestEmail }) : t("After paying, sign in with {e} to continue.", { e: submitted.guestEmail })}</Text></Note>}
         {submitted.guestEmail ? <Button title={t("Sign in to continue")} variant={paidGuest ? "primary" : "secondary"} onPress={() => { router.replace({ pathname: "/auth", params: { mode: "signup", email: submitted.guestEmail } }); setTimeout(() => setSubmitted(null), 400); }} /> :
         <Button title={t("Plan my trip")} icon="map.fill" variant="secondary" onPress={() => { const id = submitted.applicationId; router.navigate(`/applications/${id}`); setTimeout(() => { router.push(`/trip/${id}`); setSubmitted(null); }, 350); }} />}
-        <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference} (${amount} AED).`)} />
+        <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.applicationId ? appTag({ id: submitted.applicationId, reference: submitted.reference ?? "" }) : submitted.reference} (${amount} AED).`)} />
         {!submitted.guestEmail && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications"); setTimeout(() => setSubmitted(null), 400); }} />}
       </View>
     </View>
@@ -288,7 +288,7 @@ export default function Apply() {
   const header = (
     <View style={{ paddingTop: top, paddingHorizontal: S.lg, gap: S.md, paddingBottom: S.sm }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
-        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={editing ? t("Back to review") : t("Back")} onPress={back} /></View>
+        <CircleButton icon="chevron.left" label={editing ? t("Back to review") : t("Back")} onPress={back} />
         <View style={{ flex: 1, alignItems: "center" }}>
           {milestone ? <Text variant="caption" weight="600" color={c.green} testID="milestone">{"✓ " + milestone}</Text> : saved && <Text variant="caption" weight="500" color={c.secondaryLabel} testID="saved-indicator">{cloudSavedAt && session ? t("✓ Saved to your account") : t("✓ Saved on this phone")}</Text>}
         </View>
@@ -331,7 +331,7 @@ export default function Apply() {
                           {e ? <Text variant="subhead" tone="red" weight="500">{t("Missing")}</Text>
                             : <Text variant="body" weight="500">{v || t("Not answered")}</Text>}
                         </View>
-                        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" /></View>
+                        <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />
                       </PressScale>
                     );
                   })}

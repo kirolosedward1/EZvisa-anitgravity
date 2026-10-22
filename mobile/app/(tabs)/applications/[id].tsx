@@ -10,7 +10,7 @@ import { isPaid, getApplication, listRequirements, openDocumentUrl, Application,
 import { enqueueUpload, retryUpload, removeUpload, useUploads } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
-import { whatsapp, startPayment, checkPayment } from "../../../lib/api";
+import { whatsapp, startPayment, checkPayment, appTag } from "../../../lib/api";
 import { Linking } from "react-native";
 import { success, error as hError } from "../../../lib/haptics";
 import { chooseSource, pickFrom, checkQuality, confirmWarnings } from "../../../lib/capture";
@@ -62,8 +62,8 @@ export default function ApplicationDetail() {
     } else setPicking(!picking);
   };
   const open = async (path: string) => {
-    try { const url = path ? await openDocumentUrl(path) : null; if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert("Stored securely", "Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing."); }
-    catch (e: any) { Alert.alert("Can't open file", e?.message); }
+    try { const url = path ? await openDocumentUrl(path) : null; if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert(t("Stored securely"), t("Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing.")); }
+    catch (e: any) { Alert.alert(t("Can't open file"), e?.message); }
   };
   const [paying, setPaying] = useState(false); const [ziina, setZiina] = useState<string | null>(null);
   const pay = async () => {
@@ -71,13 +71,13 @@ export default function ApplicationDetail() {
     try { const o = await startPayment(a, a.applicants.length > 1); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned, pid: o.paymentId ?? "" } }); }
     catch (e: any) {
       hError();
-      if (e?.fallbackWhatsApp) Alert.alert("Payment", e.message, [{ text: "Cancel", style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${a.reference} (${Number(a.total_amount).toFixed(0)} ${a.currency}).`) }]);
+      if (e?.fallbackWhatsApp) Alert.alert(t("Payment"), t(e.message), [{ text: t("Cancel"), style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${appTag(a)}.`) }]);
       else setUpErr(e?.message ?? String(e));
     }
     finally { setPaying(false); }
   };
 
-  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={load} />} /></View>;
+  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context={id ? `application ID ${id}` : "an application"} /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title={t("Retry")} variant="secondary" onPress={load} />} /></View>;
   if (!a) return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: S.lg, gap: S.md }}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg } }} />
@@ -107,7 +107,7 @@ export default function ApplicationDetail() {
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
           {isAbandoned(a) && <Pressable onPress={() => askDiscard(() => { discardApplication(a).then(() => (router.canGoBack() ? router.back() : router.replace("/applications"))).catch((e) => setUpErr(e?.message ?? String(e))); }, t)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="detail-discard" style={{ minWidth: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={20} color={c.red} /></Pressable>}
-          <SupportButton header context={`application ${a.reference}`} />
+          <SupportButton header context={`application ${appTag(a)}`} />
         </View>) }} />
       <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xxl, gap: S.xs }}>
         <Flag country={name} size={72} />
@@ -133,7 +133,7 @@ export default function ApplicationDetail() {
         <ListRow title={t("Dates")} value={`${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />
         <ListRow title={t("Total")} value={`${Number(a.total_amount).toFixed(0)} ${a.currency}`} />
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
-        <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
+        <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${appTag(a)} (${name}).`)} />
         {a.status !== "cancelled" && <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />}
       </ListGroup>
       <AppointmentCard a={a} />
@@ -180,7 +180,7 @@ export default function ApplicationDetail() {
       <InlineError text={upErr} />
       <ListGroup inset={58}>
         {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={`${Number(p.amount).toFixed(0)} ${p.currency}`} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
-        <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
+        <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${appTag(a)}.`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>
     </ScrollView>
@@ -188,10 +188,10 @@ export default function ApplicationDetail() {
 }
 
 function CheckRow({ i, busy, canUpload, onPress }: { i: CheckItem; busy: boolean; canUpload: boolean; onPress?: () => void }) {
-  const c = useColors();
+  const c = useColors(); const { t } = useT();
   const map: Record<CheckItem["state"], { icon: "checkmark.circle.fill" | "circle" | "exclamationmark.circle.fill" | "clock.fill" | "hourglass"; color: string; label: string }> = {
     missing: { icon: "circle", color: c.tertiaryLabel, label: i.req.is_mandatory ? "Missing" : "Optional" },
-    rejected: { icon: "exclamationmark.circle.fill", color: c.red, label: `Re-upload${i.reason ? ` · ${i.reason}` : ""}` },
+    rejected: { icon: "exclamationmark.circle.fill", color: c.red, label: "Re-upload" },
     uploaded: { icon: "checkmark.circle.fill", color: c.tint, label: "Uploaded" },
     review: { icon: "clock.fill", color: c.orange, label: "Under review" },
     approved: { icon: "checkmark.circle.fill", color: c.green, label: "Approved" },
@@ -199,10 +199,10 @@ function CheckRow({ i, busy, canUpload, onPress }: { i: CheckItem; busy: boolean
     preparing: { icon: "hourglass", color: c.secondaryLabel, label: "We'll prepare this" },
   };
   const m = map[i.state];
-  const label = busy ? "Uploading…" : m.label;
+  const label = busy ? t("Uploading…") : `${t(m.label)}${i.state === "rejected" && i.reason ? ` · ${i.reason}` : ""}`;
   return <ListRow icon={m.icon} iconColor={m.color} title={i.req.title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
-    trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">Upload</Text> : undefined}
-    a11yLabel={`${i.req.title}, ${label}`} a11yHint={isOpen(i) && canUpload ? "Upload" : i.doc ? "Open" : undefined} />;
+    trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">{t("Upload")}</Text> : undefined}
+    a11yLabel={`${i.req.title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} />;
 }
 
 /** Currency, local time, plugs and emergency number from the static dataset in lib/facts.ts. */

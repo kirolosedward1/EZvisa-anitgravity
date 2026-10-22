@@ -8,6 +8,9 @@ export const openWeb = (path: string) => WebBrowser.openBrowserAsync(siteUrl(pat
 export const shareUrl = (path = "/") => siteUrl(path);
 export const whatsapp = (msg = "Hi EZvisa, I need help with my Schengen visa.") =>
   Linking.openURL(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`);
+/** How an application is named in support messages: the reference customers see plus the full id staff search by.
+ *  Nothing personal (no passport number, name or dates). */
+export const appTag = (a: { id: string; reference: string }) => `${a.reference} (ID ${a.id})`;
 export const email = async () => {
   const { lastCrash } = require("./crash") as typeof import("./crash"); const c = await lastCrash();
   const body = c ? `\n\n---\nApp error (${new Date(c.at).toISOString()}): ${c.message}` : "";
@@ -46,6 +49,22 @@ export async function startPayment(a: { id: string; destination_country: string 
     return { paymentId: String(j.id), returned };
   } finally { paying = false; }
 }
+
+/** The Ziina payment intent as returned by the website's GET /api/check-payment?id=… (a passthrough of Ziina's
+ *  /payment_intent/{id}). Amount is in fils. Null when the route or Ziina can't be reached. */
+export type PaymentIntent = { id: string; status: string; amount: number | null; currency: string | null; created_at: string | null };
+export async function paymentIntent(paymentId: string): Promise<PaymentIntent | null> {
+  try {
+    const r = await fetch(siteUrl(`/api/check-payment?id=${encodeURIComponent(paymentId)}`));
+    const j: any = await r.json().catch(() => ({}));
+    if (!r.ok || typeof j.status !== "string") return null;
+    const amount = Number(j.amount); const raw = j.created_at; const num = typeof raw === "number" || /^\d+$/.test(String(raw ?? "")) ? Number(raw) : NaN;
+    const at = raw ? new Date(Number.isFinite(num) ? (num < 1e12 ? num * 1000 : num) : raw) : null; // epoch s / ms or ISO
+    return { id: String(j.id ?? paymentId), status: j.status, amount: Number.isFinite(amount) && amount > 0 ? amount : null, currency: typeof j.currency_code === "string" ? j.currency_code.toUpperCase() : null, created_at: at && !isNaN(at.getTime()) ? at.toISOString() : null };
+  } catch { return null; }
+}
+/** Ziina statuses where money may still move: deleting the account now could orphan a payment. */
+export const PAYMENT_IN_FLIGHT = ["pending", "requires_user_action", "processing"];
 
 /** Ziina status through the website's GET /api/check-payment?id=… (completed | pending | failed | …). */
 export async function checkPayment(paymentId: string): Promise<string | null> {
