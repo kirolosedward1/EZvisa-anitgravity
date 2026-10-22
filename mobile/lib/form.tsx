@@ -148,8 +148,12 @@ export function FormProvider({ children }: { children: React.ReactNode }) {
   }, []);
   // Personal answers are removed from crash reports (lib/scrub.ts) by exact match.
   useEffect(() => {
-    registerSecrets([form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails, session?.user.email]);
-  }, [form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails, session?.user.email]);
+    registerSecrets([form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails]);
+  }, [form.firstName, form.lastName, form.email, form.phone, form.phoneLocal, form.passportNumber, form.dateOfBirth, form.spouseFirstName, form.spouseLastName, form.jobTitle, form.companyName, form.refusalDetails]);
+  useEffect(() => {
+    const u = session?.user; const md = (u?.user_metadata ?? {}) as Record<string, unknown>;
+    registerSecrets([u?.email, md.full_name as string, md.first_name as string, md.last_name as string, md.name as string, u?.phone], "account");
+  }, [session?.user]);
   // Local autosave (every change).
   useEffect(() => {
     if (!hydrated) return;

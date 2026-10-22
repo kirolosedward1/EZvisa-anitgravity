@@ -22,6 +22,7 @@ import { useUsageSharing } from "../../../lib/privacy";
 import { lastCrash } from "../../../lib/crash";
 import { startupHistory } from "../../../lib/perf";
 import { pendingEvents } from "../../../lib/analytics";
+import { SENTRY_ENABLED, sendTestError } from "../../../lib/sentry";
 import Constants from "expo-constants";
 import NetInfo from "@react-native-community/netinfo";
 import { useForm } from "../../../lib/form";
@@ -49,7 +50,10 @@ export default function Account() {
   const diagnostics = async () => {
     const [st, cr, q] = await Promise.all([startupHistory(), lastCrash(), pendingEvents()]);
     const times = st.slice(-5).map((s) => `${s.native ?? s.js} ms`).join(", ") || "-";
-    Alert.alert(t("Diagnostics"), `${t("Startup")}: ${times}\n${t("Queued events")}: ${q}\n${t("Last error")}: ${cr ? `${new Date(cr.at).toLocaleString()} · ${cr.message}` : "-"}`);
+    const u = session?.user;
+    const test = () => { sendTestError([u?.user_metadata?.full_name as string | undefined, u?.email].filter(Boolean) as string[]); Alert.alert(t("Test error sent")); };
+    Alert.alert(t("Diagnostics"), `${t("Startup")}: ${times}\n${t("Queued events")}: ${q}\n${t("Last error")}: ${cr ? `${new Date(cr.at).toLocaleString()} · ${cr.message}` : "-"}`,
+      SENTRY_ENABLED && usage ? [{ text: t("Send test error"), onPress: test }, { text: "OK", style: "cancel" }] : undefined);
   };
   const [rem, setRem] = useState(false); const [remNote, setRemNote] = useState<string | null>(null);
   const [pp, setPp] = useState(""); const [lock, setLock] = useState(false); const [bio, setBio] = useState<string | null>(null); const [lockNote, setLockNote] = useState<string | null>(null);
