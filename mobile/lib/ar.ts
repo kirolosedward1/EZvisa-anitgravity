@@ -562,7 +562,7 @@ export const AR: Record<string, string> = {
   "Vilnius": "فيلنيوس", "Valletta": "فاليتا", "Amsterdam": "أمستردام", "Oslo": "أوسلو", "Warsaw": "وارسو", "Lisbon": "لشبونة",
   "Bucharest": "بوخارست", "Bratislava": "براتيسلافا", "Ljubljana": "ليوبليانا", "Madrid": "مدريد", "Stockholm": "ستوكهولم", "Bern": "برن",
   // documents to get later (owner rule: a "No" never blocks)
-  "Valid passport": "جواز سفر ساري", "UAE residence visa valid 3 months after your return": "تأشيرة إقامة إماراتية سارية 3 أشهر بعد عودتك", "Emirates ID": "الهوية الإماراتية",
+  "Valid passport": "جواز سفر ساري", "Renewed UAE residence visa": "تأشيرة إقامة إماراتية مجددة", "Emirates ID": "الهوية الإماراتية",
   "Spouse's valid passport": "جواز سفر ساري للزوج/الزوجة", "NOC from your employer": "شهادة عدم ممانعة من جهة العمل",
   "You can continue. Your spouse needs a valid passport; add it later.": "يمكنك المتابعة. يحتاج الزوج/الزوجة إلى جواز سفر ساري؛ أضفه لاحقًا.",
   "You can continue. Ask your employer for a NOC and add it later.": "يمكنك المتابعة. اطلب شهادة عدم ممانعة من جهة عملك وأضفها لاحقًا.",

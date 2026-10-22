@@ -80,7 +80,7 @@ log(Object.keys(notes).length >= 3, "asked residence visa, valid passport and NO
 await a.page.waitForTimeout(1500);
 log(new URL(a.page.url()).pathname === `/applications/${id}`, "finished on the application page", a.page.url());
 const page = await a.page.locator("body").innerText();
-const later = LANG === "ar" ? ["للحصول عليه لاحقًا", "جواز سفر ساري", "عدم ممانعة"] : ["To get later", "Valid passport", "UAE residence visa valid 3 months after your return", "NOC from your employer"];
+const later = LANG === "ar" ? ["للحصول عليه لاحقًا", "جواز سفر ساري", "تأشيرة إقامة إماراتية مجددة", "عدم ممانعة"] : ["To get later", "Valid passport", "Renewed UAE residence visa", "NOC from your employer"];
 for (const s of later) log(page.includes(s), `application page shows "${s}"`);
 await a.page.screenshot({ path: `${OUT}/application-to-get-later.png`, fullPage: true });
 const row = (await (await fetch(`${DB}/__db`)).json()).find((r) => r.id === id);

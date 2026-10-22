@@ -16,7 +16,7 @@ ok(missingDocs(f({ hasValidPassport: "yes", residenceVisaValid: "yes", employmen
 
 // Each No is listed.
 ok(has({ hasValidPassport: "no" }, "Valid passport"), "passport No -> Valid passport");
-ok(has({ residenceVisaValid: "no" }, "UAE residence visa valid 3 months after your return"), "residence visa No -> listed");
+ok(has({ residenceVisaValid: "no" }, "Renewed UAE residence visa"), "residence visa No -> listed");
 ok(has({ hasEmiratesId: "no" }, "Emirates ID"), "website row, Emirates ID No (no residence answer) -> listed");
 ok(!has({ hasEmiratesId: "no", residenceVisaValid: "yes" }, "Emirates ID"), "Emirates ID ignored once the residence question is answered");
 ok(has({ maritalStatus: "married", spouseAccompanying: "yes", spouseHasValidPassport: "no" }, "Spouse's valid passport"), "spouse travels, passport No -> listed");

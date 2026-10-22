@@ -136,7 +136,7 @@ export type Errors = Partial<Record<keyof WizardForm, string>>;
 export function missingDocs(f: Partial<WizardForm>): string[] {
   const m: string[] = [];
   if (f.hasValidPassport === "no") m.push("Valid passport");
-  if (f.residenceVisaValid === "no") m.push("UAE residence visa valid 3 months after your return");
+  if (f.residenceVisaValid === "no") m.push("Renewed UAE residence visa");
   else if (!f.residenceVisaValid && f.hasEmiratesId === "no") m.push("Emirates ID"); // website rows: older question
   if (f.maritalStatus === "married" && f.spouseAccompanying === "yes" && f.spouseHasValidPassport === "no") m.push("Spouse's valid passport");
   if (f.employmentStatus === "employed" && f.hasNOC === "no") m.push("NOC from your employer");
