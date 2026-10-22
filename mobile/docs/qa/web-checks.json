@@ -1,0 +1,1142 @@
+[
+ {
+  "id": "home:no-hscroll",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:rtl",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:rtl",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:rtl",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:rtl",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:rtl",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:rtl",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "offline-banner",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "next: الحالة الاجتماعية"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "on: هل لديك جواز سفر ساري المفعول؟"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > رقم جواز السفر > تاريخ انتهاء جواز السفر"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "offline-banner",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": "next: Marital Status"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": "on: Do you have a valid passport?"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Number > Passport Expiry Date"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:rtl",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:rtl",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:rtl",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:rtl",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:rtl",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:rtl",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "offline-banner",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "next: الحالة الاجتماعية"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "on: هل لديك جواز سفر ساري المفعول؟"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > رقم جواز السفر > تاريخ انتهاء جواز السفر"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "offline-banner",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": "next: Marital Status"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": "on: Do you have a valid passport?"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Number > Passport Expiry Date"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "offline-banner",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": "next: Marital Status"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": "on: Do you have a valid passport?"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Number > Passport Expiry Date"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:rtl",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:rtl",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:rtl",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:rtl",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:rtl",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:rtl",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "offline-banner",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "next: الحالة الاجتماعية"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "on: هل لديك جواز سفر ساري المفعول؟"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > رقم جواز السفر > تاريخ انتهاء جواز السفر"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:rtl",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:rtl",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:rtl",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:rtl",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:rtl",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:rtl",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "offline-banner",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "next: الحالة الاجتماعية"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "on: هل لديك جواز سفر ساري المفعول؟"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > رقم جواز السفر > تاريخ انتهاء جواز السفر"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "offline-banner",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": "next: Marital Status"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": "on: Do you have a valid passport?"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Number > Passport Expiry Date"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:rtl",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:rtl",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:rtl",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:rtl",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:rtl",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:rtl",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "dir=rtl"
+ },
+ {
+  "id": "offline-banner",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "next: الحالة الاجتماعية"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "on: هل لديك جواز سفر ساري المفعول؟"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > رقم جواز السفر > تاريخ انتهاء جواز السفر"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "home:no-hscroll",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "countries:no-hscroll",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "account:no-hscroll",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "applications:no-hscroll",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "notifications:no-hscroll",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "country:no-hscroll",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "offline-banner",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "residence-uae-only",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-emirates",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "city-no-flags",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-note",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "passport-no-continues",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": "next: Marital Status"
+ },
+ {
+  "id": "back-to-passport",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": "on: Do you have a valid passport?"
+ },
+ {
+  "id": "passport-number-after-valid",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ },
+ {
+  "id": "wizard-order",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Number > Passport Expiry Date"
+ },
+ {
+  "id": "no-page-errors",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": ""
+ }
+]
