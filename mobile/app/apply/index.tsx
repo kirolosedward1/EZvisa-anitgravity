@@ -10,16 +10,16 @@ import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, fi
 import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
 import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence, iso as isoLocal } from "../../lib/wizard";
+import { matchEmirate, DEFAULT_RESIDENCE, iso as isoLocal } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { Button, Text, Icon, SuccessCheck, InlineError, Flag, Shake } from "../../components/ui";
 import { CircleButton } from "../../components/flow";
 import { PhoneField } from "../../components/CountryPicker";
 import { Checkbox, Note } from "../../components/wizard/fields";
-import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries, useFmtDate } from "../../components/wizard/answers";
+import { ChoiceList, YesNoTiles, SheetAnswer, FixedValue, DateAnswer, AdditionalCountries, useFmtDate } from "../../components/wizard/answers";
 import { useColors, S, R, T, curve, SPRING } from "../../lib/theme";
 import { fromSlug } from "../../lib/countries";
-import { useForm } from "../../lib/form";
+import { useForm, cleanForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
 import { useT } from "../../lib/i18n";
 import { SUPABASE_ENABLED } from "../../lib/config";
@@ -31,18 +31,15 @@ import { SyncIndicator, DraftConflictSheet } from "../../components/wizard/sync"
 import { useNetInfo } from "@react-native-community/netinfo";
 import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
-import { WORLD } from "../../lib/world";
-import { type WizardForm, type WizardStep, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
-import { type Question, questionErrors, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
+import { type WizardForm, type WizardStep, SCHENGEN, NATIONALITY_OPTIONS, STEP_TITLES, showSpouse, parseStep, matchCountry, tripDays, hasAnswers } from "../../lib/wizard";
+import { type Question, questionErrors, Q_BY_ID, REVIEW, activeQuestions, reviewQuestions, answer, firstError, firstInvalid, firstUnanswered, isAnswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
 
-const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
 const titleCase = (s: string) => decodeURIComponent(s).replace(/[-_+]+/g, " ").trim().replace(/\b\w/g, (m) => m.toUpperCase());
 const AUTO_MS = 260;
 /** Stable personal answers that can be reused from the last application (trip answers are never copied). */
 const PREFILL_KEYS: (keyof WizardForm)[] = ["nationality", "cityOfResidence", "hasEmiratesId", "firstName", "lastName", "phone", "phoneCountry", "phoneLocal", "dateOfBirth", "maritalStatus",
   "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
-const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });
 const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
@@ -80,7 +77,6 @@ export default function Apply() {
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
   const [editing, setEditing] = useState<Set<string> | null>(null); // came from Review: question ids that applied at that moment
   const [resumeAsk, setResumeAsk] = useState(false);
-  const [allMode, setAllMode] = useState(false); // nationality: "Other nationality" opened the full visa-required list
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null);
   const inFlight = useRef(false); const auto = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef = useRef<any>(null); const inputRef = useRef<TextInput>(null); const input2Ref = useRef<TextInput>(null);
@@ -100,7 +96,6 @@ export default function Apply() {
   const page = hydrated ? normalizePage(rawPage, f) : rawPage;
   const q: Question | null = page.startsWith("q:") ? Q_BY_ID[page.slice(2)] : null;
   const step: WizardStep = stepOfPage(page);
-  useEffect(() => { setAllMode(false); }, [page]);
   // Section finished: success haptic, short chip in the header, VoiceOver announcement.
   useEffect(() => {
     const prev = prevStep.current; prevStep.current = step;
@@ -123,7 +118,7 @@ export default function Apply() {
   }, [hydrated, session]);
   const usePrefill = () => {
     if (!prefill) return; tap();
-    const nf = cleanAfterPrefill({ ...fRef.current, ...Object.fromEntries(Object.entries(prefill.values).filter(([k]) => !(fRef.current as any)[k] || k === "phoneCountry")) } as WizardForm);
+    const nf = cleanForm({ ...fRef.current, ...Object.fromEntries(Object.entries(prefill.values).filter(([k]) => !(fRef.current as any)[k] || k === "phoneCountry")) } as WizardForm);
     setForm(nf); setPrefill(null); const u = firstUnanswered(nf); if (u) goTo(`q:${u.id}`, 1);
   };
 
@@ -131,8 +126,8 @@ export default function Apply() {
   const linkValues = (): Partial<WizardForm> => {
     const dest = matchCountry(p.to ?? p.destination, SCHENGEN) ?? (p.country ? fromSlug(p.country) : null);
     const natRaw = p.from ?? p.nationality;
-    // Only nationals who need a Schengen visa; a visa-exempt or unknown nationality in the link is ignored.
-    const nat = natRaw ? matchCountry(natRaw, SCHENGEN_VISA_REQUIRED) ?? null : null;
+    // Only the wizard's nationality options (all need a Schengen visa); anything else in the link is ignored.
+    const nat = natRaw ? matchCountry(natRaw, NATIONALITY_OPTIONS) ?? null : null;
     const start = isoDate(p.travelStartDate), end = isoDate(p.travelEndDate);
     // Residence is UAE only (RESIDENCE_COUNTRIES); a city in the link is kept only if it is one of the emirates.
     const city = matchEmirate(p.city ?? p.cityOfResidence);
@@ -224,8 +219,7 @@ export default function Apply() {
   /** Tap on a choice / Yes-No / country: save, then auto-advance (unless the website shows a warning for that answer). */
   const pick = (v: string) => {
     if (!q) return;
-    if (v === OTHER_NATIONALITY && q.allNames) { select(); setAllMode(true); return; }
-    const changes = { [q.keys[0]]: v, ...(q.onPick?.(v, fRef.current) ?? {}) } as Partial<WizardForm>;
+    const changes = answer(q, v, fRef.current); // the answer + the dependent fields it clears (e.g. NOC when not employed)
     const nf = { ...fRef.current, ...changes }; fRef.current = nf; patch(changes);
     const note = q.note?.(nf);
     if (note && note.tone !== "green") return;
@@ -234,7 +228,6 @@ export default function Apply() {
   };
   const back = () => {
     tap();
-    if (allMode) { setAllMode(false); return; }
     if (editing) { setEditing(null); goTo(REVIEW, -1); return; }
     const list = activeQuestions(f);
     if (page === REVIEW) { goTo(`q:${list[list.length - 1].id}`, -1); return; }
@@ -316,7 +309,7 @@ export default function Apply() {
 
   // ---------------- Review ----------------
   if (page === REVIEW) {
-    const qs = activeQuestions(f);
+    const qs = reviewQuestions(f); // fixed values (residence) are listed but can't be edited
     const groups = (["personal", "spouse", "employment", "trip-details"] as const).map((s) => ({ s, qs: qs.filter((x) => x.step === s) })).filter((g) => g.qs.length);
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -338,6 +331,16 @@ export default function Apply() {
                 <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden" }, curve]}>
                   {g.qs.map((x, i) => {
                     const e = firstError(x, f); const v = displayValue(x, f, t, fmt);
+                    if (x.kind === "fixed") return (
+                      <View key={x.id} accessible accessibilityLabel={`${t(x.label)}: ${v}`} testID={`review-${x.id}`}
+                        style={{ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 56, borderTopWidth: i ? 1 : 0, borderTopColor: c.separator }}>
+                        <View style={{ flex: 1, gap: S.xxs }}>
+                          <Text variant="footnote" tone="secondary">{t(x.label)}</Text>
+                          <Text variant="body" weight="500">{v}</Text>
+                        </View>
+                        <Icon name="lock.fill" size={13} color={c.tertiaryLabel} />
+                      </View>
+                    );
                     return (
                       <PressScale key={x.id} onPress={() => edit(x.id)} accessibilityRole="button" accessibilityLabel={`${t(x.label)}: ${v || (e ? t("Missing") : t("Not answered"))}`} accessibilityHint={t("Edit")} testID={`review-${x.id}`}
                         style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 56, opacity: pressed ? 0.6 : 1,
@@ -388,9 +391,9 @@ export default function Apply() {
       {!q.required && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
         {<View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
       </View>}
-      <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(q.label)}</Text>
-      {!!prefill && !allMode && <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} />}
-      {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
+      <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{t(q.label)}</Text>
+      {!!prefill && <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} />}
+      {!!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
   );
   const errBox = e ? <Shake on={`${e}|${errTick}`}><View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View></Shake> : null;
@@ -398,7 +401,14 @@ export default function Apply() {
   const tp = q.text ?? {};
   const body = (() => {
     switch (q.kind) {
-      case "choice": return <ChoiceList label={t(q.label)} options={q.options!} flag={q.flag} value={f[q.keys[0]] as string} onPick={pick} />;
+      case "choice": return (
+        <View style={{ gap: S.md }}>
+          {/* Residence is fixed (UAE only, web lib/residence.ts): shown above the emirates, never asked. */}
+          {q.id === "cityOfResidence" && <FixedValue label={t("Country of Residence")} value={f.countryOfResidence || DEFAULT_RESIDENCE} />}
+          <ChoiceList label={t(q.label)} options={q.options!} flags={q.flags} value={f[q.keys[0]] as string} onPick={pick} />
+        </View>
+      );
+      case "sheet": return <SheetAnswer label={t(q.label)} names={q.names!} value={f[q.keys[0]] as string} onPick={pick} placeholder={q.placeholder ?? "Select"} searchPlaceholder={q.searchPlaceholder ?? "Search country..."} error={!!e} />;
       case "yesno": return <YesNoTiles label={t(q.label)} value={f[q.keys[0]] as string} onPick={pick} />;
       case "text": case "textarea": return (
         <View style={{ gap: S.sm }}>
@@ -451,7 +461,7 @@ export default function Apply() {
       default: return null;
     }
   })();
-  const auto_ = q.kind === "choice" || q.kind === "yesno" || q.kind === "country";
+  const auto_ = q.kind === "choice" || q.kind === "yesno" || q.kind === "sheet";
   const showBtn = !auto_ || answered || !q.required;
   const btnTitle = !q.required && !answered ? t("Skip") : editing ? t("Save") : t("Continue");
   const bar = showBtn ? (
@@ -464,17 +474,13 @@ export default function Apply() {
     <Animated.View style={[{ flex: 1, backgroundColor: c.bg }, kbPad]}>
       {header}
       <Animated.View key={page} entering={entering} style={{ flex: 1 }}>
-        {q.kind === "country" ? (
-          <CountryList key={allMode && q.allNames ? "all" : "top"} names={allMode && q.allNames ? q.allNames.filter((n) => !q.names!.includes(n)) : q.names!} searchAll={allMode ? undefined : q.allNames} value={f[q.keys[0]] as string} onPick={pick} searchPlaceholder={q.searchPlaceholder ?? "Search country..."} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
-        ) : (
-          <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
-            {title}
-            {body}
-            {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" tone="secondary">{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
-            {noteBox}
-            {errBox}
-          </ScrollView>
-        )}
+        <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+          {title}
+          {body}
+          {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" tone="secondary">{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
+          {noteBox}
+          {errBox}
+        </ScrollView>
       </Animated.View>
       {bar}
       <DraftConflictSheet />

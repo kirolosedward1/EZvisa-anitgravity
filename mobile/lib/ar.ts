@@ -73,7 +73,7 @@ export const AR: Record<string, string> = {
   "Unavailable": "غير متاح", "Sign in to Continue": "سجّل الدخول للمتابعة", "Submitting...": "جارٍ الإرسال...", "Submit application": "إرسال الطلب", "Submitted": "تم الإرسال",
   "Pay {a} AED securely": "ادفع {a} درهم بأمان", "Pay via WhatsApp instead": "الدفع عبر واتساب بدلًا من ذلك", "Done": "تم", "Plan my trip": "خطط لرحلتي",
   "Continue Application?": "متابعة الطلب؟", "Pick up where you left off, or start fresh.": "تابع من حيث توقفت، أو ابدأ من جديد.", "Start Fresh": "البدء من جديد",
-  "Clear search": "مسح البحث", "No country found.": "لم يتم العثور على دولة.", "not set": "غير محدد", "Opens a date picker": "يفتح منتقي التاريخ",
+  "Select destination country": "اختر دولة الوجهة", "Opens a searchable list": "يفتح قائمة قابلة للبحث", "Clear search": "مسح البحث", "No country found.": "لم يتم العثور على دولة.", "not set": "غير محدد", "Opens a date picker": "يفتح منتقي التاريخ",
   "Add a country": "أضف دولة", "Add {c}": "أضف {c}", "Remove {c}": "إزالة {c}", "Arrival Date": "تاريخ الوصول", "Departure Date": "تاريخ المغادرة", "Add Country": "إضافة دولة",
   // ---- countries (Schengen + nationality list + GCC) ----
   "Austria": "النمسا", "Belgium": "بلجيكا", "Bulgaria": "بلغاريا", "Croatia": "كرواتيا", "Czech Republic": "التشيك", "Denmark": "الدنمارك", "Estonia": "إستونيا", "Finland": "فنلندا", "France": "فرنسا",
