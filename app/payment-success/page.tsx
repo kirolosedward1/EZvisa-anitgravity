@@ -8,6 +8,7 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { useEffect, useState, Suspense } from "react"
 import { getPaymentConfirmationWhatsAppUrl } from "@/lib/whatsapp"
+import { clearWizardData } from "@/lib/draft-sync"
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams()
@@ -27,7 +28,7 @@ function PaymentSuccessContent() {
 
     const cleanUpStorage = () => {
       sessionStorage.removeItem("pendingApplication")
-      localStorage.removeItem("visa-wizard-form")
+      clearWizardData() // the paid application's answers and draft link (the old key "visa-wizard-form" was never used)
       setIsLoading(false)
     }
 

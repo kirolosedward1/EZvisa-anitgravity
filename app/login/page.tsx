@@ -20,7 +20,8 @@ function LoginForm() {
     if (signedOut) clearWizardData()
   }, [signedOut])
   const rawNext = searchParams.get("next") || "/dashboard"
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  // Same-site paths only: no "//", no backslash or whitespace (browsers read "/\\evil.com" as "//evil.com"), no scheme.
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !/[\\:\s]/.test(rawNext) ? rawNext : "/dashboard"
   const urlError = searchParams.get("error")
 
   const [mode, setMode] = useState<"password" | "magic-link">("password")
