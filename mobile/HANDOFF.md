@@ -111,7 +111,7 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   "Visa granted/refused" appear only if staff set `completed`/`rejected` some other way.
 - **Live updates** (`lib/useApps.ts`, `useApps(true, true)` on Home): reload on focus, on app foreground, on pull to refresh,
   and on Supabase Realtime `postgres_changes` for `visa_applications` filtered `email=eq.<own email>`. Realtime delivers
-  nothing until `migrations/0009` (waiting for approval) adds the table to `supabase_realtime`.
+  nothing until `migrations/0009` (approved 2026-10-22, not yet confirmed applied) adds the table to `supabase_realtime`.
 - **Calendar** (`lib/appointment.ts`): `expo-calendar/legacy` `createEventInCalendarAsync` (SDK 57.0.6). iOS 17+ shows the
   system sheet without permission; older iOS requests access and explains a denial (Open Settings).
 - **Checks**: `bun scripts/run-check.ts scripts/timeline-check.ts` (34 checks, live row shape, no network).

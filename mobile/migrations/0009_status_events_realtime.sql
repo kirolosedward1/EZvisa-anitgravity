@@ -1,4 +1,4 @@
--- 0009: real step times for the Home timeline + live updates.  NOT APPLIED. Waiting for the owner's approval.
+-- 0009: real step times for the Home timeline + live updates.  APPROVED by the owner 2026-10-22; to be run in the Supabase SQL editor (ezvisa-uae). Not yet confirmed applied.
 -- Live DB: Supabase project ezvisa-uae (ref dravvaykssrbktztmrlj). Additive only: no existing column, row or policy is
 -- changed or deleted. Two independent blocks; run block 1 first.
 --
