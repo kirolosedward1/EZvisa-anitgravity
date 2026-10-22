@@ -5,6 +5,7 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 **Never merge to `main` without review.** Vercel builds `main`.
 
 ## 0. Status on 2026-10-22 (chat 15, QA): read this before sections 1-3
+- **Evening update:** PR #13's rebase-merge dropped most chat 15 code. Branch `claude/vibrant-wright-ez44ch` restores it on `mobile-app` 8651059 (owner rule `missingDocs()` + "To get later", Arabic fixes, dead files, two wizard bugs, test fixes). New tests: `scripts/missing-docs-check.ts`, `scripts/e2e-continue-web.mjs`. CI publishes EAS preview updates on pushes to `mobile-app`; last group `8094bb9f-0bd6-4cbf-9096-028bed31eaa6` (8651059, without these fixes). Details: `docs/qa-report.md` "Update, 22 Oct evening".
 - **Final QA status: NOT READY FOR PRODUCTION TESTING.** Report and evidence: `docs/qa-report.md`, `docs/qa/*.jpg`, `docs/qa/web-checks.json`.
 - Verified code: branch `claude/vibrant-wright-ez44ch` = `mobile-app` @ `89c1b26` (merged in) + chat 15 commits; PR #13 targets `mobile-app`; `mobile-app` can fast-forward to it. Later `mobile-app` commits are not covered.
 - Results: tsc 0 errors, lint 0 errors; node tests privacy 24/24, upload 24/24, secure storage 12/12, timeline ALL PASS; mocked e2e auth 29/29, payment 20/20, drafts 17/17; web walk 235/235 checks at 390/430, light/dark, EN/AR, largest text.

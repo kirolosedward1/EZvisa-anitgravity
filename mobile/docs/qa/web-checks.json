@@ -102,12 +102,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "390-dark-ar",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "390-dark-ar",
   "ok": true,
@@ -120,25 +114,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "390-dark-ar",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "390-dark-ar",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "390-dark-ar",
-  "ok": true,
-  "note": "next: الحالة الاجتماعية"
- },
- {
-  "id": "back-to-passport",
-  "tag": "390-dark-ar",
-  "ok": true,
-  "note": "on: هل لديك جواز سفر ساري المفعول؟"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "390-dark-ar",
   "ok": true,
   "note": ""
@@ -147,7 +135,7 @@
   "id": "wizard-order",
   "tag": "390-dark-ar",
   "ok": true,
-  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > تاريخ انتهاء جواز السفر"
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
  },
  {
   "id": "no-page-errors",
@@ -228,12 +216,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "390-dark-en",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "390-dark-en",
   "ok": true,
@@ -246,25 +228,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "390-dark-en",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "390-dark-en",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "390-dark-en",
-  "ok": true,
-  "note": "next: Marital Status"
- },
- {
-  "id": "back-to-passport",
-  "tag": "390-dark-en",
-  "ok": true,
-  "note": "on: Do you have a valid passport?"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "390-dark-en",
   "ok": true,
   "note": ""
@@ -273,7 +249,7 @@
   "id": "wizard-order",
   "tag": "390-dark-en",
   "ok": true,
-  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Expiry Date"
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
  },
  {
   "id": "no-page-errors",
@@ -384,12 +360,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "390-light-ar",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "390-light-ar",
   "ok": true,
@@ -402,25 +372,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "390-light-ar",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "390-light-ar",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "390-light-ar",
-  "ok": true,
-  "note": "next: الحالة الاجتماعية"
- },
- {
-  "id": "back-to-passport",
-  "tag": "390-light-ar",
-  "ok": true,
-  "note": "on: هل لديك جواز سفر ساري المفعول؟"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "390-light-ar",
   "ok": true,
   "note": ""
@@ -429,7 +393,7 @@
   "id": "wizard-order",
   "tag": "390-light-ar",
   "ok": true,
-  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > تاريخ انتهاء جواز السفر"
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
  },
  {
   "id": "no-page-errors",
@@ -510,12 +474,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "390-light-en-ax3",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "390-light-en-ax3",
   "ok": true,
@@ -528,25 +486,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "390-light-en-ax3",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "390-light-en-ax3",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "390-light-en-ax3",
-  "ok": true,
-  "note": "next: Marital Status"
- },
- {
-  "id": "back-to-passport",
-  "tag": "390-light-en-ax3",
-  "ok": true,
-  "note": "on: Do you have a valid passport?"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "390-light-en-ax3",
   "ok": true,
   "note": ""
@@ -555,7 +507,7 @@
   "id": "wizard-order",
   "tag": "390-light-en-ax3",
   "ok": true,
-  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Expiry Date"
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
  },
  {
   "id": "no-page-errors",
@@ -636,12 +588,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "390-light-en",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "390-light-en",
   "ok": true,
@@ -654,25 +600,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "390-light-en",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "390-light-en",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "390-light-en",
-  "ok": true,
-  "note": "next: Marital Status"
- },
- {
-  "id": "back-to-passport",
-  "tag": "390-light-en",
-  "ok": true,
-  "note": "on: Do you have a valid passport?"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "390-light-en",
   "ok": true,
   "note": ""
@@ -681,7 +621,7 @@
   "id": "wizard-order",
   "tag": "390-light-en",
   "ok": true,
-  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Expiry Date"
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
  },
  {
   "id": "no-page-errors",
@@ -792,12 +732,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "430-dark-ar-ax3",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "430-dark-ar-ax3",
   "ok": true,
@@ -810,25 +744,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "430-dark-ar-ax3",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "430-dark-ar-ax3",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "430-dark-ar-ax3",
-  "ok": true,
-  "note": "next: الحالة الاجتماعية"
- },
- {
-  "id": "back-to-passport",
-  "tag": "430-dark-ar-ax3",
-  "ok": true,
-  "note": "on: هل لديك جواز سفر ساري المفعول؟"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "430-dark-ar-ax3",
   "ok": true,
   "note": ""
@@ -837,7 +765,7 @@
   "id": "wizard-order",
   "tag": "430-dark-ar-ax3",
   "ok": true,
-  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > تاريخ انتهاء جواز السفر"
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
  },
  {
   "id": "no-page-errors",
@@ -948,12 +876,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "430-dark-ar",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "430-dark-ar",
   "ok": true,
@@ -966,25 +888,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "430-dark-ar",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "430-dark-ar",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "430-dark-ar",
-  "ok": true,
-  "note": "next: الحالة الاجتماعية"
- },
- {
-  "id": "back-to-passport",
-  "tag": "430-dark-ar",
-  "ok": true,
-  "note": "on: هل لديك جواز سفر ساري المفعول؟"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "430-dark-ar",
   "ok": true,
   "note": ""
@@ -993,7 +909,7 @@
   "id": "wizard-order",
   "tag": "430-dark-ar",
   "ok": true,
-  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > تاريخ انتهاء جواز السفر"
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
  },
  {
   "id": "no-page-errors",
@@ -1074,12 +990,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "430-dark-en",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "430-dark-en",
   "ok": true,
@@ -1092,25 +1002,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "430-dark-en",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "430-dark-en",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "430-dark-en",
-  "ok": true,
-  "note": "next: Marital Status"
- },
- {
-  "id": "back-to-passport",
-  "tag": "430-dark-en",
-  "ok": true,
-  "note": "on: Do you have a valid passport?"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "430-dark-en",
   "ok": true,
   "note": ""
@@ -1119,7 +1023,7 @@
   "id": "wizard-order",
   "tag": "430-dark-en",
   "ok": true,
-  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Expiry Date"
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
  },
  {
   "id": "no-page-errors",
@@ -1230,12 +1134,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "430-light-ar",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "430-light-ar",
   "ok": true,
@@ -1248,25 +1146,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "430-light-ar",
+  "ok": true,
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "430-light-ar",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "430-light-ar",
-  "ok": true,
-  "note": "next: الحالة الاجتماعية"
- },
- {
-  "id": "back-to-passport",
-  "tag": "430-light-ar",
-  "ok": true,
-  "note": "on: هل لديك جواز سفر ساري المفعول؟"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "430-light-ar",
   "ok": true,
   "note": ""
@@ -1275,7 +1167,7 @@
   "id": "wizard-order",
   "tag": "430-light-ar",
   "ok": true,
-  "note": "دولة الوجهة (شنغن) > الجنسية > بلد الإقامة > مدينة الإقامة > هل لديك هوية إماراتية؟ > الاسم الأول > اسم العائلة > البريد الإلكتروني > رقم الهاتف > تاريخ الميلاد > هل لديك جواز سفر ساري المفعول؟ > تاريخ انتهاء جواز السفر"
+  "note": "دولة الوجهة (شنغن) > الجنسية > مدينة الإقامة > اسمك > البريد الإلكتروني ورقم الهاتف > الحالة الاجتماعية"
  },
  {
   "id": "no-page-errors",
@@ -1356,12 +1248,6 @@
   "note": ""
  },
  {
-  "id": "residence-uae-only",
-  "tag": "430-light-en",
-  "ok": true,
-  "note": ""
- },
- {
   "id": "city-emirates",
   "tag": "430-light-en",
   "ok": true,
@@ -1374,25 +1260,19 @@
   "note": ""
  },
  {
-  "id": "passport-no-note",
+  "id": "no-residence-screen",
+  "tag": "430-light-en",
+  "ok": true,
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
+ },
+ {
+  "id": "no-document-questions-before-payment",
   "tag": "430-light-en",
   "ok": true,
   "note": ""
  },
  {
-  "id": "passport-no-continues",
-  "tag": "430-light-en",
-  "ok": true,
-  "note": "next: Marital Status"
- },
- {
-  "id": "back-to-passport",
-  "tag": "430-light-en",
-  "ok": true,
-  "note": "on: Do you have a valid passport?"
- },
- {
-  "id": "expiry-after-valid",
+  "id": "reaches-review",
   "tag": "430-light-en",
   "ok": true,
   "note": ""
@@ -1401,7 +1281,7 @@
   "id": "wizard-order",
   "tag": "430-light-en",
   "ok": true,
-  "note": "Destination Country (Schengen) > Nationality > Country of Residence > City of Residence > Do you have an Emirates ID? > First Name > Last Name > Email Address > Phone Number > Date of Birth > Do you have a valid passport? > Passport Expiry Date"
+  "note": "Destination Country (Schengen) > Nationality > City of Residence > Your Name > Email & Phone Number > Marital Status"
  },
  {
   "id": "no-page-errors",

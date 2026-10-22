@@ -5,6 +5,40 @@ Expo SDK 57.0.30, React Native 0.86.3, expo-router 57.
 
 > Chats 02–14, 03, 06, 08, 09 and 11 landed on `mobile-app` **while this QA was running** (09:19–10:30 UTC). This branch merged them four times, and every result below is from the **last merge**. Commits pushed to `mobile-app` after `89c1b26` are not covered.
 
+## Update, 22 Oct evening: QA review after PR #13 was merged
+
+**What happened.** PR #13 was rebase-merged into `mobile-app` (de3c31a) on top of chat 02's token commits, and the rebase **silently dropped most of chat 15's code**. Lost: the owner's document rule ("No" → get it later), the Arabic fixes for the notifications, country page, offline banner, tab bar and Google button, the removal of two dead files, and the extra Arabic keys. Commit c2a01ba, for example, kept only its two Markdown files. Then 8651059 moved all document questions after payment. This review restored the lost work on the current `mobile-app` (8651059) and re-verified everything.
+
+**Baseline vs final** (same script, `mobile-app` 8651059 vs this branch):
+
+| Check | Baseline 8651059 | Final (this branch) |
+|---|---|---|
+| `npx tsc --noEmit` | 0 errors | 0 errors |
+| `npx eslint .` | 0 errors / 150 warnings | 0 errors / 148 warnings |
+| privacy · secure storage · timeline · payment split | 24/24 · 12/12 · pass · pass | 24/24 · 12/12 · pass · pass |
+| upload queue (`run-upload-tests.mjs`) | **does not build** (stub lacks `useWindowDimensions`) | 24/24 |
+| `missing-docs-check.ts` (new) | n/a (no `missingDocs`) | 27/27 |
+| iOS / Android bundle (`--clear`) | ok, clean | ok, clean (no old DB ref, service role, secret key or vercel.app) |
+| payment e2e | 20/20 | 20/20 |
+| drafts e2e | **16/17** (test still clicked a radio on the new name screen) | 17/17 |
+| `e2e-continue-web.mjs` (new), EN and AR | **6 of 18 fail** (no NOC note, no "To get later", empty `missingDocuments`) | 19/19 each |
+| sign-in e2e | 29/29 | 29/29 |
+| web walk, 10 runs (390/430, light/dark, EN/AR, largest text) | script out of date for the new wizard | 215 checks, 0 failed |
+
+**Bugs found and fixed in this review:**
+1. Owner rule missing after the rebase. `lib/wizard.ts missingDocs()` is back (passport, renewed UAE residence visa, Emirates ID for website rows, spouse's passport, NOC for employed applicants). It's saved as `additional_notes.missingDocuments` from `columns()`, so both the pre- and post-payment saves write it. "To get later" shows on the application page for open cases only. NOC "No" gets a note. The spouse note no longer says "before applying".
+2. Prefill copied the old `hasEmiratesId` answer into new applications. That hid the residence-visa question and could pin "Emirates ID" on "To get later" (`app/apply/index.tsx`).
+3. Website applications looped on Continue application: the passport number needs "valid passport = Yes", which website rows never stored (`app/continue/[id].tsx`).
+4. Arabic regressions: notifications, country page (including the 29 capitals), offline banner, tab bar +, Google button, Retry; 61 keys restored.
+5. `steps.tsx` / `payment.tsx` were back; removed again (not imported).
+6. Tests: the upload-queue test didn't build; the drafts e2e followed the old wizard. Both fixed without weakening any assertion.
+
+**EAS Update:** the new CI job (`.github/workflows/eas-update.yml`) publishes on every push to `mobile-app`. Latest run: **update group `8094bb9f-0bd6-4cbf-9096-028bed31eaa6`** (preview, runtime exposdk:57.0.0, commit 8651059). The job verified the bundle contains `dravvaykssrbktztmrlj` and not the old project. That bundle **does not include the fixes above**; CI publishes a new one when this branch is merged into `mobile-app`.
+
+**Independent review:** a separate reviewer read the change. Its findings 1, 2 and the Retry string are fixed above, and "To get later" now hides on closed cases. Two of its findings are not fixed in the app:
+- Website side, owner: `create-payment` has no auth. Anyone with an application UUID can open a new Ziina intent and overwrite `payment_id` (audit H2). The payment result screen being reachable signed out doesn't add exposure, since guest mode is one tap; the fix belongs on the website.
+- Low: Continue-application saves are fire-and-forget and can finish out of order.
+
 ## 0. What could and could not be tested here
 
 This QA ran in a cloud container with **no iPhone, no simulator and no `EXPO_TOKEN`**. The network policy **denies** `api.expo.dev`, `u.expo.dev`, `*.supabase.co` and `www.ezvisa.net` (the proxy answers 403). The Supabase connector sees only the old project `rjbgteqgqaxalcfnksjc`; it returns "permission denied" for `dravvaykssrbktztmrlj`.
@@ -181,26 +215,12 @@ Legend: **PASS** verified by the method named · **FAIL** verified broken · **N
 
 ## 8. EAS Update (preview)
 
-**Not published. No EAS Update ID exists for this code.** There is no `EXPO_TOKEN` here, and `api.expo.dev` / `u.expo.dev` are denied.
-
-Command (preview channel only; `eas.json` maps profile `preview` → channel `preview`):
-```bash
-cd mobile
-# EAS → Environment variables → preview: EXPO_PUBLIC_SUPABASE_URL=https://dravvaykssrbktztmrlj.supabase.co,
-#   EXPO_PUBLIC_SUPABASE_ANON_KEY=<publishable key>, EXPO_PUBLIC_SITE_URL=https://www.ezvisa.net; delete EXPO_PUBLIC_WEB_URL
-npx eas-cli@latest env:pull --environment preview            # writes .env.local (git-ignored)
-npx expo export --clear --platform ios --platform android --output-dir dist   # --clear is required (S3-8)
-grep -c dravvaykssrbktztmrlj dist/_expo/static/js/ios/*.hbc   # must be >= 1
-grep -c rjbgteqgqaxalcfnksjc dist/_expo/static/js/ios/*.hbc   # must be 0
-EXPO_TOKEN=… npx eas-cli@latest update --branch preview --environment preview --skip-bundler --input-dir dist --platform all \
-  --message "chat 15 QA"
-```
-The command prints the update group ID; record it in `HANDOFF.md`.
+Published by CI on pushes to `mobile-app`: update group **`8094bb9f-0bd6-4cbf-9096-028bed31eaa6`** for 8651059 ([run](https://github.com/kirolosedward1/EZvisa-anitgravity/actions/runs/39834947186)). Merging this branch into `mobile-app` publishes the fixed bundle; take the new group ID from that run's "Publish EAS Update" step.
 
 ## 9. Final status
 
 **NOT READY FOR PRODUCTION TESTING.** Blockers:
-1. EAS Update not published; preview serves a bundle that points at the old database.
-2. Live RLS and email confirmation not verified, so cross-account safety on the real database is unproven.
-3. Website fixes (upload auth B2) and env (Ziina key, webhook secret) are not in production.
-4. No real-device pass: VoiceOver, Dynamic Type, Face ID, camera, push, real upload and real payment need one run on a 390pt and a 430pt iPhone (`QA-CHECKLIST.md`).
+1. This branch (the restored owner rule and fixes) must be merged into `mobile-app` so CI publishes a preview update that contains it.
+2. Live RLS and email confirmation are not verified, so cross-account safety on the real database is unproven. The mock checks pass (account B sees 0 rows), but they don't test the live policies.
+3. Website fixes (upload auth B2, `create-payment` auth/intent reuse H2) and env (Ziina key, webhook secret) are not in production.
+4. No real-device pass yet: VoiceOver, Dynamic Type, Face ID, camera, push, real upload and real payment need one run on a 390pt and a 430pt iPhone (`QA-CHECKLIST.md`).
