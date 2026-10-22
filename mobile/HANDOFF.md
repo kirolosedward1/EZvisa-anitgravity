@@ -173,7 +173,7 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **App** (`lib/push.ts`):
   - `notifications()` is the only loader of expo-notifications and sets the single foreground handler (banner + list, no sound, no badge). Reminders use it too.
   - `setupPush(ask)`: `ask=false` at sign-in (registers only if already granted); `ask=true` after payment (`app/payment/[id].tsx`). Never re-asks once denied. `addPushTokenListener` re-saves the token when APNs rotates it.
-  - `useNotificationRouting` in `app/_layout.tsx` (`NotificationRouter`): warm start via `addNotificationResponseReceivedListener`, cold start via `getLastNotificationResponse()` (the SDK 57 sync API; the Async one is deprecated). It waits until the stored session has loaded (`Routes` keeps application screens behind the session), and application taps wait for sign-in. Each tap is handled once, then `clearLastNotificationResponse()`. It opens `router.push(url, { withAnchor: true })`, so Back goes to Applications.
+  - `useNotificationRouting` in `app/_layout.tsx` (`NotificationRouter`): warm start via `addNotificationResponseReceivedListener`, cold start via `getLastNotificationResponse()` (the SDK 57 sync API; the Async one is deprecated). It waits until the stored session has loaded and the app side of `Routes` exists (signed in or guest; a guest restarted on Welcome gets the screen after "Continue without an account"), and application taps also wait for sign-in. Each delivery (identifier + date) is handled once, then `clearLastNotificationResponse()`; a reminder rescheduled under the same identifier (`ezvisa-rem-draft`) opens again. It opens `router.push(url, { withAnchor: true })`, so Back goes to Applications.
   - `lib/notifyRoute.ts` allows only `/applications/<uuid>`, `/account` and `/apply`.
 - **Token storage** (`lib/data.ts`): `registerPushToken` calls RPC `claim_device_token` (0012, not applied). On PGRST202 it falls back to insert, or bumps `updated_at` if the row exists. A rotated token's old row is deleted. `unregisterPushToken` returns false when offline. Sign-out still completes (`lib/auth.tsx`, 3 s timeout), and Account › Sign out says when the phone is offline that it may still get the account's notifications. `clearUserData` drops the stored token key.
 - **Server v2** (`migrations/functions/notify-status/index.ts` + `messages.ts`, NOT deployed; v1 is live):
@@ -183,9 +183,9 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - a token shared by two accounts goes to its latest owner only.
 - **Expo Go**:
   - Android Expo Go can't receive remote push (SDK 53+), and `setupPush` returns `unsupported-expo-go-android` there.
-  - iOS Expo Go only warns in the SDK 57 code, but Expo does not support push there. Real delivery must be tested on a development build (`eas build --profile development --platform ios`, APNs key managed by EAS credentials, never in the repo).
+  - iOS Expo Go only warns in the SDK 57 code, but Expo does not support push there. Real delivery must be tested on an installed build: `eas device:create` (register the iPhone), then `eas build --profile preview --platform ios` (internal distribution, channel `preview`, so it gets the same EAS updates as Expo Go). The APNs key is created and kept by EAS credentials, never in the repo. `eas.json` has no `development` profile (that would need `expo-dev-client`).
   - Tap routing and the permission prompt can be tested in Expo Go with a local reminder.
-- Checks: `node scripts/check-push.mjs` (route allow-list, message text and data, token ownership). Device test steps: QA-CHECKLIST §11.
+- Checks: `node scripts/check-push.mjs` (route allow-list, message text and data, token ownership) and `node scripts/run-push-tests.mjs` (permission, token claim/fallback/rotation, sign-out delete, tap routing warm/cold/guest, Expo Go Android, web; fakes in `scripts/push-fakes.ts`). Device test steps: QA-CHECKLIST §11.
 
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
