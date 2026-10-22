@@ -156,9 +156,10 @@ async function bootWatch(page) {
   await page.goto(BASE + "/account"); await visible(page, "a@ezvisa-test.net");
   await page.getByText("Sign out", { exact: true }).last().click();
   ok("sign out -> Welcome", await visible(page, "Continue without an account"));
-  const keys = await page.evaluate(() => Object.keys(localStorage));
-  const leftovers = keys.filter((k) => /auth-token|wizard|drafts|itinerary|passportExpiry|uploads|push|events|crash/.test(k));
-  ok("sign out clears session + cached user data", leftovers.length === 0, `remaining keys: ${keys.join(", ")}`);
+  const kv = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).map((k) => [k, localStorage.getItem(k)])));
+  // Anonymous diagnostics (events/outbox/startup) and device prefs (lang, appearance) may stay; an empty upload queue is fine.
+  const leftovers = Object.entries(kv).filter(([k, v]) => /auth-token|wizard|drafts|itinerary|passportExpiry|uploads|push|crash|discarded|notifications/.test(k) && v !== "[]").map(([k]) => k);
+  ok("sign out clears session + cached user data", leftovers.length === 0, `remaining keys: ${Object.keys(kv).join(", ")}`);
   await text(page, "Sign in").click(); await visible(page, "Welcome back");
   await fill(page, "auth-email", "b@ezvisa-test.net"); await fill(page, "auth-password", "right-pass1");
   await page.getByRole("button", { name: "Sign in", exact: true }).click(); await visible(page, "Countries");
