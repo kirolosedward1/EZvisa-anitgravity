@@ -49,26 +49,30 @@ export async function setupPush(ask = false): Promise<string> {
   }
 }
 
-type Gate = { ready: boolean; signedIn: boolean };
+/** ready: the stored session is known. signedIn: a session. inApp: signed in or guest, so the app's screens exist
+ *  (app/_layout.tsx Routes); a guest restarted on Welcome gets the screen after "Continue without an account". */
+type Gate = { ready: boolean; signedIn: boolean; inApp: boolean };
 function openPending(pending: { current: string | null }, g: Gate) {
   const url = pending.current;
-  if (!url || !g.ready || (needsSession(url) && !g.signedIn)) return;
+  if (!url || !g.ready || !g.inApp || (needsSession(url) && !g.signedIn)) return;
   pending.current = null;
   router.push(url as any, { withAnchor: true });
 }
 
 /** Opens the screen a tapped notification points to, warm (listener) or cold start (last response), each tap once.
  * Waits until the root is ready; application screens wait for a session. */
-export function useNotificationRouting(ready: boolean, signedIn: boolean) {
+export function useNotificationRouting(ready: boolean, signedIn: boolean, inApp: boolean) {
   const pending = useRef<string | null>(null);
-  const gate = useRef<Gate>({ ready, signedIn });
+  const gate = useRef<Gate>({ ready, signedIn, inApp });
   useEffect(() => {
     const N = notifications();
     if (!N) return;
     const seen = new Set<string>();
     const take = (r: import("expo-notifications").NotificationResponse | null) => {
       if (!r || r.actionIdentifier !== N.DEFAULT_ACTION_IDENTIFIER) return;
-      const id = r.notification.request.identifier;
+      // One delivery = identifier + date. The cold-start response can also reach the listener (same delivery), while a
+      // reminder rescheduled under the same identifier (ezvisa-rem-draft) is a new delivery and must open again.
+      const id = `${r.notification.request.identifier}@${r.notification.date}`;
       if (seen.has(id)) return;
       seen.add(id);
       N.clearLastNotificationResponse();
@@ -79,5 +83,5 @@ export function useNotificationRouting(ready: boolean, signedIn: boolean) {
     const sub = N.addNotificationResponseReceivedListener(take);
     return () => sub.remove();
   }, []);
-  useEffect(() => { gate.current = { ready, signedIn }; openPending(pending, gate.current); }, [ready, signedIn]);
+  useEffect(() => { gate.current = { ready, signedIn, inApp }; openPending(pending, gate.current); }, [ready, signedIn, inApp]);
 }

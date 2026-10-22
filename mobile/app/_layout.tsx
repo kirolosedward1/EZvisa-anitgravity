@@ -59,10 +59,10 @@ function Routes() {
 }
 
 /** Tapped notifications (push or reminder) open their screen once the stored session is known, warm or cold start.
- *  Application screens are behind the session (Routes), so those taps wait for sign-in. */
+ *  Every target is inside the app side of Routes (signed in or guest); application screens also wait for sign-in. */
 function NotificationRouter() {
-  const { session, loading } = useAuth();
-  useNotificationRouting(!loading, !!session);
+  const { session, guest, loading } = useAuth();
+  useNotificationRouting(!loading, !!session, !!session || guest);
   return null;
 }
 
