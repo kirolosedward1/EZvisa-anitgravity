@@ -54,7 +54,6 @@ People prepare each file. The app collects only what those people need, in the o
 
 - Logos, app icons and splash screens: `assets/logo.png`, `assets/logo-dark.png`, `assets/icon.png`, `assets/splash-icon*.png`.
 - Destination photos: `assets/countries/`. Flags: `assets/flags/`. Hero image: `assets/hero.jpg`.
-- Quick facts for the 29 Schengen countries, with sources: `lib/facts.ts`.
 - Allowed claim: the money-back guarantee if the visa is denied. The app must not show approval rates, visa counts or testimonials. The website's 98% / 5,000+ figures stay on the website.
 
 ## Product Principles

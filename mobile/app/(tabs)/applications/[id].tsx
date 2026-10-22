@@ -16,7 +16,6 @@ import { Linking } from "react-native";
 import { success, error as hError } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
 import { useT } from "../../../lib/i18n";
-import { FACTS, localTime, diffFromUae, UAE_PLUG } from "../../../lib/facts";
 import { router } from "expo-router";
 import { countdown } from "../../../lib/countdown";
 import { askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
@@ -154,7 +153,6 @@ export default function ApplicationDetail() {
         {a.status !== "cancelled" && <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />}
       </ListGroup>
       <AppointmentCard a={a} />
-      <QuickFacts country={name} />
       {locked ? (
         <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
       ) : list ? (<>
@@ -237,18 +235,3 @@ function CheckRow({ i, busy, canUpload, onPress }: { i: CheckItem; busy: boolean
     a11yLabel={`${title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} />;
 }
 
-/** Currency, local time, plugs and emergency number from the static dataset in lib/facts.ts. */
-function QuickFacts({ country }: { country: string }) {
-  const c = useColors(); const { t, lang } = useT(); const f = FACTS[country];
-  if (!f) return null;
-  const time = localTime(f.tz, lang === "ar" ? "ar" : "en-GB"); const d = diffFromUae(f.tz);
-  const diff = d == null ? "" : d === 0 ? t("same as UAE") : t("{h} h vs UAE", { h: d > 0 ? `+${d}` : String(d) });
-  return (
-    <ListGroup header={t("Quick facts")} footer={t("Sources: IEC World Plugs, ECB, EU 112, IANA time zones.")} inset={58}>
-      <ListRow icon="dollarsign.circle" iconColor={c.green} title={t("Currency")} value={`${f.currency} · ${t(f.currencyName)}`} />
-      {!!time && <ListRow icon="clock" iconColor={c.tint} title={t("Local time")} value={[time, diff].filter(Boolean).join(" · ")} />}
-      <ListRow icon="powerplug.fill" iconColor={c.orange} title={t("Plugs")} value={`${f.plugs} · ${f.volts}`} subtitle={f.plugs.includes(UAE_PLUG) ? t("Same as UAE (type G)") : t("UAE plugs (type G) need an adapter")} />
-      <ListRow icon="phone.fill" iconColor={c.red} title={t("Emergency")} value={f.emergency} />
-    </ListGroup>
-  );
-}

@@ -36,7 +36,6 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **Trip plan**: `lib/itinerary.ts` + `app/trip/[id].tsx`. Optional questions (cities, budget, who, interests) produce a deterministic plan labelled "Ideas, not bookings" with no venues, prices or hours. Days and items are editable; PDF via expo-print + expo-sharing. It is saved locally and in `additional_notes.itinerary` while the row is draft/submitted (RLS blocks it later; the UI says "saved on this phone"). AI version + `trip_plans` table: `db/proposed-itinerary-ai.md` (not deployed).
 - **Extras**:
   - status timeline with real timestamps only; Home next action + countdown chip
-  - Quick facts for the 29 Schengen countries (`lib/facts.ts`, sources in the file)
   - capture quality checks (`lib/capture.ts`)
   - Face ID lock (`lib/lock.tsx`)
   - local passport-expiry reminder (Account)
