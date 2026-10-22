@@ -218,6 +218,7 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 - **No schema, RLS or storage changes on the live DB (`dravvaykssrbktztmrlj`) without explicit owner approval.** Write proposals to `db/proposed-live-changes.sql`.
 - Don't touch the other Supabase projects on that account (BrokersConnect/brokerconnect, brokerscareers, openmatsae, topsuite_tracker, supabase-*).
 - Don't push to `main` or change Vercel settings from this work; use the `mobile-app` branch and PRs.
+- **Deploy and merge after every edit (owner rule, 2026-10-22):** after each change, run the checks (`npx tsc --noEmit`, `npx eslint .`, the test scripts), commit, and push it to `mobile-app` (fast-forward). That push is the deploy: `.github/workflows/eas-update.yml` publishes an EAS Update to the `preview` channel (Expo Go). Confirm the workflow run succeeded. "Merge" means into `mobile-app`; **never merge `mobile-app` into `main`** (Vercel builds `main`).
 - Keep test data minimal and labelled (`+ezvisa-app-test` emails).
 - **Owner rule (2026-10-22): deploy and merge after every edit.** Once type-check, lint and the checks pass, fast-forward the
   work into `mobile-app` right away (never into `main`). That push is the deploy: `.github/workflows/eas-update.yml` publishes
