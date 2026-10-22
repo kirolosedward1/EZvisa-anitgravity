@@ -1,0 +1,91 @@
+/*
+ * Pure-CSS iPhone frame (15 Pro proportions: 1179 x 2556 screen, Dynamic Island).
+ * Every dimension is expressed in container-query width units (cqw), so the same
+ * component renders correctly at any size: large in the hero, small in the gallery.
+ * Hardware colours are literal because they depict a physical device, not UI.
+ */
+
+.frame {
+  container-type: inline-size;
+  position: relative;
+  width: 100%;
+  /* 3cqw bezel on each side around a 94cqw-wide screen with a 1179:2556 ratio. */
+  aspect-ratio: 100 / 209.8;
+}
+
+/* Titanium rim */
+.body {
+  position: absolute;
+  inset: 0;
+  border-radius: 16.5cqw;
+  background: #1c1c1e;
+  box-shadow:
+    0 0 0 0.35cqw #3a3a3c,
+    0 2.5cqw 7cqw rgba(0, 0, 0, 0.22);
+}
+
+/* Black bezel between rim and glass */
+.bezel {
+  position: absolute;
+  inset: 1cqw;
+  border-radius: 15.5cqw;
+  background: #000;
+}
+
+.screen {
+  position: absolute;
+  inset: 3cqw;
+  border-radius: 13.5cqw;
+  overflow: hidden;
+  background: #fff;
+}
+
+.screen img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.island {
+  position: absolute;
+  top: 5.6cqw;
+  left: 50%;
+  width: 29cqw;
+  height: 8.6cqw;
+  border-radius: 999px;
+  background: #000;
+  transform: translateX(-50%);
+}
+
+/* Side buttons: physical, so they keep their left/right position in RTL too. */
+.button {
+  position: absolute;
+  width: 1.2cqw;
+  border-radius: 0.6cqw;
+  background: #2c2c2e;
+}
+
+.action {
+  left: -1.1cqw;
+  top: 24cqw;
+  height: 7cqw;
+}
+
+.volumeUp {
+  left: -1.1cqw;
+  top: 36cqw;
+  height: 13cqw;
+}
+
+.volumeDown {
+  left: -1.1cqw;
+  top: 51cqw;
+  height: 13cqw;
+}
+
+.power {
+  right: -1.1cqw;
+  top: 42cqw;
+  height: 20cqw;
+}

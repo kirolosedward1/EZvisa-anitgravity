@@ -167,6 +167,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "FAQ", id: "faq", type: "scroll" },
     { label: "News", id: "/news", type: "link" },
     { label: "Videos", id: "/videos", type: "link" },
+    { label: "App", id: "/app", type: "link" },
   ]
 
   return (
@@ -201,7 +202,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
             </Link>
 
             {!isWizardPage && !hideNavigation && (
-              <nav className="hidden lg:flex items-center gap-1.5 px-2">
+              <nav className="hidden lg:flex items-center gap-1.5 px-1">
                 {navItems.map((item) => (
                   <div 
                     key={item.id} 
@@ -213,7 +214,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                       <>
                         <Link
                           href={item.id}
-                          className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer group whitespace-nowrap"
+                          className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer group whitespace-nowrap"
                         >
                           {item.label}
                           <ChevronDown className="ml-1 h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-all duration-300" />
@@ -272,14 +273,14 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                     ) : item.type === "scroll" ? (
                       <button
                         onClick={() => scrollToSection(item.id)}
-                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
+                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {item.label}
                       </button>
                     ) : (
                       <Link
                         href={item.id}
-                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3.5 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
+                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {item.label}
                       </Link>
