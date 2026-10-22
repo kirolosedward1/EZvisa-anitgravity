@@ -88,3 +88,17 @@ additional_notes.uploads[].at, document_reviews, appointment_at).
 - [ ] Notifications screen opens; reminders toggle schedules on device
 - [ ] Pull to refresh on Home and application page
 - [ ] No red screens / yellow boxes in a full run-through
+
+## 11. Push notifications (physical iPhone, development build, signed in)
+- [ ] Pay for an application → the permission prompt appears once, after "Paid" (not at launch)
+- [ ] Deny → no prompt again on the next payment; the app works normally
+- [ ] Allow → `select user_id, platform, updated_at from device_tokens where email = '<test email>'` shows one row for this phone
+- [ ] Staff sets `application_status` (e.g. submitted → reviewing) in Supabase → push arrives: "There's an update on your application." (no name, country, reference or status)
+- [ ] Staff rejects a document in `document_reviews` → push: "A document needs your attention."
+- [ ] Foreground: banner shows; tap opens the application
+- [ ] Background: tap opens the application; Back goes to Applications
+- [ ] Killed (swipe away): tap launches the app straight into the application (after Face ID if the lock is on)
+- [ ] Sign out → row gone from `device_tokens`; the next status change sends nothing to this phone
+- [ ] Sign out in Airplane Mode → the confirmation adds "You're offline, so this phone may still get this account's notifications."; signing out still works
+- [ ] Second account signs in on the same phone → only that account's pushes arrive (needs 0012, or notify-status v2)
+- [ ] The customer's own submit or discard sends no push (v2)
