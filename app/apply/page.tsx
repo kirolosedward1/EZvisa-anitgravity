@@ -16,6 +16,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { useDraftSync, type ServerDraft } from "@/lib/draft-sync"
+import { DraftStatus, DraftConflictDialog } from "@/components/apply/draft-status"
 
 const WIZARD_STORAGE_KEY = "visa_wizard_data"
 const AUTO_SAVE_DELAY = 300
@@ -192,6 +194,13 @@ function ApplyPageContent() {
   const [showResumeModal, setShowResumeModal] = useState(false)
   const [pendingSavedData, setPendingSavedData] = useState<Partial<WizardFormData> | null>(null)
 
+  // Signed-in users: answers also autosave to their draft row, shared with the EZvisa app (lib/draft-sync.ts).
+  const handleServerDraft = useCallback((d: ServerDraft) => {
+    setFormData(coerceResidence({ ...defaultFormData, ...(d.wizard as Partial<WizardFormData>) }))
+    setCurrentStep(getStepNumber(d.step))
+  }, [])
+  const draft = useDraftSync({ form: formData, step: getStepSlug(currentStep), ready: isInitialized && !showResumeModal, onLoad: handleServerDraft })
+
   const isUpdatingUrl = useRef(false)
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const wizardContainerRef = useRef<HTMLDivElement>(null)
@@ -224,6 +233,7 @@ function ApplyPageContent() {
 
   const handleStartFresh = useCallback(() => {
     localStorage.removeItem(WIZARD_STORAGE_KEY)
+    draft.forget()
     const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
     const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
     const travelStartDate = searchParams.get("travelStartDate") || ""
@@ -245,7 +255,7 @@ function ApplyPageContent() {
     )
     
     setShowResumeModal(false)
-  }, [router, searchParams])
+  }, [router, searchParams, draft.forget])
 
   const scrollToWizardTop = useCallback(() => {
     if (typeof window === "undefined") return
@@ -541,7 +551,7 @@ function ApplyPageContent() {
         )
       case "payment":
       case "documents":
-        return <PaymentStep formData={formData} onBack={handleBack} isLoading={isTransitioning} paymentError={paymentError} />
+        return <PaymentStep formData={formData} onBack={handleBack} isLoading={isTransitioning} paymentError={paymentError} prepareSubmit={draft.prepareSubmit} onSubmitted={draft.forget} />
       default:
         return null
     }
@@ -607,7 +617,7 @@ function ApplyPageContent() {
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                 <div className="flex items-center gap-2">
                   <span>Step {currentVisualStep} of {totalSteps}</span>
-                  {lastSaved && <span className="text-emerald-500 font-medium">✓ Saved</span>}
+                  <DraftStatus status={draft.status} signedIn={draft.signedIn} savedLocally={!!lastSaved} onRetry={draft.retry} />
                 </div>
                 <span>{Math.round(progressPercentage)}% complete</span>
               </div>
@@ -637,7 +647,7 @@ function ApplyPageContent() {
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                     <div className="flex items-center gap-2">
                       <span>Step {currentVisualStep} of {totalSteps}</span>
-                      {lastSaved && <span className="text-emerald-500 font-medium">✓ Saved</span>}
+                      <DraftStatus status={draft.status} signedIn={draft.signedIn} savedLocally={!!lastSaved} onRetry={draft.retry} />
                     </div>
                     <span>{Math.round(progressPercentage)}% complete</span>
                   </div>
@@ -791,6 +801,8 @@ function ApplyPageContent() {
           </div>
         </div>
       </div>
+
+      <DraftConflictDialog conflict={draft.conflict} onChoose={draft.resolveConflict} />
 
       {showResumeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 md:backdrop-blur-md animate-in fade-in duration-200">
