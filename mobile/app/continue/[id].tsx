@@ -20,8 +20,9 @@ import { activeQuestions, firstError, Q_BY_ID, type Question } from "../../lib/q
 import { success, error as hError, tap, select } from "../../lib/haptics";
 
 const AUTO_MS = 260;
-/** Applications made on the website asked everything else there: only the passport number and employment are asked here. */
-const scoped = (qs: Question[], website: boolean) => (website ? qs.filter((x) => x.step === "employment" || x.id === "passportNumber") : qs);
+/** Applications made on the website asked everything else there: only the passport number and employment are asked here.
+ *  The number only applies after "Do you have a valid passport?" = Yes, and website rows never stored that answer, so it is asked too. */
+const scoped = (qs: Question[], website: boolean) => (website ? qs.filter((x) => x.step === "employment" || x.id === "hasValidPassport" || x.id === "passportNumber") : qs);
 
 function Bar({ fill }: { fill: number }) {
   const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
