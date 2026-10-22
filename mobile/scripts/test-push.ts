@@ -4,7 +4,9 @@
 import { F, render, unmount, tap } from "./push-fakes";
 import { setupPush, useNotificationRouting, notifications } from "../lib/push";
 import { registerPushToken, unregisterPushToken } from "../lib/data";
+import { planReminders } from "../lib/reminders";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 let pass = 0, fail = 0;
 const check = async (name: string, fn: () => unknown) => {
@@ -69,10 +71,21 @@ async function tokens() {
     eq(await setupPush(true), "denied"); eq(F.requests, 0); eq(F.ops, []);
     F.perm = { status: "granted", canAskAgain: true };
   });
-  await check("token rotation: the new token is claimed and the old row deleted", async () => {
-    F.ops = []; F.token = "ExpoPushToken[t2]"; F.tokenListeners.forEach((l) => l()); await new Promise((r) => setTimeout(r, 10));
-    eq(F.ops, [["delete", "device_tokens", "token", "ExpoPushToken[t1]"], ["rpc", "claim_device_token", { p_token: "ExpoPushToken[t2]", p_platform: "ios" }]]);
+  await check("the token listener does not loop (every token fetch fires the event, as in the SDK)", async () => {
+    await wait(20); F.ops = []; F.fetches = 0;
+    eq(await setupPush(true), "registered"); await wait(50);
+    if (F.fetches > 1) throw new Error(`${F.fetches} token fetches after one setupPush`);
+    const claims = F.ops.filter((o) => o[0] === "rpc").length; if (claims < 1 || claims > 2) throw new Error(`${claims} claims after one setupPush`); // the listener may re-claim once (idempotent)
+  });
+  await check("token rotation: the new token is claimed first, then the old row deleted", async () => {
+    F.ops = []; F.tokenListeners.forEach((l) => l({ type: "ios", data: "device[t2]" })); await wait(20);
+    eq(F.ops, [["rpc", "claim_device_token", { p_token: "ExpoPushToken[t2]", p_platform: "ios" }], ["delete", "device_tokens", "token", "ExpoPushToken[t1]"]]);
     eq(F.tokenListeners.length, 1, "one listener");
+  });
+  await check("rotation whose claim fails keeps the old row", async () => {
+    F.ops = []; F.rpcError = { code: "57014" }; F.tokenListeners.forEach((l) => l({ type: "ios", data: "device[t3]" })); await wait(20); F.rpcError = null;
+    eq(F.ops.filter((o) => o[0] === "delete"), [], "no delete");
+    F.ops = []; F.tokenListeners.forEach((l) => l({ type: "ios", data: "device[t2]" })); await wait(20); // back to t2 for the next checks
   });
   await check("before migration 0013: claim RPC missing (PGRST202) -> plain insert", async () => {
     F.ops = []; F.rpcError = { code: "PGRST202" }; await registerPushToken("ExpoPushToken[t2]");
@@ -86,8 +99,17 @@ async function tokens() {
     F.rpcError = { code: "57014" }; const s = await setupPush(true); F.rpcError = null;
     if (!s.startsWith("unavailable")) throw new Error(s);
   });
-  await check("signed out: the token is kept on the phone, nothing is sent", async () => {
-    F.ops = []; F.session = null; await registerPushToken("ExpoPushToken[t2]"); eq(F.ops, []); F.session = { user: { id: "a" } };
+  await check("signed out: nothing is sent", async () => {
+    F.ops = []; const keep = F.session; F.session = null; await registerPushToken("ExpoPushToken[t2]"); eq(F.ops, []); F.session = keep;
+  });
+  await check("a save in flight when sign-out starts cannot re-create the row afterwards", async () => {
+    F.ops = []; F.rpcDelay = 30;
+    const save = registerPushToken("ExpoPushToken[t2]"); await wait(5);
+    eq(await unregisterPushToken(), true); await save; F.rpcDelay = 0;
+    const kinds = F.ops.map((o) => o[0]); if (kinds.lastIndexOf("delete") < kinds.lastIndexOf("rpc")) throw new Error(`order ${kinds}`);
+    F.ops = []; await registerPushToken("ExpoPushToken[t2]"); eq(F.ops, [], "same session after sign-out sends nothing");
+    F.session = { user: { id: "a" }, access_token: "jwt-a2" }; F.ops = []; await registerPushToken("ExpoPushToken[t2]");
+    eq(F.ops.map((o) => o[0]), ["rpc"], "the next sign-in saves again");
   });
   await check("sign-out deletes this phone's token", async () => {
     F.ops = []; eq(await unregisterPushToken(), true); eq(F.ops, [["delete", "device_tokens", "token", "ExpoPushToken[t2]"]]);
@@ -96,10 +118,23 @@ async function tokens() {
   await check("sign-out with a server error: reports false", async () => { F.deleteError = { message: "x" }; eq(await unregisterPushToken(), false); F.deleteError = null; });
   await check("no stored token: nothing to delete", async () => { F.ops = []; await AsyncStorage.removeItem("ezvisa.push.token"); eq(await unregisterPushToken(), true); eq(F.ops, []); });
   await check("the foreground handler is set once", () => { notifications(); notifications(); eq(F.handlerSet, 1); });
+  await check("reminder text has no destination or name (lock screen)", () => {
+    const plan = planReminders([{ id: "3f2b8c1e-9a4d-4c2b-8f1e-0a1b2c3d4e5f", status: "submitted", entry_date: "2030-06-01", countries: { name: "France" },
+      applicants: [{ id: "p1", is_primary: true, first_name: "Sara", passport_expiry_date: "2031-01-15" }, { id: "p2", is_primary: false, first_name: "Omar", passport_expiry_date: "2031-02-15" }] } as any], new Date("2026-10-22T00:00:00"));
+    if (plan.length < 6) throw new Error(`only ${plan.length} reminders`);
+    for (const r of plan) if (/France|Sara|Omar/.test(r.title + r.body)) throw new Error(`"${r.title}: ${r.body}"`);
+  });
 }
 
 async function main() {
   if (F.phase === "ios") { await routing(); await tokens(); }
+  if (F.phase === "android") {
+    await check("Android: after one \"Don't allow\" the next payment does not ask again", async () => {
+      F.perm = { status: "undetermined", canAskAgain: true }; F.requestTo = "denied"; F.requests = 0;
+      eq(await setupPush(true), "denied"); eq(F.requests, 1);
+      eq(await setupPush(true), "denied"); eq(F.requests, 1, "asked again");
+    });
+  }
   if (F.phase === "android-expo-go") {
     await check("Expo Go on Android: no prompt, no token, no throw", async () => { F.requests = 0; eq(await setupPush(true), "unsupported-expo-go-android"); eq(F.requests, 0); eq(F.ops, []); });
     await check("Expo Go on Android: reminder taps still open their screen", () => { reset(); show(true, true); fire(tap("r1", { url: "/account" })); eq(F.pushed, ["/account"]); });

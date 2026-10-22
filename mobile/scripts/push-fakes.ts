@@ -2,18 +2,19 @@
 // The phase (process.argv[2]) picks the platform: "ios" (a store build), "android-expo-go" or "web".
 declare const process: any;
 const phase: string = process.argv[2] ?? "ios";
+const os = phase === "web" ? "web" : phase.startsWith("android") ? "android" : "ios";
 type Resp = { actionIdentifier: string; notification: { date: number; request: { identifier: string; content: { data: unknown } } } };
 
 export const F = {
   phase,
   // expo-notifications
   perm: { status: "undetermined", canAskAgain: true }, requestTo: "granted", requests: 0, handlerSet: 0, token: "ExpoPushToken[t1]",
-  last: null as Resp | null, cleared: 0, responseListeners: [] as ((r: Resp) => void)[], tokenListeners: [] as (() => void)[],
+  last: null as Resp | null, cleared: 0, responseListeners: [] as ((r: Resp) => void)[], tokenListeners: [] as ((t: { type: string; data: string }) => void)[], fetches: 0,
   // expo-router
   pushed: [] as string[],
   // supabase
-  session: { user: { id: "a" } } as object | null, rpcError: null as { code?: string } | null, insertError: null as { code?: string } | null,
-  deleteError: null as object | null, deleteThrows: false, ops: [] as unknown[][],
+  session: { user: { id: "a" }, access_token: "jwt-a1" } as object | null, rpcError: null as { code?: string } | null, insertError: null as { code?: string } | null,
+  deleteError: null as object | null, deleteThrows: false, ops: [] as unknown[][], rpcDelay: 0,
 };
 
 // A tiny hook runtime: enough for useRef/useEffect with deps, so a hook can be "rendered" and re-rendered in node.
@@ -44,9 +45,20 @@ const notifications = {
   DEFAULT_ACTION_IDENTIFIER: "expo.modules.notifications.actions.DEFAULT",
   setNotificationHandler() { F.handlerSet++; },
   async getPermissionsAsync() { return { ...F.perm }; },
-  async requestPermissionsAsync() { F.requests++; F.perm = { status: F.requestTo, canAskAgain: F.requestTo !== "denied" }; return { ...F.perm }; },
-  async getExpoPushTokenAsync(o: { projectId?: string }) { if (o.projectId !== "pid") throw new Error("no projectId"); return { data: F.token }; },
-  addPushTokenListener(cb: () => void) {
+  // Android 13+ lets the app ask a second time after the first "Don't allow" (canAskAgain stays true); iOS does not.
+  async requestPermissionsAsync() { F.requests++; F.perm = { status: F.requestTo, canAskAgain: F.requestTo !== "denied" || os === "android" }; return { ...F.perm }; },
+  // Like the SDK: without a devicePushToken it fetches one, and every fetch also fires the push-token event
+  // (PushTokenModule didRegister/onNewToken), which is how a listener that fetches again loops.
+  async getExpoPushTokenAsync(o: { projectId?: string; devicePushToken?: { type: string; data: string } }) {
+    if (o.projectId !== "pid") throw new Error("no projectId");
+    if (!o.devicePushToken) {
+      F.fetches++; // a native device-token fetch, which also fires the event
+      const t = { type: os, data: F.token.replace("ExpoPushToken", "device") };
+      setTimeout(() => F.tokenListeners.forEach((l) => l(t)), 0);
+    }
+    return { data: o.devicePushToken ? o.devicePushToken.data.replace("device", "ExpoPushToken") : F.token };
+  },
+  addPushTokenListener(cb: (t: { type: string; data: string }) => void) {
     if (F.phase === "android-expo-go") throw new Error("Android push was removed from Expo Go"); // what the SDK 57 code does
     F.tokenListeners.push(cb); return { remove() {} };
   },
@@ -60,8 +72,11 @@ const notifications = {
 // The Supabase client lib/data.ts uses for tokens: auth.getSession, rpc, from("device_tokens").insert / update().eq / delete().eq.
 const result = (r: object) => ({ then: (ok: (v: object) => unknown, bad?: (e: unknown) => unknown) => Promise.resolve(r).then(ok, bad) });
 const supabase = {
-  auth: { async getSession() { return { data: { session: F.session } }; } },
-  async rpc(name: string, args: object) { F.ops.push(["rpc", name, args]); return { error: F.rpcError }; },
+  auth: { async getSession() { return { data: { session: F.session && { ...F.session } } }; } },
+  async rpc(name: string, args: object) {
+    const err = F.rpcError; if (F.rpcDelay) await new Promise((r) => setTimeout(r, F.rpcDelay));
+    F.ops.push(["rpc", name, args]); return { error: err };
+  },
   from(table: string) {
     return {
       insert(v: object) { F.ops.push(["insert", table, v]); return result({ error: F.insertError }); },
@@ -77,7 +92,6 @@ const supabase = {
   },
 };
 
-const os = phase === "web" ? "web" : phase.startsWith("android") ? "android" : "ios";
 (globalThis as any).__push = {
   supabase,
   fakes: {

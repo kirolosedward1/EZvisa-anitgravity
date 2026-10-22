@@ -18,7 +18,7 @@ await build({ entryPoints: [dir + "test-push.ts"], bundle: true, platform: "node
   } }],
   banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" } });
 let failed = false;
-for (const p of ["ios", "android-expo-go", "web"]) {
+for (const p of ["ios", "android", "android-expo-go", "web"]) {
   try { execFileSync(process.execPath, [out, p], { stdio: "inherit" }); } catch { failed = true; }
 }
 process.exit(failed ? 1 : 0);

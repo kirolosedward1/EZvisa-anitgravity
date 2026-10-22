@@ -20,10 +20,19 @@ export function notifications(): N | null {
   return mod;
 }
 
+const projectId = () => Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+let lastToken: string | null = null;
 async function saveToken(N: N) {
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-  const { data } = await N.getExpoPushTokenAsync({ projectId });
+  const { data } = await N.getExpoPushTokenAsync({ projectId: projectId() });
+  lastToken = data;
   await registerPushToken(data);
+}
+/** The push-token event fires on every device-token fetch, not only on rotation (expo-notifications TokenEmitter), so the
+ *  listener uses the token it is given (no fetch, no loop) and skips the one just saved. */
+function onDeviceToken(N: N, device: import("expo-notifications").DevicePushToken) {
+  N.getExpoPushTokenAsync({ projectId: projectId(), devicePushToken: device })
+    .then(({ data }) => { if (data === lastToken) return; lastToken = data; return registerPushToken(data); })
+    .catch(() => {});
 }
 
 let tokenSub: { remove: () => void } | null = null;
@@ -37,12 +46,14 @@ export async function setupPush(ask = false): Promise<string> {
     const Device = require("expo-device") as typeof import("expo-device");
     if (!Device.isDevice) return "simulator";
     let { status, canAskAgain } = await N.getPermissionsAsync();
-    if (status !== "granted" && (!ask || !canAskAgain)) return status === "denied" ? "denied" : "not-asked";
+    // A "Don't allow" is final here on both platforms (Android 13+ would let us ask once more): Settings can change it.
+    if (status === "denied") return "denied";
+    if (status !== "granted" && (!ask || !canAskAgain)) return "not-asked";
     if (status !== "granted") status = (await N.requestPermissionsAsync()).status;
     if (status !== "granted") return "denied";
     await saveToken(N);
     // APNs/FCM can rotate the device token; re-save so the server never keeps sending to a dead one.
-    tokenSub ??= N.addPushTokenListener(() => { saveToken(N).catch(() => {}); });
+    tokenSub ??= N.addPushTokenListener((t) => onDeviceToken(N, t));
     return "registered";
   } catch (e: any) {
     return `unavailable: ${e?.message ?? e}`;

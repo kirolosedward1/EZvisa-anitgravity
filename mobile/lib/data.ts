@@ -469,29 +469,42 @@ export async function markRead(ids: string[]) {
   await AsyncStorage.setItem(READ_KEY, JSON.stringify([...s]));
 }
 
-const PUSH_TOKEN_KEY = "ezvisa.push.token";
+const PUSH_TOKEN_KEY = "ezvisa.push.token"; // the token last saved to the server for the signed-in user
+const savingTokens = new Set<Promise<void>>();
+let releasedSession: string | null = null; // access token of the session whose phone token was removed at sign-out
 /** Stores this phone's Expo push token in device_tokens for the signed-in user (RLS: own rows only; user_id/email come from the session server-side).
- * claim_device_token (migration 0012) also takes the token off any other account that last used this phone. Until it is applied,
- * a plain insert is used and an existing row gets a fresh updated_at (notify-status sends a shared token only to its latest owner). */
-export async function registerPushToken(token: string) {
-  const prev = await AsyncStorage.getItem(PUSH_TOKEN_KEY).catch(() => null);
-  await AsyncStorage.setItem(PUSH_TOKEN_KEY, token).catch(() => {});
+ * claim_device_token (migration 0013) also takes the token off any other account that last used this phone. Until it is applied,
+ * a plain insert is used and an existing row gets a fresh updated_at (notify-status sends a shared token only to its latest owner).
+ * A rotated token's old row is deleted only after the new one is saved. */
+export function registerPushToken(token: string): Promise<void> {
+  const p = saveTokenRow(token).finally(() => { savingTokens.delete(p); });
+  savingTokens.add(p);
+  return p;
+}
+async function saveTokenRow(token: string) {
   if (!supabase) return;
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
+  if (!session || session.access_token === releasedSession) return; // signed out, or signing out right now
+  const prev = await AsyncStorage.getItem(PUSH_TOKEN_KEY).catch(() => null);
   const platform = Platform.OS === "android" ? "android" : "ios";
-  if (prev && prev !== token) await supabase.from("device_tokens" as any).delete().eq("token", prev).then(() => {}, () => {}); // rotated token
   const claim: { error: { code?: string } | null } = await (supabase as any).rpc("claim_device_token", { p_token: token, p_platform: platform });
-  if (!claim.error) return;
-  if (claim.error.code !== "PGRST202") throw claim.error; // PGRST202 = function not in the database yet
-  const { error } = await supabase.from("device_tokens" as any).insert({ token, platform } as any);
-  if (error?.code === "23505") { await supabase.from("device_tokens" as any).update({ updated_at: new Date().toISOString() } as any).eq("token", token); return; }
-  if (error) throw error;
+  if (claim.error) {
+    if (claim.error.code !== "PGRST202") throw claim.error; // PGRST202 = function not in the database yet
+    const { error } = await supabase.from("device_tokens" as any).insert({ token, platform } as any);
+    if (error?.code === "23505") await supabase.from("device_tokens" as any).update({ updated_at: new Date().toISOString() } as any).eq("token", token);
+    else if (error) throw error;
+  }
+  await AsyncStorage.setItem(PUSH_TOKEN_KEY, token).catch(() => {});
+  if (prev && prev !== token) await supabase.from("device_tokens" as any).delete().eq("token", prev).then(() => {}, () => {}); // rotated token
 }
-/** Removes this phone's token from the signed-in account. false = the server could not be reached, so pushes would continue. */
+/** Removes this phone's token from the signed-in account (called before signing out). Waits for a save already in flight,
+ * and no later save for this session goes through. false = the server could not be reached, so pushes would continue. */
 export async function unregisterPushToken(): Promise<boolean> {
+  if (!supabase) return true;
+  releasedSession = (await supabase.auth.getSession().catch(() => null))?.data.session?.access_token ?? null;
+  await Promise.all([...savingTokens].map((p) => p.catch(() => {})));
   const token = await AsyncStorage.getItem(PUSH_TOKEN_KEY).catch(() => null);
-  if (!token || !supabase) return true;
+  if (!token) return true;
   try {
     const { error } = await supabase.from("device_tokens" as any).delete().eq("token", token);
     return !error;
