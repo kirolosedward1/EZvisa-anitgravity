@@ -37,7 +37,8 @@ People prepare each file. The app collects only what those people need, in the o
 - The app asks "Do you have a valid passport?" before the passport number. If the answer is No, the application continues with a note to get the passport and add it later.
 - Any "No" to a document question (valid passport, Emirates ID, spouse's passport, NOC) never blocks: the app shows "add it later", lists it under "To get later" on Review and on the application page, and saves it as `additional_notes.missingDocuments` for the team.
 - Self-employed applicants are not asked for a NOC.
-- Employment questions (job title and company on one page) and document upload come after payment.
+- Before payment the app asks only: destination, nationality, city (residence is fixed to the UAE), name (first + last on one page), email + phone (one page; signed-in users only give the phone, the account email is used), marital status and, if married, whether the spouse travels (the price depends on it).
+- Everything else comes after payment, one question per screen on "Continue application": trip details, UAE residence visa validity, date of birth, passport (valid?, number, expiry), spouse details, employment (job title and company on one page), then document upload. Travel itinerary, spouse occupation and the Emirates ID question are not asked.
 - Home shows all of the user's applications. At most the 10 most recent failed or unpaid ones appear, each with Discard plus a confirmation.
 - Languages: English and Arabic, with RTL support; Arabic strings live in `lib/ar.ts`. Dark mode is dropped for now.
 - Auth: the website's methods (email + password, magic link, sign-up, password reset), same accounts. Google and Apple stay hidden until enabled on the project (the website doesn't offer them). Signed-out starts show Welcome; "Continue without an account" keeps guest checkout.

@@ -539,4 +539,15 @@ export const AR: Record<string, string> = {
   "Documents can be uploaded after payment.": "يمكن رفع المستندات بعد الدفع.",
   "This application can't take new documents.": "لا يقبل هذا الطلب مستندات جديدة.",
   "Please sign in to upload documents": "سجّل الدخول لرفع المستندات",
+  // ---- before / after payment split ----
+  "Your Name": "اسمك",
+  "Email & Phone Number": "البريد الإلكتروني ورقم الهاتف",
+  "Passport & Residence": "الجواز والإقامة",
+  "Passport and UAE residence": "الجواز والإقامة في الإمارات",
+  "Spouse Name": "اسم الزوج/الزوجة",
+  "As on your spouse's passport.": "كما في جواز سفر الزوج/الزوجة.",
+  "{step}, {i} of {n}": "{step}، {i} من {n}",
+  "Is your UAE residence visa valid at least 3 months after your return date?": "هل تأشيرة إقامتك في الإمارات سارية لمدة 3 أشهر على الأقل بعد تاريخ عودتك؟",
+  "Most embassies need your UAE residence visa to be valid at least 3 months after you return. Renew it before your appointment; our team will guide you.": "تشترط معظم السفارات أن تكون إقامتك في الإمارات سارية لمدة 3 أشهر على الأقل بعد عودتك. جدّدها قبل موعدك، وسيرشدك فريقنا.",
+  "You'll need a valid passport (at least 6 months validity from your travel date) before your visa appointment. Our team will contact you.": "ستحتاج إلى جواز سفر ساري المفعول (صلاحية 6 أشهر على الأقل من تاريخ السفر) قبل موعد التأشيرة. سيتواصل معك فريقنا.",
 };

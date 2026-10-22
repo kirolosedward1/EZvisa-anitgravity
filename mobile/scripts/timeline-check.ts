@@ -21,6 +21,11 @@ const row = (p: Partial<VisaRow> & Record<string, unknown>, notes?: Record<strin
 const st = (s: Step[], k: Step["key"]) => s.find((x) => x.key === k)!;
 const next = (a: ReturnType<typeof row>) => nextAction(a, buildChecklist(requirementsFor((a.notes?.wizard as any)?.employmentStatus), a.documents).customer);
 const selfEmployed = { employmentStatus: "student" }; // complete employment answers with no NOC requirement
+const inDays = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+/** Every answer the app asks after payment (Continue application), so an app row is complete. */
+const afterPay = { ...selfEmployed, purposeOfTrip: "tourism", travelStartDate: inDays(30), travelEndDate: inDays(40), datesFlexible: "no", travelingWith: "alone", hotelCategory: "3-star",
+  fundingSource: "self", balanceRange: "10000-25000", isFirstSchengenVisa: "yes", previousRefusals: "no", residenceVisaValid: "yes", dateOfBirth: "1990-01-01",
+  hasValidPassport: "yes", passportNumber: "N1234567", passportExpiry: inDays(2000) };
 const app = { source: "mobile-app", platform: "ios" };
 const up = (type: string, at: string) => ({ type, path: `x/${type}.pdf`, name: `${type}.pdf`, at });
 const ALL = ["passportCopy", "residencyCopy", "photo", "bankStatement"];
@@ -34,7 +39,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
   ok(next(a).kind === "pay", "A next action: Pay"); }
 
 // B. App draft submitted in the app, paid, documents partly uploaded.
-{ const a = row({ payment_status: "paid", payment_id: "z1", created_at: "2026-09-01T08:00:00Z" }, { ...app, submittedAt: "2026-10-02T09:30:00Z", wizard: selfEmployed, uploads: [up("passportCopy", "2026-10-03T10:00:00Z")] });
+{ const a = row({ payment_status: "paid", payment_id: "z1", created_at: "2026-09-01T08:00:00Z" }, { ...app, submittedAt: "2026-10-02T09:30:00Z", wizard: afterPay, uploads: [up("passportCopy", "2026-10-03T10:00:00Z")] });
   const s = buildTimeline(a);
   ok(st(s, "submitted").at === "2026-10-02T09:30:00Z", "B app row: Submitted time is notes.submittedAt, not the draft's created_at");
   ok(st(s, "paid").state === "done" && st(s, "paid").at === null, "B Paid done, no invented paid time (no column)");
@@ -83,7 +88,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
   ok(st(s, "paid").state === "attention" && st(s, "paid").label === "Payment failed", "J failed payment needs attention"); }
 
 // K. A document rejected by staff (document_reviews).
-{ const a = row({ payment_status: "paid", document_reviews: { passportCopy: { status: "rejected", reason: "Blurry", at: "2026-10-06T10:00:00Z" } } }, { ...app, wizard: selfEmployed, uploads: [up("passportCopy", "2026-10-03T10:00:00Z")] });
+{ const a = row({ payment_status: "paid", document_reviews: { passportCopy: { status: "rejected", reason: "Blurry", at: "2026-10-06T10:00:00Z" } } }, { ...app, wizard: afterPay, uploads: [up("passportCopy", "2026-10-03T10:00:00Z")] });
   const s = buildTimeline(a);
   ok(st(s, "documents").state === "attention" && st(s, "documents").note === "Re-upload needed", "K rejected document: Documents needs attention");
   ok(next(a).kind === "upload" && next(a).title.startsWith("Re-upload"), "K next action: Re-upload"); }
@@ -97,8 +102,9 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 { ok(next(row({ payment_status: "paid" }, { ...app })).kind === "continue", "M paid, employment missing: Continue application"); }
 // N. The passport number is asked after payment too: employment done but no number (column or wizard) -> Continue application.
 { ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: { ...selfEmployed, hasValidPassport: "yes" } })).kind === "continue", "N paid, passport number missing: Continue application");
-  ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: { ...selfEmployed, hasValidPassport: "yes", passportNumber: "N1234567" } })).kind !== "continue", "N paid, number in the wizard notes: no Continue");
-  ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { ...app, wizard: selfEmployed })).kind !== "continue", "N paid, number only in the passport_number column (website row): no Continue");
+  ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: afterPay })).kind !== "continue", "N paid, every after-payment answer in the wizard notes: no Continue");
+  ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { wizard: selfEmployed })).kind !== "continue", "N paid, number only in the passport_number column (website row): no Continue");
+  ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { ...app, wizard: { ...selfEmployed, passportNumber: "N1234567" } })).kind === "continue", "N paid app row with trip and passport answers missing: Continue application");
   ok(next(row({ payment_status: "pending", passport_number: null }, { ...app, wizard: selfEmployed })).kind === "pay", "N unpaid, no number: still Pay, never Continue"); }
 
 // N. Draft -> Continue draft.

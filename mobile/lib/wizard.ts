@@ -1,7 +1,9 @@
 // Mirrors the website wizard (ezvisa.net/apply, web repo lib/wizard-steps.ts + components/apply/*):
 // same step slugs, order, fields, options and validation rules.
 
-export type WizardStep = "personal" | "spouse" | "employment" | "trip-details" | "payment";
+// Before payment the app asks only "personal" (destination, nationality, city, name, contact, marital status, spouse coming).
+// After payment (Continue application): "trip-details", "passport", "spouse", "employment".
+export type WizardStep = "personal" | "spouse" | "employment" | "trip-details" | "passport" | "payment";
 export type YesNo = "yes" | "no" | "";
 
 export type WizardForm = {
@@ -10,6 +12,8 @@ export type WizardForm = {
   firstName: string; lastName: string; email: string; phone: string; phoneCountry: string; phoneLocal: string; whatsappOptIn: boolean;
   dateOfBirth: string; passportNumber: string; passportExpiry: string; hasValidPassport: YesNo;
   maritalStatus: "" | "single" | "married" | "divorced" | "widowed"; spouseAccompanying: YesNo;
+  /** App-only (notes JSON): UAE residence visa valid at least 3 months after the return date. Replaces hasEmiratesId in the app. */
+  residenceVisaValid: YesNo;
   // spouse
   spouseFirstName: string; spouseLastName: string; spouseHasValidPassport: YesNo; spouseOccupation: string;
   // employment
@@ -25,7 +29,7 @@ export type WizardForm = {
 export const emptyForm: WizardForm = {
   destination: "", nationality: "", countryOfResidence: "United Arab Emirates", cityOfResidence: "", hasEmiratesId: "",
   firstName: "", lastName: "", email: "", phone: "", phoneCountry: "AE", phoneLocal: "", whatsappOptIn: true,
-  dateOfBirth: "", passportNumber: "", passportExpiry: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "",
+  dateOfBirth: "", passportNumber: "", passportExpiry: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "", residenceVisaValid: "",
   spouseFirstName: "", spouseLastName: "", spouseHasValidPassport: "", spouseOccupation: "",
   employmentStatus: "", jobTitle: "", companyName: "", employmentStartDate: "", monthlySalary: "", hasNOC: "", averageMonthlyIncome: "",
   purposeOfTrip: "", travelStartDate: "", travelEndDate: "", datesFlexible: "", travelingWith: "", hotelCategory: "", fundingSource: "", balanceRange: "",
@@ -76,26 +80,25 @@ export const STEP_TITLES: Record<WizardStep, { title: string; description: strin
   spouse: { title: "Spouse Information", description: "Spouse details" },
   employment: { title: "Employment", description: "Work & income details" },
   "trip-details": { title: "Trip Details", description: "Travel intent & preferences" },
+  passport: { title: "Passport & Residence", description: "Passport and UAE residence" },
   payment: { title: "Review & Payment", description: "Confirm & complete payment" },
 };
 export const showSpouse = (f: WizardForm) => f.maritalStatus === "married" && f.spouseAccompanying === "yes";
-/** Visible steps, exactly like the web (spouse only when married and the spouse travels). */
-// Employment is asked AFTER payment in the app (app/continue/[id].tsx), so it is not a wizard step any more.
-export const visibleSteps = (f: WizardForm): WizardStep[] => (showSpouse(f) ? ["personal", "spouse", "trip-details", "payment"] : ["personal", "trip-details", "payment"]);
+/** Steps asked BEFORE payment (the wizard): only what the price and the account need. */
+export const visibleSteps = (_f: WizardForm): WizardStep[] => ["personal", "payment"];
+/** Steps asked AFTER payment (app/continue/[id].tsx), in order. Spouse only when married and the spouse travels. */
+export const postSteps = (f: Partial<WizardForm>): WizardStep[] =>
+  showSpouse({ ...emptyForm, ...f } as WizardForm) ? ["trip-details", "passport", "spouse", "employment"] : ["trip-details", "passport", "employment"];
 /** Employment answers complete (website rules, validateEmployment). */
 export const employmentComplete = (f: Partial<WizardForm>) => Object.keys(validateEmployment({ ...emptyForm, ...f } as WizardForm)).length === 0;
-/** Passport number, asked after payment (app/continue/[id].tsx). Required (website rule) unless there is no valid passport. */
-export function validatePassportNumber(f: Pick<WizardForm, "hasValidPassport" | "passportNumber">): Errors {
-  return f.hasValidPassport !== "no" && !(f.passportNumber ?? "").trim() ? { passportNumber: "Passport number is required" } : {};
-}
-/** Everything the app asks after payment (Continue application): passport number + employment. */
-export const continueComplete = (f: Partial<WizardForm>) =>
-  employmentComplete(f) && Object.keys(validatePassportNumber({ hasValidPassport: f.hasValidPassport ?? "", passportNumber: f.passportNumber ?? "" })).length === 0;
-/** URL step slug -> step; "documents" is the web's legacy alias for payment; unknown -> personal. */
+/** Everything the app asks after payment (Continue application) is answered and valid. */
+export const continueComplete = (f: Partial<WizardForm>) => {
+  const full = { ...emptyForm, ...f } as WizardForm;
+  return postSteps(full).every((s) => Object.keys(validateStep(s, full)).length === 0);
+};
+/** URL step slug -> wizard step. Only "personal" and "payment" are asked before payment; anything else opens personal. */
 export function parseStep(s?: string): WizardStep {
-  if (s === "documents") return "payment";
-  if (s === "employment") return "trip-details"; // asked after payment now
-  return (["personal", "spouse", "employment", "trip-details", "payment"] as string[]).includes(s ?? "") ? (s as WizardStep) : "personal";
+  return s === "payment" || s === "documents" ? "payment" : "personal";
 }
 
 // ---- validation (same rules as the web components) ----
@@ -134,23 +137,28 @@ export function validatePersonal(f: WizardForm): Errors {
   if (!RESIDENCE_COUNTRIES.includes(f.countryOfResidence)) e.countryOfResidence = "Please select your country of residence";
   if (!f.cityOfResidence.trim()) e.cityOfResidence = "City is required";
   else if (f.countryOfResidence === "United Arab Emirates" && !UAE_EMIRATES.includes(f.cityOfResidence)) e.cityOfResidence = "Please select your emirate";
-  if (f.countryOfResidence === "United Arab Emirates" && !f.hasEmiratesId) e.hasEmiratesId = "Please choose Yes or No";
   if (!f.firstName.trim()) e.firstName = "First name is required";
   if (!f.lastName.trim()) e.lastName = "Last name is required";
   if (!f.email.trim()) e.email = "Email is required"; else if (!isValidEmail(f.email.trim())) e.email = "Please enter a valid email address. Check for typos in the domain.";
   if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = "Please enter a valid phone number (7-15 digits).";
+  if (!f.maritalStatus) e.maritalStatus = "Please select your marital status";
+  if (f.maritalStatus === "married" && !f.spouseAccompanying) e.spouseAccompanying = "Please choose Yes or No";
+  return e;
+}
+/** After payment: UAE residence, date of birth and passport. A "No" (passport or residence) is recorded and shown as a note,
+ *  not blocked: the customer has paid and the team follows up. Website rows answered hasEmiratesId instead of residenceVisaValid. */
+export function validatePassport(f: WizardForm): Errors {
+  const e: Errors = {};
+  if (!f.residenceVisaValid && !f.hasEmiratesId) e.residenceVisaValid = "Please choose Yes or No";
   if (!f.dateOfBirth) e.dateOfBirth = "Please select your date of birth (must be 18+)"; else if (Date.parse(f.dateOfBirth) > adultMax().getTime()) e.dateOfBirth = "You must be 18 or older";
   if (!f.hasValidPassport) e.hasValidPassport = "Please choose Yes or No";
-  else if (f.hasValidPassport === "no") e.hasValidPassport = "You need a valid passport (at least 6 months validity from your travel date) before applying.";
-  else {
-    // The passport NUMBER is asked after payment (Continue application, validatePassportNumber); validity and expiry stay here.
+  else if (f.hasValidPassport === "yes") {
     // App-only field (kept in the wizard notes JSON; no DB column): valid >= 3 months after the return date.
     if (!f.passportExpiry) e.passportExpiry = "Please select your passport expiry date";
     else if (f.passportExpiry < iso(new Date())) e.passportExpiry = "This passport has expired. Enter the expiry date of your current passport.";
     else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date";
+    if (!f.passportNumber.trim()) e.passportNumber = "Passport number is required";
   }
-  if (!f.maritalStatus) e.maritalStatus = "Please select your marital status";
-  if (f.maritalStatus === "married" && !f.spouseAccompanying) e.spouseAccompanying = "Please choose Yes or No";
   return e;
 }
 export function validateSpouse(f: WizardForm): Errors {
@@ -195,7 +203,7 @@ export function validateTrip(f: WizardForm): Errors {
   return e;
 }
 export const validateStep = (s: WizardStep, f: WizardForm): Errors =>
-  s === "personal" ? validatePersonal(f) : s === "spouse" ? validateSpouse(f) : s === "employment" ? validateEmployment(f) : s === "trip-details" ? validateTrip(f) : {};
+  s === "personal" ? validatePersonal(f) : s === "passport" ? validatePassport(f) : s === "spouse" ? validateSpouse(f) : s === "employment" ? validateEmployment(f) : s === "trip-details" ? validateTrip(f) : {};
 /** First visible step that is still incomplete, or null when everything is valid. */
 export const firstIncomplete = (f: WizardForm): WizardStep | null => visibleSteps(f).find((s) => s !== "payment" && Object.keys(validateStep(s, f)).length > 0) ?? null;
 

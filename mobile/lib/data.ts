@@ -11,7 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { supabase } from "./supabase";
 import { siteUrl } from "./config";
 import type { Database } from "./database.types";
-import { emptyForm, continueComplete, type WizardForm } from "./wizard";
+import { emptyForm, continueComplete, employmentComplete, type WizardForm } from "./wizard";
 
 export type VisaRow = Database["public"]["Tables"]["visa_applications"]["Row"];
 type VisaUpdate = Database["public"]["Tables"]["visa_applications"]["Update"];
@@ -298,24 +298,41 @@ export async function patchNotes(applicationId: string, patch: Partial<Notes>): 
   return { synced: !!data?.length };
 }
 
-/** The answers asked after payment, from this row: the wizard notes, with the passport_number column as fallback
- *  (rows from the website, or from before the number moved after payment). */
-export function continueForm(a: Pick<Application, "notes" | "passport_number">): Partial<WizardForm> {
+/** Every answer of this row as a form: the wizard notes, with the website's columns as fallback (rows from the website,
+ *  or answers written by staff), so Continue application only asks what is really missing. */
+export function continueForm(a: Pick<Application, "notes"> & Partial<VisaRow>): WizardForm {
   const w = (a.notes?.wizard ?? {}) as Partial<WizardForm>; const n = a.notes as any;
-  return { ...w, employmentStatus: w.employmentStatus ?? n?.employmentStatus, passportNumber: w.passportNumber || a.passport_number || "" };
+  const yn = (b: boolean | null | undefined): WizardForm["previousRefusals"] => (b === true ? "yes" : b === false ? "no" : "");
+  return {
+    ...emptyForm, ...w,
+    employmentStatus: w.employmentStatus || n?.employmentStatus || "", jobTitle: w.jobTitle || n?.jobTitle || "", companyName: w.companyName || n?.companyName || "",
+    monthlySalary: w.monthlySalary || n?.monthlySalary || "", maritalStatus: w.maritalStatus || n?.maritalStatus || "", spouseAccompanying: w.spouseAccompanying || n?.spouseAccompanying || "",
+    passportNumber: w.passportNumber || a.passport_number || "", dateOfBirth: w.dateOfBirth || a.date_of_birth || "",
+    travelStartDate: w.travelStartDate || a.entry_date || "", travelEndDate: w.travelEndDate || a.exit_date || "", purposeOfTrip: w.purposeOfTrip || a.travel_purpose || "",
+    previousRefusals: w.previousRefusals || (a.previous_rejections == null ? "" : yn(a.previous_rejections)),
+    refusalDetails: w.refusalDetails || a.rejection_details || "",
+  } as WizardForm;
 }
-/** Paid, still open, and the after-payment answers (passport number, employment) are not all there yet. */
-export const needsContinue = (a: Application) => isPaid(a) && ["submitted", "draft", "reviewing"].includes(a.status) && !continueComplete(continueForm(a));
+/** Paid, still open, and the answers asked after payment are not all there yet. */
+export const needsContinue = (a: Application) => {
+  if (!isPaid(a) || !["submitted", "draft", "reviewing"].includes(a.status)) return false;
+  const f = continueForm(a);
+  // Rows from the website asked everything before payment there; only the passport number and employment may be missing.
+  if (a.notes?.source !== "mobile-app") return !employmentComplete(f) || (f.hasValidPassport !== "no" && !f.passportNumber.trim());
+  return !continueComplete(f);
+};
 
-/** Saves the Continue application answers: additional_notes (wizard + the website's employment keys) and the
- *  passport_number column staff read. While the case is in review the guard trigger (migrations/0002) keeps only the
- *  notes, so the number is then kept in additional_notes.wizard. `synced` is false when the row was not writable. */
-export async function saveContinueAnswers(applicationId: string, patch: Partial<Notes>, passportNumber: string): Promise<{ synced: boolean }> {
+/** Saves the answers asked after payment (Continue application): the same columns the website reads (dates, purpose,
+ *  date of birth, passport number, refusals ...) and additional_notes (wizard + the website's keys). While the case is in
+ *  review the guard trigger (migrations/0002) keeps only additional_notes, which also hold every answer (wizard).
+ *  `synced` is false when the row was not writable. */
+export async function saveAfterPayment(applicationId: string, f: WizardForm): Promise<{ synced: boolean }> {
   const sb = need(); const u = await me();
-  const { data: cur, error: ce } = await sb.from("visa_applications").select("additional_notes").eq("id", applicationId).eq("email", u.email).single();
+  const { data: cur, error: ce } = await sb.from("visa_applications").select("email, additional_notes").eq("id", applicationId).eq("email", u.email).single();
   if (ce) throw ce;
-  const n = { ...parseNotes(cur.additional_notes), ...patch };
-  const { data, error } = await sb.from("visa_applications").update({ additional_notes: JSON.stringify(n), passport_number: passportNumber.trim() || null }).eq("id", applicationId).eq("email", u.email).select("id");
+  const prev = parseNotes(cur.additional_notes);
+  const { user_agent: _ua, referrer: _ref, ...cols } = columns(f, cur.email ?? u.email, prev.wizardStep ?? "payment", prev) as any;
+  const { data, error } = await sb.from("visa_applications").update({ ...cols, updated_at: new Date().toISOString() }).eq("id", applicationId).eq("email", u.email).select("id");
   if (error) throw error;
   return { synced: !!data?.length };
 }
