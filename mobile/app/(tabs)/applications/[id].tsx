@@ -1,7 +1,7 @@
 import { AppointmentCard } from "../../../components/Appointment";
 import { employmentComplete } from "../../../lib/wizard";
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
+import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
@@ -26,6 +26,7 @@ import { Icon } from "../../../components/ui";
 let LOC: string | undefined;
 const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
 const EDITABLE = UPLOAD_STATUSES;
+const REFRESH_MS = 30_000;
 
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -35,15 +36,22 @@ export default function ApplicationDetail() {
   const [upErr, setUpErr] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [reqs, setReqs] = useState<Requirement[] | null>(null);
-  const load = useCallback(async () => {
+  /** quiet = background refresh: a failure keeps what is on screen instead of replacing it with an error. */
+  const load = useCallback(async (quiet = false) => {
     try {
-      setErr(null);
-      const app = await getApplication(id!); setA(app);
+      const app = await getApplication(id!); setA(app); setErr(null);
       listRequirements(app.country_id, (app.notes?.wizard as any)?.employmentStatus).then(setReqs).catch(() => setReqs([]));
-    } catch (e: any) { setErr(e?.message ?? String(e)); }
+    } catch (e: any) { if (!quiet) setErr(e?.message ?? String(e)); }
   }, [id]);
-  useFocusEffect(useCallback(() => { load(); }, [load]));
-  const onDone = useCallback(() => { success(); load(); }, [load]);
+  // Staff can change statuses on the website while this screen is open: refresh every 30 s while it is visible and
+  // the app is in the foreground, and right away when the app comes back. (No realtime: that needs a DB change.)
+  useFocusEffect(useCallback(() => {
+    load();
+    const tick = setInterval(() => { if (AppState.currentState === "active") load(true); }, REFRESH_MS);
+    const sub = AppState.addEventListener("change", (s) => { if (s === "active") load(true); });
+    return () => { clearInterval(tick); sub.remove(); };
+  }, [load]));
+  const onDone = useCallback(() => { success(); load(true); }, [load]);
   const queue = useUploads(id, onDone);
 
   /** Pick → reject wrong types here with a clear message → crop/compress and confirm on the preview screen → queue. */
@@ -84,7 +92,7 @@ export default function ApplicationDetail() {
     }
   };
 
-  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={load} />} /></View>;
+  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={() => load()} />} /></View>;
   if (!a) return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: S.lg, gap: S.md }}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg } }} />
