@@ -87,6 +87,10 @@ const row = (await (await fetch(`${DB}/__db`)).json()).find((r) => r.id === id);
 const md = JSON.parse(row?.additional_notes || "{}").missingDocuments ?? [];
 log(md.includes("Valid passport") && md.includes("NOC from your employer") && md.some((x) => /residence visa/i.test(x)), "row saved additional_notes.missingDocuments", JSON.stringify(md));
 log(!row?.passport_number, "no passport number stored after valid passport = No");
+// Closed case (file ready): the list no longer applies.
+await fetch(`${DB}/__db/edit`, { method: "POST", body: JSON.stringify({ id, patch: { application_status: "ready" } }) });
+await a.page.goto(`${APP}/applications/${id}`); await a.page.waitForTimeout(2500);
+log(!(await a.page.locator("body").innerText()).includes(later[0]), "closed application (ready): no 'To get later' list");
 log(a.errors.length === 0, "no page errors (A)", a.errors.join(" ; "));
 
 // ---------- account B cannot open A's application ----------

@@ -143,7 +143,7 @@ export default function ApplicationDetail() {
           <ListRow icon="briefcase.fill" iconColor={c.tint} title={t("Continue application")} subtitle={t("Add your passport number and employment details.")} onPress={() => router.push(`/continue/${a.id}`)} />
         </ListGroup>
       )}
-      {(() => { const later = missingDocs((a.notes?.wizard ?? {}) as any); return later.length > 0 && (
+      {(() => { const later = EDITABLE.includes(a.status) ? missingDocs((a.notes?.wizard ?? {}) as any) : []; return later.length > 0 && ( // open cases only
         <ListGroup header={t("To get later")} footer={t("Your application continues. Add these when you have them.")} inset={58}>
           {later.map((d) => <ListRow key={d} icon="clock" iconColor={c.orange} title={t(d)} chevron={false} />)}
         </ListGroup>
