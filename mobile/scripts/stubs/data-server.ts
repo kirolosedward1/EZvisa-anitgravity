@@ -8,10 +8,13 @@ export const docPath = (a: string, t: string, id: string, type: string) => `${a}
 const file = () => process.env.TEST_DIR + "/server.json";
 export const server = (): { objects: Record<string, number>; puts: number } => { try { return JSON.parse(fs.readFileSync(file(), "utf8")); } catch { return { objects: {}, puts: 0 }; } };
 const save = (s: ReturnType<typeof server>) => fs.writeFileSync(file(), JSON.stringify(s));
-export async function uploadDocument(applicationId: string, f: { uri: string; mimeType?: string | null }, documentType: string, uploadId: string) {
+const DOC_TYPES = ["passportCopy", "passportFront", "passportBack", "residencyCopy", "photo", "personalPhoto", "passportPhoto", "bankStatement", "nocCertificate", "salaryCertificate"];
+export const isUploadType = (t: string) => DOC_TYPES.includes(t);
+export async function uploadDocument(applicationId: string, f: { uri: string; mimeType?: string | null }, documentType: string, uploadId: string, onProgress?: (fraction: number) => void) {
   const fault = (globalThis as any).__fault;
   if (fault === "offline") throw new UploadError("Network request failed", true);
   if (fault === "hang") return new Promise<void>(() => {});
+  onProgress?.(0.5);
   const s = server(); s.puts++;
   const p = docPath(applicationId, documentType, uploadId, f.mimeType ?? "image/jpeg");
   s.objects[p] = (s.objects[p] ?? 0) + 1; // same path again = overwrite, not a new object

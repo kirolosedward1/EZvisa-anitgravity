@@ -250,11 +250,16 @@ function Seg({ v }: { v: number }) {
 }
 
 /** Indeterminate progress bar (Storage uploads don't report progress). */
-export function ProgressBar() {
-  const c = useColors(); const x = useSharedValue(0);
-  useEffect(() => { x.value = withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.ease) }), -1, false); }, []);
-  const a = useAnimatedStyle(() => ({ left: `${x.value * 70}%` as any }));
-  return <View accessibilityRole="progressbar" accessibilityLabel="Uploading" style={{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ position: "absolute", top: 0, bottom: 0, width: "30%", borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
+/** Indeterminate sweep, or a filled bar when `value` (0-1) is known, e.g. bytes sent during an upload. */
+export function ProgressBar({ value, label = "Uploading" }: { value?: number; label?: string }) {
+  const c = useColors(); const x = useSharedValue(0); const reduce = useReducedMotion();
+  const known = value != null;
+  useEffect(() => {
+    if (known) x.value = reduce ? value ?? 0 : withTiming(value ?? 0, { duration: DUR.fast });
+    else x.value = withRepeat(withTiming(1, { duration: 1100, easing: Easing.inOut(Easing.ease) }), -1, false);
+  }, [known, value, reduce, x]);
+  const a = useAnimatedStyle(() => (known ? { left: 0, width: `${x.value * 100}%` as any } : { left: `${x.value * 70}%` as any, width: "30%" as any }));
+  return <View accessibilityRole="progressbar" accessibilityLabel={label} accessibilityValue={known ? { min: 0, max: 100, now: Math.round((value ?? 0) * 100) } : undefined} style={{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ position: "absolute", top: 0, bottom: 0, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
 }
 
 export function Avatar({ name, size = 56 }: { name: string; size?: number }) {

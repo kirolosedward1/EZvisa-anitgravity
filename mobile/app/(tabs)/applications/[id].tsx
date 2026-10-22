@@ -6,7 +6,7 @@ import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
-import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL } from "../../../lib/data";
+import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES } from "../../../lib/data";
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
@@ -25,7 +25,7 @@ import { Icon } from "../../../components/ui";
 
 let LOC: string | undefined;
 const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
-const EDITABLE = ["draft", "submitted", "reviewing", "awaiting_documents"];
+const EDITABLE = UPLOAD_STATUSES;
 
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -191,14 +191,14 @@ function UploadRow({ j }: { j: UploadJob }) {
   const c = useColors(); const { t } = useT();
   const v = j.state === "done" ? { icon: "checkmark.circle.fill" as const, color: c.green, sub: t("Uploaded") }
     : j.state === "failed" ? { icon: "exclamationmark.circle.fill" as const, color: c.red, sub: `${t("Failed")} · ${t(j.error ?? "")}` }
-    : j.state === "uploading" ? { icon: "arrow.up.circle.fill" as const, color: c.tint, sub: t("Uploading…") }
+    : j.state === "uploading" ? { icon: "arrow.up.circle.fill" as const, color: c.tint, sub: j.progress != null && j.progress > 0 ? `${t("Uploading…")} ${Math.round(j.progress * 100)}%` : t("Uploading…") }
     : j.offline ? { icon: "wifi.slash" as const, color: c.orange, sub: t("Waiting for connection") }
     : j.nextAt ? { icon: "clock.fill" as const, color: c.orange, sub: t("Connection problem · retrying ({n}/{max})", { n: j.attempts, max: 6 }) }
     : { icon: "clock.fill" as const, color: c.secondaryLabel, sub: t("Queued") };
   return (
     <View testID={`upload-${j.state}`}>
       <ListRow icon={v.icon} iconColor={v.color} title={j.name} subtitle={v.sub} />
-      {j.state === "uploading" && <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar /></View>}
+      {j.state === "uploading" && <View style={{ paddingHorizontal: S.md, paddingBottom: S.sm }}><ProgressBar value={j.progress} label={t("Uploading…")} /></View>}
       {(j.state === "failed" || j.state === "queued") && (
         <View style={{ flexDirection: "row", gap: S.sm, paddingHorizontal: S.md, paddingBottom: S.sm }}>
           {j.state === "failed" && <View style={{ flex: 1 }}><Button title={t("Retry")} size="M" variant="secondary" onPress={() => retryUpload(j.id)} /></View>}

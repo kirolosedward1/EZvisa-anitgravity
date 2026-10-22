@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo, { type NetInfoState } from "@react-native-community/netinfo";
 import * as Crypto from "expo-crypto";
 import { useEffect, useState } from "react";
-import { uploadDocument, UploadError } from "./data";
+import { uploadDocument, UploadError, isUploadType } from "./data";
 import { supabase } from "./supabase";
 import { track } from "./analytics";
 
@@ -19,6 +19,8 @@ export type UploadJob = {
   state: UploadState; attempts: number; error?: string; createdAt: number;
   /** queued only: earliest retry time (backoff) and whether it is waiting for the connection */
   nextAt?: number; offline?: boolean; doneAt?: number;
+  /** uploading only: bytes sent / total (0-1), kept in memory, not saved */
+  progress?: number;
 };
 
 const KEY = "ezvisa.uploads.v1";
@@ -39,6 +41,12 @@ const doneListeners = new Set<(applicationId: string) => void>();
 const emit = () => listeners.forEach((l) => l());
 const persist = () => AsyncStorage.setItem(KEY, JSON.stringify(jobs)).catch(() => {});
 const update = (id: string, patch: Partial<UploadJob>) => { jobs = jobs.map((j) => (j.id === id ? { ...j, ...patch } : j)); persist(); emit(); };
+/** Progress changes many times a second: update the UI in 5% steps and don't write to storage. */
+const setProgress = (id: string, p: number) => {
+  const cur = jobs.find((j) => j.id === id); const step = Math.floor(p * 20) / 20;
+  if (!cur || cur.state !== "uploading" || cur.progress === step) return;
+  jobs = jobs.map((j) => (j.id === id ? { ...j, progress: step } : j)); emit();
+};
 
 /** Restores the queue saved before the app was closed or killed. Pure, used by tests. */
 export function restore(saved: any[], now = Date.now(), uuid: () => string = Crypto.randomUUID): UploadJob[] {
@@ -106,6 +114,7 @@ let chain: Promise<unknown> = Promise.resolve(); // enqueues run one at a time, 
 
 export function enqueueUpload(applicationId: string, file: { uri: string; name: string; mimeType?: string | null; size?: number | null }, documentType: string, requirementId?: string | null): Promise<EnqueueResult> {
   const run = chain.then(async (): Promise<EnqueueResult> => {
+    if (!isUploadType(documentType)) throw new UploadError("This document type can't be uploaded.", false);
     await load();
     const md5 = md5Of(file.uri);
     const same = md5 ? jobs.find((j) => j.applicationId === applicationId && j.documentType === documentType && j.md5 === md5) : undefined;
@@ -146,19 +155,19 @@ async function process() {
   const job = jobs.find((j) => j.state === "queued" && (!j.nextAt || j.nextAt <= now));
   if (!job) { schedule(now); return; }
   running = true;
-  update(job.id, { state: "uploading", offline: false, error: undefined });
+  update(job.id, { state: "uploading", offline: false, error: undefined, progress: 0 });
   try {
-    await withTimeout(uploadDocument(job.applicationId, { uri: job.uri, name: job.name, mimeType: job.mimeType, size: job.size }, job.documentType, job.id));
+    await withTimeout(uploadDocument(job.applicationId, { uri: job.uri, name: job.name, mimeType: job.mimeType, size: job.size }, job.documentType, job.id, (p) => setProgress(job.id, p)));
     dropCopy(job.uri);
-    update(job.id, { state: "done", doneAt: Date.now(), nextAt: undefined, error: undefined });
+    update(job.id, { state: "done", doneAt: Date.now(), nextAt: undefined, error: undefined, progress: undefined });
     doneListeners.forEach((l) => l(job.applicationId));
     track("upload_done", { docType: job.documentType as any, ok: true });
   } catch (e: any) {
     const network = e instanceof UploadError ? e.network : false;
     const attempts = job.attempts + 1;
-    if (network && !online) update(job.id, { state: "queued", offline: true, nextAt: undefined }); // no attempt used
-    else if (network && attempts < MAX_ATTEMPTS) update(job.id, { state: "queued", attempts, nextAt: Date.now() + backoffMs(attempts), error: e?.message });
-    else { update(job.id, { state: "failed", attempts, error: e?.message ?? String(e) }); track("upload_done", { docType: job.documentType as any, ok: false }); }
+    if (network && !online) update(job.id, { state: "queued", offline: true, nextAt: undefined, progress: undefined }); // no attempt used
+    else if (network && attempts < MAX_ATTEMPTS) update(job.id, { state: "queued", attempts, nextAt: Date.now() + backoffMs(attempts), error: e?.message, progress: undefined });
+    else { update(job.id, { state: "failed", attempts, error: e?.message ?? String(e), progress: undefined }); track("upload_done", { docType: job.documentType as any, ok: false }); }
   } finally {
     running = false;
   }

@@ -299,12 +299,31 @@ export async function patchNotes(applicationId: string, patch: Partial<Notes>): 
 }
 
 export class UploadError extends Error { constructor(message: string, public network: boolean) { super(message); } }
+/** Statuses in which a paid case still takes documents (the detail screen uses the same list). */
+export const UPLOAD_STATUSES = ["draft", "submitted", "reviewing", "awaiting_documents"];
 const isNetwork = (e: any) => { const m = String(e?.message ?? e).toLowerCase(); return m.includes("network") || m.includes("timeout") || m.includes("offline") || m.includes("failed to fetch"); };
 
 /** Same bucket + path scheme as the website's /api/upload-document: visa_documents/<applicationId>/<type>_<id>.<ext>.
  *  <id> is the queue job's stable UUID, so every retry of one upload targets the same object (no duplicates). */
 export const DOC_BUCKET = "visa_documents";
 const EXT: Record<string, string> = { "application/pdf": "pdf", "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png" };
+/** Only the website's document types (DOC_FLAG keys) and its file types (PDF/JPG/PNG) are ever sent. */
+export const isUploadType = (documentType: string) => Object.prototype.hasOwnProperty.call(DOC_FLAG, documentType);
+export const isUploadMime = (mime: string) => mime in EXT;
+
+/** multipart POST with real upload progress (fetch has none). Rejects only on network failure. */
+function postForm(url: string, fd: FormData, token: string | null, onProgress?: (fraction: number) => void): Promise<{ status: number; json: any }> {
+  return new Promise((resolve, reject) => {
+    const x = new XMLHttpRequest();
+    x.open("POST", url);
+    if (token) x.setRequestHeader("Authorization", `Bearer ${token}`);
+    if (onProgress) x.upload.onprogress = (e) => { if (e.lengthComputable && e.total > 0) onProgress(Math.min(1, e.loaded / e.total)); };
+    x.onload = () => { let json: any = {}; try { json = JSON.parse(x.responseText); } catch {} resolve({ status: x.status, json }); };
+    x.onerror = () => reject(new Error("Network request failed"));
+    x.ontimeout = () => reject(new Error("Network timeout"));
+    x.send(fd);
+  });
+}
 /** Object path for one upload. Pure, used by tests. */
 export const docPath = (applicationId: string, documentType: string, uploadId: string, type: string) => `${applicationId}/${documentType}_${uploadId}.${EXT[type] ?? "jpg"}`;
 const alreadyThere = (m: string) => /already exists|duplicate|\b409\b/i.test(m);
@@ -315,21 +334,31 @@ const alreadyThere = (m: string) => /already exists|duplicate|\b409\b/i.test(m);
  *     same bucket/path with the user's own session and set the has_* flag ourselves. This needs the storage policy in
  *     db/proposed-live-changes.sql; until it is approved the direct upload is refused and the error is shown.
  *  Idempotent per uploadId: "already exists" means an earlier attempt got through, which counts as success. */
-export async function uploadDocument(applicationId: string, file: { uri: string; name: string; mimeType?: string | null; size?: number | null }, documentType: string, uploadId: string) {
+export async function uploadDocument(applicationId: string, file: { uri: string; name: string; mimeType?: string | null; size?: number | null }, documentType: string, uploadId: string, onProgress?: (fraction: number) => void) {
   const sb = need();
   try {
+    if (!isUploadType(documentType)) throw new UploadError("This document type can't be uploaded.", false);
+    const raw = file.mimeType || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    const type = raw === "image/jpg" ? "image/jpeg" : raw;
+    if (!isUploadMime(type)) throw new UploadError("Only PDF, JPG or PNG files.", false);
     const u = await me();
-    const type = file.mimeType || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    // Documents are uploaded only after payment, and only while the case can still change (same rule as the detail screen).
+    const { data: row, error: re } = await sb.from("visa_applications").select("payment_status, application_status").eq("id", applicationId).eq("email", u.email).single();
+    if (re) throw re;
+    if (!isPaid(row)) throw new UploadError("Documents can be uploaded after payment.", false);
+    if (!UPLOAD_STATUSES.includes(row.application_status ?? "submitted")) throw new UploadError("This application can't take new documents.", false);
+    const token = (await sb.auth.getSession()).data.session?.access_token ?? null;
     let path: string | null = null; let viaSite = "";
     try {
       const fd = new FormData();
       if (Platform.OS === "web") { const blob = await (await fetch(file.uri)).blob(); fd.append("file", new File([blob], file.name, { type })); }
       else fd.append("file", { uri: file.uri, name: file.name, type } as any);
       fd.append("applicationId", applicationId); fd.append("documentType", documentType); fd.append("uploadId", uploadId);
-      const res = await fetch(siteUrl("/api/upload-document"), { method: "POST", body: fd });
-      const j: any = await res.json().catch(() => ({}));
-      if (res.ok && j.success) path = String(j.path ?? "");
-      else if (res.status === 400 || res.status === 403) throw new UploadError(j.error || `Upload refused (${res.status})`, false);
+      // The user's session token goes with the file so the website can check who is uploading (audit B2).
+      const res = await postForm(siteUrl("/api/upload-document"), fd, token, onProgress);
+      const j = res.json ?? {};
+      if (res.status >= 200 && res.status < 300 && j.success) path = String(j.path ?? "");
+      else if (res.status === 400 || res.status === 401 || res.status === 403) throw new UploadError(j.error || `Upload refused (${res.status})`, false);
       else viaSite = j.error || `HTTP ${res.status}`;
     } catch (e: any) {
       if (e instanceof UploadError) throw e;
