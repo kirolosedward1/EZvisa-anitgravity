@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
+import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 
 function LoginForm() {
   const router = useRouter()
@@ -71,7 +72,7 @@ function LoginForm() {
   return (
     <div className="w-full max-w-md space-y-6 p-8 bg-card rounded-2xl shadow-xl border border-border/60">
       <div className="text-center">
-        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">Customer Portal</h2>
+        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">Customer Portal</h2>
         <p className="text-muted-foreground text-xs md:text-sm mt-1.5">
           Sign in to track your visa cases, upload documents, and download completed files
         </p>
@@ -106,7 +107,7 @@ function LoginForm() {
           <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto">
             ✓
           </div>
-          <h3 className="font-bold text-sm text-foreground">Check your email</h3>
+          <h3 className="font-semibold text-sm text-foreground">Check your email</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
             We sent a secure 1-click sign-in link to <strong>{email}</strong>. Click the link in your inbox to access your dashboard instantly.
           </p>
@@ -192,6 +193,8 @@ function LoginForm() {
           </Button>
         </form>
       )}
+
+      <GoogleSignInButton next={next} />
 
       {/* 1-Click Demo Logins for Dashboard Area */}
       <DemoLoginButtons next={next} />

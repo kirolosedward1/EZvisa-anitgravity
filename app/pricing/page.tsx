@@ -40,19 +40,19 @@ export default function PricingPage() {
           badge="Pricing Plan"
           title={
             <>
-              All-Inclusive <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Visa Service</span>
+              All-Inclusive <span className="text-[#0436DC]">Visa Service</span>
             </>
           }
           description="One-time payment • No hidden fees • Full support"
           gradientType="default"
         >
           <div className="flex flex-col items-center gap-3">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border border-emerald-500/20">
+            <div className="inline-flex items-center gap-2 bg-[#0436DC] px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider text-white">
               <Sparkles className="w-3.5 h-3.5" />
               Most Popular Choice
             </div>
             <div className="flex items-baseline justify-center gap-4 mt-2">
-              <span className="text-5xl lg:text-6xl font-black text-foreground">249 AED</span>
+              <span className="text-5xl lg:text-6xl font-semibold text-foreground">249 AED</span>
             </div>
           </div>
         </InnerHero>
@@ -68,7 +68,7 @@ export default function PricingPage() {
                 <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
                   <Check className="w-7 h-7 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold">What's Included</h3>
+                <h3 className="text-2xl font-semibold text-[#0A0F1F]">What's Included</h3>
               </div>
               <div className="space-y-5">
                 {[
@@ -97,7 +97,7 @@ export default function PricingPage() {
                 <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
                   <X className="w-7 h-7 text-gray-600" />
                 </div>
-                <h3 className="text-2xl font-bold">Not Included</h3>
+                <h3 className="text-2xl font-semibold text-[#0A0F1F]">Not Included</h3>
               </div>
               <div className="space-y-5">
                 {[
@@ -116,7 +116,7 @@ export default function PricingPage() {
               </div>
 
               {/* Info Card */}
-              <div className="mt-10 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6">
+              <div className="mt-10 border border-blue-100 rounded-2xl p-6 bg-[#0436DC]">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-xl">💡</span>
@@ -148,13 +148,13 @@ export default function PricingPage() {
 
           {/* Money Back Guarantee */}
           <div className="mt-20 max-w-5xl mx-auto">
-            <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200 rounded-3xl p-10 lg:p-12">
+            <div className="border-2 border-green-200 rounded-3xl p-10 lg:p-12 bg-[#0436DC]">
               <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
                 <div className="w-24 h-24 rounded-2xl bg-white shadow-lg flex items-center justify-center flex-shrink-0">
                   <Shield className="w-12 h-12 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl lg:text-3xl font-bold mb-3 text-gray-900">100% Money-Back Guarantee</h3>
+                  <h3 className="text-2xl lg:text-3xl font-semibold mb-3 text-[#0A0F1F]">100% Money-Back Guarantee</h3>
                   <p className="text-base text-gray-700 leading-relaxed">
                     If we cannot process your application due to our error, we'll provide a full refund. Your
                     satisfaction and trust are our top priorities.{" "}

@@ -1,3 +1,5 @@
+> **Archived 2026-10-23. Outdated planning doc, kept for history only. The ground-up UI plan was replaced by the design system in `theme/` (`docs/design-system.md`). Current status: `mobile/HANDOFF.md` section 0.**
+
 # EZvisa Mobile: Ground-up UI Overhaul Plan
 
 Status: PLAN ONLY. No code has been changed. Target: Expo Go SDK 57 (iOS first, Android and web degrade gracefully).

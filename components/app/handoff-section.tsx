@@ -1,8 +1,8 @@
 "use client"
 
 import { useLayoutEffect, useRef, useState } from "react"
-import Image from "next/image"
 import { motion, useReducedMotion } from "framer-motion"
+import { CountryFlag } from "@/components/country-flag"
 import { Check, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -24,9 +24,7 @@ function ApplicationCard({ className }: { className?: string }) {
   return (
     <div className={cn("flex h-full w-full flex-col gap-2 rounded-2xl bg-primary p-4 text-primary-foreground", className)}>
       <div className="flex items-center gap-2">
-        <span className="relative h-6 w-6 overflow-hidden rounded-full">
-          <Image src="/flags/germany.png" alt="" fill sizes="24px" className="object-cover" />
-        </span>
+        <CountryFlag iso="DE" title="Germany" />
         <span className="text-sm font-semibold">Germany</span>
       </div>
       <span className="text-xs opacity-85">Draft · Trip details</span>
@@ -118,7 +116,7 @@ export function HandoffSection() {
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-muted-foreground">Germany · Draft</span>
-              <h4 className="text-lg font-bold leading-tight tracking-tight">Pick up where you left off</h4>
+              <h4 className="text-lg font-semibold leading-tight tracking-tight">Pick up where you left off</h4>
             </div>
             <div ref={toRef} className="relative h-28 w-full rounded-2xl bg-muted">
               <ApplicationCard className={cn(!landed && "invisible")} />

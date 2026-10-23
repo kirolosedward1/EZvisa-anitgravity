@@ -12,6 +12,7 @@ import { DemoLoginButtons } from "@/components/auth/demo-login-buttons";
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import { ApplicationView } from "@/components/dashboard/application-view";
+import { visibleApplications } from "@/lib/active-applications";
 import type { VisaApplication } from "@/lib/types/visa-application";
 
 // Demo shortcuts are for previews and local testing, not real customers
@@ -28,7 +29,7 @@ function SignOutButton({ label }: { label: string }) {
   );
 }
 
-export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ id?: string; demo?: string }> }) {
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ id?: string; demo?: string; pay?: string }> }) {
   const cookieStore = await cookies();
   const resolvedSearchParams = await searchParams;
   const demoCookie = cookieStore.get("ez_demo_session");
@@ -97,6 +98,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       // Fallback
     }
   }
+
+  relatedApps = visibleApplications(relatedApps);
 
   const firstName = (user.user_metadata?.full_name || relatedApps[0]?.full_name || "").split(" ")[0];
 
@@ -188,6 +191,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             relatedApps={relatedApps}
             hrefFor={(app) => `/dashboard?id=${app.id}`}
             showTrackingLink
+            allowDiscard={!isDemo}
           />
         </div>
       </main>

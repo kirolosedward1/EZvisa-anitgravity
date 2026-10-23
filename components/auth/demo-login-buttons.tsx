@@ -59,15 +59,15 @@ export function DemoLoginButtons({ next = "/dashboard", className = "", variant 
   };
 
   return (
-    <div className={`rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/5 via-primary/[0.02] to-transparent p-5 sm:p-6 ${className}`}>
+    <div className={`rounded-2xl border border-primary/20 bg-[#F7F8FA] p-5 sm:p-6 ${className}`}>
       <div className="flex items-center gap-2 mb-2">
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary text-primary-foreground shadow-xs">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground shadow-xs">
           <Sparkles className="w-3 h-3" /> Demo Sandbox
         </span>
         <span className="text-xs font-semibold text-muted-foreground">Instant 1-Click Access</span>
       </div>
 
-      <h3 className="text-sm sm:text-base font-bold text-foreground mb-1">
+      <h3 className="text-sm sm:text-base font-semibold text-foreground mb-1">
         Explore Applicant Dashboard Scenarios
       </h3>
       <p className="text-xs text-muted-foreground mb-4">
@@ -93,10 +93,10 @@ export function DemoLoginButtons({ next = "/dashboard", className = "", variant 
                 <div className="mt-0.5">{getScenarioIcon(scenarioKey)}</div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                    <span className="text-xs sm:text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                    <span className="text-xs sm:text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                       {config.title}
                     </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.2 rounded-full border ${getBadgeClass(config.badgeVariant)}`}>
+                    <span className={`text-[10px] font-semibold px-2 py-0.2 rounded-full border ${getBadgeClass(config.badgeVariant)}`}>
                       {config.badge}
                     </span>
                   </div>

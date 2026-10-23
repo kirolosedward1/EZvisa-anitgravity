@@ -1,4 +1,3 @@
-import { createBuildClient } from "@/lib/supabase/server"
 import { cache } from "react"
 import { STATIC_BLOG_POSTS } from "./blog-static-data"
 

@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { Play, Eye, Clock, Rocket } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { InnerHero } from "@/components/inner-hero"
+import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -46,7 +47,7 @@ export default function VideosContent() {
           badge="Guides"
           title={
             <>
-              Video <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Guides</span>
+              Video <span className="text-primary bg-[#0436DC]">Guides</span>
             </>
           }
           description="Watch our expert video tutorials to learn everything about visa applications, document preparation, and avoiding common mistakes."
@@ -64,7 +65,7 @@ export default function VideosContent() {
                   className="group relative bg-card rounded-xl overflow-hidden border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg cursor-pointer"
                 >
                   {/* Video Thumbnail with 9:16 aspect ratio */}
-                  <div className="relative aspect-[9/16] bg-gradient-to-br from-primary/10 to-primary/5 overflow-hidden">
+                  <div className="relative aspect-[9/16] overflow-hidden bg-[#F7F8FA]">
                     {/* Thumbnail Image */}
                     <img 
                       src={video.thumbnail || "/placeholder.svg"} 
@@ -72,22 +73,22 @@ export default function VideosContent() {
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-primary/90 md:backdrop-blur- flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                      <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
                         <Play className="h-7 w-7 text-white ml-1" fill="currentColor" />
                       </div>
                     </div>
 
                     {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[#0A0F1F]/70" />
 
                     {/* Duration badge */}
-                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/75 md:backdrop-blur- rounded-md flex items-center gap-1">
+                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/75 rounded-md flex items-center gap-1">
                       <Clock className="h-3 w-3 text-white" />
                       <span className="text-xs font-medium text-white">{video.duration}</span>
                     </div>
 
                     {/* View count */}
-                    <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/75 md:backdrop-blur- rounded-md flex items-center gap-1">
+                    <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/75 rounded-md flex items-center gap-1">
                       <Eye className="h-3 w-3 text-white" />
                       <span className="text-xs font-medium text-white">{video.views}</span>
                     </div>
@@ -110,10 +111,10 @@ export default function VideosContent() {
         {/* Additional Info / CTA */}
         <section className="py-16 md:py-20 bg-background overflow-hidden relative">
           {/* Subtle background blur */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full pointer-events-none" />
           
           <div className="container mx-auto px-4 max-w-6xl relative z-10">
-            <div className="relative w-full rounded-[2rem] md:rounded-[2.5rem] border border-border/60 shadow-2xl p-8 md:p-12 overflow-hidden flex flex-col items-center text-center min-h-[320px] justify-center bg-slate-900">
+            <div className="photo-hero relative w-full rounded-[2rem] md:rounded-[2.5rem] border border-border/60 shadow-2xl p-8 md:p-12 overflow-hidden flex flex-col items-center text-center min-h-[320px] justify-center bg-slate-900">
               
               {/* Background Image of scenic country */}
               <div className="absolute inset-0 z-0 select-none pointer-events-none">
@@ -125,29 +126,29 @@ export default function VideosContent() {
                   sizes="(max-width: 1200px) 100vw, 1152px"
                   priority
                 />
-                <div className="absolute inset-0 bg-slate-950/65 backdrop-blur-[1px]" />
+                <PhotoHeroOverlay />
               </div>
 
               {/* Dot grid decoration */}
               <div
                 className="absolute inset-0 opacity-[0.1] pointer-events-none z-10 hidden md:block"
                 style={{
-                  backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+                  backgroundImage: "none",
                   backgroundSize: "24px 24px",
-                  maskImage: "radial-gradient(circle at 50% 50%, black 60%, transparent 100%)",
-                  WebkitMaskImage: "radial-gradient(circle at 50% 50%, black 60%, transparent 100%)",
+                  maskImage: "none",
+                  WebkitMaskImage: "none",
                 }}
               />
               
               <div className="relative z-20 max-w-2xl mx-auto flex flex-col items-center">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+                <h2 className="hero-copy mb-4 text-balance text-white">
                   Need Help With Your Application?
                 </h2>
                 <p className="text-white/85 text-base md:text-lg mb-8 leading-relaxed max-w-xl font-medium">
                   Our experts will review your documents and ensure everything is perfect before submission.
                 </p>
                 <Link href="/apply">
-                  <button className="px-8 py-3.5 bg-white text-primary hover:bg-slate-50 transition-all duration-300 font-bold inline-flex items-center gap-2.5 shadow-xl hover:-translate-y-0.5 cursor-pointer rounded-xl">
+                  <button className="px-8 py-3.5 bg-white text-primary hover:bg-slate-50 transition-all duration-300 font-semibold inline-flex items-center gap-2.5 shadow-xl hover:-translate-y-0.5 cursor-pointer rounded-xl">
                     <Rocket className="h-5 w-5 text-primary" />
                     Start Your Application
                   </button>

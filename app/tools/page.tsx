@@ -37,7 +37,7 @@ export default function ToolsIndexPage() {
       description: "Track previous trips, calculate remaining allowable days, and avoid unintentional overstay penalties across all 29 Schengen states.",
       href: "/tools/schengen-calculator",
       cta: "Calculate Stay Days",
-      color: "from-blue-500/10 via-sky-500/5 to-transparent",
+      color: "",
       badgeColor: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200",
       features: [
         "Official rolling 180-day calculation algorithm",
@@ -53,7 +53,7 @@ export default function ToolsIndexPage() {
       description: "Determine the exact closing balance required in your UAE bank statement for Spain, France, Italy, Germany, and Switzerland.",
       href: "/tools/bank-balance-calculator",
       cta: "Check Required Funds",
-      color: "from-emerald-500/10 via-teal-500/5 to-transparent",
+      color: "",
       badgeColor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200",
       features: [
         "Real-time AED conversions from EUR / CHF",
@@ -69,7 +69,7 @@ export default function ToolsIndexPage() {
       description: "Navigate visa application centers across Dubai (Wafi Mall, Sheikh Zayed Rd, Al Barsha) and Abu Dhabi with center procedures and biometrics rules.",
       href: "/tools/appointment-guide",
       cta: "Explore Visa Centers",
-      color: "from-amber-500/10 via-orange-500/5 to-transparent",
+      color: "",
       badgeColor: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200",
       features: [
         "Country-to-center jurisdiction mapping",
@@ -103,11 +103,11 @@ export default function ToolsIndexPage() {
           
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
               <Sparkles className="w-3.5 h-3.5" />
               <span>UAE Traveler Intelligence Suite</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-foreground tracking-tight">
+            <h1 className="text-3xl sm:text-5xl font-semibold text-foreground tracking-tight">
               Free Schengen Visa Tools &amp; Calculators
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed">
@@ -124,19 +124,19 @@ export default function ToolsIndexPage() {
                   key={tool.id} 
                   className="bg-card border border-border/80 rounded-3xl p-8 flex flex-col justify-between hover:shadow-xl hover:border-primary/40 transition-all duration-300 relative overflow-hidden group"
                 >
-                  <div className={"absolute inset-0 bg-gradient-to-br " + tool.color + " opacity-70 pointer-events-none group-hover:opacity-100 transition-opacity"} />
+                  <div className={"absolute inset-0 bg-[#F7F8FA]" + tool.color + " opacity-70 pointer-events-none group-hover:opacity-100 transition-opacity"} />
                   
                   <div className="relative z-10">
                     <div className="flex items-center justify-between gap-2 mb-6">
                       <div className="w-12 h-12 rounded-2xl bg-background border border-border/80 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
                         <Icon className="w-6 h-6 text-primary" />
                       </div>
-                      <span className={"text-[11px] font-bold px-2.5 py-1 rounded-full border " + tool.badgeColor}>
+                      <span className={"text-[11px] font-semibold px-2.5 py-1 rounded-full border " + tool.badgeColor}>
                         {tool.badge}
                       </span>
                     </div>
 
-                    <h2 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
+                    <h2 className="text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
                       {tool.title}
                     </h2>
 
@@ -169,15 +169,15 @@ export default function ToolsIndexPage() {
 
           {/* Value Banner */}
           <div className="bg-slate-900 text-white rounded-3xl p-8 md:p-12 relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full pointer-events-none" />
             
             <div className="relative z-10 max-w-2xl">
-              <div className="inline-flex items-center gap-2 text-primary-foreground/80 text-xs font-bold uppercase tracking-wider mb-4">
+              <div className="inline-flex items-center gap-2 text-primary-foreground/80 text-xs font-semibold uppercase tracking-wider mb-4">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <span>Consulate-Ready Document Preparation</span>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-4">
+              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-4">
                 Done calculating? Let our experts assemble your complete visa file.
               </h2>
 
