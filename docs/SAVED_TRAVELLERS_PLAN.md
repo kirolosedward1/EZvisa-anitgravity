@@ -2,7 +2,11 @@
 
 > Feature: when a signed-in customer already has traveller data saved, the wizard shows a drop-down to pick a traveller
 > and fills the traveller step from it. Same behaviour on the website (`/apply`) and in the app (`mobile/`).
-> Status: PLAN (nothing implemented yet). Section 6 is the ready-to-paste prompt.
+> Status: IMPLEMENTED on 2026-10-23 (website + app, same branch) with the decisions: ownership by email, automatic save
+> at payment, migration applied on the live project. Section 6 is the prompt the implementation followed; kept for
+> reference. Differences from the plan: the app writes travellers directly through RLS after its own after-payment save
+> (`mobile/lib/travellers.ts`) and reads through `GET /api/travellers`; the account deletion also has an `auth.users`
+> delete trigger, so rows never outlive the account.
 
 ---
 

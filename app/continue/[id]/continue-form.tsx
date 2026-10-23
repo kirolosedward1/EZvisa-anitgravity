@@ -11,10 +11,13 @@ import { SpouseStep } from "@/components/apply/spouse-step"
 import { EmploymentStep } from "@/components/apply/employment-step"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { ChoiceList, ChoiceRow, FieldError, WizardQuestion, wizardFieldClass, wizardLabelClass } from "@/components/apply/wizard-choices"
+import { TravellerSelect } from "@/components/apply/traveller-select"
 import { LangText } from "@/components/lang-text"
 import { cn } from "@/lib/utils"
 import type { DetailStep } from "@/lib/application-status"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
+import { TRAVELLER_NONE, markTravellerUsed, useTravellers } from "@/lib/travellers-client"
+import { travellerKey } from "@/lib/shared/wizard-contract"
 
 const STEP_LABEL: Record<DetailStep, { en: string; ar: string }> = {
   trip: { en: "Trip", ar: "الرحلة" },
@@ -58,7 +61,7 @@ const TRIP_KEYS = [
   "hotelCategory", "fundingSource", "balanceRange", "isFirstSchengenVisa", "previousRefusals", "refusalDetails",
   "willVisitOtherCountries", "additionalCountries", "itinerary",
 ] as const
-const SPOUSE_KEYS = ["spouseFirstName", "spouseLastName", "spouseHasValidPassport", "spouseOccupation"] as const
+const SPOUSE_KEYS = ["spouseFirstName", "spouseLastName", "spouseHasValidPassport", "spouseOccupation", "spouseTravellerId"] as const
 const EMPLOYMENT_KEYS = ["employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "hasNOC", "averageMonthlyIncome"] as const
 
 function pick(form: Partial<FormData>, keys: readonly string[]) {
@@ -90,6 +93,30 @@ export function ContinueForm({
   const formData = form as FormData
 
   const update = (data: FormDataUpdate) => setForm((current) => ({ ...current, ...data }))
+
+  // Spouse step: pick the spouse from the saved travellers (everyone but the main applicant of this case).
+  const { travellers } = useTravellers()
+  const mainKey = travellerKey({ firstName: initial.firstName, lastName: initial.lastName, dateOfBirth: initial.dateOfBirth, passportNumber: initial.passportNumber })
+  const spouseOptions = travellers.filter((t) => t.id !== initial.travellerId && travellerKey(t) !== mainKey)
+  const pickSpouse = (t: (typeof travellers)[number] | null) => {
+    setError("")
+    if (!t) {
+      update({ spouseTravellerId: TRAVELLER_NONE })
+      return
+    }
+    update({
+      spouseFirstName: t.firstName ?? "",
+      spouseLastName: t.lastName ?? "",
+      ...(t.hasValidPassport === "yes" || t.hasValidPassport === "no" ? { spouseHasValidPassport: t.hasValidPassport } : {}),
+      spouseTravellerId: t.id,
+    })
+    markTravellerUsed(t.id)
+  }
+  /** What /api/continue-application stores: a real id, or null to clear a stale one. */
+  const spousePayload = (): Record<string, unknown> => ({
+    ...pick(form, SPOUSE_KEYS),
+    spouseTravellerId: form.spouseTravellerId && form.spouseTravellerId !== TRAVELLER_NONE ? form.spouseTravellerId : null,
+  })
 
   const save = async (payload: Record<string, unknown>) => {
     setPending(true)
@@ -251,15 +278,30 @@ export function ContinueForm({
         ) : null}
 
         {step === "spouse" ? (
-          <SpouseStep
-            formData={formData}
-            updateFormData={update}
-            onNext={() => void save(pick(form, SPOUSE_KEYS))}
-            onBack={back}
-            isLoading={pending}
-            continueLabel={nextLabel.en}
-            continueLabelAr={nextLabel.ar}
-          />
+          <>
+            {spouseOptions.length ? (
+              <div className="mb-6">
+                <TravellerSelect
+                  id="spouse-traveller"
+                  travellers={spouseOptions}
+                  value={form.spouseTravellerId ?? ""}
+                  onChange={pickSpouse}
+                  label={{ en: "Spouse", ar: "الزوج أو الزوجة" }}
+                  someoneElse={{ en: "Enter spouse details", ar: "أدخل بيانات الزوج أو الزوجة" }}
+                  helper={{ en: "Pick a saved traveller to fill in the spouse details below.", ar: "اختر مسافرًا محفوظًا لتعبئة بيانات الزوج أو الزوجة أدناه." }}
+                />
+              </div>
+            ) : null}
+            <SpouseStep
+              formData={formData}
+              updateFormData={update}
+              onNext={() => void save(spousePayload())}
+              onBack={back}
+              isLoading={pending}
+              continueLabel={nextLabel.en}
+              continueLabelAr={nextLabel.ar}
+            />
+          </>
         ) : null}
 
         {step === "employment" ? (

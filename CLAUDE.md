@@ -268,6 +268,13 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
   **continue application** at `/continue/[id]` (trip details → passport if missing → spouse if travelling together →
   employment; `lib/application-status.ts` `missingDetailSteps`) → upload documents → track. Trip, hotel, budget and
   spouse questions are never asked before payment. Old `/dashboard/continue` and `/track/[token]/continue` links redirect.
+- **Saved travellers** (`public.travellers`, `scripts/007_travellers.sql`, owner = account email, owner-only RLS): the
+  people a customer applied for. Rules in the contract (`TRAVELLER_KEYS`, `travellerKey`, `travellerFromAnswers`,
+  `applyTraveller`, `travellerToRow`), server side in `lib/travellers.ts` (auto-saved when a case becomes paid and after
+  the continue step; `GET/POST /api/travellers`, `PATCH/DELETE /api/travellers/[id]`). UI: the "Who is travelling?"
+  drop-down on the traveller step (`components/apply/traveller-select.tsx`), the spouse picker on `/continue/[id]`,
+  Account → Saved travellers (`components/account/saved-travellers.tsx`); the app mirrors all three
+  (`mobile/lib/travellers.ts`, question `traveller`, `account/travellers.tsx`). Passport numbers live only in this table.
 - Header modes (`components/site-header.tsx`): task pages (`/apply`, `/continue`, `/payment-*`) show only logo,
   "Need help?" and WhatsApp; signed-in customers and customer pages get the short account header (My applications,
   New application, Destinations, Help, account menu); everyone else gets the marketing nav.

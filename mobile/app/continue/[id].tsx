@@ -14,9 +14,11 @@ import { QuestionView } from "../../components/wizard/QuestionView";
 import { useColors, S, R } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { slideIn } from "../../lib/motion";
-import { getApplication, saveAfterPayment, continueForm, isWebsiteRow, withTimeout } from "../../lib/data";
-import { STEP_TITLES, OTHER_NATIONALITY, emptyForm, type WizardForm } from "../../lib/wizard";
+import { getApplication, saveAfterPayment, continueForm, isWebsiteRow, withTimeout, patchNotes } from "../../lib/data";
+import { STEP_TITLES, OTHER_NATIONALITY, emptyForm, travellerKey, type WizardForm, type Traveller } from "../../lib/wizard";
 import { continueQuestions, continueError, Q_BY_ID, type Question } from "../../lib/questions";
+import { fetchTravellers, rememberTravellersAfterPayment, markTravellerUsed } from "../../lib/travellers";
+import { TravellerRows } from "../../components/wizard/travellers";
 import { success, error as hError, tap, select } from "../../lib/haptics";
 
 const AUTO_MS = 260;
@@ -45,11 +47,15 @@ export default function ContinueApplication() {
     || (!x.required && !x.keys.some((k) => !!String((nf as any)[k] ?? "").trim()));
   useEffect(() => { setSettled(false); const tm = setTimeout(() => setSettled(true), 700); return () => clearTimeout(tm); }, [f]);
   useEffect(() => () => { if (auto.current) clearTimeout(auto.current); }, []);
+  // Saved travellers (lib/travellers.ts): the spouse can be picked from them (everyone but this case's main applicant).
+  const [travellers, setTravellers] = useState<Traveller[]>([]); const mainTravellerId = useRef<string | null>(null);
+  useEffect(() => { if (!me) return; let on = true; fetchTravellers().then((l) => { if (on) setTravellers(l); }).catch(() => {}); return () => { on = false; }; }, [me]);
 
   useEffect(() => {
     if (!me) return; let live = true; setLoadErr(null); setAllDone(false);
     withTimeout(getApplication(id!)).then((app) => {
       if (!live) return;
+      mainTravellerId.current = app.notes?.travellerId ?? null;
       const form = continueForm(app); saved.current = form;
       const web = isWebsiteRow(app);
       // The spouse travels with them: "Who are you traveling with?" starts on With Spouse (still asked: children may come too).
@@ -77,6 +83,7 @@ export default function ContinueApplication() {
     const run = saving.current.catch(() => {}).then(async () => {
       const r = await saveAfterPayment(id!, nf);
       if (!r.synced) throw new Error(t("Your application is already in review, so it can't be changed here. Please message us on WhatsApp."));
+      rememberTravellersAfterPayment(nf); // paid case: passport details + spouse become saved travellers (never throws)
     });
     saving.current = run;
     return run;
@@ -136,9 +143,28 @@ export default function ContinueApplication() {
     </View>
   );
 
+  // Spouse name: pick the spouse from the saved travellers (the main applicant of this case is left out).
+  const mainKey = travellerKey(f);
+  const spouseOptions = q.id === "spouseName" ? travellers.filter((x) => x.id !== mainTravellerId.current && travellerKey(x) !== mainKey) : [];
+  const pickSpouse = (v: string) => {
+    const tr = v === "none" ? null : spouseOptions.find((x) => x.id === v) ?? null;
+    if (tr) {
+      patch({ spouseFirstName: tr.firstName ?? "", spouseLastName: tr.lastName ?? "", ...(tr.hasValidPassport === "yes" || tr.hasValidPassport === "no" ? { spouseHasValidPassport: tr.hasValidPassport } : {}) });
+      markTravellerUsed(tr.id);
+    }
+    patchNotes(id!, { spouseTravellerId: tr?.id }).catch(() => {});
+  };
+  const spousePicker = spouseOptions.length ? (
+    <View style={{ gap: S.sm, paddingBottom: S.xs }} testID="spouse-picker">
+      <Text variant="subhead" tone="secondary">{t("Pick a saved traveller to fill in the spouse details.")}</Text>
+      <TravellerRows travellers={spouseOptions} onPick={pickSpouse} someoneElse={t("Enter spouse details")} testID="spouse-traveller" />
+    </View>
+  ) : null;
+
   return (
     <QuestionView q={q} f={f} patch={patch} pick={pick} advance={() => advance()} showErr={showErr} errTick={errTick} settled={settled}
       header={header} entering={slideIn(dir, isRTL, reduce)} pageKey={q.id} titleRef={titleRef} allMode={allMode}
-      doneLabel={busy ? t("Saving…") : undefined} errorOf={(x, y) => continueError(x, y, saved.current)} belowTitle={err ? <InlineError text={err} /> : undefined} />
+      doneLabel={busy ? t("Saving…") : undefined} errorOf={(x, y) => continueError(x, y, saved.current)}
+      belowTitle={err || spousePicker ? <>{err ? <InlineError text={err} /> : null}{spousePicker}</> : undefined} />
   );
 }

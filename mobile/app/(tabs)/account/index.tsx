@@ -200,6 +200,7 @@ export default function Account() {
       {/* Name, email, sign-in method and member since live on their own page (account/details). */}
       <ListGroup inset={58}>
         <ListRow icon="person.text.rectangle" iconColor={c.tint} title={t("Account details")} onPress={() => router.push("/account/details")} />
+        <ListRow icon="person.2.fill" iconColor={c.tint} title={t("Saved travellers")} onPress={() => router.push("/account/travellers")} />
       </ListGroup>
       {!!apps?.length && (
         <ListGroup header={t("Application history")} inset={S.md + 28 + S.md}>
