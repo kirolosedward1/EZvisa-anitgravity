@@ -137,9 +137,9 @@ export function CookieConsent() {
       aria-labelledby="cookie-banner-title"
       className="fixed inset-x-3 bottom-3 z-[1000] mx-auto max-w-2xl rounded-xl border border-[#E3E7EF] bg-white p-5 text-[#0A0F1F] shadow-lg md:bottom-5"
     >
-      <h2 id="cookie-banner-title" className="text-base font-semibold">
+      <p id="cookie-banner-title" role="heading" aria-level={2} className="text-base font-semibold">
         <LangText en="Cookies on EZvisa" ar="ملفات تعريف الارتباط في إيزي فيزا" />
-      </h2>
+      </p>
       <p className="mt-1.5 text-sm leading-relaxed text-[#3A4150]">
         <LangText
           en={<>We use necessary cookies to run the site and sign you in. With your permission we also use chat, analytics and marketing cookies. See our <LocaleLink href="/cookie-policy" className="text-[#0436DC] underline">cookie policy</LocaleLink>.</>}
