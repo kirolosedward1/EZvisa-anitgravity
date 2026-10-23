@@ -264,8 +264,13 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
 - **`GET /api/app-config`** serves the contract as JSON for the app to fetch at launch.
 - Routes the app depends on (keep on `main`): `/api/create-payment`, `/api/check-payment`, `/api/webhooks/ziina`,
   `/api/upload-document` (Bearer + `applicationId` + `uploadId`), `/api/continue-application`, `/app-return`.
-- Journey on both platforms: wizard (personal → spouse → trip → payment) → pay → **continue application**
-  (passport number + employment: `/dashboard/continue`, `/track/[token]/continue`) → upload documents → track.
+- Journey on both platforms: wizard (**destination** = nationality + country → traveller → review & pay) → pay →
+  **continue application** at `/continue/[id]` (trip details → passport if missing → spouse if travelling together →
+  employment; `lib/application-status.ts` `missingDetailSteps`) → upload documents → track. Trip, hotel, budget and
+  spouse questions are never asked before payment. Old `/dashboard/continue` and `/track/[token]/continue` links redirect.
+- Header modes (`components/site-header.tsx`): task pages (`/apply`, `/continue`, `/payment-*`) show only logo,
+  "Need help?" and WhatsApp; signed-in customers and customer pages get the short account header (My applications,
+  New application, Destinations, Help, account menu); everyone else gets the marketing nav.
 - Change procedure, auth/Supabase configuration and known leftovers: `docs/APP_WEB_SYNC.md`, `docs/AUTH_SETUP.md`.
 
 ---

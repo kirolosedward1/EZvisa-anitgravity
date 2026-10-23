@@ -290,7 +290,6 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
               </FieldError>
             ) : null}
           </div>
-          {start && end && stay > 1 ? <StayLine start={start} end={end} stay={stay} /> : null}
         </div>
       ) : null}
     </div>

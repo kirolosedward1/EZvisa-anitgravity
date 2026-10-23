@@ -8,7 +8,6 @@ import { WizardQuestion } from "@/components/apply/wizard-choices"
 import { getReference } from "@/lib/application-status"
 import { CURRENCIES, priceForTravellers } from "@/lib/currency"
 import { SCHENGEN_META } from "@/lib/countries"
-import { formatDisplayDate, formatTravelMonth, schengenStayDays } from "@/lib/dates"
 import { citizenshipName } from "@/lib/nationalities"
 import { trackEvent } from "@/lib/analytics"
 import type { FormData } from "@/lib/form-types"
@@ -246,13 +245,9 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
 
   const country = formData.destination?.trim() || ""
   const countryAr = (country && SCHENGEN_META[country]?.ar) || country
-  const stay = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
-  const startLabel = formatDisplayDate(formData.travelStartDate)
-  const endLabel = formatDisplayDate(formData.travelEndDate)
-  const flexibleMonth = formData.datesFlexible === "yes" ? formatTravelMonth(formData.travelMonth) : ""
   const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
   const nationality = citizenshipName(formData.nationality)
-  const travellerBits = [travellerName, nationality, formData.passportNumber?.trim()].filter(Boolean)
+  const travellerBits = [travellerName, formData.passportNumber?.trim(), formData.spouseAccompanying === "yes" ? "with spouse" : ""].filter(Boolean)
 
   return (
     <div>
@@ -263,22 +258,9 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         helperAr="راجع البيانات مرة واحدة. يمكنك تعديل أي قسم قبل الدفع."
       />
 
-      <ReviewRow label="Trip" labelAr="الرحلة" onEdit={onEditTrip}>
-        {country && startLabel && endLabel && stay > 0 ? (
-          <>
-            <LangText en={country} ar={countryAr} />
-            {" · "}
-            <span dir="ltr">
-              {startLabel} – {endLabel}
-            </span>
-            {" · "}
-            <span dir="ltr">{stay}</span> <LangText en="days" ar="يومًا" />
-          </>
-        ) : flexibleMonth ? (
-          flexibleMonth
-        ) : (
-          <LangText en={country || "—"} ar={countryAr || "—"} />
-        )}
+      <ReviewRow label="Destination" labelAr="الوجهة" onEdit={onEditTrip}>
+        {country ? <LangText en={country} ar={countryAr} /> : "—"}
+        {nationality ? ` · ${nationality} passport` : ""}
       </ReviewRow>
 
       <ReviewRow label="Traveller" labelAr="المسافر" onEdit={onEditTraveller}>

@@ -31,8 +31,6 @@ import { LangText } from "@/components/lang-text"
 import { createBrowserClient, supabasePublicEnv } from "@/lib/supabase/client"
 import { cn } from "@/lib/utils"
 
-type Viewer = { email: string; name?: string; demo: boolean } | null
-
 function readDemoCookie(): boolean {
   return typeof document !== "undefined" && /(?:^|;\s*)ez_demo_active=1(?:;|$)/.test(document.cookie)
 }
@@ -54,7 +52,10 @@ function MenuLink({ href, icon: Icon, en, ar }: { href: string; icon: LucideIcon
   )
 }
 
-export function UserMenu() {
+export type Viewer = { email: string; name?: string; demo: boolean } | null
+
+/** The signed-in customer (Supabase session, or the demo sandbox cookie). `ready` turns true once checked. */
+export function useViewer(): { viewer: Viewer; ready: boolean } {
   const [viewer, setViewer] = useState<Viewer>(null)
   const [ready, setReady] = useState(false)
 
@@ -83,6 +84,12 @@ export function UserMenu() {
       sub.subscription.unsubscribe()
     }
   }, [])
+
+  return { viewer, ready }
+}
+
+export function UserMenu() {
+  const { viewer, ready } = useViewer()
 
   const signedIn = !!viewer
 

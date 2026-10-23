@@ -7,47 +7,29 @@ import { LangText } from "@/components/lang-text"
 import { CountryFlag } from "@/components/country-flag"
 import { applicantCount, priceForTravellers } from "@/lib/currency"
 import { SCHENGEN_META } from "@/lib/countries"
-import { formatShortDate, formatTravelMonth, schengenStayDays } from "@/lib/dates"
+import { citizenshipName } from "@/lib/nationalities"
 import { cn } from "@/lib/utils"
 import type { FormData } from "@/lib/form-types"
 
 const STAGES = [
-  { id: "trip", en: "01 Trip", ar: "01 الرحلة" },
+  { id: "destination", en: "01 Destination", ar: "01 الوجهة" },
   { id: "traveller", en: "02 Traveller", ar: "02 المسافر" },
   { id: "review", en: "03 Review & pay", ar: "03 المراجعة والدفع" },
 ] as const
 
 export type WizardStage = (typeof STAGES)[number]["id"]
 
-/** 1 trip, 2 traveller, 3 spouse (still the traveller stage), 4 review and pay. */
+/** 1 destination, 2 traveller, 4 review and pay. Trip and spouse details are asked after payment. */
 export function stageForStep(step: number): WizardStage {
-  if (step <= 1) return "trip"
+  if (step <= 1) return "destination"
   if (step >= 4) return "review"
   return "traveller"
-}
-
-const VISAS: Record<string, { en: string; ar: string }> = {
-  tourism: { en: "Schengen tourist", ar: "سياحة شنغن" },
-  business: { en: "Schengen business", ar: "عمل شنغن" },
-  family: { en: "Schengen family", ar: "زيارة عائلية" },
-  medical: { en: "Schengen medical", ar: "علاج" },
-  education: { en: "Schengen study", ar: "دراسة" },
-  other: { en: "Schengen visa", ar: "تأشيرة شنغن" },
-}
-
-function stayDays(formData: FormData) {
-  const stay = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
-  return stay > 0 ? stay : 0
 }
 
 function SummaryRows({ formData }: { formData: FormData }) {
   const country = formData.destination?.trim() || ""
   const meta = country ? SCHENGEN_META[country] : undefined
-  const stay = stayDays(formData)
-  const start = formData.travelStartDate
-  const end = formData.travelEndDate
-  const flexibleMonth = formData.datesFlexible === "yes" ? formatTravelMonth(formData.travelMonth) : ""
-  const visa = VISAS[formData.purposeOfTrip] 
+  const nationality = citizenshipName(formData.nationality)
   const applicants = applicantCount(formData.spouseAccompanying)
   const price = priceForTravellers(formData.spouseAccompanying)
   const spousePrice = priceForTravellers("yes")
@@ -64,21 +46,14 @@ function SummaryRows({ formData }: { formData: FormData }) {
       ) : null,
     },
     {
-      label: "Visa",
-      labelAr: "التأشيرة",
-      value: visa ? <LangText en={visa.en} ar={visa.ar} /> : null,
-    },
-    {
-      label: "Dates",
-      labelAr: "التواريخ",
-      value:
-        start && end && stay ? (
-          <span dir="ltr">
-            {formatShortDate(start)} – {formatShortDate(end)}
-          </span>
-        ) : flexibleMonth ? (
-          flexibleMonth
-        ) : null,
+      label: "Nationality",
+      labelAr: "الجنسية",
+      value: nationality ? (
+        <span className="inline-flex items-center gap-2">
+          <CountryFlag iso={formData.nationality} title={nationality} />
+          {nationality}
+        </span>
+      ) : null,
     },
     {
       label: "Applicants",
@@ -106,6 +81,9 @@ function SummaryRows({ formData }: { formData: FormData }) {
           </div>
         ))}
       </dl>
+      <p className="mt-3 text-[13px] leading-relaxed text-[#5B6475]">
+        <LangText en="Trip dates, hotel and itinerary come after payment." ar="تواريخ الرحلة والفندق وخط السير بعد الدفع." />
+      </p>
       <div className="mt-5 flex items-center justify-between text-[18px] font-semibold">
         <span>
           <LangText en="Total" ar="المجموع" />
@@ -125,9 +103,8 @@ function SummaryRows({ formData }: { formData: FormData }) {
 function summaryLine(formData: FormData) {
   const country = formData.destination?.trim() || ""
   const meta = country ? SCHENGEN_META[country] : undefined
-  const stay = stayDays(formData)
   const price = priceForTravellers(formData.spouseAccompanying)
-  return { country, countryAr: meta?.ar || country, stay, price }
+  return { country, countryAr: meta?.ar || country, price }
 }
 
 export function WizardShell({
@@ -176,10 +153,10 @@ export function WizardShell({
           >
             <span className="min-w-0 truncate">
               <span className="rtl:hidden">
-                {[line.country, line.stay ? `${line.stay} days` : ""].filter(Boolean).join(" · ") || "—"}
+                {line.country || "—"}
               </span>
               <span className="hidden rtl:inline">
-                {[line.countryAr, line.stay ? `${line.stay} يومًا` : ""].filter(Boolean).join(" · ") || "—"}
+                {line.countryAr || "—"}
               </span>
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-[#0A0F1F]" dir="ltr">

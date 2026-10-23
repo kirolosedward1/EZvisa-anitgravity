@@ -12,10 +12,25 @@ import { destinations } from "@/lib/destinations"
 import { SCHENGEN_META } from "@/lib/countries"
 import { LangText } from "@/components/lang-text"
 import { CountryFlag } from "@/components/country-flag"
-import { UserMenu } from "@/components/user-menu"
+import { UserMenu, useViewer } from "@/components/user-menu"
+import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 
 const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+
+/** Task pages (wizard, after-payment questions, payment status): logo, "Need help?" and WhatsApp only. */
+const MINIMAL_PREFIXES = ["/apply", "/continue", "/payment-success", "/payment-failed"]
+/** Customer pages: always the short account header. */
+const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip"]
+
+const ACCOUNT_NAV = [
+  { href: "/dashboard", en: "My applications", ar: "طلباتي" },
+  { href: "/apply", en: "New application", ar: "طلب جديد" },
+  { href: "/destinations", en: "Destinations", ar: "الوجهات" },
+  { href: "/contact", en: "Help", ar: "المساعدة" },
+]
+
+const matches = (path: string, prefixes: string[]) => prefixes.some((p) => path === p || path.startsWith(`${p}/`))
 
 interface SiteHeaderProps {
   hideNavigation?: boolean
@@ -28,7 +43,13 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const [showWhatsAppTooltip, setShowWhatsAppTooltip] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const isWizardPage = pathname?.startsWith("/apply")
+  const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
+  const isWizardPage = path.startsWith("/apply")
+  const { viewer } = useViewer()
+  const isMinimal = matches(path, MINIMAL_PREFIXES)
+  // Signed-in customers get the short account header everywhere; customer pages use it before the check finishes.
+  const isAccount = !isMinimal && (matches(path, ACCOUNT_PREFIXES) || !!viewer)
+  const isFull = !isMinimal && !isAccount
   const isHomePage = pathname === "/"
   
   const [selectedNationality, setSelectedNationality] = useState("")
@@ -212,7 +233,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
       >
         <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-7xl">
           <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
-            scrolled || forceBackground || isWizardPage
+            scrolled || forceBackground || !isFull
               ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
               : "bg-transparent border-transparent"
           }`}>
@@ -227,7 +248,28 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               />
             </LocaleLink>
 
-            {!isWizardPage && !hideNavigation && (
+            {isAccount && !hideNavigation && (
+              <nav className="hidden md:flex items-center gap-1 px-1" aria-label="Account">
+                {ACCOUNT_NAV.map((item) => {
+                  const active = item.href === "/dashboard" ? matches(path, ["/dashboard", "/track", "/continue"]) : matches(path, [item.href])
+                  return (
+                    <LocaleLink
+                      key={item.href}
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "rounded-full px-3.5 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                        active ? "bg-secondary text-foreground" : "text-foreground/75 hover:bg-secondary hover:text-foreground",
+                      )}
+                    >
+                      <LangText en={item.en} ar={item.ar} />
+                    </LocaleLink>
+                  )
+                })}
+              </nav>
+            )}
+
+            {isFull && !hideNavigation && (
               <nav className="hidden xl:flex items-center gap-1.5 px-1">
                 {navItems.map((item) => (
                   <div 
@@ -324,8 +366,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                 onMouseEnter={() => setShowWhatsAppTooltip(true)}
                 onMouseLeave={() => setShowWhatsAppTooltip(false)}
               >
-                {isWizardPage && (
-                  <span className="text-sm hidden sm:inline text-foreground font-semibold"><LangText en="Need help?" ar="تحتاج مساعدة؟" /></span>
+                {isMinimal && (
+                  <span className="text-sm text-foreground font-semibold"><LangText en="Need help?" ar="تحتاج مساعدة؟" /></span>
                 )}
                 <Link
                   href={whatsappLink}
@@ -340,7 +382,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                 </Link>
 
                 <AnimatePresence>
-                  {showWhatsAppTooltip && !isWizardPage && (
+                  {showWhatsAppTooltip && !isMinimal && (
                     <motion.div
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -355,9 +397,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                 </AnimatePresence>
               </div>
 
-              <UserMenu />
+              {!isMinimal && <UserMenu />}
 
-              {!isWizardPage && (
+              {isFull && (
                 <>
                   <div className="hidden sm:block">
                     <Button variant="default" asChild className="h-10 rounded-full px-5 text-[15px] font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-0.5">
@@ -389,24 +431,24 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                 </>
               )}
 
+              {isFull && (
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`${
-                  isWizardPage ? "flex" : "xl:hidden"
-                } h-10 w-10 rounded-full transition-colors flex items-center justify-center border ${
+                className={`xl:hidden h-10 w-10 rounded-full transition-colors flex items-center justify-center border ${
                   isMenuOpen ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-secondary"
                 }`}
                 aria-label="Toggle menu / القائمة"
               >
                 {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
+              )}
             </div>
           </div>
         </div>
       </header>
 
       <AnimatePresence>
-        {isMenuOpen && (
+        {isMenuOpen && isFull && (
           <>
             <motion.div
               initial={{ opacity: 0 }}

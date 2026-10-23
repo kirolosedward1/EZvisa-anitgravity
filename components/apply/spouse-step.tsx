@@ -13,6 +13,8 @@ interface SpouseStepProps {
   onNext: () => void
   onBack: () => void
   isLoading?: boolean
+  continueLabel?: string
+  continueLabelAr?: string
 }
 
 const inputStyles =
@@ -23,7 +25,7 @@ const toggleActiveStyles =
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
-export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading }: SpouseStepProps) {
+export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading, continueLabel = "Continue to Review & Pay", continueLabelAr = "تابع إلى المراجعة والدفع" }: SpouseStepProps) {
   const [isMobile, setIsMobile] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
 
@@ -184,8 +186,8 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
       <WizardBar
         onBack={onBack}
         loading={isLoading}
-        continueLabel="Continue to Review & Pay"
-        continueLabelAr="تابع إلى المراجعة والدفع"
+        continueLabel={continueLabel}
+        continueLabelAr={continueLabelAr}
         loadingLabel="Processing..."
         loadingLabelAr="جارٍ المعالجة..."
       />

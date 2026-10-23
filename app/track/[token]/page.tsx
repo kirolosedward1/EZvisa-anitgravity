@@ -168,7 +168,7 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
                       <h3 className="text-blue-800 dark:text-blue-500 font-semibold mb-1">Next step: continue your application</h3>
                       <p className="text-blue-700/90 dark:text-blue-500/90 text-sm mb-4">Payment received. Add your passport number and employment details, then upload your documents.</p>
                       <Button asChild size="sm" className="font-semibold">
-                        <Link href={`/track/${token}/continue`}>Continue application</Link>
+                        <Link href={`/continue/${mainId}`}>Continue application</Link>
                       </Button>
                     </div>
                   </div>

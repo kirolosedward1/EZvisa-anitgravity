@@ -130,7 +130,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
   if (stage !== "cancelled" && isPaid(app) && detailsMissing(app) && app.id) {
     content.icon = FileSearch
     content.title = "Continue your application"
-    content.body = "Payment is confirmed. Add your travel dates, passport and employment details, then upload your documents."
+    content.body = "Payment is confirmed. Add your trip details, passport and employment, then upload your documents."
     content.actions = (
       <Button asChild className="rounded-full px-5">
         <Link href={`/continue/${app.id}`}>Continue application</Link>

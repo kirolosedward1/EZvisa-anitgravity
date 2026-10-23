@@ -1,179 +1,279 @@
 "use client"
 
+// After payment: the questions the wizard no longer asks, in the app's order (trip details, passport, spouse,
+// employment). Each step saves to /api/continue-application before moving on, so nothing is lost if the
+// customer leaves halfway.
 import { useState } from "react"
+import type React from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { CustomDatePicker } from "@/components/ui/custom-date-picker"
+import { TripDetailsStep } from "@/components/apply/trip-details-step"
+import { SpouseStep } from "@/components/apply/spouse-step"
 import { EmploymentStep } from "@/components/apply/employment-step"
-import { datesInOrder, INVALID_DATE_MESSAGE, RETURN_AFTER_DEPARTURE } from "@/lib/dates"
+import { WizardBar } from "@/components/apply/wizard-bar"
+import { ChoiceList, ChoiceRow, FieldError, WizardQuestion, wizardFieldClass, wizardLabelClass } from "@/components/apply/wizard-choices"
+import { LangText } from "@/components/lang-text"
+import { cn } from "@/lib/utils"
 import type { DetailStep } from "@/lib/application-status"
-import type { FormData } from "@/lib/form-types"
+import type { FormData, FormDataUpdate } from "@/lib/form-types"
 
-function minDeparture() {
-  const date = new Date()
-  date.setDate(date.getDate() + 15)
-  const y = date.getFullYear()
-  const m = String(date.getMonth() + 1).padStart(2, "0")
-  const d = String(date.getDate()).padStart(2, "0")
-  return `${y}-${m}-${d}`
+const STEP_LABEL: Record<DetailStep, { en: string; ar: string }> = {
+  trip: { en: "Trip", ar: "الرحلة" },
+  passport: { en: "Passport", ar: "الجواز" },
+  spouse: { en: "Spouse", ar: "الزوج أو الزوجة" },
+  employment: { en: "Employment", ar: "العمل" },
+}
+
+const EMPTY: Partial<FormData> = {
+  purposeOfTrip: "",
+  travelStartDate: "",
+  travelEndDate: "",
+  datesFlexible: "",
+  travelMonth: "",
+  tripLength: "",
+  travelingWith: "",
+  hotelCategory: "",
+  fundingSource: "",
+  balanceRange: "",
+  isFirstSchengenVisa: "",
+  previousRefusals: "",
+  refusalDetails: "",
+  additionalCountries: [],
+  previousTravel: [],
+  preferredCities: [],
+  itinerary: "",
+  passportNumber: "",
+  spouseFirstName: "",
+  spouseLastName: "",
+  spouseOccupation: "",
+  employmentStatus: "",
+  jobTitle: "",
+  companyName: "",
+  employmentStartDate: "",
+  monthlySalary: "",
+  averageMonthlyIncome: "",
+}
+
+const TRIP_KEYS = [
+  "purposeOfTrip", "travelStartDate", "travelEndDate", "datesFlexible", "travelMonth", "tripLength", "travelingWith",
+  "hotelCategory", "fundingSource", "balanceRange", "isFirstSchengenVisa", "previousRefusals", "refusalDetails",
+  "willVisitOtherCountries", "additionalCountries", "itinerary",
+] as const
+const SPOUSE_KEYS = ["spouseFirstName", "spouseLastName", "spouseHasValidPassport", "spouseOccupation"] as const
+const EMPLOYMENT_KEYS = ["employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "hasNOC", "averageMonthlyIncome"] as const
+
+function pick(form: Partial<FormData>, keys: readonly string[]) {
+  const record = form as Record<string, unknown>
+  return Object.fromEntries(keys.map((key) => [key, record[key] ?? ""]))
 }
 
 export function ContinueForm({
   applicationId,
   steps,
   uploadHref,
+  initial,
 }: {
   applicationId: string
   steps: DetailStep[]
   uploadHref: string
+  /** Answers already on the application (from the wizard or the app), to pre-fill each step. */
+  initial: Partial<FormData>
 }) {
   const router = useRouter()
   const [index, setIndex] = useState(0)
-  const [start, setStart] = useState("")
-  const [end, setEnd] = useState("")
-  const [hasPassport, setHasPassport] = useState("")
-  const [passportNumber, setPassportNumber] = useState("")
-  const [employment, setEmployment] = useState<Partial<FormData>>({})
+  const [tripScreen, setTripScreen] = useState(0)
+  const [form, setForm] = useState<Partial<FormData>>({ ...EMPTY, ...initial })
   const [error, setError] = useState("")
   const [pending, setPending] = useState(false)
+  const [passportErrors, setPassportErrors] = useState(false)
   const step = steps[index]
+  const last = index >= steps.length - 1
+  const formData = form as FormData
 
-  const save = async (finished: boolean) => {
+  const update = (data: FormDataUpdate) => setForm((current) => ({ ...current, ...data }))
+
+  const save = async (payload: Record<string, unknown>) => {
     setPending(true)
     setError("")
-    const response = await fetch("/api/continue-application", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: applicationId,
-        travelStartDate: start,
-        travelEndDate: end,
-        hasValidPassport: hasPassport,
-        passportNumber,
-        employmentStatus: employment.employmentStatus || "",
-        jobTitle: employment.jobTitle || "",
-        companyName: employment.companyName || "",
-        employmentStartDate: employment.employmentStartDate || "",
-        monthlySalary: employment.monthlySalary || "",
-        hasNOC: employment.hasNOC || "",
-        averageMonthlyIncome: employment.averageMonthlyIncome || "",
-      }),
-    })
-    const data = await response.json().catch(() => ({}))
-    setPending(false)
-    if (!response.ok) {
-      setError(data.error || "Could not save these details.")
-      return
-    }
-    if (!finished) {
+    try {
+      const response = await fetch("/api/continue-application", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: applicationId, ...payload }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        setError(data.error || "Could not save these details. Please try again.")
+        return
+      }
+      if (last) {
+        router.push(uploadHref)
+        router.refresh()
+        return
+      }
       setIndex((current) => current + 1)
-      return
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    } catch {
+      setError("You seem to be offline. Check your connection and try again.")
+    } finally {
+      setPending(false)
     }
-    router.push(uploadHref)
-    router.refresh()
   }
 
-  const next = () => {
-    if (step === "dates") {
-      if (!start || !end) {
-        setError(INVALID_DATE_MESSAGE)
-        return
-      }
-      if (!datesInOrder(start, end)) {
-        setError(RETURN_AFTER_DEPARTURE)
-        return
-      }
-    }
-    if (step === "passport" && hasPassport !== "no" && passportNumber.trim().length < 5) {
-      setError("Enter your passport number, or say you do not have a valid passport.")
-      return
-    }
-    if (step === "employment" && !employment.employmentStatus) {
-      setError("Choose your employment status.")
-      return
-    }
+  const back = () => {
     setError("")
-    const finished = index >= steps.length - 1
-    void save(finished)
+    if (index > 0) setIndex((current) => current - 1)
+  }
+
+  const nextLabel = last ? { en: "Save and upload documents", ar: "احفظ وارفع المستندات" } : { en: "Save and continue", ar: "احفظ وتابع" }
+
+  const submitPassport = (event: React.FormEvent) => {
+    event.preventDefault()
+    const answered = form.hasValidPassport === "no" || (form.hasValidPassport === "yes" && (form.passportNumber ?? "").trim().length >= 5)
+    if (!answered) {
+      setPassportErrors(true)
+      return
+    }
+    void save({ hasValidPassport: form.hasValidPassport, passportNumber: form.hasValidPassport === "yes" ? form.passportNumber : "" })
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-lg flex-col gap-6">
+    <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-28 md:pt-32">
       <div className="flex flex-col gap-1">
-        <p className="text-xs font-medium text-primary">
-          Step {index + 1} of {steps.length}
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Continue application</h1>
-        <p className="text-sm leading-relaxed text-muted-foreground">
-          Payment is confirmed. Add the details we still need before you upload documents.
+        <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <LangText en="Payment confirmed" ar="تم تأكيد الدفع" />
+        </span>
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+          <LangText en="Continue your application" ar="أكمل طلبك" />
+        </h1>
+        <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
+          <LangText
+            en="A few more details for your visa file. Each step is saved as you go."
+            ar="بعض التفاصيل الإضافية لملف التأشيرة. يُحفظ كل جزء أولًا بأول."
+          />
         </p>
       </div>
 
-      {step === "dates" && (
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground" htmlFor="departure">
-              Departure date
-            </label>
-            <CustomDatePicker id="departure" value={start} min={minDeparture()} onChange={setStart} />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-foreground" htmlFor="return">
-              Return date
-            </label>
-            <CustomDatePicker id="return" value={end} min={start || minDeparture()} onChange={setEnd} />
-          </div>
-        </div>
-      )}
+      <div className="mt-6 flex gap-6 overflow-x-auto border-b border-[#E3E7EF]">
+        {steps.map((item, i) => (
+          <span
+            key={item}
+            aria-current={i === index ? "step" : undefined}
+            className={cn(
+              "-mb-px whitespace-nowrap border-b-2 pb-2 text-[13px] font-medium",
+              i === index ? "border-[#0436DC] text-[#0A0F1F]" : i < index ? "border-transparent text-[#0A0F1F]" : "border-transparent text-[#5B6475]",
+            )}
+          >
+            {String(i + 1).padStart(2, "0")} <LangText en={STEP_LABEL[item].en} ar={STEP_LABEL[item].ar} />
+          </span>
+        ))}
+      </div>
 
-      {step === "passport" && (
-        <div className="flex flex-col gap-4">
-          <label className="text-sm font-medium text-foreground">
-            Do you have a valid passport?
-            <select
-              className="mt-2 h-12 w-full rounded-xl border border-input bg-background px-3"
-              value={hasPassport}
-              onChange={(event) => setHasPassport(event.target.value)}
-            >
-              <option value="">Select</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </select>
-          </label>
-          {hasPassport !== "no" && (
-            <label className="text-sm font-medium text-foreground">
-              Passport number
-              <input
-                className="ltr-isolate mt-2 h-12 w-full rounded-xl border border-input bg-background px-3"
-                value={passportNumber}
-                onChange={(event) => setPassportNumber(event.target.value.toUpperCase())}
+      <div className="mt-8 w-full max-w-[560px]">
+        {error ? (
+          <p className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        {step === "trip" ? (
+          <TripDetailsStep
+            formData={formData}
+            updateFormData={update}
+            onNext={() => void save(pick(form, TRIP_KEYS))}
+            onBack={back}
+            isLoading={pending}
+            screen={tripScreen}
+            onScreenChange={setTripScreen}
+          />
+        ) : null}
+
+        {step === "passport" ? (
+          <form onSubmit={submitPassport} noValidate>
+            <WizardQuestion
+              title="Do you have a valid passport?"
+              titleAr="هل لديك جواز سفر ساري المفعول؟"
+              helper="It should be valid for at least 3 months after you return."
+              helperAr="يجب أن يكون صالحًا لمدة ٣ أشهر على الأقل بعد عودتك."
+            />
+            <ChoiceList label="Valid passport">
+              <ChoiceRow
+                title="Yes"
+                titleAr="نعم"
+                description="I'll enter the passport number."
+                descriptionAr="سأدخل رقم الجواز."
+                selected={form.hasValidPassport === "yes"}
+                onSelect={() => { update({ hasValidPassport: "yes" }); setPassportErrors(false) }}
               />
-            </label>
-          )}
-        </div>
-      )}
+              <ChoiceRow
+                title="No"
+                titleAr="لا"
+                description="We'll guide you on renewing it first."
+                descriptionAr="سنرشدك إلى تجديده أولًا."
+                selected={form.hasValidPassport === "no"}
+                onSelect={() => { update({ hasValidPassport: "no" }); setPassportErrors(false) }}
+              />
+            </ChoiceList>
+            {form.hasValidPassport === "yes" ? (
+              <div className="mt-6">
+                <label htmlFor="passportNumber" className={wizardLabelClass}>
+                  <LangText en="Passport number" ar="رقم الجواز" />
+                </label>
+                <input
+                  id="passportNumber"
+                  value={form.passportNumber || ""}
+                  onChange={(event) => { update({ passportNumber: event.target.value.toUpperCase() }); setPassportErrors(false) }}
+                  placeholder="e.g. N1234567"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className={cn(wizardFieldClass, "h-14 uppercase")}
+                />
+              </div>
+            ) : null}
+            {passportErrors ? (
+              <FieldError>
+                <LangText
+                  en={form.hasValidPassport === "yes" ? "Enter your passport number." : "Choose Yes or No."}
+                  ar={form.hasValidPassport === "yes" ? "أدخل رقم الجواز." : "اختر نعم أو لا."}
+                />
+              </FieldError>
+            ) : null}
+            <WizardBar
+              onBack={index > 0 ? back : undefined}
+              showBack={index > 0}
+              loading={pending}
+              continueLabel={nextLabel.en}
+              continueLabelAr={nextLabel.ar}
+              loadingLabel="Saving"
+              loadingLabelAr="جارٍ الحفظ"
+            />
+          </form>
+        ) : null}
 
-      {step === "employment" && (
-        <EmploymentStep
-          formData={employment as FormData}
-          updateFormData={(data) => setEmployment((current) => ({ ...current, ...data }))}
-          onNext={next}
-          onBack={() => {
-            if (index > 0) setIndex((current) => current - 1)
-          }}
-          isLoading={pending}
-        />
-      )}
+        {step === "spouse" ? (
+          <SpouseStep
+            formData={formData}
+            updateFormData={update}
+            onNext={() => void save(pick(form, SPOUSE_KEYS))}
+            onBack={back}
+            isLoading={pending}
+            continueLabel={nextLabel.en}
+            continueLabelAr={nextLabel.ar}
+          />
+        ) : null}
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-      {step !== "employment" && (
-        <Button type="button" className="h-12 rounded-xl" onClick={next} disabled={pending}>
-          {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-          {index >= steps.length - 1 ? "Save and upload documents" : "Continue"}
-        </Button>
-      )}
+        {step === "employment" ? (
+          <EmploymentStep
+            formData={formData}
+            updateFormData={update}
+            onNext={() => void save(pick(form, EMPLOYMENT_KEYS))}
+            onBack={back}
+            isLoading={pending}
+            continueLabel={nextLabel.en}
+            continueLabelAr={nextLabel.ar}
+          />
+        ) : null}
+      </div>
     </div>
   )
 }

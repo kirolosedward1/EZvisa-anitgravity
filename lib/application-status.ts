@@ -16,6 +16,7 @@ export type ApplicationLike = {
   exit_date?: string | null
   travel_start_date?: string | null
   travel_end_date?: string | null
+  travel_purpose?: string | null
   additional_notes?: string | null
   updated_at?: string | null
   paid_at?: string | null
@@ -102,9 +103,13 @@ function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : ""
 }
 
-export type DetailStep = "dates" | "passport" | "employment"
+export type DetailStep = "trip" | "passport" | "spouse" | "employment"
 
-/** Which post-payment answers are still missing, in the order the continue page asks them. */
+/**
+ * Which post-payment answers are still missing, in the order the continue page asks them (same order as the app's
+ * postSteps): trip details (purpose, dates, hotel, budget, itinerary), passport, spouse (only when the spouse
+ * travels too), employment.
+ */
 export function missingDetailSteps(app: ApplicationLike): DetailStep[] {
   const notes = notesObject(app)
   const wizard = (notes.wizard && typeof notes.wizard === "object" ? notes.wizard : notes) as Record<string, unknown>
@@ -113,14 +118,19 @@ export function missingDetailSteps(app: ApplicationLike): DetailStep[] {
   const employment = text(wizard.employmentStatus) || text(notes.employmentStatus)
   const start = text(app.entry_date) || text(app.travel_start_date) || text(wizard.travelStartDate)
   const end = text(app.exit_date) || text(app.travel_end_date) || text(wizard.travelEndDate)
+  const purpose = text(app.travel_purpose) || text(wizard.purposeOfTrip)
+  const tripAnswered = !!purpose && !!start && !!end && !!text(wizard.hotelCategory)
+  const spouseTravels = text(notes.spouseAccompanying) === "yes" || text(wizard.spouseAccompanying) === "yes"
+  const spouseAnswered = !!text(wizard.spouseFirstName) && !!text(wizard.spouseLastName) && !!text(wizard.spouseHasValidPassport)
   const missing: DetailStep[] = []
-  if (!start || !end) missing.push("dates")
+  if (!tripAnswered) missing.push("trip")
   if (!passportAnswered) missing.push("passport")
+  if (spouseTravels && !spouseAnswered) missing.push("spouse")
   if (!employment) missing.push("employment")
   return missing
 }
 
-/** Passport number, employment answers, or travel dates still missing after payment. */
+/** Trip, passport, spouse or employment answers still missing after payment. */
 export function detailsMissing(app: ApplicationLike): boolean {
   return missingDetailSteps(app).length > 0
 }
