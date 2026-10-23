@@ -170,7 +170,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-28 lg:pb-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-44 lg:pb-0">
         {/* Left Column: Dossier Review & Security info */}
         <div className="lg:col-span-7 space-y-6">
           <div>
@@ -393,7 +393,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
                 
                 <div className="flex justify-between items-baseline pt-2">
                   <span className="text-base font-semibold text-foreground">Total Fee</span>
-                  <span className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+                  <span className="text-3xl font-extrabold tracking-tight text-primary">
                     {paymentAmount} {currency.code}
                   </span>
                 </div>
@@ -409,7 +409,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           </div>
 
           {/* Action buttons */}
-          <div className="fixed lg:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:p-0 bg-background/95 md:backdrop-blur-lg border-t border-t-border/80 lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-20 flex lg:flex-col gap-3">
+          <div className="fixed lg:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:p-0 bg-background/95 md:backdrop-blur-lg border-t border-t-border/80 lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-20 flex lg:flex-col gap-3">
             <Button
               type="button"
               variant="outline"
@@ -423,7 +423,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
               type="button"
               onClick={handlePayment}
               disabled={isProcessing}
-              className="flex-1 lg:w-full h-14 rounded-2xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-98 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+              className="flex-1 lg:w-full h-14 rounded-2xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-98 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
             >
               {isProcessing ? (
                 "Redirecting to payment..."

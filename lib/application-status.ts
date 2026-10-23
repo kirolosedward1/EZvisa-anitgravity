@@ -4,12 +4,23 @@
  */
 
 export type ApplicationLike = {
+  id?: string | null
   payment_status?: string | null
   application_status?: string | null
   has_passport?: boolean | null
   has_photos?: boolean | null
   has_bank_statements?: boolean | null
   has_employment_proof?: boolean | null
+  passport_number?: string | null
+  entry_date?: string | null
+  exit_date?: string | null
+  travel_start_date?: string | null
+  travel_end_date?: string | null
+  additional_notes?: string | null
+  updated_at?: string | null
+  paid_at?: string | null
+  tracking_token?: string | null
+  payment_amount?: number | null
 }
 
 export type StepKey = "payment" | "documents" | "review" | "preparation" | "ready"
@@ -61,22 +72,115 @@ export function getStepIndex(stage: Stage): number {
   return APPLICATION_STEPS.findIndex((step) => step.key === stage)
 }
 
-/** Short customer-facing status label, used in badges and the application switcher */
-export function getStatusLabel(app: ApplicationLike): { label: string; tone: "success" | "warning" | "info" | "danger" } {
-  switch (getStage(app)) {
-    case "payment":
-      return { label: "Payment pending", tone: "warning" }
-    case "documents":
-      return { label: "Documents needed", tone: "warning" }
-    case "review":
-      return { label: "In review", tone: "info" }
-    case "preparation":
-      return { label: "Preparing file", tone: "info" }
-    case "ready":
-      return { label: "Ready", tone: "success" }
-    case "rejected":
-      return { label: "Needs attention", tone: "danger" }
+export type PillTone = "success" | "warning" | "info" | "danger" | "neutral"
+
+export type StatusPill = { label: string; tone: PillTone }
+
+export type NextTaskKind = "continue" | "upload" | "pay" | "finish"
+
+export type NextTask = { label: string; kind: NextTaskKind }
+
+const NARROW_NEXT_LABEL = "Action required"
+
+export function narrowNextLabel(): string {
+  return NARROW_NEXT_LABEL
+}
+
+function notesObject(app: ApplicationLike): Record<string, unknown> {
+  if (!app.additional_notes) return {}
+  try {
+    const parsed = JSON.parse(app.additional_notes) as unknown
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : {}
+  } catch {
+    return {}
   }
+}
+
+function text(value: unknown): string {
+  return typeof value === "string" ? value.trim() : ""
+}
+
+export type DetailStep = "dates" | "passport" | "employment"
+
+/** Which post-payment answers are still missing, in the order the continue page asks them. */
+export function missingDetailSteps(app: ApplicationLike): DetailStep[] {
+  const notes = notesObject(app)
+  const wizard = (notes.wizard && typeof notes.wizard === "object" ? notes.wizard : notes) as Record<string, unknown>
+  const passport = text(app.passport_number) || text(wizard.passportNumber)
+  const passportAnswered = text(wizard.hasValidPassport) === "no" || passport.length > 0
+  const employment = text(wizard.employmentStatus) || text(notes.employmentStatus)
+  const start = text(app.entry_date) || text(app.travel_start_date) || text(wizard.travelStartDate)
+  const end = text(app.exit_date) || text(app.travel_end_date) || text(wizard.travelEndDate)
+  const missing: DetailStep[] = []
+  if (!start || !end) missing.push("dates")
+  if (!passportAnswered) missing.push("passport")
+  if (!employment) missing.push("employment")
+  return missing
+}
+
+/** Passport number, employment answers, or travel dates still missing after payment. */
+export function detailsMissing(app: ApplicationLike): boolean {
+  return missingDetailSteps(app).length > 0
+}
+
+export function nextTaskHref(app: ApplicationLike, task: NextTask): string {
+  if (task.kind === "continue" && app.id) return `/continue/${app.id}`
+  if (task.kind === "upload" && app.tracking_token) return `/track/${app.tracking_token}/upload`
+  if (task.kind === "pay") return `/dashboard?id=${app.id ?? ""}&pay=1#pay`
+  return "/apply"
+}
+
+export function docsMissingCount(app: ApplicationLike): number {
+  return getDocumentProgress(app).missing.length
+}
+
+function taskFor(app: ApplicationLike): NextTask | null {
+  if (detailsMissing(app)) return { label: "Continue application", kind: "continue" }
+  const missing = docsMissingCount(app)
+  if (missing > 0) return { label: "Upload documents", kind: "upload" }
+  return null
+}
+
+/**
+ * Shared status rules (status-mapping.md).
+ * Paid + draft/submitted shows a Paid pill. The orange next-step pill is separate.
+ * Widths <= 360px replace that next-step label with "Action required" in the UI.
+ */
+export function getStatusDisplay(app: ApplicationLike): { pill: StatusPill; next: NextTask | null } {
+  const status = (app.application_status || "submitted").toLowerCase()
+  const payment = (app.payment_status || "").toLowerCase()
+  const paid = isPaid(app)
+  const task = taskFor(app)
+
+  if (status === "cancelled") return { pill: { label: "Cancelled", tone: "neutral" }, next: null }
+  if (status === "rejected") return { pill: { label: "Refused", tone: "danger" }, next: null }
+  if (status === "completed") return { pill: { label: "Completed", tone: "success" }, next: null }
+  if (status === "approved" || status === "ready") return { pill: { label: "File ready", tone: "success" }, next: null }
+  if (status === "appointment_booked") return { pill: { label: "Appointment booked", tone: "info" }, next: null }
+  if (status === "awaiting_documents") {
+    return { pill: { label: "Documents needed", tone: "warning" }, next: task }
+  }
+  if (status === "reviewing" || status === "preparation") {
+    return { pill: { label: "In review", tone: "warning" }, next: paid ? task : null }
+  }
+  if (status === "draft" && !paid) {
+    return { pill: { label: "Draft", tone: "neutral" }, next: { label: "Finish application", kind: "finish" } }
+  }
+  if ((status === "draft" || status === "submitted") && paid) {
+    return { pill: { label: "Paid", tone: "success" }, next: task }
+  }
+  if (status === "submitted" && payment === "failed") {
+    return { pill: { label: "Payment failed", tone: "danger" }, next: { label: "Pay now", kind: "pay" } }
+  }
+  if (!paid) {
+    return { pill: { label: "Payment due", tone: "warning" }, next: { label: "Pay now", kind: "pay" } }
+  }
+  return { pill: { label: "In review", tone: "warning" }, next: task }
+}
+
+/** Short customer-facing status label, used in badges and the application switcher */
+export function getStatusLabel(app: ApplicationLike): { label: string; tone: PillTone } {
+  return getStatusDisplay(app).pill
 }
 
 export function getReference(token?: string | null): string {

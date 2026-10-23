@@ -10,6 +10,7 @@ import Image from "next/image"
 import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
+import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, flagSrc, toCitizenshipIso } from "@/lib/nationalities"
 
 const countryFlags: Record<string, string> = {
   Austria: "🇦🇹", Belgium: "🇧🇪", Croatia: "🇭🇷", "Czech Republic": "🇨🇿",
@@ -33,6 +34,8 @@ const schengenCountries = [
 ]
 
 const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+  .map((name) => CITIZENSHIP_OPTIONS.find((country) => country.name === name))
+  .filter((country): country is NonNullable<typeof country> => Boolean(country))
 
 function getApprovalRate(from: string, to: string) {
   if (!from || !to) return "98.0%";
@@ -78,7 +81,7 @@ export function HeroSection() {
   useEffect(() => {
     const savedFrom = localStorage.getItem("hero-from-country")
     const savedTo = localStorage.getItem("hero-to-country")
-    if (savedFrom) setFromCountry(savedFrom)
+    if (savedFrom) setFromCountry(toCitizenshipIso(savedFrom) || savedFrom)
     if (savedTo) setToCountry(savedTo)
   }, [])
 
@@ -91,7 +94,8 @@ export function HeroSection() {
 
   useEffect(() => {
     const handleNationalityChange = (e: CustomEvent<{ nationality: string }>) => {
-      if (e.detail.nationality !== fromCountry) setFromCountry(e.detail.nationality)
+      const incoming = toCitizenshipIso(e.detail.nationality) || e.detail.nationality
+      if (incoming !== fromCountry) setFromCountry(incoming)
     }
     window.addEventListener("nationalityChange", handleNationalityChange as EventListener)
     return () => window.removeEventListener("nationalityChange", handleNationalityChange as EventListener)
@@ -100,6 +104,9 @@ export function HeroSection() {
   useEffect(() => {
     if (toCountry) localStorage.setItem("hero-to-country", toCountry)
   }, [toCountry])
+
+  const fromLabel = citizenshipName(fromCountry) || fromCountry
+  const fromFlag = toCitizenshipIso(fromCountry) ? flagSrc(toCitizenshipIso(fromCountry)) : ""
 
   const handleGetStarted = () => {
     const params = new URLSearchParams()
@@ -251,14 +258,14 @@ export function HeroSection() {
                               <div className="flex items-center gap-2">
                                 <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                                   <Image
-                                    src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                    src={fromFlag}
                                     alt=""
                                     fill
                                     sizes="24px"
                                     className="object-cover"
                                   />
                                 </span>
-                                <span className="text-base font-bold truncate text-foreground">{fromCountry}</span>
+                                <span className="text-base font-bold truncate text-foreground">{fromLabel}</span>
                               </div>
                             ) : (
                               <span className="text-sm font-medium text-muted-foreground">Select nationality</span>
@@ -280,21 +287,21 @@ export function HeroSection() {
                             <CommandGroup>
                               {fromCountries.map((country) => (
                                 <CommandItem
-                                  key={country}
-                                  value={country}
-                                  onSelect={() => { setFromCountry(country); setFromOpen(false) }}
+                                  key={country.iso}
+                                  value={citizenshipSearchValue(country)}
+                                  onSelect={() => { setFromCountry(country.iso); setFromOpen(false) }}
                                   className="cursor-pointer py-3 px-4 text-base rounded-xl hover:bg-primary/10 transition-colors my-1"
                                 >
                                   <div className="flex items-center gap-3">
                                     <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
                                       <Image
-                                        src={`/flags/${country.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
+                                        src={flagSrc(country.iso)}
                                         alt=""
                                         fill
                                         className="object-cover"
                                       />
                                     </span>
-                                    <span className="font-medium">{country}</span>
+                                    <span className="font-medium">{country.name}</span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -415,8 +422,8 @@ export function HeroSection() {
                           <div className="flex items-center -space-x-2.5 flex-shrink-0 mt-1">
                             <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-xs border border-background z-10 bg-secondary/50">
                               <Image
-                                src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                                alt={fromCountry}
+                                src={fromFlag}
+                                alt={fromLabel}
                                 fill
                                 className="object-cover"
                               />
@@ -432,7 +439,7 @@ export function HeroSection() {
                           </div>
                           <div>
                             <div className="font-bold text-foreground text-sm md:text-base">
-                              Schengen visa required for {fromCountry} citizens visiting {toCountry}
+                              Schengen visa required for {fromLabel} citizens visiting {toCountry}
                             </div>
                             <p className="text-xs md:text-sm text-muted-foreground mt-0.5 leading-relaxed">
                               Let's prepare your full visa dossier. We verify everything (cover letter, bookings, and itinerary) for a successful embassy submission.
@@ -443,7 +450,7 @@ export function HeroSection() {
                         <div className="flex flex-row md:flex-col gap-3 md:gap-1.5 w-full md:w-auto text-xs font-semibold text-muted-foreground/90 flex-shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
                           <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
                             <Clock className="h-3.5 w-3.5 text-primary" />
-                            <span>Ready: 24-48h</span>
+                            <span>Application ready in 1–2 days</span>
                           </div>
                           <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
                             <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
@@ -466,7 +473,7 @@ export function HeroSection() {
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
-                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Ready in 24-48 hours</span>
+                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Application ready in 1–2 days</span>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />

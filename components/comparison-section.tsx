@@ -50,7 +50,7 @@ export function ComparisonSection() {
     { name: "Complete file validation", others: false },
     { name: "Tailored cover letter & itinerary", others: false },
     { name: "Flight & hotel bookings included", others: true },
-    { name: "24-48 hours fast processing", others: false },
+    { name: "Application ready in 1–2 days", others: false },
     { name: "No hidden agency markups", others: false },
   ]
 

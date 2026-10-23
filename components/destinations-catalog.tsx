@@ -147,7 +147,7 @@ export function DestinationsCatalog() {
                       <h3 className="text-lg font-bold tracking-tight mb-1">
                         {country.name}
                       </h3>
-                      <div className="text-[11px] font-medium text-white/70">Fast 24-48h File Prep</div>
+                      <p className="text-[11px] text-white/60">Application ready in 1–2 days</p>
                     </div>
 
                     {/* Quick Apply Action Button (Floating) */}

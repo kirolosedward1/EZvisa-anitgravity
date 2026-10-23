@@ -168,6 +168,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "News", id: "/news", type: "link" },
     { label: "Videos", id: "/videos", type: "link" },
     { label: "App", id: "/app", type: "link" },
+    { label: "Account", id: "/account", type: "link" },
   ]
 
   return (

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { sanitizeInput, sanitizeEmail, sanitizePhone } from "@/lib/sanitize"
+import { datesInOrder, INVALID_DATE_MESSAGE, parseCalendarDate, RETURN_AFTER_DEPARTURE } from "@/lib/dates"
+import { toCitizenshipIso } from "@/lib/nationalities"
+import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
 
 export async function POST(request: Request) {
   try {
@@ -25,22 +28,26 @@ export async function POST(request: Request) {
       lastName: sanitizeInput(formData.lastName || "", 100),
       email: sanitizeEmail(formData.email || ""),
       phone: sanitizePhone(formData.phone || ""),
-      nationality: sanitizeInput(formData.nationality || "", 100),
+      nationality: toCitizenshipIso(formData.nationality || "") || sanitizeInput(formData.nationality || "", 100),
       destination: sanitizeInput(formData.destination || "", 100),
       purposeOfTrip: sanitizeInput(formData.purposeOfTrip || "", 500),
       jobTitle: sanitizeInput(formData.jobTitle || "", 200),
       companyName: sanitizeInput(formData.companyName || "", 200),
     }
 
-    // Server-side Date Validation
-    if (formData.travelStartDate && formData.travelEndDate) {
-      const start = new Date(formData.travelStartDate)
-      const end = new Date(formData.travelEndDate)
-      const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)
-      
-      if (end <= start) {
-        return NextResponse.json({ success: false, message: "Return date must be after departure date" }, { status: 400 })
-      }
+    const startDate = formData.travelStartDate ? parseCalendarDate(formData.travelStartDate) : null
+    const endDate = formData.travelEndDate ? parseCalendarDate(formData.travelEndDate) : null
+    if (formData.travelStartDate && !startDate) {
+      return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
+    }
+    if (formData.travelEndDate && !endDate) {
+      return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
+    }
+    if (startDate && endDate && !datesInOrder(startDate.iso, endDate.iso)) {
+      return NextResponse.json({ success: false, message: RETURN_AFTER_DEPARTURE }, { status: 400 })
+    }
+    if (startDate && endDate) {
+      const duration = (Date.parse(endDate.iso) - Date.parse(startDate.iso)) / (1000 * 60 * 60 * 24)
       if (duration > 90) {
         return NextResponse.json({ success: false, message: "Stay duration cannot exceed 90 days" }, { status: 400 })
       }
@@ -66,6 +73,23 @@ export async function POST(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    if (sanitizedData.email) {
+      const { data: existing } = await supabase
+        .from("visa_applications")
+        .select("id, payment_status, application_status")
+        .eq("email", sanitizedData.email)
+        .in("application_status", ["draft", "submitted"])
+      const abandoned = (existing || []).filter(
+        (row) => row.payment_status !== "paid" && row.payment_status !== "completed",
+      )
+      if (abandoned.length >= ACTIVE_APPLICATION_LIMIT) {
+        return NextResponse.json(
+          { success: false, message: `You can have up to ${ACTIVE_APPLICATION_LIMIT} unpaid applications. Discard one before starting another.` },
+          { status: 409 },
+        )
+      }
+    }
+
     const { data, error } = await supabase
       .from("visa_applications")
       .insert([
@@ -76,16 +100,13 @@ export async function POST(request: Request) {
           nationality: sanitizedData.nationality,
           destination_country: sanitizedData.destination,
           date_of_birth: formData.dateOfBirth || null,
-          entry_date: formData.travelStartDate,
-          exit_date: formData.travelEndDate,
+          entry_date: startDate?.iso || null,
+          exit_date: endDate?.iso || null,
           travel_purpose: sanitizedData.purposeOfTrip,
           passport_number: formData.passportNumber || null,
           duration_days:
-            formData.travelStartDate && formData.travelEndDate
-              ? Math.ceil(
-                  (new Date(formData.travelEndDate).getTime() - new Date(formData.travelStartDate).getTime()) /
-                    (1000 * 60 * 60 * 24),
-                )
+            startDate && endDate
+              ? Math.ceil((Date.parse(endDate.iso) - Date.parse(startDate.iso)) / (1000 * 60 * 60 * 24))
               : null,
           has_passport: false,
           has_photos: false,

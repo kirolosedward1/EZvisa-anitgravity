@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const title = `Apply for ${destination.name} Schengen Visa from UAE | EZvisa`
-  const description = `Get your ${destination.name} tourist visa from Dubai & Abu Dhabi easily. Complete visa file preparation including application forms, cover letter, flights, and hotel bookings in 24-48h.`
+  const description = `Get your ${destination.name} visa file prepared from Dubai and Abu Dhabi. We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy.`
 
   return {
     title,
@@ -89,9 +89,9 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
   const fastFacts = [
     {
       icon: Clock,
-      label: "Processing Time",
-      value: "10-15 working days",
-      description: "Typical embassy turnaround time after biometrics appointment."
+      label: "Our preparation",
+      value: "1–2 days",
+      description: "We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy."
     },
     {
       icon: Calendar,
@@ -144,7 +144,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       step: "03",
       icon: UserCheck,
       title: "Expert File Review",
-      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight/hotel bookings, and fully complete the official ${destination.name} form within 24-48 hours.`
+      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight and hotel bookings, and complete the official ${destination.name} form. We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy.`
     },
     {
       step: "04",
@@ -448,7 +448,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             Ready to secure your {destination.name} Visa?
           </h2>
           <p className="mt-4 text-blue-100/90 text-sm sm:text-base max-w-xl mx-auto">
-            Get your completed form, itinerary, bookings, and cover letter in 24-48 hours. Secure and backed by our money-back guarantee.
+            We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy. Secure and backed by our money-back guarantee.
           </p>
           
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">

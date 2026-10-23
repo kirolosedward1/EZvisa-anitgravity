@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { toCitizenshipIso } from "@/lib/nationalities"
 
 const WIZARD_STORAGE_KEY = "visa_wizard_data"
 const AUTO_SAVE_DELAY = 300
@@ -213,7 +214,7 @@ function ApplyPageContent() {
       setFormData({
         ...defaultFormData,
         ...pendingSavedData,
-        ...(fromCountry && { nationality: fromCountry }),
+        ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
         ...(toCountry && { destination: toCountry }),
         ...(travelStartDate && { travelStartDate }),
         ...(travelEndDate && { travelEndDate }),
@@ -231,7 +232,7 @@ function ApplyPageContent() {
     
     setFormData({
       ...defaultFormData,
-      ...(fromCountry && { nationality: fromCountry }),
+      ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
       ...(toCountry && { destination: toCountry }),
       ...(travelStartDate && { travelStartDate }),
       ...(travelEndDate && { travelEndDate }),
@@ -364,7 +365,7 @@ function ApplyPageContent() {
         setShowResumeModal(true)
         setFormData({
           ...defaultFormData,
-          ...(fromCountry && { nationality: fromCountry }),
+          ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
           ...(toCountry && { destination: toCountry }),
           ...(travelStartDate && { travelStartDate }),
           ...(travelEndDate && { travelEndDate }),
@@ -373,7 +374,7 @@ function ApplyPageContent() {
         setFormData({
           ...defaultFormData,
           ...savedData,
-          ...(fromCountry && { nationality: fromCountry }),
+          ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
           ...(toCountry && { destination: toCountry }),
           ...(travelStartDate && { travelStartDate }),
           ...(travelEndDate && { travelEndDate }),
@@ -659,7 +660,7 @@ function ApplyPageContent() {
                   className="flex items-center justify-between p-4 rounded-md bg-white dark:bg-slate-900 border border-border/80 shadow-sm cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:dark:bg-slate-950"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-sm flex items-center justify-center font-bold bg-primary text-white shadow-sm ring-2 ring-primary/20 shrink-0">
+                    <div className="w-10 h-10 rounded-sm flex items-center justify-center font-bold bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20 shrink-0">
                       {currentVisualStep}
                     </div>
                     <div>
@@ -696,7 +697,7 @@ function ApplyPageContent() {
                           <div
                             className={`w-8 h-8 rounded-sm flex items-center justify-center font-bold text-xs shrink-0 ${
                               currentStep === step.number
-                                ? "bg-primary text-white"
+                                ? "bg-primary text-primary-foreground"
                                 : currentStep > step.number
                                   ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
                                   : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
@@ -735,7 +736,7 @@ function ApplyPageContent() {
                     <div
                       className={`w-9 h-9 rounded-sm flex items-center justify-center font-bold text-sm shrink-0 transition-all ${
                         currentStep === step.number
-                          ? "bg-primary text-white shadow-sm ring-2 ring-primary/20"
+                          ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20"
                           : currentStep > step.number
                             ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
                             : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
@@ -813,7 +814,7 @@ function ApplyPageContent() {
               <button
                 type="button"
                 onClick={handleContinuePrevious}
-                className="flex-1 h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 cursor-pointer flex items-center justify-center"
+                className="flex-1 h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-primary text-primary-foreground shadow-md shadow-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 cursor-pointer flex items-center justify-center"
               >
                 Restore Details
               </button>

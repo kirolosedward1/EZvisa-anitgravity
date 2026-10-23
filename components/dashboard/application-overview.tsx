@@ -4,8 +4,8 @@ import { CalendarDays, UserRound } from "lucide-react"
 import { DashboardCard } from "@/components/dashboard/dashboard-card"
 import { NextStepCard } from "@/components/dashboard/next-step-card"
 import { ProgressTracker } from "@/components/dashboard/progress-tracker"
-import { StatusBadge } from "@/components/dashboard/status-badge"
-import { getFlagSrc, getStatusLabel, type Stage } from "@/lib/application-status"
+import { StatusPills } from "@/components/dashboard/status-pills"
+import { getFlagSrc, type Stage } from "@/lib/application-status"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
 function formatTravelDates(app: VisaApplication) {
@@ -18,8 +18,6 @@ function formatTravelDates(app: VisaApplication) {
 }
 
 export function ApplicationOverview({ app, stage }: { app: VisaApplication; stage: Stage }) {
-  const status = getStatusLabel(app)
-
   return (
     <DashboardCard aria-label={`${app.destination_country} visa application`} className="flex flex-col gap-6 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -49,9 +47,7 @@ export function ApplicationOverview({ app, stage }: { app: VisaApplication; stag
             </div>
           </div>
         </div>
-        <StatusBadge tone={status.tone} className="self-start">
-          {status.label}
-        </StatusBadge>
+        <StatusPills app={app} />
       </div>
 
       {stage !== "rejected" && (

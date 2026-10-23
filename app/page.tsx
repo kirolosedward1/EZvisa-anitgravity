@@ -1,6 +1,9 @@
 import { SiteHeader } from "@/components/site-header"
 import { HeroSection } from "@/components/hero-section"
 import { PopularDestinations } from "@/components/popular-destinations"
+import { ExploreCountries } from "@/components/explore-countries"
+import { FAQ_EN } from "@/lib/faq"
+import { WHATSAPP_DISPLAY } from "@/lib/contact"
 import dynamic from "next/dynamic"
 
 // Lazy load below-the-fold components for performance
@@ -16,7 +19,7 @@ import type { Metadata } from "next"
 export const metadata: Metadata = {
   title: "Schengen Visa Application Service UAE | 98% Approval Rate | EZvisa",
   description:
-    "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 27 European countries. Expert help with documents, itinerary planning, cover letters & more. 98% approval rate. Starting from 249 AED. Apply today!",
+    "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 29 European countries. Expert help with documents, itinerary planning, cover letters & more. 98% approval rate. Starting from 249 AED. Apply today!",
   keywords: [
     "Schengen visa UAE",
     "Schengen visa Dubai",
@@ -39,7 +42,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Schengen Visa Application UAE | 98% Approval | EZvisa",
-    description: "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 27 European countries. 98% approval rate. From 249 AED.",
+    description: "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 29 European countries. 98% approval rate. From 249 AED.",
     url: "https://www.ezvisa.net/",
     type: "website",
     images: [
@@ -69,7 +72,7 @@ export default function Home() {
           height: 200,
         },
         description:
-          "Professional Schengen visa application service with 98% approval rate. AI-powered assistance for 27 European countries.",
+          "Professional Schengen visa application service with 98% approval rate. AI-powered assistance for 29 European countries.",
         address: {
           "@type": "PostalAddress",
           addressCountry: "AE",
@@ -77,7 +80,7 @@ export default function Home() {
         },
         contactPoint: {
           "@type": "ContactPoint",
-          telephone: "+971-58-586-4446",
+          telephone: WHATSAPP_DISPLAY,
           contactType: "Customer Service",
           availableLanguage: ["en", "ar"],
           email: "hello@ezvisa.net",
@@ -125,32 +128,11 @@ export default function Home() {
       {
         "@type": "FAQPage",
         "@id": "https://www.ezvisa.net/#faqpage",
-        mainEntity: [
-          {
-            "@type": "Question",
-            name: "How long does it take to process a Schengen visa?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "Schengen visa processing typically takes 15-30 days from the date of application submission at the consulate. We help you prepare your complete application within 24-48 hours.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "What is your visa approval rate?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "We maintain a 98% approval rate for Schengen visa applications through our AI-powered document verification and personalized itinerary planning.",
-            },
-          },
-          {
-            "@type": "Question",
-            name: "Which countries can I visit with a Schengen visa?",
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: "A Schengen visa allows you to travel to 29 European countries including France, Germany, Italy, Spain, Netherlands, Austria, Greece, Portugal, and more.",
-            },
-          },
-        ],
+        mainEntity: FAQ_EN.map((item) => ({
+          "@type": "Question",
+          name: item.question,
+          acceptedAnswer: { "@type": "Answer", text: item.answer },
+        })),
       },
       {
         "@type": "BreadcrumbList",
@@ -175,6 +157,7 @@ export default function Home() {
         <HeroSection />
         <ServicesSection />
         <PopularDestinations />
+        <ExploreCountries />
         <HowItWorksSimple />
         <ComparisonSection />
         <TestimonialsSection />

@@ -97,7 +97,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               asChild
             >
               <a
-                href={`https://wa.me/971585864446?text=${encodeURIComponent(whatsappMessage)}`}
+                href={`https://wa.me/971547109533?text=${encodeURIComponent(whatsappMessage)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -112,9 +112,9 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               className="w-full justify-start gap-3 bg-transparent"
               asChild
             >
-              <a href="tel:+971585864446">
+              <a href="tel:+971547109533">
                 <Phone className="w-4 h-4" />
-                <span className="flex-1 text-left">+971 58 586 4446</span>
+                <span className="ltr-isolate flex-1 text-start">+971 54 710 9533</span>
               </a>
             </Button>
 

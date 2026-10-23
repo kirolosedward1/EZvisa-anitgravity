@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     template: "%s | EZvisa",
   },
   description:
-    "Get your Schengen visa approved fast with EZvisa. AI-powered visa application assistance for 27 European countries. Expert help with documents, itinerary, and cover letters. 98% approval rate. Starting from 249 AED.",
+    "Get your Schengen visa approved fast with EZvisa. AI-powered visa application assistance for 29 European countries. Expert help with documents, itinerary, and cover letters. 98% approval rate. Starting from 249 AED.",
   keywords: [
     "Schengen visa",
     "tourist visa Europe",
@@ -53,7 +53,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
     description:
-      "AI-powered Schengen visa application service for 27 European countries. Expert assistance with documents, itinerary & cover letters. 98% approval rate. From 249 AED.",
+      "AI-powered Schengen visa application service for 29 European countries. Expert assistance with documents, itinerary & cover letters. 98% approval rate. From 249 AED.",
     url: "https://www.ezvisa.net/",
     siteName: "EZvisa",
     locale: "en_US",
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
     description:
-      "AI-powered Schengen visa service. Expert help for 27 European countries. 98% approval rate. From 249 AED.",
+      "AI-powered Schengen visa service. Expert help for 29 European countries. 98% approval rate. From 249 AED.",
     images: ["https://www.ezvisa.net/images/logo-main.png"],
     creator: "@ezvisa",
   },
@@ -113,6 +113,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-background">
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var p=location.pathname;var m=document.cookie.match(/(?:^|; )ez_lang=([^;]*)/);var ar=p==="/ar"||p.indexOf("/ar/")===0||(m&&decodeURIComponent(m[1])==="ar");if(ar){document.documentElement.lang="ar";document.documentElement.dir="rtl";}}catch(e){}})();`,
+          }}
+        />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://client.crisp.chat" />

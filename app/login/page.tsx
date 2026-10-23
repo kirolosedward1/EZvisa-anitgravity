@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
+import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 
 function LoginForm() {
   const router = useRouter()
@@ -192,6 +193,8 @@ function LoginForm() {
           </Button>
         </form>
       )}
+
+      <GoogleSignInButton next={next} />
 
       {/* 1-Click Demo Logins for Dashboard Area */}
       <DemoLoginButtons next={next} />

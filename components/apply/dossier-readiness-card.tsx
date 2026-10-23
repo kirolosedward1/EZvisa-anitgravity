@@ -32,7 +32,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
         score += 7
         checks.push({ label: `Lead time (${daysUntilTrip} days) provides safe consular processing buffer`, passed: true })
       } else {
-        checks.push({ label: `Departure is in ${daysUntilTrip} days (embassy turnaround is typically 10-15 days)`, passed: false })
+        checks.push({ label: `Departure is in ${daysUntilTrip} days. Leave more than 15 days — the embassy decision takes longer than our preparation.`, passed: false })
       }
     }
 

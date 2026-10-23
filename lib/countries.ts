@@ -86,7 +86,7 @@ export const COUNTRY_DATA: CountryData[] = SCHENGEN_COUNTRIES.map((country) => (
   slug: countryToSlug(country),
   flag: countryFlags[country],
   description: `Complete visa document requirements for ${country}`,
-  processingTime: "10-15 business days",
+  processingTime: "Application ready in 1–2 days",
 }))
 
 export function getCountryBySlug(slug: string): CountryData | null {

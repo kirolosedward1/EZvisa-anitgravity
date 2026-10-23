@@ -11,6 +11,8 @@ import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
 import { trackEvent } from "@/lib/analytics"
+import { CitizenshipPicker } from "@/components/citizenship-picker"
+import { citizenshipName } from "@/lib/nationalities"
 
 interface NationalityStepProps {
   formData: FormData
@@ -18,30 +20,6 @@ interface NationalityStepProps {
   onNext: () => void
   isLoading?: boolean
 }
-
-const nationalityCountries = [
-  { name: "Egypt", flag: "🇪🇬" },
-  { name: "India", flag: "🇮🇳" },
-  { name: "Jordan", flag: "🇯🇴" },
-  { name: "Pakistan", flag: "🇵🇰" },
-  { name: "Russian Federation", flag: "🇷🇺" },
-  { name: "Syria", flag: "🇸🇾" },
-  { name: "United Arab Emirates", flag: "🇦🇪" },
-  { name: "Saudi Arabia", flag: "🇸🇦" },
-  { name: "Philippines", flag: "🇵🇭" },
-  { name: "Bangladesh", flag: "🇧🇩" },
-]
-
-const residenceCountries = [
-  { name: "United Arab Emirates", flag: "🇦🇪" },
-  { name: "Saudi Arabia", flag: "🇸🇦" },
-  { name: "Qatar", flag: "🇶🇦" },
-  { name: "Kuwait", flag: "🇰🇼" },
-  { name: "Bahrain", flag: "🇧🇭" },
-  { name: "Oman", flag: "🇴🇲" },
-  { name: "Egypt", flag: "🇪🇬" },
-  { name: "Jordan", flag: "🇯🇴" },
-]
 
 const schengenCountries = [
   { name: "Austria", flag: "🇦🇹" },
@@ -82,12 +60,11 @@ const selectStyles =
   "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
 const labelStyles = "text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
 const toggleActiveStyles =
-  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
+  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-primary text-primary-foreground shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
 export function NationalityStep({ formData, updateFormData, onNext, isLoading }: NationalityStepProps) {
-  const [nationalityOpen, setNationalityOpen] = useState(false)
   const [destinationOpen, setDestinationOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
@@ -182,7 +159,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-44 md:pb-0">
       <p className="text-sm text-muted-foreground leading-relaxed mb-4">
         This information helps us tailor your cover letter and strengthen your return-to-home justification.
       </p>
@@ -282,79 +259,20 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
           </Popover>
         </div>
 
-        {/* Nationality */}
         <div>
           <label className={labelStyles}>Nationality *</label>
-          <Popover open={nationalityOpen} onOpenChange={setNationalityOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={nationalityOpen}
-                className={cn(
-                  inputStyles,
-                  "w-full justify-between font-medium",
-                  getErrorClass(formData.nationality),
-                )}
-              >
-                {formData.nationality ? (
-                  <div className="flex items-center gap-2">
-                    <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
-                      <Image
-                        src={`/flags/${formData.nationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
-                    <span className="font-medium text-foreground">{formData.nationality}</span>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground/60 font-normal">Select nationality</span>
-                )}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-1 bg-popover/95 md:backdrop-blur-md border border-border/80 shadow-2xl rounded-xl">
-              <Command>
-                <CommandInput placeholder="Search nationality..." autoFocus={!isMobile} className="border-none focus:ring-0" />
-                <CommandList>
-                  <CommandEmpty>No nationality found.</CommandEmpty>
-                  <CommandGroup>
-                    {nationalityCountries.map((country) => (
-                      <CommandItem
-                        key={country.name}
-                        value={country.name}
-                        className="rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
-                        onSelect={() => {
-                          updateFormData({ nationality: country.name })
-                          setNationalityOpen(false)
-                          setShowErrors(false)
-                          trackEvent("nationality_selected", { nationality: country.name })
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4 text-blue-600",
-                            formData.nationality === country.name ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block mr-2 flex-shrink-0 border border-border/50">
-                          <Image
-                            src={`/flags/${country.name.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                            alt=""
-                            fill
-                            className="object-cover"
-                          />
-                        </span>
-                        <span className="text-foreground">{country.name}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <CitizenshipPicker
+            value={formData.nationality}
+            onChange={(iso) => {
+              updateFormData({ nationality: iso })
+              setShowErrors(false)
+              trackEvent("nationality_selected", { nationality: iso })
+            }}
+            className={getErrorClass(formData.nationality)}
+          />
+          {formData.nationality ? (
+            <span className="sr-only">{citizenshipName(formData.nationality)}</span>
+          ) : null}
         </div>
 
         {/* Country of Residence (UAE only: lib/residence.ts) */}
@@ -677,11 +595,11 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
         )}
       </div>
 
-      <div className="md:flex md:justify-end fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20">
+      <div className="md:flex md:justify-end fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20">
         <Button
           type="submit"
           disabled={isLoading}
-          className="w-full md:w-auto h-14 rounded-xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
+          className="w-full md:w-auto h-14 rounded-xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
         >
           {isLoading ? (
             <>

@@ -314,7 +314,7 @@ H1: One per page (includes primary keyword)
 ### Competitive Advantages
 - AI-powered application assistance
 - 98% approval rate
-- Fast turnaround (24-48 hours)
+- We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy.
 - Competitive pricing (from AED 249)
 - Comprehensive support
 - UAE-based service

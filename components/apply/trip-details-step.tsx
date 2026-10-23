@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
+import { datesInOrder, isValidCalendarDate, INVALID_DATE_MESSAGE } from "@/lib/dates"
 
 interface TripDetailsStepProps {
   formData: FormData
@@ -91,7 +92,7 @@ const selectStyles =
   "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
 const labelStyles = "text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
 const toggleActiveStyles =
-  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
+  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-primary text-primary-foreground shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
@@ -181,9 +182,10 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
   }
 
   const isDatesValid =
-    formData.travelStartDate &&
-    formData.travelEndDate &&
-    new Date(formData.travelEndDate) > new Date(formData.travelStartDate) &&
+    isValidCalendarDate(formData.travelStartDate) &&
+    isValidCalendarDate(formData.travelEndDate) &&
+    datesInOrder(formData.travelStartDate, formData.travelEndDate) &&
+    tripDuration > 0 &&
     tripDuration <= 90
 
   const isFormValid =
@@ -205,13 +207,17 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-44 md:pb-0">
       {showErrors && !isFormValid && (
         <div className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl text-foreground text-sm">
           <Info className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
           <div className="flex-1">
             {!isDatesValid && formData.travelStartDate && formData.travelEndDate ? (
-              <span>Return date must be after departure date.</span>
+              <span>
+                {isValidCalendarDate(formData.travelStartDate) && isValidCalendarDate(formData.travelEndDate)
+                  ? "Return date must be after departure date."
+                  : INVALID_DATE_MESSAGE}
+              </span>
             ) : (
               <span>Please fill in all required travel details before continuing.</span>
             )}
@@ -627,7 +633,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
       </div>
 
       {/* Action Buttons */}
-      <div className="md:flex md:justify-between md:pt-4 fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex justify-between gap-3">
+      <div className="md:flex md:justify-between md:pt-4 fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex justify-between gap-3">
         <Button
           type="button"
           onClick={onBack}
@@ -640,7 +646,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
         <Button
           type="submit"
           disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
+          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
         >
           {isLoading ? (
             <>

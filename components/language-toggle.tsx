@@ -1,16 +1,21 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { Languages } from "lucide-react"
 
 export function LanguageToggle() {
-  const [lang, setLang] = useState<"en" | "ar">("en")
+  const pathname = usePathname() || "/"
+  const router = useRouter()
+  const onArabic = pathname === "/ar" || pathname.startsWith("/ar/")
+  const [lang, setLang] = useState<"en" | "ar">(onArabic ? "ar" : "en")
 
   useEffect(() => {
     const saved = (localStorage.getItem("ez_lang") as "en" | "ar") || "en"
-    setLang(saved)
-    applyLanguage(saved)
-  }, [])
+    const next = onArabic ? "ar" : saved
+    setLang(next)
+    applyLanguage(next)
+  }, [onArabic])
 
   const applyLanguage = (newLang: "en" | "ar") => {
     document.documentElement.lang = newLang
@@ -22,8 +27,11 @@ export function LanguageToggle() {
 
   const toggleLanguage = () => {
     const nextLang = lang === "en" ? "ar" : "en"
+    const bare = pathname.replace(/^\/ar/, "") || "/"
+    const target = nextLang === "ar" ? (bare === "/" ? "/ar" : `/ar${bare}`) : bare
     setLang(nextLang)
     applyLanguage(nextLang)
+    router.push(target)
   }
 
   return (

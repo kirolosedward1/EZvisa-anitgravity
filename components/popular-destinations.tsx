@@ -1,7 +1,7 @@
 "use client"
 
 import { destinations } from "@/lib/destinations"
-import { ArrowRight, MoveRight, Clock } from "lucide-react"
+import { ArrowRight, MoveRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -83,10 +83,7 @@ export function PopularDestinations() {
                   <h3 className="text-xl font-bold tracking-tight mb-1">
                     {country.name}
                   </h3>
-                  <div className="text-xs font-medium text-white/70 flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-blue-400 inline" />
-                    <span>24-48h File Prep</span>
-                  </div>
+                  <p className="text-xs text-white/60">Application ready in 1–2 days</p>
                 </div>
               </Link>
             </motion.div>

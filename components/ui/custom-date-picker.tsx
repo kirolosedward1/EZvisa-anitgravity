@@ -5,6 +5,7 @@ import { Calendar as CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 
 import { cn } from "@/lib/utils"
+import { INVALID_DATE_MESSAGE, parseCalendarDate } from "@/lib/dates"
 import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
@@ -34,6 +35,8 @@ export function CustomDatePicker({
   id,
 }: CustomDatePickerProps) {
   const [open, setOpen] = React.useState(false)
+  const [typed, setTyped] = React.useState("")
+  const [invalid, setInvalid] = React.useState(false)
 
   // Parse YYYY-MM-DD in local time
   const parseDateString = React.useCallback((dateStr?: string) => {
@@ -79,7 +82,39 @@ export function CustomDatePicker({
   // Format display text
   const displayText = selectedDate ? format(selectedDate, "PPP") : ""
 
+  const commitTyped = () => {
+    const trimmed = typed.trim()
+    if (!trimmed) {
+      setInvalid(false)
+      return
+    }
+    const parsed = parseCalendarDate(trimmed)
+    if (!parsed) {
+      setInvalid(true)
+      return
+    }
+    setInvalid(false)
+    setTyped("")
+    onChange(parsed.iso)
+  }
+
   return (
+    <div className="flex flex-col gap-2">
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label={placeholder}
+      placeholder="DD/MM/YYYY"
+      disabled={disabled}
+      value={typed}
+      onChange={(event) => {
+        setTyped(event.target.value)
+        setInvalid(false)
+      }}
+      onBlur={commitTyped}
+      className="h-12 rounded-xl border border-input bg-background px-4 text-base text-foreground"
+    />
+    {invalid && <p className="text-sm text-destructive">{INVALID_DATE_MESSAGE}</p>}
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
@@ -106,5 +141,6 @@ export function CustomDatePicker({
         />
       </PopoverContent>
     </Popover>
+    </div>
   )
 }

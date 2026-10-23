@@ -34,9 +34,9 @@ export const VISA_RULES: VisaRulesConfig = {
       note: "Standard adult fee paid at the center. Under 6 years free.",
     },
     processingTime: {
-      minDays: 10,
-      maxDays: 15,
-      note: "Typical embassy turnaround time after biometrics appointment.",
+      minDays: 1,
+      maxDays: 2,
+      note: "We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy.",
     },
     stayDuration: "Up to 90 days in a 180-day window",
     providers: {

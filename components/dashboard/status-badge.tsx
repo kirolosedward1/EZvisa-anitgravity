@@ -1,13 +1,14 @@
-import { AlertCircle, CheckCircle2, Clock, XCircle } from "lucide-react"
+import { AlertCircle, CheckCircle2, Circle, Clock, XCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-export type StatusTone = "success" | "warning" | "info" | "danger"
+export type StatusTone = "success" | "warning" | "info" | "danger" | "neutral"
 
 const toneStyles: Record<StatusTone, { className: string; icon: typeof CheckCircle2 }> = {
   success: { className: "bg-success/10 text-success border-success/20", icon: CheckCircle2 },
   warning: { className: "bg-warning/10 text-warning border-warning/25", icon: AlertCircle },
   info: { className: "bg-primary/10 text-primary border-primary/15", icon: Clock },
   danger: { className: "bg-destructive/10 text-destructive border-destructive/20", icon: XCircle },
+  neutral: { className: "bg-muted text-muted-foreground border-border", icon: Circle },
 }
 
 export function StatusBadge({
