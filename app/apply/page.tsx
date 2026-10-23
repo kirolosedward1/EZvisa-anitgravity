@@ -13,6 +13,7 @@ import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { toCitizenshipIso } from "@/lib/nationalities"
+import { fetchAccountNationality, readRememberedNationality, rememberNationality } from "@/lib/remembered-nationality"
 
 import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
 const AUTO_SAVE_DELAY = 300
@@ -210,6 +211,23 @@ function ApplyPageContent() {
     if (c.countryOfResidence !== formData.countryOfResidence || c.cityOfResidence !== formData.cityOfResidence) setFormData(c)
   }, [formData])
 
+  // Preselect the nationality next time: remember every valid choice on this device.
+  useEffect(() => {
+    if (formData.nationality) rememberNationality(formData.nationality)
+  }, [formData.nationality])
+
+  // Nothing on this device (new browser): use the signed-in customer's latest application, if any.
+  useEffect(() => {
+    if (!isInitialized) return
+    let alive = true
+    fetchAccountNationality().then((iso) => {
+      if (alive && iso) setFormData((f) => (f.nationality ? f : { ...f, nationality: iso }))
+    })
+    return () => {
+      alive = false
+    }
+  }, [isInitialized])
+
   const handleContinuePrevious = useCallback(() => {
     if (pendingSavedData) {
       const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
@@ -220,6 +238,7 @@ function ApplyPageContent() {
       setFormData({
         ...defaultFormData,
         ...pendingSavedData,
+        nationality: pendingSavedData.nationality || readRememberedNationality(),
         ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
         ...(toCountry && { destination: toCountry }),
         ...(travelStartDate && { travelStartDate }),
@@ -240,6 +259,7 @@ function ApplyPageContent() {
     
     setFormData({
       ...defaultFormData,
+      nationality: readRememberedNationality(),
       ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
       ...(toCountry && { destination: toCountry }),
       ...(travelStartDate && { travelStartDate }),
@@ -357,6 +377,7 @@ function ApplyPageContent() {
         setShowResumeModal(true)
         setFormData({
           ...defaultFormData,
+          nationality: readRememberedNationality(),
           ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
           ...(toCountry && { destination: toCountry }),
           ...(travelStartDate && { travelStartDate }),
@@ -366,6 +387,7 @@ function ApplyPageContent() {
         setFormData({
           ...defaultFormData,
           ...savedData,
+          nationality: savedData.nationality || readRememberedNationality(),
           ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
           ...(toCountry && { destination: toCountry }),
           ...(travelStartDate && { travelStartDate }),
