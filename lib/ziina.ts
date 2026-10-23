@@ -18,6 +18,8 @@ export type ZiinaIntent = {
   currency_code?: string
   redirect_url?: string
   success_url?: string
+  cancel_url?: string
+  failure_url?: string
   [key: string]: unknown
 }
 

@@ -1,4 +1,4 @@
-import { SITE_URL } from "@/lib/site-url"
+import { SITE_URL, siteUrl } from "@/lib/site-url"
 
 const STATIC_ORIGINS = [
   SITE_URL,
@@ -28,6 +28,39 @@ function previewDeploymentOrigins(): string[] {
     origins.push(`https://${host}`)
   }
   return origins
+}
+
+/**
+ * Preview payment returns may use the request Origin only when VERCEL_ENV is preview and
+ * that Origin is exactly https://$VERCEL_URL or https://$VERCEL_BRANCH_URL.
+ * Any other Origin, and every production request, returns null. The Host header is never read.
+ */
+export function exactPreviewReturnOrigin(origin: string | null): string | null {
+  if (!origin) return null
+  return previewDeploymentOrigins().includes(origin) ? origin : null
+}
+
+/** Absolute payment return URL. Preview uses the validated deployment origin; everything else stays on the official site. */
+export function paymentReturnUrl(options: {
+  clientUrl: string | undefined
+  fallbackPath: string
+  requestOrigin: string | null
+  isDev: boolean
+}): string {
+  const { clientUrl, fallbackPath, requestOrigin, isDev } = options
+  const previewOrigin = exactPreviewReturnOrigin(requestOrigin)
+  const pathOf = (value: string) => {
+    const parsed = new URL(value, SITE_URL)
+    if (isDev && parsed.hostname === "localhost") return parsed.toString()
+    const path = `${parsed.pathname}${parsed.search}`
+    return previewOrigin ? `${previewOrigin}${path}` : siteUrl(path)
+  }
+  if (!clientUrl) return previewOrigin ? `${previewOrigin}${fallbackPath}` : siteUrl(fallbackPath)
+  try {
+    return pathOf(clientUrl)
+  } catch {
+    return previewOrigin ? `${previewOrigin}${fallbackPath}` : siteUrl(fallbackPath)
+  }
 }
 
 /** Web app plus the Expo web preview (localhost and *.exp.direct / *.expo.dev tunnels). */

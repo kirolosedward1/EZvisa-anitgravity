@@ -49,7 +49,7 @@ export function FAQSection() {
                 >
                   <span className="font-medium text-sm md:text-base lg:text-lg leading-relaxed pe-2 md:pe-4 text-start">{faq.question}</span>
                   <ChevronDown
-                    className={`w-5 h-5 md:w-5 md:h-5 text-muted-foreground transition-transform flex-shrink-0 mt-0.5 md:mt-1 group-hover:text-primary ${
+                    className={`w-5 h-5 md:w-5 md:h-5 text-[#5B6475] transition-transform flex-shrink-0 mt-0.5 md:mt-1 group-hover:text-primary ${
                       openIndex === index ? "rotate-180" : ""
                     }`}
                   />

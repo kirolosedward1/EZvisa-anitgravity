@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
-import { SITE_URL, siteUrl } from "@/lib/site-url"
-import { isAllowedPaymentOrigin, paymentCorsHeaders } from "@/lib/cors"
+import { isAllowedPaymentOrigin, paymentCorsHeaders, paymentReturnUrl } from "@/lib/cors"
 import { applyIntentStatus, fetchIntent, isPaidStatus, OPEN_INTENT_STATUSES, priceForApplication, UUID_RE } from "@/lib/ziina"
 
 export async function OPTIONS(request: NextRequest) {
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
     // Backward-compatible body: clients may still send amount/currency, but both are IGNORED.
     // The price is always computed here from the stored application.
     const body = await request.json().catch(() => ({}))
-    const { applicationId, success_url, cancel_url } = body ?? {}
+    const { applicationId, success_url, cancel_url, failure_url } = body ?? {}
     // Test mode is a server setting too (a client could otherwise request a free test-mode intent).
     const test = process.env.ZIINA_TEST_MODE === "true"
 
@@ -52,18 +51,18 @@ export async function POST(request: NextRequest) {
       return json({ error: "Invalid application" }, { status: 400 })
     }
 
-    // No open redirects: whatever the client sends, Ziina returns the customer to the official domain.
-    const toSite = (u: string | undefined, fallbackPath: string) => {
-      if (!u) return siteUrl(fallbackPath)
-      try {
-        const parsed = new URL(u, SITE_URL)
-        return isDev && parsed.hostname === "localhost" ? parsed.toString() : siteUrl(parsed.pathname + parsed.search)
-      } catch {
-        return siteUrl(fallbackPath)
-      }
-    }
-    const successUrl = toSite(success_url, "/payment-success")
-    const cancelUrl = toSite(cancel_url, "/payment-failed")
+    // Only the path from the client is kept. Production always returns to the official site.
+    // Preview returns to this deployment only when Origin is exactly https://$VERCEL_URL or https://$VERCEL_BRANCH_URL.
+    const toReturn = (u: unknown, fallbackPath: string) =>
+      paymentReturnUrl({
+        clientUrl: typeof u === "string" ? u : undefined,
+        fallbackPath,
+        requestOrigin: origin,
+        isDev,
+      })
+    const successUrl = toReturn(success_url, "/payment-success")
+    const cancelUrl = toReturn(cancel_url, "/payment-failed")
+    const failureUrl = toReturn(failure_url, "/payment-failed")
 
     const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY
@@ -106,7 +105,9 @@ export async function POST(request: NextRequest) {
         OPEN_INTENT_STATUSES.includes(existing.status) &&
         existing.redirect_url &&
         existing.amount === amountInFils &&
-        (!existing.success_url || !success_url || existing.success_url === success_url)
+        (!existing.success_url || existing.success_url === successUrl) &&
+        (!existing.cancel_url || existing.cancel_url === cancelUrl) &&
+        (!existing.failure_url || existing.failure_url === failureUrl)
       ) {
         return json({ ...existing, reused: true })
       }
@@ -131,6 +132,7 @@ export async function POST(request: NextRequest) {
         currency_code: validCurrency,
         success_url: successUrl,
         cancel_url: cancelUrl,
+        failure_url: failureUrl,
         test,
       }),
     })

@@ -3,34 +3,89 @@
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Check, Loader2, Mail, FileText, Clock, Headphones, ArrowRight, Upload } from "lucide-react"
+import { Check, Loader2, Mail, FileText, Clock, Headphones, Upload, RefreshCw } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { useEffect, useState, Suspense } from "react"
 import { getPaymentConfirmationWhatsAppUrl } from "@/lib/whatsapp"
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const POLL_MS = 2000
+const POLL_FOR_MS = 30_000
+
+type PaymentOutcome = "checking" | "paid" | "pending" | "failed" | "missing"
+
 function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const [token, setToken] = useState<string>("")
   const [destination, setDestination] = useState<string>("")
-  const [isLoading, setIsLoading] = useState(true)
+  const [outcome, setOutcome] = useState<PaymentOutcome>("checking")
+  const [attempt, setAttempt] = useState(0)
 
+  // Ziina's webhook only reaches production. Confirm the intent here through GET /api/check-payment,
+  // which fetches it with our API key and stores the status. Landing on this URL is not proof of payment.
   useEffect(() => {
     const urlToken = searchParams.get("token") || sessionStorage.getItem("lastCompletedToken") || ""
     const urlAppId = searchParams.get("appId") || sessionStorage.getItem("lastCompletedAppId") || ""
     const urlDest = searchParams.get("dest") || sessionStorage.getItem("lastCompletedDest") || ""
-    
+
     setToken(urlToken || urlAppId)
     setDestination(urlDest)
+    setOutcome("checking")
 
-    const cleanUpStorage = () => {
-      sessionStorage.removeItem("pendingApplication")
-      localStorage.removeItem("visa-wizard-form")
-      setIsLoading(false)
+    if (!UUID_RE.test(urlAppId)) {
+      setOutcome("missing")
+      return
     }
 
-    cleanUpStorage()
-  }, [searchParams])
+    let cancelled = false
+    let timer = 0
+    const started = Date.now()
+
+    const finish = (next: PaymentOutcome) => {
+      if (cancelled) return
+      if (next === "paid") {
+        sessionStorage.removeItem("pendingApplication")
+        localStorage.removeItem("visa-wizard-form")
+      }
+      setOutcome(next)
+    }
+
+    const tick = async () => {
+      if (cancelled) return
+      try {
+        const res = await fetch(`/api/check-payment?applicationId=${encodeURIComponent(urlAppId)}`, { cache: "no-store" })
+        const data = await res.json().catch(() => ({}))
+        if (cancelled) return
+        if (res.status === 400 || res.status === 404) {
+          finish("missing")
+          return
+        }
+        const status = String(data.payment_status ?? "").toLowerCase()
+        if (res.ok && (status === "paid" || status === "completed")) {
+          finish("paid")
+          return
+        }
+        if (res.ok && (status === "failed" || status === "canceled" || status === "cancelled")) {
+          finish("failed")
+          return
+        }
+      } catch {
+        // Keep polling until the deadline. A single network error is not a failed payment.
+      }
+      if (Date.now() - started >= POLL_FOR_MS) {
+        finish("pending")
+        return
+      }
+      timer = window.setTimeout(tick, POLL_MS)
+    }
+
+    void tick()
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [searchParams, attempt])
 
   const steps = [
     { icon: Mail, text: "Confirmation email sent to your inbox" },
@@ -44,26 +99,40 @@ function PaymentSuccessContent() {
       <SiteHeader forceBackground={true} />
       <main className="min-h-screen pt-24 pb-16 px-4">
         <div className="container max-w-xl mx-auto text-center">
-          {/* Success Icon */}
-          <div className="mb-8">
-            {isLoading ? (
+          <div className="mb-8" role="status" aria-live="polite">
+            {outcome === "checking" ? (
               <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
                 <Loader2 className="w-12 h-12 text-primary animate-spin" />
               </div>
-            ) : (
+            ) : outcome === "paid" ? (
               <div className="w-24 h-24 mx-auto rounded-full bg-emerald-500 flex items-center justify-center animate-in zoom-in duration-300">
-                <Check className="w-12 h-12 text-white stroke-[3]" />
+                <Check className="w-12 h-12 text-primary-foreground stroke-[3]" />
+              </div>
+            ) : outcome === "failed" ? (
+              <div className="w-24 h-24 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
+                <RefreshCw className="w-12 h-12 text-destructive" />
+              </div>
+            ) : (
+              <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Clock className="w-12 h-12 text-primary" />
               </div>
             )}
           </div>
 
-          {/* Title */}
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Payment Confirmed
+            {outcome === "checking" && "Confirming your payment"}
+            {outcome === "paid" && "Payment Confirmed"}
+            {outcome === "failed" && "Payment didn't go through"}
+            {outcome === "pending" && "Payment not confirmed yet"}
+            {outcome === "missing" && "We couldn't verify this payment"}
           </h1>
-          
+
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Your Schengen visa application package has been received and is now assigned to our document preparation desk.
+            {outcome === "checking" && "We're checking this payment with Ziina. This takes a few seconds."}
+            {outcome === "paid" && "Your Schengen visa application package has been received and is now assigned to our document preparation desk."}
+            {outcome === "failed" && "You weren't charged. You can retry the payment whenever you're ready."}
+            {outcome === "pending" && "If you completed payment, it can take a minute to show. Check again, and we'll ask Ziina for the latest status."}
+            {outcome === "missing" && "This return link doesn't include an application we can check. If you paid, use your tracking reference or contact us on WhatsApp."}
           </p>
 
           {/* Case Reference Badge */}
@@ -74,7 +143,27 @@ function PaymentSuccessContent() {
             </div>
           )}
 
-          {/* Action Required: Upload Documents (Step 2 of 2) */}
+          {outcome === "pending" && (
+            <div className="mb-8">
+              <Button type="button" size="lg" className="h-12 px-6 rounded-xl" onClick={() => setAttempt((n) => n + 1)}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Check again
+              </Button>
+            </div>
+          )}
+
+          {outcome === "failed" && (
+            <div className="mb-8">
+              <Button asChild size="lg" className="h-12 px-6 rounded-xl">
+                <Link href="/apply?step=payment&retry=true">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Retry Payment
+                </Link>
+              </Button>
+            </div>
+          )}
+
+          {outcome === "paid" && (
           <div className="mb-8 bg-amber-500/10 border-2 border-amber-500/30 rounded-3xl p-6 md:p-8 text-left shadow-md relative overflow-hidden">
             <div className="flex items-center gap-3 mb-3">
               <span className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
@@ -96,7 +185,7 @@ function PaymentSuccessContent() {
 
             <div className="flex flex-col sm:flex-row gap-3">
               {token && (
-                <Button asChild size="lg" className="w-full sm:w-auto h-12 px-6 rounded-xl bg-primary hover:bg-primary/90 text-white shadow-sm text-sm font-semibold">
+                <Button asChild size="lg" className="w-full sm:w-auto h-12 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-sm font-semibold">
                   <Link href={`/track/${token}/upload`}>
                     <Upload className="w-4 h-4 mr-2" />
                     Upload Documents Now
@@ -110,8 +199,9 @@ function PaymentSuccessContent() {
               </Button>
             </div>
           </div>
+          )}
 
-          {/* Customer Dashboard & Case Access */}
+          {outcome === "paid" && (
           <div className="mb-8 bg-card border border-border/80 shadow-sm rounded-3xl p-6 text-left">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
@@ -130,8 +220,9 @@ function PaymentSuccessContent() {
               </div>
             </div>
           </div>
+          )}
 
-          {/* What Happens Next */}
+          {outcome === "paid" && (
           <div className="mb-8 bg-card border border-border/80 shadow-sm rounded-3xl p-6 md:p-8 max-w-md mx-auto text-left relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full pointer-events-none" />
             <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-6">
@@ -151,6 +242,7 @@ function PaymentSuccessContent() {
               ))}
             </div>
           </div>
+          )}
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
