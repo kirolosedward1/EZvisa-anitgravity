@@ -33,7 +33,7 @@ export function ApplicationView({
         </div>
         <aside className="flex flex-col gap-6" aria-label="Case details and support">
           <CaseSummary app={app} stage={stage} showTrackingLink={showTrackingLink} allowDiscard={allowDiscard} />
-          <SupportCard token={app.tracking_token ?? ""} destination={app.destination_country} />
+          <SupportCard id={app.id} token={app.tracking_token ?? ""} destination={app.destination_country} />
         </aside>
       </div>
     </div>

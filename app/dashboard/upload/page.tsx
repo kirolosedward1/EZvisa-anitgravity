@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { Upload, FileText, CheckCircle2, Loader2, ArrowLeft, AlertCircle, Clock } from "lucide-react"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { useRegisterSupportCase } from "@/lib/support-context"
 import { DOC_TYPES, DOC_FLAG, MAX_UPLOAD_BYTES, UPLOAD_MIME, REQUIREMENTS } from "@/lib/shared/wizard-contract"
 
 type AppDocStatus = {
@@ -32,6 +33,7 @@ function UploadDesk() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [app, setApp] = useState<AppDocStatus | null>(null)
+  useRegisterSupportCase(id ? { id: app?.id || id, country: app?.destination_country, step: "upload" } : null)
   const [loading, setLoading] = useState(true)
 
   const token = useCallback(async () => {

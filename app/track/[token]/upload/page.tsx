@@ -10,6 +10,7 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { Upload, FileText, CheckCircle2, Loader2, ArrowLeft, AlertCircle, Clock, ShieldCheck } from "lucide-react"
 import { getDocumentHelpWhatsAppUrl } from "@/lib/whatsapp"
+import { useRegisterSupportCase } from "@/lib/support-context"
 import { DOC_TYPES, DOC_FLAG, MAX_UPLOAD_BYTES, UPLOAD_MIME, REQUIREMENTS, referenceOf } from "@/lib/shared/wizard-contract"
 
 type AppDocStatus = {
@@ -35,6 +36,8 @@ export default function UploadDocumentsPage() {
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [appStatus, setAppStatus] = useState<AppDocStatus | null>(null)
+  // Only once the row is loaded: a reference built from the token would not match the one the customer sees.
+  useRegisterSupportCase(appStatus?.id ? { id: appStatus.id, country: appStatus.destination_country, step: "upload" } : null)
   const [loadingStatus, setLoadingStatus] = useState(true)
 
   const fetchStatus = useCallback(async () => {
