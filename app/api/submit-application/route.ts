@@ -73,6 +73,37 @@ export async function POST(request: Request) {
 
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Same person, same trip, within 10 minutes: return the row we already saved.
+    // App-level only. There is no unique constraint and no migration.
+    if (sanitizedData.email) {
+      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+      let recent = supabase
+        .from("visa_applications")
+        .select("id, tracking_token")
+        .eq("email", sanitizedData.email)
+        .eq("destination_country", sanitizedData.destination)
+        .in("application_status", ["draft", "submitted"])
+        .gte("created_at", since)
+        .order("created_at", { ascending: false })
+        .limit(1)
+      recent = startDate ? recent.eq("entry_date", startDate.iso) : recent.is("entry_date", null)
+      recent = endDate ? recent.eq("exit_date", endDate.iso) : recent.is("exit_date", null)
+      const { data: duplicate, error: duplicateError } = await recent.maybeSingle()
+      if (duplicateError) {
+        console.error("[submit] duplicate lookup failed:", duplicateError.code)
+        return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
+      }
+      if (duplicate) {
+        return NextResponse.json({
+          success: true,
+          message: "Application submitted successfully",
+          applicationId: duplicate.id,
+          trackingToken: duplicate.tracking_token ?? undefined,
+          created: false,
+        })
+      }
+    }
+
     if (sanitizedData.email) {
       const { data: existing } = await supabase
         .from("visa_applications")
@@ -156,6 +187,8 @@ export async function POST(request: Request) {
       success: true,
       message: "Application submitted successfully",
       applicationId: application.id,
+      trackingToken: application.tracking_token ?? undefined,
+      created: true,
     })
   } catch (error) {
     return NextResponse.json(

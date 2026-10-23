@@ -11,10 +11,6 @@ const STATIC_ORIGINS = [
   "http://127.0.0.1:8081",
 ]
 
-/** This project's Vercel preview hosts only. Production stays the exact ezvisa.net origins above. */
-const PREVIEW_HOST =
-  /^e-zvisa-anitgravit[a-z0-9-]*-kirolosedward1-gmailcoms-projects\.vercel\.app$/
-
 function extraOrigins(): string[] {
   return (process.env.PAYMENT_CORS_ORIGINS || "")
     .split(",")
@@ -22,32 +18,16 @@ function extraOrigins(): string[] {
     .filter(Boolean)
 }
 
-function deploymentOrigins(): string[] {
+/** Exact preview deployment hosts. No *.vercel.app pattern. Production never includes these. */
+function previewDeploymentOrigins(): string[] {
+  if (process.env.VERCEL_ENV !== "preview") return []
   const origins: string[] = []
-  for (const host of [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL]) {
-    const value = host?.trim()
-    if (!value) continue
-    const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`
-    try {
-      const url = new URL(withProtocol)
-      if (url.protocol !== "https:") continue
-      origins.push(`https://${url.host}`)
-    } catch {
-      continue
-    }
+  for (const raw of [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL]) {
+    const host = raw?.trim()
+    if (!host || /[\s/]/.test(host)) continue
+    origins.push(`https://${host}`)
   }
   return origins
-}
-
-function isProjectPreviewOrigin(origin: string): boolean {
-  try {
-    const url = new URL(origin)
-    if (url.protocol !== "https:" || url.username || url.password || url.port) return false
-    if (url.pathname !== "/" || url.search || url.hash) return false
-    return PREVIEW_HOST.test(url.hostname)
-  } catch {
-    return false
-  }
 }
 
 /** Web app plus the Expo web preview (localhost and *.exp.direct / *.expo.dev tunnels). */
@@ -56,8 +36,7 @@ export function isAllowedPaymentOrigin(origin: string | null): boolean {
   if (
     STATIC_ORIGINS.includes(origin) ||
     extraOrigins().includes(origin) ||
-    deploymentOrigins().includes(origin) ||
-    isProjectPreviewOrigin(origin)
+    previewDeploymentOrigins().includes(origin)
   ) {
     return true
   }

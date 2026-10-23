@@ -20,19 +20,18 @@ interface PaymentStepProps {
 }
 
 type SavedCheckout = {
-  fingerprint: string
   applicationId: string
   trackingToken?: string
 }
 
 const CHECKOUT_STORAGE_KEY = "ez_checkout_application"
 
-function readSavedCheckout(fingerprint: string): SavedCheckout | null {
+function readSavedCheckout(): SavedCheckout | null {
   try {
     const raw = sessionStorage.getItem(CHECKOUT_STORAGE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as SavedCheckout
-    if (parsed.fingerprint === fingerprint && parsed.applicationId) return parsed
+    if (typeof parsed.applicationId === "string" && parsed.applicationId) return parsed
   } catch {
     return null
   }
@@ -51,10 +50,19 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
   const [isProcessing, setIsProcessing] = useState(false)
   const [currency, setCurrency] = useState<CurrencyInfo>(getDefaultCurrency())
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [applicationId, setApplicationId] = useState<string | null>(null)
   const inFlightRef = useRef<string | null>(null)
-  const savedCheckoutRef = useRef<SavedCheckout | null>(null)
+  const trackingTokenRef = useRef<string | undefined>(undefined)
 
   const router = useRouter()
+
+  useEffect(() => {
+    const saved = readSavedCheckout()
+    if (saved) {
+      setApplicationId(saved.applicationId)
+      trackingTokenRef.current = saved.trackingToken
+    }
+  }, [])
 
   useEffect(() => {
     setCurrency(getDefaultCurrency())
@@ -82,13 +90,9 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
   const paymentAmount = basePrice * multiplier
 
   const handlePayment = async () => {
-    const fingerprint = JSON.stringify(formData)
-    const existing =
-      savedCheckoutRef.current?.fingerprint === fingerprint
-        ? savedCheckoutRef.current
-        : readSavedCheckout(fingerprint)
     if (inFlightRef.current) return
-    inFlightRef.current = existing?.applicationId ?? "pending"
+    const remembered = applicationId ? { applicationId, trackingToken: trackingTokenRef.current } : readSavedCheckout()
+    inFlightRef.current = remembered?.applicationId ?? "pending"
 
     setIsProcessing(true)
     trackEvent("checkout_started", { destination: formData.destination, amount: paymentAmount })
@@ -99,10 +103,10 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
     let redirecting = false
 
     try {
-      let applicationId = existing?.applicationId
-      let trackingToken = existing?.trackingToken
+      let checkoutId = remembered?.applicationId
+      let trackingToken = remembered?.trackingToken
 
-      if (!applicationId) {
+      if (!checkoutId) {
         // The application row is created here, once, when the customer first proceeds to payment.
         const submitResponse = await fetch("/api/submit-application", {
           method: "POST",
@@ -123,32 +127,35 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
         }
 
         const createdId: string = submitData.applicationId
-        applicationId = createdId
+        checkoutId = createdId
         trackingToken = typeof submitData.trackingToken === "string" ? submitData.trackingToken : undefined
-        const saved: SavedCheckout = { fingerprint, applicationId: createdId, trackingToken }
-        savedCheckoutRef.current = saved
+        const saved: SavedCheckout = { applicationId: createdId, trackingToken }
+        setApplicationId(createdId)
+        trackingTokenRef.current = trackingToken
         rememberCheckout(saved)
 
-        // Queue the HubSpot lead once, here, before Ziina. Retry must not call this again.
-        try {
-          await fetch("/api/hubspot/create-lead", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(formData),
-          })
-        } catch (hubspotError) {
-          console.error("HubSpot lead creation failed:", hubspotError)
+        // A reused row (same person, country, and dates within 10 minutes) already has its lead.
+        if (submitData.created === true) {
+          try {
+            await fetch("/api/hubspot/create-lead", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            })
+          } catch (hubspotError) {
+            console.error("HubSpot lead creation failed:", hubspotError)
+          }
         }
       }
 
-      if (!applicationId) throw new Error("Failed to save application. Please try again.")
-      inFlightRef.current = applicationId
+      if (!checkoutId) throw new Error("Failed to save application. Please try again.")
+      inFlightRef.current = checkoutId
 
       const successUrl = new URL("/payment-success", window.location.origin)
       if (trackingToken) successUrl.searchParams.set("token", trackingToken)
-      successUrl.searchParams.set("appId", applicationId)
+      successUrl.searchParams.set("appId", checkoutId)
       if (formData.destination) successUrl.searchParams.set("dest", formData.destination)
 
       const response = await fetch("/api/create-payment", {
@@ -157,7 +164,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          applicationId,
+          applicationId: checkoutId,
           amount: paymentAmount,
           currency: currency.code,
           success_url: successUrl.toString(),
@@ -177,7 +184,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
 
       if (data.redirect_url) {
         sessionStorage.setItem("lastCompletedToken", trackingToken || "")
-        sessionStorage.setItem("lastCompletedAppId", applicationId)
+        sessionStorage.setItem("lastCompletedAppId", checkoutId)
         sessionStorage.setItem("lastCompletedDest", formData.destination || "")
         sessionStorage.setItem("pendingApplication", JSON.stringify({
           ...formData,
