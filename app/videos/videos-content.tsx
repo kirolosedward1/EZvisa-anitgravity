@@ -47,7 +47,7 @@ export default function VideosContent() {
           badge="Guides"
           title={
             <>
-              Video <span className="text-primary bg-[#0436DC]">Guides</span>
+              Video <span className="text-primary">Guides</span>
             </>
           }
           description="Watch our expert video tutorials to learn everything about visa applications, document preparation, and avoiding common mistakes."

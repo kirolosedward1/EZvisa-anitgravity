@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { ChevronDown, ArrowUpRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -108,6 +109,46 @@ interface FooterProps {
   limitWidth?: boolean
 }
 
+/** Customer pages (dashboard, account, tracking, receipts): a one-line footer instead of the marketing footer. */
+const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip", "/continue"]
+
+function AccountFooter({ className }: { className?: string }) {
+  const year = new Date().getUTCFullYear()
+  const links = [
+    { href: "/contact", en: "Help", ar: "المساعدة" },
+    { href: "/privacy-policy", en: "Privacy", ar: "الخصوصية" },
+    { href: "/terms-of-service", en: "Terms", ar: "الشروط" },
+    { href: "/refund-policy", en: "Refunds", ar: "الاسترداد" },
+  ]
+  return (
+    <footer className={cn("border-t border-border/80 bg-background text-foreground", className)}>
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-4 py-6 text-sm text-muted-foreground md:flex-row md:justify-between">
+        <p>
+          <LangText
+            en={<>&copy; <span suppressHydrationWarning>{year}</span> EZvisa</>}
+            ar={<>&copy; <span suppressHydrationWarning>{year}</span> إيزي فيزا</>}
+          />
+        </p>
+        <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <a
+            href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-[#1A7F37] hover:underline"
+          >
+            <LangText en="WhatsApp support" ar="الدعم عبر واتساب" />
+          </a>
+          {links.map((link) => (
+            <LocaleLink key={link.href} href={link.href} className="hover:text-foreground">
+              <LangText en={link.en} ar={link.ar} />
+            </LocaleLink>
+          ))}
+        </nav>
+      </div>
+    </footer>
+  )
+}
+
 export function Footer({ 
   simplified = false,
   className = "",
@@ -116,6 +157,9 @@ export function Footer({
 }: FooterProps) {
   const currentYear = new Date().getUTCFullYear()
   const [openSection, setOpenSection] = useState<string | null>(null)
+  const pathname = usePathname()
+  const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
+  if (ACCOUNT_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) return <AccountFooter className={className} />
 
   const toggleSection = (title: string) => {
     setOpenSection(openSection === title ? null : title)
@@ -128,10 +172,6 @@ export function Footer({
       limitWidth ? "w-full max-w-[1312px] mx-auto" : "",
       className
     )}>
-      {/* Decorative orbs */}
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-accent/5 pointer-events-none hidden md:block" />
-      <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-accent/4 pointer-events-none hidden md:block" />
-
       {/* Decorative flight path overlay */}
       <div className="absolute top-12 left-[10%] w-[300px] h-[220px] pointer-events-none select-none opacity-[0.05] dark:opacity-[0.08] -rotate-[15deg] hidden md:block">
         <Image

@@ -3,7 +3,7 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { Plus, X } from "lucide-react"
+import { BriefcaseBusiness, CircleEllipsis, GraduationCap, Plus, Stethoscope, TreePalm, Users, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
@@ -12,6 +12,7 @@ import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import { TravelDatesField } from "@/components/apply/travel-dates-field"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { LangText } from "@/components/lang-text"
+import { CountryFlag } from "@/components/country-flag"
 import {
   ChoiceList,
   ChoiceRow,
@@ -32,12 +33,12 @@ interface TripDetailsStepProps {
 }
 
 const purposes = [
-  { value: "tourism", en: "Tourism", ar: "سياحة", desc: "A holiday or a short visit.", descAr: "عطلة أو زيارة قصيرة." },
-  { value: "business", en: "Business", ar: "عمل", desc: "Meetings or work travel.", descAr: "اجتماعات أو سفر عمل." },
-  { value: "family", en: "Family visit", ar: "زيارة عائلية", desc: "Seeing family in Europe.", descAr: "زيارة العائلة في أوروبا." },
-  { value: "medical", en: "Medical treatment", ar: "علاج", desc: "Care at a clinic or hospital.", descAr: "علاج في عيادة أو مستشفى." },
-  { value: "education", en: "Education or training", ar: "دراسة أو تدريب", desc: "A course or a study trip.", descAr: "دورة أو رحلة دراسية." },
-  { value: "other", en: "Other", ar: "سبب آخر", desc: "A reason not listed here.", descAr: "سبب غير موجود في القائمة." },
+  { value: "tourism", icon: TreePalm, en: "Tourism", ar: "سياحة", desc: "A holiday or a short visit.", descAr: "عطلة أو زيارة قصيرة." },
+  { value: "business", icon: BriefcaseBusiness, en: "Business", ar: "عمل", desc: "Meetings or work travel.", descAr: "اجتماعات أو سفر عمل." },
+  { value: "family", icon: Users, en: "Family visit", ar: "زيارة عائلية", desc: "Seeing family in Europe.", descAr: "زيارة العائلة في أوروبا." },
+  { value: "medical", icon: Stethoscope, en: "Medical treatment", ar: "علاج", desc: "Care at a clinic or hospital.", descAr: "علاج في عيادة أو مستشفى." },
+  { value: "education", icon: GraduationCap, en: "Education or training", ar: "دراسة أو تدريب", desc: "A course or a study trip.", descAr: "دورة أو رحلة دراسية." },
+  { value: "other", icon: CircleEllipsis, en: "Other", ar: "سبب آخر", desc: "A reason not listed here.", descAr: "سبب غير موجود في القائمة." },
 ]
 
 const companions = [
@@ -226,6 +227,7 @@ export function TripDetailsStep({
                     titleAr={item.ar}
                     description={item.desc}
                     descriptionAr={item.descAr}
+                    icon={item.icon}
                     selected={formData.purposeOfTrip === item.value}
                     onSelect={() => select({ purposeOfTrip: item.value })}
                   />
@@ -504,6 +506,7 @@ export function TripDetailsStep({
                           titleAr={SCHENGEN_META[country]?.ar || country}
                           description="Add this stop to the itinerary."
                           descriptionAr="أضف هذه المحطة إلى خط السير."
+                          leading={<CountryFlag iso={SCHENGEN_META[country]?.iso} country={country} className="size-7" />}
                           selected={newCountry === country}
                           onSelect={() => {
                             setNewCountry(country)
@@ -573,7 +576,8 @@ export function TripDetailsStep({
                     <ul className="divide-y divide-[#E3E7EF] border-y border-[#E3E7EF]">
                       {additionalCountries.map((visit) => (
                         <li key={visit.country} className="flex items-center justify-between gap-3 py-3">
-                          <div className="min-w-0">
+                          <CountryFlag iso={SCHENGEN_META[visit.country]?.iso} country={visit.country} className="size-7" />
+                          <div className="min-w-0 flex-1">
                             <p className="truncate text-[15px] font-medium text-[#0A0F1F]">
                               <LangText en={visit.country} ar={SCHENGEN_META[visit.country]?.ar || visit.country} />
                             </p>

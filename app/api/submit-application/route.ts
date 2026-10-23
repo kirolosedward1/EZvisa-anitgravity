@@ -172,16 +172,17 @@ export async function POST(request: Request) {
       if (formData.travelEndDate && !endDate) {
         return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
       }
-      if (!startDate || !endDate) {
+      // Dates are asked after payment (/continue/[id]), like in the app: none is fine, but not just one of them.
+      if (!!startDate !== !!endDate) {
         return NextResponse.json(
           { success: false, message: "Please select a departure date and a return date." },
           { status: 400 },
         )
       }
-      if (!datesInOrder(startDate.iso, endDate.iso)) {
+      if (startDate && endDate && !datesInOrder(startDate.iso, endDate.iso)) {
         return NextResponse.json({ success: false, message: RETURN_AFTER_DEPARTURE }, { status: 400 })
       }
-      if (startDate.iso < todayIsoUae()) {
+      if (startDate && startDate.iso < todayIsoUae()) {
         return NextResponse.json({ success: false, message: "Your departure date is in the past. Please choose new dates." }, { status: 400 })
       }
     }

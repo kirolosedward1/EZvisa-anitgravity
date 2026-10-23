@@ -73,5 +73,5 @@ export async function getApplicationByToken(token: string): Promise<VisaApplicat
 
 /** Link to the upload desk of a case: the secret tracking link when the database has one, else the signed-in dashboard. */
 export const uploadPath = (a: Pick<VisaApplication, "id" | "tracking_token">) => (a.tracking_token ? `/track/${a.tracking_token}/upload` : `/dashboard/upload?id=${a.id}`)
-export const continuePath = (a: Pick<VisaApplication, "id" | "tracking_token">) => (a.tracking_token ? `/track/${a.tracking_token}/continue` : `/dashboard/continue?id=${a.id}`)
+export const continuePath = (a: Pick<VisaApplication, "id" | "tracking_token">) => `/continue/${a.id}`
 export const trackPath = (a: Pick<VisaApplication, "id" | "tracking_token">) => (a.tracking_token ? `/track/${a.tracking_token}` : `/dashboard?id=${a.id}`)

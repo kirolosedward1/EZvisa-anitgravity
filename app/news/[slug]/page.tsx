@@ -31,17 +31,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
+  // Most posts have no SEO overrides: fall back to the post's own title and excerpt so the tab title is never empty.
+  const metaTitle = post.seo?.metaTitle?.trim() || post.title
+  const metaDescription = post.seo?.metaDescription?.trim() || post.excerpt
+
   return {
-    title: post.seo.metaTitle,
-    description: post.seo.metaDescription,
+    title: metaTitle,
+    description: metaDescription,
     keywords: post.seo.keywords,
     authors: [{ name: post.author }],
     alternates: {
       canonical: `https://www.ezvisa.net/news/${slug}`,
     },
     openGraph: {
-      title: post.seo.metaTitle,
-      description: post.seo.metaDescription,
+      title: metaTitle,
+      description: metaDescription,
       images: [
         {
           url: post.featuredImage,
@@ -57,8 +61,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     },
     twitter: {
       card: "summary_large_image",
-      title: post.seo.metaTitle,
-      description: post.seo.metaDescription,
+      title: metaTitle,
+      description: metaDescription,
       images: [post.featuredImage],
     },
   }

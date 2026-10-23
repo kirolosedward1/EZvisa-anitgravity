@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
-import { Sparkles, CheckCircle2, AlertCircle, Files, LogOut, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Files, LogOut, Loader2 } from "lucide-react";
 
 interface DemoModeBarProps {
   currentScenario: DemoScenario;
@@ -39,7 +39,7 @@ export function DemoModeBar({ currentScenario, applicantName, applicantEmail }: 
       <div className="container mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 text-sm sm:px-6 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full border border-warning/25 bg-warning/10 px-2.5 py-0.5 text-xs font-medium text-warning">
-            <Sparkles className="size-3.5" aria-hidden="true" /> Demo mode
+            Demo mode
           </span>
           <span className="text-muted-foreground">
             Viewing as <strong className="font-medium text-foreground">{applicantName}</strong> ({applicantEmail})

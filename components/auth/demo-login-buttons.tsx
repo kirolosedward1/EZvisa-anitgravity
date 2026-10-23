@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
-import { Loader2, Sparkles, CheckCircle2, AlertCircle, Files, ArrowRight } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Files, ArrowRight } from "lucide-react";
 
 interface DemoLoginButtonsProps {
   next?: string;
@@ -62,7 +62,7 @@ export function DemoLoginButtons({ next = "/dashboard", className = "", variant 
     <div className={`rounded-2xl border border-primary/20 bg-[#F7F8FA] p-5 sm:p-6 ${className}`}>
       <div className="flex items-center gap-2 mb-2">
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary text-primary-foreground shadow-xs">
-          <Sparkles className="w-3 h-3" /> Demo Sandbox
+          Demo Sandbox
         </span>
         <span className="text-xs font-semibold text-muted-foreground">Instant 1-Click Access</span>
       </div>

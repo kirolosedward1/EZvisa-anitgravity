@@ -35,7 +35,7 @@ export default function ContactPage() {
           badge="Contact Us"
           title={
             <>
-              Get in <span className="text-primary bg-[#0436DC]">Touch</span>
+              Get in <span className="text-primary">Touch</span>
             </>
           }
           description="Have questions about your visa application? WhatsApp support, 9am–6pm UAE time."

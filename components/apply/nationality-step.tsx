@@ -2,9 +2,6 @@
 
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
-import { CitizenshipPicker } from "@/components/citizenship-picker"
-import { CountryFlag } from "@/components/country-flag"
 import { LangText } from "@/components/lang-text"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import {
@@ -15,13 +12,8 @@ import {
   wizardFieldClass,
   wizardLabelClass,
 } from "@/components/apply/wizard-choices"
-import { Button } from "@/components/ui/button"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { priceForTravellers } from "@/lib/currency"
-import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
-import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
 
@@ -87,9 +79,7 @@ function localIso(date: Date) {
 
 export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading }: NationalityStepProps) {
   const [showErrors, setShowErrors] = useState(false)
-  const [destinationOpen, setDestinationOpen] = useState(false)
   const [maxDob, setMaxDob] = useState("")
-  const [touchKeyboard, setTouchKeyboard] = useState(false)
   const seeded = useRef(false)
   const withSpouse = formData.spouseAccompanying === "yes"
   const spousePrice = priceForTravellers("yes")
@@ -99,7 +89,6 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
     const date = new Date()
     date.setFullYear(date.getFullYear() - 18)
     setMaxDob(localIso(date))
-    setTouchKeyboard(window.matchMedia("(pointer: coarse)").matches)
   }, [])
 
   useEffect(() => {
@@ -117,13 +106,11 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
   const errors = {
     firstName: !formData.firstName.trim(),
     lastName: !formData.lastName.trim(),
-    nationality: !formData.nationality,
     passport: !formData.passportNumber.trim(),
     phone: !phone || !isValidPhone(phone),
     email: !formData.email.trim() || !isValidEmail(formData.email.trim()),
     // The form is noValidate, so the input's max isn't enforced by the browser: check the date and 18+ here.
     dateOfBirth: !isValidCalendarDate(formData.dateOfBirth) || formData.dateOfBirth < "1900-01-01" || (!!maxDob && formData.dateOfBirth > maxDob),
-    destination: !formData.destination,
   }
   const isFormValid = !Object.values(errors).some(Boolean)
 
@@ -195,30 +182,6 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             </FieldError>
           ) : null}
         </div>
-      </div>
-
-      <div className="mt-7" data-invalid={invalid("nationality")}>
-        <span className={wizardLabelClass}>
-          <LangText en="Nationality" ar="الجنسية" />
-        </span>
-        <CitizenshipPicker
-          value={formData.nationality}
-          placeholder="Select nationality"
-          placeholderAr="اختر الجنسية"
-          onChange={(iso) => {
-            set({ nationality: iso })
-            trackEvent("nationality_selected", { nationality: iso })
-          }}
-          className={cn(
-            "h-[52px] rounded-[10px] border-[#E3E7EF] bg-[#FFFFFF] px-4 text-[15px] font-normal shadow-none hover:bg-[#FFFFFF]",
-            invalidClass("nationality"),
-          )}
-        />
-        {showErrors && errors.nationality ? (
-          <FieldError>
-            <LangText en="Choose your nationality." ar="اختر الجنسية." />
-          </FieldError>
-        ) : null}
       </div>
 
       <div className="mt-7" data-invalid={invalid("passport")}>
@@ -300,8 +263,8 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             indicator="radio"
             title="With my spouse"
             titleAr="مع الزوج أو الزوجة"
-            description={`Two applicants, AED ${spousePrice}`}
-            descriptionAr={`متقدمان، ${spousePrice} درهم`}
+            description={`Two applicants, AED ${spousePrice}. Spouse details after payment.`}
+            descriptionAr={`متقدمان، ${spousePrice} درهم. بيانات الزوج أو الزوجة بعد الدفع.`}
             selected={withSpouse}
             onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes" })}
           />
@@ -357,78 +320,11 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
         ) : null}
       </div>
 
-      <div className="mt-7" data-invalid={invalid("destination")}>
-        <span className={wizardLabelClass}>
-          <LangText en="Destination" ar="الوجهة" />
-        </span>
-        <Popover open={destinationOpen} onOpenChange={setDestinationOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              role="combobox"
-              aria-expanded={destinationOpen}
-              aria-invalid={invalid("destination")}
-              className={cn(
-                "h-[52px] w-full justify-between rounded-[10px] border-[#E3E7EF] bg-[#FFFFFF] px-4 text-[15px] font-normal shadow-none hover:bg-[#FFFFFF]",
-                invalidClass("destination"),
-              )}
-            >
-              {formData.destination ? (
-                <span className="flex min-w-0 items-center gap-2">
-                  <CountryFlag iso={SCHENGEN_META[formData.destination]?.iso} title={formData.destination} />
-                  <span className="truncate text-[#0A0F1F]">
-                    <LangText en={formData.destination} ar={SCHENGEN_META[formData.destination]?.ar || formData.destination} />
-                  </span>
-                </span>
-              ) : (
-                <span className="font-normal text-[#5B6475]">
-                  <LangText en="Select destination" ar="اختر الوجهة" />
-                </span>
-              )}
-              <ChevronsUpDown className="ms-2 size-4 shrink-0 text-[#5B6475]" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-            <Command>
-              <CommandInput placeholder="Search country..." autoFocus={!touchKeyboard} />
-              <CommandList>
-                <CommandEmpty>No country found.</CommandEmpty>
-                <CommandGroup>
-                  {SCHENGEN_COUNTRIES.map((country) => (
-                    <CommandItem
-                      key={country}
-                      value={country}
-                      onSelect={() => {
-                        set({ destination: country })
-                        setDestinationOpen(false)
-                        trackEvent("destination_selected", { destination: country })
-                      }}
-                    >
-                      <Check className={cn("me-2 size-4", formData.destination === country ? "opacity-100" : "opacity-0")} />
-                      <span className="me-2">
-                        <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
-                      </span>
-                      <LangText en={country} ar={SCHENGEN_META[country]?.ar || country} />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-        {showErrors && errors.destination ? (
-          <FieldError>
-            <LangText en="Choose a destination." ar="اختر الوجهة." />
-          </FieldError>
-        ) : null}
-      </div>
-
       <WizardBar
         onBack={onBack}
         loading={isLoading}
-        continueLabel={withSpouse ? "Continue" : "Continue to Review & Pay"}
-        continueLabelAr={withSpouse ? "تابع" : "تابع إلى المراجعة والدفع"}
+        continueLabel="Continue to Review & Pay"
+        continueLabelAr="تابع إلى المراجعة والدفع"
         loadingLabel="Please wait"
         loadingLabelAr="لحظات"
       />

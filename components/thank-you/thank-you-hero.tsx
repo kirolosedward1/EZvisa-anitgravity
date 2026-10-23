@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { CheckCircle2, Mail, Sparkles } from "lucide-react"
+import { CheckCircle2, Mail } from "lucide-react"
 
 interface ApplicationData {
   firstName: string
@@ -98,7 +98,6 @@ export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
               transition={{ delay: 0.5 }}
               className="mt-8 inline-flex items-center gap-2 bg-primary/10 px-6 py-3 rounded-full"
             >
-              <Sparkles className="w-4 h-4 text-primary" />
               <span className="text-sm font-medium text-primary">
                 Reference: #{applicationData.orderId}
               </span>

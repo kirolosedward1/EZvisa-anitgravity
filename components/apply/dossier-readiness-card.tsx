@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { ShieldCheck, CheckCircle2, AlertTriangle, Sparkles } from "lucide-react"
+import { ShieldCheck, CheckCircle2, AlertTriangle, ClipboardCheck } from "lucide-react"
 import { FormData } from "@/lib/form-types"
 
 interface DossierReadinessCardProps {
@@ -80,7 +80,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/30 shrink-0">
-            <Sparkles className="w-5 h-5" />
+            <ClipboardCheck className="w-5 h-5" />
           </div>
           <div>
             <h4 className="font-semibold text-sm text-foreground uppercase tracking-wider">

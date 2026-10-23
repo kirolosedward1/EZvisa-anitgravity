@@ -1,13 +1,35 @@
 import { redirect } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
-import { Footer } from "@/components/footer"
 import { ContinueForm } from "@/app/continue/[id]/continue-form"
 import { createServerClient } from "@/lib/supabase/server"
 import { docsMissingCount, isPaid, missingDetailSteps } from "@/lib/application-status"
 import { getDemoApplicationByToken } from "@/lib/demo-data"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import type { FormData } from "@/lib/form-types"
 
 export const metadata = { title: "Continue application", robots: { index: false, follow: false } }
+
+/** Answers already saved on the row (wizard notes from the website or the app, then the columns), to pre-fill. */
+function savedAnswers(app: VisaApplication): Partial<FormData> {
+  let notes: Record<string, unknown> = {}
+  try {
+    const parsed = JSON.parse(app.additional_notes || "{}")
+    if (parsed && typeof parsed === "object") notes = parsed
+  } catch {
+    notes = {}
+  }
+  const wizard = (notes.wizard && typeof notes.wizard === "object" ? notes.wizard : {}) as Partial<FormData>
+  return {
+    ...wizard,
+    purposeOfTrip: wizard.purposeOfTrip || app.travel_purpose || "",
+    travelStartDate: wizard.travelStartDate || app.entry_date || "",
+    travelEndDate: wizard.travelEndDate || app.exit_date || "",
+    passportNumber: wizard.passportNumber || app.passport_number || "",
+    destination: app.destination_country || wizard.destination || "",
+    spouseAccompanying: notes.spouseAccompanying === "yes" || wizard.spouseAccompanying === "yes" ? "yes" : "no",
+    employmentStatus: (wizard.employmentStatus || notes.employmentStatus || "") as FormData["employmentStatus"],
+  }
+}
 
 export default async function ContinuePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -32,12 +54,16 @@ export default async function ContinuePage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <>
+    <div className="min-h-[100dvh] bg-[#FFFFFF]">
       <SiteHeader />
-      <main id="main-content" className="bg-background px-4 py-16">
-        <ContinueForm applicationId={id} steps={steps} uploadHref={token ? `/track/${token}/upload` : `/dashboard?id=${id}`} />
+      <main id="main-content">
+        <ContinueForm
+          applicationId={id}
+          steps={steps}
+          uploadHref={token ? `/track/${token}/upload` : `/dashboard?id=${id}`}
+          initial={savedAnswers(app)}
+        />
       </main>
-      <Footer />
-    </>
+    </div>
   )
 }

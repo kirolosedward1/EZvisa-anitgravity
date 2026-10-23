@@ -1,6 +1,7 @@
 "use client"
 
 import { Check } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { LangText } from "@/components/lang-text"
 import { cn } from "@/lib/utils"
 
@@ -35,6 +36,8 @@ export function ChoiceRow({
   selected,
   onSelect,
   indicator = "check",
+  icon: Icon,
+  leading,
 }: {
   title: string
   titleAr: string
@@ -44,6 +47,10 @@ export function ChoiceRow({
   onSelect: () => void
   /** Trip keeps a check. Traveller uses a 20px radio. */
   indicator?: "check" | "radio"
+  /** Optional Lucide icon shown in a tile before the text. */
+  icon?: LucideIcon
+  /** Optional element before the text when there is no icon, e.g. a round country flag. */
+  leading?: React.ReactNode
 }) {
   return (
     <button
@@ -56,6 +63,21 @@ export function ChoiceRow({
         selected ? "border-[#0436DC] bg-[#F2F5FF]" : "border-[#E3E7EF] bg-[#FFFFFF]",
       )}
     >
+      {Icon ? (
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-lg transition-colors",
+            selected ? "bg-[#0436DC] text-primary-foreground" : "bg-[#F2F5FF] text-[#0436DC]",
+          )}
+          aria-hidden
+        >
+          <Icon className="size-4.5" strokeWidth={1.75} />
+        </span>
+      ) : leading ? (
+        <span className="flex shrink-0 items-center" aria-hidden>
+          {leading}
+        </span>
+      ) : null}
       <span className="min-w-0 flex-1">
         <span
           className={cn(

@@ -6,19 +6,21 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { InnerHero } from "@/components/inner-hero"
-import { 
-  Clock, 
-  Calendar, 
-  MapPin, 
-  Coins, 
-  ShieldCheck, 
-  Check, 
-  X, 
-  ArrowRight, 
-  Sparkles, 
-  FileText, 
-  UserCheck, 
-  TicketCheck 
+import {
+  Clock,
+  Calendar,
+  MapPin,
+  Coins,
+  ShieldCheck,
+  Check,
+  X,
+  ArrowRight,
+  Star,
+  FileText,
+  UserCheck,
+  TicketCheck,
+  Tag,
+  Sparkles,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -113,7 +115,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       description: "Standard visa fee paid directly at the application center. Under 6 years free."
     },
     {
-      icon: Sparkles,
+      icon: Tag,
       label: "EZvisa Price",
       value: destination.price,
       description: "Flat fee for full application form, itineraries, hotel/flight reservations & support."

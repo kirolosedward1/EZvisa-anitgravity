@@ -1,6 +1,6 @@
 "use client"
 
-import { FileText, Plane, Hotel, Map, Mail, X, Sparkles } from "lucide-react"
+import { FileText, Plane, Hotel, Map, Mail, X, ShieldCheck } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useState } from "react"
 import Image from "next/image"
@@ -38,7 +38,7 @@ const services = [
     image: "/images/documents/cover-letter.png",
   },
   {
-    icon: Sparkles,
+    icon: ShieldCheck,
     title: "Travel insurance",
     description: "Compliant Schengen medical travel insurance covering €30,000 for your entire stay in Europe.",
     image: "/images/documents/travel-insurance.jpeg",

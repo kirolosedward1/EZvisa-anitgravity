@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import VideosContent from "./videos-content"
 
 export const metadata: Metadata = {
-  title: "Visa Application Video Guides | EZvisa Video Library",
+  title: "Visa Application Video Guides",
   description:
     "Watch step-by-step video guides on applying for Schengen visas, document preparation tips, and common mistakes to avoid. Expert video tutorials for European visa applications.",
   keywords: [

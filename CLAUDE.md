@@ -139,7 +139,7 @@ Usage rules:
 | Component | Purpose |
 |---|---|
 | `site-header.tsx` | Sticky translucent (`backdrop-blur`) top nav, centered hover-pill links, mobile drawer. **New pages must be added here (desktop + mobile).** |
-| `footer.tsx` | Dark footer with link sections + CTA |
+| `footer.tsx` | Footer with link sections + CTA. Customer pages (`/dashboard`, `/account`, `/track`, `/receipt`, `/trip`, `/continue`) get a one-line footer (copyright, WhatsApp, Help, legal) automatically. |
 | `hero-section.tsx` | Homepage hero: layered branded background (gradient wash + masked dot grid + radial glow), country selector, trust badges |
 | `services-section.tsx` | 3-column services card grid |
 | `how-it-works-simple.tsx` | Step process with icons |
@@ -152,6 +152,11 @@ Usage rules:
 | `country-card.tsx`, `country-document-selector.tsx`, `document-requirements-page.tsx` | Documents flow |
 | `start-application-box.tsx`, `fixed-cta-button.tsx`, `continue-application-notification.tsx` | Conversion helpers |
 | `cookie-consent.tsx`, `scroll-restoration.tsx`, `scroll-to-top.tsx`, `theme-provider.tsx` | App-wide utilities |
+| `country-flag.tsx` | **The only flag component**: round flag from `public/flags/<slug>.png` (by ISO or country name). Never render rectangular flags. |
+| `user-menu.tsx` | Header account dropdown (signed-out: sign in / sign up / track / app / help; signed-in: applications, documents, account, sign out). |
+| `app-promo-section.tsx` | Homepage app section with iPhone mockups (reuses `components/app/*`). The app link lives in the footer, not the header nav. |
+| `payment-marks.tsx` | Footer payment badges (official Simple Icons paths). |
+| `auth/auth-split-layout.tsx`, `auth/google-sign-in.tsx` | Sign-in page frame (brand panel + app preview on desktop, form only on mobile) and the Google button with the official "G" logo. |
 
 ---
 
@@ -259,8 +264,13 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
 - **`GET /api/app-config`** serves the contract as JSON for the app to fetch at launch.
 - Routes the app depends on (keep on `main`): `/api/create-payment`, `/api/check-payment`, `/api/webhooks/ziina`,
   `/api/upload-document` (Bearer + `applicationId` + `uploadId`), `/api/continue-application`, `/app-return`.
-- Journey on both platforms: wizard (personal → spouse → trip → payment) → pay → **continue application**
-  (passport number + employment: `/dashboard/continue`, `/track/[token]/continue`) → upload documents → track.
+- Journey on both platforms: wizard (**destination** = nationality + country → traveller → review & pay) → pay →
+  **continue application** at `/continue/[id]` (trip details → passport if missing → spouse if travelling together →
+  employment; `lib/application-status.ts` `missingDetailSteps`) → upload documents → track. Trip, hotel, budget and
+  spouse questions are never asked before payment. Old `/dashboard/continue` and `/track/[token]/continue` links redirect.
+- Header modes (`components/site-header.tsx`): task pages (`/apply`, `/continue`, `/payment-*`) show only logo,
+  "Need help?" and WhatsApp; signed-in customers and customer pages get the short account header (My applications,
+  New application, Destinations, Help, account menu); everyone else gets the marketing nav.
 - Change procedure, auth/Supabase configuration and known leftovers: `docs/APP_WEB_SYNC.md`, `docs/AUTH_SETUP.md`.
 
 ---
