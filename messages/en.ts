@@ -400,8 +400,11 @@ export const en = {
   "review.proceed": "Proceed to Payment",
   "review.travellers": "Travellers",
   "review.travellersWithSpouse": "You and your spouse · 2 travellers",
-  "summary.yourTrip": "Your trip",
   "review.travellersSolo": "Just you · 1 traveller",
+  "review.nationalityPassport": "{name} passport",
+  "review.withSpouse": "with spouse",
+  "summary.yourTrip": "Your trip",
+  "summary.withSpouse": "with a spouse",
   "review.country": "Country",
   "review.travelDates": "Travel dates",
 

@@ -264,11 +264,14 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
   const country = formData.destination?.trim() || ""
   const countryAr = (country && SCHENGEN_META[country]?.ar) || country
   const nationality = citizenshipName(formData.nationality)
+  const nationalityAr = citizenshipNameAr(formData.nationality) || nationality
   const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
   const passport = formData.passportNumber?.trim()
-  const travellerEn = [travellerName, citizenshipName(formData.nationality), passport].filter(Boolean)
-  const travellerAr = [travellerName, citizenshipNameAr(formData.nationality), passport].filter(Boolean)
   const withSpouse = applicantCount(formData.spouseAccompanying, formData.travelingWith) > 1
+  const spouseEn = withSpouse ? message("en", "review.withSpouse") : ""
+  const spouseAr = withSpouse ? message("ar", "review.withSpouse") : ""
+  const travellerEn = [travellerName, passport, spouseEn].filter(Boolean)
+  const travellerAr = [travellerName, passport, spouseAr].filter(Boolean)
 
   return (
     <div>
@@ -280,15 +283,20 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
       />
 
       <ReviewRow label="Destination" labelAr="الوجهة" onEdit={onEditTrip}>
-        {country ? <LangText en={country} ar={countryAr} /> : "—"}
-        {nationality ? ` · ${nationality} passport` : ""}
+        {country ? <LangText en={country} ar={countryAr} /> : <Msg id="summary.yourTrip" />}
+        {nationality ? (
+          <>
+            {" · "}
+            <Msg id="review.nationalityPassport" values={{ name: nationality }} valuesAr={{ name: nationalityAr }} />
+          </>
+        ) : null}
       </ReviewRow>
 
       <ReviewRow label="Traveller" labelAr="المسافر" onEdit={onEditTraveller}>
         {travellerEn.length ? (
           <LangText en={travellerEn.join(" · ")} ar={travellerAr.join(" · ")} />
         ) : (
-          "—"
+          <Msg id="summary.yourTrip" />
         )}
       </ReviewRow>
 

@@ -402,8 +402,11 @@ export const ar: Record<MessageKey, string> = {
   "review.proceed": "المتابعة إلى الدفع",
   "review.travellers": "المسافرون",
   "review.travellersWithSpouse": "أنت وزوجك/زوجتك · مسافران",
-  "summary.yourTrip": "رحلتك",
   "review.travellersSolo": "أنت فقط · مسافر واحد",
+  "review.nationalityPassport": "جواز {name}",
+  "review.withSpouse": "مع الزوج أو الزوجة",
+  "summary.yourTrip": "رحلتك",
+  "summary.withSpouse": "مع الزوج أو الزوجة",
   "review.country": "الدولة",
   "review.travelDates": "تواريخ السفر",
 
