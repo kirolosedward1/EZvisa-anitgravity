@@ -1,3 +1,5 @@
+> **Archived 2026-10-23 (outdated plan).** A plan-only document; the UI was rebuilt differently since (v9/v10). Current status: `mobile/HANDOFF.md` §0.
+
 # EZvisa Mobile: Ground-up UI Overhaul Plan
 
 Status: PLAN ONLY. No code has been changed. Target: Expo Go SDK 57 (iOS first, Android and web degrade gracefully).

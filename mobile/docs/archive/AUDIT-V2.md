@@ -1,3 +1,5 @@
+> **Archived 2026-10-23 (outdated plan).** Gap list from 19 Oct (v6 design); later chats closed or replaced most items. Current status: `mobile/HANDOFF.md` §0.
+
 # EZvisa app: audit v2 (gap list vs. the approved brief)
 
 Date: 19 Oct 2026 (Europe/Berlin). Base: `mobile-app` @ e4b43a4 (v6 design, wizard ported 1:1 from www.ezvisa.net/apply).

@@ -7,7 +7,7 @@
 -- table shows "absent" instead of stopping the query. Counts are aggregates only (no emails, names or ids).
 --
 -- Sections
---   1 migrations   mobile/migrations 0001-0013, website scripts/006, mobile/db/proposed-live-changes.sql
+--   1 migrations   mobile/migrations 0001-0013, the app's avatars bucket, website scripts/006, mobile/db/proposed-live-changes.sql
 --   2 risk         derived checks for audit B1 / B5 / H6 (broad SELECT/UPDATE, broad storage, open INSERT)
 --   3 tables       device_tokens, wizard_events, document_reviews, customer_profiles, and related objects
 --   4 realtime     tables in the supabase_realtime publication
@@ -126,6 +126,11 @@ markers(sort, mig, marker, present) as (values
 
   (13, '0013 claim_device_token', 'function claim_device_token(text, text)',
        exists(select 1 from fn where name = 'claim_device_token')),
+
+  (14, 'app avatars storage (mobile v10.6; no migration in the repo)', 'bucket avatars',
+       exists(select 1 from storage.buckets where id = 'avatars')),
+  (14, 'app avatars storage (mobile v10.6; no migration in the repo)', 'a storage policy mentions avatars',
+       exists(select 1 from pol where sch = 'storage' and (qual || wcheck) ilike '%avatars%')),
 
   (20, 'website scripts/006 tighten RLS', 'policy "Users can view own submissions" scoped to own email',
        exists(select 1 from pol where tbl = 'visa_applications' and name = 'Users can view own submissions' and qual ilike '%email%' and qual not ilike '%auth.role()%')),

@@ -1,3 +1,5 @@
+> **Archived 2026-10-23 (outdated plan).** The v9 polish plan is done or superseded by the v10 UI work. Current status: `mobile/HANDOFF.md` §0.
+
 # v9 Premium polish plan (visuals and experience only, no backend/data/rule changes)
 
 Before screenshots: `screenshots/v9-before/` (light/dark English, light Arabic, 393×852 @3x).
