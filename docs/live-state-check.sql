@@ -4,7 +4,7 @@
 -- Output: one table with columns section | item | result | detail. Export it (Download CSV) or copy all rows and paste them back.
 --
 -- Sections
---   01 migrations     which of mobile/migrations 0001-0012 are applied, judged by the objects each one creates
+--   01 migrations     which of mobile/migrations 0001-0013 are applied, judged by the objects each one creates
 --   02 security       audit B1 / B5 / H6 checks (broad policies, insert guard, grants), website scripts 003/005/006
 --   03 tables         every public table, row-level security on/off, plus the four tables asked about
 --   04 policies       every policy on schemas public and storage (USING / WITH CHECK text)
@@ -97,7 +97,7 @@ checks(mig, obj, found) as (
          exists (select 1 from pol where schemaname = 'storage' and policyname = 'customers upload own paid application docs')
   union all select '0011 document_storage_policies', 'policy "Admins have full access to visa_documents" is gone',
          not exists (select 1 from pol where schemaname = 'storage' and policyname = 'Admins have full access to visa_documents')
-  union all select '0012 claim_device_token', 'function claim_device_token(text, text)', exists (select 1 from fn where proname = 'claim_device_token')
+  union all select '0013 claim_device_token (was 0012 until PR #22)', 'function claim_device_token(text, text)', exists (select 1 from fn where proname = 'claim_device_token')
   union all select '0012 customer_profiles', 'table customer_profiles', exists (select 1 from tbls where t = 'customer_profiles')
   union all select '0012 customer_profiles', 'trigger customer_profiles_touch',
          exists (select 1 from trg where tbl = 'customer_profiles' and tgname = 'customer_profiles_touch')
