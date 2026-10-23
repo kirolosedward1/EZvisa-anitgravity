@@ -5,12 +5,14 @@
 //   - GET /api/check-payment?id= for the payment id the server returned to THIS device (stored, never from a URL).
 // Ziina reporting "completed" while the row is not yet updated shows "Payment received · updating" and keeps checking.
 import { useEffect, useRef, useState } from "react";
-import { AppState, View, Platform } from "react-native";
+import { AccessibilityInfo, AppState, View, Platform } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Icon, Skeleton, Text, type IconName } from "../../components/ui";
-import { useColors, S, R } from "../../lib/theme";
+import { Button, Icon, Text, type IconName } from "../../components/ui";
+import { PaymentMark } from "../../components/payment/PaymentMark";
+import { PaymentStallActions, devPaymentPreview, paymentPhrase, paymentWaitPhase, usePaymentWaitClock, PAYMENT_SLOW_MS, PAYMENT_STALL_MS } from "../../components/payment/PaymentWait";
+import { useColors, S } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { useAuth } from "../../lib/auth";
 import { getApplication, needsContinue } from "../../lib/data";
@@ -44,11 +46,20 @@ function unsettled(s: Signals, returned: string): State {
 }
 
 export default function PaymentResult() {
-  const { id, returned: returnedParam } = useLocalSearchParams<{ id: string; returned?: string }>();
-  const c = useColors(); const { t } = useT(); const insets = useSafeAreaInsets(); const { session } = useAuth();
-  const [state, setState] = useState<State>("checking"); const [needsEmp, setNeedsEmp] = useState(false); const paying = usePaying();
-  const run = useRef(0); const returned = useRef(returnedParam === "cancel" || returnedParam === "closed" ? returnedParam : "success");
-  const stateRef = useRef<State>("checking");
+  const { id, returned: returnedParam, preview: previewParam } = useLocalSearchParams<{ id: string; returned?: string; preview?: string | string[] }>();
+  // Dev only (?preview=checking|slow|stalled|timers|success|late|failure). Ignored in production, and it never calls Ziina.
+  const preview = devPaymentPreview(previewParam); const previewRef = useRef(preview);
+  useEffect(() => { previewRef.current = preview; }, [preview]);
+  const c = useColors(); const { t, lang } = useT(); const pt = (s: string) => paymentPhrase(lang, s, t);
+  const insets = useSafeAreaInsets(); const { session } = useAuth();
+  const initialState: State = preview === "failure" ? "failed" : "checking";
+  const [state, setState] = useState<State>(initialState); const [needsEmp, setNeedsEmp] = useState(false); const paying = usePaying();
+  const [attempt, setAttempt] = useState(0);
+  const headStart = preview === "slow" ? PAYMENT_SLOW_MS : preview === "stalled" ? PAYMENT_STALL_MS : 0;
+  const elapsed = usePaymentWaitClock(state === "checking", attempt, headStart);
+  const run = useRef(0); const pollSleep = useRef<(() => void) | null>(null);
+  const returned = useRef(returnedParam === "cancel" || returnedParam === "closed" ? returnedParam : "success");
+  const stateRef = useRef<State>(initialState);
   const OUTCOME: Partial<Record<State, "paid" | "pending" | "failed" | "cancelled">> = { paid: "paid", confirming: "paid", pending: "pending", failed: "failed", cancelled: "cancelled" };
   const show = (s: State) => { const o = OUTCOME[s]; if (o && stateRef.current !== s) track("payment_finished", { outcome: o }); stateRef.current = s; setState(s); };
 
@@ -65,6 +76,8 @@ export default function PaymentResult() {
   };
 
   const verify = async () => {
+    if (previewRef.current) return; // dev preview paints the states itself
+    setAttempt((n) => n + 1); // restart the 8s / 20s copy clock with this attempt
     const me = ++run.current;
     show("checking");
     const started = Date.now(); let until = started + (returned.current === "success" ? POLL_FOR : POLL_SHORT);
@@ -78,7 +91,16 @@ export default function PaymentResult() {
       if (s.intent === "completed" && stateRef.current !== "confirming") { show("confirming"); success(); }
       if (s.intent && (s.intent === "completed" || PROCESSING.includes(s.intent))) until = Math.max(until, started + POLL_FOR);
       if (Date.now() > until) { show(unsettled(s, returned.current)); return; }
-      await new Promise((r) => setTimeout(r, POLL_MS));
+      let cancel: () => void = () => {};
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, POLL_MS);
+        cancel = () => { clearTimeout(timer); resolve(); };
+        const previous = pollSleep.current;
+        pollSleep.current = cancel;
+        previous?.();
+      });
+      if (pollSleep.current === cancel) pollSleep.current = null;
+      if (run.current !== me) return;
     }
   };
 
@@ -97,22 +119,37 @@ export default function PaymentResult() {
     } finally { quietBusy.current = false; }
   };
 
-  useEffect(() => { const h = setTimeout(verify, 0); return () => { clearTimeout(h); run.current++; }; }, [id, !!session]);
   useEffect(() => {
+    if (preview) return;
+    const h = setTimeout(verify, 0);
+    return () => { clearTimeout(h); const wake = pollSleep.current; pollSleep.current = null; wake?.(); run.current++; };
+  }, [id, !!session, preview]);
+  useEffect(() => {
+    if (preview) return;
     const tick = setInterval(() => { if (Date.now() - openedAt.current < QUIET_FOR) quiet(); }, QUIET_EVERY);
     return () => clearInterval(tick);
-  }, [id, !!session]);
+  }, [id, !!session, preview]);
   // Back online (NetInfo, plus a light 5 s retry while offline), or back from another app (e.g. a banking app for
   // 3-D Secure): check again if not settled.
   useEffect(() => {
+    if (preview) return;
     const again = () => { if (["pending", "confirming", "offline"].includes(stateRef.current)) verify(); };
     const net = NetInfo.addEventListener((n) => { if (n.isConnected && stateRef.current === "offline") verify(); });
     const app = AppState.addEventListener("change", (a) => { if (a === "active") again(); });
     const tick = setInterval(() => { if (stateRef.current === "offline") verify(); }, 5000);
     return () => { net(); app.remove(); clearInterval(tick); };
-  }, [id, !!session]);
+  }, [id, !!session, preview]);
+  // Dev preview resolves itself: success morphs after 0.9s, late confirms at 22s (through the stalled screen). Retry cancels that.
+  useEffect(() => {
+    if (!preview || attempt > 0) return;
+    if (preview === "failure") { hError(); return; }
+    if (preview !== "success" && preview !== "late") return;
+    const timer = setTimeout(() => { stateRef.current = "paid"; setState("paid"); success(); }, preview === "success" ? 900 : 22_000);
+    return () => clearTimeout(timer);
+  }, [preview, attempt]);
 
   const retry = async () => {
+    if (previewRef.current) { setAttempt((n) => n + 1); show("checking"); return; }
     if (paying) return;
     try { track("payment_started", { retry: true }); const o = await startPayment(id!); returned.current = o.returned; verify(); }
     catch (e: any) { if (e?.busy) return; if (e?.alreadyPaid) { returned.current = "success"; verify(); } else hError(); }
@@ -129,20 +166,33 @@ export default function PaymentResult() {
     offline: { icon: "wifi.slash", color: c.secondaryLabel, title: t("You're offline"), body: t("We'll check your payment when you're back online.") },
   };
   const v = V[state];
+  // The 20s stall stays up through the verifier's "not confirmed yet" state. Quiet polling still promotes that to paid,
+  // and the same mark morphs into the check — the screen does not swap to a different result view underneath the user.
+  const phase = state === "checking" ? paymentWaitPhase(elapsed) : null;
+  const stalled = phase === "stalled" || (state === "pending" && elapsed >= PAYMENT_STALL_MS);
+  const title = stalled ? pt("Still confirming your payment") : v.title;
+  const body = stalled ? pt("We'll keep checking in the background.") : phase === "slow" ? pt("Still confirming with Ziina…") : v.body;
+  const mark = state === "failed" ? "failure" as const : state === "paid" || state === "confirming" ? "success" as const : state === "checking" || stalled ? "checking" as const : null;
+  const leave = () => router.replace(session ? `/applications/${id}` : "/", { withAnchor: true });
+  const retryCheck = () => { if (previewRef.current) { setAttempt((n) => n + 1); show("checking"); return; } verify(); };
+  useEffect(() => { if (Platform.OS === "ios") AccessibilityInfo.announceForAccessibility(`${title}. ${body}`); }, [title, body]);
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: Platform.OS === "ios" ? S.lg : insets.top + S.lg }} testID="payment-result">
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.md, padding: S.xl }} accessibilityLiveRegion="polite">
-        {v.icon ? <Icon name={v.icon} size={56} color={v.color} /> : <Skeleton w={56} h={56} r={R.round} />}
-        <Text variant="title1" center accessibilityRole="header" testID="payment-state">{v.title}</Text>
-        <Text variant="body" tone="secondary" center>{v.body}</Text>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.md, padding: S.xl }}>
+        {mark ? <PaymentMark mode={mark} paused={stalled} label={title} /> : v.icon ? <Icon name={v.icon} size={56} color={v.color} /> : null}
+        <View accessibilityLiveRegion="polite" style={{ alignItems: "center", gap: S.md }}>
+          <Text variant="title1" center accessibilityRole="header" testID="payment-state">{title}</Text>
+          <Text variant="body" tone="secondary" center>{body}</Text>
+        </View>
       </View>
       <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
+        {stalled && <PaymentStallActions retryLabel={t("Retry")} leaveLabel={pt("Go to my application")} onRetry={retryCheck} onLeave={leave} />}
         {state === "paid" && !guest && <Button title={needsEmp ? t("Continue application") : t("Upload documents")} onPress={() => router.replace(needsEmp ? `/continue/${id}` : `/applications/${id}`, { withAnchor: true })} />}
-        {guest && ["paid", "confirming", "pending"].includes(state) && <Button title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} />}
-        {["pending", "confirming", "offline"].includes(state) && <Button title={t("Check again")} variant="secondary" onPress={verify} />}
-        {(state === "failed" || state === "cancelled") && <Button title={paying ? t("Opening secure payment…") : t("Try again")} loading={paying} disabled={paying} onPress={retry} />}
-        {(state === "failed" || state === "pending") && <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp("Hi EZvisa, I need help paying for my application.")} />}
-        {state !== "checking" && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => router.replace(session ? `/applications/${id}` : "/", { withAnchor: true })} />}
+        {guest && ["paid", "confirming", "pending"].includes(state) && !stalled && <Button title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} />}
+        {["pending", "confirming", "offline"].includes(state) && !stalled && <Button title={t("Check again")} variant="secondary" onPress={verify} />}
+        {(state === "failed" || state === "cancelled") && <Button title={paying ? t("Opening secure payment…") : state === "failed" ? t("Retry") : t("Try again")} loading={paying} disabled={paying} onPress={retry} />}
+        {(state === "failed" || (state === "pending" && !stalled)) && <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp("Hi EZvisa, I need help paying for my application.")} />}
+        {state !== "checking" && !stalled && <Button title={t("Done")} variant="plain" color={c.label} onPress={leave} />}
       </View>
     </View>
   );
