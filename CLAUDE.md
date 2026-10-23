@@ -10,12 +10,18 @@
 
 **Value proposition:** Personally tailored visa applications by experts who know exactly what European embassies want to see. No templates, no guesswork.
 
-**Key business facts:**
-- Base price: **249 AED**
-- Money-back guarantee if the visa is denied
-- 98% approval rate, 5,000+ visas approved
-- Covers all Schengen countries (27–29 depending on copy)
-- Support via WhatsApp + Email + Phone, plus Crisp live chat
+**Key business facts (owner-confirmed, 2026-10-23; the copy must match these exactly):**
+- Price: **249 AED** per application, **498 AED** with an accompanying spouse (`lib/shared/wizard-contract.ts`).
+- Included: application form, cover letter, day-by-day itinerary, flight reservation, hotel reservation, and a
+  document check by a visa specialist. Ready in **1–2 days**; the embassy's decision takes longer.
+- **Not included:** travel insurance (optional extra through EZvisa, or the client brings their own) and embassy /
+  visa centre fees (paid at the appointment).
+- **No money-back guarantee.** Refunds follow `/refund-policy`: full refund before document review starts, for an
+  error on our side, or a duplicate payment. A visa refusal is not refunded. Never promise approval.
+- **No unverified numbers:** don't publish approval rates, customer counts, ratings or review counts (and no
+  `aggregateRating` in structured data) until the owner supplies verified figures. Testimonials are off the site.
+- Documents are uploaded only on the website or in the app, never over WhatsApp or email.
+- Covers all 29 Schengen countries. Support via WhatsApp, email and phone, plus Crisp live chat.
 
 ---
 
@@ -103,6 +109,7 @@ The site was redesigned to feel like a **real, trustworthy professional service*
 - Headings are **semibold sans (Poppins)** with tight tracking — **no italic editorial/serif display type**.
 - Section labels are compact **pill chips** (e.g. `inline-flex ... rounded-full bg-primary/10 text-primary text-xs font-medium`), not `— Eyebrow` dashes or `01 /` numbering.
 - Depth comes from subtle shadows, soft gradients, masked dot grids, and gentle radial glows — **never decorative blobs, heavy mesh, grain, or glassmorphism**.
+  - One exception, at the owner's request: the homepage hero's country selector card, its eligibility note, the rating pill and the three reassurance chips are frosted glass over the hero photo (`bg-primary-foreground/10 backdrop-blur-xl`, white text). The two pickers inside stay solid white. Don't spread glass to other sections.
 
 ### Color tokens (defined in `app/globals.css` `:root`, OKLCH)
 | Token | Purpose | Notes |
@@ -144,12 +151,12 @@ Usage rules:
 | `services-section.tsx` | 3-column services card grid |
 | `how-it-works-simple.tsx` | Step process with icons |
 | `comparison-section.tsx` | DIY vs EZvisa comparison |
-| `testimonials-section.tsx` | Customer stories with star rows |
 | `contact-section.tsx` | Homepage CTA section |
 | `faq-section.tsx` | Accordion FAQ |
-| `what-you-get-section.tsx` | Deliverables list |
+| `inner-hero.tsx` | Heading for every inner page: copy left, destination photo card right (`variant="plain"` for legal pages, which use the `.legal-copy` text styles) |
+| `after-payment-timeline.tsx` | What happens after payment, and when (How it works + destination pages) |
 | `top-destinations-carousel.tsx` | Animated destination/flag carousel (Embla) |
-| `country-card.tsx`, `country-document-selector.tsx`, `document-requirements-page.tsx` | Documents flow |
+| `document-requirements-page.tsx`, `documents/document-split.tsx`, `documents/country-facts.tsx` | Documents flow: per-country page, "you provide / we prepare" split, facts strip (visa centre, fee, timing) |
 | `start-application-box.tsx`, `fixed-cta-button.tsx`, `continue-application-notification.tsx` | Conversion helpers |
 | `cookie-consent.tsx`, `scroll-restoration.tsx`, `scroll-to-top.tsx`, `theme-provider.tsx` | App-wide utilities |
 | `country-flag.tsx` | **The only flag component**: round flag from `public/flags/<slug>.png` (by ISO or country name). Never render rectangular flags. |
@@ -219,7 +226,7 @@ Never log or expose secrets. Check the exact required names in the route/handler
 | Change brand colors | `app/globals.css` (`:root` tokens) |
 | Change the font | `app/layout.tsx` (Poppins import) + `app/globals.css` (`--font-sans`) |
 | Edit homepage hero | `components/hero-section.tsx` |
-| Edit testimonials / FAQ / footer | the matching `components/*-section.tsx` / `footer.tsx` |
+| Edit FAQ / footer | `lib/faq.ts`, `components/faq-section.tsx`, `footer.tsx` |
 | Add a Schengen country | `lib/countries.ts` + new `app/documents/required-documents-to-apply-for-a-tourist-visa-in-<country>/page.tsx` |
 | Update pricing | `app/pricing/page.tsx` + price lines in hero/contact |
 | Visa application logic | `app/apply/*`, `lib/wizard-steps.ts`, `lib/form-types.ts`, `lib/actions/visa-application.ts`, `app/api/submit-application` |

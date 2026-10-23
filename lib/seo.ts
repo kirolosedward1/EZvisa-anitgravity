@@ -142,7 +142,7 @@ export function generateServiceSchema() {
     },
     name: "Schengen Visa Application Service",
     description:
-      "Complete Schengen visa application assistance including form filling, document verification, itinerary planning, hotel reservations, and cover letter writing.",
+      "Schengen visa application preparation for UAE residents: application form, cover letter, day-by-day itinerary, flight and hotel reservations, and a document check by a visa specialist.",
     areaServed: {
       "@type": "Country",
       name: "United Arab Emirates",
@@ -150,13 +150,11 @@ export function generateServiceSchema() {
     hasOfferCatalog: {
       "@type": "OfferCatalog",
       name: "Schengen Visa Services",
+      // The two real prices: one applicant, or a couple travelling together. No ratings: none are published.
       itemListElement: [
         {
           "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "Basic Schengen Visa Package",
-          },
+          itemOffered: { "@type": "Service", name: "Schengen visa application, one applicant" },
           price: "249",
           priceCurrency: "AED",
           availability: "https://schema.org/InStock",
@@ -164,23 +162,13 @@ export function generateServiceSchema() {
         },
         {
           "@type": "Offer",
-          itemOffered: {
-            "@type": "Service",
-            name: "Premium Schengen Visa Package",
-          },
-          price: "349",
+          itemOffered: { "@type": "Service", name: "Schengen visa application, applicant and spouse" },
+          price: "498",
           priceCurrency: "AED",
           availability: "https://schema.org/InStock",
           url: "https://www.ezvisa.net/apply",
         },
       ],
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: "4.9",
-      reviewCount: "847",
-      bestRating: "5",
-      worstRating: "1",
     },
   }
 }

@@ -127,7 +127,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
       </div>
 
       <div className="pt-2 border-t border-border/30 text-[11px] text-muted-foreground leading-relaxed">
-        <strong>Our Guarantee:</strong> EZvisa reviews every detail to ensure your application forms, travel itinerary, flight/hotel vouchers, and cover letter meet all procedural guidelines before delivery.
+        <strong>What we check:</strong> before your file is ready, a visa specialist checks that your application form, itinerary, flight and hotel reservations and cover letter all match each other and the consulate's checklist.
       </div>
     </div>
   )

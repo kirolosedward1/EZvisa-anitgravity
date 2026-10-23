@@ -55,7 +55,7 @@ export default async function DossierPage({ params }: { params: Promise<{ token:
   }
 
   const dossierHtml = generateCompleteDossierPack(appData)
-  const whatsAppUrl = getCaseTrackingWhatsAppUrl(token, appData.destination_country)
+  const whatsAppUrl = getCaseTrackingWhatsAppUrl(appData.id || token, appData.destination_country)
 
   return (
     <DossierViewerClient

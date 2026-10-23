@@ -23,11 +23,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ezvisa.net"),
   title: {
-    default: "EZvisa - Schengen Visa Application Service | 98% Approval Rate",
+    default: "EZvisa | Schengen Visa Application Service for UAE Residents",
     template: "%s | EZvisa",
   },
   description:
-    "Get your Schengen visa approved fast with EZvisa. AI-powered visa application assistance for 29 European countries. Expert help with documents, itinerary, and cover letters. 98% approval rate. Starting from 249 AED.",
+    "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
   keywords: [
     "Schengen visa",
     "tourist visa Europe",
@@ -54,9 +54,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
+    title: "EZvisa | Schengen Visa Application Service for UAE Residents",
     description:
-      "AI-powered Schengen visa application service for 29 European countries. Expert assistance with documents, itinerary & cover letters. 98% approval rate. From 249 AED.",
+      "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
     url: "https://www.ezvisa.net/",
     siteName: "EZvisa",
     locale: "en_US",
@@ -72,9 +72,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
+    title: "EZvisa | Schengen Visa Application Service for UAE Residents",
     description:
-      "AI-powered Schengen visa service. Expert help for 29 European countries. 98% approval rate. From 249 AED.",
+      "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED.",
     images: ["https://www.ezvisa.net/images/logo-main.png"],
     creator: "@ezvisa",
   },

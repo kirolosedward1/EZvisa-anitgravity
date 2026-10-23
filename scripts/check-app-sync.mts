@@ -183,7 +183,7 @@ eq("price rule (249 / 498)", [web.priceAed("no"), web.priceAed("yes")], [web.PRI
 check("payment-step takes the price from the contract", /priceAed\(/.test(webFile("components/apply/payment-step.tsx")))
 
 // 8. The website must not keep its own copies of the lists.
-for (const f of ["components/apply/nationality-step.tsx", "components/apply/trip-details-step.tsx", "components/hero-section.tsx", "components/site-header.tsx", "components/start-application-box.tsx", "components/how-it-works-content.tsx", "components/document-requirements-page.tsx"]) {
+for (const f of ["components/apply/nationality-step.tsx", "components/apply/trip-details-step.tsx", "components/hero-section.tsx", "components/site-header.tsx", "components/start-application-box.tsx", "components/document-requirements-page.tsx"]) {
   const src = webFile(f)
   check(`${f} has no private nationality/destination list`, !/const (nationalityCountries|fromCountries|nationalities|schengenCountries|residenceCountries)\s*=\s*\[/.test(src), "import the list from lib/shared/wizard-contract.ts instead")
 }

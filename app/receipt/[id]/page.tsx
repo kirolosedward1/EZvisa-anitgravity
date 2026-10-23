@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ReceiptView } from "@/components/dashboard/receipt-view"
@@ -6,6 +8,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { isPaid } from "@/lib/application-status"
 import { getDemoApplicationByToken } from "@/lib/demo-data"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import { SupportApplication } from "@/components/support-application"
 
 export const metadata = { title: "Receipt", robots: { index: false, follow: false } }
 
@@ -27,8 +30,15 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="bg-background px-4 py-16">
-        <ReceiptView app={app} />
+      <main id="main-content" className="min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
+        <SupportApplication id={app.id ?? id} country={app.destination_country} step="receipt" />
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+          <Link href={`/dashboard?id=${app.id ?? id}`} className="inline-flex items-center gap-2 self-start text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
+            Back to your application
+          </Link>
+          <ReceiptView app={app} />
+        </div>
       </main>
       <Footer />
     </>

@@ -13,6 +13,7 @@ import { WizardBar } from "@/components/apply/wizard-bar"
 import { ChoiceList, ChoiceRow, FieldError, WizardQuestion, wizardFieldClass, wizardLabelClass } from "@/components/apply/wizard-choices"
 import { TravellerSelect } from "@/components/apply/traveller-select"
 import { LangText } from "@/components/lang-text"
+import { normalizePassport } from "@/lib/digits"
 import { cn } from "@/lib/utils"
 import type { DetailStep } from "@/lib/application-status"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
@@ -169,7 +170,7 @@ export function ContinueForm({
         <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
           <LangText en="Payment confirmed" ar="تم تأكيد الدفع" />
         </span>
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
+        <h1 className="app-title mt-3 text-foreground">
           <LangText en="Continue your application" ar="أكمل طلبك" />
         </h1>
         <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
@@ -248,7 +249,8 @@ export function ContinueForm({
                 <input
                   id="passportNumber"
                   value={form.passportNumber || ""}
-                  onChange={(event) => { update({ passportNumber: event.target.value.toUpperCase() }); setPassportErrors(false) }}
+                  onChange={(event) => { update({ passportNumber: normalizePassport(event.target.value) }); setPassportErrors(false) }}
+                  inputMode="text"
                   placeholder="e.g. N1234567"
                   autoCapitalize="characters"
                   autoCorrect="off"

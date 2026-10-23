@@ -9,8 +9,7 @@ export function DownloadSection() {
           Get the EZvisa app
         </h2>
         <p className="text-base leading-relaxed text-muted-foreground">
-          Free to download. {PRICE_LABEL} per application, paid in the app when you are ready, with a money-back
-          guarantee if the visa is denied.
+          Free to download. {PRICE_LABEL} per application, paid in the app when you are ready.
         </p>
       </div>
       <StoreBadges size="lg" className="shrink-0" />

@@ -15,6 +15,7 @@ import { CountryFlag } from "@/components/country-flag"
 import { UserMenu, useViewer } from "@/components/user-menu"
 import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
+import { supportMessage, useSupportCase } from "@/lib/support-context"
 
 const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
 
@@ -70,6 +71,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const [isMobileDestinationsOpen, setIsMobileDestinationsOpen] = useState(false)
 
   const [pageUrl, setPageUrl] = useState<string | null>(null)
+  // Application pages register their case so WhatsApp opens with its reference, status and page.
+  const supportCase = useSupportCase()
 
   useEffect(() => {
     const el = headerRef.current
@@ -89,6 +92,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   }, [pathname])
 
   const getWhatsAppMessage = () => {
+    if (supportCase) return supportMessage(supportCase)
     const baseUrl = pageUrl ?? ""
     if (isWizardPage) return `Hi! I need help with my visa application. I'm currently on the application page: ${baseUrl}`
     if (pathname === '/') return `Hi! I'm interested in applying for a Schengen visa. Can you help me get started?`
@@ -96,7 +100,6 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     if (pathname?.startsWith('/documents')) return `Hi! I have questions about the required documents for my visa application. Page: ${baseUrl}`
     if (pathname?.startsWith('/news')) return `Hi! I have a question about visa information. Page: ${baseUrl}`
     if (pathname?.startsWith('/contact')) return `Hi! I'd like to get in touch regarding visa services.`
-    if (pathname?.startsWith('/success-stories')) return `Hi! I saw your success stories and I'm interested in applying for a visa.`
     return `Hi! I have a question about visa services. I'm currently viewing: ${baseUrl}`
   }
 
@@ -221,7 +224,6 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "Services", ar: "الخدمات", id: "services", type: "scroll" },
     { label: "Destinations", ar: "الوجهات", id: "/destinations", type: "link" },
     { label: "Documents", ar: "المستندات", id: "/documents", type: "link" },
-    { label: "Success Stories", ar: "قصص النجاح", id: "testimonials", type: "scroll" },
     { label: "FAQ", ar: "الأسئلة الشائعة", id: "faq", type: "scroll" },
     { label: "News", ar: "الأخبار", id: "/news", type: "link" },
     { label: "Videos", ar: "الفيديوهات", id: "/videos", type: "link" },

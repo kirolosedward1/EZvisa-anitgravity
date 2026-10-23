@@ -19,6 +19,25 @@ import { toCitizenshipIso } from "@/lib/nationalities"
 import { canonicalSchengenCountry } from "@/lib/countries"
 import { UUID_RE } from "@/lib/applications"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
+import { toWesternDigits, normalizePassport } from "@/lib/digits"
+
+// Arabic/Persian digits typed on the client become Western before validation and saving (Western input unchanged).
+const DIGIT_FIELDS = ["phone", "dateOfBirth", "travelStartDate", "travelEndDate", "travelMonth", "tripLength", "employmentStartDate"]
+function normalizeDigits(input: unknown): Record<string, any> {
+  if (!input || typeof input !== "object") return {}
+  const f: Record<string, any> = { ...(input as Record<string, any>) }
+  for (const key of DIGIT_FIELDS) if (typeof f[key] === "string") f[key] = toWesternDigits(f[key])
+  if (typeof f.passportNumber === "string") f.passportNumber = normalizePassport(f.passportNumber)
+  if (Array.isArray(f.additionalCountries)) {
+    f.additionalCountries = f.additionalCountries.map((v: unknown) => {
+      if (!v || typeof v !== "object") return v
+      const visit: Record<string, any> = { ...(v as Record<string, any>) }
+      for (const key of ["arrivalDate", "departureDate"]) if (typeof visit[key] === "string") visit[key] = toWesternDigits(visit[key])
+      return visit
+    })
+  }
+  return f
+}
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000
 
@@ -112,7 +131,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const formData = await request.json()
+    const formData = normalizeDigits(await request.json())
     
     // Sanitize inputs
     const sanitizedData = {

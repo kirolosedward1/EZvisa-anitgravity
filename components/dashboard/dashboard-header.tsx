@@ -1,35 +1,23 @@
+/** Compact page heading for the customer dashboard: greeting, one line of context, actions on the right. */
 export function DashboardHeader({
-  badge,
   title,
   description,
   actions,
 }: {
-  badge: string
+  /** Kept for older call sites; no longer shown (the header nav already says where you are). */
+  badge?: string
   title: React.ReactNode
   description?: React.ReactNode
   actions?: React.ReactNode
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-border/60 pb-10 pt-28 md:pt-32">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          backgroundImage: "none",
-          backgroundSize: "24px 24px",
-          maskImage: "none",
-          WebkitMaskImage: "none",
-        }}
-      />
-      <div className="container relative mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6 md:flex-row md:items-end md:justify-between">
-        <div className="flex flex-col gap-3">
-          <span className="inline-flex w-fit items-center rounded-full border border-primary/10 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            {badge}
-          </span>
-          <h1 className="text-3xl font-semibold leading-tight tracking-tight text-foreground md:text-4xl">{title}</h1>
-          {description && <div className="text-base leading-relaxed text-muted-foreground">{description}</div>}
+    <section className="pb-8 pt-28 md:pt-32">
+      <div className="container mx-auto flex max-w-6xl flex-col gap-5 px-4 sm:px-6 md:flex-row md:items-end md:justify-between">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <h1 className="app-title text-foreground">{title}</h1>
+          {description && <div className="text-sm leading-relaxed text-muted-foreground">{description}</div>}
         </div>
-        {actions && <div className="flex flex-wrap items-center gap-3">{actions}</div>}
+        {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>
     </section>
   )

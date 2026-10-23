@@ -1,4 +1,4 @@
-// Sticky footer. No application: "Apply for <country>" with the guarantee under it (no price: the server sets it).
+// Sticky footer. No application: "Apply for <country>" with the turnaround under it (no price: the server sets it).
 // A draft: "Continue your <country> application". An open case: "View your application" in the secondary style, so a
 // second application is never started by accident. A hairline appears on top once content scrolls under it.
 import { StyleSheet, View, type LayoutChangeEvent } from "react-native";
@@ -22,7 +22,7 @@ export function CountryFooter({ name, state, loading, onApply, onContinue, onVie
       {loading && <Button title={t("Apply for {c}", { c: country })} loading onPress={() => {}} />}
       {!loading && kind === "apply" && <>
         <Button title={t("Apply for {c}", { c: country })} onPress={onApply} />
-        <Text variant="footnote" tone="secondary" center>{t("Money back if the visa is refused")}</Text>
+        <Text variant="footnote" tone="secondary" center>{t("Your file is ready in 1–2 days")}</Text>
       </>}
       {!loading && kind === "continue" && <Button title={t("Continue your {c} application", { c: country })} onPress={onContinue} />}
       {!loading && kind === "view" && <Button title={t("View your application")} variant="secondary" onPress={onView} />}

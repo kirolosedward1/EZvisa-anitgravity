@@ -75,7 +75,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     tab: "Pay",
     title: `Review, then pay ${PRICE_LABEL}`,
     body: "Check your answers on one page, then pay through Ziina. The price is set by our server, so what you see is what you pay.",
-    details: [`${PRICE_LABEL} per application`, "Guest checkout, sign in later with the same email", "Money-back guarantee if the visa is denied"],
+    details: [`${PRICE_LABEL} per application`, "Guest checkout, sign in later with the same email", "Embassy and visa centre fees are paid at your appointment"],
     screen: SCREENS.pay,
   },
   {
@@ -129,7 +129,7 @@ export const DETAILS: Detail[] = [
   { icon: WifiOff, title: "Uploads survive bad signal", body: "Lose connection mid-upload and it resumes when you're back online." },
   { icon: RefreshCw, title: "Autosave and resume anywhere", body: "Every answer saves as you go. Open the app or the website and continue at the same question." },
   { icon: Wallet, title: "Pay only when you're ready", body: `Finish the questions first. Payment comes after review: ${PRICE_LABEL} per application.` },
-  { icon: ShieldCheck, title: "Money-back guarantee", body: "If the embassy denies your visa, the service fee is refunded.", href: "/refund-policy", linkLabel: "Refund policy" },
+  { icon: ShieldCheck, title: "Clear refund rules", body: "Full refund if you cancel before we start reviewing your documents, or if we can't deliver because of an error on our side.", href: "/refund-policy", linkLabel: "Refund policy" },
 ]
 
 export interface Faq {
@@ -147,7 +147,7 @@ export const FAQS: Faq[] = [
   },
   {
     question: "How much does it cost?",
-    answer: `The app is free to download. The service is ${PRICE_LABEL} per application, paid in the app through Ziina after you have reviewed your answers. If the visa is denied, the fee is refunded under our money-back guarantee.`,
+    answer: `The app is free to download. The service is ${PRICE_LABEL} per application, paid in the app through Ziina after you have reviewed your answers. Embassy and visa centre fees are paid separately at your appointment.`,
   },
   {
     question: "I started on the website. Will it show in the app?",

@@ -23,12 +23,12 @@ export default function RefundPolicyPage() {
           badge="Legal"
           title="Refund Policy"
           description="Last updated: January 2026"
-          gradientType="default"
+          variant="plain"
         />
 
         {/* Content */}
-        <section className="container mx-auto px-4 py-12 lg:py-16 max-w-3xl">
-          <div className="bg-white rounded-lg border p-8 prose prose-gray max-w-none">
+        <section className="container mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:py-16">
+          <div className="legal-copy">
             <h2>Service Fee Refund Policy</h2>
             <p>
               At EZvisa, we're committed to providing excellent service. Our refund policy for the service fee (249 AED

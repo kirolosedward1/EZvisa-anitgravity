@@ -8,9 +8,11 @@ import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
-import { Upload, FileText, CheckCircle2, Loader2, ArrowLeft, AlertCircle, Clock } from "lucide-react"
+import { ArrowLeft, Loader2 } from "lucide-react"
+import { UploadChecklist } from "@/components/documents/upload-checklist"
 import { createBrowserClient } from "@/lib/supabase/client"
-import { DOC_TYPES, DOC_FLAG, MAX_UPLOAD_BYTES, UPLOAD_MIME, REQUIREMENTS } from "@/lib/shared/wizard-contract"
+import { useRegisterSupportCase } from "@/lib/support-context"
+import { DOC_FLAG, REQUIREMENTS, referenceOf } from "@/lib/shared/wizard-contract"
 
 type AppDocStatus = {
   id: string
@@ -26,12 +28,9 @@ type AppDocStatus = {
 function UploadDesk() {
   const searchParams = useSearchParams()
   const id = searchParams.get("id") ?? ""
-  const [file, setFile] = useState<File | null>(null)
-  const [docType, setDocType] = useState<string>("passportCopy")
-  const [uploading, setUploading] = useState(false)
-  const [success, setSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [app, setApp] = useState<AppDocStatus | null>(null)
+  useRegisterSupportCase(id ? { id: app?.id || id, country: app?.destination_country, step: "upload" } : null)
   const [loading, setLoading] = useState(true)
 
   const token = useCallback(async () => {
@@ -61,175 +60,71 @@ function UploadDesk() {
     fetchStatus()
   }, [fetchStatus])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    if (!f) return
-    setSuccess(false)
-    if (f.size > MAX_UPLOAD_BYTES) {
-      setError("File size exceeds 5MB limit")
-      return
-    }
-    if (!(f.type in UPLOAD_MIME)) {
-      setError("Only PDF, JPG or PNG files")
-      return
-    }
-    setError(null)
-    setFile(f)
-  }
-
-  const handleUpload = async () => {
-    if (!file || !id) return
-    setUploading(true)
-    setError(null)
-    setSuccess(false)
-    try {
-      const jwt = await token()
-      if (!jwt) throw new Error("Please sign in to upload documents")
-      const formData = new window.FormData()
-      formData.append("file", file)
-      formData.append("applicationId", id)
-      formData.append("documentType", docType)
-      formData.append("uploadId", crypto.randomUUID())
-      const res = await fetch("/api/upload-document", { method: "POST", body: formData, headers: { Authorization: `Bearer ${jwt}` } })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || "Upload failed")
-      setSuccess(true)
-      setFile(null)
-      await fetchStatus()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed")
-    } finally {
-      setUploading(false)
-    }
+  const upload = async (file: File, documentType: string) => {
+    const jwt = await token()
+    if (!jwt) throw new Error("Your session has ended. Sign in again to upload.")
+    const formData = new window.FormData()
+    formData.append("file", file)
+    formData.append("applicationId", id)
+    formData.append("documentType", documentType)
+    formData.append("uploadId", crypto.randomUUID())
+    const res = await fetch("/api/upload-document", { method: "POST", body: formData, headers: { Authorization: `Bearer ${jwt}` } })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.error || "The upload didn't go through. Try again.")
+    await fetchStatus()
   }
 
   const required = app?.required ?? ["has_passport", "has_photos", "has_bank_statements", "has_employment_proof"]
   const rows = REQUIREMENTS.filter((r) => !r.provided_by_ezvisa && required.includes(DOC_FLAG[r.document_type]))
   const allComplete = !!app && rows.every((r) => !!(app as Record<string, unknown>)[DOC_FLAG[r.document_type]])
+  const back = id ? `/dashboard?id=${id}` : "/dashboard"
 
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <main className="min-h-screen bg-background pt-24 pb-16 px-4">
-        <div className="container max-w-3xl mx-auto space-y-6">
-          <Link href={id ? `/dashboard?id=${id}` : "/dashboard"} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Link>
+      <main className="min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+          <div className="flex items-center justify-between gap-4">
+            <Link href={back} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+              <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
+              Back to your application
+            </Link>
+            {app?.id ? <span className="ltr-isolate text-xs tabular-nums text-muted-foreground">{referenceOf(app.id)}</span> : null}
+          </div>
 
-          <div className="bg-card border rounded-xl p-6 md:p-8 shadow-sm">
-            <h1 className="text-2xl md:text-3xl font-semibold tracking-tight mb-2">Upload Supporting Documents</h1>
-            {app && (
-              <p className="text-muted-foreground">
-                Application for <strong className="text-foreground">{app.full_name}</strong> &bull; {app.destination_country} Visa
-              </p>
-            )}
-            {!id && <p className="text-sm text-destructive">No application selected.</p>}
+          <div className="flex flex-col gap-2">
+            <h1 className="app-title text-foreground">Upload your documents</h1>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {app ? <>{app.full_name} · {app.destination_country} visa. </> : null}
+              Upload each document in its row. A clear phone photo or scan is fine: PDF, JPG or PNG, up to 5 MB.
+            </p>
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+            <div className="flex justify-center py-12">
+              <Loader2 className="size-6 animate-spin text-primary" aria-label="Loading your checklist" />
+            </div>
           ) : app ? (
-            <div className="bg-card border rounded-xl p-6 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-primary" />
-                  Document Checklist
-                </h2>
-                {allComplete ? (
-                  <span className="text-xs font-bold text-emerald-600 bg-emerald-500/10 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> All Documents Received
-                  </span>
-                ) : (
-                  <span className="text-xs font-bold text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> Pending Uploads
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {rows.map((r) => {
-                  const received = !!(app as Record<string, unknown>)[DOC_FLAG[r.document_type]]
-                  return (
-                    <div key={r.id} className="p-3 rounded-lg border flex items-center justify-between bg-muted/50">
-                      <div>
-                        <p className="text-sm font-medium">{r.title}</p>
-                        {r.description && <p className="text-xs text-muted-foreground">{r.description}</p>}
-                      </div>
-                      <span className={`${received ? "text-emerald-600 bg-emerald-500/10" : "text-amber-600 bg-amber-500/10"} px-2 py-0.5 text-xs font-bold rounded-full`}>{received ? "Received" : "Pending"}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ) : null}
-
-          {app && (
-            <div className="bg-card border rounded-xl p-6 md:p-8 shadow-sm">
-              <h2 className="text-lg font-semibold mb-4">Select Document to Upload</h2>
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="docType" className="block text-sm font-medium mb-2">Document Category</label>
-                  <select
-                    id="docType"
-                    className="w-full flex h-11 items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    value={docType}
-                    onChange={(e) => setDocType(e.target.value)}
-                  >
-                    {DOC_TYPES.map((d) => (
-                      <option key={d.value} value={d.value}>{d.label}</option>
-                    ))}
-                  </select>
+            <>
+              <UploadChecklist rows={rows} status={app as Record<string, unknown>} onUpload={upload} />
+              {allComplete ? (
+                <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                  <p className="text-sm text-foreground">Everything is in. A visa specialist will check your documents and prepare your file.</p>
+                  <Button asChild variant="outline" className="shrink-0 rounded-full hover:bg-secondary hover:text-foreground">
+                    <Link href={back}>Back to your application</Link>
+                  </Button>
                 </div>
-
-                <div>
-                  <label htmlFor="file" className="block text-sm font-medium mb-2">Select File (PDF, JPG, PNG)</label>
-                  <div className="border-2 border-dashed rounded-xl p-8 text-center bg-background transition-colors hover:bg-secondary/60">
-                    <input type="file" id="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} />
-                    <label htmlFor="file" className="cursor-pointer flex flex-col items-center">
-                      <Upload className="w-8 h-8 text-muted-foreground mb-3" />
-                      <span className="font-medium text-primary">Click to browse</span>
-                      <span className="text-xs text-muted-foreground mt-1">Accepted: PDF, JPG, PNG &bull; Max 5MB</span>
-                    </label>
-                  </div>
-                  {file && (
-                    <div className="mt-4 p-3 bg-primary/5 text-primary rounded-md flex items-center text-sm border border-primary/10">
-                      <FileText className="w-4 h-4 mr-2 shrink-0" />
-                      <span className="truncate font-medium">{file.name}</span>
-                      <span className="ml-auto text-xs opacity-75">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
-                    </div>
-                  )}
-                </div>
-
-                {error && (
-                  <div className="p-4 bg-destructive/5 text-destructive rounded-md flex items-start text-sm border border-destructive/20" role="alert">
-                    <AlertCircle className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
-                    {error}
-                  </div>
-                )}
-
-                {success && (
-                  <div className="p-4 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-md flex items-start text-sm border border-emerald-100 dark:border-emerald-900/40" role="status">
-                    <CheckCircle2 className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
-                    Document uploaded securely. The checklist has been updated.
-                  </div>
-                )}
-
-                <Button onClick={handleUpload} disabled={!file || uploading} className="w-full h-11 text-base font-semibold">
-                  {uploading ? (
-                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Uploading securely...</>
-                  ) : (
-                    <><Upload className="w-4 h-4 mr-2" /> Upload Document</>
-                  )}
-                </Button>
-              </div>
-            </div>
+              ) : null}
+            </>
+          ) : (
+            <p className="rounded-2xl border border-border/70 bg-card p-6 text-sm text-muted-foreground" role="alert">
+              {!id ? "No application selected. Open it from My applications." : error}
+            </p>
           )}
-          {!loading && !app && error && (
-            <div className="p-4 bg-destructive/5 text-destructive rounded-md flex items-start text-sm border border-destructive/20" role="alert">
-              <AlertCircle className="w-5 h-5 mr-2 shrink-0 mt-0.5" />
-              {error}
-            </div>
-          )}
+
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Files are stored privately and only our visa team can open them. The same checklist is in the EZvisa app.
+          </p>
         </div>
       </main>
       <Footer />

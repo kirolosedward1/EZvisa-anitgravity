@@ -37,6 +37,7 @@ import { CountryFlag } from "@/components/country-flag"
 import { PhoneField } from "@/components/phone-field"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { removeAvatar, uploadAvatar, useAvatarUrl } from "@/lib/avatar"
+import { AvatarPhoto } from "@/components/avatar-photo"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 import { SCHENGEN_META } from "@/lib/countries"
 import { EMAIL_RE } from "@/lib/auth/errors"
@@ -253,13 +254,7 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
               disabled={photoBusy}
             >
               <span className="relative flex size-24 items-center justify-center overflow-hidden rounded-full bg-primary text-2xl font-semibold text-primary-foreground ring-4 ring-background">
-                {photo ? (
-                  // Signed Supabase or Google URLs: not routed through next/image's optimiser.
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photo} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  initialsOf(profile.name, profile.email)
-                )}
+                <AvatarPhoto src={photo} initials={initialsOf(profile.name, profile.email)} className="absolute inset-0" />
                 {photoBusy ? (
                   <span className="absolute inset-0 flex items-center justify-center bg-foreground/40">
                     <Loader2 className="size-6 animate-spin text-primary-foreground" aria-hidden="true" />
