@@ -42,7 +42,9 @@ function Routes() {
   const inApp = loading || !!session || guest;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
-      <Stack.Protected guard={inApp}>
+      {/* Signed out: any app route (e.g. "/") goes to Welcome. Without redirectTo, expo-router 58 falls back to the first
+          allowed route it finds, which was the sign-in screen (no "Continue without an account", no Google button). */}
+      <Stack.Protected guard={inApp} redirectTo="/welcome">
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="apply" options={{ presentation: "modal" }} />
         <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
