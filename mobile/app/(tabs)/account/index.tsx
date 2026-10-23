@@ -1,5 +1,6 @@
 import { stage } from "../../../lib/stage";
 import { ActionSheetIOS, Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
+import { shareReceipt } from "../../../lib/receipt";
 import { useAvatar, pickAvatar, removeAvatar } from "../../../lib/avatar";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -31,7 +32,7 @@ import { useForm } from "../../../lib/form";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 
 export default function Account() {
-  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
+  const c = useColors(); const pb = useTabInset(S.md as any) /* tab bar + safe area + 16 */; const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true); const { signOut: endSession } = useAuth();
   const photo = useAvatar(session?.user.id);
   const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT(); const { saveBeforeSignOut } = useForm();
@@ -247,17 +248,3 @@ export default function Account() {
 }
 
 const esc = (x: string) => x.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));
-/** Receipt built only from the stored payment record (no invented fields). */
-async function shareReceipt(a: Application, name: string, mail: string) {
-  const amount = `${Number(a.payment_amount).toFixed(2)} ${a.currency || "AED"}`;
-  const rows: [string, string][] = [["Reference", a.reference], ["Destination", a.countries?.name ?? a.destination_country ?? ""], ["Customer", name], ["Email", mail],
-    ["Amount paid", amount], ["Status", a.payment_status ?? ""], ...(a.payment_id ? [["Payment ID", a.payment_id] as [string, string]] : []), ["Date", new Date(a.updated_at ?? a.created_at ?? Date.now()).toLocaleDateString()]];
-  const html = `<html><body style="font-family:-apple-system,Helvetica;padding:32px"><h1 style="margin:0">EZvisa</h1><p style="color:#666">Payment receipt · EZvisa visa application service</p>
-    <table style="width:100%;border-collapse:collapse;margin-top:24px">${rows.map(([k, v]) => `<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #eee">${esc(k)}</td><td style="padding:8px 0;text-align:right;border-bottom:1px solid #eee">${esc(v)}</td></tr>`).join("")}</table>
-    <p style="color:#666;margin-top:24px;font-size:12px">Embassy and VFS fees are not included and are paid at the appointment.</p></body></html>`;
-  try {
-    if (Platform.OS === "web") { await Print.printAsync({ html }); return; }
-    const { uri } = await Print.printToFileAsync({ html });
-    if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: `Receipt ${a.reference}` });
-  } catch (e: any) { Alert.alert("Couldn't create the receipt", e?.message ?? String(e)); }
-}

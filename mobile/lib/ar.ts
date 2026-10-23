@@ -610,4 +610,11 @@ export const AR: Record<string, string> = {
   "Explore countries": "استكشف الدول",
   "View all {n} countries": "عرض جميع الدول الـ{n}",
   "Questions": "أسئلة شائعة",
+  "Free time to explore {city} at your own pace": "وقت حر لاستكشاف {city} على راحتك",
+  "Climb a tower or dome for a view over {city}": "اصعد برجًا أو قبة لإطلالة على {city}",
+  "Visit a palace or castle and its gardens": "زُر قصرًا أو قلعة وحدائقها",
+  "Lunch at a covered food hall": "غداء في سوق طعام مغطى",
+  "Cooking class for a local dish": "درس طبخ لطبق محلي",
+  "Botanical garden visit in {city}": "زيارة حديقة نباتية في {city}",
+  "Your trip plan unlocks after payment": "تُفتح خطة رحلتك بعد الدفع",
 };

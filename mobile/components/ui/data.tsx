@@ -43,7 +43,7 @@ export function FlagChip({ country, onPress, selected }: { country: string; onPr
 const STATUS_TONE = (c: ReturnType<typeof useColors>, v: string) => (({ paid: c.green, completed: c.green, approved: c.green, ready: c.green, generated: c.green, rejected: c.red, failed: c.red, cancelled: c.grey, draft: c.grey, reviewing: c.orange, under_review: c.orange, processing: c.orange, awaiting_documents: c.orange, pending: c.orange, submitted: c.blue, appointment_booked: c.indigo, uploaded: c.blue } as Record<string, string>)[v] ?? c.grey);
 export function StatusPill({ v, a }: { v: string; a?: { status: string; payment_status?: string | null } }) {
   const { t } = useT();
-  const c = useColors(); const st = a ? stage(a) : null; const col = st ? (c as any)[st.tone] ?? c.grey : STATUS_TONE(c, v); v = st ? st.key : v;
+  const c = useColors(); const st = a ? stage(a) : null; const col = st ? st.color ?? (c as any)[st.tone] ?? c.grey : STATUS_TONE(c, v); v = st ? st.key : v;
   return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: S.xs, paddingVertical: S.xxs, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{t(st ? st.label : STATUS_LABEL[v] ?? v)}</Text></View>;
 }
 

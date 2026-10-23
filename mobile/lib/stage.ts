@@ -2,7 +2,7 @@
 // see /workspace/ezvisa/status-mapping.md). Pure: inputs are the row's status, payment_status and document progress.
 export type StageKey = "draft" | "payment_due" | "payment_failed" | "paid" | "reviewing" | "awaiting_documents" | "ready" | "appointment_booked" | "completed" | "rejected" | "cancelled";
 export type StageInput = { status: string; payment_status?: string | null; docsMissing?: number; detailsMissing?: boolean };
-export type Stage = { key: StageKey; label: string; tone: "grey" | "blue" | "orange" | "green" | "red" | "indigo"; next: { label: string; vars?: Record<string, number> } | null };
+export type Stage = { key: StageKey; label: string; tone: "grey" | "blue" | "orange" | "green" | "red" | "indigo"; color?: string; next: { label: string; vars?: Record<string, number> } | null };
 
 const PAID = ["paid", "completed"];
 export const paidStatus = (p?: string | null) => PAID.includes(p ?? "");
@@ -21,8 +21,8 @@ export function stage(i: StageInput): Stage {
     case "reviewing": return { key: "reviewing", label: "In review", tone: "orange", next: paid ? afterPay() : null };
   }
   // draft / submitted (and anything unknown): payment decides.
-  if (paid) return { key: "paid", label: "Paid", tone: "green", next: afterPay() };
+  if (paid) return { key: "paid", label: "Paid", tone: "green", color: "#1A7F37", next: afterPay() };
   if (s === "draft") return { key: "draft", label: "Draft", tone: "grey", next: { label: "Finish application" } };
   if (i.payment_status === "failed") return { key: "payment_failed", label: "Payment failed", tone: "red", next: { label: "Pay now" } };
-  return { key: "payment_due", label: "Payment due", tone: "orange", next: { label: "Pay now" } };
+  return { key: "payment_due", label: "Payment due", tone: "orange", color: "#B83200", next: { label: "Pay now" } };
 }
