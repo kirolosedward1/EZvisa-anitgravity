@@ -20,7 +20,7 @@ export interface RateLimitResult {
 
 export interface RateLimitOptions {
   /**
-   * What to do when Redis throws or times out.
+   * What to do when Redis is not configured, throws, or times out.
    * "open" allows the request. "memory" applies an in-memory window with the same limit.
    * Default is "open".
    */
@@ -45,10 +45,7 @@ function warnRateLimitDisabled() {
 function getRedis(): Redis | null {
   const url = process.env.KV_REST_API_URL
   const token = process.env.KV_REST_API_TOKEN?.trim() ?? ""
-  if (!url?.startsWith("https://") || token.length === 0) {
-    warnRateLimitDisabled()
-    return null
-  }
+  if (!url?.startsWith("https://") || token.length === 0) return null
   if (!redis) {
     redis = new Redis({ url, token })
   }
@@ -134,7 +131,11 @@ export async function checkRateLimit(
 ): Promise<RateLimitResult> {
   const onError = options?.onError ?? "open"
   const client = getRedis()
-  if (!client) return allow(config)
+  if (!client) {
+    if (onError === "memory") return memoryLimit(identifier, config)
+    warnRateLimitDisabled()
+    return allow(config)
+  }
 
   let redisResult: RateLimitResult | undefined
   let redisError: unknown

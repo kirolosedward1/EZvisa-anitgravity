@@ -10,7 +10,7 @@ import { LangText } from "@/components/lang-text"
 import { PaymentWaitBang, PaymentWaitRing } from "@/components/payment/payment-mark"
 import { useArabic } from "@/components/ready-line"
 import { useEffect, useState, Suspense } from "react"
-import { getPaymentConfirmationWhatsAppUrl } from "@/lib/whatsapp"
+import { getPaymentConfirmationWhatsAppUrl, getWhatsAppUrl } from "@/lib/whatsapp"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const POLL_MS = 2000
@@ -107,14 +107,15 @@ function PaymentSuccessContent() {
     return () => window.clearTimeout(timer)
   }, [outcome, attempt])
 
+  const localePath = (path: string) => `${arabic ? "/ar" : ""}${path}`
   const applicationPath = token ? `/track/${token}` : "/dashboard"
-  const applicationHref = `${arabic ? "/ar" : ""}${applicationPath}`
+  const applicationHref = localePath(applicationPath)
 
   const steps = [
-    { icon: Mail, text: "Confirmation email sent to your inbox" },
-    { icon: Clock, text: "Application reviewed within 24 hours by a specialist" },
-    { icon: FileText, text: "Custom cover letter, flight, and hotel vouchers prepared" },
-    { icon: Headphones, text: "Direct WhatsApp concierge support throughout your journey" },
+    { icon: Mail, en: "Confirmation email sent to your inbox", ar: "أُرسل بريد التأكيد إلى بريدك" },
+    { icon: Clock, en: "Application reviewed within 24 hours by a specialist", ar: "يراجع مختص الطلب خلال ٢٤ ساعة" },
+    { icon: FileText, en: "Custom cover letter, flight, and hotel vouchers prepared", ar: "نجهّز خطاب التغطية وقسائم الطيران والفندق" },
+    { icon: Headphones, en: "Direct WhatsApp concierge support throughout your journey", ar: "دعم مباشر عبر واتساب طوال إجراءاتك" },
   ]
 
   return (
@@ -152,20 +153,20 @@ function PaymentSuccessContent() {
 
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
             {outcome === "checking" && <LangText en="Confirming your payment" ar="جارٍ التحقق من الدفع…" />}
-            {outcome === "paid" && "Payment Confirmed"}
-            {outcome === "failed" && "Payment didn't go through"}
+            {outcome === "paid" && <LangText en="Payment Confirmed" ar="تم تأكيد الدفع" />}
+            {outcome === "failed" && <LangText en="Payment didn't go through" ar="لم تتم عملية الدفع" />}
             {outcome === "pending" && <LangText en="Payment not confirmed yet" ar="لم يتأكد الدفع بعد" />}
             {outcome === "cancelled" && <LangText en="This application was cancelled" ar="تم إلغاء هذا الطلب" />}
-            {outcome === "missing" && "We couldn't verify this payment"}
+            {outcome === "missing" && <LangText en="We couldn't verify this payment" ar="تعذّر التحقق من هذه الدفعة" />}
           </h1>
 
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             {outcome === "checking" && <LangText en="We're checking this payment with Ziina. This takes a few seconds." ar={"نتحقق من هذا الدفع مع \u2068Ziina\u2069. يستغرق ذلك بضع ثوانٍ."} />}
-            {outcome === "paid" && "Your Schengen visa application package has been received and is now assigned to our document preparation desk."}
-            {outcome === "failed" && "You weren't charged. You can retry the payment whenever you're ready."}
+            {outcome === "paid" && <LangText en="Your Schengen visa application package has been received and is now assigned to our document preparation desk." ar="استلمنا ملف طلب تأشيرة شنغن وأُسند إلى مكتب تجهيز المستندات." />}
+            {outcome === "failed" && <LangText en="You weren't charged. You can retry the payment whenever you're ready." ar="لم يُخصم أي مبلغ. يمكنك إعادة محاولة الدفع متى شئت." />}
             {outcome === "pending" && <LangText en="If you completed payment, it can take a minute to show. Check again, and we'll ask Ziina for the latest status." ar={"إذا دفعت فقد يستغرق ظهوره دقيقة. تحقق مجددًا وسنسأل \u2068Ziina\u2069 عن آخر حالة."} />}
             {outcome === "cancelled" && <LangText en="There is nothing left to confirm for this application." ar="لا يوجد ما يحتاج إلى تأكيد لهذا الطلب." />}
-            {outcome === "missing" && "This return link doesn't include an application we can check. If you paid, use your tracking reference or contact us on WhatsApp."}
+            {outcome === "missing" && <LangText en="This return link doesn't include an application we can check. If you paid, use your tracking reference or contact us on WhatsApp." ar="لا يتضمن رابط العودة هذا طلبًا يمكننا التحقق منه. إذا كنت قد دفعت، استخدم رقم التتبع أو تواصل معنا عبر واتساب." />}
           </p>
 
           {outcome === "checking" && confirmingSlow && (
@@ -177,7 +178,7 @@ function PaymentSuccessContent() {
           {/* Case Reference Badge */}
           {token && (
             <div className="mb-8 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary font-mono text-sm font-semibold">
-              <span className="text-muted-foreground font-sans text-xs">Tracking Reference:</span>
+              <span className="text-muted-foreground font-sans text-xs"><LangText en="Tracking Reference:" ar="رقم التتبع:" /></span>
               <span>#EZ-{token.substring(0, 8).toUpperCase()}</span>
             </div>
           )}
@@ -208,9 +209,9 @@ function PaymentSuccessContent() {
           {outcome === "failed" && (
             <div className="mb-8">
               <Button asChild size="lg" className="h-12 px-6 rounded-xl">
-                <Link href="/apply?step=payment&retry=true">
+                <Link href={localePath("/apply?step=payment&retry=true")}>
                   <RefreshCw className="w-4 h-4 mr-2" />
-                  Retry Payment
+                  <LangText en="Retry Payment" ar="إعادة محاولة الدفع" />
                 </Link>
               </Button>
             </div>
@@ -220,34 +221,36 @@ function PaymentSuccessContent() {
           <div className="mb-8 bg-amber-500/10 border-2 border-amber-500/30 rounded-3xl p-6 md:p-8 text-left shadow-md relative overflow-hidden">
             <div className="flex items-center gap-3 mb-3">
               <span className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                2
+                <LangText en="2" ar="٢" />
               </span>
               <div>
                 <h2 className="text-base md:text-lg font-bold text-foreground">
-                  Step 2: Upload Your Supporting Documents
+                  <LangText en="Step 2: Upload Your Supporting Documents" ar="الخطوة ٢: ارفع المستندات الداعمة" />
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Provide your passport copy, bank statement, and employment proof to begin file preparation.
+                  <LangText en="Provide your passport copy, bank statement, and employment proof to begin file preparation." ar="أرسل نسخة من جواز السفر وكشف الحساب وإثبات العمل لنبدأ تجهيز الملف." />
                 </p>
               </div>
             </div>
 
             <p className="text-xs text-muted-foreground mb-5 leading-relaxed">
-              Our specialists review your documents within 24 hours to generate your tailored consular cover letter, confirmed flight/hotel vouchers, and complete appointment submission pack.
+              <LangText en="Our specialists review your documents within 24 hours to generate your tailored consular cover letter, confirmed flight/hotel vouchers, and complete appointment submission pack." ar="يراجع مختصونا مستنداتك خلال ٢٤ ساعة لإعداد خطاب التغطية ووثائق الطيران والفندق وملف الموعد." />
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3">
               {token && (
                 <Button asChild size="lg" className="w-full sm:w-auto h-12 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm text-sm font-semibold">
-                  <Link href={`/track/${token}/upload`}>
+                  <Link href={localePath(`/track/${token}/upload`)}>
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload Documents Now
+                    <LangText en="Upload Documents Now" ar="ارفع المستندات الآن" />
                   </Link>
                 </Button>
               )}
               <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6 rounded-xl text-emerald-600 border-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 text-sm font-semibold">
-                <a href={getPaymentConfirmationWhatsAppUrl(token || "EZVISA", destination)} target="_blank" rel="noopener noreferrer">
-                  Send via WhatsApp Instead
+                <a href={arabic
+                  ? getWhatsAppUrl(`مرحبًا EZvisa! أتممت الدفع${destination ? ` إلى ${destination}` : ""} (المرجع: #${(token || "EZVISA").substring(0, 8).toUpperCase()}). يرجى تأكيد الاستلام وإخباري متى تبدأ مراجعة الملف.`)
+                  : getPaymentConfirmationWhatsAppUrl(token || "EZVISA", destination)} target="_blank" rel="noopener noreferrer">
+                  <LangText en="Send via WhatsApp Instead" ar="الإرسال عبر واتساب بدلًا من ذلك" />
                 </a>
               </Button>
             </div>
@@ -258,17 +261,17 @@ function PaymentSuccessContent() {
           <div className="mb-8 bg-card border border-border/80 shadow-sm rounded-3xl p-6 text-left">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h3 className="text-sm font-bold text-foreground">Track Your Case &amp; Download Later</h3>
+                <h3 className="text-sm font-bold text-foreground"><LangText en="Track Your Case & Download Later" ar="تتبع طلبك وحمّل الملف لاحقًا" /></h3>
                 <p className="text-xs text-muted-foreground mt-0.5 max-w-sm">
-                  Access your customer portal anytime to track case milestones, upload additional files, and download your finalized dossier.
+                  <LangText en="Access your customer portal anytime to track case milestones, upload additional files, and download your finalized dossier." ar="ادخل إلى حسابك في أي وقت لتتبع مراحل الطلب ورفع ملفات إضافية وتنزيل الملف النهائي." />
                 </p>
               </div>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none rounded-xl text-xs">
-                  <Link href={`/track/${token}`}>Case Details</Link>
+                  <Link href={localePath(`/track/${token}`)}><LangText en="Case Details" ar="تفاصيل الطلب" /></Link>
                 </Button>
                 <Button asChild size="sm" className="flex-1 sm:flex-none rounded-xl text-xs">
-                  <Link href="/dashboard">Customer Dashboard</Link>
+                  <Link href={localePath("/dashboard")}><LangText en="Customer Dashboard" ar="لوحة العميل" /></Link>
                 </Button>
               </div>
             </div>
@@ -279,7 +282,7 @@ function PaymentSuccessContent() {
           <div className="mb-8 bg-card border border-border/80 shadow-sm rounded-3xl p-6 md:p-8 max-w-md mx-auto text-left relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full pointer-events-none" />
             <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-6">
-              What Happens Next
+              <LangText en="What Happens Next" ar="ماذا يحدث بعد ذلك" />
             </h2>
             <div className="space-y-4 relative z-10">
               {steps.map((step, index) => (
@@ -290,7 +293,7 @@ function PaymentSuccessContent() {
                   <div className="w-10 h-10 rounded-full bg-primary/10 group-hover:bg-primary/15 transition-colors flex items-center justify-center shrink-0">
                     <step.icon className="w-5 h-5 text-primary" />
                   </div>
-                  <span className="text-foreground text-sm font-medium">{step.text}</span>
+                  <span className="text-foreground text-sm font-medium"><LangText en={step.en} ar={step.ar} /></span>
                 </div>
               ))}
             </div>
@@ -300,7 +303,7 @@ function PaymentSuccessContent() {
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
             <Button asChild variant="ghost" size="lg" className="w-full sm:w-auto h-12 px-6 rounded-full text-sm font-medium">
-              <Link href="/">Return to Home</Link>
+              <Link href={arabic ? "/ar" : "/"}><LangText en="Return to Home" ar="العودة إلى الرئيسية" /></Link>
             </Button>
           </div>
         </div>
