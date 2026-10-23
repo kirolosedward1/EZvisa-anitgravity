@@ -22,7 +22,9 @@ export function useAvatar(uid?: string | null): string | null {
   return uid && cur?.uid === uid ? cur.uri : null;
 }
 
-const PATH = (uid: string) => `${uid}/avatar.jpg`;
+const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif" };
+/** <uid>/avatar.<ext>; the real path (with its extension) is what user_metadata.avatar_path stores. */
+const PATH = (uid: string, type = "image/jpeg") => `${uid}/avatar.${EXT[type] ?? "jpg"}`;
 let syncing: string | null = null;
 /** No photo on this phone (e.g. after sign-out): fetch the saved one from storage. */
 async function syncRemote(uid: string) {
@@ -41,15 +43,21 @@ function b64ToBytes(b64: string): Uint8Array {
   return new Uint8Array(bytes);
 }
 /** Upload to avatars/<uid>/avatar.jpg (upsert) and remember the path in user_metadata. Best effort: the local copy still shows. */
-async function upload(uid: string, dataUri: string) {
+async function upload(uid: string, dataUri: string, hint?: string) {
   if (!supabase) return;
   // Native gives a base64 data URI (above); web's picker gives a blob: URL, so read its bytes.
-  const m = /^data:image\/\w+;base64,(.*)$/.exec(dataUri);
-  const bytes = m ? b64ToBytes(m[1]) : new Uint8Array(await (await fetch(dataUri)).arrayBuffer());
+  const m = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(dataUri);
+  let bytes: Uint8Array; let type: string;
+  if (m) { type = m[1].toLowerCase(); bytes = b64ToBytes(m[2]); }
+  else { const blob = await (await fetch(dataUri)).blob(); type = (blob.type || hint || "image/jpeg").toLowerCase(); bytes = new Uint8Array(await blob.arrayBuffer()); }
   if (!bytes.length) return;
-  const { error } = await supabase.storage.from("avatars").upload(PATH(uid), bytes, { contentType: "image/jpeg", upsert: true });
+  if (!EXT[type]) type = "image/jpeg";
+  const path = PATH(uid, type);
+  const { data: s0 } = await supabase.auth.getSession(); const old = s0.session?.user.user_metadata?.avatar_path as string | undefined;
+  const { error } = await supabase.storage.from("avatars").upload(path, bytes, { contentType: type, upsert: true });
   if (error) throw error;
-  await supabase.auth.updateUser({ data: { avatar_path: PATH(uid) } });
+  await supabase.auth.updateUser({ data: { avatar_path: path } });
+  if (old && old !== path) await supabase.storage.from("avatars").remove([old]).catch(() => {}); // a different format replaced it
 }
 
 async function save(next: Stored | null) {
@@ -72,12 +80,13 @@ export async function pickAvatar(uid: string): Promise<boolean> {
     uri = out.base64 ? `data:image/jpeg;base64,${out.base64}` : out.uri;
   }
   await save({ uid, uri });
-  await upload(uid, uri).catch(() => {});
+  await upload(uid, uri, a.mimeType ?? undefined).catch(() => {});
   return true;
 }
 export async function removeAvatar() {
   const uid = cur?.uid; await save(null);
-  if (uid && supabase) { await supabase.storage.from("avatars").remove([PATH(uid)]).catch(() => {}); await supabase.auth.updateUser({ data: { avatar_path: null } }).catch(() => {}); }
+  if (uid && supabase) { const { data: s0 } = await supabase.auth.getSession(); const path = (s0.session?.user.user_metadata?.avatar_path as string | undefined) ?? PATH(uid);
+    await supabase.storage.from("avatars").remove([path]).catch(() => {}); await supabase.auth.updateUser({ data: { avatar_path: null } }).catch(() => {}); }
 }
 /** Sign-out (lib/userData.ts): forget the photo in memory too. */
 export function resetAvatar() { cur = null; loaded = false; emit(); }

@@ -29,9 +29,10 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={44} />
         <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[a.reference, range(a.entry_date, a.exit_date)].filter(Boolean).join(" · ")}</Text></View>
-        {swiping ? null : onDiscard ? (
-          <PressScale onPress={() => askDiscard(onDiscard, t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="app-discard"
-            style={{ width: 36, height: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
+        {onDiscard ? (
+          // At rest the trash is invisible and untappable (swipe or long-press to discard); it shows only once swiped.
+          <PressScale disabled={!swiping} onPress={() => askDiscard(onDiscard, t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Discard")} accessibilityElementsHidden={!swiping} importantForAccessibility={swiping ? "auto" : "no-hide-descendants"} testID="app-discard"
+            pointerEvents={swiping ? "auto" : "none"} style={{ opacity: swiping ? 1 : 0, width: 36, height: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
             <Icon name="trash" size={16} color={c.red} />
           </PressScale>
         ) : <Icon name="chevron.right" size={ICON.sm} color={c.tertiaryLabel} weight="semibold" />}

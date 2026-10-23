@@ -1,5 +1,5 @@
 import { AppointmentCard } from "../../../components/Appointment";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -12,7 +12,7 @@ import { SupportButton } from "../../../components/Support";
 import { whatsapp } from "../../../lib/api";
 import { intentStatus, knownPayment, money, startPayment, usePaying, useQuote } from "../../../lib/payments";
 import { Linking } from "react-native";
-import { success, error as hError } from "../../../lib/haptics";
+import { success, error as hError, tap } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
 import { shareReceipt } from "../../../lib/receipt";
 import { useT } from "../../../lib/i18n";
@@ -79,6 +79,9 @@ export default function ApplicationDetail() {
   const quote = useQuote(unpaid ? a!.id : null, a?.updated_at);
   // Ziina status of the checkout this device opened (server proxy), so a paid-but-not-yet-recorded payment shows as confirming.
   useEffect(() => { let on = true; if (unpaid) knownPayment(a!.id).then((p) => p && intentStatus(p.paymentId)).then((s) => on && setZiina(s ?? null)).catch(() => {}); return () => { on = false; }; }, [a?.id, a?.payment_status]);
+  // The locked Trip plan row only scrolls to the payment step; paying always needs its own tap there.
+  const scroller = useRef<ScrollView>(null); const payY = useRef(0);
+  const toPayStep = () => { tap(); scroller.current?.scrollTo({ y: Math.max(0, payY.current - S.md), animated: true }); };
   const pay = async () => {
     if (!a || paying) return; setUpErr(null);
     try { const o = await startPayment(a.id); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }); }
@@ -116,7 +119,7 @@ export default function ApplicationDetail() {
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
+    <ScrollView ref={scroller} contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.tint} />}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
@@ -132,6 +135,7 @@ export default function ApplicationDetail() {
         </View>
       </View>
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
+      {locked && <View onLayout={(e) => { payY.current = e.nativeEvent.layout.y; }} />}
       {locked && (
         <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
           {ziina === "completed" || ziina === "pending"
@@ -159,7 +163,7 @@ export default function ApplicationDetail() {
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
         {a.status !== "cancelled" && (paid
           ? <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />
-          : <ListRow icon="lock.fill" iconColor={c.grey} title={t("Trip plan")} subtitle={t("Your trip plan unlocks after payment")} onPress={pay} />)}
+          : <ListRow icon="lock.fill" iconColor={c.grey} title={t("Trip plan")} subtitle={t("Your trip plan unlocks after payment")} onPress={toPayStep} />)}
       </ListGroup>
       <AppointmentCard a={a} />
       {locked ? (

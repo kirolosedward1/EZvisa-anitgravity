@@ -54,7 +54,7 @@ export function StatusPill({ v, a }: { v: string; a?: { status: string; payment_
 export function StatusPills({ a }: { a: Application }) {
   const { t } = useT(); const act = nextAction(a as any);
   const [rowW, setRowW] = useState(0); const [needW, setNeedW] = useState(0);
-  const short = !!act && rowW > 0 && needW > rowW;
+  const short = !!act && rowW > 0 && needW + 8 > rowW; // 8pt margin: rounding/font metrics differ by a few px
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }} onLayout={(e) => setRowW(e.nativeEvent.layout.width)} testID="status-pills">
       {/* Invisible measure of the full-length pair, so the choice doesn't flicker. */}
