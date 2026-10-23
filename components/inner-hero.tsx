@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation"
 import { destinations } from "@/lib/destinations"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 import { stableIndex } from "@/lib/stable-index"
+import { canonicalPath } from "@/lib/route-path"
 
 interface InnerHeroProps {
   badge?: React.ReactNode
@@ -30,7 +31,7 @@ export function InnerHero({
   className = "",
 }: InnerHeroProps) {
   const pathname = usePathname()
-  const picked = randomizeBackground ? destinations[stableIndex(pathname || "inner", destinations.length)] : undefined
+  const picked = randomizeBackground ? destinations[stableIndex(canonicalPath(pathname), destinations.length)] : undefined
   const named = destinations.find((destination) => destination.image === backgroundImage)
   const heroBgImage = backgroundImage || picked?.image
   const heroBgCountryName = named?.name || picked?.name

@@ -16,6 +16,7 @@ import { UserMenu, useViewer } from "@/components/user-menu"
 import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
+import { canonicalPath } from "@/lib/route-path"
 
 const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
 
@@ -54,14 +55,14 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const [showWhatsAppTooltip, setShowWhatsAppTooltip] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
+  const path = canonicalPath(pathname)
   const isWizardPage = path.startsWith("/apply")
   const { viewer } = useViewer()
   const isMinimal = matches(path, MINIMAL_PREFIXES)
   // Signed-in customers get the short account header everywhere; customer pages use it before the check finishes.
   const isAccount = !isMinimal && (matches(path, ACCOUNT_PREFIXES) || !!viewer)
   const isFull = !isMinimal && !isAccount
-  const isHomePage = pathname === "/"
+  const isHomePage = path === "/"
   
   const [selectedNationality, setSelectedNationality] = useState("")
   const [isNationalityOpen, setIsNationalityOpen] = useState(false)
@@ -95,12 +96,12 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     if (supportCase) return supportMessage(supportCase)
     const baseUrl = pageUrl ?? ""
     if (isWizardPage) return `Hi! I need help with my visa application. I'm currently on the application page: ${baseUrl}`
-    if (pathname === '/') return `Hi! I'm interested in applying for a Schengen visa. Can you help me get started?`
-    if (pathname?.startsWith('/destinations')) return `Hi! I have questions about travel destinations and document checklists. Page: ${baseUrl}`
-    if (pathname?.startsWith('/documents')) return `Hi! I have questions about the required documents for my visa application. Page: ${baseUrl}`
-    if (pathname?.startsWith('/news')) return `Hi! I have a question about visa information. Page: ${baseUrl}`
-    if (pathname?.startsWith('/contact')) return `Hi! I'd like to get in touch regarding visa services.`
-    if (pathname?.startsWith('/success-stories')) return `Hi! I saw your success stories and I'm interested in applying for a visa.`
+    if (path === "/") return `Hi! I'm interested in applying for a Schengen visa. Can you help me get started?`
+    if (path.startsWith("/destinations")) return `Hi! I have questions about travel destinations and document checklists. Page: ${baseUrl}`
+    if (path.startsWith("/documents")) return `Hi! I have questions about the required documents for my visa application. Page: ${baseUrl}`
+    if (path.startsWith("/news")) return `Hi! I have a question about visa information. Page: ${baseUrl}`
+    if (path.startsWith("/contact")) return `Hi! I'd like to get in touch regarding visa services.`
+    if (path.startsWith("/success-stories")) return `Hi! I saw your success stories and I'm interested in applying for a visa.`
     return `Hi! I have a question about visa services. I'm currently viewing: ${baseUrl}`
   }
 
@@ -189,7 +190,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
 
   const scrollToSection = (sectionId: string) => {
     setIsMenuOpen(false)
-    if (pathname === "/") {
+    if (path === "/") {
       setTimeout(() => {
         const element = document.getElementById(sectionId)
         if (element) {
@@ -206,7 +207,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   }
 
   useEffect(() => {
-    if (pathname === "/" && window.location.hash) {
+    if (path === "/" && window.location.hash) {
       const sectionId = window.location.hash.substring(1)
       setTimeout(() => {
         const element = document.getElementById(sectionId)
@@ -215,7 +216,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           const elementPosition = element.getBoundingClientRect().top
           const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 20
           window.scrollTo({ top: offsetPosition, behavior: "smooth" })
-          window.history.replaceState(null, "", pathname)
+          window.history.replaceState(null, "", window.location.pathname)
         }
       }, 300)
     }
