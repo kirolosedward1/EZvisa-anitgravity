@@ -19,7 +19,7 @@ const C = createContext<Ctx>({ lang: "en", rtl: false, ready: true, t: (s, v) =>
 function applyDir(l: Lang) {
   const rtl = l === "ar";
   if (Platform.OS === "web") { if (typeof document !== "undefined") { document.documentElement.dir = rtl ? "rtl" : "ltr"; document.documentElement.lang = l; } return; }
-  I18nManager.allowRTL(rtl); I18nManager.forceRTL(rtl);
+  I18nManager.allowRTL(true); I18nManager.forceRTL(rtl);
 }
 async function reload() {
   if (Platform.OS === "web") { if (typeof window !== "undefined") window.location.reload(); return; }
@@ -29,12 +29,19 @@ async function reload() {
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setState] = useState<Lang>("en"); const [ready, setReady] = useState(false);
   useEffect(() => {
-    AsyncStorage.getItem(KEY).then((v) => {
+    AsyncStorage.getItem(KEY).then(async (v) => {
       const l: Lang = v === "ar" ? "ar" : "en";
       setState(l);
       if (Platform.OS === "web") applyDir(l);
-      else if (I18nManager.isRTL !== (l === "ar")) applyDir(l); // takes effect on the next start
-    }).catch(() => {}).finally(() => setReady(true));
+      else if (I18nManager.isRTL !== (l === "ar")) {
+        // Stored language and layout direction disagree (e.g. first start after choosing Arabic): apply and reload now,
+        // at most once per 15 s so a platform that ignores forceRTL can never loop.
+        applyDir(l);
+        const last = Number(await AsyncStorage.getItem(KEY + ".dirfix").catch(() => null)) || 0;
+        if (Date.now() - last > 15000) { await AsyncStorage.setItem(KEY + ".dirfix", String(Date.now())).catch(() => {}); await reload(); return; }
+      }
+      setReady(true);
+    }).catch(() => setReady(true));
   }, []);
   const setLang = useCallback(async (l: Lang) => {
     await AsyncStorage.setItem(KEY, l).catch(() => {});
@@ -46,3 +53,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   return <C.Provider value={{ lang, rtl: lang === "ar", ready, t, setLang }}>{children}</C.Provider>;
 }
 export const useT = () => useContext(C);
+
+/** Wraps IDs and amounts in Unicode first-strong isolates so they keep LTR order inside Arabic text ("إيصال · ⁨EZ-36218265⁩"). */
+export const ltr = (s: string | number | null | undefined) => (s == null || s === "" ? "" : `\u2068${s}\u2069`);

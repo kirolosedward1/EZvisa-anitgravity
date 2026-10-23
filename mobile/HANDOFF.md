@@ -265,7 +265,7 @@ production; its rate limit fails open, #13), H1 (`mobile-app` changes nothing ou
   - `useNotificationRouting` in `app/_layout.tsx` (`NotificationRouter`): warm start via `addNotificationResponseReceivedListener`, cold start via `getLastNotificationResponse()` (the SDK 57 sync API; the Async one is deprecated). It waits until the stored session has loaded and the app side of `Routes` exists (signed in or guest; a guest restarted on Welcome gets the screen after "Continue without an account"), and application taps also wait for sign-in. Each delivery (identifier + date) is handled once, then `clearLastNotificationResponse()`; a reminder rescheduled under the same identifier (`ezvisa-rem-draft`) opens again. It opens `router.push(url, { withAnchor: true })`, so Back goes to Applications.
   - `lib/notifyRoute.ts` allows only `/applications/<uuid>`, `/account` and `/apply`.
 - **Token storage** (`lib/data.ts`): `registerPushToken` calls RPC `claim_device_token` (0013, approved, not yet applied) *(pending SQL, §0)*. On PGRST202 it falls back to insert, or bumps `updated_at` if the row exists. A rotated token's old row is deleted only after the new one is saved, and `ezvisa.push.token` holds the last token saved to the server. `unregisterPushToken` waits for any save in flight and blocks later saves for the same session (so a save racing sign-out cannot re-create the row); it returns false when offline. Sign-out still completes (`lib/auth.tsx`, 3 s timeout), and Account › Sign out says when the phone is offline that it may still get the account's notifications. `clearUserData` drops the stored token key.
-- **Server v2** (`migrations/functions/notify-status/index.ts` + `messages.ts`, NOT deployed; v1 is live):
+- **Server v2** (`migrations/functions/notify-status/index.ts` + `messages.ts`, approved 2026-10-23, NOT yet deployed; v1 is live):
   - lock-screen text is only "There's an update on your application." or "A document needs your attention.";
   - data is `{ type, applicationId, url }`;
   - no push for the customer's own draft/submit/discard;
@@ -282,6 +282,14 @@ production; its rate limit fails open, #13), H1 (`mobile-app` changes nothing ou
   - `node scripts/push-server/run-fn.mjs`: the v2 edge function with a fake client, 9 checks.
   - `bash scripts/push-server/run-sql.sh`: 0006 + 0013 on a throwaway local Postgres, 21 checks.
   - Device test steps: QA-CHECKLIST §11.
+
+## 2l. Country screen v2 (2026-10-23)
+- `components/CountryDetail.tsx` (both routes: Countries → `/country/[slug]`, Home → `/destination/[slug]`) composes `components/country/*`: Hero (34% photo, stretchy pull, collapsing blurred bar with flag + name, 44pt Back/Share), GlanceList, YourApplicationCard, Requirements, FundsSection, VisaCentre, Questions, CountryFooter.
+- Data: `lib/countryInfo.ts` (`countryInfo(slug)`, `countryApp()` = none / draft / active for the footer and card, `footerKind()`). Copies of website data, each checked against the website file by `scripts/country-check.ts`: `lib/visaCentres.ts` (APPOINTMENT_CENTERS, without timing tips) and `lib/funds.ts` (SCHENGEN_FUNDS_RULES + calculateRequiredFunds).
+- **Proof of funds is hidden** (`FUNDS_CONFIRMED = false` in `lib/funds.ts`): the website numbers have no source in comments or git history. Flip it once they are confirmed. The web preview can show it with `window.__PREVIEW_FUNDS__`.
+- Hidden for missing data: visa centre for Bulgaria, Estonia, Iceland, Latvia, Liechtenstein, Luxembourg, Malta, Romania, Slovakia, Slovenia (not in the website mapping); funds for every country except the 8 in the website file; tips for UAE residence visa (none in the repo) and bank statement (website "6 months" contradicts the checklist's "3-6 months").
+- Removed: "24–48h processing" (audit S2-2 / M16), "C · Schengen", the hard-coded DOCS (Travel insurance, NOC for everyone). No price on this screen.
+- Checks: `bun scripts/run-check.ts scripts/country-check.ts` (287), `node scripts/country-shots.mjs <dir>` (234 web UI checks + screenshots), `node scripts/country-sheets.mjs <dir>`. Screenshots and sheets: `docs/screenshots/country-v2/` (light: the app is light-only since v10.4; `pre-merge/` shows the dark run).
 
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 **[Superseded 2026-10-23: see §0]** Vercel now has the Supabase, Ziina and webhook env vars; upload and payment routes are live with auth; the database items below are re-checked by `docs/live-state-check.sql`.
@@ -326,6 +334,6 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 1. Owner: set the Vercel env vars (Supabase URL/anon/service role, Ziina key and webhook secret), fix the Supabase Auth URL config, approve `proposed-live-changes.sql`. Then re-run `scripts/e2e-live.mjs`: upload, payment and `payment_id` should pass.
 2. Send the "application submitted" email for app submissions (e.g. a small authenticated web route that sends it for an existing row id, or a DB webhook).
 3. Customer document viewing: signed URLs are in the app (chat 09); needs `migrations/0011` applied.
-4. Push: apply `migrations/0013_claim_device_token.sql` (approved), deploy `notify-status` v2, then run QA §11 on a physical iPhone.
+4. Push: apply `migrations/0013_claim_device_token.sql` (approved) and deploy `notify-status` v2 (approved 2026-10-23, with `messages.ts`, `--no-verify-jwt`), then run QA §11 on a physical iPhone.
 5. Supabase Auth URL configuration (owner): add the app redirect URLs from §2g and set the Site URL to https://www.ezvisa.net. Google sign-in additionally needs the provider enabled (not used by the website today).
 6. Development build (`eas build --profile development`) for push and native testing; App Store / Play listings.

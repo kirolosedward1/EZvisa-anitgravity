@@ -1,3 +1,4 @@
+import { useT } from "../../lib/i18n";
 // Liquid Glass tab bar (iOS 26/27 style): floating translucent capsule, thin specular rim, and a glass "lens" pill that
 // springs between tabs (stretching in flight, settling back) and can be dragged across tabs. All motion runs on the UI
 // thread via Reanimated shared values; the drag uses PanResponder (no new native module, so it works in Expo Go).
@@ -8,7 +9,7 @@ import Animated, { useSharedValue, useAnimatedStyle, useAnimatedReaction, withSp
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
-import { router } from "expo-router";
+import { router, useSegments } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/tabs";
 import { useColors, useIsDark, elevation, SPRING, TAB_BAR_HEIGHT, S, R, ICON, SIZE, DUR } from "../../lib/theme";
 import { select, tap } from "../../lib/haptics";
@@ -25,7 +26,7 @@ const ICONS: Record<string, [IconName, IconName]> = {
 const H = TAB_BAR_HEIGHT;
 const PAD = S.xs - 2; // lens inset inside the capsule
 const COMPACT = 0.14; // how much the bar shrinks while scrolling down
-const DOT = TAB_BAR_HEIGHT - (S.xs - 2) * 2; // selected circle diameter (the bar height minus its inset)
+const DOT = 44; // selected circle diameter (the bar height minus its inset)
 const TAB_W = 56; // each tab is this wide: the bar hugs its content and sits centred, not edge to edge
 const glass = Platform.OS === "ios" && isLiquidGlassAvailable();
 
@@ -38,16 +39,16 @@ function Material({ radius }: { radius: number }) {
 }
 
 /** Centre "+" (between Countries and Applications): starts a new application via /apply, like the old floating button. */
-const FAB = SIZE.buttonM;
+const FAB = 56; // fixed 56x56 circle; only a uniform press scale, never width/scaleX
 function NewAppButton() {
-  const c = useColors(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0);
+  const c = useColors(); const { t } = useT(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: press.value }] }));
   const open = () => { const now = Date.now(); if (now - last.current < 800) return; last.current = now; tap(); router.push("/apply"); };
   return (
     <View style={{ width: FAB + S.xs, alignItems: "center", justifyContent: "center" }}>
       <Animated.View style={[{ width: FAB, height: FAB, borderRadius: FAB / 2, backgroundColor: c.accentFill, shadowColor: c.shadow, shadowOpacity: 0.16, shadowRadius: S.xs, shadowOffset: { width: 0, height: S.xxs }, elevation: 4 }, a]}>
         <Pressable onPress={open} onPressIn={() => { press.value = withSpring(reduce ? 0.96 : 0.9, SPRING.press); }} onPressOut={() => { press.value = withSpring(1, SPRING.press); }}
-          accessibilityRole="button" accessibilityLabel="New application" testID="tab-new-application" hitSlop={S.xxs}
+          accessibilityRole="button" accessibilityLabel={t("New application")} testID="tab-new-application" hitSlop={S.xxs}
           style={{ flex: 1, borderRadius: FAB / 2, alignItems: "center", justifyContent: "center" }}>
           <Icon name="airplane" size={ICON.lg} color={c.onAccent} />
         </Pressable>
@@ -56,7 +57,7 @@ function NewAppButton() {
   );
 }
 
-const LENS = { damping: 18, stiffness: 260, mass: 0.7 };      // droplet travel: quick with a soft settle
+const LENS = { damping: 18, stiffness: 220, overshootClamping: true };      // droplet travel: quick with a soft settle
 const SETTLE = { damping: 12, stiffness: 320, mass: 0.6 };    // stretch / squash recovery
 
 /** One tab: the icon only (the label is read by VoiceOver), crossfading outline/filled and grey/tint, with a spring scale. */
@@ -89,7 +90,8 @@ function Tab({ label, icons, on, progress, reduce, onPress, onLayout, testID, ph
 /** The first screen of each tab's stack (its list). */
 const TAB_ROOT: Record<string, string> = { "(home)": "index", "(countries)": "countries", applications: "index", account: "index" };
 
-export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
+  const segments = useSegments() as string[];
   const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const reduce = !!useReducedMotion();
   const { session } = useAuth(); const photo = useAvatar(session?.user.id);
   const [kb, setKb] = useState(false);
@@ -100,9 +102,9 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   }, []);
   const focused = state.routes[state.index];
   // Hidden on every pushed/detail screen (also when it's the only route in its stack, e.g. opened from another tab).
-  const nested = focused.state as { index?: number; routes?: { name: string }[] } | undefined;
-  const top = nested?.routes?.[nested.index ?? 0]?.name;
-  const hidden = kb || (nested?.index ?? 0) > 0 || (!!top && !["index", "countries"].includes(top));
+  // SDK 58: routes no longer carry nested stack state; derive the focused tab's top screen from the URL segments.
+  const top = segments[0] === "(tabs)" && segments[1] === focused.name ? (segments[2] ?? "index") : undefined;
+  const hidden = kb || (!!top && !["index", "countries"].includes(top));
   const bottom = insets.bottom > 0 ? Math.max(insets.bottom - S.xs, S.xs) : S.md;
   const ty = useSharedValue(0);
   useEffect(() => { ty.value = withSpring(hidden ? H + bottom + S.x3 : 0, SPRING.press); }, [hidden, bottom]);
@@ -116,29 +118,38 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const slots = useRef<{ x: number; w: number }[]>([]);
   const x = useSharedValue(0); const w = useSharedValue(0); const sx = useSharedValue(1); const sy = useSharedValue(1); const shown = useSharedValue(0);
   const progress = [useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0)];
+  // Row width (the tab-row container the lens lives in). The lens x is always clamped inside it: [PAD, rowW - DOT - PAD].
+  const rowW = useRef(0); const lensBase = useRef(0);
+  const clampX = (v: number) => (rowW.current > 0 ? Math.min(Math.max(v, PAD), rowW.current - DOT - PAD) : v);
   const moveTo = (i: number, animate = true) => {
-    const s = slots.current[i]; if (!s) return;
-    if (!animate || reduce || !shown.value) { x.value = reduce && shown.value ? withTiming(s.x, { duration: DUR.fast }) : s.x; w.value = s.w; shown.value = 1; return; }
-    const far = Math.abs(s.x - x.value) > 4;
-    x.value = withSpring(s.x, LENS); w.value = withSpring(s.w, LENS);
-    if (far) { sx.value = withSequence(withSpring(1.22, { damping: 20, stiffness: 600 }), withSpring(1, SETTLE)); sy.value = withSequence(withSpring(0.86, { damping: 20, stiffness: 600 }), withSpring(1, SETTLE)); }
+    const s = slots.current[i];
+    // Nothing is shown until this tab's slot and the row are measured (no stray circle at x = 0 on first render / remount).
+    if (!s || !(s.w > 0) || rowW.current <= 0) { shown.value = 0; return; }
+    const tx = clampX(s.x) - lensBase.current; // relative to where layout put the lens (left in LTR; Android RTL swaps left/right)
+    // First placement (mount, remount, after a re-measure) jumps; only a real tab change animates translateX.
+    if (!animate || reduce || !shown.value) { x.value = reduce && shown.value ? withTiming(tx, { duration: DUR.fast }) : tx; w.value = DOT; shown.value = 1; return; }
+    x.value = withSpring(tx, LENS); w.value = DOT; // fixed 44x44 circle: only translateX animates
   };
+  const onRow = (e: LayoutChangeEvent) => { const nw = e.nativeEvent.layout.width; if (Math.abs(nw - rowW.current) > 0.5) { rowW.current = nw; moveTo(state.index, false); } };
   useEffect(() => { moveTo(state.index); }, [state.index, reduce]);
   // The selected highlight is a circle (DOT x DOT) centred on the tab's icon.
-  const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; slots.current[i] = { x: lx + (width - DOT) / 2, w: DOT }; if (i === state.index) moveTo(i, false); };
-  const lens = useAnimatedStyle(() => ({ opacity: shown.value, width: w.value, transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
+  const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; const prev = slots.current[i]; slots.current[i] = { x: lx + (width - DOT) / 2, w: width > 0 ? DOT : 0 };
+    if (i === state.index && (!prev || Math.abs(prev.x - slots.current[i].x) > 0.5 || !shown.value)) moveTo(i, false); };
+  // Always a true circle at rest (DOT x DOT); the squash/stretch only plays while it travels.
+  const lens = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ translateX: x.value }] }));
 
   const go = (i: number) => {
     const route = state.routes[i]; const on = state.index === i;
-    const e = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-    if (!e.defaultPrevented && !on) { select(); navigation.navigate(route.name, route.params); return; }
+    const e = emitter.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+    if (!e.defaultPrevented && !on) { select(); navigateToTab(route.key); return; }
     moveTo(state.index);
     // Tapping the open tab goes back to its list. The stack pops to the top on its own; but a screen opened without the
     // list under it (after a payment, Continue, a notification) is the stack's only screen, so reset the stack to the list.
-    const stack = (route as any).state as { key?: string; routes?: { name: string }[] } | undefined;
     const root = TAB_ROOT[route.name];
-    if (!e.defaultPrevented && on && root && stack?.key && stack.routes?.[0]?.name !== root)
-      navigation.dispatch({ type: "RESET", payload: { index: 0, routes: [{ name: root }] }, target: stack.key } as any);
+    if (!e.defaultPrevented && on && root && top && top !== root) {
+      if (router.canDismiss()) router.dismissAll();
+      else router.replace((route.name === "(home)" ? "/" : `/${root === "index" ? route.name : root}`) as any);
+    }
   };
   // Drag the lens across tabs (horizontal pans only, so taps and vertical scrolls are untouched); release snaps + selects.
   const nearest = (cx: number) => { let best = state.index, d = 1e9; slots.current.forEach((s, i) => { if (!s) return; const dd = Math.abs(s.x + s.w / 2 - cx); if (dd < d) { d = dd; best = i; } }); return best; };
@@ -146,10 +157,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const startX = useRef(0);
   const pan = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
-    onPanResponderGrant: () => { startX.current = x.value; if (!reduce) { sx.value = withSpring(1.12, SETTLE); sy.value = withSpring(0.92, SETTLE); } },
-    onPanResponderMove: (_, g) => { const max = Math.max(...slots.current.filter(Boolean).map((s) => s.x)); x.value = Math.min(Math.max(startX.current + g.dx, 0), max); },
-    onPanResponderRelease: () => { sx.value = withSpring(1, SETTLE); sy.value = withSpring(1, SETTLE); live.current.go(live.current.nearest(x.value + w.value / 2)); },
-    onPanResponderTerminate: () => { sx.value = withSpring(1, SETTLE); sy.value = withSpring(1, SETTLE); live.current.moveTo(live.current.idx); },
+    onPanResponderGrant: () => { startX.current = x.value; },
+    onPanResponderMove: (_, g) => { const max = Math.max(...slots.current.filter(Boolean).map((s) => s.x)); x.value = clampX(Math.min(Math.max(startX.current + lensBase.current + g.dx, PAD), max)) - lensBase.current; },
+    onPanResponderRelease: () => { live.current.go(live.current.nearest(x.value + lensBase.current + w.value / 2)); },
+    onPanResponderTerminate: () => { live.current.moveTo(live.current.idx); },
   })).current;
   // PanResponder callbacks are created once; keep the latest closures reachable.
   return (
@@ -158,13 +169,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         <Material radius={H / 2} />
         {/* specular rim: a 1pt light edge just inside the outer hairline */}
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: H / 2, borderWidth: 1, borderColor: c.chromeRim }]} />
-        <View {...pan.panHandlers} style={{ height: H, flexDirection: "row", alignItems: "center", paddingHorizontal: PAD }} accessibilityRole="tablist">
+        <View {...pan.panHandlers} onLayout={onRow} style={{ height: H, flexDirection: "row", alignItems: "center", paddingHorizontal: PAD, borderRadius: H / 2, overflow: "hidden" }} accessibilityRole="tablist">
           {/* Physical `left` on purpose: the lens is positioned by translateX from measured layout x, which is always
               measured from the left edge, so it lines up in LTR and RTL alike. */}
-          <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: PAD, height: H - PAD * 2, borderRadius: (H - PAD * 2) / 2, overflow: "hidden",
+          <Animated.View pointerEvents="none" testID="tab-lens" onLayout={(e) => { const bx = e.nativeEvent.layout.x; if (Math.abs(bx - lensBase.current) > 0.5) { lensBase.current = bx; moveTo(state.index, false); } }} style={[{ position: "absolute", left: 0, top: (H - DOT) / 2, width: DOT, height: DOT, borderRadius: DOT / 2, overflow: "hidden",
             backgroundColor: c.lens, borderWidth: 1, borderColor: c.lensRim },
             dark ? null : { shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: PAD, shadowOffset: { width: 0, height: 2 } }, lens]}>
-            {glass && <GlassView glassEffectStyle="clear" style={StyleSheet.absoluteFill} />}
+            {glass && <GlassView glassEffectStyle="clear" style={[StyleSheet.absoluteFill, { borderRadius: DOT / 2 }]} />}
           </Animated.View>
           {state.routes.map((route, i) => {
             const label = (descriptors[route.key].options.title ?? route.name) as string;

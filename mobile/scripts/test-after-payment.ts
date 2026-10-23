@@ -86,7 +86,7 @@ db.user = ME;
   db.rows = [soon];
   const fs = continueForm(toApplication(soon));
   ok(!needsContinue(toApplication(soon)), "answered app row with departure in 5 days: Continue not needed again");
-  const dq = continueQuestions(fs, false).find((q) => q.id === "travelStartDate")!;
+  const dq = continueQuestions(fs, false).find((q) => q.id === "dates")!;
   ok(!continueError(dq, fs, fs), "the saved departure date is still accepted on the screen");
   ok(!!continueError(dq, { ...fs, travelStartDate: inDays(6) }, fs), "a newly picked date under 15 days is still refused");
 
