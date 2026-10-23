@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../../components/Logo";
-import { Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
+import { ActionPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
 import { AppointmentCard } from "../../../components/Appointment";
 import { useColors, S, R, curve, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
@@ -12,6 +12,7 @@ import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requ
 import { useApps } from "../../../lib/useApps";
 import { tap, error as hError } from "../../../lib/haptics";
 import { useEffect, useRef, useState } from "react";
+import { nextAction as cardAction } from "../../../lib/nextStep";
 import { buildChecklist } from "../../../lib/checklist";
 import { nextAction } from "../../../lib/nextAction";
 import { buildTimeline, doneCount, isUserDiscarded, chooseHero } from "../../../lib/timeline";
@@ -25,12 +26,13 @@ import { countdown } from "../../../lib/countdown";
 import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
-import { SwipeToDiscard, SwipeLock } from "../../../components/SwipeToDiscard";
+import { SwipeToDiscard, SwipeLock, SwipeActive } from "../../../components/SwipeToDiscard";
 import { useAvatar } from "../../../lib/avatar";
 import { onTabScroll } from "../../../lib/tabBarScroll";
+import { Explore, FaqSection } from "../../../components/home/Sections";
 
 const fmtDay = (s: string, lang: string) => new Date(s.slice(0, 10) + "T12:00:00").toLocaleDateString(lang === "ar" ? "ar" : undefined, { day: "numeric", month: "short" });
-const tripDates = (a: Application, lang: string) => (a.entry_date ? [fmtDay(a.entry_date, lang), a.exit_date && fmtDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
+const tripDates = (a: Application, lang: string) => (a.entry_date ? [fmtDay(a.entry_date, lang), a.exit_date && a.exit_date.slice(0, 10) !== a.entry_date.slice(0, 10) && fmtDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
 const STEP_LABEL: Record<string, string> = { personal: "Personal", spouse: "Spouse", employment: "Employment", "trip-details": "Trip" };
 const SERVER_STEP: Record<string, string> = { ...STEP_LABEL, payment: "Review" };
 const draftStep = (d: LocalDraft) => { const q = d.page.startsWith("q:") ? Q_BY_ID[d.page.slice(2)] : null; return q ? STEP_LABEL[q.step] ?? q.step : "Review"; };
@@ -46,7 +48,8 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
   const steps = buildTimeline(a); const done = doneCount(steps);
   const cd = ["completed", "rejected", "cancelled"].includes(a.status) ? null : countdown(a.entry_date, a.exit_date, t);
   const status = t(a.status === "submitted" && isPaid(a) ? "Paid" : STATUS_LABEL[a.status] ?? a.status); // same wording as the list
-  const open = () => router.push(`/applications/${a.id}`, { withAnchor: true });
+  const pending = cardAction(a);
+  const open = () => router.push((pending?.href ?? `/applications/${a.id}`) as any, { withAnchor: true });
   const act = () => {
     tap();
     switch (n.kind) {
@@ -71,6 +74,7 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: S.xs, marginTop: S.xs }}>
           <Text variant="callout" weight="600" tone={a.status === "cancelled" ? "secondary" : "accent"} color={a.status === "rejected" ? c.red : undefined} testID="hero-status">{status}</Text>
+          {pending && <ActionPill label={t(pending.label)} />}
           {!!tripDates(a, lang) && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" tabular testID="hero-dates">{tripDates(a, lang)}</Text></>}
           {!!cd && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" testID="countdown">{cd}</Text></>}
         </View>
@@ -116,7 +120,7 @@ function HeroSkeleton() {
 
 /** The other applications (the hero one is left out): drafts saved on this phone + the signed-in user's server
  *  applications, most recently updated first. Only drafts and unpaid cases can be discarded. */
-type Item = { key: string; country: string; status: string; at: number; open: () => void; /** discards without asking (swipe); the trash button asks once */ remove?: () => void; tone?: "accent" | "secondary"; draft?: string };
+type Item = { key: string; country: string; status: string; action?: string; actionHref?: string; at: number; open: () => void; /** discards without asking (swipe); the trash button asks once */ remove?: () => void; tone?: "accent" | "secondary"; draft?: string };
 function useItems(apps: Application[] | null): Item[] | null {
   const { t } = useT(); const { hydrated, drafts, openDraft, removeDraft, openServerDraft } = useForm();
   if (!hydrated) return null;
@@ -128,11 +132,13 @@ function useItems(apps: Application[] | null): Item[] | null {
       open: () => { openDraft(d.key); router.push({ pathname: "/apply", params: { resume: "1" } }); }, remove: () => removeDraft(d.key) })),
     ...server.filter((a) => !(a.status === "draft" && drafts.some((d) => d.draftId === a.id)) && !isUserDiscarded(a)).map((a): Item => {
       const paid = isPaid(a);
-      const status = a.status === "draft" ? t("Draft") : needsContinue(a) ? t("Continue application")
+      const act = cardAction(a);
+      const status = a.status === "draft" ? t("Draft") : act ? t(a.status === "submitted" ? "Paid" : STATUS_LABEL[a.status] ?? a.status) : needsContinue(a) ? t("Continue application")
         : a.status === "submitted" && !paid ? `${t("Submitted")} · ${t("Payment due")}` : paid && a.status === "submitted" ? t("Paid") : t(STATUS_LABEL[a.status] ?? a.status);
-      return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : "secondary",
+      return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, action: act ? t(act.label) : undefined, actionHref: act?.href, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : "secondary",
         // A draft saved from the website or another device opens in the wizard, at the question it was left on.
         open: a.status === "draft" ? () => { openServerDraft(a.id).then((ok) => router.push(ok ? { pathname: "/apply", params: { resume: "1" } } : `/applications/${a.id}`)).catch(() => router.push(`/applications/${a.id}`)); }
+          : act ? () => router.push(act.href as any, { withAnchor: true })
           : () => router.push(status === t("Continue application") ? `/continue/${a.id}` : `/applications/${a.id}`, { withAnchor: true }),
         remove: isAbandoned(a) ? () => { discardApplication(a).catch(() => {}); } : undefined,
         draft: a.status === "draft" ? SERVER_STEP[a.notes?.wizardStep ?? ""] ?? "Personal" : undefined };
@@ -154,15 +160,15 @@ function AppList({ items, title }: { items: Item[]; title: string }) {
             {i.country ? <Flag country={i.country} size={28} /> : <View style={{ width: 28, height: 28, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={13} color={c.tint} /></View>}
             <View style={{ flex: 1, paddingVertical: S.xs }}>
               <Text variant="body" numberOfLines={1}>{t(i.country || "New application")}</Text>
-              <Text variant="footnote" tone={i.tone ?? "secondary"} numberOfLines={1}>{i.status}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><Text variant="footnote" tone={i.tone ?? "secondary"} numberOfLines={1} style={{ flexShrink: 1 }}>{i.status}</Text>{!!i.action && <ActionPill label={i.action} />}</View>
             </View>
             {!i.remove && <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />}
           </PressScale>
           {i.remove && (
-            <PressScale onPress={() => { tap(); askDiscard(i.remove!, t); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
+            <SwipeActive.Consumer>{(sw) => sw ? null : <PressScale onPress={() => { tap(); askDiscard(i.remove!, t); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
               style={{ width: 44, height: 44, marginRight: S.xs, alignItems: "center", justifyContent: "center" }}>
               <Icon name="trash" size={17} color={c.red} />
-            </PressScale>
+            </PressScale>}</SwipeActive.Consumer>
           )}
           </View>
          </SwipeToDiscard>
@@ -185,7 +191,7 @@ function Story({ name }: { name: string }) {
           {photo ? <Image source={photo} style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.card }} contentFit="cover" cachePolicy="memory" recyclingKey={name} /> : <Flag country={name} size={inner} />}
         </View>
       </View>
-      <Text variant="caption" weight="500" numberOfLines={1} center>{t(name)}</Text>
+      <Text variant="caption" weight="500" numberOfLines={2} center style={{ width: RING + 8 }}>{t(name)}</Text>
     </PressScale>
   );
 }
@@ -271,11 +277,13 @@ export default function Home() {
         <Icon name="magnifyingglass" size={ICON.md} color={c.secondaryLabel} weight="medium" />
         <Text variant="body" tone="secondary">{t("Search destinations")}</Text>
       </PressScale>
-      <AppList items={others} title={heroKey ? t("Other applications") : t("Your applications")} />
       <SectionHeader title={t("Popular countries")} action={t("See all")} onAction={() => router.navigate("/countries")} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: S.lg - 4, gap: S.xs }} testID="popular-stories">
         {STORIES.map((n) => <Story key={n} name={n} />)}
       </ScrollView>
+      <AppList items={others} title={heroKey ? t("Other applications") : t("Your applications")} />
+      <Explore />
+      <FaqSection />
     </ScrollView>
     </SwipeLock.Provider>
   );

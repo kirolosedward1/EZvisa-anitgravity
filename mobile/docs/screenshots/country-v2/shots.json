@@ -11,24 +11,23 @@
    "files": [
     "italy-390-light-en-1.jpg",
     "italy-390-light-en-2.jpg",
-    "italy-390-light-en-3.jpg",
-    "italy-390-light-en-4.jpg"
+    "italy-390-light-en-3.jpg"
    ]
   },
   {
-   "label": "italy-390-dark-ar",
+   "label": "italy-390-light-ar",
    "files": [
-    "italy-390-dark-ar-1.jpg",
-    "italy-390-dark-ar-2.jpg",
-    "italy-390-dark-ar-3.jpg"
+    "italy-390-light-ar-1.jpg",
+    "italy-390-light-ar-2.jpg",
+    "italy-390-light-ar-3.jpg"
    ]
   },
   {
-   "label": "italy-430-dark-en",
+   "label": "italy-430-light-en",
    "files": [
-    "italy-430-dark-en-1.jpg",
-    "italy-430-dark-en-2.jpg",
-    "italy-430-dark-en-3.jpg"
+    "italy-430-light-en-1.jpg",
+    "italy-430-light-en-2.jpg",
+    "italy-430-light-en-3.jpg"
    ]
   },
   {
@@ -51,13 +50,13 @@
    ]
   },
   {
-   "label": "italy-430-dark-ar-largest",
+   "label": "italy-430-light-ar-largest",
    "files": [
-    "italy-430-dark-ar-largest-1.jpg",
-    "italy-430-dark-ar-largest-2.jpg",
-    "italy-430-dark-ar-largest-3.jpg",
-    "italy-430-dark-ar-largest-4.jpg",
-    "italy-430-dark-ar-largest-5.jpg"
+    "italy-430-light-ar-largest-1.jpg",
+    "italy-430-light-ar-largest-2.jpg",
+    "italy-430-light-ar-largest-3.jpg",
+    "italy-430-light-ar-largest-4.jpg",
+    "italy-430-light-ar-largest-5.jpg"
    ]
   }
  ],
@@ -78,12 +77,12 @@
    ]
   },
   {
-   "label": "italy-funds-preview-390-dark-ar",
+   "label": "italy-funds-preview-390-light-ar",
    "files": [
-    "italy-funds-preview-390-dark-ar-1.jpg",
-    "italy-funds-preview-390-dark-ar-2.jpg",
-    "italy-funds-preview-390-dark-ar-3.jpg",
-    "italy-funds-preview-390-dark-ar-4.jpg"
+    "italy-funds-preview-390-light-ar-1.jpg",
+    "italy-funds-preview-390-light-ar-2.jpg",
+    "italy-funds-preview-390-light-ar-3.jpg",
+    "italy-funds-preview-390-light-ar-4.jpg"
    ]
   },
   {
@@ -95,8 +94,7 @@
     "italy-funds-preview-390-light-en-largest-4.jpg",
     "italy-funds-preview-390-light-en-largest-5.jpg",
     "italy-funds-preview-390-light-en-largest-6.jpg",
-    "italy-funds-preview-390-light-en-largest-7.jpg",
-    "italy-funds-preview-390-light-en-largest-8.jpg"
+    "italy-funds-preview-390-light-en-largest-7.jpg"
    ]
   }
  ],
@@ -112,27 +110,26 @@
    "files": [
     "portugal-no-funds-390-light-en-1.jpg",
     "portugal-no-funds-390-light-en-2.jpg",
-    "portugal-no-funds-390-light-en-3.jpg",
-    "portugal-no-funds-390-light-en-4.jpg"
+    "portugal-no-funds-390-light-en-3.jpg"
    ]
   },
   {
-   "label": "portugal-no-funds-430-dark-ar",
+   "label": "portugal-no-funds-430-light-ar",
    "files": [
-    "portugal-no-funds-430-dark-ar-1.jpg",
-    "portugal-no-funds-430-dark-ar-2.jpg",
-    "portugal-no-funds-430-dark-ar-3.jpg"
+    "portugal-no-funds-430-light-ar-1.jpg",
+    "portugal-no-funds-430-light-ar-2.jpg",
+    "portugal-no-funds-430-light-ar-3.jpg"
    ]
   },
   {
-   "label": "portugal-no-funds-390-dark-en-largest",
+   "label": "portugal-no-funds-390-light-en-largest",
    "files": [
-    "portugal-no-funds-390-dark-en-largest-1.jpg",
-    "portugal-no-funds-390-dark-en-largest-2.jpg",
-    "portugal-no-funds-390-dark-en-largest-3.jpg",
-    "portugal-no-funds-390-dark-en-largest-4.jpg",
-    "portugal-no-funds-390-dark-en-largest-5.jpg",
-    "portugal-no-funds-390-dark-en-largest-6.jpg"
+    "portugal-no-funds-390-light-en-largest-1.jpg",
+    "portugal-no-funds-390-light-en-largest-2.jpg",
+    "portugal-no-funds-390-light-en-largest-3.jpg",
+    "portugal-no-funds-390-light-en-largest-4.jpg",
+    "portugal-no-funds-390-light-en-largest-5.jpg",
+    "portugal-no-funds-390-light-en-largest-6.jpg"
    ]
   }
  ],
@@ -152,20 +149,19 @@
    ]
   },
   {
-   "label": "malta-no-centre-430-dark-ar",
+   "label": "malta-no-centre-430-light-ar",
    "files": [
-    "malta-no-centre-430-dark-ar-1.jpg",
-    "malta-no-centre-430-dark-ar-2.jpg"
+    "malta-no-centre-430-light-ar-1.jpg",
+    "malta-no-centre-430-light-ar-2.jpg"
    ]
   },
   {
-   "label": "malta-no-centre-390-dark-en-largest",
+   "label": "malta-no-centre-390-light-en-largest",
    "files": [
-    "malta-no-centre-390-dark-en-largest-1.jpg",
-    "malta-no-centre-390-dark-en-largest-2.jpg",
-    "malta-no-centre-390-dark-en-largest-3.jpg",
-    "malta-no-centre-390-dark-en-largest-4.jpg",
-    "malta-no-centre-390-dark-en-largest-5.jpg"
+    "malta-no-centre-390-light-en-largest-1.jpg",
+    "malta-no-centre-390-light-en-largest-2.jpg",
+    "malta-no-centre-390-light-en-largest-3.jpg",
+    "malta-no-centre-390-light-en-largest-4.jpg"
    ]
   }
  ],
@@ -186,23 +182,22 @@
    ]
   },
   {
-   "label": "italy-draft-430-dark-ar",
+   "label": "italy-draft-430-light-ar",
    "files": [
-    "italy-draft-430-dark-ar-1.jpg",
-    "italy-draft-430-dark-ar-2.jpg",
-    "italy-draft-430-dark-ar-3.jpg"
+    "italy-draft-430-light-ar-1.jpg",
+    "italy-draft-430-light-ar-2.jpg",
+    "italy-draft-430-light-ar-3.jpg"
    ]
   },
   {
-   "label": "italy-draft-390-dark-en-largest",
+   "label": "italy-draft-390-light-en-largest",
    "files": [
-    "italy-draft-390-dark-en-largest-1.jpg",
-    "italy-draft-390-dark-en-largest-2.jpg",
-    "italy-draft-390-dark-en-largest-3.jpg",
-    "italy-draft-390-dark-en-largest-4.jpg",
-    "italy-draft-390-dark-en-largest-5.jpg",
-    "italy-draft-390-dark-en-largest-6.jpg",
-    "italy-draft-390-dark-en-largest-7.jpg"
+    "italy-draft-390-light-en-largest-1.jpg",
+    "italy-draft-390-light-en-largest-2.jpg",
+    "italy-draft-390-light-en-largest-3.jpg",
+    "italy-draft-390-light-en-largest-4.jpg",
+    "italy-draft-390-light-en-largest-5.jpg",
+    "italy-draft-390-light-en-largest-6.jpg"
    ]
   }
  ],
@@ -223,23 +218,22 @@
    ]
   },
   {
-   "label": "italy-active-430-dark-ar",
+   "label": "italy-active-430-light-ar",
    "files": [
-    "italy-active-430-dark-ar-1.jpg",
-    "italy-active-430-dark-ar-2.jpg",
-    "italy-active-430-dark-ar-3.jpg"
+    "italy-active-430-light-ar-1.jpg",
+    "italy-active-430-light-ar-2.jpg",
+    "italy-active-430-light-ar-3.jpg"
    ]
   },
   {
-   "label": "italy-active-390-dark-en-largest",
+   "label": "italy-active-390-light-en-largest",
    "files": [
-    "italy-active-390-dark-en-largest-1.jpg",
-    "italy-active-390-dark-en-largest-2.jpg",
-    "italy-active-390-dark-en-largest-3.jpg",
-    "italy-active-390-dark-en-largest-4.jpg",
-    "italy-active-390-dark-en-largest-5.jpg",
-    "italy-active-390-dark-en-largest-6.jpg",
-    "italy-active-390-dark-en-largest-7.jpg"
+    "italy-active-390-light-en-largest-1.jpg",
+    "italy-active-390-light-en-largest-2.jpg",
+    "italy-active-390-light-en-largest-3.jpg",
+    "italy-active-390-light-en-largest-4.jpg",
+    "italy-active-390-light-en-largest-5.jpg",
+    "italy-active-390-light-en-largest-6.jpg"
    ]
   }
  ]

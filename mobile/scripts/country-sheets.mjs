@@ -29,7 +29,8 @@ if (Object.keys(before).length) {
   for (const [cfg, files] of Object.entries(before)) {
     const [w, scheme, lang] = cfg.split(" ");
     rows.push({ label: `Before · Italy ${cfg}`, files });
-    const a = pick(`italy-${w}-${scheme}-${lang}`); if (a) rows.push({ label: `After · Italy ${cfg}`, files: a.files });
+    const a = pick(`italy-${w}-${scheme}-${lang}`) ?? pick(`italy-${w}-light-${lang}`); // the app is light-only since v10.4
+    if (a) rows.push({ label: `After · Italy ${a.label.replace(/^italy-/, "").replace(/-/g, " ")}`, files: a.files });
   }
   await render("before-after", page("Country screen: before / after", "Before: 44% photo, three tiles (90 days max, C Schengen, 24-48h processing), a fixed list with Travel insurance and Salary certificate / NOC for everyone, English only. After: see the rows below.", rows));
 }

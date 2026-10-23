@@ -2,39 +2,44 @@ import { useState } from "react";
 import { ScrollView, View, RefreshControl } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
+import { SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
 import { buildTimeline, doneCount } from "../../../lib/timeline";
 import { useT } from "../../../lib/i18n";
 import { useColors, useIsDark, S, R, curve, card, ICON } from "../../../lib/theme";
 import { STATUS_LABEL, type Application } from "../../../lib/data";
+import { nextAction } from "../../../lib/nextStep";
 import { useApps, ACTIVE } from "../../../lib/useApps";
 import { tap } from "../../../lib/haptics";
 import { askDiscard, isAbandoned } from "../../../lib/discard";
 import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
-import { SwipeToDiscard, SwipeLock } from "../../../components/SwipeToDiscard";
+import { SwipeToDiscard, SwipeLock, SwipeActive } from "../../../components/SwipeToDiscard";
+import { useContext } from "react";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 
 const fmt = (s?: string | null) => (s ? new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
+/** "13 Jan – 20 Jan"; one date when there is no return date or it is the same day. */
+const range = (a?: string | null, b?: string | null) => (!a ? "" : !b || b.slice(0, 10) === a.slice(0, 10) ? fmt(a) : `${fmt(a)} – ${fmt(b)}`);
 
 function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
-  const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const steps = buildTimeline(a);
+  const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const steps = buildTimeline(a); const swiping = useContext(SwipeActive);
   return (
-    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift
+    <PressScale onPress={() => { tap(); router.push((nextAction(a)?.href ?? `/applications/${a.id}`) as any); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift={!swiping} disabled={swiping} scaleTo={swiping ? 1 : undefined}
       style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={44} />
-        <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[a.reference, a.entry_date && `${fmt(a.entry_date)} – ${fmt(a.exit_date)}`].filter(Boolean).join(" · ")}</Text></View>
+        <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[a.reference, range(a.entry_date, a.exit_date)].filter(Boolean).join(" · ")}</Text></View>
         {onDiscard ? (
-          <PressScale onPress={() => askDiscard(onDiscard, t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="app-discard"
-            style={{ width: 36, height: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
+          // At rest the trash is invisible and untappable (swipe or long-press to discard); it shows only once swiped.
+          <PressScale disabled={!swiping} onPress={() => askDiscard(onDiscard, t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Discard")} accessibilityElementsHidden={!swiping} importantForAccessibility={swiping ? "auto" : "no-hide-descendants"} testID="app-discard"
+            pointerEvents={swiping ? "auto" : "none"} style={{ opacity: swiping ? 1 : 0, width: 36, height: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
             <Icon name="trash" size={16} color={c.red} />
           </PressScale>
         ) : <Icon name="chevron.right" size={ICON.sm} color={c.tertiaryLabel} weight="semibold" />}
       </View>
       <View style={{ gap: S.xs }}>
         <ProgressSegments count={steps.length} index={doneCount(steps)} fraction={0} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t(STATUS_LABEL[a.status] ?? a.status)} />
-        <StatusPill v={a.status} />
+        <StatusPills a={a} />
       </View>
     </PressScale>
   );

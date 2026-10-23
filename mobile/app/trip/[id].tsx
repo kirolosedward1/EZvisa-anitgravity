@@ -17,7 +17,7 @@ import { Note } from "../../components/wizard/fields";
 import { useColors, useIsDark, S, R, T, curve, card } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { getApplication, type Application } from "../../lib/data";
-import { BUDGETS, WHO, INTERESTS, emptyPrefs, generatePlan, loadPlan, savePlan, planHtml, suggestedCities, newId, type Plan, type Prefs, type Interest, type Slot } from "../../lib/itinerary";
+import { BUDGETS, WHO, INTERESTS, emptyPrefs, generatePlan, planAllowed, loadPlan, savePlan, planHtml, suggestedCities, newId, type Plan, type Prefs, type Interest, type Slot } from "../../lib/itinerary";
 import { select, success, tap, error as hError } from "../../lib/haptics";
 
 const QS = ["cities", "budget", "who", "interests"] as const;
@@ -36,7 +36,7 @@ export default function TripPlan() {
   const busy = useRef(false);
 
   const load = useCallback(async () => {
-    try { setErr(null); const app = await getApplication(id!); setA(app); const p = await loadPlan(app); setPlan(p); if (p) setPrefs(p.prefs); else { setQ("cities"); setPrefs({ ...emptyPrefs, cities: suggestedCities(app).slice(0, 1) }); } }
+    try { setErr(null); const app = await getApplication(id!); if (!planAllowed(app)) { router.replace(`/applications/${app.id}`, { withAnchor: true }); return; } setA(app); const p = await loadPlan(app); setPlan(p); if (p) setPrefs(p.prefs); else { setQ("cities"); setPrefs({ ...emptyPrefs, cities: suggestedCities(app).slice(0, 1) }); } }
     catch (e: any) { setErr(e?.message ?? String(e)); }
   }, [id]);
   useEffect(() => { load(); }, [load]);

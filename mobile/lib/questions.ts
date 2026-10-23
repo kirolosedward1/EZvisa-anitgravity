@@ -66,7 +66,8 @@ export const QUESTIONS: Question[] = [
   { id: "purposeOfTrip", step: "trip-details", keys: ["purposeOfTrip"], label: "Purpose of Trip", required: true, kind: "choice", options: PURPOSES },
   { id: "travelStartDate", step: "trip-details", keys: ["travelStartDate"], label: "Intended Departure Date", required: true, kind: "date", placeholder: "Select departure date", min: () => iso(earliestDeparture()), dateStyle: "calendar",
     hint: "At least 15 days from today." },
-  { id: "travelEndDate", step: "trip-details", keys: ["travelEndDate"], label: "Intended Return Date", required: true, kind: "date", placeholder: "Select return date", min: (f) => f.travelStartDate || todayIso(), dateStyle: "calendar" },
+  { id: "travelEndDate", step: "trip-details", keys: ["travelEndDate"], label: "Intended Return Date", required: true, kind: "date", placeholder: "Select return date", min: (f) => iso(new Date(Math.max(f.travelStartDate ? Date.parse(f.travelStartDate + "T00:00:00") : 0, earliestDeparture().getTime()) + 86400000)), dateStyle: "calendar",
+    hint: "After your departure date." }, // never in the past; strictly after departure
   { id: "datesFlexible", step: "trip-details", keys: ["datesFlexible"], label: "Are your travel dates flexible?", required: true, kind: "yesno" },
   { id: "travelingWith", step: "trip-details", keys: ["travelingWith"], label: "Who are you traveling with?", required: true, kind: "choice", options: COMPANIONS },
   { id: "hotelCategory", step: "trip-details", keys: ["hotelCategory"], label: "Accommodation Preferences", required: true, kind: "choice", options: HOTELS },

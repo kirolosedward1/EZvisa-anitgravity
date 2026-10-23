@@ -21,7 +21,7 @@ export function GroupHeader({ title, action, onAction, testID }: { title: string
 }
 
 /** Inset-grouped card with hairline separators (kept in dark mode by the E0 surface border). */
-export function Group({ children, footer, inset = S.gutter + ICON.lg + S.sm, style }: { children: React.ReactNode; footer?: string; inset?: number; style?: object }) {
+export function Group({ children, footer, inset = S.md + ICON.lg + S.sm, style }: { children: React.ReactNode; footer?: string; inset?: number; style?: object }) {
   const c = useColors();
   const items = React.Children.toArray(children).filter(Boolean);
   if (!items.length) return null;

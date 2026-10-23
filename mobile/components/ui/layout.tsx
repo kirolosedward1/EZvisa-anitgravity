@@ -51,7 +51,7 @@ export function Sheet({ visible, onClose, title, children, closeLabel = "Close",
   if (!mounted) return null;
   return (
     <Modal visible transparent animationType="none" statusBarTranslucent onRequestClose={onClose}>
-      <View style={{ flex: 1, justifyContent: "flex-end" }}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, justifyContent: "flex-end" }}>
         <Animated.View style={[{ position: "absolute", top: 0, bottom: 0, start: 0, end: 0, backgroundColor: c.overlay }, backdrop]}>
           <Pressable style={{ flex: 1 }} onPress={onClose} accessibilityRole="button" accessibilityLabel={closeLabel} />
         </Animated.View>
@@ -72,7 +72,7 @@ export function Sheet({ visible, onClose, title, children, closeLabel = "Close",
           </View>
           <ScrollView bounces={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: S.sm }}>{children}</ScrollView>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

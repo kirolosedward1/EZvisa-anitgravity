@@ -1,5 +1,5 @@
 import { AppointmentCard } from "../../../components/Appointment";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
@@ -12,8 +12,9 @@ import { SupportButton } from "../../../components/Support";
 import { whatsapp } from "../../../lib/api";
 import { intentStatus, knownPayment, money, startPayment, usePaying, useQuote } from "../../../lib/payments";
 import { Linking } from "react-native";
-import { success, error as hError } from "../../../lib/haptics";
+import { success, error as hError, tap } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
+import { shareReceipt } from "../../../lib/receipt";
 import { useT } from "../../../lib/i18n";
 import { router } from "expo-router";
 import { countdown } from "../../../lib/countdown";
@@ -78,6 +79,9 @@ export default function ApplicationDetail() {
   const quote = useQuote(unpaid ? a!.id : null, a?.updated_at);
   // Ziina status of the checkout this device opened (server proxy), so a paid-but-not-yet-recorded payment shows as confirming.
   useEffect(() => { let on = true; if (unpaid) knownPayment(a!.id).then((p) => p && intentStatus(p.paymentId)).then((s) => on && setZiina(s ?? null)).catch(() => {}); return () => { on = false; }; }, [a?.id, a?.payment_status]);
+  // The locked Trip plan row only scrolls to the payment step; paying always needs its own tap there.
+  const scroller = useRef<ScrollView>(null); const payY = useRef(0);
+  const toPayStep = () => { tap(); scroller.current?.scrollTo({ y: Math.max(0, payY.current - S.md), animated: true }); };
   const pay = async () => {
     if (!a || paying) return; setUpErr(null);
     try { const o = await startPayment(a.id); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }); }
@@ -115,7 +119,7 @@ export default function ApplicationDetail() {
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
+    <ScrollView ref={scroller} contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.tint} />}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
@@ -127,10 +131,11 @@ export default function ApplicationDetail() {
         <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text variant="subhead" tone="secondary" tabular>{a.reference}</Text>
-          <StatusPill v={a.status} />
+          <StatusPill v={a.status} a={a} />
         </View>
       </View>
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
+      {locked && <View onLayout={(e) => { payY.current = e.nativeEvent.layout.y; }} />}
       {locked && (
         <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
           {ziina === "completed" || ziina === "pending"
@@ -143,13 +148,22 @@ export default function ApplicationDetail() {
           <ListRow icon="briefcase.fill" iconColor={c.tint} title={t("Continue application")} subtitle={t("Add your passport number and employment details.")} onPress={() => router.push(`/continue/${a.id}`)} />
         </ListGroup>
       )}
+      {paid && !needsContinue(a) && list && list.customer.length - done > 0 && (
+        <ListGroup header={t("Next step")} inset={58}>
+          <ListRow icon="arrow.up.doc.fill" iconColor={c.tint} title={t(list.customer.length - done === 1 ? "Submit 1 document" : "Submit {n} documents", { n: list.customer.length - done })}
+            subtitle={(() => { const o = list.customer.filter(isOpen).map((i) => t(i.req.title)); return o.slice(0, 3).join(", ") + (o.length > 3 ? " " + t("+{n} more", { n: o.length - 3 }) : ""); })()} />
+        </ListGroup>
+      )}
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
-        <ListRow title={t("Dates")} value={`${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />
+        {!!a.entry_date && <ListRow title={t("Dates")} value={!a.exit_date || a.exit_date.slice(0, 10) === a.entry_date.slice(0, 10) ? fmtD(a.entry_date) : `${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />}
+        {paid && <ListRow title={t("Paid")} value={fmtD(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null)} />}
         {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
-        {a.status !== "cancelled" && <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />}
+        {a.status !== "cancelled" && (paid
+          ? <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />
+          : <ListRow icon="lock.fill" iconColor={c.grey} title={t("Trip plan")} subtitle={t("Your trip plan unlocks after payment")} onPress={toPayStep} />)}
       </ListGroup>
       <AppointmentCard a={a} />
       {locked ? (
@@ -183,7 +197,7 @@ export default function ApplicationDetail() {
       </ListGroup>}
       <InlineError text={upErr} />
       <ListGroup inset={58}>
-        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
+        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} onPress={paid ? () => shareReceipt(a, a.full_name ?? "", a.email ?? "") : undefined} a11yHint={paid ? t("Payment receipt") : undefined} />)}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>

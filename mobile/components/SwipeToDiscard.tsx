@@ -13,6 +13,8 @@ const REVEAL = 96;
 /** The screen's ScrollView listens here: while a row is being swiped the list must not scroll (screens set
  *  scrollEnabled={!swiping}). */
 export const SwipeLock = createContext<(on: boolean) => void>(() => {});
+/** True while this row is dragged or its Discard button shows: the row hides its own trash button and press effect. */
+export const SwipeActive = createContext(false);
 
 export function SwipeToDiscard({ onDiscard, radius = 0, enabled = true, testID, children }: { onDiscard: () => void; radius?: number; enabled?: boolean; testID?: string; children: React.ReactNode }) {
   const c = useColors(); const { t, rtl } = useT(); const lock = useContext(SwipeLock);
@@ -35,27 +37,30 @@ export function SwipeToDiscard({ onDiscard, radius = 0, enabled = true, testID, 
       if (over !== past.current) { past.current = over; select(); } // a tick when a release would discard
     },
     onPanResponderRelease: (_, g) => {
-      const { dir: d, snap: s, discard: go, drag: dr } = live.current; const dist = Math.abs(start.current + g.dx); dr(false);
+      const { dir: d, snap: s, discard: go, drag: dr } = live.current; const dist = Math.max(0, (start.current + g.dx) * d); dr(false); // only the trailing (left in LTR) direction counts
       if (dist > width.current / 2 || (dist > REVEAL && Math.abs(g.vx) > 1.2 && Math.sign(g.vx) === d)) go();
       else s(dist > REVEAL / 2 ? d * REVEAL : 0);
     },
     onPanResponderTerminate: () => { live.current.drag(false); live.current.snap(0); },
   })).current;
   const row = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  // The red layer only exists while the row is actually moved: at rest nothing can peek out behind the card
+  // (a press-scale, a translucent card or a sub-pixel gap used to show the Discard button half open).
+  const under = useAnimatedStyle(() => ({ opacity: Math.abs(x.value) > 0.5 ? 1 : 0 }));
   const onLayout = (e: LayoutChangeEvent) => { width.current = e.nativeEvent.layout.width; };
   if (!enabled) return <>{children}</>;
   return (
     <View onLayout={onLayout} style={{ borderRadius: radius, overflow: "hidden" }} testID={testID}>
       {/* Behind the row: red, with the Discard button at the trailing edge. */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: c.red, flexDirection: "row", justifyContent: "flex-end", borderRadius: radius }]}>
+      <Animated.View pointerEvents={open ? "auto" : "none"} style={[StyleSheet.absoluteFill, { backgroundColor: c.red, flexDirection: "row", justifyContent: "flex-end", borderRadius: radius }, under]}>
         <Pressable onPress={discard} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="swipe-discard"
           style={{ width: REVEAL, alignItems: "center", justifyContent: "center", gap: S.xxs }}>
           <Icon name="trash" size={18} color={c.onAccent} />
           <Text variant="caption" weight="600" color={c.onAccent}>{t("Discard")}</Text>
         </Pressable>
-      </View>
+      </Animated.View>
       <Animated.View {...pan.panHandlers} style={row}>
-        {children}
+        <SwipeActive.Provider value={open || dragging}>{children}</SwipeActive.Provider>
         {/* While the button shows, a tap on the row closes it instead of opening the application. */}
         {(open || dragging) && <Pressable style={StyleSheet.absoluteFill} onPress={() => { if (!cooling.current) snap(0); }} accessibilityLabel={t("Close")} />}
       </Animated.View>

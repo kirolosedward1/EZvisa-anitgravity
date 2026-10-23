@@ -14,7 +14,8 @@ export type Palette = {
   /** Hairline around cards and controls. */ border: string;
   /** List separators. */ separator: string;
   /** Accent for text, icons, progress and selection outlines. */ accent: string;
-  /** Accent for filled controls (primary button, selected tile). Pair with `onAccent`. */ accentFill: string;
+  /** Accent for filled controls (selected tile, the tab bar plane). Pair with `onAccent`. */ accentFill: string;
+  /** Primary buttons: ink, with `onPrimary` text (premium look; blue stays for selection, links and progress). */ primaryFill: string; onPrimary: string;
   /** Selected-row tint. */ accentSoft: string;
   /** Text / icons on `accentFill` and `danger`. */ onAccent: string;
   success: string; warning: string; danger: string;
@@ -31,19 +32,20 @@ export type Palette = {
 };
 
 export const light: Palette = {
-  background: "#FFFFFF",
-  surface: "#F5F5F7",
+  background: "#FAFAF8",      // warm off-white canvas; cards are white with a hairline
+  surface: "#FFFFFF",
   surfaceRaised: "#FFFFFF",
   fill: "rgba(118,118,128,0.12)",
   fillSubtle: "rgba(118,118,128,0.07)",
-  text: "#0A0A0A",            // 19.8:1
-  textSecondary: "#5F5F66",   // 6.3:1 bg · 5.8:1 surface
-  textTertiary: "#6E6E76",    // 5.1:1 bg · 4.6:1 surface
-  border: "rgba(0,0,0,0.08)",
-  separator: "rgba(60,60,67,0.16)",
+  text: "#111114",            // 18.0:1 bg · 18.9:1 surface (soft ink)
+  textSecondary: "#6A6A72",   // 5.1:1 bg · 5.4:1 surface (warm grey)
+  textTertiary: "#737379",    // 4.5:1 bg · 4.7:1 surface
+  border: "#E9E9EC",          // hairline around cards and fields
+  separator: "rgba(60,60,67,0.12)",
   accent: "#0436DC",          // 8.2:1 bg · 7.5:1 surface
   accentFill: "#0436DC",      // onAccent 8.2:1
-  accentSoft: "rgba(4,54,220,0.08)",
+  primaryFill: "#111114", onPrimary: "#FFFFFF", // 18.9:1
+  accentSoft: "rgba(4,54,220,0.06)",
   onAccent: "#FFFFFF",
   success: "#1A7F37",         // 5.1:1 bg · 4.7:1 surface
   warning: "#B83200",         // 6.0:1
@@ -73,6 +75,7 @@ export const dark: Palette = {
   separator: "rgba(84,84,88,0.6)",
   accent: "#8CA2FF",          // 8.7:1 bg · 7.1:1 surface
   accentFill: "#3D5AFE",      // onAccent 5.1:1
+  primaryFill: "#FFFFFF", onPrimary: "#000000",
   accentSoft: "rgba(140,162,255,0.14)",
   onAccent: "#FFFFFF",
   success: "#30D158",         // 8.4:1 surface

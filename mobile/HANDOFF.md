@@ -202,7 +202,7 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
 - **Proof of funds is hidden** (`FUNDS_CONFIRMED = false` in `lib/funds.ts`): the website numbers have no source in comments or git history. Flip it once they are confirmed. The web preview can show it with `window.__PREVIEW_FUNDS__`.
 - Hidden for missing data: visa centre for Bulgaria, Estonia, Iceland, Latvia, Liechtenstein, Luxembourg, Malta, Romania, Slovakia, Slovenia (not in the website mapping); funds for every country except the 8 in the website file; tips for UAE residence visa (none in the repo) and bank statement (website "6 months" contradicts the checklist's "3-6 months").
 - Removed: "24–48h processing" (audit S2-2 / M16), "C · Schengen", the hard-coded DOCS (Travel insurance, NOC for everyone). No price on this screen.
-- Checks: `bun scripts/run-check.ts scripts/country-check.ts` (287), `node scripts/country-shots.mjs <dir>` (234 web UI checks + screenshots), `node scripts/country-sheets.mjs <dir>`. Screenshots and sheets: `docs/screenshots/country-v2/`.
+- Checks: `bun scripts/run-check.ts scripts/country-check.ts` (287), `node scripts/country-shots.mjs <dir>` (234 web UI checks + screenshots), `node scripts/country-sheets.mjs <dir>`. Screenshots and sheets: `docs/screenshots/country-v2/` (light: the app is light-only since v10.4; `pre-merge/` shows the dark run).
 
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.

@@ -76,9 +76,11 @@ if (process.env.BEFORE) {
   await b.close(); process.exit(0);
 }
 
+// The app is light-only since v10.4 (lib/appearance.tsx useScheme), so every config renders light; the screen itself
+// only uses theme tokens, and docs/screenshots/country-v2/pre-merge has the dark-mode run from before that change.
 const CONFIGS = {
-  full: [{ w: 390, scheme: "light", lang: "en" }, { w: 390, scheme: "dark", lang: "ar" }, { w: 430, scheme: "dark", lang: "en" }, { w: 430, scheme: "light", lang: "ar" }, { w: 390, scheme: "light", lang: "en", big: true }, { w: 430, scheme: "dark", lang: "ar", big: true }],
-  some: [{ w: 390, scheme: "light", lang: "en" }, { w: 430, scheme: "dark", lang: "ar" }, { w: 390, scheme: "dark", lang: "en", big: true }],
+  full: [{ w: 390, scheme: "light", lang: "en" }, { w: 390, scheme: "light", lang: "ar" }, { w: 430, scheme: "light", lang: "en" }, { w: 430, scheme: "light", lang: "ar" }, { w: 390, scheme: "light", lang: "en", big: true }, { w: 430, scheme: "light", lang: "ar", big: true }],
+  some: [{ w: 390, scheme: "light", lang: "en" }, { w: 430, scheme: "light", lang: "ar" }, { w: 390, scheme: "light", lang: "en", big: true }],
 };
 const SCENARIOS = [
   { id: "italy", slug: "italy", data: "none", cfgs: CONFIGS.full },
@@ -111,7 +113,7 @@ for (const s of SCENARIOS) {
       const glance = await p.getByTestId("glance-stay").getAttribute("aria-label");
       log(cfg.lang !== "en" || glance === "Stay, Up to 90 days in any 180 days", `${tag}: glance row reads as one element`, glance);
       const footer = await p.getByTestId("country-footer").innerText();
-      const want = { none: cfg.lang === "en" ? "Apply for Italy" : "قدّم على تأشيرة", draft: cfg.lang === "en" ? "Continue your Italy application" : "أكمل طلبك", active: cfg.lang === "en" ? "View your application" : "عرض طلبك" }[s.data];
+      const want = { none: cfg.lang === "en" ? "Apply for Italy" : "قدّم على إيطاليا", draft: cfg.lang === "en" ? "Continue your Italy application" : "أكمل طلبك", active: cfg.lang === "en" ? "View your application" : "عرض طلبك" }[s.data];
       log(s.slug !== "italy" || footer.includes(want), `${tag}: footer button for "${s.data}"`, footer.replace(/\n/g, " / "));
       if (s.data === "active") log(await has("yourapp-active") && (await p.getByTestId("yourapp-header").innerText()).length > 0 && /See all|عرض الكل/.test(await p.getByTestId("yourapp-header").innerText()), `${tag}: active card, See all with 2 items`);
       // Back and Share: 44pt; Back on the leading side (right in Arabic)

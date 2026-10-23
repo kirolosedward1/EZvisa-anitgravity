@@ -1,3 +1,4 @@
+import { paidStatus } from "./stage";
 // Trip plan: optional questions + a deterministic, local template engine (no AI, no network, no keys).
 // The output is generic ideas per day ("Ideas, not bookings"): it never names venues, prices, opening hours or bookings.
 // Stored on the phone and in visa_applications.additional_notes.itinerary (no schema change; RLS allows the update
@@ -40,12 +41,12 @@ type Pool = Record<Interest, { budget: string[]; mid: string[]; premium: string[
 const P: Pool = {
   food: {
     budget: ["Browse a local food market in {city}", "Try local street food", "Picnic with local bread, cheese and fruit"],
-    mid: ["Eat at a local bistro in {city}", "Try a regional speciality", "Coffee and pastries in a neighbourhood café"],
+    mid: ["Eat at a local bistro in {city}", "Try a regional speciality", "Coffee and pastries in a neighbourhood café", "Lunch at a covered food hall", "Cooking class for a local dish"],
     premium: ["Book a tasting menu in {city}", "Join a guided food tour", "Wine or tea tasting session"],
   },
   culture: {
     budget: ["Free walking tour of {city}'s old town", "Visit a church or cathedral", "Explore a historic square and its side streets"],
-    mid: ["Visit a major museum in {city}", "Guided tour of a historic site", "See a local exhibition or gallery"],
+    mid: ["Visit a major museum in {city}", "Guided tour of a historic site", "See a local exhibition or gallery", "Climb a tower or dome for a view over {city}", "Visit a palace or castle and its gardens"],
     premium: ["Private guided tour of {city}", "Evening concert or opera", "Skip-the-line museum visit"],
   },
   shopping: {
@@ -55,7 +56,7 @@ const P: Pool = {
   },
   nature: {
     budget: ["Walk in a large city park", "Sunset at a viewpoint over {city}"],
-    mid: ["Half-day trip to a nearby lake, coast or hills", "Bike ride along a river or waterfront"],
+    mid: ["Half-day trip to a nearby lake, coast or hills", "Bike ride along a river or waterfront", "Botanical garden visit in {city}"],
     premium: ["Private day trip into the countryside near {city}", "Scenic boat trip"],
   },
   nightlife: {
@@ -73,6 +74,7 @@ const SLOTS: Slot[] = ["Morning", "Afternoon", "Evening"];
 
 /** Deterministic plan: same application + answers -> same plan. */
 export function generatePlan(a: Application, prefs: Prefs, lang: Lang): Plan {
+  if (!planAllowed(a)) throw new Error("Your trip plan unlocks after payment");
   const t = (s: string, v?: Record<string, string | number>) => translate(lang, s, v);
   const start = a.entry_date ?? null, end = a.exit_date ?? null;
   const nDays = start && end ? Math.max(1, Math.min(90, Math.round((Date.parse(end) - Date.parse(start)) / DAY) + 1)) : 5;
@@ -82,14 +84,19 @@ export function generatePlan(a: Application, prefs: Prefs, lang: Lang): Plan {
   const per = Math.max(1, Math.floor(nDays / cities.length)); let extra = nDays - per * cities.length;
   const cityOf: string[] = [];
   cities.forEach((c) => { const k = per + (extra-- > 0 ? 1 : 0); for (let i = 0; i < k; i++) cityOf.push(c); });
-  const used: Record<string, number> = {};
+  const usedIn: Record<string, Set<string>> = {};
   // Nightlife only in the evening; evenings prefer nightlife when chosen. Each pool cycles so ideas don't repeat early.
   const pick = (want: Interest, city: string, _k: number, slot: Slot = "Afternoon") => {
     let interest = want;
     if (slot === "Evening" && interests.includes("nightlife")) interest = "nightlife";
     else if (slot !== "Evening" && interest === "nightlife") interest = interests.find((x) => x !== "nightlife") ?? "culture";
-    const pool = P[interest][tier]; const i = (used[interest] = (used[interest] ?? -1) + 1);
-    return t(pool[i % pool.length], { city });
+    // Never repeat an idea in the same city: this tier first, then the other tiers, then the other interests.
+    const tiers = [tier, ...(["mid", "budget", "premium"] as const).filter((x) => x !== tier)];
+    const order: Interest[] = [interest, ...interests.filter((x) => x !== interest && x !== "nightlife"), ...(Object.keys(P) as Interest[]).filter((x) => x !== interest && x !== "nightlife" && !interests.includes(x))];
+    const seen = (usedIn[city] ??= new Set<string>());
+    for (const it of slot === "Evening" && interest === "nightlife" ? ["nightlife" as Interest, ...order] : order)
+      for (const tr of tiers) for (const idea of P[it][tr]) if (!seen.has(idea)) { seen.add(idea); return t(idea, { city }); }
+    return t("Free time to explore {city} at your own pace", { city });
   };
   const days: Day[] = [];
   for (let d = 0; d < nDays; d++) {
@@ -119,7 +126,10 @@ export function generatePlan(a: Application, prefs: Prefs, lang: Lang): Plan {
 }
 
 const key = (id: string) => `ezvisa.itinerary.v1.${id}`;
+/** Trip plans are a paid feature (lib/stage.ts rule). */
+export const planAllowed = (a: { payment_status?: string | null }) => paidStatus(a.payment_status);
 export async function loadPlan(a: Application): Promise<Plan | null> {
+  if (!planAllowed(a)) throw new Error("Your trip plan unlocks after payment");
   const local = await AsyncStorage.getItem(key(a.id)).then((s) => (s ? (JSON.parse(s) as Plan) : null)).catch(() => null);
   const remote = (a.notes as any).itinerary as Plan | undefined;
   const ok = (p: any): p is Plan => p && p.v === 1 && Array.isArray(p.days);
@@ -128,6 +138,7 @@ export async function loadPlan(a: Application): Promise<Plan | null> {
 }
 /** Saves on the phone first, then to the account. Returns whether the account copy was updated. */
 export async function savePlan(a: Application, plan: Plan): Promise<{ synced: boolean; error?: string }> {
+  if (!planAllowed(a)) return { synced: false, error: "Your trip plan unlocks after payment" };
   const p = { ...plan, updatedAt: new Date().toISOString() };
   await AsyncStorage.setItem(key(a.id), JSON.stringify(p)).catch(() => {});
   try { const r = await patchNotes(a.id, { itinerary: p }); return { synced: r.synced }; }

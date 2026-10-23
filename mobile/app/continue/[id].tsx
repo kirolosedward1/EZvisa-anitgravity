@@ -8,13 +8,14 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useReducedMotion, useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import Animated from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text, Skeleton, InlineError, EmptyState } from "../../components/ui";
+import { Text, Skeleton, InlineError, EmptyState, Button } from "../../components/ui";
+import { useAuth } from "../../lib/auth";
 import { CircleButton } from "../../components/flow";
 import { QuestionView } from "../../components/wizard/QuestionView";
 import { useColors, S, R, SPRING } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { slideIn } from "../../lib/motion";
-import { getApplication, saveAfterPayment, continueForm, isWebsiteRow } from "../../lib/data";
+import { getApplication, saveAfterPayment, continueForm, isWebsiteRow, withTimeout } from "../../lib/data";
 import { STEP_TITLES, OTHER_NATIONALITY, emptyForm, type WizardForm } from "../../lib/wizard";
 import { continueQuestions, continueError, Q_BY_ID, type Question } from "../../lib/questions";
 import { success, error as hError, tap, select } from "../../lib/haptics";
@@ -31,6 +32,7 @@ function Bar({ fill }: { fill: number }) {
 export default function ContinueApplication() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL; const reduce = useReducedMotion();
+  const { session, loading: authLoading } = useAuth(); const me = session?.user?.email; const [nonce, setNonce] = useState(0); const [allDone, setAllDone] = useState(false);
   const [f, setF] = useState<WizardForm | null>(null); const fRef = useRef<WizardForm | null>(null); fRef.current = f;
   const [qid, setQid] = useState<string | null>(null); const [dir, setDir] = useState(1); const [website, setWebsite] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null); const [err, setErr] = useState<string | null>(null);
@@ -50,16 +52,19 @@ export default function ContinueApplication() {
   useEffect(() => () => { if (auto.current) clearTimeout(auto.current); }, []);
 
   useEffect(() => {
-    getApplication(id!).then((app) => {
+    if (!me) return; let live = true; setLoadErr(null); setAllDone(false);
+    withTimeout(getApplication(id!)).then((app) => {
+      if (!live) return;
       const form = continueForm(app); saved.current = form;
       const web = isWebsiteRow(app);
       // The spouse travels with them: "Who are you traveling with?" starts on With Spouse (still asked: children may come too).
       if (!web && form.spouseAccompanying === "yes" && !form.travelingWith) { form.travelingWith = "spouse"; preset.current.add("travelingWith"); }
       setWebsite(web); setF(form);
       const first = continueQuestions(form, web).find((x) => !!continueError(x, form, saved.current) || preset.current.has(x.id));
-      if (first) setQid(first.id); else router.replace(`/applications/${id}`, { withAnchor: true });
-    }).catch((e) => setLoadErr(e?.message ?? String(e)));
-  }, [id]);
+      if (first) setQid(first.id); else { setAllDone(true); router.replace(`/applications/${id}`, { withAnchor: true }); }
+    }).catch((e) => { if (live) setLoadErr(t(e?.message ?? String(e))); });
+    return () => { live = false; };
+  }, [id, me, nonce]);
 
   const q: Question | null = qid ? Q_BY_ID[qid] ?? null : null;
   const list = f ? continueQuestions(f, website) : [];
@@ -130,7 +135,9 @@ export default function ContinueApplication() {
   if (!f || !q) return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       {header}
-      {loadErr ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={loadErr} /></View>
+      {!session && !authLoading ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="person.crop.circle" title={t("Sign in to continue your application")} message={t("Use the email you paid with.")} action={<Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />} /></View>
+        : loadErr ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={loadErr} action={<Button title={t("Retry")} variant="secondary" onPress={() => setNonce((n) => n + 1)} />} /></View>
+        : allDone ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="checkmark.circle.fill" title={t("Nothing left to add")} action={<Button title={t("Open application")} onPress={() => router.replace(`/applications/${id}`, { withAnchor: true })} />} /></View>
         : <View style={{ padding: S.lg, gap: S.md }}><Skeleton w="60%" h={28} /><Skeleton h={60} r={R.tile} /><Skeleton h={60} r={R.tile} /></View>}
     </View>
   );
