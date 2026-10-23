@@ -11,6 +11,17 @@ import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
+import type { ReactNode } from "react"
+
+/** Both languages are in the HTML. The /ar script sets dir=rtl before paint, so Arabic shows at the same size. */
+function LangText({ en, ar }: { en: ReactNode; ar: ReactNode }) {
+  return (
+    <>
+      <span className="rtl:hidden">{en}</span>
+      <span className="hidden rtl:inline">{ar}</span>
+    </>
+  )
+}
 import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, flagSrc, toCitizenshipIso } from "@/lib/nationalities"
 
 const countryFlags: Record<string, string> = {
@@ -191,28 +202,24 @@ export function HeroSection() {
                 ))}
               </div>
               <span className="tracking-wide uppercase text-[10px] font-bold text-[#0A0F1F]">
-                {arabic ? "٤٫٩/٥ من أكثر من ٥٬٠٠٠ مسافر" : "4.9/5 from 5,000+ travelers"}
+                <LangText en="4.9/5 from 5,000+ travelers" ar="٤٫٩/٥ من أكثر من ٥٬٠٠٠ مسافر" />
               </span>
             </motion.div>
 
             {/* Headline */}
             <motion.h1 variants={itemVariants} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.15] tracking-tight text-balance max-w-4xl text-[#0A0F1F]">
-              {arabic ? (
-                <>
-                  احصل على تأشيرة شنغن، <span className="text-[#0436DC]">بسهولة.</span>
-                </>
-              ) : (
-                <>
-                  Get your Schengen visa approved, the <span className="text-[#0436DC]">easy</span> way.
-                </>
-              )}
+              <LangText
+                en={<>Get your Schengen visa approved, the <span className="text-[#0436DC]">easy</span> way.</>}
+                ar={<>احصل على تأشيرة شنغن، <span className="text-[#0436DC]">بسهولة.</span></>}
+              />
             </motion.h1>
 
             {/* Subheading */}
             <motion.p variants={itemVariants} className="mt-5 max-w-2xl text-base md:text-lg text-[#5B6475] leading-relaxed font-medium">
-              {arabic
-                ? "نجهّز ملف التأشيرة كاملًا — النماذج وخطاب التغطية وخط السير والحجوزات — حتى توافق السفارة."
-                : "We prepare your complete visa file — forms, cover letter, itinerary, and bookings — so embassies say yes."}
+              <LangText
+                en="We prepare your complete visa file — forms, cover letter, itinerary, and bookings — so embassies say yes."
+                ar="نجهّز ملف التأشيرة كاملًا — النماذج وخطاب التغطية وخط السير والحجوزات — حتى توافق السفارة."
+              />
             </motion.p>
 
             {/* Country selector card */}
@@ -224,9 +231,9 @@ export function HeroSection() {
                 <div className="flex items-center justify-between mb-2 border-b border-border/50 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{arabic ? "ابدأ طلب التأشيرة" : "Start Visa Application"}</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider"><LangText en="Start Visa Application" ar="ابدأ طلب التأشيرة" /></span>
                   </div>
-                  <span className="text-[10px] font-bold text-[#0436DC] bg-[#0436DC]/10 px-2.5 py-1 rounded-md uppercase tracking-wider">{arabic ? "منطقة شنغن" : "Schengen Area"}</span>
+                  <span className="text-[10px] font-bold text-[#0436DC] bg-[#0436DC]/10 px-2.5 py-1 rounded-md uppercase tracking-wider"><LangText en="Schengen Area" ar="منطقة شنغن" /></span>
                 </div>
 
                 {/* Selectors Row */}
@@ -234,7 +241,7 @@ export function HeroSection() {
                   
                   {/* Selector 1 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">{arabic ? "١. جنسيتي" : "1. My Nationality"}</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="١. جنسيتي" /></span>
                     <Popover open={fromOpen} onOpenChange={setFromOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -263,7 +270,7 @@ export function HeroSection() {
                                 <span className="text-base font-bold truncate text-foreground">{fromLabel}</span>
                               </div>
                             ) : (
-                              <span className="text-sm font-medium text-muted-foreground">{arabic ? "اختر الجنسية" : "Select nationality"}</span>
+                              <span className="text-sm font-medium text-muted-foreground"><LangText en="Select nationality" ar="اختر الجنسية" /></span>
                             )}
                           </div>
                           <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -278,7 +285,7 @@ export function HeroSection() {
                         <Command className="bg-transparent">
                           <CommandInput placeholder={arabic ? "ابحث عن دولة..." : "Search country..."} className="h-12 text-base border-b-0" autoFocus={!isMobile} />
                           <CommandList className="max-h-[300px] p-2">
-                            <CommandEmpty>{arabic ? "لم يُعثر على دولة." : "No country found."}</CommandEmpty>
+                            <CommandEmpty><LangText en="No country found." ar="لم يُعثر على دولة." /></CommandEmpty>
                             <CommandGroup>
                               {fromCountries.map((country) => (
                                 <CommandItem
@@ -309,7 +316,7 @@ export function HeroSection() {
 
                   {/* Selector 2 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">{arabic ? "٢. وجهتي" : "2. My Destination"}</span>
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="٢. وجهتي" /></span>
                     <Popover open={toOpen} onOpenChange={setToOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -337,7 +344,7 @@ export function HeroSection() {
                                 <span className="text-base font-bold truncate text-foreground">{toCountry}</span>
                               </div>
                             ) : (
-                              <span className="text-sm font-medium text-muted-foreground">{arabic ? "اختر الوجهة" : "Pick a destination"}</span>
+                              <span className="text-sm font-medium text-muted-foreground"><LangText en="Pick a destination" ar="اختر الوجهة" /></span>
                             )}
                           </div>
                           <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -352,7 +359,7 @@ export function HeroSection() {
                         <Command className="bg-transparent">
                           <CommandInput placeholder={arabic ? "ابحث عن دولة..." : "Search country..."} className="h-12 text-base border-b-0" autoFocus={!isMobile} />
                           <CommandList className="max-h-[300px] p-2">
-                            <CommandEmpty>{arabic ? "لم يُعثر على دولة." : "No country found."}</CommandEmpty>
+                            <CommandEmpty><LangText en="No country found." ar="لم يُعثر على دولة." /></CommandEmpty>
                             <CommandGroup>
                               {schengenCountries.map((country) => (
                                 <CommandItem
@@ -394,7 +401,7 @@ export function HeroSection() {
                         asChild
                       >
                         <Link href={handleGetStarted()}>
-                          {arabic ? "ابدأ" : "Get started"} <ArrowRight className="ml-2 h-5 w-5" />
+                          <LangText en="Get started" ar="ابدأ" /> <ArrowRight className="ml-2 h-5 w-5" />
                         </Link>
                       </Button>
                     </motion.div>
@@ -434,14 +441,16 @@ export function HeroSection() {
                           </div>
                           <div>
                             <div className="font-bold text-foreground text-sm md:text-base">
-                              {arabic
-                                ? `تأشيرة شنغن مطلوبة لمواطني ${fromLabel} عند زيارة ${toCountry}`
-                                : `Schengen visa required for ${fromLabel} citizens visiting ${toCountry}`}
+                              <LangText
+                                en={`Schengen visa required for ${fromLabel} citizens visiting ${toCountry}`}
+                                ar={`تأشيرة شنغن مطلوبة لمواطني ${fromLabel} عند زيارة ${toCountry}`}
+                              />
                             </div>
                             <p className="text-xs md:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-                              {arabic
-                                ? "لنجهّز ملف التأشيرة كاملًا. نراجع كل شيء (خطاب التغطية والحجوزات وخط السير) لتقديم ناجح للسفارة."
-                                : "Let's prepare your full visa dossier. We verify everything (cover letter, bookings, and itinerary) for a successful embassy submission."}
+                              <LangText
+                                en="Let's prepare your full visa dossier. We verify everything (cover letter, bookings, and itinerary) for a successful embassy submission."
+                                ar="لنجهّز ملف التأشيرة كاملًا. نراجع كل شيء (خطاب التغطية والحجوزات وخط السير) لتقديم ناجح للسفارة."
+                              />
                             </p>
                           </div>
                         </div>
@@ -453,7 +462,7 @@ export function HeroSection() {
                           </div>
                           <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
                             <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-                            <span>{getApprovalRate(fromCountry, toCountry)} {arabic ? "نسبة القبول" : "Approval"}</span>
+                            <span>{getApprovalRate(fromCountry, toCountry)} <LangText en="Approval" ar="نسبة القبول" /></span>
                           </div>
                         </div>
                       </div>
@@ -468,7 +477,7 @@ export function HeroSection() {
             <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-6 font-medium text-[#0A0F1F] mx-auto">
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
-                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">{arabic ? "ضمان استرداد المبلغ" : "Money-back guarantee"}</span>
+                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="Money-back guarantee" ar="ضمان استرداد المبلغ" /></span>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
@@ -476,7 +485,7 @@ export function HeroSection() {
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
-                <span className="font-bold text-[#0A0F1F] text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">{arabic ? "ملف شامل" : "All-Inclusive File"}</span>
+                <span className="font-bold text-[#0A0F1F] text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="All-Inclusive File" ar="ملف شامل" /></span>
               </div>
             </motion.div>
           </motion.div>
