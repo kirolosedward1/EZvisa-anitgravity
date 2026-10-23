@@ -198,7 +198,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             Get your <span className="text-[#0436DC]">{destination.name}</span> Schengen visa application ready, easily.
           </>
         }
-        description={`Complete visa file preparation for ${destination.name}. We prepare your application forms, travel itinerary, flight reservations, and cover letter for a successful submission.`}
+        description={`Complete visa file preparation for ${destination.name}. We prepare your application forms, travel itinerary, flight reservations, and cover letter.`}
         backgroundImage={destination.image}
       >
         <div className="flex flex-col items-center gap-6 w-full">

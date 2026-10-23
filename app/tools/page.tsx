@@ -111,7 +111,7 @@ export default function ToolsIndexPage() {
               Free Schengen Visa Tools &amp; Calculators
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed">
-              Plan your European itinerary with total confidence. Built specifically for UAE residents, Golden Visa holders, and frequent travelers to ensure flawless consular compliance.
+              Plan your European itinerary with total confidence. Built specifically for UAE residents, Golden Visa holders, and frequent travelers to help you meet consular requirements.
             </p>
           </div>
 

@@ -28,7 +28,9 @@ export function InnerHero({
   children,
   className = "",
 }: InnerHeroProps) {
-  const pathname = usePathname()
+  // The server renders /ar/* via a rewrite (it sees "/documents", the browser sees "/ar/documents"):
+  // use the locale-free path so the picked hero is identical on both sides (fixes React #418 on /ar).
+  const pathname = usePathname()?.replace(/^\/ar(?=\/|$)/, "") || "/"
   const picked = randomizeBackground ? destinations[stableIndex(pathname || "inner", destinations.length)] : undefined
   const named = destinations.find((destination) => destination.image === backgroundImage)
   const heroBgImage = backgroundImage || picked?.image

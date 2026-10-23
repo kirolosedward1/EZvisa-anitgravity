@@ -145,7 +145,7 @@ export default function VideosContent() {
                   Need Help With Your Application?
                 </h2>
                 <p className="text-white/85 text-base md:text-lg mb-8 leading-relaxed max-w-xl font-medium">
-                  Our experts will review your documents and ensure everything is perfect before submission.
+                  Our team checks your documents before you submit.
                 </p>
                 <Link href="/apply">
                   <button className="px-8 py-3.5 bg-white text-primary hover:bg-slate-50 transition-all duration-300 font-semibold inline-flex items-center gap-2.5 shadow-xl hover:-translate-y-0.5 cursor-pointer rounded-xl">

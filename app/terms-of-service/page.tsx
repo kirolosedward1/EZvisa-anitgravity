@@ -47,23 +47,15 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-4">3. Important Disclaimers</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4"><LangText en="3. Important Disclaimers" ar="٣. إخلاءات مسؤولية مهمة" /></h2>
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <p className="text-foreground font-medium mb-2">Please read carefully:</p>
-              <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-                <li>
-                  <strong>EZvisa is NOT a travel agency.</strong>
-                </li>
-                <li>
-                  We do NOT guarantee visa approval. The final decision rests solely with the respective embassy or
-                  consulate.
-                </li>
-                <li>We are NOT responsible for visa rejections or delays caused by embassy processing.</li>
-                <li>We do NOT help find or book visa appointment slots.</li>
-                <li>
-                  Flight reservations and hotel reservations provided are verifiable reservations for your visa application and may be subject to
-                  cancellation policies.
-                </li>
+              <p className="text-foreground font-medium mb-2"><LangText en="Please read carefully:" ar="يرجى القراءة بعناية:" /></p>
+              <ul className="list-disc ps-6 text-muted-foreground space-y-2">
+                <li><strong><LangText en="EZvisa is NOT a travel agency." ar="إيزي فيزا ليست وكالة سفر." /></strong></li>
+                <li><LangText en="We do NOT guarantee visa approval. The final decision rests solely with the respective embassy or consulate." ar="لا نضمن الموافقة على التأشيرة. القرار النهائي يعود حصريًا إلى السفارة أو القنصلية المختصة." /></li>
+                <li><LangText en="We are NOT responsible for visa rejections or delays caused by embassy processing." ar="لسنا مسؤولين عن رفض التأشيرة أو التأخير الناتج عن إجراءات السفارة." /></li>
+                <li><LangText en="We do NOT help find or book visa appointment slots." ar="لا نساعد في إيجاد مواعيد التأشيرة أو حجزها." /></li>
+                <li><LangText en="Flight reservations and hotel reservations provided are verifiable reservations for your visa application and may be subject to cancellation policies." ar="حجوزات الطيران والفنادق المقدّمة حجوزات قابلة للتحقق لطلب التأشيرة، وقد تخضع لسياسات الإلغاء." /></li>
               </ul>
             </div>
           </section>

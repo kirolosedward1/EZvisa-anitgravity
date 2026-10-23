@@ -54,7 +54,7 @@ export default function ContactPage() {
               <div className="text-left">
                 <h2 className="text-2xl font-semibold text-primary mb-3">Support Channels</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6 font-medium">
-                  Choose the most convenient way to reach us. Our team responds instantly to WhatsApp queries.
+                  Choose the most convenient way to reach us. We reply on WhatsApp 9am–6pm UAE time.
                 </p>
               </div>
 

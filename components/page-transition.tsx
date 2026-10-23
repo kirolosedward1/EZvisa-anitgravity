@@ -9,7 +9,7 @@ interface PageTransitionProps {
 }
 
 export function PageTransition({ children }: PageTransitionProps) {
-  const pathname = usePathname()
+  const pathname = usePathname()?.replace(/^\/ar(?=\/|$)/, "") || "/"
   const [canAnimate, setCanAnimate] = useState(false)
 
   useEffect(() => {

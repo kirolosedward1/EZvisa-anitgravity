@@ -15,6 +15,9 @@ const csp = [
   "base-uri 'self'",
   `form-action 'self' https://*.ziina.com https://accounts.google.com ${SUPABASE}`,
   "frame-ancestors 'self'",
+  // Where violations are sent (WebKit warns and ignores a report-only policy without one).
+  "report-uri /api/csp-report",
+  "report-to csp",
 ].join('; ')
 
 /** @type {import('next').NextConfig} */
@@ -100,6 +103,10 @@ const nextConfig = {
           {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin'
+          },
+          {
+            key: 'Reporting-Endpoints',
+            value: 'csp="/api/csp-report"',
           },
           {
             key: 'Content-Security-Policy-Report-Only',
