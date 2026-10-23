@@ -3,10 +3,11 @@ import Link from "next/link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { createServerClient } from "@/lib/supabase/server"
-import { isPaid } from "@/lib/application-status"
+import { getStatusLabel, isPaid } from "@/lib/application-status"
 import { getDemoApplicationByToken } from "@/lib/demo-data"
 import { PreparationLine } from "@/components/ready-line"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import { SupportApplication } from "@/components/support-application"
 
 export const metadata = { title: "Trip plan", robots: { index: false, follow: false } }
 
@@ -34,6 +35,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
     <>
       <SiteHeader />
       <main id="main-content" className="bg-background px-4 py-16">
+        <SupportApplication id={app.id ?? id} country={app.destination_country} status={getStatusLabel(app).label} step="trip" />
         <article className="mx-auto flex w-full max-w-lg flex-col gap-4">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">{app.destination_country} trip plan</h1>
           <p className="text-sm leading-relaxed text-muted-foreground"><PreparationLine /></p>

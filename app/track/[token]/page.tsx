@@ -12,6 +12,8 @@ import { getApplicationByToken, serviceClient, uploadPath } from "@/lib/applicat
 import { isDemoToken, getDemoRelatedApplications } from "@/lib/demo-data"
 import { isPaid, needsContinue, parseNotes, referenceOf, requiredFlags, STATUS_LABEL, FINISHED_STATUSES, FILE_READY_STATUSES, DOC_FLAG, REQUIREMENTS, PRICE_AED } from "@/lib/shared/wizard-contract"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import { SupportApplication } from "@/components/support-application"
+import { getStatusLabel } from "@/lib/application-status"
 
 /**
  * Case tracking by secret link. Same rows and the same next-step rules as the signed-in dashboard and the EZvisa app
@@ -68,6 +70,7 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
     <>
       <SiteHeader forceBackground={true} />
       <main className="min-h-screen bg-background pt-24 pb-16 px-4">
+        <SupportApplication id={mainId || token} country={mainApp.destination_country} status={getStatusLabel(mainApp).label} step="overview" />
         <div className="container max-w-4xl mx-auto space-y-6">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>

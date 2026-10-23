@@ -15,6 +15,7 @@ import { CountryFlag } from "@/components/country-flag"
 import { UserMenu, useViewer } from "@/components/user-menu"
 import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
+import { supportMessage, useSupportCase } from "@/lib/support-context"
 
 const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
 
@@ -70,6 +71,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const [isMobileDestinationsOpen, setIsMobileDestinationsOpen] = useState(false)
 
   const [pageUrl, setPageUrl] = useState<string | null>(null)
+  // Application pages register their case so WhatsApp opens with its reference, status and page.
+  const supportCase = useSupportCase()
 
   useEffect(() => {
     const el = headerRef.current
@@ -89,6 +92,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   }, [pathname])
 
   const getWhatsAppMessage = () => {
+    if (supportCase) return supportMessage(supportCase)
     const baseUrl = pageUrl ?? ""
     if (isWizardPage) return `Hi! I need help with my visa application. I'm currently on the application page: ${baseUrl}`
     if (pathname === '/') return `Hi! I'm interested in applying for a Schengen visa. Can you help me get started?`

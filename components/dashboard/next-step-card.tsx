@@ -49,7 +49,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
                 </Link>
               </Button>
               <Button asChild variant="outline" className="rounded-full px-5">
-                <a href={getDocumentHelpWhatsAppUrl(token)} target="_blank" rel="noopener noreferrer">
+                <a href={getDocumentHelpWhatsAppUrl(app.id || token)} target="_blank" rel="noopener noreferrer">
                   <WhatsAppIcon className="size-4" />
                   Send on WhatsApp
                 </a>
@@ -117,7 +117,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
           body: "This application needs attention from our team. You're covered by our money-back guarantee — message us and a specialist will walk you through your options.",
           actions: (
             <Button asChild className="rounded-full px-5">
-              <a href={getCaseTrackingWhatsAppUrl(token, app.destination_country)} target="_blank" rel="noopener noreferrer">
+              <a href={getCaseTrackingWhatsAppUrl(app.id || token, app.destination_country)} target="_blank" rel="noopener noreferrer">
                 <WhatsAppIcon className="size-4" />
                 Talk to a specialist
               </a>

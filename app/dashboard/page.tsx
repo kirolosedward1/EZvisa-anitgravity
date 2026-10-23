@@ -14,6 +14,8 @@ import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import { ApplicationView } from "@/components/dashboard/application-view";
 import { visibleApplications } from "@/lib/active-applications";
 import type { VisaApplication } from "@/lib/types/visa-application";
+import { SupportApplication } from "@/components/support-application";
+import { getStatusLabel } from "@/lib/application-status";
 
 // Demo shortcuts are for previews and local testing, not real customers
 const SHOW_DEMO_ACCESS = process.env.VERCEL_ENV !== "production";
@@ -155,6 +157,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     <>
       <SiteHeader />
       <main id="main-content" className="bg-background">
+        {mainApp?.id ? <SupportApplication id={mainApp.id} country={mainApp.destination_country} status={getStatusLabel(mainApp).label} step="overview" /> : null}
         <DashboardHeader
           badge="My account"
           title={firstName ? `Welcome back, ${firstName}` : "Your visa applications"}
