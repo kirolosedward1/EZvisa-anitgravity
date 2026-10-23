@@ -3,13 +3,14 @@ import { CheckCircle, Users, Globe, Award } from "lucide-react"
 import Image from "next/image"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
+import { CompanyLegalNotice } from "@/components/legal/company-details"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 
 export const metadata: Metadata = {
-  title: "About EZvisa - Expert Schengen Visa Service | 98% Approval Rate",
+  title: "About EZvisa - Schengen Visa Application Preparation",
   description:
-    "Learn about EZvisa, your trusted Schengen visa application partner in UAE. AI-powered visa assistance with 98% success rate. Fast, reliable service for 29 European countries since 2020.",
+    "Learn about EZvisa, your trusted Schengen visa application partner in UAE. We prepare your complete visa file. Fast, reliable service for 29 European countries since 2020.",
   keywords: [
     "about EZvisa",
     "visa application company",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "About EZvisa - Expert Schengen Visa Service",
-    description: "Your trusted partner for European visa applications with 98% approval rate.",
+    description: "Your partner for preparing European visa applications.",
     url: "https://www.ezvisa.net/about",
     type: "website",
   },
@@ -52,7 +53,7 @@ export default function AboutPage() {
               Your trusted partner for <span className="text-primary bg-[#0436DC]">Schengen visas</span>
             </>
           }
-          description="At EZvisa, we combine technology and expertise to simplify your travel preparation so embassies say yes."
+          description="At EZvisa, we combine technology and expertise to simplify your visa application preparation."
           gradientType="ocean"
         />
 
@@ -165,12 +166,12 @@ export default function AboutPage() {
                   <div className="text-sm font-semibold text-muted-foreground">Countries Covered</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-semibold text-primary mb-1">98%</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Success Rate</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">EN · AR</div>
+                  <div className="text-sm font-semibold text-muted-foreground">Bilingual service</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-semibold text-primary mb-1">24/7</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Support Available</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">9am–6pm</div>
+                  <div className="text-sm font-semibold text-muted-foreground">WhatsApp support, UAE time</div>
                 </div>
               </div>
             </div>
@@ -178,6 +179,7 @@ export default function AboutPage() {
           </div>
         </section>
       </div>
+      <CompanyLegalNotice />
       <Footer />
     </>
   )

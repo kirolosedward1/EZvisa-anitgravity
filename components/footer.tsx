@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils"
 import { LangText } from "@/components/lang-text"
 import { LocaleLink } from "@/components/locale-link"
 import { PaymentMarks } from "@/components/payment-marks"
+import { openCookieSettings } from "@/components/cookie-consent"
+import { CompanyFooterBlock } from "@/components/legal/company-details"
+import { COMPANY } from "@/lib/legal/company"
 
 const socialLinks = [
   {
@@ -91,6 +94,8 @@ const footerSections = [
     links: [
       { href: "/privacy-policy", label: "Privacy policy", labelAr: "سياسة الخصوصية" },
       { href: "/terms-of-service", label: "Terms of service", labelAr: "شروط الخدمة" },
+      { href: "/cookie-policy", label: "Cookie policy", labelAr: "سياسة ملفات تعريف الارتباط" },
+      { href: "/disclaimer", label: "Disclaimer", labelAr: "إخلاء المسؤولية" },
       { href: "#cookie-settings", label: "Cookie settings", labelAr: "إعدادات ملفات تعريف الارتباط", isCookieButton: true },
     ],
   },
@@ -210,10 +215,7 @@ export function Footer({
                           <li key={link.href}>
                             {link.isCookieButton ? (
                               <button
-                                onClick={() => {
-                                  localStorage.removeItem("cookie-consent")
-                                  window.location.reload()
-                                }}
+                                onClick={openCookieSettings}
                                 className="text-muted-foreground hover:text-foreground transition-colors text-sm"
                               >
                                 <LangText en={link.label} ar={link.labelAr} />
@@ -241,10 +243,7 @@ export function Footer({
                         <li key={link.href}>
                           {link.isCookieButton ? (
                             <button
-                              onClick={() => {
-                                  localStorage.removeItem("cookie-consent")
-                                  window.location.reload()
-                              }}
+                              onClick={openCookieSettings}
                               className="block py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                             >
                               <LangText en={link.label} ar={link.labelAr} />
@@ -267,16 +266,19 @@ export function Footer({
 
             {/* Disclaimer */}
             <div className="border-t border-border/80 pt-6 mb-8 text-center">
+              <div className="text-xs leading-relaxed max-w-4xl mx-auto text-[#3A4150] mb-3">
+                <CompanyFooterBlock />
+              </div>
               <p className="text-xs leading-relaxed max-w-4xl mx-auto text-[#3A4150]/70">
                 <LangText
                   en={
                     <>
-                      <span className="font-medium text-[#0A0F1F]/80">Disclaimer:</span> EZvisa is not a travel agency. We provide document preparation and guidance services only. We do not guarantee visa approval — final decisions rest solely with the respective embassy or consulate. All travel arrangements and visa outcomes are subject to official government policies.
+                      <span className="font-medium text-[#0A0F1F]/80">Disclaimer:</span> EZvisa is a private company and is not affiliated with any government, embassy or consulate. EZvisa is a private visa application preparation service. We are not a government body and are not affiliated with any embassy, consulate, visa application centre (including VFS Global) or government authority. We do not guarantee visa approval; the decision rests solely with the embassy or consulate. Our fees are service fees only and do not include government or visa centre fees. EZvisa is not VAT-registered; prices shown are final.
                     </>
                   }
                   ar={
                     <>
-                      <span className="font-medium text-[#0A0F1F]/80">إخلاء مسؤولية:</span> إيزي فيزا ليست وكالة سفر. نقدّم خدمات تجهيز المستندات والإرشاد فقط. لا نضمن الموافقة على التأشيرة — القرار النهائي يعود حصريًا إلى السفارة أو القنصلية المختصة. تخضع ترتيبات السفر ونتائج التأشيرة للسياسات الرسمية.
+                      <span className="font-medium text-[#0A0F1F]/80">إخلاء مسؤولية:</span> إيزي فيزا شركة خاصة وغير تابعة لأي حكومة أو سفارة أو قنصلية. إيزي فيزا خدمة خاصة لتجهيز طلبات التأشيرة. لسنا جهة حكومية ولسنا تابعين لأي سفارة أو قنصلية أو مركز طلبات تأشيرات (بما في ذلك VFS Global) أو أي جهة حكومية. لا نضمن الموافقة على التأشيرة؛ القرار يعود حصريًا إلى السفارة أو القنصلية. رسومنا رسوم خدمة فقط ولا تشمل الرسوم الحكومية أو رسوم مراكز التأشيرات. إيزي فيزا غير مسجّلة لضريبة القيمة المضافة؛ الأسعار المعروضة نهائية.
                     </>
                   }
                 />
@@ -311,8 +313,8 @@ export function Footer({
 
             <p className="text-xs text-[#3A4150] text-center md:text-end">
               <LangText
-                en={<>&copy; <span suppressHydrationWarning>{currentYear}</span> EZvisa · ezvisa.net</>}
-                ar={<>&copy; <span suppressHydrationWarning>{currentYear}</span> إيزي فيزا · ezvisa.net</>}
+                en={<>&copy; <span suppressHydrationWarning>{currentYear}</span> {COMPANY.COMPANY_LEGAL_NAME}. All rights reserved. · EZvisa · ezvisa.net</>}
+                ar={<>&copy; <span suppressHydrationWarning>{currentYear}</span> {COMPANY.COMPANY_LEGAL_NAME}. جميع الحقوق محفوظة. · إيزي فيزا · ezvisa.net</>}
               />
             </p>
           </div>

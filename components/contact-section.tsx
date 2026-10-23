@@ -10,8 +10,9 @@ export function ContactSection() {
   const benefits = [
     "Quick document verification",
     "Expert guidance included",
-    "98% approval rate",
-    "Money-back guarantee",
+    "Forms, cover letter, itinerary and reservations",
+    "Full refund before we start",
+    "WhatsApp support, 9am–6pm UAE time",
   ]
 
   return (

@@ -43,19 +43,6 @@ const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federati
   .map((name) => CITIZENSHIP_OPTIONS.find((country) => country.name === name))
   .filter((country): country is NonNullable<typeof country> => Boolean(country))
 
-function getApprovalRate(from: string, to: string) {
-  if (!from || !to) return "98.0%";
-  const key = `${from}-${to}`;
-  let hash = 0;
-  for (let i = 0; i < key.length; i++) {
-    hash = (hash << 5) - hash + key.charCodeAt(i);
-    hash |= 0;
-  }
-  // Generate a stable pseudo-random rate between 94.0% and 99.4%
-  const rate = 94.0 + (Math.abs(hash) % 55) / 10;
-  return `${rate.toFixed(1)}%`;
-}
-
 export function HeroSection() {
   const [fromCountry, setFromCountry] = useState("")
   const [toCountry, setToCountry] = useState("")
@@ -194,16 +181,16 @@ export function HeroSection() {
             {/* Headline */}
             <motion.h1 variants={itemVariants} className="hero-copy max-w-4xl text-balance text-white">
               <LangText
-                en={<>Get your Schengen visa approved, the <span className="text-[#0436DC]">easy</span> way.</>}
-                ar={<>احصل على تأشيرة شنغن، <span className="text-[#0436DC]">بسهولة.</span></>}
+                en={<>Get your Schengen visa application ready, the <span className="text-[#0436DC]">easy</span> way.</>}
+                ar={<>جهّز طلب تأشيرة شنغن، <span className="text-[#0436DC]">بسهولة.</span></>}
               />
             </motion.h1>
 
             {/* Subheading */}
             <motion.p variants={itemVariants} className="hero-copy mt-5 max-w-2xl text-white/90">
               <LangText
-                en="We prepare your complete visa file — forms, cover letter, itinerary, and bookings — so embassies say yes."
-                ar="نجهّز ملف التأشيرة كاملًا — النماذج وخطاب التغطية وخط السير والحجوزات — حتى توافق السفارة."
+                en="We prepare your complete visa file: forms, cover letter, itinerary and reservations."
+                ar="نجهّز ملف التأشيرة كاملًا: النماذج وخطاب التغطية وخط السير والحجوزات."
               />
             </motion.p>
 
@@ -390,8 +377,8 @@ export function HeroSection() {
                             </div>
                             <p className="text-xs md:text-sm text-muted-foreground mt-0.5 leading-relaxed">
                               <LangText
-                                en="Let's prepare your full visa dossier. We verify everything (cover letter, bookings, and itinerary) for a successful embassy submission."
-                                ar="لنجهّز ملف التأشيرة كاملًا. نراجع كل شيء (خطاب التغطية والحجوزات وخط السير) لتقديم ناجح للسفارة."
+                                en="Let's prepare your full visa dossier. We check everything (cover letter, reservations and itinerary) before you submit."
+                                ar="لنجهّز ملف التأشيرة كاملًا. نراجع كل شيء (خطاب التغطية والحجوزات وخط السير) قبل التقديم."
                               />
                             </p>
                           </div>
@@ -401,10 +388,6 @@ export function HeroSection() {
                           <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
                             <Clock className="h-3.5 w-3.5 text-primary" />
                             <ReadyLine />
-                          </div>
-                          <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
-                            <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-                            <span>{getApprovalRate(fromCountry, toCountry)} <LangText en="Approval" ar="نسبة القبول" /></span>
                           </div>
                         </div>
                       </div>
@@ -419,7 +402,7 @@ export function HeroSection() {
             <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-6 font-medium text-[#0A0F1F] mx-auto">
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
-                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="Money-back guarantee" ar="ضمان استرداد المبلغ" /></span>
+                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="Full refund before we start" ar="استرداد كامل قبل بدء التجهيز" /></span>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />

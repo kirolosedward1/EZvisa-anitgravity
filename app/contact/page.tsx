@@ -3,21 +3,22 @@ import { Mail, Phone, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
+import { CompanyLegalNotice } from "@/components/legal/company-details"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 import { ContactForm } from "@/components/contact-form"
 
 export const metadata: Metadata = {
-  title: "Contact EZvisa - 24/7 Schengen Visa Support | WhatsApp & Email",
+  title: "Contact EZvisa - Schengen Visa Support | WhatsApp & Email",
   description:
-    "Contact EZvisa support team for Schengen visa questions. Reach us via WhatsApp (+971 54 710 9533), email, or contact form. Fast response, expert guidance available 24/7.",
+    "Contact EZvisa support team for Schengen visa questions. Reach us via WhatsApp (+971 54 710 9533), email, or contact form. WhatsApp support, 9am–6pm UAE time.",
   keywords: ["contact visa service", "visa support", "visa help", "EZvisa contact", "visa consultation"],
   alternates: {
     canonical: "https://www.ezvisa.net/contact",
   },
   openGraph: {
-    title: "Contact EZvisa - 24/7 Visa Support",
-    description: "Get expert help with your Schengen visa application. WhatsApp & email support available 24/7.",
+    title: "Contact EZvisa - Visa Support",
+    description: "Get expert help with your Schengen visa application. WhatsApp support, 9am–6pm UAE time, and email.",
     url: "https://www.ezvisa.net/contact",
     type: "website",
   },
@@ -37,7 +38,7 @@ export default function ContactPage() {
               Get in <span className="text-primary bg-[#0436DC]">Touch</span>
             </>
           }
-          description="Have questions about your visa application? Our team of experts is available 24/7."
+          description="Have questions about your visa application? WhatsApp support, 9am–6pm UAE time."
           gradientType="default"
         />
 
@@ -142,6 +143,7 @@ export default function ContactPage() {
           </div>
         </section>
       </div>
+      <CompanyLegalNotice />
       <Footer />
     </>
   )

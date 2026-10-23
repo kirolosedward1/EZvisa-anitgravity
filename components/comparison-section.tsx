@@ -47,11 +47,11 @@ export function ComparisonSection() {
 
   const features = [
     { name: "Simple, guided forms", others: false },
-    { name: "24/7 expert document review", others: false },
+    { name: "Expert document review", others: false },
     { name: "Smart error detection", others: false },
     { name: "Complete file validation", others: false },
     { name: "Tailored cover letter & itinerary", others: false },
-    { name: "Flight & hotel bookings included", others: true },
+    { name: "Flight & hotel reservations for your visa application", others: true },
     { name: "Ready in 1–2 days", others: false },
     { name: "No hidden agency markups", others: false },
   ]

@@ -1,3 +1,4 @@
+import { LangText } from "@/components/lang-text"
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -76,10 +77,10 @@ export default function PricingPage() {
                   "Personalized visa requirements checklist",
                   "Application form preparation and filling",
                   "Expert consultation and guidance",
-                  "Dummy flight and hotel bookings",
+                  "Verifiable flight reservation and hotel reservation for your visa application",
                   "Customized cover letter",
                   "Day-by-day travel itinerary",
-                  "24/7 customer support via chat and email",
+                  "WhatsApp support, 9am–6pm UAE time, and email",
                 ].map((item, index) => (
                   <div key={index} className="flex items-start gap-4 group">
                     <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-green-200 transition-colors">
@@ -142,11 +143,11 @@ export default function PricingPage() {
               </Button>
             </Link>
             <p className="text-muted-foreground">
-              Join 5,000+ satisfied customers who got their visa approved
+              Join 5,000+ travelers who prepared their visa file with EZvisa
             </p>
           </div>
 
-          {/* Money Back Guarantee */}
+          {/* Refund note (legal audit H4, refund-policy.md) */}
           <div className="mt-20 max-w-5xl mx-auto">
             <div className="border-2 border-green-200 rounded-3xl p-10 lg:p-12 bg-[#0436DC]">
               <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
@@ -154,15 +155,14 @@ export default function PricingPage() {
                   <Shield className="w-12 h-12 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl lg:text-3xl font-semibold mb-3 text-[#0A0F1F]">100% Money-Back Guarantee</h3>
+                  <h3 className="text-2xl lg:text-3xl font-semibold mb-3 text-[#0A0F1F]"><LangText en="Full refund before we start" ar="استرداد كامل قبل بدء التجهيز" /></h3>
                   <p className="text-base text-gray-700 leading-relaxed">
-                    If we cannot process your application due to our error, we'll provide a full refund. Your
-                    satisfaction and trust are our top priorities.{" "}
+                    <LangText en="Cancel for a full refund any time before we start preparing your file, or if we fail to deliver. No refund for visa refusals — the embassy decides. EZvisa is not VAT-registered; prices shown are final." ar="ألغِ واحصل على استرداد كامل في أي وقت قبل أن نبدأ تجهيز ملفك، أو إذا لم نقدّم الخدمة. لا استرداد عند رفض التأشيرة — القرار للسفارة. إيزي فيزا غير مسجّلة لضريبة القيمة المضافة؛ الأسعار المعروضة نهائية." />{" "}
                     <Link
                       href="/refund-policy"
                       className="text-primary font-semibold hover:underline inline-flex items-center"
                     >
-                      Read our refund policy
+                      <LangText en="Read our refund policy" ar="اقرأ سياسة الاسترداد" />
                     </Link>
                   </p>
                 </div>

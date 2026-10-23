@@ -16,7 +16,7 @@ const steps = [
     number: "2",
     icon: CreditCard,
     title: "Pay securely",
-    description: "Complete your application with secure payment processing. Money-back guarantee.",
+    description: "Complete your application with secure payment processing. EZvisa is not VAT-registered; prices shown are final.",
   },
   {
     number: "3",
@@ -28,7 +28,7 @@ const steps = [
     number: "4",
     icon: PlaneTakeoff,
     title: "Submit & travel",
-    description: "Download your file, walk into your appointment, and get approved.",
+    description: "Download your file and take it to your appointment.",
   },
 ]
 
@@ -47,7 +47,7 @@ export function HowItWorksSimple() {
               How it works
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
-              Four simple steps to your <span className="text-primary">approved visa.</span>
+              Four simple steps to your <span className="text-primary">complete visa file.</span>
             </h2>
           </div>
           <Button asChild variant="outline" className="hidden md:inline-flex rounded-xl font-semibold border-primary/20 text-primary hover:bg-primary/5 hover:text-primary transition-all duration-300">

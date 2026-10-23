@@ -122,9 +122,9 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
     },
     {
       icon: ShieldCheck,
-      label: "Refund Guarantee",
-      value: "100% Money-Back",
-      description: "Full refund of service fee in case of visa rejection. Real confidence."
+      label: "Refunds",
+      value: "Full refund before we start",
+      description: "Cancel for a full refund any time before we start preparing your file, or if we fail to deliver. No refund for visa refusals — the embassy decides. EZvisa is not VAT-registered; prices shown are final."
     }
   ]
 
@@ -145,7 +145,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       step: "03",
       icon: UserCheck,
       title: "Expert File Review",
-      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight and hotel bookings, and complete the official ${destination.name} form. We prepare your application in 1–2 days. The embassy's decision takes longer.`
+      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight and hotel reservations for your visa application, and complete the official ${destination.name} form. We prepare your application in 1–2 days. The embassy's decision takes longer.`
     },
     {
       step: "04",
@@ -182,8 +182,8 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       answer: "Embassies allow applications to be submitted up to 6 months before your departure date. We highly recommend starting your application with EZvisa at least 4 to 6 weeks in advance to secure prime biometrics appointment slots and avoid seasonal processing delays."
     },
     {
-      question: "What is your 100% money-back guarantee?",
-      answer: `If your ${destination.name} visa application is rejected by the embassy, EZvisa will refund 100% of our service fee (${destination.price}). Please note that third-party embassy/VFS fees are non-refundable. We offer this because our expert review process ensures a near-perfect success rate.`
+      question: "Is VAT added at checkout?",
+      answer: `No. EZvisa is not VAT-registered; prices shown are final. The visa decision is always made by the embassy, so no one can guarantee approval.`
     }
   ]
 
@@ -197,7 +197,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         badge="Apply from Dubai & Abu Dhabi"
         title={
           <>
-            Get your <span className="text-[#0436DC]">{destination.name}</span> Schengen Visa approved, easily.
+            Get your <span className="text-[#0436DC]">{destination.name}</span> Schengen visa application ready, easily.
           </>
         }
         description={`Complete visa file preparation for ${destination.name}. We prepare your application forms, travel itinerary, flight reservations, and cover letter for a successful submission.`}
@@ -446,10 +446,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         
         <div className="relative container mx-auto px-6 max-w-4xl z-10">
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">
-            Ready to secure your {destination.name} Visa?
+            Ready to prepare your {destination.name} visa application?
           </h2>
           <p className="mt-4 text-blue-100/90 text-sm sm:text-base max-w-xl mx-auto">
-            <PreparationLine /> Secure and backed by our money-back guarantee.
+            <PreparationLine /> EZvisa is not VAT-registered; prices shown are final.
           </p>
           
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">

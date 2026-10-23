@@ -99,7 +99,7 @@ export default function ReviewsPage() {
                   <div className="mt-auto pt-6 border-t border-border/50">
                     <h4 className="font-semibold text-foreground">{review.name}</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      {review.destination} visa approved
+                      {review.destination} visa file
                     </p>
                   </div>
                 </div>

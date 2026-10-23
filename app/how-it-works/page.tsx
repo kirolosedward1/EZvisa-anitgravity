@@ -96,7 +96,7 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="font-semibold text-lg text-foreground mb-3">Real-time Tracking</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Monitor your application progress 24/7 with live status updates through your dashboard.
+                    Monitor your application progress any time with live status updates through your dashboard.
                   </p>
                 </div>
               </div>
@@ -109,7 +109,7 @@ export default function HowItWorksPage() {
                   </div>
                   <h3 className="font-semibold text-lg text-foreground mb-3">Ready to Travel</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Get instant notification when your complete visa package is approved and ready.
+                    Get instant notification when your complete visa file is ready.
                   </p>
                 </div>
               </div>

@@ -273,7 +273,7 @@ export function TestimonialsSection() {
                     </div>
                     <div>
                       <div className="font-semibold text-foreground text-sm">{testimonials[selectedTestimonial].name}</div>
-                      <div className="text-xs text-primary font-semibold">{testimonials[selectedTestimonial].destination} visa approved</div>
+                      <div className="text-xs text-primary font-semibold">{testimonials[selectedTestimonial].destination} visa file</div>
                     </div>
                   </div>
                 </div>
@@ -312,7 +312,7 @@ function TestimonialCard({ testimonial }: { testimonial: typeof testimonials[num
             {testimonial.name}
           </div>
           <div className="text-xs text-muted-foreground">
-            {testimonial.destination} visa approved
+            {testimonial.destination} visa file
           </div>
         </div>
       </div>

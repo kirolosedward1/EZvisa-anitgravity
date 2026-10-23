@@ -86,7 +86,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
             <div>
               <h3 className="font-semibold text-lg">Need Help?</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Our expert team is here to assist you 24/7
+                WhatsApp support, 9am–6pm UAE time
               </p>
             </div>
           </div>
@@ -164,8 +164,8 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
           </div>
           <div className="grid grid-cols-2 gap-4 pt-4 border-t">
             <div>
-              <p className="text-xl font-semibold text-primary">98%</p>
-              <p className="text-xs text-muted-foreground">Approval Rate</p>
+              <p className="text-xl font-semibold text-primary">29</p>
+              <p className="text-xs text-muted-foreground">Schengen countries</p>
             </div>
             <div>
               <p className="text-xl font-semibold text-primary">4.9/5</p>

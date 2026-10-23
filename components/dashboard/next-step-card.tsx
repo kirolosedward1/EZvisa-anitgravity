@@ -114,7 +114,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
         return {
           icon: LifeBuoy,
           title: "Let's talk about your application",
-          body: "This application needs attention from our team. You're covered by our money-back guarantee — message us and a specialist will walk you through your options.",
+          body: "This application needs attention from our team. Message us and a specialist will walk you through your options.",
           actions: (
             <Button asChild className="rounded-full px-5">
               <a href={getCaseTrackingWhatsAppUrl(token, app.destination_country)} target="_blank" rel="noopener noreferrer">

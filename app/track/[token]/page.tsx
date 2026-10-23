@@ -146,7 +146,7 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
                     <div className="flex-1">
                       <h3 className="font-semibold mb-1 text-foreground">{STATUS_LABEL[status] ?? status}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {status === "completed" ? "Visa granted. We wish you a wonderful trip." : status === "rejected" ? "The embassy refused this application. Message us on WhatsApp about the next steps and the money-back guarantee." : "This application was cancelled."}
+                        {status === "completed" ? "Visa granted. We wish you a wonderful trip." : status === "rejected" ? "The embassy refused this application. Message us on WhatsApp about the next steps." : "This application was cancelled."}
                       </p>
                     </div>
                   </div>
