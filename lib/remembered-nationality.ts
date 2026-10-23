@@ -1,5 +1,5 @@
 // The applicant's nationality, remembered so the wizard can preselect it next time: a first-party cookie on this
-// device, and for signed-in customers their latest application (so a new device knows it too).
+// device, and for signed-in customers their account citizenship or latest application (so a new device knows it too).
 import { createBrowserClient, supabasePublicEnv } from "@/lib/supabase/client"
 import { toCitizenshipIso } from "@/lib/nationalities"
 
@@ -28,6 +28,9 @@ export async function fetchAccountNationality(): Promise<string> {
     const { data: auth } = await supabase.auth.getSession()
     const email = auth.session?.user?.email
     if (!email) return ""
+    // Citizenship saved on the account (Account page or the app) comes first.
+    const saved = toCitizenshipIso(auth.session?.user?.user_metadata?.citizenship)
+    if (saved) return saved
     const { data } = await supabase
       .from("visa_applications")
       .select("nationality")
