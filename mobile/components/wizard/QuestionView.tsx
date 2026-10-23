@@ -141,7 +141,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
   const btnTitle = !q.required && !answered ? t("Skip") : doneLabel ?? t("Continue");
   const bar = showBtn ? (
     <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: barBottom, backgroundColor: c.bg }}>
-      {q.kind === "dates" && <DatesSummary f={f} />}
+      {q.kind === "dates" && <DatesSummary f={f} patch={patch} />}
       <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} disabled={!!liveErr && (q.required || answered)} onPress={advance} />
     </View>
   ) : <View style={{ height: barBottom }} />;

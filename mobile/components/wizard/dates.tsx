@@ -22,17 +22,24 @@ export function useDateFmt() {
 }
 
 /** Summary bar shown above Continue on the dates screen. */
-export function DatesSummary({ f }: { f: WizardForm }) {
+export function DatesSummary({ f, patch }: { f: WizardForm; patch?: (p: Partial<WizardForm>) => void }) {
   const { t } = useT(); const { short } = useDateFmt();
   if (!f.travelStartDate) return null;
   const n = stayDays(f.travelStartDate, f.travelEndDate);
   const text = f.travelEndDate && n > 0 ? `${short(f.travelStartDate)} – ${short(f.travelEndDate)} · ${t(n === 1 ? "1 day" : "{n} days", { n })}` : `${short(f.travelStartDate)} – ${t("Select return date")}`;
-  return (
-    <View testID="dates-summary" accessible accessibilityLabel={text} style={{ flexDirection: "row", alignItems: "center", gap: S.xs, backgroundColor: "#F2F5FF", borderRadius: R.tile, paddingHorizontal: S.md, paddingVertical: S.sm, marginBottom: S.sm }}>
+  const flex = f.datesFlexible === "yes" && !!patch;
+  const body = (<>
       <Icon name="calendar" size={15} color={BLUE} />
-      <Text variant="subhead" weight="600" color={BLUE}>{text}</Text>
-    </View>
+      <Text variant="subhead" weight="600" color={BLUE} style={{ flex: 1 }}>{text}</Text>
+      {flex && <Text variant="subhead" weight="600" color={BLUE}>{t("Edit")}</Text>}
+    </>);
+  const st = { flexDirection: "row" as const, alignItems: "center" as const, gap: S.xs, backgroundColor: "#F2F5FF", borderRadius: R.tile, paddingHorizontal: S.md, paddingVertical: S.sm, marginBottom: S.sm };
+  if (flex) return (
+    // Flexible: shows the exact entry/exit dates that will be saved; tap to switch to Fixed with them prefilled.
+    <Pressable testID="dates-summary" onPress={() => { select(); patch!({ datesFlexible: "no" }); }} accessibilityRole="button" accessibilityLabel={`${text}, ${t("Edit exact dates")}`}
+      style={({ pressed }) => [st, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}>{body}</Pressable>
   );
+  return <View testID="dates-summary" accessible accessibilityLabel={text} style={st}>{body}</View>;
 }
 
 export function DatesAnswer({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>) => void }) {

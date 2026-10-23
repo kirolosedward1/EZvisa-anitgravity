@@ -355,6 +355,7 @@ export const AR: Record<string, string> = {
   "{n} days": "{n} أيام",
   "Adjust exact dates": "تعديل التواريخ بدقة",
   "We'll use the first possible day in your window. You can change to exact dates any time before documents.": "سنستخدم أول يوم متاح ضمن الفترة. يمكنك تحديد التواريخ بدقة في أي وقت قبل المستندات.",
+  "Edit exact dates": "تعديل التواريخ",
   "Continue application": "متابعة الطلب",
   "opens documents": "يفتح المستندات",
   "opens application form": "يفتح نموذج الطلب",
