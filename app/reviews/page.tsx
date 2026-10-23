@@ -3,7 +3,6 @@ import Link from "next/link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
-import { LangText } from "@/components/lang-text"
 
 export const metadata = {
   title: "Customer Reviews",
@@ -56,7 +55,7 @@ export default function ReviewsPage() {
       <SiteHeader />
       <main className="flex-1">
         <InnerHero 
-          title={<LangText en="Loved by 5,000+ happy travelers" ar="موثوق لدى أكثر من ٥٬٠٠٠ مسافر" />} 
+          title="Loved by 5,000+ happy travelers" 
           description="Read genuine reviews from travelers who successfully secured their Schengen visas using our expert document preparation service."
         />
         

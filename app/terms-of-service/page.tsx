@@ -1,7 +1,6 @@
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
-import { LangText } from "@/components/lang-text"
 
 export const metadata = {
   title: "Terms of Service",
@@ -14,8 +13,8 @@ export default function TermsOfServicePage() {
     <main className="min-h-screen bg-background">
       <SiteHeader forceBackground={true} />
       <InnerHero
-        badge={<LangText en="Legal" ar="قانوني" />}
-        title={<LangText en="Terms of Service" ar="شروط الخدمة" />}
+        badge="Legal"
+        title="Terms of Service"
         description="Last updated: January 7, 2026"
         gradientType="default"
       />

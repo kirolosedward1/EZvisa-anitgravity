@@ -5,7 +5,6 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
-import { LangText } from "@/components/lang-text"
 
 export const metadata: Metadata = {
   title: "Refund Policy - EZvisa Terms and Conditions",
@@ -21,8 +20,8 @@ export default function RefundPolicyPage() {
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen">
         <InnerHero
-          badge={<LangText en="Legal" ar="قانوني" />}
-          title={<LangText en="Refund Policy" ar="سياسة الاسترداد" />}
+          badge="Legal"
+          title="Refund Policy"
           description="Last updated: January 2026"
           gradientType="default"
         />

@@ -5,9 +5,7 @@ import { Check, X } from "lucide-react"
 import { motion } from "framer-motion"
 import Image from "next/image"
 import { ReadyLine } from "@/components/ready-line"
-import { LocaleLink } from "@/components/locale-link"
-import { Msg } from "@/components/msg"
-import type { MessageKey } from "@/messages"
+import { APPLICATION_READY } from "@/lib/copy"
 
 export function ComparisonSection() {
   const [currentCurrency, setCurrentCurrency] = useState<{ code: string; symbol: string; rate: number }>({
@@ -47,15 +45,15 @@ export function ComparisonSection() {
     return `${basePrice}+ AED`
   }
 
-  const features: { name: MessageKey; others: boolean; ready?: boolean }[] = [
-    { name: "compare.feature1", others: false },
-    { name: "compare.feature2", others: false },
-    { name: "compare.feature3", others: false },
-    { name: "compare.feature4", others: false },
-    { name: "compare.feature5", others: false },
-    { name: "compare.feature6", others: true },
-    { name: "compare.feature7", others: false, ready: true },
-    { name: "compare.feature8", others: false },
+  const features = [
+    { name: "Simple, guided forms", others: false },
+    { name: "24/7 expert document review", others: false },
+    { name: "Smart error detection", others: false },
+    { name: "Complete file validation", others: false },
+    { name: "Tailored cover letter & itinerary", others: false },
+    { name: "Flight & hotel bookings included", others: true },
+    { name: "Ready in 1–2 days", others: false },
+    { name: "No hidden agency markups", others: false },
   ]
 
   return (
@@ -77,13 +75,13 @@ export function ComparisonSection() {
         <div className="text-center max-w-2xl mx-auto mb-16 md:mb-24">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            <Msg id="compare.eyebrow" />
+            Why EZvisa
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground mb-5 text-balance">
-            <Msg id="compare.headingLead" /> <span className="text-primary"><Msg id="compare.headingAccent" /></span>
+            Real service. <span className="text-primary">Real difference.</span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-            <Msg id="compare.intro" />
+            See how EZvisa removes the stress, high markups, and long waiting periods of traditional travel agencies.
           </p>
         </div>
 
@@ -99,9 +97,9 @@ export function ComparisonSection() {
           >
             <div>
               <div className="mb-6">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest"><Msg id="compare.alternative" /></span>
-                <h3 className="text-xl font-semibold text-foreground mt-1"><Msg id="compare.otherAgencies" /></h3>
-                <p className="text-xs text-muted-foreground mt-1"><Msg id="compare.otherTagline" /></p>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Alternative</span>
+                <h3 className="text-xl font-semibold text-foreground mt-1">Other Agencies</h3>
+                <p className="text-xs text-muted-foreground mt-1">Slow, manual, and expensive</p>
               </div>
 
               <div className="space-y-4 border-t border-border/60 pt-6">
@@ -113,7 +111,7 @@ export function ComparisonSection() {
                       <X className="w-4 h-4 text-muted-foreground/50 mt-0.5 flex-shrink-0" strokeWidth={3} />
                     )}
                     <span className={`text-sm ${feature.others ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      {feature.ready ? <ReadyLine /> : <Msg id={feature.name} />}
+                      {feature.name === APPLICATION_READY ? <ReadyLine /> : feature.name}
                     </span>
                   </div>
                 ))}
@@ -121,7 +119,7 @@ export function ComparisonSection() {
             </div>
 
             <div className="mt-8 pt-6 border-t border-border/60 text-center">
-              <span className="text-xs text-muted-foreground block mb-1"><Msg id="compare.estimatedCost" /></span>
+              <span className="text-xs text-muted-foreground block mb-1">Estimated Average Cost</span>
               <span className="text-xl font-semibold text-muted-foreground line-through">{getOtherPrice()}</span>
             </div>
           </motion.div>
@@ -136,7 +134,7 @@ export function ComparisonSection() {
           >
             {/* Recommendation Ribbon */}
             <div className="absolute top-0 right-0 bg-primary text-white text-[10px] font-semibold tracking-widest uppercase py-1.5 px-6 rounded-bl-2xl">
-              <Msg id="compare.recommended" />
+              Highly Recommended
             </div>
 
             <div>
@@ -144,8 +142,8 @@ export function ComparisonSection() {
                 <div className="h-8 relative w-[100px] mb-2">
                   <Image src="/images/logo-main.png" alt="EZvisa" fill className="object-contain" priority />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mt-1"><Msg id="compare.ezvisaWay" /></h3>
-                <p className="text-xs text-primary font-medium mt-1"><Msg id="compare.ezvisaTagline" /></p>
+                <h3 className="text-xl font-semibold text-foreground mt-1">EZvisa Way</h3>
+                <p className="text-xs text-primary font-medium mt-1">100% automated &amp; expert checked</p>
               </div>
 
               <div className="space-y-4 border-t border-primary/10 pt-6">
@@ -155,7 +153,7 @@ export function ComparisonSection() {
                       <Check className="w-3 h-3 text-emerald-500" strokeWidth={3} />
                     </div>
                     <span className="text-sm text-foreground font-medium">
-                      {feature.ready ? <ReadyLine /> : <Msg id={feature.name} />}
+                      {feature.name === APPLICATION_READY ? <ReadyLine /> : feature.name}
                     </span>
                   </div>
                 ))}
@@ -163,7 +161,7 @@ export function ComparisonSection() {
             </div>
 
             <div className="mt-8 pt-6 border-t border-primary/10 text-center">
-              <span className="text-xs text-muted-foreground block mb-1"><Msg id="compare.flatFee" /></span>
+              <span className="text-xs text-muted-foreground block mb-1">Fixed Flat Fee</span>
               <span className="text-2xl font-semibold text-primary">{getPrice()}</span>
             </div>
           </motion.div>
@@ -177,15 +175,15 @@ export function ComparisonSection() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="mt-12 text-center"
         >
-          <LocaleLink
+          <a
             href="/apply"
             className="inline-flex items-center gap-2 group px-6 py-3.5 rounded-2xl bg-primary hover:bg-primary/95 text-white text-base font-semibold transition-all shadow-lg hover:shadow-primary/20 hover:-translate-y-0.5"
           >
-            <Msg id="compare.start" />
+            Start your application now
             <span className="transform translate-x-0 group-hover:translate-x-1 transition-transform duration-200">
               &rarr;
             </span>
-          </LocaleLink>
+          </a>
         </motion.div>
       </div>
     </section>
