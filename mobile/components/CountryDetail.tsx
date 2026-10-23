@@ -1,71 +1,91 @@
-import { PressScale } from "./ui";
-import { Pressable, ScrollView, View, useWindowDimensions, Platform } from "react-native";
-import { Image } from "expo-image";
+// Country screen (Countries tab → country, and Home → destination; both routes render this component).
+// Everything here helps the person decide and start, or see where their application for this country stands.
+// Data: lib/countryInfo.ts (no facts hard-coded in the screen); sections live in components/country/.
+import { useRef, useState } from "react";
+import { Platform, Share, View, useWindowDimensions, type LayoutChangeEvent } from "react-native";
+import Animated, { useAnimatedScrollHandler, useSharedValue } from "react-native-reanimated";
 import { Stack, router, useLocalSearchParams, useSegments } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { BlurView } from "expo-blur";
-import { fromSlug } from "../lib/countries";
-import { PHOTOS } from "../lib/photos";
-import { CAPITALS } from "../lib/capitals";
-import { Button, EmptyState, Flag, Text, Icon, IconName } from "./ui";
-import { useColors, useIsDark, S, R, curve } from "../lib/theme";
+import { countryApp, countryInfo } from "../lib/countryInfo";
+import { useApps } from "../lib/useApps";
+import { useForm } from "../lib/form";
 import { useT } from "../lib/i18n";
-import { tap } from "../lib/haptics";
-
-const FACTS = [["90", "days max"], ["C", "Schengen"], ["24–48h", "processing"]];
-const DOCS: [IconName, string][] = [["person.text.rectangle" as IconName, "Passport"], ["creditcard.fill", "Emirates ID & UAE visa"], ["camera.fill" as IconName, "Photo 35×45 mm"], ["building.columns.fill" as IconName, "Bank statements"], ["doc.text.fill", "Salary certificate / NOC"], ["cross.case.fill" as IconName, "Travel insurance"]];
+import { useColors, S, R, HERO, curve } from "../lib/theme";
+import { Button, EmptyState } from "./ui";
+import { PhotoHeader, TitleBlock, TopBar, topBarHeight } from "./country/Hero";
+import { GlanceList } from "./country/GlanceList";
+import { YourApplicationCard } from "./country/YourApplicationCard";
+import { Requirements } from "./country/Requirements";
+import { FundsSection } from "./country/FundsSection";
+import { VisaCentre } from "./country/VisaCentre";
+import { Questions } from "./country/Questions";
+import { CountryFooter } from "./country/CountryFooter";
 
 export default function CountryDetail() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const c = useColors(); const dark = useIsDark(); const { t, rtl } = useT(); const insets = useSafeAreaInsets(); const { height } = useWindowDimensions();
-  const name = fromSlug(slug ?? "");
+  const c = useColors(); const insets = useSafeAreaInsets(); const { height } = useWindowDimensions(); const { t, lang } = useT();
   const segs = useSegments() as string[];
-  const back = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(segs.includes("(home)") ? "/" : "/countries"); };
-  if (!name) return (
-    <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}>
+  const info = countryInfo(slug ?? "");
+  const { session, apps, err } = useApps();
+  const { hydrated, drafts, openDraft, openServerDraft } = useForm();
+  const scrollY = useSharedValue(0); const under = useSharedValue(1);
+  const scroller = useRef<Animated.ScrollView>(null);
+  const [footerH, setFooterH] = useState(0); const [centreY, setCentreY] = useState<number | null>(null);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    scrollY.value = e.contentOffset.y;
+    under.value = e.contentOffset.y + e.layoutMeasurement.height < e.contentSize.height - S.xl ? 1 : 0;
+  });
+  const back = () => { if (router.canGoBack()) router.back(); else router.replace(segs.includes("(home)") ? "/" : "/countries"); };
+  if (!info) return (
+    <View style={{ flex: 1, backgroundColor: c.background, justifyContent: "center" }}>
       <Stack.Screen options={{ headerShown: false }} />
       <EmptyState icon="exclamationmark.triangle.fill" title={t("Not found")} action={<Button title={t("Back")} variant="secondary" onPress={back} />} />
     </View>
   );
-  const heroH = Math.round(height * 0.44);
+
+  const heroH = Math.round(height * HERO.ratio);
+  const barH = topBarHeight(insets.top);
+  const sheetTop = heroH - HERO.overlap;
+  const title = lang === "ar" && info.nameAr ? info.nameAr : info.name;
+  const capital = lang === "ar" && info.capitalAr ? info.capitalAr : info.capital;
+  // Until the user's applications and this phone's drafts are known, the footer waits: Apply must never show
+  // first and then turn into "View your application".
+  const known = hydrated && (!session || apps !== null || !!err);
+  const state = countryApp(info.name, apps, session ? drafts : drafts.filter((d) => !d.owner));
+
+  const apply = () => router.push({ pathname: "/apply", params: { step: "personal", to: info.name } });
+  const continueDraft = () => {
+    if (state.kind !== "draft") return;
+    if (state.draftKey) { openDraft(state.draftKey); router.push({ pathname: "/apply", params: { resume: "1" } }); return; }
+    const id = state.app?.id; if (!id) return;
+    openServerDraft(id).then((ok) => router.push(ok ? { pathname: "/apply", params: { resume: "1" } } : `/applications/${id}`)).catch(() => router.push(`/applications/${id}`));
+  };
+  const view = () => { if (state.kind === "active") router.push(`/applications/${state.app.id}`, { withAnchor: true }); };
+  const share = () => {
+    const url = info.docsUrl; const msg = t("Schengen visa for {c}", { c: title });
+    Share.share(Platform.OS === "ios" ? { url, title: msg } : { message: `${msg}\n${url}`, title: msg }).catch(() => {});
+  };
+  const toCentre = () => { if (centreY != null) scroller.current?.scrollTo({ y: Math.max(0, sheetTop + centreY - barH - S.md), animated: true }); };
+
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg }}>
+    <View style={{ flex: 1, backgroundColor: c.background }} testID="country-screen">
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView contentContainerStyle={{ paddingBottom: S.xl }} showsVerticalScrollIndicator={false}>
-        <Image source={PHOTOS[slug!]} style={{ width: "100%", height: heroH, backgroundColor: c.card }} contentFit="cover" cachePolicy="memory" accessibilityIgnoresInvertColors />
-        <View style={[{ marginTop: -S.xxl, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: c.bg, paddingHorizontal: S.lg, paddingTop: S.xl }, curve]}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}>
-            <Flag country={name} size={56} />
-            <View style={{ flex: 1 }}>
-              <Text variant="largeTitle" accessibilityRole="header">{t(name)}</Text>
-              <Text variant="subhead" tone="secondary">{CAPITALS[name]?.city}</Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: "row", gap: S.sm, marginTop: S.xl }}>
-            {FACTS.map(([v, l]) => (
-              <View key={l} style={[{ flex: 1, borderRadius: R.tile, backgroundColor: c.card, paddingVertical: S.md, paddingHorizontal: S.sm, alignItems: "center", gap: S.xxs }, curve]} accessible accessibilityLabel={`${v} ${t(l)}`}>
-                <Text variant="title2" tabular numberOfLines={1} adjustsFontSizeToFit>{v}</Text>
-                <Text variant="footnote" tone="secondary">{t(l)}</Text>
-              </View>
-            ))}
-          </View>
-          <Text variant="title3" style={{ marginTop: S.xxl, marginBottom: S.xs }} accessibilityRole="header">{t("What you'll need")}</Text>
-          {DOCS.map(([i, d]) => (
-            <View key={d} style={{ flexDirection: "row", alignItems: "center", gap: S.md, minHeight: 52 }}>
-              <View style={{ width: 36, height: 36, borderRadius: R.xl, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={i} size={16} color={c.tint} /></View>
-              <Text variant="body" style={{ flex: 1 }}>{t(d)}</Text>
-            </View>
-          ))}
+      <Animated.ScrollView ref={scroller} onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: footerH + S.xl }} testID="country-scroll">
+        <PhotoHeader photo={info.photo} height={heroH} scrollY={scrollY} />
+        <View style={[{ marginTop: -HERO.overlap, borderTopStartRadius: R.sheet, borderTopEndRadius: R.sheet, backgroundColor: c.background, paddingTop: S.xl, gap: S.xxl }, curve]}>
+          <TitleBlock name={info.name} title={title} capital={capital} />
+          {known && <YourApplicationCard state={state} onContinueDraft={continueDraft} />}
+          <GlanceList info={info} onCentre={toCentre} />
+          <Requirements />
+          <FundsSection info={info} />
+          {info.provider && <View onLayout={(e: LayoutChangeEvent) => setCentreY(e.nativeEvent.layout.y)}><VisaCentre centre={info.provider} /></View>}
+          <Questions info={info} />
         </View>
-      </ScrollView>
-      <PressScale onPress={back} accessibilityRole="button" accessibilityLabel={t("Back")} hitSlop={8}
-        style={{ position: "absolute", top: insets.top + S.xs, start: S.md, transform: [{ scaleX: rtl ? -1 : 1 }], width: 44, height: 44, borderRadius: R.round, overflow: "hidden", alignItems: "center", justifyContent: "center" }}>
-        <BlurView intensity={50} tint={dark ? "dark" : "light"} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: Platform.OS === "android" ? c.glassTint : undefined }} />
-        <Icon name="chevron.left" size={16} color={c.label} weight="bold" />
-      </PressScale>
-      <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.lg), backgroundColor: c.bg }}>
-        <Button title={t("Apply for {c}", { c: t(name) })} onPress={() => router.push({ pathname: "/apply", params: { step: "personal", to: name } })} />
-      </View>
+      </Animated.ScrollView>
+      <TopBar name={info.name} title={title} scrollY={scrollY} showAt={sheetTop + S.xl + S.xl - barH} onBack={back} onShare={share} />
+      <CountryFooter name={info.name} state={state} loading={!known} onApply={apply} onContinue={continueDraft} onView={view} under={under}
+        onLayout={(e) => setFooterH(e.nativeEvent.layout.height)} />
     </View>
   );
 }
