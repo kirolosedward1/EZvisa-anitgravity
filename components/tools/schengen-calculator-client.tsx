@@ -18,6 +18,7 @@ import {
   Plane
 } from "lucide-react"
 import Link from "next/link"
+import { PreparationLine } from "@/components/ready-line"
 
 export function SchengenCalculatorClient() {
   const [pastTrips, setPastTrips] = useState<TripInterval[]>([
@@ -249,7 +250,7 @@ export function SchengenCalculatorClient() {
                 </Link>
               </Button>
               <p className="text-[11px] text-center text-muted-foreground">
-                We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy.
+                <PreparationLine />
               </p>
             </div>
           </div>

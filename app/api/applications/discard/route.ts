@@ -3,6 +3,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { isDiscardable } from "@/lib/active-applications"
 import type { ApplicationLike } from "@/lib/application-status"
 
+/** Same update as the mobile app's cancelApplication: status becomes cancelled, nothing is deleted. */
 export async function POST(request: Request) {
   const supabase = await createServerClient()
   const { data: auth } = await supabase.auth.getUser()
@@ -15,40 +16,28 @@ export async function POST(request: Request) {
 
   const { data: app, error: loadError } = await supabase
     .from("visa_applications")
-    .select("id, email, application_status, payment_status, additional_notes")
+    .select("id, email, application_status, payment_status")
     .eq("id", id)
     .eq("email", email)
     .maybeSingle()
 
   if (loadError || !app) return NextResponse.json({ error: "Application not found" }, { status: 404 })
   if (!isDiscardable(app as ApplicationLike)) {
-    return NextResponse.json({ error: "Only unpaid drafts can be discarded" }, { status: 409 })
+    return NextResponse.json({ error: "Only unpaid draft or submitted applications can be discarded" }, { status: 409 })
   }
 
-  let notes: Record<string, unknown> = {}
-  try {
-    const parsed = JSON.parse(app.additional_notes || "{}")
-    if (parsed && typeof parsed === "object") notes = parsed
-  } catch {
-    notes = {}
-  }
-  notes.discarded_at = new Date().toISOString()
-
-  const { data: updated, error } = await supabase
+  const { data, error } = await supabase
     .from("visa_applications")
-    .update({ application_status: "cancelled", additional_notes: JSON.stringify(notes) })
+    .update({ application_status: "cancelled" })
     .eq("id", id)
     .eq("email", email)
     .in("application_status", ["draft", "submitted"])
-    .select("application_status")
-    .maybeSingle()
+    .not("payment_status", "in", "(paid,completed)")
+    .select("id, application_status")
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
-  if (updated?.application_status !== "cancelled") {
-    return NextResponse.json(
-      { error: "Discard was not saved. Customer cancellation is still blocked until the proposed database policy is applied." },
-      { status: 409 },
-    )
+  if (!data?.some((row) => row.application_status === "cancelled")) {
+    return NextResponse.json({ error: "Could not discard this application." }, { status: 409 })
   }
   return NextResponse.json({ ok: true })
 }

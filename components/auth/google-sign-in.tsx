@@ -1,38 +1,16 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 
-/**
- * Shown only when Supabase reports Google as an external provider,
- * or when NEXT_PUBLIC_ENABLE_GOOGLE_AUTH is explicitly true.
- */
+/** Shown by default. Set NEXT_PUBLIC_ENABLE_GOOGLE_AUTH=false to hide it. */
 export function GoogleSignInButton({ next = "/dashboard" }: { next?: string }) {
-  const [enabled, setEnabled] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "true") {
-      setEnabled(true)
-      return
-    }
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!url || !key) return
-    fetch(`${url}/auth/v1/settings`, { headers: { apikey: key } })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (data?.external?.google === true) setEnabled(true)
-      })
-      .catch(() => {
-        setEnabled(false)
-      })
-  }, [])
-
-  if (!enabled) return null
+  if (process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === "false") return null
 
   const signIn = async () => {
     setLoading(true)

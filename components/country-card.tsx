@@ -5,7 +5,7 @@ import Image from "next/image"
 import { ArrowRight } from "lucide-react"
 import { motion } from "framer-motion"
 import type { CountryData } from "@/lib/countries"
-import { APPLICATION_READY } from "@/lib/copy"
+import { ReadyLine } from "@/components/ready-line"
 
 interface CountryCardProps {
   country: CountryData
@@ -36,7 +36,7 @@ export function CountryCard({ country, index }: CountryCardProps) {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-base font-medium group-hover:text-primary transition-colors">{country.name}</h3>
-              <span className="text-xs text-muted-foreground">{APPLICATION_READY}</span>
+              <ReadyLine className="text-xs text-muted-foreground" />
             </div>
             <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
           </div>
@@ -56,7 +56,7 @@ export function CountryCard({ country, index }: CountryCardProps) {
             <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
           <h3 className="text-xl font-medium mb-1 group-hover:text-primary transition-colors">{country.name}</h3>
-          <p className="text-xs text-muted-foreground mb-3">{APPLICATION_READY}</p>
+          <p className="text-xs text-muted-foreground mb-3"><ReadyLine /></p>
           <p className="text-sm text-muted-foreground">{country.description}</p>
         </div>
       </Link>

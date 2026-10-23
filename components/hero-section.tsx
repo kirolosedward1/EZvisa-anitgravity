@@ -10,6 +10,7 @@ import Image from "next/image"
 import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
+import { ReadyLine } from "@/components/ready-line"
 import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, flagSrc, toCitizenshipIso } from "@/lib/nationalities"
 
 const countryFlags: Record<string, string> = {
@@ -450,7 +451,7 @@ export function HeroSection() {
                         <div className="flex flex-row md:flex-col gap-3 md:gap-1.5 w-full md:w-auto text-xs font-semibold text-muted-foreground/90 flex-shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
                           <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
                             <Clock className="h-3.5 w-3.5 text-primary" />
-                            <span>Application ready in 1–2 days</span>
+                            <ReadyLine />
                           </div>
                           <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
                             <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
@@ -473,7 +474,7 @@ export function HeroSection() {
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
-                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Application ready in 1–2 days</span>
+                <ReadyLine className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left" />
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
                 <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />

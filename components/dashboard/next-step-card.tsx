@@ -25,7 +25,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
         return {
           icon: Wallet,
           title: "Complete your payment to get started",
-          body: "Your application is saved. Once payment is confirmed, our visa specialists start preparing your file. The embassy decision takes longer and depends on the embassy.",
+          body: `Your application is saved. Once payment is confirmed, our visa specialists start preparing your file. ${PREPARATION_TIME}`,
           actions: (
             <PayNowButton
               applicationId={app.id}

@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { APPLICATION_READY, PREPARATION_TIME } from "@/lib/copy"
+import { PreparationLine, ReadyLine } from "@/components/ready-line"
 import { destinations } from "@/lib/destinations"
 import { Button } from "@/components/ui/button"
 
@@ -20,7 +20,7 @@ export function ExploreCountries() {
             Explore countries
           </h2>
           <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
-            {PREPARATION_TIME}
+            <PreparationLine />
           </p>
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
@@ -41,7 +41,7 @@ export function ExploreCountries() {
               </span>
               <span className="flex flex-col gap-1 p-3">
                 <span className="font-semibold text-foreground">{country.name}</span>
-                <span className="text-xs text-muted-foreground">{APPLICATION_READY}</span>
+                <ReadyLine className="text-xs text-muted-foreground" />
               </span>
             </Link>
           ))}

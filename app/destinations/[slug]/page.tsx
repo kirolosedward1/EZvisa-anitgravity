@@ -1,4 +1,5 @@
 import { destinations } from "@/lib/destinations"
+import { PreparationLine } from "@/components/ready-line"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const title = `Apply for ${destination.name} Schengen Visa from UAE | EZvisa`
-  const description = `Get your ${destination.name} visa file prepared from Dubai and Abu Dhabi. We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy.`
+  const description = `Get your ${destination.name} visa file prepared from Dubai and Abu Dhabi. We prepare your application in 1–2 days. The embassy's decision takes longer.`
 
   return {
     title,
@@ -91,7 +92,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       icon: Clock,
       label: "Our preparation",
       value: "1–2 days",
-      description: "We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy."
+      description: "We prepare your application in 1–2 days. The embassy's decision takes longer."
     },
     {
       icon: Calendar,
@@ -144,7 +145,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       step: "03",
       icon: UserCheck,
       title: "Expert File Review",
-      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight and hotel bookings, and complete the official ${destination.name} form. We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy.`
+      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight and hotel bookings, and complete the official ${destination.name} form. We prepare your application in 1–2 days. The embassy's decision takes longer.`
     },
     {
       step: "04",
@@ -448,7 +449,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             Ready to secure your {destination.name} Visa?
           </h2>
           <p className="mt-4 text-blue-100/90 text-sm sm:text-base max-w-xl mx-auto">
-            We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy. Secure and backed by our money-back guarantee.
+            <PreparationLine /> Secure and backed by our money-back guarantee.
           </p>
           
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">

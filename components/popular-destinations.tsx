@@ -1,6 +1,7 @@
 "use client"
 
 import { destinations } from "@/lib/destinations"
+import { ReadyLine } from "@/components/ready-line"
 import { ArrowRight, MoveRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
@@ -83,7 +84,7 @@ export function PopularDestinations() {
                   <h3 className="text-xl font-bold tracking-tight mb-1">
                     {country.name}
                   </h3>
-                  <p className="text-xs text-white/60">Application ready in 1–2 days</p>
+                  <ReadyLine className="text-xs text-white/60" />
                 </div>
               </Link>
             </motion.div>

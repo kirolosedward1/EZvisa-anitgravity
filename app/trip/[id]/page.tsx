@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer"
 import { createServerClient } from "@/lib/supabase/server"
 import { isPaid } from "@/lib/application-status"
 import { getDemoApplicationByToken } from "@/lib/demo-data"
-import { PREPARATION_TIME } from "@/lib/copy"
+import { PreparationLine } from "@/components/ready-line"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
 export const metadata = { title: "Trip plan", robots: { index: false, follow: false } }
@@ -36,7 +36,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
       <main id="main-content" className="bg-background px-4 py-16">
         <article className="mx-auto flex w-full max-w-lg flex-col gap-4">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">{app.destination_country} trip plan</h1>
-          <p className="text-sm leading-relaxed text-muted-foreground">{PREPARATION_TIME}</p>
+          <p className="text-sm leading-relaxed text-muted-foreground"><PreparationLine /></p>
           <dl className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-6 text-sm">
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">Traveller</dt>

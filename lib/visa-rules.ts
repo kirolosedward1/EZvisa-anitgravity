@@ -36,7 +36,7 @@ export const VISA_RULES: VisaRulesConfig = {
     processingTime: {
       minDays: 1,
       maxDays: 2,
-      note: "We prepare your application in 1–2 days. The embassy decision takes longer and depends on the embassy.",
+      note: "We prepare your application in 1–2 days. The embassy's decision takes longer.",
     },
     stayDuration: "Up to 90 days in a 180-day window",
     providers: {

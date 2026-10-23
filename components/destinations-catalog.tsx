@@ -7,6 +7,7 @@ import { destinations, Destination } from "@/lib/destinations"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
+import { ReadyLine } from "@/components/ready-line"
 
 type TabType = "all" | "schengen" | "non-schengen"
 
@@ -147,7 +148,7 @@ export function DestinationsCatalog() {
                       <h3 className="text-lg font-bold tracking-tight mb-1">
                         {country.name}
                       </h3>
-                      <p className="text-[11px] text-white/60">Application ready in 1–2 days</p>
+                      <p className="text-[11px] text-white/60"><ReadyLine /></p>
                     </div>
 
                     {/* Quick Apply Action Button (Floating) */}

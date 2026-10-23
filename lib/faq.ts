@@ -39,6 +39,10 @@ export const FAQ_EN: FaqItem[] = [
     question: "Can I pay first and finish later?",
     answer: "Yes. After payment, open Continue application to add your remaining details, then upload your documents.",
   },
+  {
+    question: "How long does it take?",
+    answer: "We prepare your application in 1–2 days. The embassy's decision takes longer.",
+  },
 ]
 
 export const FAQ_AR: FaqItem[] = [
@@ -76,5 +80,9 @@ export const FAQ_AR: FaqItem[] = [
   {
     question: "هل يمكنني الدفع أولًا والإكمال لاحقًا؟",
     answer: "نعم. بعد الدفع، افتح «متابعة الطلب» لإضافة بقية بياناتك، ثم ارفع مستنداتك.",
+  },
+  {
+    question: "كم يستغرق تجهيز الطلب؟",
+    answer: "نجهّز طلبك خلال ١–٢ يوم. قرار السفارة يستغرق وقتًا أطول.",
   },
 ]
