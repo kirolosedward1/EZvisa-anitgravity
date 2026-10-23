@@ -104,7 +104,7 @@ m(mig, parts, evidence) as (
     'bucket visa_documents=' || b_underscore || ' (bucket visa-documents=' || b_hyphen || '), read-own policy=' || p_storage_read_own || ', upload-own-paid policy=' || p_storage_upload_paid from f
   union all select '0012 customer_profiles', array[t_profiles, p_profiles_select],
     'table customer_profiles=' || t_profiles || ', own-row policies=' || p_profiles_select from f
-  union all select '0013 claim_device_token (on main also filed as 0012_claim_device_token.sql)', array[fn_claim_token],
+  union all select '0013 claim_device_token', array[fn_claim_token],
     'function public.claim_device_token=' || fn_claim_token from f
   union all select 'website scripts/003 broad policies (should be GONE)', array[p_003_admin_update, p_003_public_insert],
     'policy "Only admins can update" (any signed-in user updates every row)=' || p_003_admin_update || ', policy "Allow public submissions"=' || p_003_public_insert from f
