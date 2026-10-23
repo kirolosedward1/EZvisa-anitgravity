@@ -24,6 +24,12 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, E
 
 let LOC: string | undefined;
 const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
+/** "Jan 13 – Jan 20, 2027": the year once when both dates share it, so the range fits on one row. */
+const fmtRange = (a: string, b?: string | null) => {
+  if (!b || b.slice(0, 10) === a.slice(0, 10)) return fmtD(a);
+  const x = new Date(a.slice(0, 10) + "T12:00:00"), y = new Date(b.slice(0, 10) + "T12:00:00");
+  return x.getFullYear() === y.getFullYear() ? `${x.toLocaleDateString(LOC, { day: "numeric", month: "short" })} – ${fmtD(b)}` : `${fmtD(a)} – ${fmtD(b)}`;
+};
 const EDITABLE = UPLOAD_STATUSES;
 const REFRESH_MS = 30_000;
 
@@ -102,7 +108,7 @@ export default function ApplicationDetail() {
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg } }} />
       {/* Mirrors the real layout: hero, Status timeline (4 steps), Trip group */}
       <View accessible accessibilityLabel={t("Loading")} style={{ gap: S.md }} testID="detail-skeleton">
-        <Skeleton w={72} h={72} r={R.round} /><Skeleton w="55%" h={34} r={R.md} />
+        <Skeleton w={56} h={56} r={R.round} /><Skeleton w="55%" h={34} r={R.md} />
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Skeleton w="35%" h={16} /><Skeleton w={84} h={22} r={R.sm} /></View>
         <Skeleton w={90} h={20} style={{ marginTop: S.lg }} />
         <View style={{ borderRadius: R.card, padding: S.md, gap: S.lg, backgroundColor: c.card }}>{[0, 1, 2, 3].map((i) => <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}><Skeleton w={14} h={14} r={R.round} /><Skeleton w={`${60 - i * 8}%` as `${number}%`} h={16} /></View>)}</View>
@@ -129,7 +135,7 @@ export default function ApplicationDetail() {
           <SupportButton header context={`application ${a.reference}`} />
         </View>) }} />
       <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xxl, gap: S.xs }}>
-        <Flag country={name} size={72} />
+        <Flag country={name} size={56} />
         <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text>
@@ -159,7 +165,7 @@ export default function ApplicationDetail() {
       )}
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
-        {!!a.entry_date && <ListRow title={t("Dates")} value={!a.exit_date || a.exit_date.slice(0, 10) === a.entry_date.slice(0, 10) ? fmtD(a.entry_date) : `${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />}
+        {!!a.entry_date && <ListRow title={t("Dates")} value={fmtRange(a.entry_date, a.exit_date)} />}
         {paid && <ListRow title={t("Paid")} value={fmtD(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null)} />}
         {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
@@ -175,7 +181,7 @@ export default function ApplicationDetail() {
         <View onLayout={(e) => { docsY.current = e.nativeEvent.layout.y; }} />
         <ListGroup header={t("Your documents · {i} of {n}", { i: done, n: list.customer.length })} footer={canUpload ? t("PDF or image · max 5 MB. Tap a missing item to upload it.") : undefined} inset={58}>
           <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} accessible accessibilityLabel={`${done} of ${list.customer.length} documents provided`}>
-            <View style={{ height: 6, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 6, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
+            <View style={{ height: 4, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 4, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
           </View>
           {list.customer.map((i) => <CheckRow key={i.req.id} flash={flash?.id === i.req.id ? flash.n : 0} i={i} busy={busyType(i.req.document_type)} canUpload={canUpload}
             onPress={() => (isOpen(i) ? (canUpload ? pickFile(i.req.document_type, i.req.id) : undefined) : i.doc && open(i.doc.storage_path))} />)}
@@ -236,10 +242,10 @@ function NextStepCard({ icon, title, subtitle, target, onPress }: { icon: "brief
   const c = useColors();
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}, ${target}`} accessibilityHint={subtitle}
-      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.md, paddingStart: S.md, paddingEnd: S.md, paddingVertical: S.md - 2, backgroundColor: pressed ? "#F5F5F7" : "transparent", transform: [{ scale: pressed ? 0.98 : 1 }] })}>
-      <View style={{ width: 30, height: 30, borderRadius: 8, backgroundColor: "#EEF2FF", alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={16} color="#0436DC" /></View>
+      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm + 2, backgroundColor: pressed ? c.fillSubtle : "transparent" })}>
+      <View style={{ width: 32, height: 32, borderRadius: R.sm, backgroundColor: c.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={16} color={c.accent} /></View>
       <View style={{ flex: 1 }}>
-        <Text variant="body" style={{ fontWeight: "600" }}>{title}</Text>
+        <Text variant="headline">{title}</Text>
         {!!subtitle && <Text variant="subhead" tone="secondary" numberOfLines={2}>{subtitle}</Text>}
       </View>
       <Chevron />

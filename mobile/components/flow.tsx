@@ -151,7 +151,7 @@ export function ToggleRow({ label, value, onChange, icon }: { label: string; val
     <View style={[{ minHeight: 56, borderRadius: R.input, backgroundColor: c.card, paddingHorizontal: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }, curve]}>
       {!!icon && <Icon name={icon} size={20} color={c.whatsapp} />}
       <Text variant="subhead" style={{ flex: 1 }}>{label}</Text>
-      <Switch value={value} onValueChange={(v) => { select(); onChange(v); }} trackColor={{ true: c.green, false: c.surface2 }} accessibilityLabel={label} />
+      <Switch value={value} onValueChange={(v) => { select(); onChange(v); }} trackColor={{ true: c.accentFill, false: c.surface2 }} thumbColor="#fff" accessibilityLabel={label} />
     </View>
   );
 }
