@@ -8,19 +8,22 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`.
 Everything in this section was checked on 2026-10-23 against git, GitHub Actions, Vercel and Expo. Any note elsewhere in
 this file, in `docs/qa-report.md`, in `docs/mobile-audit.md` or in a migration header that disagrees with it is
 **superseded**. Lines marked *(pending SQL)* need the owner to run `docs/live-state-check.sql` (read-only) in the ezvisa-uae
-SQL editor: no session so far could reach that database (the Supabase connector sees only the old project).
+SQL editor: no session so far could reach that database. Rechecked 23 Oct: the Supabase connector lists only `rjbgteqgqaxalcfnksjc`
+and BrokersConnect projects and returns "no permission" for `dravvaykssrbktztmrlj`; the cloud network policy also denies
+`*.supabase.co`, `www.ezvisa.net` and `api.expo.dev` (proxy 403). Unblock: connect the Supabase account that owns ezvisa-uae
+at https://claude.ai/customize/connectors and start a new session, or paste the SQL output.
 
 ### 0.1 What is live
 | Surface | Live now | Evidence |
 |---|---|---|
-| Website www.ezvisa.net | `main` @ `7be29de` (PR #30), Vercel production READY | Vercel deployments |
-| Expo Go, channel `preview` | Last verified publish: `mobile-app` @ `aad5052` (v10.3), update group `7e64bbdb-1e36-459e-be20-07b8b5f1e9d2`. `mobile-app` has had v10.4 and later pushed since (now `de95dcf`); each push publishes automatically, so check the newest "EAS Update (preview)" run | GitHub Actions run 22; its bundle check confirmed `dravvaykssrbktztmrlj` and not the old `rjbgteqgqaxalcfnksjc` |
+| Website www.ezvisa.net | `main` @ `47ba882` (PR #34), Vercel production READY. Served by Vercel project **`e-zvisa-anitgravity`** (`prj_YLsofIv9M9foVZUSeIgmyaSvZH9q`; domains www.ezvisa.net, ezvisa.net → www). The other project `ezvisa` only has ezvisa.vercel.app | Vercel deployments + project domains, 23 Oct |
+| Expo Go, channel `preview` | Last verified publish: `mobile-app` @ `f566d02` (v10.9.1), update group **`15fc0235-d4be-4de6-9c0e-d7fdd8db29a0`** (23 Oct 00:33 UTC). `mobile-app` keeps moving and every push publishes, so check the newest "EAS Update (preview)" run | GitHub Actions run 30; its bundle check confirmed `dravvaykssrbktztmrlj` and not the old `rjbgteqgqaxalcfnksjc`. expo.dev itself is not reachable from the cloud sessions |
 | Database ezvisa-uae (`dravvaykssrbktztmrlj`) | *(pending SQL)*: policies, buckets, columns, triggers, realtime, migrations 0001-0013 | `docs/live-state-check.sql` |
-| Vercel production env (names) | `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`, `NEXT_PUBLIC_ezvisaSUPABASE_*`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY`, `ZIINA_API_KEY`, `ZIINA_WEBHOOK_SECRET`, **`ZIINA_TEST_MODE=true`**, HubSpot, Resend, Blob, KV/Redis, Postgres | Vercel env list (names only; `ZIINA_TEST_MODE` is a plain-text variable) |
+| Vercel production env (names) | 31 variables. All environments: `BLOB_READ_WRITE_TOKEN`, `HUBSPOT_ACCESS_TOKEN`, `HUBSPOT_CLIENT_SECRET`, `KV_REST_API_READ_ONLY_TOKEN`, `KV_REST_API_TOKEN`, `KV_REST_API_URL`, `KV_URL`, `REDIS_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_ezvisaSUPABASE_URL`, `NEXT_PUBLIC_ezvisaSUPABASE_ANON_KEY`, `NEXT_PUBLIC_ezvisaSUPABASE_PUBLISHABLE_KEY`, `POSTGRES_DATABASE/HOST/PASSWORD/PRISMA_URL/URL/URL_NON_POOLING/USER`, `RESEND_API_KEY`, `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `ZIINA_API_KEY`, **`ZIINA_TEST_MODE=true`**. Preview + production only (sensitive): `ZIINA_WEBHOOK_SECRET`, `CRON_SECRET` | Vercel env list on `e-zvisa-anitgravity`, 23 Oct (names only; `ZIINA_TEST_MODE` is plain text, read by `app/api/create-payment/route.ts:39`) |
 | Store builds | None. No `eas build` has been made; App Store / Play listings do not exist | |
 
 ### 0.2 What is merged where
-- `mobile-app` is **7 commits ahead of `main`** (`71c638a` v10.2 … `de95dcf`, app code only; nothing outside `mobile/`).
+- `mobile-app` is **14 commits ahead of `main`** on 23 Oct (`71c638a` v10.2 … `48d0f01`, app code only; nothing outside `mobile/`).
   So Expo preview runs newer app code than `main`. Merging `mobile-app` into `main` cannot change the website.
 - `main` has app files `mobile-app` doesn't: leftovers of `de75fd8` (PR #15) that nothing imports: `lib/search.ts`,
   `metro.config.js`, `scripts/ts-hooks.mjs`, `scripts/wizard-rules.test.ts` (fails: imports `NATIONALITY_OPTIONS`, which
@@ -29,8 +32,11 @@ SQL editor: no session so far could reach that database (the Supabase connector 
 - `main` @ `7be29de` checks: `npm ci`; `tsc` 0 errors; `eslint` 0 errors (160 warnings); privacy 41/41, upload 24/24,
   secure storage 12/12, push 12/12 + 29, timeline, appointment, drafts-check 6/6, payment e2e 20/20, drafts e2e 17/17 + 7/7,
   continue e2e 33/33, nav e2e 10/10. Auth e2e 27/28: the one failure is a stale assertion (it looks for the email on Account,
-  which PR #27 moved to Account details). Broken test harnesses: `plan-v82` (the `rn.js` stub lacks `Image`),
-  `e2e-ui-web` (Playwright crash after 12 passes). `scripts/passport-later-check.ts` (§2j) does not exist. Website:
+  which PR #27 moved to Account details; pointed at `/account/details` it passes). Its last step (guest → Applications) can't
+  run: it clicks the tab by its text label, and the tab bar is icon-only since PR #25. Broken test harness: `plan-v82` (the
+  `rn.js` stub lacks `Image`). `e2e-ui-web` is **not** broken: it needs an image path as its second argument
+  (`node scripts/e2e-ui-web.mjs <outDir> assets/icon.png`), then passes 19/19. `scripts/passport-later-check.ts` (§2j) was
+  deleted in `8651059`. A second independent run (status audit `nfpl98`) got the same results on `ebc4f9a` and `7be29de`. Website:
   `pnpm build` passes (type check skipped by `ignoreBuildErrors`); `pnpm lint` (= `tsc`) has 2 old errors
   (`app/documents/[slug]/page.tsx:93`, `lib/blog.ts:1`).
 - Unmerged branches with work worth keeping: `claude/nice-faraday-r722ry` (website draft sync + wizard parity, 15 commits,
@@ -38,26 +44,31 @@ SQL editor: no session so far could reach that database (the Supabase connector 
   merges cleanly into `main` since `fa2af32`, **overlaps nice-faraday: pick one**), `claude/vibrant-wright-ez44ch` (chat 15
   fixes after PR #13, 12 commits, half conflict), `claude/bold-feynman-ssk2ur` (prefill QA fixes, 2 commits, conflict).
   Branch-by-branch list: 0.5.
+- **Owner rule not in the code:** `PRODUCT.md` ("any No to a document never blocks … To get later … saved as
+  `additional_notes.missingDocuments`") and `docs/qa-report.md` describe this as done. It is in **neither `main` nor
+  `mobile-app`** (`git grep missingDoc` / "To get later" finds nothing). The code exists only on
+  `claude/vibrant-wright-ez44ch` (`8a05aab`, `ed2d51d`, `508d08b`, `17b6d52`) and was lost in the PR #13 rebase.
 - Migration numbering: `main` and `mobile-app` both have `0012_customer_profiles.sql` and `0013_claim_device_token.sql`.
   `bold-feynman` renames customer_profiles to `0013` as well, so renumber it when it is ported. Next free number: **0014**.
 
 ### 0.3 Open blockers
 | # | Blocker | Status | Owner |
 |---|---|---|---|
-| 1 | **Production takes test payments**: `ZIINA_TEST_MODE=true` on Vercel production, so every checkout is a Ziina test intent and a test card marks a case paid | OPEN, decide before any real customer pays | Owner |
+| 1 | **Production takes test payments**: `ZIINA_TEST_MODE=true` on Vercel production, so every checkout is a Ziina test intent and a test card marks a case paid | OPEN, decide before any real customer pays (re-verified 23 Oct: plain-text value `true` on production, preview and development; read at `app/api/create-payment/route.ts:39`) | Owner |
 | 2 | Live RLS / storage policies unknown (audit B1). The SQL flags any broad policy | *(pending SQL)* | Owner runs SQL |
 | 3 | Migration 0002's customer UPDATE policy depends on a guard trigger that only `db/proposed-live-changes.sql` creates (marked not applied). Policy without trigger = a customer can change their own `payment_status` | *(pending SQL)*, risk row "customer UPDATE policy without the guard trigger" | Owner runs SQL, then dev |
 | 4 | Client inserts can set any column, incl. `payment_status` (audit B5, H6) | OPEN, needs an approved BEFORE INSERT guard (next number 0014) | Owner approval, then dev |
 | 5 | Supabase Auth: Site URL (was `http://localhost:3000`), redirect allow list for `ezvisa://` / `exp://`, "Confirm email" must be ON | Unverified (dashboard only) | Owner |
 | 6 | "Paid" date on the application page (v10.3, `mobile-app`, published) falls back to `updated_at`, which breaks the "real timestamps only" rule (§2f, audit H3/M7) | OPEN on `mobile-app` | Dev |
 | 7 | `mobile-app` and `main` differ (0.2); the `de75fd8` leftovers and failing test on `main` | OPEN | Dev: next `mobile-app` → `main` PR, then delete the leftovers |
-| 8 | Two status-audit sessions wrote different `docs/live-state-check.sql` files (`claude/mobile-status-audit-mc2sve`, tested on local Postgres, and `claude/mobile-status-audit-d3tww9`) | Keep one | Owner |
+| 8 | At least 9 status-audit sessions ran the same task (`claude/mobile-status-audit-*`, `claude/live-state-check*`) | The `docs/live-state-check.sql` on `main` (from `mc2sve`) is the one to run: a second session ran it on local Postgres before and after applying 0001-0013, inside a READ ONLY transaction, with matching verdicts. The other branches' copies are duplicates | Owner: close the other audit sessions |
 | 9 | EAS `preview` environment still holds `EXPO_PUBLIC_WEB_URL` (unused); its other values matter only for manual `eas update` (CI sets its own) | OPEN | Owner |
 | 10 | No real-device pass (VoiceOver, Dynamic Type, Face ID, camera, push, real upload, real payment) and no development build | OPEN | Owner + dev |
 | 11 | App submissions send no "application submitted" email and no HubSpot lead (audit H7); staff see app cases only in the table | OPEN | Owner decision, then dev (website route) |
 | 12 | Website wizard/draft parity: `nice-faraday` vs PR #19 (`trusting-bell`) overlap; the website still asks the passport number and trip before payment, the app after | OPEN | Owner picks one branch |
 | 13 | Rate limiting fails open in production: the configured Upstash host no longer resolves (found by the session on `claude/blissful-babbage-1u96lk`, commit `99bf6b3`). `check-payment`, `create-payment` and upload limits are not enforced | OPEN; fix (in-memory fallback) is on that branch, unmerged; Upstash env is owner's | Owner (Upstash) + review `99bf6b3` |
 | 14 | Remote branch clean-up (the 13 `claude/*` branches marked Delete in 0.5; `app-return`, `pay-server-price`, `wizard-ux` are merged too) was approved by the owner but blocked by this session's permission rules | OPEN | Owner: delete in GitHub, or allow `git push --delete` |
+| 15 | **Website sign-up confirmation links are broken**: `app/signup/page.tsx:36` sends `emailRedirectTo …/api/auth/callback`, a route that does not exist on `main` (only `app/auth/callback`). A forwarder exists on PR #19 (`trusting-bell`, `app/api/auth/callback/route.ts`) | OPEN | Dev: port it in a small website PR (or point signup at `/auth/callback`) |
 
 Closed since the 22 Oct notes: B2 upload auth (live), B3 Ziina webhook (HMAC enforced, secret set on production, every
 status re-verified with Ziina), B4 preview on the old DB (`7e64bbdb…`, CI checks the DB ref on every publish), H2 one
@@ -74,7 +85,7 @@ production; its rate limit fails open, #13), H1 (`mobile-app` changes nothing ou
 ### 0.5 Branches (2026-10-23, against `main` @ `7be29de`)
 | Branch | State | Keep? |
 |---|---|---|
-| `mobile-app` | 6 commits ahead of `main` (v10.2-v10.7), publishes Expo preview | Keep (integration branch) |
+| `mobile-app` | 14 commits ahead of `main` (v10.2 … `48d0f01`, 23 Oct), publishes Expo preview | Keep (integration branch) |
 | `claude/ezvisa-mobile-dev-e9zw25` | Merged (PRs #23-#30); still in active use by a session | Keep while in use |
 | `claude/nice-faraday-r722ry` | Unmerged: website draft sync + parity, 15 commits (`cbbd84c`..`01a86ea`), clean merge | Keep (decision, §0.3 #12) |
 | `claude/trusting-bell-9yvqmh` (PR #19, open) | Unmerged: `271c89a`, `431f9d1` (+ merge `fa2af32`), clean merge | Keep (decision, §0.3 #12) |
