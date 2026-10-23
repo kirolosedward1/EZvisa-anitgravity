@@ -81,15 +81,17 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   useEffect(() => {
     const header = headerRef.current
     const bar = headerBarRef.current
-    if (!header || !bar) return
+    if (!header) return
     const apply = () => {
-      // The fixed header's padding is transparent. Stick content to the visible bar, not the padding below it.
-      document.documentElement.style.setProperty("--site-header-height", `${Math.round(bar.getBoundingClientRect().bottom)}px`)
+      // Marketing header: the fixed padding is transparent, so measure the visible pill.
+      // Wizard header: the plain bar is the header itself, so the summary sits flush under it.
+      const edge = (bar ?? header).getBoundingClientRect().bottom
+      document.documentElement.style.setProperty("--site-header-height", `${Math.round(edge)}px`)
     }
     apply()
     const observer = new ResizeObserver(apply)
     observer.observe(header, { box: "border-box" })
-    observer.observe(bar, { box: "border-box" })
+    if (bar) observer.observe(bar, { box: "border-box" })
     return () => observer.disconnect()
     // The minimal bar and the full header are different elements: measure whichever is mounted.
   }, [isMinimal])
