@@ -36,8 +36,8 @@ export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
     <section className="relative py-16 md:py-24 overflow-hidden">
       {/* Decorative Background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full" />
       </div>
 
       <div className="container mx-auto px-4 max-w-4xl relative">
@@ -78,10 +78,8 @@ export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
-              <span className="bg-gradient-to-r from-emerald-600 to-primary bg-clip-text text-transparent">
-                Payment Successful!
-              </span>
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-[#0A0F1F]">
+              Payment <span className="text-[#0436DC]">Successful!</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-6">
               Welcome aboard, {applicationData.firstName}!

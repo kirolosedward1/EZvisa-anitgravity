@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
+import { headers } from "next/headers"
 import { Poppins } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { CookieConsent } from "@/components/cookie-consent"
@@ -7,6 +8,7 @@ import { ScrollRestoration } from "@/components/scroll-restoration"
 import { ContinueApplicationNotification } from "@/components/continue-application-notification"
 import { NavigationProgressBar } from "@/components/navigation-progress"
 import { PageTransition } from "@/components/page-transition"
+import { LocaleDirection } from "@/components/locale-direction"
 import Script from "next/script"
 import "./globals.css"
 
@@ -24,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | EZvisa",
   },
   description:
-    "Get your Schengen visa approved fast with EZvisa. AI-powered visa application assistance for 27 European countries. Expert help with documents, itinerary, and cover letters. 98% approval rate. Starting from 249 AED.",
+    "Get your Schengen visa approved fast with EZvisa. AI-powered visa application assistance for 29 European countries. Expert help with documents, itinerary, and cover letters. 98% approval rate. Starting from 249 AED.",
   keywords: [
     "Schengen visa",
     "tourist visa Europe",
@@ -53,7 +55,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
     description:
-      "AI-powered Schengen visa application service for 27 European countries. Expert assistance with documents, itinerary & cover letters. 98% approval rate. From 249 AED.",
+      "AI-powered Schengen visa application service for 29 European countries. Expert assistance with documents, itinerary & cover letters. 98% approval rate. From 249 AED.",
     url: "https://www.ezvisa.net/",
     siteName: "EZvisa",
     locale: "en_US",
@@ -71,7 +73,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
     description:
-      "AI-powered Schengen visa service. Expert help for 27 European countries. 98% approval rate. From 249 AED.",
+      "AI-powered Schengen visa service. Expert help for 29 European countries. 98% approval rate. From 249 AED.",
     images: ["https://www.ezvisa.net/images/logo-main.png"],
     creator: "@ezvisa",
   },
@@ -105,13 +107,14 @@ export const viewport: Viewport = {
   themeColor: "#2563eb",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const arabic = (await headers()).get("x-ez-locale") === "ar"
   return (
-    <html lang="en" className="bg-background">
+    <html lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} className="bg-background" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
@@ -160,6 +163,7 @@ export default function RootLayout({
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
+        <LocaleDirection />
         <NavigationProgressBar />
         <ScrollRestoration />
         {/* overflow-x-clip (not hidden): hidden would turn <main> into a scroll container and stop position: sticky from working on every page */}

@@ -10,7 +10,7 @@ import { InnerHero } from "@/components/inner-hero"
 export const metadata: Metadata = {
   title: "How It Works - 4-Step Schengen Visa Application Process | EZvisa",
   description:
-    "Learn how to apply for your Schengen visa with EZvisa. Simple 4-step process: Fill form, Upload documents, Review & payment, Get visa-ready file. 24-48 hour turnaround time.",
+    "Learn how EZvisa prepares your Schengen visa file. Simple 4-step process. We prepare your application in 1–2 days. The embassy's decision takes longer.",
   keywords: [
     "visa application process",
     "how to apply visa",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "How It Works - 4-Step Visa Application Process",
-    description: "Simple 4-step process to get your Schengen visa approved. 24-48 hour turnaround.",
+    description: "We prepare your application in 1–2 days. The embassy's decision takes longer.",
     url: "https://ezvisa.net/how-it-works",
     type: "website",
   },
@@ -34,12 +34,12 @@ export default function HowItWorksPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-gray-50">
+      <div className="min-h-screen bg-[#F7F8FA]">
         <InnerHero
           badge="Process"
           title={
             <>
-              How It <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Works</span>
+              How It <span className="text-[#0436DC]">Works</span>
             </>
           }
           description="Get your European visa prepared in 4 simple steps. Fast, easy, and hassle-free."
@@ -58,9 +58,7 @@ export default function HowItWorksPage() {
               className="w-full h-full object-cover object-center" 
             />
             {/* White overlay to ensure text readability */}
-            <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
-            {/* Subtle gradient to fade into next/previous sections */}
-            <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+            <div className="absolute inset-0 bg-[#FFFFFF]/90" />
           </div>
           
           <div className="container mx-auto px-6 max-w-6xl relative z-10">

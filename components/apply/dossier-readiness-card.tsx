@@ -32,7 +32,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
         score += 7
         checks.push({ label: `Lead time (${daysUntilTrip} days) provides safe consular processing buffer`, passed: true })
       } else {
-        checks.push({ label: `Departure is in ${daysUntilTrip} days (embassy turnaround is typically 10-15 days)`, passed: false })
+        checks.push({ label: `Departure is in ${daysUntilTrip} days. Leave more than 15 days — the embassy decision takes longer than our preparation.`, passed: false })
       }
     }
 
@@ -76,7 +76,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
   }, [formData])
 
   return (
-    <div className="bg-gradient-to-br from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-500/20 rounded-3xl p-6 space-y-4 shadow-sm">
+    <div className="border border-blue-500/20 rounded-3xl p-6 space-y-4 shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/30 shrink-0">
@@ -104,7 +104,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
       <div className="space-y-1.5">
         <div className="w-full bg-muted/40 h-2 rounded-full overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all duration-500"
+            className="h-full rounded-full transition-all duration-500 bg-[#0436DC]"
             style={{ width: `${readiness.score}%` }}
           />
         </div>

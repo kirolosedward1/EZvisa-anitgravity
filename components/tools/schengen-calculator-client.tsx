@@ -18,6 +18,7 @@ import {
   Plane
 } from "lucide-react"
 import Link from "next/link"
+import { PreparationLine } from "@/components/ready-line"
 
 export function SchengenCalculatorClient() {
   const [pastTrips, setPastTrips] = useState<TripInterval[]>([
@@ -241,7 +242,7 @@ export function SchengenCalculatorClient() {
               <Button
                 asChild
                 disabled={result.isOverstay}
-                className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20"
+                className="w-full h-12 text-base font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/20"
               >
                 <Link href={applyUrl} className="flex items-center justify-center gap-2">
                   <span>Prepare Visa File for These Dates</span>
@@ -249,7 +250,7 @@ export function SchengenCalculatorClient() {
                 </Link>
               </Button>
               <p className="text-[11px] text-center text-muted-foreground">
-                EZvisa prepares your complete file (forms, cover letter, itinerary, hotel/flight reservations) within 24-48 hours.
+                <PreparationLine />
               </p>
             </div>
           </div>

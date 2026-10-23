@@ -8,7 +8,7 @@ export default function NotFound() {
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-gray-50 flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <FileQuestion className="w-10 h-10 text-primary" />

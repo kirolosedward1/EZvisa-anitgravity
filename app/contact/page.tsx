@@ -34,7 +34,7 @@ export default function ContactPage() {
           badge="Contact Us"
           title={
             <>
-              Get in <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Touch</span>
+              Get in <span className="text-primary bg-[#0436DC]">Touch</span>
             </>
           }
           description="Have questions about your visa application? Our team of experts is available 24/7."
@@ -44,7 +44,7 @@ export default function ContactPage() {
         {/* Main Content */}
         <section className="relative container mx-auto px-6 py-12 lg:py-16 max-w-6xl z-10">
           {/* Subtle background glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full pointer-events-none" />
 
           <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start z-10">
             

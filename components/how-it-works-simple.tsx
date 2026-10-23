@@ -36,7 +36,7 @@ export function HowItWorksSimple() {
   return (
     <section id="how-it-works" className="relative py-24 md:py-32 bg-secondary/15 overflow-hidden">
       {/* Subtle backdrop circle blur */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none hidden md:block" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full pointer-events-none hidden md:block" />
 
       <div className="container mx-auto px-6 max-w-6xl relative z-10">
         {/* Section header */}
@@ -60,13 +60,7 @@ export function HowItWorksSimple() {
         {/* Step grid with relative connectors */}
         <div className="relative">
           {/* Connecting line on desktop */}
-          <div 
-            className="absolute top-[3.5rem] left-[8%] right-[8%] h-[2px] hidden lg:block pointer-events-none z-0"
-            style={{
-              backgroundImage: "linear-gradient(to right, transparent, var(--primary) 15%, var(--primary) 85%, transparent)",
-              opacity: 0.25,
-            }}
-          />
+          <div className="absolute top-[3.5rem] left-[8%] right-[8%] h-[2px] hidden lg:block pointer-events-none z-0 bg-[#E3E7EF]" />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
             {steps.map((step, index) => {

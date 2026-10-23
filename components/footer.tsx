@@ -103,7 +103,7 @@ export function Footer({
   transparent = false,
   limitWidth = false
 }: FooterProps) {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getUTCFullYear()
   const [openSection, setOpenSection] = useState<string | null>(null)
 
   const toggleSection = (title: string) => {
@@ -118,8 +118,8 @@ export function Footer({
       className
     )}>
       {/* Decorative orbs */}
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-accent/5 blur-3xl pointer-events-none hidden md:block" />
-      <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-accent/4 blur-3xl pointer-events-none hidden md:block" />
+      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-accent/5 pointer-events-none hidden md:block" />
+      <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-accent/4 pointer-events-none hidden md:block" />
 
       {/* Decorative flight path overlay */}
       <div className="absolute top-12 left-[10%] w-[300px] h-[220px] pointer-events-none select-none opacity-[0.05] dark:opacity-[0.08] -rotate-[15deg] hidden md:block">
@@ -186,7 +186,7 @@ export function Footer({
                     >
                       <span className="text-sm font-semibold text-foreground">{section.title}</span>
                       <ChevronDown
-                        className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                        className={`h-4 w-4 text-[#5B6475] transition-transform duration-200 ${
                           openSection === section.title ? "rotate-180" : ""
                         }`}
                       />
@@ -297,7 +297,7 @@ export function Footer({
             </div>
 
             <p className="text-xs text-muted-foreground text-center md:text-right">
-              &copy; {currentYear} EZvisa · ezvisa.net
+              &copy; <span suppressHydrationWarning>{currentYear}</span> EZvisa · ezvisa.net
             </p>
           </div>
         </div>

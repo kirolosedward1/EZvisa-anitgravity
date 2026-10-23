@@ -1,4 +1,5 @@
 import { destinations } from "@/lib/destinations"
+import { PreparationLine } from "@/components/ready-line"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
@@ -44,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const title = `Apply for ${destination.name} Schengen Visa from UAE | EZvisa`
-  const description = `Get your ${destination.name} tourist visa from Dubai & Abu Dhabi easily. Complete visa file preparation including application forms, cover letter, flights, and hotel bookings in 24-48h.`
+  const description = `Get your ${destination.name} visa file prepared from Dubai and Abu Dhabi. We prepare your application in 1–2 days. The embassy's decision takes longer.`
 
   return {
     title,
@@ -89,9 +90,9 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
   const fastFacts = [
     {
       icon: Clock,
-      label: "Processing Time",
-      value: "10-15 working days",
-      description: "Typical embassy turnaround time after biometrics appointment."
+      label: "Our preparation",
+      value: "1–2 days",
+      description: "We prepare your application in 1–2 days. The embassy's decision takes longer."
     },
     {
       icon: Calendar,
@@ -144,7 +145,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       step: "03",
       icon: UserCheck,
       title: "Expert File Review",
-      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight/hotel bookings, and fully complete the official ${destination.name} form within 24-48 hours.`
+      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight and hotel bookings, and complete the official ${destination.name} form. We prepare your application in 1–2 days. The embassy's decision takes longer.`
     },
     {
       step: "04",
@@ -196,7 +197,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         badge="Apply from Dubai & Abu Dhabi"
         title={
           <>
-            Get your <span className="text-blue-300">{destination.name}</span> Schengen Visa approved, easily.
+            Get your <span className="text-[#0436DC]">{destination.name}</span> Schengen Visa approved, easily.
           </>
         }
         description={`Complete visa file preparation for ${destination.name}. We prepare your application forms, travel itinerary, flight reservations, and cover letter for a successful submission.`}
@@ -213,13 +214,13 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             </Link>
             <Link
               href={destination.documentPath}
-              className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/15 text-white border border-white/25 text-base font-semibold rounded-2xl transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-white text-[#0A0F1F] border border-[#E3E7EF] text-base font-semibold rounded-2xl shadow-[0_8px_24px_rgba(10,15,31,0.08)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               Check Required Documents
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white/60">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#5B6475]">
             <Star className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
             <span>Over 5,000+ Schengen visas processed successfully.</span>
           </div>
@@ -251,7 +252,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                   <fact.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  <h3 className="text-[11px] font-bold text-[#5B6475] uppercase tracking-wider">
                     {fact.label}
                   </h3>
                   <div className="text-base sm:text-lg font-bold text-foreground mt-0.5">
@@ -441,14 +442,14 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       {/* 7. Bottom Final CTA Banner */}
       <section className="py-20 bg-primary text-primary-foreground text-center relative overflow-hidden">
         {/* Soft Decorative Background Circles */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-white/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-white/5 rounded-full pointer-events-none" />
         
         <div className="relative container mx-auto px-6 max-w-4xl z-10">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
             Ready to secure your {destination.name} Visa?
           </h2>
           <p className="mt-4 text-blue-100/90 text-sm sm:text-base max-w-xl mx-auto">
-            Get your completed form, itinerary, bookings, and cover letter in 24-48 hours. Secure and backed by our money-back guarantee.
+            <PreparationLine /> Secure and backed by our money-back guarantee.
           </p>
           
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
