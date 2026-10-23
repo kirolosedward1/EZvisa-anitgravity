@@ -43,8 +43,11 @@ function b64ToBytes(b64: string): Uint8Array {
 /** Upload to avatars/<uid>/avatar.jpg (upsert) and remember the path in user_metadata. Best effort: the local copy still shows. */
 async function upload(uid: string, dataUri: string) {
   if (!supabase) return;
-  const m = /^data:image\/\w+;base64,(.*)$/.exec(dataUri); if (!m) return;
-  const { error } = await supabase.storage.from("avatars").upload(PATH(uid), b64ToBytes(m[1]), { contentType: "image/jpeg", upsert: true });
+  // Native gives a base64 data URI (above); web's picker gives a blob: URL, so read its bytes.
+  const m = /^data:image\/\w+;base64,(.*)$/.exec(dataUri);
+  const bytes = m ? b64ToBytes(m[1]) : new Uint8Array(await (await fetch(dataUri)).arrayBuffer());
+  if (!bytes.length) return;
+  const { error } = await supabase.storage.from("avatars").upload(PATH(uid), bytes, { contentType: "image/jpeg", upsert: true });
   if (error) throw error;
   await supabase.auth.updateUser({ data: { avatar_path: PATH(uid) } });
 }
