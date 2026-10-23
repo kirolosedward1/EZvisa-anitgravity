@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Platform, Pressable, Switch, TextInput, View, useWindowDimensions } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useColors, useIsDark, S, R, T, HIT, ICON, curve, SPRING } from "../lib/theme";
+import { useColors, useIsDark, S, R, T, ICON, curve, SPRING } from "../lib/theme";
 import { Icon, IconName, PressScale, Text, Flag, InlineError } from "./ui";
 import { select } from "../lib/haptics";
 // Haptics: selection tick on choices/toggles only; CircleButton (back, close, help) is navigation and stays silent.
@@ -17,7 +17,38 @@ export function FlowProgress({ value }: { value: number }) {
 
 export function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
   const c = useColors();
-  return <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={S.xxs} style={{ width: HIT, height: HIT, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={ICON.sm + 2} color={c.label} weight="bold" /></PressScale>;
+  return <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={S.xxs} style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={ICON.sm + 1} color={c.label} weight="semibold" /></PressScale>;
+}
+
+export type FlowStep = { key: string; label: string; icon: IconName };
+/** Step indicator (application and Continue): icons with short labels in a row; finished steps get a check, the
+ *  current one is blue, and the line to the next step fills as the current step's questions are answered. */
+export function StepIndicator({ steps, current, fraction, a11yLabel }: { steps: FlowStep[]; current: number; fraction: number; a11yLabel: string }) {
+  const c = useColors();
+  return (
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={a11yLabel} style={{ flexDirection: "row", alignItems: "flex-start" }} testID="step-indicator">
+      {steps.map((st, i) => {
+        const done = i < current; const on = i === current;
+        const col = done || on ? c.accent : c.textTertiary;
+        const fill = i < current ? 1 : i === current ? Math.min(1, Math.max(0, fraction)) : 0;
+        return (
+          <View key={st.key} style={[{ flexDirection: "row", alignItems: "flex-start" }, i < steps.length - 1 ? { flex: 1 } : { flexShrink: 0 }]}>
+            <View style={{ alignItems: "center", gap: S.xxs, minWidth: 56 }}>
+              <View style={{ width: 28, height: 28, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: done ? c.accent : on ? c.accentSoft : "transparent", borderWidth: done ? 0 : 1, borderColor: col }}>
+                <Icon name={done ? "checkmark" : st.icon} size={ICON.sm} color={done ? c.onAccent : col} weight={done ? "bold" : "medium"} />
+              </View>
+              <Text variant="caption" weight={on ? "600" : "500"} color={on ? c.accent : done ? c.text : c.textTertiary} numberOfLines={1}>{st.label}</Text>
+            </View>
+            {i < steps.length - 1 && (
+              <View style={{ flex: 1, height: 1.5, marginTop: 14, marginHorizontal: -S.xs, backgroundColor: c.border, overflow: "hidden" }}>
+                <View style={{ width: `${fill * 100}%`, height: 1.5, backgroundColor: c.accent }} />
+              </View>
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
 }
 
 /** Full-width selectable row with a leading icon or flag. */
@@ -120,7 +151,7 @@ export function ToggleRow({ label, value, onChange, icon }: { label: string; val
     <View style={[{ minHeight: 56, borderRadius: R.input, backgroundColor: c.card, paddingHorizontal: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }, curve]}>
       {!!icon && <Icon name={icon} size={20} color={c.whatsapp} />}
       <Text variant="subhead" style={{ flex: 1 }}>{label}</Text>
-      <Switch value={value} onValueChange={(v) => { select(); onChange(v); }} trackColor={{ true: c.green, false: c.surface2 }} accessibilityLabel={label} />
+      <Switch value={value} onValueChange={(v) => { select(); onChange(v); }} trackColor={{ true: c.accentFill, false: c.surface2 }} thumbColor="#fff" accessibilityLabel={label} />
     </View>
   );
 }

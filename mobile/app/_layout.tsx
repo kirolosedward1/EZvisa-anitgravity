@@ -2,7 +2,7 @@ import "../lib/perf"; // first: starts the startup clock
 import { initSentry } from "../lib/sentry";
 import { installCrashHandler } from "../lib/crash";
 import { startAnalytics } from "../lib/analytics";
-import { Stack } from "expo-router";
+import { Stack, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
 import { AppearanceProvider, useAppearance } from "../lib/appearance";
@@ -11,7 +11,9 @@ import { FormProvider, useForm } from "../lib/form";
 import { I18nProvider, useT } from "../lib/i18n";
 import { useColors, useIsDark } from "../lib/theme";
 import { useEffect } from "react";
-import { View } from "react-native";
+import { View, Platform } from "react-native";
+import { BlurView } from "expo-blur";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NetworkBanner } from "../components/NetworkBanner";
 import { BootOverlay } from "../components/Boot";
 import { LockGate } from "../lib/lock";
@@ -40,11 +42,14 @@ function Routes() {
   const inApp = loading || !!session || guest;
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
-      <Stack.Protected guard={inApp}>
+      {/* Signed out: any app route (e.g. "/") goes to Welcome. Without redirectTo, expo-router 58 falls back to the first
+          allowed route it finds, which was the sign-in screen (no "Continue without an account", no Google button). */}
+      <Stack.Protected guard={inApp} redirectTo="/welcome">
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="apply" options={{ presentation: "modal" }} />
         <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="continue/[id]" options={{ presentation: "modal" }} />
+        <Stack.Screen name="receipt/[id]" />
         {/* full screen: a swipe-to-dismiss sheet would fight the crop handles */}
         <Stack.Screen name="upload/[id]" options={{ presentation: "fullScreenModal", gestureEnabled: false }} />
       </Stack.Protected>
@@ -66,6 +71,17 @@ function NotificationRouter() {
   return null;
 }
 
+/** Status-bar backdrop on every screen: content scrolling under the clock is softened, tinted from the theme background. */
+const MODAL_ROUTES = new Set(["apply", "trip", "continue", "upload", "auth", "payment"]);
+function StatusBackdrop() {
+  const c = useColors(); const insets = useSafeAreaInsets(); const seg = useSegments();
+  // Not over modal sheets (they sit below the status bar on iOS; a strip over the dimmed screen behind looks wrong).
+  if (insets.top <= 0 || MODAL_ROUTES.has(seg[0] ?? "")) return null;
+  const tint = /^#[0-9a-f]{6}$/i.test(c.bg) ? c.bg + (Platform.OS === "ios" ? "8C" : "F0") : c.bg;
+  const st = { position: "absolute" as const, top: 0, left: 0, right: 0, height: insets.top, backgroundColor: tint };
+  return Platform.OS === "ios" ? <BlurView pointerEvents="none" intensity={60} tint="systemChromeMaterialLight" style={st} /> : <View pointerEvents="none" style={st} />;
+}
+
 function Themed() {
   const dark = useIsDark(); const c = useColors();
   const base = dark ? DarkTheme : DefaultTheme;
@@ -76,6 +92,7 @@ function Themed() {
         <View style={{ flex: 1, backgroundColor: c.bg }}>
           <StatusBar style={dark ? "light" : "dark"} />
           <Routes />
+          <StatusBackdrop />
           <NotificationRouter />
           <NetworkBanner />
           <LockGate />

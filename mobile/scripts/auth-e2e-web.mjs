@@ -2,7 +2,7 @@
 // the response shapes GoTrue returns. Usage: node auth-e2e.mjs <outDir>
 // Needs a web dev server (npx expo start --web) with EXPO_PUBLIC_SUPABASE_URL=https://dravvaykssrbktztmrlj.supabase.co and any
 // placeholder key in .env.local, and Playwright (PLAYWRIGHT=/path/to/playwright/index.mjs if it is not resolvable).
-const { chromium } = await import(process.env.PLAYWRIGHT ?? "playwright");
+const { chromium } = await import(process.env.PLAYWRIGHT ?? "playwright-core");
 import fs from "node:fs";
 
 const BASE = "http://localhost:8081";

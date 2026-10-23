@@ -19,7 +19,7 @@ ok(ids(emptyForm, "pre").includes("contact"), "signed in: the contact screen sta
 setAccountEmail(null);
 
 const post = ids({ ...emptyForm, hasValidPassport: "yes", employmentStatus: "employed", previousRefusals: "yes", willVisitOtherCountries: "yes" }, "post");
-for (const id of ["purposeOfTrip", "travelStartDate", "travelEndDate", "travelingWith", "hotelCategory", "residenceVisaValid", "dateOfBirth", "hasValidPassport", "passportNumber", "passportExpiry", "employmentStatus", "jobCompany", "refusalDetails", "additionalCountries"])
+for (const id of ["purposeOfTrip", "dates", "travelingWith", "hotelCategory", "residenceVisaValid", "dateOfBirth", "hasValidPassport", "passportNumber", "passportExpiry", "employmentStatus", "jobCompany", "refusalDetails", "additionalCountries"])
   ok(post.includes(id), `post: asks ${id}`);
 ok(!post.includes("itinerary") && !post.includes("spouseOccupation") && !post.includes("hasEmiratesId"), "removed: itinerary, spouse occupation, Emirates ID");
 ok(!postSteps({ ...emptyForm }).includes("spouse") && postSteps({ ...emptyForm, maritalStatus: "married", spouseAccompanying: "yes" }).includes("spouse"), "post: spouse questions only when the spouse travels");

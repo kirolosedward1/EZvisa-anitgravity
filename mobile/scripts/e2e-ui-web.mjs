@@ -36,8 +36,10 @@ const s2 = await scale();
 log(s0 === 1 && s1 < 0.95 && s2 === 1, "tab bar shrinks scrolling down, full size again at the top", `${s0} -> ${s1} -> ${s2}`);
 // 3. single confirmation on the trash button
 const c0 = await cancelled(); dialogs = 0;
-await p.getByTestId("app-discard").first().click(); await p.waitForTimeout(1500);
-log(dialogs === 1 && (await cancelled()) === c0 + 1, "trash: one confirmation, then discarded", `dialogs=${dialogs}`);
+// The trash is hidden until a row is swiped (v10.16); long-press asks the same single confirmation.
+const lp = await p.getByTestId("app-swipe").first().boundingBox();
+await p.mouse.move(lp.x + 60, lp.y + 30); await p.mouse.down(); await p.waitForTimeout(900); await p.mouse.up(); await p.waitForTimeout(1500);
+log(dialogs === 1 && (await cancelled()) === c0 + 1, "long-press: one confirmation, then discarded", `dialogs=${dialogs}`);
 // 4. swipe: long swipe discards at once (no dialog)
 const card = p.getByTestId("app-swipe").first(); const bb = await card.boundingBox(); dialogs = 0;
 await p.mouse.move(bb.x + bb.width - 40, bb.y + 40); await p.mouse.down(); for (let i = 1; i <= 12; i++) await p.mouse.move(bb.x + bb.width - 40 - i * 25, bb.y + 42); await p.mouse.up(); await p.waitForTimeout(1500);

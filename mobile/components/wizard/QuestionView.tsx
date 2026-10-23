@@ -1,12 +1,13 @@
 // One question per screen: title, answer UI by kind, notes, inline error and the Continue bar. Shared by the wizard
 // (app/apply, before payment) and Continue application (app/continue/[id], after payment), so both look and behave the same.
-import React, { useRef } from "react";
-import { ScrollView, View, Platform, TextInput, I18nManager } from "react-native";
+import React, { useRef, useState } from "react";
+import { ScrollView, View, Platform, TextInput, I18nManager, type TextInputInstance } from "react-native";
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Text, Shake, PressScale } from "../ui";
 import { PhoneField } from "../CountryPicker";
 import { Checkbox, Note } from "./fields";
+import { DatesAnswer, DatesSummary } from "./dates";
 import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries } from "./answers";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
@@ -33,17 +34,19 @@ type Props = {
   children?: React.ReactNode;
 };
 
-const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean) =>
-  [T.title3, { color: c.label, minHeight: 60, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: err ? 1.5 : 0, borderColor: c.red, textAlign: rtl ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)] as any;
+/** White field with a hairline; blue while typing, red on an error. */
+const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean, focused = false) =>
+  [T.title3, { color: c.label, minHeight: 52, borderRadius: R.lg, backgroundColor: c.surface, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: err || focused ? 1.5 : 1, borderColor: err ? c.red : focused ? c.accent : c.border, textAlign: rtl ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)] as any;
 
 export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, children }: Props) {
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
-  const inputRef = useRef<TextInput>(null); const input2Ref = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null); const input2Ref = useRef<TextInputInstance>(null);
   // Lift the screen (and its Continue bar) above the iOS keyboard; S.md between button and keyboard.
   const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
   const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
   const account = getAccountEmail();
 
+  const [focus, setFocus] = useState<string | null>(null); // the field being typed in (blue border)
   const liveErr = errorOf(q, f);
   const hasInput = q.kind === "contact" ? !!f.phoneLocal.trim() && (!!account || !!f.email.trim()) : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
   const e = showErr || (settled && hasInput) ? liveErr : undefined;
@@ -79,7 +82,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
           keyboardType={tp.keyboard ?? "default"} autoCapitalize={tp.caps ?? "sentences"} autoCorrect={q.kind === "textarea"} spellCheck={q.kind === "textarea"}
           textContentType={tp.contentType as any} autoComplete={tp.autoComplete as any} multiline={q.kind === "textarea"} textAlignVertical={q.kind === "textarea" ? "top" : "center"}
           returnKeyType={q.kind === "textarea" ? "default" : "next"} onSubmitEditing={q.kind === "textarea" ? undefined : advance} blurOnSubmit={false} testID="question-input"
-          style={[...fieldStyle(c, !!e, isRTL), q.kind === "textarea" && [T.body, { minHeight: 150 }]]} />
+          onFocus={() => setFocus(q.keys[0])} onBlur={() => setFocus(null)} style={[...fieldStyle(c, !!e, isRTL, focus === q.keys[0]), q.kind === "textarea" && [T.body, { minHeight: 150 }]]} />
       );
       case "pair": {
         const [a, b] = q.fields ?? [];
@@ -89,7 +92,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
             <TextInput ref={first ? inputRef : input2Ref} value={String(f[x.key] ?? "")} onChangeText={(v) => patch({ [x.key]: v } as Partial<WizardForm>)} placeholder={t(x.placeholder)} placeholderTextColor={c.secondaryLabel}
               accessibilityLabel={t(x.label)} autoFocus={first} autoCapitalize="words" autoCorrect={false} textContentType={x.contentType as any} autoComplete={x.autoComplete as any}
               returnKeyType={first ? "next" : "done"} blurOnSubmit={false} onSubmitEditing={() => (first ? input2Ref.current?.focus() : advance())} testID={first ? "question-input" : "question-input-2"}
-              style={fieldStyle(c, !!e && !!qe[x.key], isRTL)} />
+              onFocus={() => setFocus(x.key)} onBlur={() => setFocus(null)} style={fieldStyle(c, !!e && !!qe[x.key], isRTL, focus === x.key)} />
           </View>
         );
         return (
@@ -106,7 +109,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
             <Text variant="footnote" weight="600" tone="secondary">{t("Email Address")}</Text>
             <TextInput ref={inputRef} value={f.email} onChangeText={(v) => patch({ email: v })} placeholder="your.email@example.com" placeholderTextColor={c.secondaryLabel}
               accessibilityLabel={t("Email Address")} autoFocus keyboardType="email-address" autoCapitalize="none" autoCorrect={false} textContentType="emailAddress" autoComplete="email"
-              returnKeyType="next" blurOnSubmit={false} testID="question-input" style={fieldStyle(c, !!e && !!qe.email, isRTL)} />
+              returnKeyType="next" blurOnSubmit={false} testID="question-input" onFocus={() => setFocus("email")} onBlur={() => setFocus(null)} style={fieldStyle(c, !!e && !!qe.email, isRTL, focus === "email")} />
           </View>}
           <View style={{ gap: S.xs }}>
             {!account && <Text variant="footnote" weight="600" tone="secondary">{t("Phone Number")}</Text>}
@@ -122,13 +125,14 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
               {([[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const).map(([n, l]) => {
                 const [y, m, d] = f.travelStartDate.split("-").map(Number); const v = isoLocal(new Date(y, m - 1, d + n - 1)); const on = f.travelEndDate === v;
                 return <PressScale key={n} onPress={() => { select(); patch({ travelEndDate: v }); }} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t(l)}
-                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? c.tintFill : c.card }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? c.tint : c.label}>{t(l)}</Text></PressScale>;
+                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? "#0436DC" : c.card, borderWidth: on ? 0 : 1, borderColor: "#E3E7EF" }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? "#FFFFFF" : c.label}>{t(l)}</Text></PressScale>;
               })}
             </View>
           )}
           <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />
         </View>
       );
+      case "dates": return <DatesAnswer f={f} patch={patch} />;
       case "countries": return <AdditionalCountries f={f} onChange={(v) => patch({ additionalCountries: v })} />;
       default: return null;
     }
@@ -139,6 +143,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
   const btnTitle = !q.required && !answered ? t("Skip") : doneLabel ?? t("Continue");
   const bar = showBtn ? (
     <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: barBottom, backgroundColor: c.bg }}>
+      {q.kind === "dates" && <DatesSummary f={f} patch={patch} />}
       <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} disabled={!!liveErr && (q.required || answered)} onPress={advance} />
     </View>
   ) : <View style={{ height: barBottom }} />;
@@ -153,7 +158,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
           <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
             {title}
             {body}
-            {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" tone="secondary">{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
+            {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" color={c.label}>{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
             {noteBox}
             {errBox}
           </ScrollView>
