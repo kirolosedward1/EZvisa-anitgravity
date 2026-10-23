@@ -88,12 +88,12 @@ function SummaryRows({ formData }: { formData: FormData }) {
         <span>
           <LangText en="Total" ar="المجموع" />
         </span>
-        <span dir="ltr">AED {price}</span>
+        <span dir="ltr">{price} AED</span>
       </div>
       {applicants === 1 ? (
         <p className="mt-3 text-[14px] text-[#3A4150]">
-          <span className="rtl:hidden">AED {spousePrice} with a spouse</span>
-          <span className="hidden rtl:inline">مع الزوج أو الزوجة AED {spousePrice}</span>
+          <span className="rtl:hidden">{spousePrice} AED with a spouse</span>
+          <span className="hidden rtl:inline">مع الزوج أو الزوجة {spousePrice} AED</span>
         </p>
       ) : null}
     </div>
@@ -160,7 +160,7 @@ export function WizardShell({
               </span>
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-[#0A0F1F]" dir="ltr">
-              AED {line.price}
+              {line.price} AED
               <ChevronDown className={cn("size-4 text-[#5B6475]", summaryOpen && "rotate-180")} aria-hidden />
             </span>
           </button>

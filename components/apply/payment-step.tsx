@@ -271,7 +271,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         <span>
           <LangText en="Total" ar="المجموع" />
         </span>
-        <span dir="ltr">AED {paymentAmount}</span>
+        <span dir="ltr">{paymentAmount} AED</span>
       </div>
 
       <p className="mt-5 text-[13px] leading-relaxed text-[#5B6475]">
@@ -307,7 +307,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         loading={isProcessing}
         continueType="button"
         onContinue={handlePayment}
-        continueLabel={`Pay AED ${paymentAmount}`}
+        continueLabel={`Pay ${paymentAmount} AED`}
         continueLabelAr={`ادفع ${paymentAmount} درهم`}
         loadingLabel="Opening Ziina…"
         loadingLabelAr="جارٍ فتح زينة…"
@@ -322,7 +322,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
             </h2>
             <p className="mt-2 text-[15px] leading-relaxed text-[#5B6475]">
               <LangText
-                en={`Secure payment of AED ${paymentAmount}. Please don't close this page.`}
+                en={`Secure payment of ${paymentAmount} AED. Please don't close this page.`}
                 ar={`دفع آمن بقيمة ${paymentAmount} درهم. لا تغلق هذه الصفحة.`}
               />
             </p>

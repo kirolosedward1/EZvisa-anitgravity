@@ -263,7 +263,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             indicator="radio"
             title="With my spouse"
             titleAr="مع الزوج أو الزوجة"
-            description={`Two applicants, AED ${spousePrice}. Spouse details after payment.`}
+            description={`Two applicants, ${spousePrice} AED. Spouse details after payment.`}
             descriptionAr={`متقدمان، ${spousePrice} درهم. بيانات الزوج أو الزوجة بعد الدفع.`}
             selected={withSpouse}
             onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes" })}

@@ -22,7 +22,7 @@ function DestinationCard({ country }: { country: Destination }) {
   const specs = [
     { label: "Type", ar: "النوع", value: country.region === "Schengen" ? "Schengen" : country.visaType, valueAr: country.region === "Schengen" ? "شنغن" : country.visaType },
     { label: "Ready in", ar: "جاهز خلال", value: "1–2 days", valueAr: "١–٢ يوم" },
-    { label: "Fee", ar: "الرسوم", value: `AED ${PRICE_AED}`, valueAr: `${PRICE_AED} درهم` },
+    { label: "Fee", ar: "الرسوم", value: `${PRICE_AED} AED`, valueAr: `${PRICE_AED} درهم` },
   ]
   return (
     <div className="photo-card group relative aspect-[3/4] overflow-hidden rounded-[1.75rem] bg-foreground shadow-md ring-1 ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/15 focus-within:ring-2 focus-within:ring-ring">
