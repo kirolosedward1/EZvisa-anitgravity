@@ -1,7 +1,7 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { headers } from "next/headers"
-import { Poppins } from "next/font/google"
+import { IBM_Plex_Sans_Arabic, Poppins } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { CookieConsent } from "@/components/cookie-consent"
 import { ScrollRestoration } from "@/components/scroll-restoration"
@@ -18,6 +18,15 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-poppins",
   display: "swap",
+})
+
+// Arabic glyphs only. Latin keeps Poppins because this subset's unicode-range does not cover it.
+const plexArabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600"],
+  variable: "--font-arabic",
+  display: "swap",
+  preload: false,
 })
 
 export const metadata: Metadata = {
@@ -111,7 +120,12 @@ export default async function RootLayout({
 }>) {
   const arabic = (await headers()).get("x-ez-locale") === "ar"
   return (
-    <html lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} className="bg-background" suppressHydrationWarning>
+    <html
+      lang={arabic ? "ar" : "en"}
+      dir={arabic ? "rtl" : "ltr"}
+      className={arabic ? `${plexArabic.variable} bg-background` : "bg-background"}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />

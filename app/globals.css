@@ -368,6 +368,11 @@ body {
   line-height: 1.4;
 }
 
+/* IBM Plex Sans Arabic is loaded only when lang="ar". Its arabic subset leaves Latin on Poppins. */
+html[lang="ar"] body {
+  font-family: var(--font-arabic), var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Arabic headings are one step lighter (600 → 500). Body stays 400. Labels stay 500. */
 [dir="rtl"] h1,
 [dir="rtl"] h2,
