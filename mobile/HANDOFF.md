@@ -178,7 +178,7 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - `useNotificationRouting` in `app/_layout.tsx` (`NotificationRouter`): warm start via `addNotificationResponseReceivedListener`, cold start via `getLastNotificationResponse()` (the SDK 57 sync API; the Async one is deprecated). It waits until the stored session has loaded and the app side of `Routes` exists (signed in or guest; a guest restarted on Welcome gets the screen after "Continue without an account"), and application taps also wait for sign-in. Each delivery (identifier + date) is handled once, then `clearLastNotificationResponse()`; a reminder rescheduled under the same identifier (`ezvisa-rem-draft`) opens again. It opens `router.push(url, { withAnchor: true })`, so Back goes to Applications.
   - `lib/notifyRoute.ts` allows only `/applications/<uuid>`, `/account` and `/apply`.
 - **Token storage** (`lib/data.ts`): `registerPushToken` calls RPC `claim_device_token` (0013, approved, not yet applied). On PGRST202 it falls back to insert, or bumps `updated_at` if the row exists. A rotated token's old row is deleted only after the new one is saved, and `ezvisa.push.token` holds the last token saved to the server. `unregisterPushToken` waits for any save in flight and blocks later saves for the same session (so a save racing sign-out cannot re-create the row); it returns false when offline. Sign-out still completes (`lib/auth.tsx`, 3 s timeout), and Account › Sign out says when the phone is offline that it may still get the account's notifications. `clearUserData` drops the stored token key.
-- **Server v2** (`migrations/functions/notify-status/index.ts` + `messages.ts`, NOT deployed; v1 is live):
+- **Server v2** (`migrations/functions/notify-status/index.ts` + `messages.ts`, approved 2026-10-23, NOT yet deployed; v1 is live):
   - lock-screen text is only "There's an update on your application." or "A document needs your attention.";
   - data is `{ type, applicationId, url }`;
   - no push for the customer's own draft/submit/discard;
@@ -244,6 +244,6 @@ The token is not in the repo. EAS environment variables (preview) must hold the 
 1. Owner: set the Vercel env vars (Supabase URL/anon/service role, Ziina key and webhook secret), fix the Supabase Auth URL config, approve `proposed-live-changes.sql`. Then re-run `scripts/e2e-live.mjs`: upload, payment and `payment_id` should pass.
 2. Send the "application submitted" email for app submissions (e.g. a small authenticated web route that sends it for an existing row id, or a DB webhook).
 3. Customer document viewing: signed URLs are in the app (chat 09); needs `migrations/0011` applied.
-4. Push: apply `migrations/0013_claim_device_token.sql` (approved), deploy `notify-status` v2, then run QA §11 on a physical iPhone.
+4. Push: apply `migrations/0013_claim_device_token.sql` (approved) and deploy `notify-status` v2 (approved 2026-10-23, with `messages.ts`, `--no-verify-jwt`), then run QA §11 on a physical iPhone.
 5. Supabase Auth URL configuration (owner): add the app redirect URLs from §2g and set the Site URL to https://www.ezvisa.net. Google sign-in additionally needs the provider enabled (not used by the website today).
 6. Development build (`eas build --profile development`) for push and native testing; App Store / Play listings.
