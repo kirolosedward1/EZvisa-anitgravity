@@ -46,7 +46,17 @@ const STATUS_TONE = (c: ReturnType<typeof useColors>, v: string) => (({ paid: c.
 export function StatusPill({ v, a }: { v: string; a?: { status: string; payment_status?: string | null } }) {
   const { t } = useT();
   const c = useColors(); const st = a ? stage(a) : null; const col = st ? st.color ?? (c as any)[st.tone] ?? c.grey : STATUS_TONE(c, v); v = st ? st.key : v;
-  return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: S.xs, paddingVertical: S.xxs, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{t(st ? st.label : STATUS_LABEL[v] ?? v)}</Text></View>;
+  return <Pill color={col} label={t(st ? st.label : STATUS_LABEL[v] ?? v)} />;
+}
+/** The one status pill: outlined, with a coloured dot (white inside, so it reads the same on cards and the canvas). */
+function Pill({ color, label, testID }: { color: string; label: string; testID?: string }) {
+  const c = useColors();
+  return (
+    <View testID={testID} style={[{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: c.surface, borderWidth: 1, borderColor: color + "40", borderRadius: R.round, paddingHorizontal: S.xs, paddingVertical: 3, alignSelf: "flex-start", flexShrink: 1 }, curve]}>
+      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: color }} />
+      <Text variant="caption" weight="600" color={color} numberOfLines={1}>{label}</Text>
+    </View>
+  );
 }
 
 /** Status pill plus, for a paid application with something left to do, the specific action (lib/nextStep), 8pt after it.
@@ -67,7 +77,8 @@ export function StatusPills({ a }: { a: Application }) {
   );
 }
 export function ActionPill({ label }: { label: string }) {
-  return <View style={[{ backgroundColor: "#FFF1E6", borderRadius: R.chip, paddingHorizontal: S.xs, paddingVertical: S.xxs, alignSelf: "flex-start" }, curve]} testID="action-pill"><Text variant="caption" weight="600" color="#B83200" numberOfLines={1}>{label}</Text></View>;
+  const c = useColors();
+  return <Pill color={c.orange} label={label} testID="action-pill" />;
 }
 
 // Customer-facing journey, from the live columns only: application_status (website/admin: submitted -> reviewing -> ready |
@@ -111,16 +122,16 @@ export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
         const reached = s.state !== "todo";
         const stateWord = s.state === "done" ? t("done") : s.state === "current" ? t("in progress") : s.state === "attention" ? t("needs attention") : s.state === "todo" ? t("not yet") : "";
         return (
-          <View key={s.key} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 28 : 52 }} accessible testID={`step-${s.key}`}
+          <View key={s.key} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 24 : 44 }} accessible testID={`step-${s.key}`}
             accessibilityLabel={[t(s.label), stateWord, s.note && t(s.note), when].filter(Boolean).join(", ")}>
-            <View style={{ alignItems: "center", width: 16 }}>
-              <View style={{ width: 16, height: 16, borderRadius: R.sm, marginTop: S.xxs, backgroundColor: filled ? col : "transparent", borderWidth: 2, borderColor: col, alignItems: "center", justifyContent: "center" }}>
-                {s.state === "done" && <Icon name="checkmark" size={8} color="#fff" weight="bold" />}
-                {s.state === "failed" && <Icon name="xmark" size={8} color="#fff" weight="bold" />}
-                {s.state === "attention" && <Icon name="exclamationmark" size={8} color="#fff" weight="bold" />}
-                {s.state === "current" && <View style={{ width: 6, height: 6, borderRadius: R.xs, backgroundColor: col }} />}
+            <View style={{ alignItems: "center", width: 14 }}>
+              <View style={{ width: 14, height: 14, borderRadius: 7, marginTop: 4, backgroundColor: filled ? col : c.surface, borderWidth: 1.5, borderColor: col, alignItems: "center", justifyContent: "center" }}>
+                {s.state === "done" && <Icon name="checkmark" size={7} color="#fff" weight="bold" />}
+                {s.state === "failed" && <Icon name="xmark" size={7} color="#fff" weight="bold" />}
+                {s.state === "attention" && <Icon name="exclamationmark" size={7} color="#fff" weight="bold" />}
+                {s.state === "current" && <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: col }} />}
               </View>
-              {!last && <View style={{ flex: 1, width: 2, marginVertical: S.xxs, backgroundColor: s.state === "done" ? c.tint : c.fill }} />}
+              {!last && <View style={{ flex: 1, width: 1.5, marginVertical: 3, backgroundColor: s.state === "done" ? c.tint : c.border }} />}
             </View>
             <View style={{ flex: 1, paddingBottom: last ? 0 : S.sm }}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: S.xs }}>

@@ -30,7 +30,7 @@ export default function TripPlan() {
   const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null);
   const [plan, setPlan] = useState<Plan | null | undefined>(undefined);
   const [q, setQ] = useState<QStep | null>(null); const [dir, setDir] = useState(1);
-  const [prefs, setPrefs] = useState<Prefs>(emptyPrefs); const [city, setCity] = useState("");
+  const [prefs, setPrefs] = useState<Prefs>(emptyPrefs); const [city, setCity] = useState(""); const [cityFocus, setCityFocus] = useState(false);
   const [editing, setEditing] = useState(false); const [dirty, setDirty] = useState(false);
   const [saveMsg, setSaveMsg] = useState<string | null>(null); const [savedTick, setSavedTick] = useState(0); const [saving, setSaving] = useState(false); const [exporting, setExporting] = useState(false);
   const busy = useRef(false);
@@ -93,12 +93,12 @@ export default function TripPlan() {
       <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         {header(<View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={t("Back")} onPress={back} /></View>)}
         <View style={{ paddingHorizontal: S.lg, flexDirection: "row", gap: S.xxs }} accessible accessibilityRole="progressbar" accessibilityLabel={t("{i} of {n}", { i: i + 1, n: QS.length })}>
-          {QS.map((_, k) => <View key={k} style={{ flex: 1, height: 4, borderRadius: R.xs, backgroundColor: k <= i ? c.tintFill : c.fill }} />)}
+          {QS.map((_, k) => <View key={k} style={{ flex: 1, height: 3, borderRadius: R.xs, backgroundColor: k <= i ? c.accent : c.fill }} />)}
         </View>
         <Animated.View key={q} entering={entering} style={{ flex: 1 }}>
           <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: S.lg, gap: S.lg }}>
             <View style={{ gap: S.xs }}>
-              <Text variant="caption" weight="600" tone="secondary">{t("Trip plan")} · {t("Optional")}</Text>
+              <Text variant="overline" tone="secondary">{t("Trip plan")} · {t("Optional")}</Text>
               <Text variant="title1" accessibilityRole="header" testID="trip-question">{t(titles[q])}</Text>
             </View>
             {q === "cities" && <View style={{ gap: S.md }}>
@@ -106,9 +106,9 @@ export default function TripPlan() {
                 {prefs.cities.map((x) => <Chip key={x} label={x} on icon="xmark" a11y={t("Remove {c}", { c: x })} onPress={() => setPrefs((p) => ({ ...p, cities: p.cities.filter((y) => y !== x) }))} />)}
                 {sugg.map((x) => <Chip key={x} label={x} icon="plus" a11y={t("Add {c}", { c: x })} onPress={() => setPrefs((p) => ({ ...p, cities: [...p.cities, x] }))} />)}
               </View>
-              <View style={[{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 56, borderRadius: R.tile, backgroundColor: c.card, paddingHorizontal: S.md }, curve]}>
-                <TextInput value={city} onChangeText={setCity} onSubmitEditing={addCity} placeholder={t("Add a city")} placeholderTextColor={c.secondaryLabel} returnKeyType="done" accessibilityLabel={t("Add a city")} testID="trip-city-input"
-                  style={[T.body, { flex: 1, color: c.label, paddingVertical: S.sm, textAlign: isRTL ? "right" : "left" }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+              <View style={[{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 48, borderRadius: R.lg, backgroundColor: c.surface, borderWidth: cityFocus ? 1.5 : 1, borderColor: cityFocus ? c.accent : c.border, paddingStart: S.md, paddingEnd: S.xxs }, curve]}>
+                <TextInput value={city} onChangeText={setCity} onFocus={() => setCityFocus(true)} onBlur={() => setCityFocus(false)} onSubmitEditing={addCity} placeholder={t("Add a city")} placeholderTextColor={c.secondaryLabel} returnKeyType="done" accessibilityLabel={t("Add a city")} testID="trip-city-input"
+                  style={[T.body, { flex: 1, color: c.label, paddingVertical: S.xs, textAlign: isRTL ? "right" : "left" }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
                 <PressScale onPress={addCity} disabled={!city.trim()} accessibilityRole="button" accessibilityLabel={t("Add")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center", opacity: city.trim() ? 1 : 0.4 }}><Icon name="plus" size={18} color={c.tint} weight="semibold" /></PressScale>
               </View>
               <Text variant="footnote" tone="secondary">{t("In the order you'll visit them. Days are split evenly.")}</Text>
@@ -136,20 +136,20 @@ export default function TripPlan() {
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       {header(<PressScale onPress={() => { tap(); setEditing(!editing); }} accessibilityRole="button" accessibilityLabel={editing ? t("Done editing") : t("Edit plan")} testID="trip-edit"
-        style={{ minHeight: 44, paddingHorizontal: S.md, borderRadius: R.round, backgroundColor: editing ? c.tintFill : c.card, flexDirection: "row", alignItems: "center", gap: S.xs }}>
-        <Icon name={editing ? "checkmark" : "pencil"} size={14} color={editing ? c.onAccent : c.label} weight="semibold" /><Text variant="subhead" weight="600" color={editing ? c.onAccent : c.label}>{editing ? t("Done") : t("Edit")}</Text></PressScale>)}
+        style={{ minHeight: 40, paddingHorizontal: S.md, borderRadius: R.round, backgroundColor: editing ? c.primaryFill : c.surface, borderWidth: editing ? 0 : 1, borderColor: c.border, flexDirection: "row", alignItems: "center", gap: S.xs }}>
+        <Icon name={editing ? "checkmark" : "pencil"} size={13} color={editing ? c.onPrimary : c.label} weight="semibold" /><Text variant="subhead" weight="600" color={editing ? c.onPrimary : c.label}>{editing ? t("Done") : t("Edit")}</Text></PressScale>)}
       <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.md }}>
         <View style={{ gap: S.xs }}>
           <Text variant="largeTitle" accessibilityRole="header">{t("Trip plan")}</Text>
           <Text variant="subhead" tone="secondary">{t(a.destination_country ?? "")}{a.entry_date ? ` · ${fmt(a.entry_date)} – ${fmt(a.exit_date)}` : ""}</Text>
-          <View style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.sm, paddingVertical: S.xs, borderRadius: R.round, backgroundColor: c.orange + "1F" }} testID="ideas-badge">
-            <Icon name="lightbulb.fill" size={13} color={c.orange} /><Text variant="caption" weight="700" color={c.orange}>{t("Ideas, not bookings")}</Text>
+          <View style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: S.xs, paddingVertical: 3, borderRadius: R.round, backgroundColor: c.surface, borderWidth: 1, borderColor: c.orange + "40" }} testID="ideas-badge">
+            <Icon name="lightbulb.fill" size={11} color={c.orange} /><Text variant="caption" weight="600" color={c.orange}>{t("Ideas, not bookings")}</Text>
           </View>
         </View>
         {plan.days.map((d, di) => (
-          <View key={d.id} style={[card(c, dark, 1), { padding: S.md, gap: S.sm }]} testID={`day-${d.n}`}>
+          <View key={d.id} style={[card(c, dark, 0), { padding: S.lg, gap: S.sm }]} testID={`day-${d.n}`}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
-              <Text variant="footnote" weight="700" tone="tint">{t("Day {n}", { n: d.n })}</Text>
+              <Text variant="overline" tone="tint">{t("Day {n}", { n: d.n })}</Text>
               {!!d.date && <Text variant="footnote" tone="secondary">· {fmt(d.date)}</Text>}
               <View style={{ flex: 1 }} /><Text variant="footnote" tone="secondary">{d.city}</Text>
             </View>
@@ -190,10 +190,10 @@ export default function TripPlan() {
 function Chip({ label, on, icon, onPress, a11y, checkbox }: { label: string; on?: boolean; icon?: IconName; onPress: () => void; a11y: string; checkbox?: boolean }) {
   const c = useColors();
   return (
-    <PressScale onPress={() => { select(); onPress(); }} accessibilityRole={checkbox ? "checkbox" : "button"} accessibilityState={checkbox ? { checked: !!on } : undefined} aria-checked={checkbox ? !!on : undefined} accessibilityLabel={a11y}
-      style={({ pressed }) => [{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 48, paddingHorizontal: S.md, borderRadius: R.round, backgroundColor: on ? c.tintFill : c.card, opacity: pressed ? 0.75 : 1 }, curve]}>
-      {!!icon && <Icon name={icon} size={15} color={on ? c.onAccent : c.tint} />}
-      <Text variant="subhead" weight="600" color={on ? c.onAccent : c.label}>{label}</Text>
+    <PressScale onPress={() => { select(); onPress(); }} accessibilityRole={checkbox ? "checkbox" : "button"} accessibilityState={checkbox ? { checked: !!on } : undefined} aria-checked={checkbox ? !!on : undefined} accessibilityLabel={a11y} hitSlop={4}
+      style={[{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 40, paddingHorizontal: S.md, borderRadius: R.round, backgroundColor: on ? c.accentSoft : c.surface, borderWidth: on ? 1.5 : 1, borderColor: on ? c.accent : c.border }, curve]}>
+      {!!icon && <Icon name={icon} size={13} color={on ? c.accent : c.secondaryLabel} weight="semibold" />}
+      <Text variant="subhead" weight={on ? "600" : "500"} color={on ? c.accent : c.label}>{label}</Text>
     </PressScale>
   );
 }
