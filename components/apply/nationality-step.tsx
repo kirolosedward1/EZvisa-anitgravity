@@ -17,6 +17,7 @@ import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
 import { normalizePassport, toWesternDigits } from "@/lib/digits"
+import { isValidPhone } from "@/lib/phone"
 
 interface NationalityStepProps {
   formData: FormData
@@ -37,19 +38,6 @@ function isValidEmail(email: string) {
   if (!localPart || !domain.includes(".")) return false
   const invalidDomains = ["gmial.com", "yahooo.com", "hotmial.com", "gmai.com"]
   return !invalidDomains.includes(domain.toLowerCase())
-}
-
-function isValidPhone(phone: string) {
-  const digitsOnly = toWesternDigits(phone).replace(/[^\d]/g, "")
-  if (digitsOnly.length < 7 || digitsOnly.length > 15) return false
-  if (/^(\d)\1+$/.test(digitsOnly)) return false
-  if (digitsOnly.length >= 8) {
-    const sequential = digitsOnly
-      .split("")
-      .every((digit, index, arr) => index === 0 || Number.parseInt(digit) === Number.parseInt(arr[index - 1]) + 1)
-    if (sequential) return false
-  }
-  return true
 }
 
 /** The visible prefix is always +971. Digits are stored as "+971 5xxxxxxx". */
