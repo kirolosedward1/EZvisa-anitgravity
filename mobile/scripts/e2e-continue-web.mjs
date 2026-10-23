@@ -32,6 +32,13 @@ const title = async () => (await page.getByTestId("question-title").first().text
 const shot = (f) => page.screenshot({ path: `${OUT}/${f}.png` });
 const pick = async (name) => { await page.getByRole("radio", { name, exact: true }).first().click(); await page.waitForTimeout(800); };
 const cont = async () => { await page.getByRole("button", { name: "Continue", exact: true }).last().click(); await page.waitForTimeout(700); };
+// "When are you travelling?" (one step since v10.14): tap departure then return day in the calendar, then Continue.
+const dayLabel = (iso) => new Date(iso + "T12:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+const dates = async (from, to) => {
+  await page.getByRole("button", { name: dayLabel(from), exact: true }).first().click(); await page.waitForTimeout(300);
+  await page.getByRole("button", { name: dayLabel(to), exact: true }).first().click(); await page.waitForTimeout(300);
+  await cont();
+};
 const date = async (v) => { await page.locator('input[type="date"]').first().fill(v); await page.waitForTimeout(300); await cont(); };
 
 // ---- sign in ----
@@ -69,8 +76,7 @@ log((await title()) === "Purpose of Trip", "Continue starts at Purpose of Trip",
 await shot("03-continue-first");
 // Each trip question in order: [expected title (prefix), answer].
 const trip = [
-  ["Purpose of Trip", () => pick("Tourism")], ["Intended Departure Date", () => date(inDays(30))], ["Intended Return Date", () => date(inDays(40))],
-  ["Are your travel dates flexible", () => pick("No")], ["Who are you traveling with", () => pick("Traveling Alone")],
+  ["Purpose of Trip", () => pick("Tourism")], ["When are you travelling", () => dates(inDays(30), inDays(40))], ["Who are you traveling with", () => pick("Traveling Alone")],
   ["Accommodation Preferences", () => pick("3-Star Hotel / Mid-range")], ["Funding Source", () => pick("Self-funded (Personal savings)")],
   ["Approx. Bank Balance Range", () => pick("10,000 - 25,000 AED")], ["Is this your first Schengen Visa", () => pick("Yes")],
   ["Have you ever had a visa refusal", () => pick("No")], ["Will you be visiting other Schengen countries", () => pick("No")],
@@ -106,7 +112,7 @@ const mins = await fetch(`${DB}/rest/v1/visa_applications`, { method: "POST", he
     additional_notes: JSON.stringify({ source: "mobile-app", maritalStatus: "married", spouseAccompanying: "yes", wizard: { destination: "France", nationality: "India", firstName: "Aisha", lastName: "Khan", maritalStatus: "married", spouseAccompanying: "yes" } }) }) });
 const mar = (await mins.json())[0];
 await page.goto(`${APP}/continue/${mar.id}`); await page.waitForTimeout(2500);
-await pick("Tourism"); await date(inDays(30)); await date(inDays(40)); await pick("No");
+await pick("Tourism"); await dates(inDays(30), inDays(40));
 log((await title()) === "Who are you traveling with?", "spouse travels: companions question is still asked", await title());
 log((await page.getByRole("radio", { name: "With Spouse", exact: true }).first().getAttribute("aria-checked")) === "true", "With Spouse is preselected");
 await pick("With Family");

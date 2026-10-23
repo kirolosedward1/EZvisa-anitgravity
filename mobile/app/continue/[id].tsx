@@ -5,32 +5,29 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Platform, AccessibilityInfo, I18nManager } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useReducedMotion, useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
-import Animated from "react-native-reanimated";
+import { useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text, Skeleton, InlineError, EmptyState } from "../../components/ui";
-import { CircleButton } from "../../components/flow";
+import { Text, Skeleton, InlineError, EmptyState, Button, type IconName } from "../../components/ui";
+import { useAuth } from "../../lib/auth";
+import { CircleButton, StepIndicator, type FlowStep } from "../../components/flow";
 import { QuestionView } from "../../components/wizard/QuestionView";
-import { useColors, S, R, SPRING } from "../../lib/theme";
+import { useColors, S, R } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { slideIn } from "../../lib/motion";
-import { getApplication, saveAfterPayment, continueForm, isWebsiteRow } from "../../lib/data";
+import { getApplication, saveAfterPayment, continueForm, isWebsiteRow, withTimeout } from "../../lib/data";
 import { STEP_TITLES, OTHER_NATIONALITY, emptyForm, type WizardForm } from "../../lib/wizard";
 import { continueQuestions, continueError, Q_BY_ID, type Question } from "../../lib/questions";
 import { success, error as hError, tap, select } from "../../lib/haptics";
 
 const AUTO_MS = 260;
 
-function Bar({ fill }: { fill: number }) {
-  const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
-  useEffect(() => { w.value = reduce ? fill : withSpring(fill, SPRING.enter); }, [fill, reduce]);
-  const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
-  return <View style={{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
-}
+/** Short label + icon per after-payment step; Documents (upload) always comes last. */
+const STEP_UI: Record<string, [string, IconName]> = { "trip-details": ["Trip", "airplane"], passport: ["Passport", "person.text.rectangle"], spouse: ["Spouse", "person.2.fill"], employment: ["Work", "briefcase.fill"] };
 
 export default function ContinueApplication() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL; const reduce = useReducedMotion();
+  const { session, loading: authLoading } = useAuth(); const me = session?.user?.email; const [nonce, setNonce] = useState(0); const [allDone, setAllDone] = useState(false);
   const [f, setF] = useState<WizardForm | null>(null); const fRef = useRef<WizardForm | null>(null); fRef.current = f;
   const [qid, setQid] = useState<string | null>(null); const [dir, setDir] = useState(1); const [website, setWebsite] = useState(false);
   const [loadErr, setLoadErr] = useState<string | null>(null); const [err, setErr] = useState<string | null>(null);
@@ -50,20 +47,27 @@ export default function ContinueApplication() {
   useEffect(() => () => { if (auto.current) clearTimeout(auto.current); }, []);
 
   useEffect(() => {
-    getApplication(id!).then((app) => {
+    if (!me) return; let live = true; setLoadErr(null); setAllDone(false);
+    withTimeout(getApplication(id!)).then((app) => {
+      if (!live) return;
       const form = continueForm(app); saved.current = form;
       const web = isWebsiteRow(app);
       // The spouse travels with them: "Who are you traveling with?" starts on With Spouse (still asked: children may come too).
       if (!web && form.spouseAccompanying === "yes" && !form.travelingWith) { form.travelingWith = "spouse"; preset.current.add("travelingWith"); }
       setWebsite(web); setF(form);
       const first = continueQuestions(form, web).find((x) => !!continueError(x, form, saved.current) || preset.current.has(x.id));
-      if (first) setQid(first.id); else router.replace(`/applications/${id}`, { withAnchor: true });
-    }).catch((e) => setLoadErr(e?.message ?? String(e)));
-  }, [id]);
+      if (first) setQid(first.id); else { setAllDone(true); router.replace(`/applications/${id}`, { withAnchor: true }); }
+    }).catch((e) => { if (live) setLoadErr(t(e?.message ?? String(e))); });
+    return () => { live = false; };
+  }, [id, me, nonce]);
 
   const q: Question | null = qid ? Q_BY_ID[qid] ?? null : null;
   const list = f ? continueQuestions(f, website) : [];
   const idx = q ? list.findIndex((x) => x.id === q.id) : -1;
+  // Steps of this row's questions (website rows: passport + employment), then Documents.
+  const stepKeys = [...new Set(list.map((x) => x.step as string))];
+  const flowSteps: FlowStep[] = [...stepKeys.map((k) => ({ key: k, label: t(STEP_UI[k]?.[0] ?? k), icon: STEP_UI[k]?.[1] ?? ("circle" as IconName) })), { key: "docs", label: t("Documents"), icon: "doc.on.doc.fill" as IconName }];
+  const inStep = q ? list.filter((x) => x.step === q.step) : [];
   const patch = (x: Partial<WizardForm>) => setF((y) => (y ? { ...y, ...x } : y));
   const goTo = (next: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setQid(next); setShowErr(false); setAllMode(false); setErr(null); };
   const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`, { withAnchor: true }); };
@@ -116,13 +120,8 @@ export default function ContinueApplication() {
         <CircleButton icon="xmark" label={t("Close")} onPress={close} />
       </View>
       {q && list.length > 0 && (
-        <View accessible accessibilityRole="progressbar" accessibilityLabel={t("{step}, {i} of {n}", { step: t(STEP_TITLES[q.step].title), i: idx + 1, n: list.length })} style={{ gap: S.xs }}>
-          <Bar fill={(idx + 1) / list.length} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text variant="caption" weight="600" tone="secondary">{t(STEP_TITLES[q.step].title)}</Text>
-            <Text variant="caption" tone="secondary" tabular>{t("{i} of {n}", { i: idx + 1, n: list.length })}</Text>
-          </View>
-        </View>
+        <StepIndicator steps={flowSteps} current={stepKeys.indexOf(q.step)} fraction={inStep.length ? inStep.indexOf(q) / inStep.length : 0}
+          a11yLabel={t("{step}, {i} of {n}", { step: t(STEP_TITLES[q.step].title), i: idx + 1, n: list.length })} />
       )}
     </View>
   );
@@ -130,7 +129,9 @@ export default function ContinueApplication() {
   if (!f || !q) return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       {header}
-      {loadErr ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={loadErr} /></View>
+      {!session && !authLoading ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="person.crop.circle" title={t("Sign in to continue your application")} message={t("Use the email you paid with.")} action={<Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />} /></View>
+        : loadErr ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={loadErr} action={<Button title={t("Retry")} variant="secondary" onPress={() => setNonce((n) => n + 1)} />} /></View>
+        : allDone ? <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}><EmptyState icon="checkmark.circle.fill" title={t("Nothing left to add")} action={<Button title={t("Open application")} onPress={() => router.replace(`/applications/${id}`, { withAnchor: true })} />} /></View>
         : <View style={{ padding: S.lg, gap: S.md }}><Skeleton w="60%" h={28} /><Skeleton h={60} r={R.tile} /><Skeleton h={60} r={R.tile} /></View>}
     </View>
   );

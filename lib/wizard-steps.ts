@@ -1,24 +1,21 @@
-export type WizardStep = "personal" | "spouse" | "employment" | "trip-details" | "payment" | "documents"
+export type WizardStep = "trip-details" | "personal" | "spouse" | "payment"
 
 export const STEP_TO_NUMBER: Record<WizardStep, number> = {
-  personal: 1,
-  spouse: 2,
-  employment: 3,
-  "trip-details": 4,
-  payment: 5,
-  documents: 5, // Legacy alias mapped to payment
+  "trip-details": 1,
+  personal: 2,
+  spouse: 3,
+  payment: 4,
 }
 
 export const NUMBER_TO_STEP: Record<number, WizardStep> = {
-  1: "personal",
-  2: "spouse",
-  3: "employment",
-  4: "trip-details",
-  5: "payment",
+  1: "trip-details",
+  2: "personal",
+  3: "spouse",
+  4: "payment",
 }
 
 export function getStepSlug(stepNumber: number): WizardStep {
-  return NUMBER_TO_STEP[stepNumber] || "personal"
+  return NUMBER_TO_STEP[stepNumber] || "trip-details"
 }
 
 export function getStepNumber(slug: string): number {
@@ -27,6 +24,5 @@ export function getStepNumber(slug: string): number {
 }
 
 export function isValidStep(slug: string): boolean {
-  const validSteps: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment", "documents"]
-  return validSteps.includes(slug as WizardStep)
+  return Object.prototype.hasOwnProperty.call(STEP_TO_NUMBER, slug)
 }

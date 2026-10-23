@@ -15,7 +15,7 @@ export type Palette = {
   /** List separators. */ separator: string;
   /** Accent for text, icons, progress and selection outlines. */ accent: string;
   /** Accent for filled controls (selected tile, the tab bar plane). Pair with `onAccent`. */ accentFill: string;
-  /** Primary buttons: ink, with `onPrimary` text (premium look; blue stays for selection, links and progress). */ primaryFill: string; onPrimary: string;
+  /** Primary buttons: brand blue (same as the tab plane), `onPrimary` text, `primaryPressed` while pressed. */ primaryFill: string; primaryPressed: string; onPrimary: string;
   /** Selected-row tint. */ accentSoft: string;
   /** Text / icons on `accentFill` and `danger`. */ onAccent: string;
   success: string; warning: string; danger: string;
@@ -44,7 +44,7 @@ export const light: Palette = {
   separator: "rgba(60,60,67,0.12)",
   accent: "#0436DC",          // 8.2:1 bg · 7.5:1 surface
   accentFill: "#0436DC",      // onAccent 8.2:1
-  primaryFill: "#111114", onPrimary: "#FFFFFF", // 18.9:1
+  primaryFill: "#0436DC", primaryPressed: "#0330C2", onPrimary: "#FFFFFF", // brand blue, white text 8.2:1
   accentSoft: "rgba(4,54,220,0.06)",
   onAccent: "#FFFFFF",
   success: "#1A7F37",         // 5.1:1 bg · 4.7:1 surface
@@ -75,7 +75,7 @@ export const dark: Palette = {
   separator: "rgba(84,84,88,0.6)",
   accent: "#8CA2FF",          // 8.7:1 bg · 7.1:1 surface
   accentFill: "#3D5AFE",      // onAccent 5.1:1
-  primaryFill: "#FFFFFF", onPrimary: "#000000",
+  primaryFill: "#0436DC", primaryPressed: "#0330C2", onPrimary: "#FFFFFF",
   accentSoft: "rgba(140,162,255,0.14)",
   onAccent: "#FFFFFF",
   success: "#30D158",         // 8.4:1 surface
@@ -98,7 +98,7 @@ export const withAliases = (p: Palette) => ({
   ...p,
   bg: p.background, card: p.surface, raised: p.surfaceRaised, fill2: p.fillSubtle,
   label: p.text, secondaryLabel: p.textSecondary, tertiaryLabel: p.textTertiary,
-  hairline: p.border, ring: p.border,
+  hairline: p.border, ring: "#E5E5EA", // flag ring (1pt)
   green: p.success, orange: p.warning, red: p.danger, grey: p.textTertiary,
   tint: p.accent, tintFill: p.accentFill, brand: p.accentFill, onTint: p.onAccent,
   blue: p.accent, indigo: p.accent, teal: p.accent,

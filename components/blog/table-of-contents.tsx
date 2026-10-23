@@ -61,7 +61,7 @@ export function TableOfContents({ content }: { content: string }) {
     >
       <div className="sticky top-48 max-h-[calc(100vh-16rem)] overflow-y-auto z-10">
         <div className="relative pb-4 mb-6 border-b border-border/30">
-          <h3 className="text-lg font-bold text-foreground">Table of Contents</h3>
+          <h3 className="text-lg font-semibold text-foreground">Table of Contents</h3>
           <div className="mt-2 h-1 w-16 bg-primary rounded-full" />
         </div>
         <nav className="space-y-3">

@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useState, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Info, Loader2 } from "lucide-react"
+import { WizardBar } from "@/components/apply/wizard-bar"
+import { Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
@@ -17,12 +17,12 @@ interface EmploymentStepProps {
 }
 
 const inputStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 shadow-sm"
+  "h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 shadow-sm"
 const selectStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
+  "h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
 const labelStyles = "text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
 const toggleActiveStyles =
-  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
+  "h-12 rounded-xl font-semibold text-sm bg-[#0436DC] text-white flex items-center justify-center cursor-pointer border border-transparent"
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
@@ -62,7 +62,7 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-44 md:pb-0">
       <p className="text-sm text-muted-foreground leading-relaxed mb-4">
         Employment details help us strengthen your visa application and create a compelling cover letter.
       </p>
@@ -207,31 +207,14 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
         </div>
       )}
 
-      <div className="md:flex md:justify-between md:gap-4 fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex gap-3">
-        <Button
-          type="button"
-          onClick={onBack}
-          variant="outline"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base border border-border bg-background/40 hover:bg-background/80 text-foreground hover:text-foreground transition-all duration-300 active:scale-95 px-8"
-        >
-          Back
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Continue to Trip Details"
-          )}
-        </Button>
-      </div>
+      <WizardBar
+        onBack={onBack}
+        loading={isLoading}
+        continueLabel="Save and upload documents"
+        continueLabelAr="احفظ وارفع المستندات"
+        loadingLabel="Processing..."
+        loadingLabelAr="جارٍ المعالجة..."
+      />
     </form>
   )
 }

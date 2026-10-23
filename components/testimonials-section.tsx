@@ -117,10 +117,10 @@ export function TestimonialsSection() {
       <div
         className="absolute inset-0 opacity-[0.12] pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+          backgroundImage: "none",
           backgroundSize: "28px 28px",
-          maskImage: "radial-gradient(ellipse 50% 50% at 50% 50%, black 60%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 50% 50% at 50% 50%, black 60%, transparent 100%)",
+          maskImage: "none",
+          WebkitMaskImage: "none",
         }}
       />
 
@@ -222,7 +222,7 @@ export function TestimonialsSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedTestimonial(null)}
-            className="fixed inset-0 bg-foreground/30 md:backdrop-blur- z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-foreground/30 z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}

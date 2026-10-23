@@ -79,7 +79,7 @@ export default function ReviewsPage() {
               {testimonials.map((review, i) => (
                 <div key={i} className="bg-card border border-border/60 rounded-3xl p-8 flex flex-col hover:border-primary/30 hover:shadow-lg transition-all duration-300">
                   <div className="flex justify-between items-start mb-6">
-                    <div className="h-12 w-12 rounded-full bg-primary/10 text-primary font-bold flex items-center justify-center">
+                    <div className="h-12 w-12 rounded-full bg-primary/10 text-primary font-semibold flex items-center justify-center">
                       {review.initials}
                     </div>
                     <Quote className="h-6 w-6 text-primary/20" />

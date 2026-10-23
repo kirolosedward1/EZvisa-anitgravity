@@ -9,7 +9,7 @@ export function BlogHero() {
       badge="Blog"
       title={
         <>
-          News & <span className="text-blue-300">Insights</span>
+          News & <span className="text-[#0436DC]">Insights</span>
         </>
       }
       description="Expert visa guidance, travel tips, and the latest updates on Schengen visa applications."

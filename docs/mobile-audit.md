@@ -1,5 +1,7 @@
 # EZvisa mobile app: codebase audit and plan (chat 01)
 
+> **Superseded 2026-10-23 for status** (what is live, merged or still open, incl. §10 B1-B5/H1-H9, §12 and §13): see `mobile/HANDOFF.md` §0 and `docs/live-state-check.sql`. The code analysis below describes the commits it names.
+
 Date: 2026-10-22. Branch: `mobile-app` (base `591aced`). Read-and-report only; the one build fix is listed in §9.
 > *Current status lives in `mobile/HANDOFF.md` §0 (2026-10-23). §14 below holds that audit's evidence and branch table; §1-13 are historical.*
 

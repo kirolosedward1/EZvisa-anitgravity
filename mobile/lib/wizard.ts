@@ -120,20 +120,25 @@ export function passportCoversTrip(f: { passportExpiry: string; travelEndDate: s
   const need = new Date(base.getFullYear(), base.getMonth() + 3, base.getDate());
   return new Date(f.passportExpiry + "T00:00:00").getTime() >= need.getTime();
 }
-export const tripDays = (f: WizardForm) => (f.travelStartDate && f.travelEndDate ? Math.ceil((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) : 0);
+/** Inclusive Schengen stay: both the arrival day and the departure day count. */
+export const tripDays = (f: WizardForm) => {
+  if (!f.travelStartDate || !f.travelEndDate) return 0;
+  return Math.round((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) + 1;
+};
 
 export type Errors = Partial<Record<keyof WizardForm, string>>;
 export function validatePersonal(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.destination) e.destination = "Please select a destination";
-  if (!needsSchengenVisa(f.nationality)) e.nationality = "Please select your nationality";
+  if (!f.nationality) e.nationality = "Please select your nationality";
+  else if (!needsSchengenVisa(f.nationality)) e.nationality = "Citizens of this country don't need a Schengen visa for short visits, so we can't apply for one. Choose another nationality if you hold one.";
   if (!RESIDENCE_COUNTRIES.includes(f.countryOfResidence)) e.countryOfResidence = "Please select your country of residence";
   if (!f.cityOfResidence.trim()) e.cityOfResidence = "City is required";
   else if (f.countryOfResidence === "United Arab Emirates" && !UAE_EMIRATES.includes(f.cityOfResidence)) e.cityOfResidence = "Please select your emirate";
   if (!f.firstName.trim()) e.firstName = "First name is required";
   if (!f.lastName.trim()) e.lastName = "Last name is required";
   if (!f.email.trim()) e.email = "Email is required"; else if (!isValidEmail(f.email.trim())) e.email = "Please enter a valid email address. Check for typos in the domain.";
-  if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = "Please enter a valid phone number (7-15 digits).";
+  if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = (f.phoneCountry || "AE") === "AE" ? "Enter a valid UAE mobile number" : "Enter a valid phone number";
   if (!f.maritalStatus) e.maritalStatus = "Please select your marital status";
   if (f.maritalStatus === "married" && !f.spouseAccompanying) e.spouseAccompanying = "Please choose Yes or No";
   return e;
@@ -177,12 +182,17 @@ export function validateEmployment(f: WizardForm): Errors {
   }
   return e;
 }
+/** A real calendar date in YYYY-MM-DD (rejects e.g. 2026-02-31, which Date.parse would roll over). */
+export const realDate = (s: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
 export function validateTrip(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.purposeOfTrip) e.purposeOfTrip = "Please select the purpose of your trip";
   if (!f.travelStartDate) e.travelStartDate = "Please select a departure date";
-  else if (Date.parse(f.travelStartDate) < earliestDeparture().getTime() - day / 2) e.travelStartDate = "Departure must be at least 15 days from today";
+  else if (realDate(f.travelStartDate) && Date.parse(f.travelStartDate) < earliestDeparture().getTime() - day / 2) e.travelStartDate = "Departure must be at least 15 days from today";
+  if (f.travelStartDate && !realDate(f.travelStartDate)) e.travelStartDate = "Please enter a valid date";
   if (!f.travelEndDate) e.travelEndDate = "Please select a return date";
+  else if (!realDate(f.travelEndDate)) e.travelEndDate = "Please enter a valid date";
+  else if (!f.travelStartDate && Date.parse(f.travelEndDate) < earliestDeparture().getTime() + day / 2) e.travelEndDate = "Return date must be at least 16 days from today";
   else if (f.travelStartDate && tripDays(f) <= 0) e.travelEndDate = "Return date must be after departure date";
   else if (tripDays(f) > 90) e.travelEndDate = "Schengen visits are limited to 90 days";
   else if (f.passportExpiry && !passportCoversTrip(f)) e.travelEndDate = "Passport must be valid at least 3 months after your return date";

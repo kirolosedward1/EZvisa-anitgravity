@@ -1,10 +1,13 @@
 "use client"
 
 import { destinations } from "@/lib/destinations"
-import { ArrowRight, MoveRight, Clock } from "lucide-react"
+import { ReadyLine } from "@/components/ready-line"
+import { ArrowRight, MoveRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { CountryFlag } from "@/components/country-flag"
+import { SCHENGEN_META } from "@/lib/countries"
 
 export function PopularDestinations() {
   // Filter only popular destinations (first 5: France, Italy, Spain, Germany, Switzerland)
@@ -16,10 +19,10 @@ export function PopularDestinations() {
         {/* Header Row */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
-            <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
+            <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
               Top Travel Spots
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mt-3">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-3">
               Popular Destinations
             </h2>
           </div>
@@ -58,35 +61,25 @@ export function PopularDestinations() {
                 />
 
                 {/* Dark Vignette Overlay for legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent z-10 group-hover:from-black/95 group-hover:via-black/45 transition-colors" />
+                <div className="absolute inset-0 z-10 transition-colors bg-[#0A0F1F]/70" />
 
                 {/* Top Right Circular Arrow Icon */}
                 <div className="absolute top-4 right-4 z-20">
-                  <div className="h-10 w-10 border border-white/30 rounded-full bg-black/20 md:backdrop-blur- text-white group-hover:bg-white group-hover:text-black flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm">
+                  <div className="h-10 w-10 border border-white/30 rounded-full bg-black/20 text-white group-hover:bg-white group-hover:text-black flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm">
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
 
                 {/* Bottom Card Content */}
                 <div className="absolute bottom-6 left-5 right-5 z-20 text-white flex flex-col transition-transform duration-300 group-hover:-translate-y-1">
-                  <span className="text-xs font-bold text-accent/90 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <span className="relative w-4 h-4 rounded-full overflow-hidden inline-block flex-shrink-0">
-                      <Image
-                        src={`/flags/${country.slug}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
+                  <span className="text-xs font-semibold text-accent/90 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
                     <span>{country.visaType}</span>
                   </span>
-                  <h3 className="text-xl font-bold tracking-tight mb-1">
+                  <h3 className="text-xl font-semibold tracking-tight mb-1">
                     {country.name}
                   </h3>
-                  <div className="text-xs font-medium text-white/70 flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-blue-400 inline" />
-                    <span>24-48h File Prep</span>
-                  </div>
+                  <ReadyLine className="text-xs text-white/60" />
                 </div>
               </Link>
             </motion.div>

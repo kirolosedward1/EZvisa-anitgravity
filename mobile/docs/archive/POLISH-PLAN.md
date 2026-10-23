@@ -1,4 +1,4 @@
-> **Archived 2026-10-23 (outdated plan).** The v9 polish plan is done or superseded by the v10 UI work. Current status: `mobile/HANDOFF.md` §0.
+> **Archived 2026-10-23. Outdated planning doc, kept for history only. The v9 polish plan has shipped or been replaced by later UI work. Current status: `mobile/HANDOFF.md` section 0.**
 
 # v9 Premium polish plan (visuals and experience only, no backend/data/rule changes)
 

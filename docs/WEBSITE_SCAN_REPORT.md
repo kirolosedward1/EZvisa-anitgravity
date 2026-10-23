@@ -48,7 +48,7 @@
 **File:** `/app/api/send-email/route.ts`
 **Line:** 3
 \`\`\`typescript
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "re_WbXrEuBs_ArhgCnADWTtxbVQ3Lz3MRZLj"
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "re_REDACTED"
 \`\`\`
 **Risk:** API key exposed in source code. If repo is public or code is inspected, attackers can abuse email sending.
 **Solution:** Remove hardcoded fallback. Require env variable only:
@@ -131,7 +131,7 @@ const ratelimit = new Ratelimit({
 
 ### 2.4 [LOW] Missing Static Generation
 **Issue:** Some static pages could be pre-rendered
-**Files:** Document requirement pages (27 countries)
+**Files:** Document requirement pages (29 countries)
 **Solution:** Add `export const dynamic = 'force-static'` or use generateStaticParams
 
 ---

@@ -1,4 +1,4 @@
-> **Archived 2026-10-23 (outdated plan).** Gap list from 19 Oct (v6 design); later chats closed or replaced most items. Current status: `mobile/HANDOFF.md` §0.
+> **Archived 2026-10-23. Outdated planning doc, kept for history only. Its gap list (19-22 Oct) has been worked through by chats 02-15; its live-DB notes are replaced by `docs/live-state-check.sql`. Current status: `mobile/HANDOFF.md` section 0.**
 
 # EZvisa app: audit v2 (gap list vs. the approved brief)
 
