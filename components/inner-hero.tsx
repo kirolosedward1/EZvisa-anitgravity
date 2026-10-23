@@ -29,8 +29,10 @@ export function InnerHero({
   children,
   className = "",
 }: InnerHeroProps) {
-  const pathname = usePathname()
-  const picked = randomizeBackground ? destinations[stableIndex(pathname || "inner", destinations.length)] : undefined
+  // Hash the locale-free path: /ar/* is rendered on the server as the rewritten EN path (and /documents is
+  // prerendered once for both), so hashing the raw browser path picked a different photo/caption on /ar (#418).
+  const pathname = usePathname()?.replace(/^\/ar(?=\/|$)/, "") || "/"
+  const picked = randomizeBackground ? destinations[stableIndex(pathname, destinations.length)] : undefined
   const named = destinations.find((destination) => destination.image === backgroundImage)
   const heroBgImage = backgroundImage || picked?.image
   const heroBgCountryName = named?.name || picked?.name

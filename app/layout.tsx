@@ -9,6 +9,7 @@ import { ContinueApplicationNotification } from "@/components/continue-applicati
 import { NavigationProgressBar } from "@/components/navigation-progress"
 import { PageTransition } from "@/components/page-transition"
 import { LocaleDirection } from "@/components/locale-direction"
+import { LocaleProvider } from "@/components/locale-provider"
 import { CrispVisibility } from "@/components/crisp-visibility"
 import Script from "next/script"
 import "./globals.css"
@@ -183,11 +184,13 @@ export default async function RootLayout({
         <NavigationProgressBar />
         <ScrollRestoration />
         {/* overflow-x-clip (not hidden): hidden would turn <main> into a scroll container and stop position: sticky from working on every page */}
-        <main className="overflow-x-clip w-full flex flex-col min-h-screen">
-          <PageTransition>{children}</PageTransition>
-        </main>
-        <ContinueApplicationNotification />
-        <CookieConsent />
+        <LocaleProvider arabic={arabic}>
+          <main className="overflow-x-clip w-full flex flex-col min-h-screen">
+            <PageTransition>{children}</PageTransition>
+          </main>
+          <ContinueApplicationNotification />
+          <CookieConsent />
+        </LocaleProvider>
         <Analytics />
         <Script id="crisp-chat" strategy="lazyOnload">
           {`

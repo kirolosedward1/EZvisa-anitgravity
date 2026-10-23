@@ -2,11 +2,12 @@
 
 import { usePathname, useRouter } from "next/navigation"
 import { Languages } from "lucide-react"
+import { useArabicUrl } from "@/components/locale-provider"
 
 export function LanguageToggle() {
   const pathname = usePathname() || "/"
   const router = useRouter()
-  const onArabic = pathname === "/ar" || pathname.startsWith("/ar/")
+  const onArabic = useArabicUrl()
 
   const toggleLanguage = () => {
     const bare = pathname.replace(/^\/ar(?=\/|$)/, "") || "/"

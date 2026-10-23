@@ -1,28 +1,16 @@
 "use client"
 
-import { useLayoutEffect, useState } from "react"
-import { usePathname } from "next/navigation"
 import { APPLICATION_READY, APPLICATION_READY_AR, PREPARATION_TIME, PREPARATION_TIME_AR } from "@/lib/copy"
 import { LangText } from "@/components/lang-text"
-
-function isArabicPath(path: string | null | undefined) {
-  return path === "/ar" || !!path?.startsWith("/ar/")
-}
+import { useArabicUrl } from "@/components/locale-provider"
 
 /**
  * True only for the current /ar URL.
- * The first render uses the route (same on server and client). The address bar is
- * applied before paint, and a previous /ar visit is dropped as soon as the route changes.
+ * The first render uses the locale the server rendered with (see components/locale-provider);
+ * the address bar is applied before paint.
  */
 export function useArabic() {
-  const pathname = usePathname()
-  const [browserPath, setBrowserPath] = useState<string | null>(null)
-
-  useLayoutEffect(() => {
-    setBrowserPath(window.location.pathname)
-  }, [pathname])
-
-  return isArabicPath(browserPath ?? pathname)
+  return useArabicUrl()
 }
 
 /** "Ready in 1–2 days". Arabic is in the markup and shows when the route sets dir=rtl. */
