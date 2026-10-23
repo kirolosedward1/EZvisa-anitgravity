@@ -167,7 +167,7 @@ export default function UploadDocumentsPage() {
               {allComplete && (
                 <div className="mt-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between flex-wrap gap-2">
                   <span>All required files are uploaded. Our experts are finalizing your Schengen file.</span>
-                  <Button asChild size="sm" variant="outline" className="text-xs h-7 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10">
+                  <Button asChild size="sm" variant="outline" className="text-xs h-7 border-emerald-500/40 text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-800">
                     <Link href={`/track/${token}`}>Return to your case</Link>
                   </Button>
                 </div>

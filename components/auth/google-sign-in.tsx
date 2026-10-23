@@ -69,7 +69,7 @@ export function GoogleSignInButton({
       <Button
         type="button"
         variant="outline"
-        className={cn("h-12 w-full gap-3 rounded-xl border-border bg-background text-sm font-semibold text-foreground shadow-xs hover:bg-secondary", className)}
+        className={cn("h-12 w-full gap-3 rounded-xl border-border bg-background text-sm font-semibold text-foreground shadow-xs hover:border-primary/30 hover:bg-primary/5 hover:text-foreground", className)}
         onClick={signIn}
         disabled={loading}
       >

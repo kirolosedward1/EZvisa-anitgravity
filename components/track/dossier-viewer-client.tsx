@@ -89,7 +89,7 @@ export function DossierViewerClient({
               Save HTML
             </Button>
 
-            <Button asChild variant="outline" size="sm" className="text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30">
+            <Button asChild variant="outline" size="sm" className="text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400">
               <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
                 WhatsApp Support
               </a>

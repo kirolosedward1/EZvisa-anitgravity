@@ -187,7 +187,7 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
                             Upload Documents
                           </Link>
                         </Button>
-                        <Button asChild size="sm" variant="outline" className="border-amber-500/30 text-amber-700 dark:text-amber-500 hover:bg-amber-500/10">
+                        <Button asChild size="sm" variant="outline" className="border-amber-500/30 text-amber-700 dark:text-amber-500 hover:bg-amber-500/10 hover:text-amber-800 dark:hover:text-amber-400">
                           <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">Send via WhatsApp</a>
                         </Button>
                       </div>
@@ -211,7 +211,7 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
                           View &amp; Print Dossier (A4)
                         </Link>
                       </Button>
-                      <Button asChild size="sm" variant="outline" className="border-emerald-600/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50">
+                      <Button asChild size="sm" variant="outline" className="border-emerald-600/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 hover:text-emerald-800 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300">
                         <a href={`/api/download-document?token=${token}`}>
                           <Download className="w-4 h-4 mr-2" />
                           Download Package
