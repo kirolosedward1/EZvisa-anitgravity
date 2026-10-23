@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 
 export const metadata: Metadata = {
-  title: "Free Schengen Travel Tools & Calculators | EZvisa UAE",
+  title: "Free Schengen Travel Tools & Calculators",
   description: "Free interactive Schengen visa tools for UAE residents. Calculate the 90/180-day rolling rule, estimate required consular bank balance in AED, and locate VFS/TLS/BLS visa centers in Dubai & Abu Dhabi.",
   alternates: {
     canonical: "https://www.ezvisa.net/tools",

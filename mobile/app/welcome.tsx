@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -12,7 +12,7 @@ import { markWelcomed } from "../lib/onboarding";
 import { tap } from "../lib/haptics";
 import { useT } from "../lib/i18n";
 import { GoogleIconButton } from "../components/GoogleButton";
-import { signInWithGoogle } from "../lib/google";
+import { signInWithGoogle, googleEnabled } from "../lib/google";
 import { success, error as hError } from "../lib/haptics";
 
 // Flags arranged on two orbits around the centre.
@@ -30,6 +30,9 @@ export default function Welcome() {
   const guest = () => { tap(); clearNotice(); markWelcomed(); continueAsGuest(); };
   // Google: the same sign-in as on the sign-in screen. Until Google is turned on for the project it explains that here.
   const [gBusy, setGBusy] = useState(false); const [gErr, setGErr] = useState<string | null>(null);
+  // Same rule as the sign-in form: only offer Google when the provider is switched on (it always failed otherwise).
+  const [gOn, setGOn] = useState(false);
+  useEffect(() => { let on = true; googleEnabled().then((v) => on && setGOn(v)).catch(() => {}); return () => { on = false; }; }, []);
   const google = async () => {
     tap(); clearNotice(); setGErr(null); setGBusy(true);
     try { if ((await signInWithGoogle()) === "ok") { markWelcomed(); success(); } } catch (e: any) { hError(); setGErr(e?.message ?? String(e)); } finally { setGBusy(false); }
@@ -51,13 +54,15 @@ export default function Welcome() {
         <View style={{ height: S.xxl }} />
         <Button title={t("Sign in")} size="M" onPress={() => auth("signin")} />
         <Button title={t("Create account")} size="M" variant="secondary" onPress={() => auth("signup")} />
-        {/* A light "or" line, then Google */}
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginVertical: S.xs, paddingHorizontal: S.xl }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: c.separator }} />
-          <Text variant="caption" tone="tertiary">{t("or")}</Text>
-          <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: c.separator }} />
-        </View>
-        <View style={{ alignItems: "center" }}><GoogleIconButton onPress={google} loading={gBusy} /></View>
+        {/* A light "or" line, then Google (only when the provider is enabled) */}
+        {gOn ? (<>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginVertical: S.xs, paddingHorizontal: S.xl }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: c.separator }} />
+            <Text variant="caption" tone="tertiary">{t("or")}</Text>
+            <View style={{ flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: c.separator }} />
+          </View>
+          <View style={{ alignItems: "center" }}><GoogleIconButton onPress={google} loading={gBusy} /></View>
+        </>) : null}
         {gErr ? <Text variant="footnote" tone="red" center accessibilityLiveRegion="polite" testID="google-error">{t(gErr)}</Text> : null}
         <TextLink title={t("Continue without an account")} onPress={guest} testID="continue-guest" />
       </Animated.View>

@@ -12,6 +12,7 @@ import { formatDisplayDate, formatTravelMonth, schengenStayDays } from "@/lib/da
 import { citizenshipName } from "@/lib/nationalities"
 import { trackEvent } from "@/lib/analytics"
 import type { FormData } from "@/lib/form-types"
+import { CHECKOUT_STORAGE_KEY } from "@/lib/wizard-storage"
 
 interface PaymentStepProps {
   formData: FormData
@@ -25,9 +26,30 @@ interface PaymentStepProps {
 type SavedCheckout = {
   applicationId: string
   trackingToken?: string
+  /** Answers the saved application was created from; a change means the server row must be updated before paying. */
+  fingerprint?: string
 }
 
-const CHECKOUT_STORAGE_KEY = "ez_checkout_application"
+
+/** Stable summary of the answers (files left out), compared before reusing a saved application. */
+export function answersFingerprint(formData: FormData): string {
+  const plain: Record<string, unknown> = {}
+  for (const key of Object.keys(formData).sort()) {
+    const value = (formData as unknown as Record<string, unknown>)[key]
+    if (typeof File !== "undefined" && value instanceof File) continue
+    if (value === null || value === undefined || value === "") continue
+    plain[key] = value
+  }
+  return JSON.stringify(plain)
+}
+
+export function clearSavedCheckout() {
+  try {
+    sessionStorage.removeItem(CHECKOUT_STORAGE_KEY)
+  } catch {
+    // storage unavailable
+  }
+}
 
 function readSavedCheckout(): SavedCheckout | null {
   try {
@@ -82,7 +104,14 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
 
   const handlePayment = async () => {
     if (inFlightRef.current) return
-    const remembered = applicationId ? { applicationId, trackingToken: trackingTokenRef.current } : readSavedCheckout()
+    const saved = readSavedCheckout()
+    const remembered = applicationId
+      ? { applicationId, trackingToken: trackingTokenRef.current, fingerprint: saved?.applicationId === applicationId ? saved.fingerprint : undefined }
+      : saved
+    const fingerprint = answersFingerprint(formData)
+    // Edited answers (trip, traveller, spouse) since the application was saved: update it before paying, otherwise
+    // the stale row is paid and priced (e.g. "with my spouse" shown as AED 498 but charged 249).
+    const stale = !!remembered && remembered.fingerprint !== fingerprint
     inFlightRef.current = remembered?.applicationId ?? "pending"
 
     setIsProcessing(true)
@@ -94,8 +123,8 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
     let redirecting = false
 
     try {
-      let checkoutId = remembered?.applicationId
-      let token = remembered?.trackingToken
+      let checkoutId = stale ? undefined : remembered?.applicationId
+      let token = stale ? undefined : remembered?.trackingToken
 
       if (!checkoutId) {
         const submitResponse = await fetch("/api/submit-application", {
@@ -103,7 +132,11 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(
+            stale && remembered?.trackingToken
+              ? { ...formData, replaceApplicationId: remembered.applicationId, replaceTrackingToken: remembered.trackingToken }
+              : formData,
+          ),
           signal: controller.signal,
         })
 
@@ -125,7 +158,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         const createdId: string = submitData.applicationId
         checkoutId = createdId
         token = typeof submitData.trackingToken === "string" ? submitData.trackingToken : undefined
-        const saved: SavedCheckout = { applicationId: createdId, trackingToken: token }
+        const saved: SavedCheckout = { applicationId: createdId, trackingToken: token, fingerprint }
         setApplicationId(createdId)
         setTrackingToken(token)
         trackingTokenRef.current = token

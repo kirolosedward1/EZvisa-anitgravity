@@ -6,7 +6,7 @@ export const dynamic = "force-static"
 export const revalidate = 86400 // Revalidate once per day
 
 export const metadata: Metadata = {
-  title: "Schengen Visa Document Requirements by Country | EZvisa",
+  title: "Schengen Visa Document Requirements by Country",
   description:
     "Complete Schengen visa document requirements for 29 European countries. Detailed checklists for passport, photos, insurance, bank statements, itinerary, and more. Get your documents right the first time.",
   keywords: [

@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
+import { hasBearerSecret } from "@/lib/bearer-auth"
+
+const CASE_STATUSES = new Set(["draft", "submitted", "reviewing", "preparation", "awaiting_documents", "appointment_booked", "approved", "ready", "rejected", "cancelled", "completed"])
 
 function getSupabaseAdmin() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -11,8 +14,7 @@ function getSupabaseAdmin() {
 function verifyAdminAuth(request: NextRequest): boolean {
   const authHeader = request.headers.get("Authorization")
   const secret = process.env.ADMIN_API_SECRET
-  if (!secret) return false
-  return authHeader === `Bearer ${secret}`
+  return hasBearerSecret(authHeader, secret)
 }
 
 /**
@@ -63,7 +65,9 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%,destination_country.ilike.%${search}%`)
+    // Characters that are syntax in a PostgREST or() filter (comma, parentheses, quotes, backslash) are removed.
+    const term = search.replace(/[,()"'\\*%]/g, " ").trim().slice(0, 100)
+    if (term) query = query.or(`full_name.ilike.%${term}%,email.ilike.%${term}%,destination_country.ilike.%${term}%`)
   }
 
   const { data, error } = await query
@@ -91,54 +95,53 @@ export async function PATCH(request: NextRequest) {
   try {
     const { id, application_status, expected_updated_at, notes, actor = "admin_staff" } = await request.json()
 
-    if (!id) {
+    if (!id || typeof id !== "string") {
       return NextResponse.json({ error: "Missing application ID" }, { status: 400 })
     }
-
-    // 1. Concurrency Check: Verify record hasn't been modified since it was loaded
-    if (expected_updated_at) {
-      const { data: current } = await supabase
-        .from("visa_applications")
-        .select("updated_at")
-        .eq("id", id)
-        .single()
-
-      if (current && current.updated_at && current.updated_at !== expected_updated_at) {
-        return NextResponse.json(
-          { error: "Conflict: This case was modified by another staff member. Please refresh." },
-          { status: 409 }
-        )
-      }
+    if (application_status && !CASE_STATUSES.has(application_status)) {
+      return NextResponse.json({ error: "Unknown application status" }, { status: 400 })
+    }
+    // "ready" means the final package was delivered; that goes through trigger-email (documents.ready),
+    // which checks that final_package.pdf exists.
+    if (application_status === "ready") {
+      return NextResponse.json({ error: "Use the 'documents ready' email action to mark a case ready." }, { status: 400 })
     }
 
-    // 2. Perform Update
+    // 1+2. Update only if the record is still the version staff loaded (atomic; a separate read raced).
     const updatePayload: Record<string, any> = {
       updated_at: new Date().toISOString()
     }
     if (application_status) updatePayload.application_status = application_status
 
-    const { data: updated, error: updateError } = await supabase
-      .from("visa_applications")
-      .update(updatePayload)
-      .eq("id", id)
-      .select()
-      .single()
+    let update = supabase.from("visa_applications").update(updatePayload).eq("id", id)
+    if (expected_updated_at) update = update.eq("updated_at", expected_updated_at)
+    const { data: rows, error: updateError } = await update.select()
 
     if (updateError) {
-      return NextResponse.json({ error: updateError.message }, { status: 500 })
+      console.error("[admin] case update failed", updateError.code)
+      return NextResponse.json({ error: "Could not update the case" }, { status: 500 })
+    }
+    const updated = rows?.[0]
+    if (!updated) {
+      return NextResponse.json(
+        { error: "Conflict: This case was modified by another staff member (or no longer exists). Please refresh." },
+        { status: 409 }
+      )
     }
 
-    // 3. Log Audit Trail
+    // 3. Log Audit Trail. email_logs has a unique (event_type, entity_id) index for email idempotency, so each
+    // audit entry needs its own entity_id or every update after the first one is silently rejected.
     try {
-      await supabase.from("email_logs").insert({
+      const { error: auditError } = await supabase.from("email_logs").insert({
         event_type: "admin.case_updated",
-        entity_id: id,
+        entity_id: `${id}:${updatePayload.updated_at}`,
         recipient: actor,
         template: "audit",
         status: "logged",
         error_reason: notes ? `Notes: ${notes}` : `Status changed to ${application_status}`,
         sent_at: new Date().toISOString()
       })
+      if (auditError) console.error("[admin] audit log insert failed", auditError.code)
     } catch {
       // Non-fatal if audit table structure differs
     }

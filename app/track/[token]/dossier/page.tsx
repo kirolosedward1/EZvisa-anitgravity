@@ -6,7 +6,7 @@ import { DossierViewerClient } from "@/components/track/dossier-viewer-client"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Consular Dossier Package | EZvisa",
+  title: "Consular Dossier Package",
   robots: {
     index: false,
     follow: false,

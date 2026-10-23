@@ -429,7 +429,9 @@ export async function uploadDocument(applicationId: string, file: { uri: string;
   const sb = need();
   try {
     if (!isUploadType(documentType)) throw new UploadError("This document type can't be uploaded.", false);
-    const raw = file.mimeType || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+    // Some Files/iCloud providers report PDFs as application/octet-stream: treat that like a missing type.
+    const given = file.mimeType && file.mimeType !== "application/octet-stream" ? file.mimeType : "";
+    const raw = given || (file.name.toLowerCase().endsWith(".pdf") ? "application/pdf" : "image/jpeg");
     const type = raw === "image/jpg" ? "image/jpeg" : raw;
     if (!isUploadMime(type)) throw new UploadError("Only PDF, JPG or PNG files.", false);
     const u = await me();

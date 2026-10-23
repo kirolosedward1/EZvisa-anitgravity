@@ -101,3 +101,11 @@ export function getCountryBySlug(slug: string): CountryData | null {
 export function getCountryUrl(country: string): string {
   return `/documents/required-documents-to-apply-for-a-tourist-visa-in-${countryToSlug(country)}`
 }
+
+/** The canonical Schengen country name for `name` (case and spacing insensitive, slugs accepted), or null. */
+export function canonicalSchengenCountry(name: unknown): SchengenCountry | null {
+  if (typeof name !== "string") return null
+  const key = name.trim().toLowerCase().replace(/[-_\s]+/g, " ")
+  if (!key) return null
+  return SCHENGEN_COUNTRIES.find((c) => c.toLowerCase() === key) ?? null
+}

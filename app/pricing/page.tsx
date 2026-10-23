@@ -8,7 +8,7 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 
 export const metadata: Metadata = {
-  title: "Schengen Visa Pricing - 249 AED All-Inclusive | EZvisa",
+  title: "Schengen Visa Pricing - 249 AED All-Inclusive",
   description:
     "Simple, transparent Schengen visa application pricing. 249 AED flat rate includes AI-powered document review, itinerary planning, cover letter, hotel booking, and expert assistance. No hidden fees.",
   keywords: [
@@ -20,12 +20,12 @@ export const metadata: Metadata = {
     "visa application charges",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/pricing",
+    canonical: "https://www.ezvisa.net/pricing",
   },
   openGraph: {
     title: "Schengen Visa Pricing - 249 AED All-Inclusive",
     description: "Transparent pricing for Schengen visa applications. All-inclusive service from 249 AED.",
-    url: "https://ezvisa.net/pricing",
+    url: "https://www.ezvisa.net/pricing",
     type: "website",
   },
 }

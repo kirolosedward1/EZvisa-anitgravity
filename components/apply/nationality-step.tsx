@@ -23,6 +23,7 @@ import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { trackEvent } from "@/lib/analytics"
 import { cn } from "@/lib/utils"
+import { isValidCalendarDate } from "@/lib/dates"
 
 interface NationalityStepProps {
   formData: FormData
@@ -40,7 +41,7 @@ function isValidEmail(email: string) {
   const parts = email.split("@")
   if (parts.length !== 2) return false
   const [localPart, domain] = parts
-  if (localPart.length < 2 || !domain.includes(".")) return false
+  if (!localPart || !domain.includes(".")) return false
   const invalidDomains = ["gmial.com", "yahooo.com", "hotmial.com", "gmai.com"]
   return !invalidDomains.includes(domain.toLowerCase())
 }
@@ -70,6 +71,20 @@ function composePhone(local: string) {
   return digits ? `+971 ${digits}` : ""
 }
 
+/** UAE numbers are usually written 050 123 4567 or pasted with 971 / 00971: keep only the national number after
+ *  +971 ("+971 0501234567" is not a valid international number). Applied when the step is submitted. */
+function nationalNumber(local: string) {
+  let digits = local.replace(/[^\d]/g, "")
+  if (digits.startsWith("00971")) digits = digits.slice(5)
+  else if (digits.startsWith("971") && digits.length >= 11) digits = digits.slice(3)
+  return digits.replace(/^0/, "")
+}
+
+/** Local calendar date (YYYY-MM-DD); toISOString() is UTC and is a day behind in the UAE before 04:00. */
+function localIso(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+}
+
 export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading }: NationalityStepProps) {
   const [showErrors, setShowErrors] = useState(false)
   const [destinationOpen, setDestinationOpen] = useState(false)
@@ -78,12 +93,12 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
   const seeded = useRef(false)
   const withSpouse = formData.spouseAccompanying === "yes"
   const spousePrice = priceForTravellers("yes")
-  const phone = composePhone(localPhone(formData.phone || ""))
+  const phone = composePhone(nationalNumber(localPhone(formData.phone || "")))
 
   useEffect(() => {
     const date = new Date()
     date.setFullYear(date.getFullYear() - 18)
-    setMaxDob(date.toISOString().slice(0, 10))
+    setMaxDob(localIso(date))
     setTouchKeyboard(window.matchMedia("(pointer: coarse)").matches)
   }, [])
 
@@ -106,7 +121,8 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
     passport: !formData.passportNumber.trim(),
     phone: !phone || !isValidPhone(phone),
     email: !formData.email.trim() || !isValidEmail(formData.email.trim()),
-    dateOfBirth: !formData.dateOfBirth,
+    // The form is noValidate, so the input's max isn't enforced by the browser: check the date and 18+ here.
+    dateOfBirth: !isValidCalendarDate(formData.dateOfBirth) || formData.dateOfBirth < "1900-01-01" || (!!maxDob && formData.dateOfBirth > maxDob),
     destination: !formData.destination,
   }
   const isFormValid = !Object.values(errors).some(Boolean)
@@ -120,6 +136,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
       })
       return
     }
+    if (phone !== formData.phone) updateFormData({ phone })
     onNext()
   }
 
@@ -331,7 +348,11 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
         />
         {showErrors && errors.dateOfBirth ? (
           <FieldError>
-            <LangText en="Enter your date of birth." ar="أدخل تاريخ الميلاد." />
+            {formData.dateOfBirth && maxDob && formData.dateOfBirth > maxDob ? (
+              <LangText en="The main applicant must be 18 or older." ar="يجب أن يكون مقدم الطلب الرئيسي 18 عاماً أو أكثر." />
+            ) : (
+              <LangText en="Enter your date of birth." ar="أدخل تاريخ الميلاد." />
+            )}
           </FieldError>
         ) : null}
       </div>

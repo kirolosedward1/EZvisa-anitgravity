@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer"
 import { AppointmentGuideClient } from "@/components/tools/appointment-guide-client"
 
 export const metadata: Metadata = {
-  title: "UAE Schengen Visa Appointment Centers & Booking Guide | EZvisa",
+  title: "UAE Schengen Visa Appointment Centers & Booking Guide",
   description: "Complete guide to Schengen visa appointments in Dubai & Abu Dhabi. Centers for VFS Global, TLScontact, and BLS International. Slot timing tips and biometrics rules.",
   alternates: {
     canonical: "https://www.ezvisa.net/tools/appointment-guide",

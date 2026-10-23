@@ -15,7 +15,7 @@ import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { toCitizenshipIso } from "@/lib/nationalities"
 
-const WIZARD_STORAGE_KEY = "visa_wizard_data"
+import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
 const AUTO_SAVE_DELAY = 300
 
 interface WizardFormData {
@@ -233,6 +233,8 @@ function ApplyPageContent() {
 
   const handleStartFresh = useCallback(() => {
     localStorage.removeItem(WIZARD_STORAGE_KEY)
+    // A new application must not pay the one this tab created earlier.
+    try { sessionStorage.removeItem(CHECKOUT_STORAGE_KEY) } catch { /* storage unavailable */ }
     const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
     const toCountry = searchParams.get("to") || searchParams.get("destination") || ""
     const travelStartDate = searchParams.get("travelStartDate") || ""
@@ -250,7 +252,7 @@ function ApplyPageContent() {
     setCurrentStep(1)
     setTripScreen(0)
     router.replace(
-      localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`),
+      localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${encodeURIComponent(fromCountry)}` : ""}${toCountry ? `&to=${encodeURIComponent(toCountry)}` : ""}`),
       { scroll: false }
     )
     
@@ -389,7 +391,7 @@ function ApplyPageContent() {
         const slug = getStepSlug(1)
         if (isMounted.current) {
           router.replace(
-            localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`),
+            localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${encodeURIComponent(fromCountry)}` : ""}${toCountry ? `&to=${encodeURIComponent(toCountry)}` : ""}`),
           )
         }
       } else {
@@ -397,7 +399,7 @@ function ApplyPageContent() {
         const slug = getStepSlug(1)
         if (isMounted.current) {
           router.replace(
-            localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`),
+            localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${encodeURIComponent(fromCountry)}` : ""}${toCountry ? `&to=${encodeURIComponent(toCountry)}` : ""}`),
           )
         }
       }
@@ -529,7 +531,9 @@ function ApplyPageContent() {
   }, [])
 
   useEffect(() => {
-    if (!isInitialized) return
+    // While "Continue your application?" is open, the saved draft is the only copy: don't overwrite it with
+    // the empty form underneath (a reload before choosing used to lose the draft).
+    if (!isInitialized || showResumeModal) return
 
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current)
@@ -548,7 +552,7 @@ function ApplyPageContent() {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [formData, isInitialized])
+  }, [formData, isInitialized, showResumeModal])
 
   return (
     <div className="min-h-[100dvh] bg-[#FFFFFF]" ref={wizardContainerRef}>

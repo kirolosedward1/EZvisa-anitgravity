@@ -29,6 +29,7 @@ import Constants from "expo-constants";
 import NetInfo from "@react-native-community/netinfo";
 import { useForm } from "../../../lib/form";
 import { onTabScroll } from "../../../lib/tabBarScroll";
+import { iso } from "../../../lib/wizard";
 
 export default function Account() {
   const c = useColors(); const pb = useTabInset(S.md as any) /* tab bar + safe area + 16 */; const insets = useSafeAreaInsets();
@@ -111,7 +112,7 @@ export default function Account() {
           value={pp ? new Date(pp + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : t("Not set")}
           onPress={() => setPpOpen((o) => !o)} a11yHint={ppOpen ? t("Closes the date picker") : t("Opens a date picker")} />
         {ppOpen && <View style={{ padding: S.sm }} testID="passport-expiry-picker">
-          <DateAnswer label={t("Passport expiry")} value={pp} onChange={onPp} style="wheel" placeholder={t("Select date")} min={new Date().toISOString().slice(0, 10)} />
+          <DateAnswer label={t("Passport expiry")} value={pp} onChange={onPp} style="wheel" placeholder={t("Select date")} min={iso(new Date())} />
         </View>}
       </View>
       {!!remNote && Platform.OS !== "web" && <ListRow title={t("Open Settings")} tint chevron={false} onPress={() => Linking.openSettings()} />}

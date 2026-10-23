@@ -90,13 +90,9 @@ export const metadata: Metadata = {
     },
   },
   manifest: "/site.webmanifest?v=2",
-  alternates: {
-    canonical: "https://www.ezvisa.net/",
-  },
-  verification: {
-    google: "google-site-verification-code",
-    yandex: "yandex-verification-code",
-  },
+  // No canonical here: a root canonical is inherited by every page that doesn't set its own, which told search
+  // engines those pages duplicate the homepage. Each indexable page sets its own (the homepage in app/page.tsx).
+  // (The placeholder site-verification codes were removed: they published meaningless meta tags.)
   generator: 'v0.app'
 }
 
@@ -133,6 +129,24 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
+        {/* Google Consent Mode defaults, before GA/GTM load. A visitor who chose "Necessary only" (or turned
+            analytics/marketing off) in the cookie banner is respected on every page; components/cookie-consent.tsx
+            sends updates when the choice changes. Previously the banner's choice was stored but never applied. */}
+        <Script id="consent-defaults" strategy="beforeInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            var c = null;
+            try { c = JSON.parse(localStorage.getItem('cookie-consent') || 'null'); } catch (e) {}
+            var a = !c || c.analytics !== false, m = !c || c.marketing !== false;
+            gtag('consent', 'default', {
+              analytics_storage: a ? 'granted' : 'denied',
+              ad_storage: m ? 'granted' : 'denied',
+              ad_user_data: m ? 'granted' : 'denied',
+              ad_personalization: m ? 'granted' : 'denied'
+            });
+          `}
+        </Script>
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-3M5NW9FZYG"
           strategy="lazyOnload"

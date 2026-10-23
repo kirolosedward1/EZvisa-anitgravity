@@ -437,10 +437,12 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               <div className="flex items-center justify-between px-6 py-5 border-b border-border/50">
                 <span className="text-base font-medium text-foreground"><LangText en="Menu" ar="القائمة" /></span>
                 <button
+                  type="button"
                   onClick={() => setIsMenuOpen(false)}
+                  aria-label="Close menu"
                   className="h-10 w-10 rounded-full bg-secondary hover:bg-secondary/80 transition-colors flex items-center justify-center text-foreground"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-5 w-5" aria-hidden="true" />
                 </button>
               </div>
 

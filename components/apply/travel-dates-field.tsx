@@ -11,6 +11,7 @@ import {
   schengenEndDate,
   schengenStayDays,
   upcomingTravelMonths,
+  flexibleEntryDate,
 } from "@/lib/dates"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 
@@ -107,7 +108,7 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
   const applyMonth = (value: string) => {
     onClearErrors()
     const length = Number(formData.tripLength)
-    const entry = `${value}-01`
+    const entry = flexibleEntryDate(value)
     updateFormData({
       datesFlexible: "yes",
       travelMonth: value,
@@ -118,7 +119,7 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
 
   const applyFlexibleLength = (days: number) => {
     onClearErrors()
-    const entry = formData.travelMonth ? `${formData.travelMonth}-01` : ""
+    const entry = formData.travelMonth ? flexibleEntryDate(formData.travelMonth) : ""
     updateFormData({
       datesFlexible: "yes",
       tripLength: String(days),

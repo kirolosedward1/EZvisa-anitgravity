@@ -9,7 +9,7 @@ import type { Metadata } from "next"
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: "Schengen Visa News, Guides & Travel Tips | EZvisa Blog",
+  title: "Schengen Visa News, Guides & Travel Tips",
   description:
     "Latest Schengen visa guides, travel tips, and document requirements for 2026. Expert advice on European visa applications, common mistakes, and success stories. Stay updated with visa policy changes.",
   keywords: [
@@ -21,12 +21,12 @@ export const metadata: Metadata = {
     "travel blog",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/news",
+    canonical: "https://www.ezvisa.net/news",
   },
   openGraph: {
     title: "Schengen Visa News, Guides & Travel Tips",
     description: "Expert advice and latest updates on European visa applications.",
-    url: "https://ezvisa.net/news",
+    url: "https://www.ezvisa.net/news",
     type: "website",
   },
 }

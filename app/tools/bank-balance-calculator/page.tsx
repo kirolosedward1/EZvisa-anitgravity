@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer"
 import { BankBalanceCalculatorClient } from "@/components/tools/bank-balance-calculator-client"
 
 export const metadata: Metadata = {
-  title: "Schengen Visa Bank Balance Calculator | EZvisa UAE",
+  title: "Schengen Visa Bank Balance Calculator",
   description: "Calculate the exact minimum bank balance required for your Schengen visa application from Dubai & Abu Dhabi. Country-specific consular requirements in AED.",
   alternates: {
     canonical: "https://www.ezvisa.net/tools/bank-balance-calculator",

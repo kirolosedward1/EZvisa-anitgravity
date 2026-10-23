@@ -5,8 +5,9 @@ import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
 
 export const metadata = {
-  title: "Customer Reviews | EZvisa",
+  title: "Customer Reviews",
   description: "Read what 5,000+ happy travelers have to say about their seamless Schengen visa application experience with EZvisa.",
+  alternates: { canonical: "https://www.ezvisa.net/reviews" },
 }
 
 const testimonials = [

@@ -203,7 +203,11 @@ function useResumePayment() {
   const { loading, session } = useAuth();
   useEffect(() => {
     if (loading || resumeChecked) return; resumeChecked = true;
-    paymentToResume(async (id) => (session ? isPaid(await getApplication(id)) : null))
+    paymentToResume(async (id) => {
+      if (!session) return null; // guest checkout: resume (the result screen verifies with the server)
+      try { return isPaid(await getApplication(id)); }
+      catch (e: any) { return /couldn't find this application/i.test(String(e?.message)) ? "missing" : null; }
+    })
       .then((id) => { if (id) router.push({ pathname: "/payment/[id]", params: { id, returned: "success" } }); })
       .catch(() => {});
   }, [loading, session]);

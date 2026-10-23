@@ -22,18 +22,10 @@ async function getTrackingData(token: string) {
   if (!mainApp) return null
   if (isDemoToken(token)) return { mainApp, relatedApps: getDemoRelatedApplications(token) as VisaApplication[] }
 
-  const supabase = serviceClient()
-  if (!supabase || !mainApp.email) return { mainApp, relatedApps: [mainApp] }
-  const { data: relatedApps } = await supabase
-    .from("visa_applications")
-    .select("id, tracking_token, destination_country, full_name, created_at, application_status, payment_status, additional_notes")
-    .ilike("email", mainApp.email)
-    .order("created_at", { ascending: false })
-  // Only cases with a tracking link can be switched to here; discarded unpaid cases stay hidden, like in the app.
-  const visible = ((relatedApps ?? []) as VisaApplication[]).filter(
-    (a) => a.tracking_token && !(a.application_status === "cancelled" && !isPaid(a) && parseNotes(a.additional_notes).discarded_at),
-  )
-  return { mainApp, relatedApps: visible.length ? visible : [mainApp] }
+  // A tracking token is a bearer link for ONE application. Never list (or link to) other applications that share
+  // the email: the email on a guest application is unverified, so anyone could file a case under someone else's
+  // address and use its token to read their tokens. Signed-in owners see all their cases on /dashboard.
+  return { mainApp, relatedApps: [mainApp] }
 }
 
 export default async function TrackPage({ params }: { params: Promise<{ token: string }> }) {
