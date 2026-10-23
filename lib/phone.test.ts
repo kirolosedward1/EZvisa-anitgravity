@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { isValidPhone } from "./phone"
+import { hasInvalidPhone, isValidPhone } from "./phone"
 
 test("1111111 is rejected", () => {
   assert.equal(isValidPhone("1111111"), false)
@@ -21,6 +21,18 @@ test("Arabic-digit input is accepted", () => {
 
 test("Persian-digit input is accepted", () => {
   assert.equal(isValidPhone("+۹۷۱۵۰۱۲۳۴۵۶۷"), true)
+})
+
+test("a submitted phone is rejected only when it is present and invalid", () => {
+  assert.equal(hasInvalidPhone("1111111"), true)
+  assert.equal(hasInvalidPhone("+971 1111111"), true)
+  assert.equal(hasInvalidPhone("+9711234"), true)
+  assert.equal(hasInvalidPhone("+9711234567890123"), true)
+  assert.equal(hasInvalidPhone("+971501234567"), false)
+  assert.equal(hasInvalidPhone("+٩٧١٥٠١٢٣٤٥٦٧"), false)
+  assert.equal(hasInvalidPhone(""), false)
+  assert.equal(hasInvalidPhone("   "), false)
+  assert.equal(hasInvalidPhone(undefined), false)
 })
 
 test("too short or too long numbers are rejected", () => {

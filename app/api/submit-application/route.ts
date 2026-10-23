@@ -19,7 +19,7 @@ import { toCitizenshipIso } from "@/lib/nationalities"
 import { canonicalSchengenCountry } from "@/lib/countries"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
 import { toWesternDigits, normalizePassport } from "@/lib/digits"
-import { isValidPhone } from "@/lib/phone"
+import { hasInvalidPhone } from "@/lib/phone"
 
 // Arabic/Persian digits typed on the client become Western before validation and saving (Western input unchanged).
 const DIGIT_FIELDS = ["phone", "dateOfBirth", "travelStartDate", "travelEndDate", "travelMonth", "tripLength", "employmentStartDate"]
@@ -160,7 +160,7 @@ export async function POST(request: Request) {
         { status: 400 },
       )
     }
-    if (!isValidPhone(sanitizedData.phone)) {
+    if (hasInvalidPhone(sanitizedData.phone)) {
       return NextResponse.json({ success: false, message: "Enter a valid phone number." }, { status: 400 })
     }
 

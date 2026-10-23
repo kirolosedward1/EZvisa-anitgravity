@@ -78,6 +78,16 @@ function bounds(countries: CountryCode[] | undefined): { min: number; max: numbe
   return { min, max }
 }
 
+/**
+ * A phone that was sent and fails the local-number check.
+ * Missing or blank is not a rejection: continue saves omit the phone.
+ */
+export function hasInvalidPhone(phone: unknown): boolean {
+  if (typeof phone !== "string") return false
+  const value = phone.trim()
+  return value.length > 0 && !isValidPhone(value)
+}
+
 /** True when the local number is a plausible length for its country and not a single repeated digit. */
 export function isValidPhone(phone: string): boolean {
   const { national, countries } = localPhoneDigits(phone)

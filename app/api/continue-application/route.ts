@@ -15,6 +15,7 @@ import { isPaid } from "@/lib/application-status"
 import { sanitizeInput } from "@/lib/sanitize"
 import { canonicalSchengenCountry } from "@/lib/countries"
 import { toWesternDigits, normalizePassport } from "@/lib/digits"
+import { hasInvalidPhone } from "@/lib/phone"
 
 // Arabic/Persian digits typed on the client become Western before validation and saving (Western input unchanged).
 const DIGIT_FIELDS = ["phone", "dateOfBirth", "travelStartDate", "travelEndDate", "travelMonth", "tripLength", "employmentStartDate"]
@@ -55,6 +56,9 @@ const bad = (error: string) => NextResponse.json({ error }, { status: 400 })
 
 export async function POST(request: Request) {
   const body = normalizeDigits(await request.json().catch(() => ({})))
+  if (hasInvalidPhone(body.phone)) {
+    return NextResponse.json({ success: false, message: "Enter a valid phone number." }, { status: 400 })
+  }
   const id = typeof body.id === "string" ? body.id : ""
   if (!id) return NextResponse.json({ error: "Missing application" }, { status: 400 })
   // Demo sandbox rows live in code (lib/demo-data): nothing to save, and no Supabase session.
