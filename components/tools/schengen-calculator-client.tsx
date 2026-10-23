@@ -22,6 +22,15 @@ import { Msg } from "@/components/msg"
 import { useMessage } from "@/components/use-message"
 import { PreparationLine } from "@/components/ready-line"
 
+/** 1 يوم واحد، 2 يومان، 3–10 N أيام، 11+ N يومًا. */
+function arabicDayCount(count: number) {
+  const category = new Intl.PluralRules("ar").select(count)
+  if (category === "one") return "يوم واحد"
+  if (category === "two") return "يومان"
+  if (category === "few") return `${count} أيام`
+  return `${count} يومًا`
+}
+
 export function SchengenCalculatorClient() {
   const removeLabel = useMessage("calc.removeTrip")
   const [pastTrips, setPastTrips] = useState<TripInterval[]>([
@@ -200,7 +209,11 @@ export function SchengenCalculatorClient() {
                     <Msg id="calc.overstayTitle" />
                   </h4>
                   <p className="text-xs mt-1 leading-relaxed">
-                    <Msg id="calc.overstayBody" values={{ n: result.overstayDays }} />
+                    <Msg
+                      id="calc.overstayBody"
+                      values={{ n: result.overstayDays }}
+                      valuesAr={{ days: arabicDayCount(result.overstayDays) }}
+                    />
                   </p>
                 </div>
               </div>
