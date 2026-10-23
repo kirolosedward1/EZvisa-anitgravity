@@ -1,3 +1,5 @@
+> **Archived 2026-10-23. Outdated planning doc, kept for history only. The wizard ideas (19 Oct) were either built (`components/wizard/extras.tsx`) or dropped by later wizard chats. Current status: `mobile/HANDOFF.md` section 0.**
+
 # Wizard UX ideas (audit 2026-10-19)
 
 ## Audit

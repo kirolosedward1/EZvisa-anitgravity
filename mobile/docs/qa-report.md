@@ -1,5 +1,7 @@
 # EZvisa app: QA and release readiness (chat 15)
 
+> **Superseded 2026-10-23 for anything about what is live or merged** (EAS preview, B2/B3/B4, branches, open issues): see `mobile/HANDOFF.md` §0. The test evidence below still describes the code it names. **Not shipped:** the "To get later" / `missingDocuments` work in rows 5 and §7 (`9ea8e91`, `af81f75`) is not on `main` or `mobile-app` (lost in the PR #13 rebase; only on `claude/vibrant-wright-ez44ch`).
+
 Date: 22 Oct 2026. Code verified: `mobile/` on branch `claude/vibrant-wright-ez44ch` = **`origin/mobile-app` @ `89c1b26`** (chats 02–14, then 03, 06, 08, 09, 11, `main` and the passport-number move, all merged in) + the chat 15 commits in §7. `mobile-app` can fast-forward to it.
 Expo SDK 57.0.30, React Native 0.86.3, expo-router 57.
 

@@ -12,11 +12,13 @@ export function ApplicationView({
   relatedApps,
   hrefFor,
   showTrackingLink,
+  allowDiscard,
 }: {
   app: VisaApplication
   relatedApps: VisaApplication[]
   hrefFor: (app: VisaApplication) => string
   showTrackingLink?: boolean
+  allowDiscard?: boolean
 }) {
   const stage = getStage(app)
 
@@ -30,7 +32,7 @@ export function ApplicationView({
           <DocumentChecklist app={app} />
         </div>
         <aside className="flex flex-col gap-6" aria-label="Case details and support">
-          <CaseSummary app={app} stage={stage} showTrackingLink={showTrackingLink} />
+          <CaseSummary app={app} stage={stage} showTrackingLink={showTrackingLink} allowDiscard={allowDiscard} />
           <SupportCard token={app.tracking_token ?? ""} destination={app.destination_country} />
         </aside>
       </div>

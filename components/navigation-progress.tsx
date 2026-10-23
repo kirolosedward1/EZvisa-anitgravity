@@ -82,10 +82,10 @@ function NavigationProgressBarContent() {
   return (
     <div
       aria-hidden="true"
-      className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none h-1 overflow-hidden"
+      className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none h-1 overflow-hidden bg-[#E3E7EF]"
     >
       <div
-        className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-sky-400 shadow-[0_0_12px_rgba(59,130,246,0.8)] transition-all duration-200 ease-out"
+        className="h-full bg-[#0436DC] transition-all duration-200 ease-out"
         style={{
           width: `${progress}%`,
           opacity: loading ? 1 : 0,

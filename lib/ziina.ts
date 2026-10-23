@@ -4,7 +4,7 @@
  * never from a client parameter or an unverified webhook body.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
-import { CURRENCIES } from "@/lib/currency"
+import { priceForTravellers } from "@/lib/currency"
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -18,6 +18,8 @@ export type ZiinaIntent = {
   currency_code?: string
   redirect_url?: string
   success_url?: string
+  cancel_url?: string
+  failure_url?: string
   [key: string]: unknown
 }
 
@@ -25,8 +27,8 @@ export type ZiinaIntent = {
 export function priceForApplication(notesRaw: unknown): { amount: number; currency: "AED" } {
   let notes: any = {}
   try { notes = typeof notesRaw === "string" ? JSON.parse(notesRaw) : notesRaw ?? {} } catch { notes = {} }
-  const spouse = (notes?.spouseAccompanying ?? notes?.wizard?.spouseAccompanying) === "yes"
-  return { amount: CURRENCIES.AED.basePrice * (spouse ? 2 : 1), currency: "AED" }
+  const spouse = (notes?.spouseAccompanying ?? notes?.wizard?.spouseAccompanying) === "yes" ? "yes" : "no"
+  return { amount: priceForTravellers(spouse), currency: "AED" }
 }
 
 export const isPaidStatus = (s: unknown) => ["paid", "completed"].includes(String(s ?? "").toLowerCase())
@@ -45,6 +47,7 @@ export async function fetchIntent(id: string): Promise<ZiinaIntent | null> {
   const res = await fetch(`https://api-v2.ziina.com/api/payment_intent/${encodeURIComponent(id)}`, {
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     cache: "no-store",
+    signal: AbortSignal.timeout(12000),
   })
   if (!res.ok) return null
   const data = await res.json().catch(() => null)
@@ -87,5 +90,7 @@ export async function applyIntentStatus(
     .select()
     .maybeSingle()
   if (upError) return { row, status: row.payment_status, changed: false, error: upError.code }
+  // Audit trail (no personal data): every stored payment status change, whichever path made it.
+  console.info(`[payment] ${row.id} ${row.payment_status ?? "null"} -> ${next} (intent ${intent.id}, ziina ${intent.status})`)
   return { row: updated ?? row, status: next, changed: true }
 }

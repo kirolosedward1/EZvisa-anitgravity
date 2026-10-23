@@ -1,30 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useLayoutEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import { translations, Language } from "./index"
 
+function languageFromPath(path: string | null | undefined): Language {
+  return path === "/ar" || path?.startsWith("/ar/") ? "ar" : "en"
+}
+
 export function useTranslation() {
-  const [lang, setLang] = useState<Language>("en")
+  const pathname = usePathname()
+  const [browserPath, setBrowserPath] = useState<string | null>(null)
 
-  useEffect(() => {
-    const current = (localStorage.getItem("ez_lang") as Language) || "en"
-    setLang(current)
+  useLayoutEffect(() => {
+    setBrowserPath(window.location.pathname)
+  }, [pathname])
 
-    const handleLanguageChange = (e: CustomEvent<Language>) => {
-      if (e.detail && (e.detail === "en" || e.detail === "ar")) {
-        setLang(e.detail)
-      }
-    }
-
-    window.addEventListener("ez_language_change" as any, handleLanguageChange)
-    return () => {
-      window.removeEventListener("ez_language_change" as any, handleLanguageChange)
-    }
-  }, [])
+  const active = languageFromPath(browserPath ?? pathname)
 
   return {
-    t: translations[lang] || translations.en,
-    lang,
-    isRtl: lang === "ar",
+    t: translations[active] || translations.en,
+    lang: active,
+    isRtl: active === "ar",
   }
 }

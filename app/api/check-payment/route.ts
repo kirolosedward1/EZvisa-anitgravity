@@ -27,11 +27,19 @@ export async function GET(request: NextRequest) {
       if (!supabase) return NextResponse.json({ error: "Payment service configuration error" }, { status: 500 })
       const { data: app, error } = await supabase
         .from("visa_applications")
-        .select("id, payment_id, payment_status, payment_amount, additional_notes")
+        .select("id, payment_id, payment_status, payment_amount, additional_notes, application_status")
         .eq("id", applicationId)
         .maybeSingle()
       if (error) return NextResponse.json({ error: "Could not load application" }, { status: 500 })
       if (!app) return NextResponse.json({ error: "Application not found" }, { status: 404 })
+
+      if (String(app.application_status ?? "").toLowerCase() === "cancelled") {
+        const price = priceForApplication(app.additional_notes)
+        return NextResponse.json(
+          { applicationId: app.id, status: "cancelled", payment_status: app.payment_status ?? "pending", open: false, amount: price.amount, currency: price.currency },
+          { headers: noStore },
+        )
+      }
 
       let status: string = app.payment_status ?? "pending"
       let open = false

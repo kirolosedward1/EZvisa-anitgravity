@@ -8,7 +8,7 @@ export const revalidate = 86400 // Revalidate once per day
 export const metadata: Metadata = {
   title: "Schengen Visa Document Requirements by Country | EZvisa",
   description:
-    "Complete Schengen visa document requirements for 27 European countries. Detailed checklists for passport, photos, insurance, bank statements, itinerary, and more. Get your documents right the first time.",
+    "Complete Schengen visa document requirements for 29 European countries. Detailed checklists for passport, photos, insurance, bank statements, itinerary, and more. Get your documents right the first time.",
   keywords: [
     "Schengen visa documents",
     "visa requirements",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Schengen Visa Document Requirements by Country",
     description:
-      "Detailed document requirements for Schengen visa applications. Complete checklists for all 27 European countries.",
+      "Detailed document requirements for Schengen visa applications. Complete checklists for all 29 European countries.",
     url: "https://www.ezvisa.net/documents",
     type: "website",
   },

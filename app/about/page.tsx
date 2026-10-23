@@ -33,15 +33,15 @@ export default function AboutPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 relative overflow-hidden">
+      <div className="min-h-screen relative overflow-hidden">
         {/* Decorative dot matrix background */}
         <div
           className="absolute inset-0 opacity-[0.1] pointer-events-none"
           style={{
-            backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+            backgroundImage: "none",
             backgroundSize: "32px 32px",
-            maskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 75%, transparent 100%)",
-            WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 75%, transparent 100%)",
+            maskImage: "none",
+            WebkitMaskImage: "none",
           }}
         />
 
@@ -49,7 +49,7 @@ export default function AboutPage() {
           badge="About Us"
           title={
             <>
-              Your trusted partner for <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Schengen visas</span>
+              Your trusted partner for <span className="text-primary bg-[#0436DC]">Schengen visas</span>
             </>
           }
           description="At EZvisa, we combine technology and expertise to simplify your travel preparation so embassies say yes."
@@ -62,7 +62,7 @@ export default function AboutPage() {
             
             {/* Mission */}
             <div className="prose prose-gray max-w-none">
-              <h2 className="text-2xl font-bold mb-4 text-primary">Our Mission</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-primary">Our Mission</h2>
               <p className="text-muted-foreground leading-relaxed">
                 At EZvisa, we believe that travel should be accessible to everyone. Our mission is to simplify the
                 complex visa application process, making it easy, transparent, and stress-free for travelers from the
@@ -72,7 +72,7 @@ export default function AboutPage() {
 
             {/* Why Choose Us */}
             <div>
-              <h2 className="text-2xl font-bold mb-6 text-primary">Why Choose EZvisa?</h2>
+              <h2 className="text-2xl font-semibold mb-6 text-primary">Why Choose EZvisa?</h2>
               <div className="grid md:grid-cols-2 gap-6">
                 
                 <div className="bg-card/75 border border-border/80 shadow-md hover:shadow-xl hover:border-primary/20 hover:-translate-y-1 rounded-2xl p-6 transition-all duration-300">
@@ -81,7 +81,7 @@ export default function AboutPage() {
                       <CheckCircle className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-foreground mb-2">Expert Guidance</h3>
+                      <h3 className="font-semibold text-foreground mb-2">Expert Guidance</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         Our team of visa experts has years of experience processing thousands of successful applications
                         across all European countries.
@@ -96,7 +96,7 @@ export default function AboutPage() {
                       <Users className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-foreground mb-2">Dedicated Support</h3>
+                      <h3 className="font-semibold text-foreground mb-2">Dedicated Support</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         Get personalized assistance throughout your application journey with our responsive support team
                         available via chat, email, and phone.
@@ -111,7 +111,7 @@ export default function AboutPage() {
                       <Globe className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-foreground mb-2">All European Countries</h3>
+                      <h3 className="font-semibold text-foreground mb-2">All European Countries</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         We handle visa applications for all 29 Schengen countries plus the UK, covering your entire
                         European travel needs.
@@ -126,7 +126,7 @@ export default function AboutPage() {
                       <Award className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-foreground mb-2">Transparent Pricing</h3>
+                      <h3 className="font-semibold text-foreground mb-2">Transparent Pricing</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
                         No hidden fees, no surprises. Our flat rate includes document review, application preparation,
                         and expert consultation.
@@ -140,7 +140,7 @@ export default function AboutPage() {
 
             {/* Our Story */}
             <div className="prose prose-gray max-w-none">
-              <h2 className="text-2xl font-bold mb-4 text-primary">Our Story</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-primary">Our Story</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Founded by experienced travel professionals who understand the challenges of visa applications, EZvisa
                 was created to bridge the gap between travelers and their European dreams. We saw too many people
@@ -154,22 +154,22 @@ export default function AboutPage() {
             </div>
 
             {/* Stats */}
-            <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 md:backdrop-blur- shadow-primary/[0.02]">
+            <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 shadow-primary/[0.02]">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
-                  <div className="text-3xl font-bold text-primary mb-1">5,000+</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">5,000+</div>
                   <div className="text-sm font-semibold text-muted-foreground">Visas Processed</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-primary mb-1">29</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">29</div>
                   <div className="text-sm font-semibold text-muted-foreground">Countries Covered</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-primary mb-1">98%</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">98%</div>
                   <div className="text-sm font-semibold text-muted-foreground">Success Rate</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold text-primary mb-1">24/7</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">24/7</div>
                   <div className="text-sm font-semibold text-muted-foreground">Support Available</div>
                 </div>
               </div>

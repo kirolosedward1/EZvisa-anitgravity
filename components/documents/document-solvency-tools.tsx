@@ -34,8 +34,8 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
   return (
     <div className="mt-12 space-y-8">
       {/* Solvency Intelligence Banner */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 md:p-8 shadow-md border border-slate-700/60 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="text-white rounded-2xl p-6 md:p-8 shadow-md border border-slate-700/60 relative overflow-hidden bg-[#0A0F1F]">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full pointer-events-none" />
         
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -48,7 +48,7 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
             </span>
           </div>
 
-          <h3 className="text-xl md:text-2xl font-bold tracking-tight mb-2">
+          <h3 className="text-xl md:text-2xl font-semibold tracking-tight mb-2">
             Bank Balance &amp; Financial Proof for {country}
           </h3>
           <p className="text-sm text-slate-300 max-w-2xl leading-relaxed mb-6">
@@ -56,17 +56,17 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
               <span className="text-xs text-slate-300 block mb-1">Daily Subsistence Rate</span>
-              <span className="text-xl font-bold text-white">
+              <span className="text-xl font-semibold text-white">
                 {funds.currency === "CHF" ? `${funds.dailyRate} CHF` : `€${funds.dailyRate}`}
               </span>
               <span className="text-[11px] text-slate-400 block mt-0.5">per person / day</span>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
               <span className="text-xs text-slate-300 block mb-1">10-Day Trip Minimum</span>
-              <span className="text-xl font-bold text-emerald-400">
+              <span className="text-xl font-semibold text-emerald-400">
                 ~{funds.totalAed.toLocaleString()} AED
               </span>
               <span className="text-[11px] text-slate-400 block mt-0.5">
@@ -74,9 +74,9 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
               </span>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
               <span className="text-xs text-slate-300 block mb-1">Recommended Ending Buffer</span>
-              <span className="text-xl font-bold text-blue-400">
+              <span className="text-xl font-semibold text-blue-400">
                 ~{funds.recommendedBufferAed.toLocaleString()} AED
               </span>
               <span className="text-[11px] text-slate-400 block mt-0.5">+30% expert safety cushion</span>
@@ -106,9 +106,9 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
           <div>
             <div className="flex items-center gap-2 mb-2 text-primary">
               <Calendar className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase tracking-wider">Stay Duration Rules</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">Stay Duration Rules</span>
             </div>
-            <h4 className="font-bold text-base mb-1.5">Schengen 90/180-Day Rule Calculator</h4>
+            <h4 className="font-semibold text-base mb-1.5">Schengen 90/180-Day Rule Calculator</h4>
             <p className="text-xs text-muted-foreground leading-relaxed mb-4">
               Short-stay Schengen visas limit your stay to 90 days in any rolling 180-day window. Verify your planned dates to avoid unintended overstay violations.
             </p>
@@ -126,9 +126,9 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
           <div>
             <div className="flex items-center gap-2 mb-2 text-amber-600 dark:text-amber-500">
               <MapPin className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase tracking-wider">Submission Centers</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">Submission Centers</span>
             </div>
-            <h4 className="font-bold text-base mb-1.5">{country} Appointment Centers in UAE</h4>
+            <h4 className="font-semibold text-base mb-1.5">{country} Appointment Centers in UAE</h4>
             <p className="text-xs text-muted-foreground leading-relaxed mb-4">
               Applications for {country} in the UAE are submitted via {provider} in Dubai and Abu Dhabi. Biometrics (VIS) remain valid for 59 months.
             </p>
@@ -150,7 +150,7 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-base">Consular Dossier Stacking Order</h4>
+              <h4 className="font-semibold text-base">Consular Dossier Stacking Order</h4>
               <p className="text-xs text-muted-foreground">Standard 11-step arrangement expected by VFS, BLS, and TLS submission counters</p>
             </div>
           </div>
@@ -178,11 +178,11 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {stackingSteps.map((step) => (
                 <div key={step.num} className="bg-white dark:bg-slate-900 border rounded-lg p-3 text-xs flex items-start gap-2.5">
-                  <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">
+                  <span className="w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-[10px] shrink-0 mt-0.5">
                     {step.num}
                   </span>
                   <div>
-                    <h5 className="font-bold text-foreground text-xs">{step.title}</h5>
+                    <h5 className="font-semibold text-foreground text-xs">{step.title}</h5>
                     <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">{step.desc}</p>
                   </div>
                 </div>

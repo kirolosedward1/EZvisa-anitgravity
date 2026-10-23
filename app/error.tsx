@@ -14,13 +14,13 @@ export default function Error({
 }) {
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen flex items-center justify-center px-4">
       <div className="text-center max-w-md">
         <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
           <AlertTriangle className="w-10 h-10 text-red-600" />
         </div>
 
-        <h1 className="text-2xl font-bold text-foreground mb-3">Something went wrong</h1>
+        <h1 className="text-2xl font-semibold text-foreground mb-3">Something went wrong</h1>
 
         <p className="text-muted-foreground mb-8">
           We apologize for the inconvenience. An unexpected error occurred while processing your request.
