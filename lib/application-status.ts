@@ -25,7 +25,7 @@ export type ApplicationLike = {
 
 export type StepKey = "payment" | "documents" | "review" | "preparation" | "ready"
 
-export type Stage = StepKey | "rejected"
+export type Stage = StepKey | "rejected" | "cancelled"
 
 export const APPLICATION_STEPS: { key: StepKey; label: string; description: string }[] = [
   { key: "payment", label: "Payment", description: "Secure your file" },
@@ -59,7 +59,9 @@ export function getDocumentProgress(app: ApplicationLike) {
 }
 
 export function getStage(app: ApplicationLike): Stage {
-  const status = app.application_status
+  const status = (app.application_status || "").toLowerCase()
+  // Same order as the app's stage(): cancelled is decided before payment_status.
+  if (status === "cancelled") return "cancelled"
   if (status === "rejected") return "rejected"
   if (!isPaid(app)) return "payment"
   if (status === "ready") return "ready"

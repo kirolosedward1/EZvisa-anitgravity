@@ -5,8 +5,10 @@ import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
+import { EmploymentStep } from "@/components/apply/employment-step"
 import { datesInOrder, INVALID_DATE_MESSAGE, RETURN_AFTER_DEPARTURE } from "@/lib/dates"
 import type { DetailStep } from "@/lib/application-status"
+import type { FormData } from "@/lib/form-types"
 
 function minDeparture() {
   const date = new Date()
@@ -32,7 +34,7 @@ export function ContinueForm({
   const [end, setEnd] = useState("")
   const [hasPassport, setHasPassport] = useState("")
   const [passportNumber, setPassportNumber] = useState("")
-  const [employment, setEmployment] = useState("")
+  const [employment, setEmployment] = useState<Partial<FormData>>({})
   const [error, setError] = useState("")
   const [pending, setPending] = useState(false)
   const step = steps[index]
@@ -49,7 +51,13 @@ export function ContinueForm({
         travelEndDate: end,
         hasValidPassport: hasPassport,
         passportNumber,
-        employmentStatus: employment,
+        employmentStatus: employment.employmentStatus || "",
+        jobTitle: employment.jobTitle || "",
+        companyName: employment.companyName || "",
+        employmentStartDate: employment.employmentStartDate || "",
+        monthlySalary: employment.monthlySalary || "",
+        hasNOC: employment.hasNOC || "",
+        averageMonthlyIncome: employment.averageMonthlyIncome || "",
       }),
     })
     const data = await response.json().catch(() => ({}))
@@ -81,7 +89,7 @@ export function ContinueForm({
       setError("Enter your passport number, or say you do not have a valid passport.")
       return
     }
-    if (step === "employment" && !employment) {
+    if (step === "employment" && !employment.employmentStatus) {
       setError("Choose your employment status.")
       return
     }
@@ -147,30 +155,25 @@ export function ContinueForm({
       )}
 
       {step === "employment" && (
-        <label className="text-sm font-medium text-foreground">
-          Employment status
-          <select
-            className="mt-2 h-12 w-full rounded-xl border border-input bg-background px-3"
-            value={employment}
-            onChange={(event) => setEmployment(event.target.value)}
-          >
-            <option value="">Select employment status</option>
-            <option value="employed">Employed</option>
-            <option value="business">Business owner</option>
-            <option value="freelancer">Freelancer</option>
-            <option value="student">Student</option>
-            <option value="unemployed">Unemployed</option>
-            <option value="retired">Retired</option>
-          </select>
-        </label>
+        <EmploymentStep
+          formData={employment as FormData}
+          updateFormData={(data) => setEmployment((current) => ({ ...current, ...data }))}
+          onNext={next}
+          onBack={() => {
+            if (index > 0) setIndex((current) => current - 1)
+          }}
+          isLoading={pending}
+        />
       )}
 
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <Button type="button" className="h-12 rounded-xl" onClick={next} disabled={pending}>
-        {pending ? <Loader2 className="size-4 animate-spin" /> : null}
-        {index >= steps.length - 1 ? "Save and upload documents" : "Continue"}
-      </Button>
+      {step !== "employment" && (
+        <Button type="button" className="h-12 rounded-xl" onClick={next} disabled={pending}>
+          {pending ? <Loader2 className="size-4 animate-spin" /> : null}
+          {index >= steps.length - 1 ? "Save and upload documents" : "Continue"}
+        </Button>
+      )}
     </div>
   )
 }

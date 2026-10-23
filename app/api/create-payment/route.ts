@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
     for (const [key, value] of Object.entries(paymentCorsHeaders(origin))) headers.set(key, value)
     return NextResponse.json(body, { status: init.status, headers })
   }
+  const started = Date.now()
   try {
     const isDev = process.env.NODE_ENV === "development"
     if (origin && !isAllowedPaymentOrigin(origin)) {
@@ -26,7 +27,12 @@ export async function POST(request: NextRequest) {
     
     // Rate limiting - strict for payment routes (Redis-based)
     const clientIp = getClientIp(request)
-    const rateLimitResult = await checkRateLimit(`payment:${clientIp}`, RATE_LIMITS.strict)
+    const rateLimitResult = await Promise.race([
+      checkRateLimit(`payment:${clientIp}`, RATE_LIMITS.strict),
+      new Promise<Awaited<ReturnType<typeof checkRateLimit>>>((resolve) =>
+        setTimeout(() => resolve({ success: true, remaining: RATE_LIMITS.strict.limit, resetIn: RATE_LIMITS.strict.windowSeconds }), 3000),
+      ),
+    ])
     
     if (!rateLimitResult.success) {
       console.log("[v0] Rate limit exceeded for payment")
@@ -113,9 +119,10 @@ export async function POST(request: NextRequest) {
       return json({ error: "Payment service configuration error" }, { status: 500 })
     }
 
-    console.log("[v0] Calling Ziina API...")
+    console.log("[payment] Calling Ziina API", { waitedMs: Date.now() - started })
     const response = await fetch("https://api-v2.ziina.com/api/payment_intent", {
       method: "POST",
+      signal: AbortSignal.timeout(12000),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
@@ -154,15 +161,18 @@ export async function POST(request: NextRequest) {
     const { error: linkError } = await supabase.from("visa_applications").update({ payment_id: data.id }).eq("id", applicationId)
     if (linkError) console.error("[payment] Failed to link payment to application", linkError.code)
 
-    console.log("[v0] Payment intent created successfully:", data.id)
-    return json(data)
+    console.log("[payment] Payment intent created", { id: data.id, ms: Date.now() - started })
+    return json({ ...data, elapsedMs: Date.now() - started })
   } catch (error) {
+    const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")
+    console.error("[payment] create-payment failed", { ms: Date.now() - started, timedOut, error })
     return json(
       {
-        error: "Failed to create payment intent",
+        error: timedOut ? "Ziina took too long to respond. Retry." : "Failed to create payment intent",
+        elapsedMs: Date.now() - started,
         details: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 },
+      { status: timedOut ? 504 : 500 },
     )
   }
 }

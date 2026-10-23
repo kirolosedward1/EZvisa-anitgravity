@@ -117,10 +117,10 @@ export function WhatYouGetSection() {
       <div
         className="absolute inset-0 opacity-[0.1] pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+          backgroundImage: "none",
           backgroundSize: "32px 32px",
-          maskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 75%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 75%, transparent 100%)",
+          maskImage: "none",
+          WebkitMaskImage: "none",
         }}
       />
 

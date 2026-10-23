@@ -133,7 +133,7 @@ function PaymentSuccessContent() {
 
           {/* What Happens Next */}
           <div className="mb-8 bg-card border border-border/80 shadow-sm rounded-3xl p-6 md:p-8 max-w-md mx-auto text-left relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full pointer-events-none" />
             <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-6">
               What Happens Next
             </h2>

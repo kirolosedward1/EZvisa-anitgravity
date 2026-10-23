@@ -34,12 +34,12 @@ export default function DestinationsPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="min-h-screen bg-[#F7F8FA]">
         <InnerHero
           badge="Destinations"
           title={
             <>
-              Explore Schengen <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary via-blue-500 to-primary/80">Destinations</span>
+              Explore Schengen <span className="text-[#0436DC]">Destinations</span>
             </>
           }
           description="Find tailored visa checklists, processing times, and prices for all 29 Schengen member states. We make visa applications simple."

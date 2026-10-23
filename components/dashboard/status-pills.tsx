@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getStatusDisplay, narrowNextLabel, nextTaskHref, type ApplicationLike } from "@/lib/application-status"
 
@@ -12,10 +13,13 @@ export function StatusPills({ app }: { app: ApplicationLike }) {
       {next && (
         <Link
           href={nextTaskHref(app, next)}
-          className="inline-flex items-center rounded-full border border-warning/30 bg-warning/15 px-2.5 py-0.5 text-xs font-medium text-warning"
+          className="inline-flex items-center gap-1 rounded-full bg-[#FFF4EC] px-2.5 py-0.5 text-xs font-medium text-[#B83200]"
         >
           <span className="max-[360px]:hidden">{next.label}</span>
-          <span className="hidden max-[360px]:inline">{narrowNextLabel()}</span>
+          <span className="hidden max-[360px]:inline-flex items-center gap-1">
+            {narrowNextLabel()}
+            <ArrowRight className="size-3" aria-hidden="true" />
+          </span>
         </Link>
       )}
     </div>

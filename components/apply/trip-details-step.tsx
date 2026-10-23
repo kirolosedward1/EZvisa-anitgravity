@@ -87,12 +87,12 @@ const hotelOptions = [
 ]
 
 const inputStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 shadow-sm"
+  "h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 shadow-sm"
 const selectStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
+  "h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
 const labelStyles = "text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
 const toggleActiveStyles =
-  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-primary text-primary-foreground shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
+  "h-12 rounded-xl font-semibold text-sm bg-[#0436DC] text-white flex items-center justify-center cursor-pointer border border-transparent"
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
@@ -633,7 +633,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
       </div>
 
       {/* Action Buttons */}
-      <div className="md:flex md:justify-between md:pt-4 fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex justify-between gap-3">
+      <div className="md:flex md:justify-between md:pt-4 fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 z-20 flex justify-between gap-3">
         <Button
           type="button"
           onClick={onBack}

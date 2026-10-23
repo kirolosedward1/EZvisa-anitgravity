@@ -66,10 +66,10 @@ export function ContactForm() {
       <div
         className="absolute inset-0 opacity-[0.12] pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+          backgroundImage: "none",
           backgroundSize: "24px 24px",
-          maskImage: "radial-gradient(circle at 50% 50%, black 75%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(circle at 50% 50%, black 75%, transparent 100%)",
+          maskImage: "none",
+          WebkitMaskImage: "none",
         }}
       />
 

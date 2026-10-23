@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { APPLICATION_READY, APPLICATION_READY_AR, PREPARATION_TIME, PREPARATION_TIME_AR } from "@/lib/copy"
 
-function useArabic() {
+export function useArabic() {
   const [arabic, setArabic] = useState(false)
   useEffect(() => {
     const read = () => {

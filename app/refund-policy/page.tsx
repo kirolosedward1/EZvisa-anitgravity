@@ -17,7 +17,7 @@ export default function RefundPolicyPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-gray-50">
+      <div className="min-h-screen">
         <InnerHero
           badge="Legal"
           title="Refund Policy"

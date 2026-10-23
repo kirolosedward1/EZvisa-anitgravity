@@ -7,7 +7,6 @@ import { NationalityStep } from "@/components/apply/nationality-step"
 import { TripDetailsStep } from "@/components/apply/trip-details-step"
 import { DocumentsStep } from "@/components/apply/documents-step"
 import { PaymentStep } from "@/components/apply/payment-step"
-import { EmploymentStep } from "@/components/apply/employment-step"
 import { SpouseStep } from "@/components/apply/spouse-step"
 import { CheckCircle2, ChevronDown } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
@@ -282,8 +281,9 @@ function ApplyPageContent() {
       const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
       
       // Skip spouse step (step 2) if not needed
-      if (nextStep === 2 && !shouldShowSpouse) {
-        return 3 // Skip to employment
+      // Employment is asked after payment on /continue/[id].
+      if (nextStep === 3 || (nextStep === 2 && !shouldShowSpouse)) {
+        return 4
       }
       
       return Math.min(nextStep, 5)
@@ -298,8 +298,8 @@ function ApplyPageContent() {
       const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
       
       // Skip spouse step (step 2) when going back if not needed
-      if (previousStep === 2 && !shouldShowSpouse) {
-        return 1 // Skip back to personal
+      if (previousStep === 3 || (previousStep === 2 && !shouldShowSpouse)) {
+        return shouldShowSpouse ? 2 : 1
       }
       
       return Math.max(previousStep, 1)
@@ -382,7 +382,7 @@ function ApplyPageContent() {
       }
 
       if (stepSlug && isValidStep(stepSlug)) {
-        const stepNumber = getStepNumber(stepSlug)
+        const stepNumber = stepSlug === "employment" ? 4 : getStepNumber(stepSlug)
         setCurrentStep(stepNumber)
       } else if (stepSlug) {
         // Invalid step, redirect to personal step
@@ -439,7 +439,6 @@ function ApplyPageContent() {
       return [
         { number: 1, title: "Personal Information", description: "Profile & contact details" },
         { number: 2, title: "Spouse Information", description: "Spouse details" },
-        { number: 3, title: "Employment", description: "Work & income details" },
         { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
         { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
       ]
@@ -447,7 +446,6 @@ function ApplyPageContent() {
 
     return [
       { number: 1, title: "Personal Information", description: "Profile & contact details" },
-      { number: 3, title: "Employment", description: "Work & income details" },
       { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
       { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
     ]
@@ -486,7 +484,7 @@ function ApplyPageContent() {
 
     const stepSlug = searchParams.get("step")
     if (stepSlug && isValidStep(stepSlug)) {
-      const stepNumber = getStepNumber(stepSlug)
+      const stepNumber = stepSlug === "employment" ? 4 : getStepNumber(stepSlug)
       if (stepNumber !== currentStep && !isUpdatingUrl.current) {
         setCurrentStep(stepNumber)
       }
@@ -521,15 +519,6 @@ function ApplyPageContent() {
           />
         )
       case "employment":
-        return (
-          <EmploymentStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-            onBack={handleBack}
-            isLoading={isTransitioning}
-          />
-        )
       case "trip-details":
         return (
           <TripDetailsStep
@@ -580,18 +569,6 @@ function ApplyPageContent() {
       <SiteHeader />
 
       <div className="flex-1 relative overflow-hidden bg-background">
-        {/* Aurora Mesh Gradient Background - Lighter */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none transform-gpu">
-          {/* Static gradient orbs - Optimized for GPU/Battery by removing continuous pulse animations */}
-          <div className="absolute -top-[40%] -right-[20%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-blue-400/15 via-indigo-400/10 to-purple-400/5 blur-3xl" />
-          <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tr from-violet-400/12 via-blue-300/8 to-cyan-300/5 blur-3xl" />
-          <div className="absolute top-[60%] right-[10%] w-[60%] h-[60%] rounded-full bg-gradient-to-tl from-indigo-400/10 via-blue-400/8 to-primary/5 blur-3xl" />
-          
-          {/* Mesh overlay for texture */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.03),transparent_50%)] opacity-40" />
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-15" />
-        </div>
-
         <div className="relative z-10 container mx-auto px-4 pt-28 md:pt-36 pb-16 md:pb-24" ref={wizardContainerRef}>
           {/* Mobile: Title and Progress at Top */}
           <motion.div
@@ -612,9 +589,9 @@ function ApplyPageContent() {
                 </div>
                 <span>{Math.round(progressPercentage)}% complete</span>
               </div>
-              <div className="h-1.5 bg-border/40 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-[#E3E7EF] rounded-full overflow-hidden">
                 <motion.div
-                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-[0_0_10px_rgba(59,130,246,0.3)] rounded-full"
+                  className="h-full bg-[#0436DC] rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${progressPercentage}%` }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
@@ -642,9 +619,9 @@ function ApplyPageContent() {
                     </div>
                     <span>{Math.round(progressPercentage)}% complete</span>
                   </div>
-                  <div className="h-1.5 bg-border/40 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[#E3E7EF] rounded-full overflow-hidden">
                     <motion.div
-                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 shadow-[0_0_10px_rgba(59,130,246,0.3)] rounded-full"
+                      className="h-full bg-[#0436DC] rounded-full"
                       initial={{ width: 0 }}
                       animate={{ width: `${progressPercentage}%` }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
@@ -794,7 +771,7 @@ function ApplyPageContent() {
       </div>
 
       {showResumeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 md:backdrop-blur-md animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 animate-in fade-in duration-200">
           <div className="bg-white dark:bg-slate-900 border border-border/80 shadow-xl rounded-md p-6 md:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col gap-5">
             <div className="space-y-2">
               <h3 className="text-xl font-semibold tracking-tight text-foreground">Continue Application?</h3>

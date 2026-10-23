@@ -33,15 +33,15 @@ export default function AboutPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 relative overflow-hidden">
+      <div className="min-h-screen relative overflow-hidden">
         {/* Decorative dot matrix background */}
         <div
           className="absolute inset-0 opacity-[0.1] pointer-events-none"
           style={{
-            backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+            backgroundImage: "none",
             backgroundSize: "32px 32px",
-            maskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 75%, transparent 100%)",
-            WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 75%, transparent 100%)",
+            maskImage: "none",
+            WebkitMaskImage: "none",
           }}
         />
 
@@ -49,7 +49,7 @@ export default function AboutPage() {
           badge="About Us"
           title={
             <>
-              Your trusted partner for <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Schengen visas</span>
+              Your trusted partner for <span className="text-primary bg-[#0436DC]">Schengen visas</span>
             </>
           }
           description="At EZvisa, we combine technology and expertise to simplify your travel preparation so embassies say yes."
@@ -154,7 +154,7 @@ export default function AboutPage() {
             </div>
 
             {/* Stats */}
-            <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 md:backdrop-blur- shadow-primary/[0.02]">
+            <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 shadow-primary/[0.02]">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
                   <div className="text-3xl font-bold text-primary mb-1">5,000+</div>

@@ -50,7 +50,9 @@ export function CaseSummary({
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Payment</dt>
           <dd>
-            <StatusBadge tone={paid ? "success" : "warning"}>{paid ? "Paid" : "Pending"}</StatusBadge>
+            <StatusBadge tone={(app.application_status || "").toLowerCase() === "cancelled" ? "neutral" : paid ? "success" : "warning"}>
+              {(app.application_status || "").toLowerCase() === "cancelled" ? "Cancelled" : paid ? "Paid" : "Pending"}
+            </StatusBadge>
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4">

@@ -50,7 +50,7 @@ export function ApplicationOverview({ app, stage }: { app: VisaApplication; stag
         <StatusPills app={app} />
       </div>
 
-      {stage !== "rejected" && (
+      {stage !== "rejected" && stage !== "cancelled" && (
         <div className="border-t border-border/60 pt-6">
           <ProgressTracker stage={stage} />
         </div>

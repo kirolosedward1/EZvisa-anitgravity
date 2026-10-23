@@ -57,6 +57,10 @@ export async function POST(request: Request) {
   if (employmentStatus) {
     wizard.employmentStatus = employmentStatus
     notes.employmentStatus = employmentStatus
+    for (const key of ["jobTitle", "companyName", "employmentStartDate", "monthlySalary", "hasNOC", "averageMonthlyIncome"] as const) {
+      const value = typeof body[key] === "string" ? body[key].trim().slice(0, 120) : ""
+      if (value) wizard[key] = value
+    }
   }
   notes.wizard = wizard
 

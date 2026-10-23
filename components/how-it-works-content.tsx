@@ -129,7 +129,7 @@ export function HowItWorksContent() {
                 <div key={index} className="relative">
                   {/* Connector Line */}
                   {index < steps.length - 1 && (
-                    <div className="hidden lg:block absolute left-12 top-20 bottom-[-32px] w-[2px] bg-gradient-to-b from-primary/30 to-primary/5" />
+                    <div className="hidden lg:block absolute left-12 top-20 bottom-[-32px] w-[2px] bg-[#0436DC]" />
                   )}
 
                   <div className="bg-card border border-border/80 rounded-2xl p-6 lg:p-8 relative shadow-sm hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 group">

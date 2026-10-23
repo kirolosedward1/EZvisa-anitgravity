@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils"
 export type StatusTone = "success" | "warning" | "info" | "danger" | "neutral"
 
 const toneStyles: Record<StatusTone, { className: string; icon: typeof CheckCircle2 }> = {
-  success: { className: "bg-success/10 text-success border-success/20", icon: CheckCircle2 },
-  warning: { className: "bg-warning/10 text-warning border-warning/25", icon: AlertCircle },
+  success: { className: "border-transparent bg-[#EAF6EE] text-[#1A7F37]", icon: CheckCircle2 },
+  warning: { className: "border-transparent bg-[#FFF4EC] text-[#B83200]", icon: AlertCircle },
   info: { className: "bg-primary/10 text-primary border-primary/15", icon: Clock },
   danger: { className: "bg-destructive/10 text-destructive border-destructive/20", icon: XCircle },
-  neutral: { className: "bg-muted text-muted-foreground border-border", icon: Circle },
+  neutral: { className: "border-transparent bg-[#F2F4F7] text-[#5B6475]", icon: Circle },
 }
 
 export function StatusBadge({

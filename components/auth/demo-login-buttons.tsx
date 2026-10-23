@@ -59,7 +59,7 @@ export function DemoLoginButtons({ next = "/dashboard", className = "", variant 
   };
 
   return (
-    <div className={`rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/5 via-primary/[0.02] to-transparent p-5 sm:p-6 ${className}`}>
+    <div className={`rounded-2xl border border-primary/20 bg-[#F7F8FA] p-5 sm:p-6 ${className}`}>
       <div className="flex items-center gap-2 mb-2">
         <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-primary text-primary-foreground shadow-xs">
           <Sparkles className="w-3 h-3" /> Demo Sandbox

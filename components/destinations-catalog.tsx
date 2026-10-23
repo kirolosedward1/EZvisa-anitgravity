@@ -43,7 +43,7 @@ export function DestinationsCatalog() {
   return (
     <div className="w-full">
       {/* Search and Tabs Control Panel */}
-      <div className="bg-background/80 md:backdrop-blur-md border-b border-border/40 py-6 mb-10">
+      <div className="bg-background/80 border-b border-border/40 py-6 mb-10">
         <div className="container mx-auto px-6 max-w-6xl">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Real-time Search */}
@@ -118,7 +118,7 @@ export function DestinationsCatalog() {
                         className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                       />
                       {/* Vignette Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent z-10 transition-opacity duration-300 group-hover:from-black/100 group-hover:via-black/50" />
+                      <div className="absolute inset-0 z-10 transition-opacity duration-300 bg-[#0A0F1F]/70" />
                     </Link>
 
                     {/* Top Right Circular Arrow Icon (links to landing page) */}
@@ -171,7 +171,7 @@ export function DestinationsCatalog() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="max-w-2xl mx-auto text-center py-16 px-6 bg-gradient-to-br from-muted/50 to-muted border border-border/40 rounded-3xl md:backdrop-blur-md"
+                className="max-w-2xl mx-auto text-center py-16 px-6 border border-border/40 rounded-3xl"
               >
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
                   <Compass className="w-8 h-8 animate-pulse" />

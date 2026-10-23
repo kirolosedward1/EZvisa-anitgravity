@@ -231,9 +231,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                               transition={{ duration: 0.2 }}
                               className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-[600px] z-50 cursor-default"
                             >
-                              <div className="bg-background/95 backdrop-blur-xl border border-border/60 shadow-2xl shadow-black/10 rounded-3xl p-6 relative overflow-hidden">
+                              <div className="bg-background/95 border border-border/60 shadow-2xl shadow-black/10 rounded-3xl p-6 relative overflow-hidden">
                                 {/* Subtle background glow */}
-                                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/3" />
+                                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
                                 
                                 <div className="relative z-10">
                                   <div className="flex items-center justify-between mb-4 px-2">
@@ -402,7 +402,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
-              className="fixed inset-0 bg-black/40 md:backdrop-blur-md z-40"
+              className="fixed inset-0 bg-black/40 z-40"
               onClick={() => setIsMenuOpen(false)}
             />
 

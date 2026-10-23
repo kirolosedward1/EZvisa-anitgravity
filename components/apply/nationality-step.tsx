@@ -55,12 +55,12 @@ const schengenCountries = [
 
 // Shared style constants
 const inputStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none shadow-sm"
+  "h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none shadow-sm"
 const selectStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
+  "h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
 const labelStyles = "text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
 const toggleActiveStyles =
-  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-primary text-primary-foreground shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
+  "h-12 rounded-xl font-semibold text-sm bg-[#0436DC] text-white flex items-center justify-center cursor-pointer border border-transparent"
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
@@ -217,7 +217,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-1 bg-popover/95 md:backdrop-blur-md border border-border/80 shadow-2xl rounded-xl">
+            <PopoverContent className="w-full p-1 bg-popover/95 border border-border/80 shadow-2xl rounded-xl">
               <Command>
                 <CommandInput placeholder="Search country..." autoFocus={!isMobile} className="border-none focus:ring-0" />
                 <CommandList>
@@ -338,7 +338,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
         {/* Contact Information Section */}
         {/* Divider */}
         <div className="md:col-span-2 my-2">
-          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+          <div className="h-px bg-[#0436DC]" />
         </div>
         
         {/* First Name */}
@@ -595,7 +595,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
         )}
       </div>
 
-      <div className="md:flex md:justify-end fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20">
+      <div className="md:flex md:justify-end fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 z-20">
         <Button
           type="submit"
           disabled={isLoading}

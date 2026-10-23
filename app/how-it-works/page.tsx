@@ -34,12 +34,12 @@ export default function HowItWorksPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-gray-50">
+      <div className="min-h-screen bg-[#F7F8FA]">
         <InnerHero
           badge="Process"
           title={
             <>
-              How It <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Works</span>
+              How It <span className="text-[#0436DC]">Works</span>
             </>
           }
           description="Get your European visa prepared in 4 simple steps. Fast, easy, and hassle-free."
@@ -58,9 +58,7 @@ export default function HowItWorksPage() {
               className="w-full h-full object-cover object-center" 
             />
             {/* White overlay to ensure text readability */}
-            <div className="absolute inset-0 bg-background/85 backdrop-blur-[2px]" />
-            {/* Subtle gradient to fade into next/previous sections */}
-            <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+            <div className="absolute inset-0 bg-[#FFFFFF]/90" />
           </div>
           
           <div className="container mx-auto px-6 max-w-6xl relative z-10">

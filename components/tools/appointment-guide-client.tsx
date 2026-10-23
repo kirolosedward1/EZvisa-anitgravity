@@ -245,7 +245,7 @@ export function AppointmentGuideClient() {
             <div className="pt-2 border-t border-border/40 space-y-3">
               <Button
                 asChild
-                className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20"
+                className="w-full h-12 text-base font-bold text-white shadow-lg shadow-blue-500/20 bg-[#0436DC]"
               >
                 <Link href="/apply" className="flex items-center justify-center gap-2">
                   <span>Prepare My Complete Visa Dossier</span>

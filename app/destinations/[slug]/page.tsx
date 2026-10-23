@@ -197,7 +197,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         badge="Apply from Dubai & Abu Dhabi"
         title={
           <>
-            Get your <span className="text-blue-300">{destination.name}</span> Schengen Visa approved, easily.
+            Get your <span className="text-[#0436DC]">{destination.name}</span> Schengen Visa approved, easily.
           </>
         }
         description={`Complete visa file preparation for ${destination.name}. We prepare your application forms, travel itinerary, flight reservations, and cover letter for a successful submission.`}
@@ -214,13 +214,13 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             </Link>
             <Link
               href={destination.documentPath}
-              className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/15 text-white border border-white/25 text-base font-semibold rounded-2xl transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-white text-[#0A0F1F] border border-[#E3E7EF] text-base font-semibold rounded-2xl shadow-[0_8px_24px_rgba(10,15,31,0.08)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               Check Required Documents
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white/60">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#5B6475]">
             <Star className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
             <span>Over 5,000+ Schengen visas processed successfully.</span>
           </div>
@@ -442,7 +442,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       {/* 7. Bottom Final CTA Banner */}
       <section className="py-20 bg-primary text-primary-foreground text-center relative overflow-hidden">
         {/* Soft Decorative Background Circles */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-white/5 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-white/5 rounded-full pointer-events-none" />
         
         <div className="relative container mx-auto px-6 max-w-4xl z-10">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">

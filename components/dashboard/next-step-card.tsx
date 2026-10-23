@@ -103,6 +103,13 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
             </>
           ),
         }
+      case "cancelled":
+        return {
+          icon: LifeBuoy,
+          title: "Cancelled",
+          body: "This application is cancelled. There is nothing to pay.",
+          actions: null,
+        }
       case "rejected":
         return {
           icon: LifeBuoy,
@@ -120,7 +127,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
     }
   })()
 
-  if (isPaid(app) && detailsMissing(app) && app.id) {
+  if (stage !== "cancelled" && isPaid(app) && detailsMissing(app) && app.id) {
     content.icon = FileSearch
     content.title = "Continue your application"
     content.body = "Payment is confirmed. Add your travel dates, passport and employment details, then upload your documents."

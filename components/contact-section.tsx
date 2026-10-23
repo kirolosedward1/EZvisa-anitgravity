@@ -22,13 +22,13 @@ export function ContactSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary via-primary to-indigo-950 text-white shadow-2xl shadow-primary/10 border border-primary/20"
+          className="relative overflow-hidden rounded-3xl text-[#0A0F1F] shadow-[0_8px_24px_rgba(10,15,31,0.08)] border border-[#E3E7EF] bg-[#FFFFFF]"
         >
           {/* Subtle grid pattern overlay */}
           <div
             className="absolute inset-0 opacity-[0.08] pointer-events-none"
             style={{
-              backgroundImage: "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+              backgroundImage: "none",
               backgroundSize: "20px 20px",
             }}
           />
@@ -44,14 +44,11 @@ export function ContactSection() {
             />
           </div>
 
-          {/* Decorative glowing orb */}
-          <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-sky-500/25 blur-[120px] pointer-events-none hidden md:block" />
-
           <div className="relative grid lg:grid-cols-[1.25fr_1fr] gap-12 lg:gap-16 p-8 md:p-14 lg:p-16 z-10">
             
             {/* Left - Text Headline & Actions */}
             <div className="flex flex-col justify-center text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-semibold uppercase tracking-wider mb-6 self-start">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F7F8FA] text-[#0436DC] border border-[#E3E7EF] text-xs font-semibold uppercase tracking-wider mb-6 self-start">
                 <span className="w-1.5 h-1.5 rounded-full bg-sky-300 animate-pulse" />
                 Ready when you are
               </div>
@@ -61,13 +58,13 @@ export function ContactSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: 0.1 }}
-                className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-[1.15] tracking-tight text-white mb-6 text-balance"
+                className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-[1.15] tracking-tight text-[#0A0F1F] mb-6 text-balance"
               >
                 Start your Schengen <br className="hidden sm:inline" />
-                visa application today.
+                visa application <span className="text-[#0436DC]">today.</span>
               </motion.h2>
 
-              <p className="text-base md:text-lg text-white/80 max-w-md leading-relaxed mb-10">
+              <p className="text-base md:text-lg text-[#5B6475] max-w-md leading-relaxed mb-10">
                 Join thousands of travelers who trusted us with their Schengen visa applications.
               </p>
 
@@ -75,11 +72,11 @@ export function ContactSection() {
                 <Button
                   asChild
                   size="lg"
-                  className="h-12 px-7 bg-white text-primary hover:bg-white/95 rounded-xl font-semibold shadow-lg shadow-black/10 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                  className="h-12 px-7 bg-[#0436DC] text-white hover:bg-[#0436DC]/90 rounded-xl font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer"
                 >
                   <Link href="/apply" className="flex items-center">
                     Start application
-                    <ArrowRight className="ml-2 h-4 w-4 text-primary" strokeWidth={2.5} />
+                    <ArrowRight className="ml-2 h-4 w-4 text-white" strokeWidth={2.5} />
                   </Link>
                 </Button>
 
@@ -87,7 +84,7 @@ export function ContactSection() {
                   asChild
                   size="lg"
                   variant="outline"
-                  className="h-12 px-7 bg-white/5 border-white/20 text-white hover:bg-white/10 hover:border-white/30 rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                  className="h-12 px-7 bg-white border border-[#E3E7EF] text-[#0A0F1F] hover:bg-[#F7F8FA] rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] cursor-pointer"
                 >
                   <Link href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application." target="_blank" rel="noopener noreferrer" className="flex items-center">
                     Chat on WhatsApp
@@ -107,8 +104,8 @@ export function ContactSection() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="lg:self-center w-full"
             >
-              <div className="rounded-3xl bg-white/5 md:backdrop-blur-md border border-white/10 p-8 text-left">
-                <div className="text-xs font-semibold tracking-widest text-sky-300 mb-6">What you get</div>
+              <div className="rounded-3xl bg-[#F7F8FA] border border-[#E3E7EF] p-8 text-left">
+                <div className="text-xs font-semibold tracking-widest text-[#0436DC] mb-6">What you get</div>
                 <div className="space-y-4">
                   {benefits.map((benefit, index) => (
                     <motion.div
@@ -119,20 +116,20 @@ export function ContactSection() {
                       transition={{ duration: 0.3, delay: 0.3 + index * 0.08 }}
                       className="flex gap-3.5 items-center"
                     >
-                      <div className="h-6 w-6 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <Check className="h-3.5 w-3.5 text-sky-300" strokeWidth={3} />
+                      <div className="h-6 w-6 rounded-full bg-[#0436DC]/10 flex items-center justify-center flex-shrink-0">
+                        <Check className="h-3.5 w-3.5 text-[#0436DC]" strokeWidth={3} />
                       </div>
-                      <span className="text-sm md:text-base text-white font-medium leading-none">{benefit}</span>
+                      <span className="text-sm md:text-base text-[#0A0F1F] font-medium leading-none">{benefit}</span>
                     </motion.div>
                   ))}
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-white/10 flex items-center justify-between">
+                <div className="mt-8 pt-6 border-t border-[#E3E7EF] flex items-center justify-between">
                   <div>
-                    <span className="text-xs tracking-wider uppercase text-white/55 block">Starting at</span>
+                    <span className="text-xs tracking-wider uppercase text-[#5B6475] block">Starting at</span>
                     <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-3xl font-bold text-white">249</span>
-                      <span className="text-xs font-semibold text-white/70">AED</span>
+                      <span className="text-3xl font-bold text-[#0A0F1F]">249</span>
+                      <span className="text-xs font-semibold text-[#5B6475]">AED</span>
                     </div>
                   </div>
                 </div>

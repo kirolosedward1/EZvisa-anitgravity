@@ -45,6 +45,7 @@ export async function fetchIntent(id: string): Promise<ZiinaIntent | null> {
   const res = await fetch(`https://api-v2.ziina.com/api/payment_intent/${encodeURIComponent(id)}`, {
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     cache: "no-store",
+    signal: AbortSignal.timeout(12000),
   })
   if (!res.ok) return null
   const data = await res.json().catch(() => null)

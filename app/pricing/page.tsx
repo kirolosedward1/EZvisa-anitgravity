@@ -40,7 +40,7 @@ export default function PricingPage() {
           badge="Pricing Plan"
           title={
             <>
-              All-Inclusive <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Visa Service</span>
+              All-Inclusive <span className="text-primary bg-[#0436DC]">Visa Service</span>
             </>
           }
           description="One-time payment • No hidden fees • Full support"
@@ -116,7 +116,7 @@ export default function PricingPage() {
               </div>
 
               {/* Info Card */}
-              <div className="mt-10 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6">
+              <div className="mt-10 border border-blue-100 rounded-2xl p-6 bg-[#0436DC]">
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
                     <span className="text-xl">💡</span>
@@ -148,7 +148,7 @@ export default function PricingPage() {
 
           {/* Money Back Guarantee */}
           <div className="mt-20 max-w-5xl mx-auto">
-            <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-2 border-green-200 rounded-3xl p-10 lg:p-12">
+            <div className="border-2 border-green-200 rounded-3xl p-10 lg:p-12 bg-[#0436DC]">
               <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
                 <div className="w-24 h-24 rounded-2xl bg-white shadow-lg flex items-center justify-center flex-shrink-0">
                   <Shield className="w-12 h-12 text-green-600" />
