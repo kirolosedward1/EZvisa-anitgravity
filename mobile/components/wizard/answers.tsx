@@ -19,17 +19,17 @@ export const useFmtDate = () => {
   return (s: string) => (s ? parse(s)!.toLocaleDateString(lang === "ar" ? "ar" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
 };
 
-/** One big answer row. Selected = brand fill + check. */
+/** One answer row: white with a hairline; selected = thin blue outline, soft blue tint and a blue check. */
 export function AnswerRow({ label, selected, onPress, country, testID }: { label: string; selected?: boolean; onPress: () => void; country?: string; testID?: string }) {
   const c = useColors();
   return (
     <PressScale onPress={() => { select(); onPress(); }} accessibilityRole="radio" accessibilityState={{ checked: !!selected }} aria-checked={!!selected} accessibilityLabel={label} testID={testID}
-      style={({ pressed }) => [{ minHeight: 60, borderRadius: R.tile, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm,
-        backgroundColor: selected ? c.tintFill : c.card, opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.985 : 1 }] }, curve]}>
-      {!!country && <Flag country={country} size={32} />}
-      <Text variant="headline" weight={selected ? "600" : "500"} color={selected ? c.onTint : c.label} style={{ flex: 1 }}>{label}</Text>
-      <View style={{ width: 24, height: 24, borderRadius: R.round, borderWidth: selected ? 0 : 1.5, borderColor: c.tertiaryLabel, backgroundColor: selected ? c.onAccentSecondary : "transparent", alignItems: "center", justifyContent: "center" }}>
-        {selected && <Icon name="checkmark" size={ICON.sm} color={c.accentFill} weight="bold" />}
+      style={({ pressed }) => [{ minHeight: 52, borderRadius: R.lg, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm,
+        backgroundColor: selected ? c.accentSoft : c.surface, borderWidth: selected ? 1.5 : 1, borderColor: selected ? c.accent : c.border, opacity: pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }, curve]}>
+      {!!country && <Flag country={country} size={28} />}
+      <Text variant="body" weight={selected ? "600" : "500"} color={c.label} style={{ flex: 1 }}>{label}</Text>
+      <View style={{ width: 22, height: 22, borderRadius: R.round, borderWidth: selected ? 0 : 1.5, borderColor: c.border, backgroundColor: selected ? c.accent : "transparent", alignItems: "center", justifyContent: "center" }}>
+        {selected && <Icon name="checkmark" size={ICON.xs + 1} color={c.onAccent} weight="bold" />}
       </View>
     </PressScale>
   );
@@ -44,22 +44,12 @@ export function ChoiceList({ label, options, value, onPick, flag }: { label: str
   );
 }
 
-/** Two large Yes / No tiles. */
+/** Yes / No as two answer rows (same look as every other choice). */
 export function YesNoTiles({ label, value, onPick }: { label: string; value: string; onPick: (v: "yes" | "no") => void }) {
-  const c = useColors(); const { t } = useT();
+  const { t } = useT();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ flexDirection: "row", gap: S.sm }}>
-      {(["yes", "no"] as const).map((v) => {
-        const on = value === v;
-        return (
-          <PressScale key={v} onPress={() => { select(); onPick(v); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={v === "yes" ? t("Yes") : t("No")}
-            style={({ pressed }) => [{ flex: 1, minHeight: 120, borderRadius: R.card, alignItems: "center", justifyContent: "center", gap: S.xs, padding: S.md,
-              backgroundColor: on ? c.tintFill : c.card, opacity: pressed ? 0.8 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] }, curve]}>
-            <Icon name={v === "yes" ? "checkmark.circle.fill" : "xmark.circle.fill"} size={ICON.xl} color={on ? c.onAccent : c.secondaryLabel} />
-            <Text variant="title3" color={on ? c.onTint : c.label}>{v === "yes" ? t("Yes") : t("No")}</Text>
-          </PressScale>
-        );
-      })}
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: S.xs }}>
+      {(["yes", "no"] as const).map((v) => <AnswerRow key={v} label={v === "yes" ? t("Yes") : t("No")} selected={value === v} onPress={() => onPick(v)} />)}
     </View>
   );
 }

@@ -1,3 +1,4 @@
+import { useT } from "../lib/i18n";
 import { ActivityIndicator, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 import { PressScale, Text } from "./ui";
@@ -16,14 +17,14 @@ function G({ size = ICON.md + 1 }: { size?: number }) {
 }
 
 export function GoogleButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
-  const g = useIsDark() ? GOOGLE.dark : GOOGLE.light;
+  const g = useIsDark() ? GOOGLE.dark : GOOGLE.light; const { t } = useT();
   return (
-    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel="Continue with Google" accessibilityState={{ busy: !!loading }}
+    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel={t("Continue with Google")} accessibilityState={{ busy: !!loading }}
       style={{ minHeight: SIZE.buttonL, borderRadius: R.round, borderWidth: 1, borderColor: g.border, backgroundColor: g.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xl }}>
       {loading ? <ActivityIndicator color={g.text} /> : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
           <G />
-          <Text variant="headline" weight="500" color={g.text}>Continue with Google</Text>
+          <Text variant="headline" weight="500" color={g.text}>{t("Continue with Google")}</Text>
         </View>
       )}
     </PressScale>
@@ -32,9 +33,9 @@ export function GoogleButton({ onPress, loading }: { onPress: () => void; loadin
 
 /** Just the "G" in a round neutral button (Welcome). Same branding colours as GoogleButton. */
 export function GoogleIconButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
-  const g = useIsDark() ? GOOGLE.dark : GOOGLE.light;
+  const g = useIsDark() ? GOOGLE.dark : GOOGLE.light; const { t } = useT();
   return (
-    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel="Continue with Google" accessibilityState={{ busy: !!loading }} testID="google-icon"
+    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel={t("Continue with Google")} accessibilityState={{ busy: !!loading }} testID="google-icon"
       style={{ width: SIZE.buttonM + S.xs, height: SIZE.buttonM + S.xs, borderRadius: R.round, borderWidth: 1, borderColor: g.border, backgroundColor: g.bg, alignItems: "center", justifyContent: "center" }}>
       {loading ? <ActivityIndicator color={g.text} /> : <G size={ICON.lg} />}
     </PressScale>

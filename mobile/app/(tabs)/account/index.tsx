@@ -1,3 +1,4 @@
+import { stage } from "../../../lib/stage";
 import { ActionSheetIOS, Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
 import { useAvatar, pickAvatar, removeAvatar } from "../../../lib/avatar";
 import * as Print from "expo-print";
@@ -8,7 +9,7 @@ import { pendingUploads } from "../../../lib/uploads";
 import { EMAIL } from "../../../lib/config";
 import { useEffect, useState } from "react";
 import { remindersEnabled, remindersSupported, setRemindersEnabled, planReminders, getPassportExpiry, setPassportExpiry, syncReminders } from "../../../lib/reminders";
-import { useT, type Lang } from "../../../lib/i18n";
+import { useT, type Lang, ltr } from "../../../lib/i18n";
 import { lockSupported, lockEnabled, setLockEnabled, biometricLabel, lockAfter, setLockAfter, LOCK_AFTER } from "../../../lib/lock";
 import { DateAnswer } from "../../../components/wizard/answers";
 import { Stack, router } from "expo-router";
@@ -30,7 +31,7 @@ import { useForm } from "../../../lib/form";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 
 export default function Account() {
-  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
+  const c = useColors(); const pb = useTabInset(S.md as any) /* tab bar + safe area + 16 */; const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true); const { signOut: endSession } = useAuth();
   const photo = useAvatar(session?.user.id);
   const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT(); const { saveBeforeSignOut } = useForm();
@@ -151,7 +152,6 @@ export default function Account() {
           <Button title={t("Create account")} variant="plain" color={c.label} onPress={() => router.push({ pathname: "/auth", params: { mode: "signup" } })} />
         </View>
       </View>
-      {appearance}
       {language}
       {reminders}
       {support}
@@ -161,7 +161,7 @@ export default function Account() {
   const u = session.user;
   /** Profile photo: choose one from Photos, or remove it (kept on this phone, lib/avatar.ts). */
   const editPhoto = () => {
-    const choose = () => { pickAvatar(u.id).catch((e) => Alert.alert(t("Couldn't load"), e?.message ?? String(e))); };
+    const choose = () => { pickAvatar(u.id).catch((e) => { const m = t(e?.message ?? String(e)); if (Platform.OS === "web") window.alert(m); else Alert.alert(t("Couldn't load"), m); }); };
     if (!photo || Platform.OS === "web") { if (photo && Platform.OS === "web" && window.confirm(t("Remove photo?"))) { removeAvatar(); return; } choose(); return; }
     if (Platform.OS === "ios") { ActionSheetIOS.showActionSheetWithOptions({ options: [t("Choose photo"), t("Remove photo"), t("Cancel")], destructiveButtonIndex: 1, cancelButtonIndex: 2 }, (i) => { if (i === 0) choose(); if (i === 1) removeAvatar(); }); return; }
     Alert.alert(t("Profile photo"), undefined, [{ text: t("Choose photo"), onPress: choose }, { text: t("Remove photo"), style: "destructive", onPress: () => { removeAvatar(); } }, { text: t("Cancel"), style: "cancel" }]);
@@ -203,20 +203,19 @@ export default function Account() {
       {!!apps?.length && (
         <ListGroup header={t("Application history")} inset={S.md + 28 + S.md}>
           {apps.map((a) => <ListRow key={a.id} leading={<Flag country={a.countries?.name ?? a.destination_country ?? ""} size={28} />} title={t(a.countries?.name ?? a.destination_country ?? "Application")}
-            subtitle={`${a.reference} · ${t(STATUS_LABEL[a.status] ?? a.status)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`, { withAnchor: true })} />)}
+            subtitle={`${ltr(a.reference)} · ${t(stage(a).label)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`, { withAnchor: true })} />)}
         </ListGroup>
       )}
       {!!paidApps.length && (
         <ListGroup header={t("Receipts")} footer={t("From your payment record. Tap to save or share a PDF.")} inset={58}>
-          {paidApps.map((a) => <ListRow key={a.id} icon="doc.text.fill" iconColor={c.green} title={`${t("Receipt")} · ${a.reference}`} subtitle={t(a.countries?.name ?? a.destination_country ?? "")}
-            value={`${Number(a.payment_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => shareReceipt(a, full, u.email ?? "")} />)}
+          {paidApps.map((a) => <ListRow key={a.id} icon="doc.text.fill" iconColor={c.green} title={`${t("Receipt")} · ${ltr(a.reference)}`} subtitle={t(a.countries?.name ?? a.destination_country ?? "")}
+            value={`${Number(a.payment_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => router.push(`/receipt/${a.id}`)} />)}
         </ListGroup>
       )}
       <ListGroup inset={58}>
         <ListRow icon="bell.fill" iconColor={c.red} title={t("Notifications")} value={unread ? String(unread) : undefined} onPress={() => router.push("/account/notifications")} />
         <ListRow icon="doc.text.fill" iconColor={c.tint} title={t("Applications")} onPress={() => router.navigate("/applications")} />
       </ListGroup>
-      {appearance}
       {language}
       {security}
       {reminders}
@@ -247,18 +246,3 @@ export default function Account() {
   );
 }
 
-const esc = (x: string) => x.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));
-/** Receipt built only from the stored payment record (no invented fields). */
-async function shareReceipt(a: Application, name: string, mail: string) {
-  const amount = `${Number(a.payment_amount).toFixed(2)} ${a.currency || "AED"}`;
-  const rows: [string, string][] = [["Reference", a.reference], ["Destination", a.countries?.name ?? a.destination_country ?? ""], ["Customer", name], ["Email", mail],
-    ["Amount paid", amount], ["Status", a.payment_status ?? ""], ...(a.payment_id ? [["Payment ID", a.payment_id] as [string, string]] : []), ["Date", new Date(a.updated_at ?? a.created_at ?? Date.now()).toLocaleDateString()]];
-  const html = `<html><body style="font-family:-apple-system,Helvetica;padding:32px"><h1 style="margin:0">EZvisa</h1><p style="color:#666">Payment receipt · EZvisa visa application service</p>
-    <table style="width:100%;border-collapse:collapse;margin-top:24px">${rows.map(([k, v]) => `<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #eee">${esc(k)}</td><td style="padding:8px 0;text-align:right;border-bottom:1px solid #eee">${esc(v)}</td></tr>`).join("")}</table>
-    <p style="color:#666;margin-top:24px;font-size:12px">Embassy and VFS fees are not included and are paid at the appointment.</p></body></html>`;
-  try {
-    if (Platform.OS === "web") { await Print.printAsync({ html }); return; }
-    const { uri } = await Print.printToFileAsync({ html });
-    if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: `Receipt ${a.reference}` });
-  } catch (e: any) { Alert.alert("Couldn't create the receipt", e?.message ?? String(e)); }
-}

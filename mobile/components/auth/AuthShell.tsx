@@ -41,13 +41,14 @@ export function AuthShell({ title, subtitle, nav = "close", children, testID }: 
   );
 }
 
-/** Text input on the card fill, 56pt tall, Dynamic Type capped at 1.6x so it never clips. */
+/** Text input: white with a hairline, blue while typing, 48pt tall; Dynamic Type capped at 1.6x so it never clips. */
 export function Field({ trailing, ...p }: TextInputProps & { trailing?: React.ReactNode }) {
-  const c = useColors();
+  const c = useColors(); const [focused, setFocused] = useState(false);
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: c.card, borderRadius: R.input, minHeight: 56, paddingHorizontal: S.md, gap: S.xs }}>
+    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: c.surface, borderRadius: R.lg, minHeight: 48, paddingHorizontal: S.md, gap: S.xs, borderWidth: focused ? 1.5 : 1, borderColor: focused ? c.accent : c.border }}>
       <TextInput placeholderTextColor={c.secondaryLabel} maxFontSizeMultiplier={1.6} accessibilityLabel={p.placeholder} {...p}
-        style={[T.body, { flex: 1, color: c.label, minHeight: 56, paddingVertical: 0, textAlign: "auto" }, Platform.OS === "web" && ({ outlineStyle: "none" } as object)]} />
+        onFocus={(e) => { setFocused(true); p.onFocus?.(e); }} onBlur={(e) => { setFocused(false); p.onBlur?.(e); }}
+        style={[T.body, { flex: 1, color: c.label, minHeight: 46, paddingVertical: 0, textAlign: "auto" }, Platform.OS === "web" && ({ outlineStyle: "none" } as object)]} />
       {trailing}
     </View>
   );

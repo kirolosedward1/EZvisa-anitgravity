@@ -38,7 +38,7 @@ export function buildTimeline(a: Application): Step[] {
   // 1. Submitted. A cancelled row counts as submitted only with evidence (a submit time, a payment, or a website row).
   const sAt = submittedAt(a);
   const submitted = st !== "draft" && (st !== "cancelled" || !!sAt || paid || refunded);
-  const steps: Step[] = [{ key: "submitted", label: "Submitted", state: submitted ? "done" : "todo", at: submitted ? sAt : null }];
+  const steps: Step[] = [st === "draft" ? { key: "submitted", label: "Finish application", state: "current", at: null } : { key: "submitted", label: "Submitted", state: submitted ? "done" : "todo", at: submitted ? sAt : null }];
 
   // 2. Paid (payment_status from the Ziina webhook; no time column exists).
   const pf = PAY_FAILED[a.payment_status ?? ""];
