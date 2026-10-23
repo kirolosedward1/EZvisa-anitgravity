@@ -14,7 +14,7 @@ import { lockSupported, lockEnabled, setLockEnabled, biometricLabel, lockAfter, 
 import { DateAnswer } from "../../../components/wizard/answers";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ListGroup, ListRow, Flag, Avatar, Text, Button, Icon, SegmentedControl, PressScale, useTabInset } from "../../../components/ui";
+import { ListGroup, ListRow, Flag, Avatar, Text, Button, Icon, IconTile, SegmentedControl, PressScale, useTabInset } from "../../../components/ui";
 import { useAppearance, type AppearancePref } from "../../../lib/appearance";
 import { useColors, S, R, ICON } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
@@ -78,9 +78,9 @@ export default function Account() {
   const security = lockSupported ? (
     <ListGroup header={t("Security")} footer={lockNote ?? (bio ? t("Ask for {m} when you open the app.", { m: t(bio) }) : t("No Face ID, Touch ID or passcode is set up on this device."))}>
       <View style={{ minHeight: 52, paddingHorizontal: S.md, paddingVertical: S.xs, flexDirection: "row", alignItems: "center", gap: S.sm }} testID="faceid">
-        <Icon name="faceid" size={20} color={c.green} />
+        <IconTile name="faceid" color={c.green} />
         <Text variant="body" style={{ flex: 1 }}>{t("Unlock with {m}", { m: t(bio ?? "Face ID") })}</Text>
-        <Switch value={lock} disabled={!bio} onValueChange={toggleLock} trackColor={{ true: c.green, false: c.fill }} accessibilityLabel={t("Unlock with {m}", { m: t(bio ?? "Face ID") })} />
+        <Switch value={lock} disabled={!bio} onValueChange={toggleLock} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor="#fff" accessibilityLabel={t("Unlock with {m}", { m: t(bio ?? "Face ID") })} />
       </View>
     {lock && (
         <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm, gap: S.xs }}>
@@ -101,9 +101,9 @@ export default function Account() {
   const reminders = (
     <ListGroup header={t("Reminders")} footer={!remindersSupported ? t("Available in the iOS and Android app.") : remNote ?? (rem ? (planned ? t("{n} reminder(s) scheduled on this phone.", { n: planned }) : t("Nothing to remind yet. Add your passport expiry or submit an application with travel dates.")) : t("A week and a day before you travel, and 6 and 3 months before your passport expires."))}>
       <View style={{ minHeight: 52, paddingHorizontal: S.md, paddingVertical: S.xs, flexDirection: "row", alignItems: "center", gap: S.sm }} testID="reminders">
-        <Icon name="alarm.fill" size={20} color={c.orange} />
+        <IconTile name="alarm.fill" color={c.orange} />
         <Text variant="body" style={{ flex: 1 }}>{t("Trip and passport reminders")}</Text>
-        <Switch value={rem} disabled={!remindersSupported} onValueChange={toggleRem} trackColor={{ true: c.green, false: c.fill }} accessibilityLabel={t("Trip and passport reminders")} />
+        <Switch value={rem} disabled={!remindersSupported} onValueChange={toggleRem} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor="#fff" accessibilityLabel={t("Trip and passport reminders")} />
       </View>
       {/* A row with the date; the wheel opens only when the row is tapped. */}
       <View testID="passport-expiry">
@@ -135,7 +135,7 @@ export default function Account() {
     <ListGroup header={t("Privacy")} footer={t("Anonymous app usage and crash reports. Never your name, passport or email.")}>
       <View style={{ minHeight: 52, paddingHorizontal: S.md, paddingVertical: S.xs, flexDirection: "row", alignItems: "center", gap: S.sm }} testID="usage-sharing">
         <Text variant="body" style={{ flex: 1 }}>{t("Share usage data")}</Text>
-        <Switch value={usage} onValueChange={setUsage} trackColor={{ true: c.green, false: c.fill }} accessibilityLabel={t("Share usage data")} />
+        <Switch value={usage} onValueChange={setUsage} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor="#fff" accessibilityLabel={t("Share usage data")} />
       </View>
       <ListRow title={t("Version")} value={Constants.expoConfig?.version ?? ""} onLongPress={diagnostics} a11yHint={t("Long press for diagnostics")} />
     </ListGroup>
@@ -145,7 +145,7 @@ export default function Account() {
       <Stack.Screen options={{ headerShown: false }} />
       <Text variant="largeTitle" accessibilityRole="header" style={{ marginHorizontal: S.lg, marginBottom: S.xxl }}>{t("Account")}</Text>
       <View style={{ alignItems: "center", paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }}>
-        <View style={{ width: 88, height: 88, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={36} color={c.tertiaryLabel} /></View>
+        <View style={{ width: 88, height: 88, borderRadius: R.round, backgroundColor: c.fill, borderWidth: 1, borderColor: c.hairline, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={36} color={c.tertiaryLabel} /></View>
         <Text variant="title2" center>{t("Sign in to track your visa")}</Text>
         <View style={{ alignSelf: "stretch", gap: S.xs, marginTop: S.sm }}>
           <Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />

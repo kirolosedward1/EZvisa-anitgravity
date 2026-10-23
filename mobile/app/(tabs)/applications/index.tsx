@@ -27,7 +27,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
     <PressScale onPress={() => { tap(); router.push((nextAction(a)?.href ?? `/applications/${a.id}`) as any); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift={!swiping} disabled={swiping} scaleTo={swiping ? 1 : undefined}
       style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
-        <Flag country={name} size={44} />
+        <Flag country={name} size={40} />
         <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[ltr(a.reference), ltr(range(a.entry_date, a.exit_date))].filter(Boolean).join(" · ")}</Text></View>
         {onDiscard ? (
           // At rest the trash is invisible and untappable (swipe or long-press to discard); it shows only once swiped.
@@ -52,7 +52,7 @@ function AppCardSkeleton() {
   const c = useColors(); const dark = useIsDark();
   return (
     <View style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}><Skeleton w={44} h={44} r={R.round} /><View style={{ flex: 1, gap: S.xs }}><Skeleton w="45%" h={20} /><Skeleton w="70%" h={12} /></View></View>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}><Skeleton w={40} h={40} r={R.round} /><View style={{ flex: 1, gap: S.xs }}><Skeleton w="45%" h={20} /><Skeleton w="70%" h={12} /></View></View>
       <View style={{ gap: S.xs }}><Skeleton h={S.xxs} r={R.xs} /><Skeleton w={84} h={20} r={R.sm} /></View>
     </View>
   );
