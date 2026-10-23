@@ -170,9 +170,8 @@ function Banner({ manage, setManage, prefs, setPrefs, save }: {
     { key: "marketing", label: t("Marketing", "التسويق"), desc: t("Google Tag Manager ad tags, to measure our advertising.", "وسوم الإعلانات عبر Google Tag Manager، لقياس إعلاناتنا.") },
   ]
   const policyHref = ar ? "/ar/cookie-policy" : "/cookie-policy"
-  const btn = "h-12 flex-1 whitespace-nowrap sm:flex-none sm:min-w-36 rounded-xl px-3 sm:px-5 text-[15px] font-semibold cursor-pointer transition-colors"
-  const solid = `${btn} bg-[#0436DC] text-white hover:bg-[#032bb0]`
-  const outline = `${btn} border border-[#E3E7EF] bg-white text-[#0A0F1F] hover:bg-[#F7F8FA]`
+  const btn = "h-11 flex-1 whitespace-nowrap sm:flex-none sm:min-w-32 rounded-xl border border-[#0436DC] bg-white px-3 text-[14px] font-semibold text-[#0436DC] cursor-pointer transition-colors hover:bg-[#0436DC]/5"
+  const link = "h-11 px-2 whitespace-nowrap text-[14px] font-semibold text-[#0436DC] underline underline-offset-2 cursor-pointer"
 
   return (
     <div
@@ -185,16 +184,10 @@ function Banner({ manage, setManage, prefs, setPrefs, save }: {
       style={{ bottom: offset }}
       className="fixed inset-x-0 z-[1000] border-t border-[#E3E7EF] bg-white"
     >
-      <div className="mx-auto max-h-[70vh] w-full max-w-6xl overflow-y-auto px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <p id="cookie-banner-title" role="heading" aria-level={2} className="text-[15px] font-semibold text-[#0A0F1F]">
-          {t("Cookies on EZvisa", "ملفات تعريف الارتباط في إيزي فيزا")}
-        </p>
-        <p className="mt-1 text-[13px] leading-relaxed text-[#5B6475]">
-          {t(
-            "We use necessary cookies to run the site and sign you in. With your permission we also use chat, analytics and marketing cookies. See our ",
-            "نستخدم ملفات تعريف الارتباط الضرورية لتشغيل الموقع وتسجيل دخولك. وبإذنك نستخدم أيضًا ملفات المحادثة والتحليلات والتسويق. راجع ",
-          )}
-          <a href={policyHref} className="text-[#0436DC] underline">{t("cookie policy", "سياسة ملفات تعريف الارتباط")}</a>.
+      <div className="mx-auto max-h-[70vh] w-full max-w-6xl overflow-y-auto px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <p id="cookie-banner-title" className="text-[13px] leading-snug text-[#5B6475]">
+          {t("We use cookies for chat and analytics. ", "نستخدم ملفات تعريف الارتباط للدردشة والتحليلات. ")}
+          <a href={policyHref} className="text-[#0436DC] underline">{t("Cookie policy", "سياسة ملفات تعريف الارتباط")}</a>
         </p>
 
         {manage && (
@@ -223,13 +216,13 @@ function Banner({ manage, setManage, prefs, setPrefs, save }: {
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" onClick={() => save(ALL)} className={solid}>{t("Accept all", "قبول الكل")}</button>
-          <button type="button" onClick={() => save(DENIED)} className={solid}>{t("Reject", "رفض")}</button>
+        <div className="mt-2.5 flex flex-nowrap items-center gap-2">
+          <button type="button" onClick={() => save(ALL)} className={btn}>{t("Accept all", "قبول الكل")}</button>
+          <button type="button" onClick={() => save(DENIED)} className={btn}>{t("Reject", "رفض")}</button>
           {manage ? (
-            <button type="button" onClick={() => save(prefs)} className={outline}>{t("Save choices", "حفظ الاختيارات")}</button>
+            <button type="button" onClick={() => save(prefs)} className={link}>{t("Save", "حفظ")}</button>
           ) : (
-            <button type="button" onClick={() => setManage(true)} className={outline}>{t("Manage", "إدارة")}</button>
+            <button type="button" onClick={() => setManage(true)} className={link}>{t("Manage", "إدارة")}</button>
           )}
         </div>
       </div>

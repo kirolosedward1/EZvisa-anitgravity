@@ -25,7 +25,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const headerRef = useRef<HTMLElement>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showWhatsAppTooltip, setShowWhatsAppTooltip] = useState(false)
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  // /ar/* renders the same pages: compare against the locale-free path so /ar gets exactly the EN header.
+  const pathname = rawPathname?.replace(/^\/ar(?=\/|$)/, "") || "/"
   const router = useRouter()
   const isWizardPage = pathname?.startsWith("/apply")
   const isHomePage = pathname === "/"
@@ -177,7 +179,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           const elementPosition = element.getBoundingClientRect().top
           const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 20
           window.scrollTo({ top: offsetPosition, behavior: "smooth" })
-          window.history.replaceState(null, "", pathname)
+          window.history.replaceState(null, "", rawPathname)
         }
       }, 300)
     }
