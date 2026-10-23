@@ -8,6 +8,7 @@ import { destinations } from "@/lib/destinations"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 import { stableIndex } from "@/lib/stable-index"
 import { canonicalPath } from "@/lib/route-path"
+import { CountryName } from "@/components/country-name"
 
 interface InnerHeroProps {
   badge?: React.ReactNode
@@ -145,7 +146,7 @@ export function InnerHero({
           </motion.div>
           {heroBgCountryName && (
             <div className={`absolute bottom-4 end-6 md:bottom-5 md:end-8 text-[9px] md:text-[10px] tracking-widest font-semibold uppercase z-20 pointer-events-none select-none ${heroBgImage ? "text-white/70" : "text-[#0A0F1F]/40"}`}>
-              {heroBgCountryName}
+              <CountryName name={heroBgCountryName} />
             </div>
           )}
         </div>

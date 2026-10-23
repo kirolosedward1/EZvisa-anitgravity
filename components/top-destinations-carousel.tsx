@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { CountryFlag } from "@/components/country-flag"
+import { CountryName } from "@/components/country-name"
 import { SCHENGEN_META } from "@/lib/countries"
 
 // All Schengen countries for Row 1 - Starting with popular destinations
@@ -50,7 +51,7 @@ function DestinationCard({ name, onSelect }: { name: string; onSelect: (name: st
     >
       <CountryFlag iso={SCHENGEN_META[name]?.iso} title={name} className="size-9 sm:size-10" />
       <span className="min-w-0 flex-1 truncate text-base sm:text-lg font-semibold tracking-tight text-foreground group-hover:text-primary transition-colors">
-        {name}
+        <CountryName name={name} />
       </span>
     </button>
   )
@@ -63,7 +64,8 @@ export function TopDestinationsCarousel() {
     // Save to localStorage
     localStorage.setItem("hero-to-country", countryName)
     // Navigate to apply page with pre-filled destination
-    router.push(`/apply?to=${encodeURIComponent(countryName)}`)
+    const arabic = window.location.pathname === "/ar" || window.location.pathname.startsWith("/ar/")
+    router.push(`${arabic ? "/ar" : ""}/apply?to=${encodeURIComponent(countryName)}`)
   }
 
   return (

@@ -8,16 +8,20 @@ import { Check, FileText, AlertCircle, BookOpen, ClipboardList, Camera, ShieldCh
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import Link from "next/link"
 import { CountryFlag } from "@/components/country-flag"
 import { SCHENGEN_COUNTRIES, SCHENGEN_META, getCountryUrl } from "@/lib/countries"
-import { toCitizenshipIso } from "@/lib/nationalities"
+import { toCitizenshipIso, citizenshipLabel, citizenshipLabelAr, citizenshipSearchValue, CITIZENSHIP_OPTIONS } from "@/lib/nationalities"
 import { motion } from "framer-motion"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
 import { LangText } from "@/components/lang-text"
 import { FixedCTAButton } from "@/components/fixed-cta-button"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
+import { CountryName } from "@/components/country-name"
+import { LocaleLink, localizeHref } from "@/components/locale-link"
+import type { MessageKey } from "@/messages"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 
 interface DocumentRequirementsPageProps {
@@ -59,78 +63,23 @@ const countryBackgrounds: Record<string, string> = {
   default: "/images/eiffel-tower-view.jpg"
 }
 
-const getDocumentRequirements = (country: string) => ({
+const getDocumentRequirements = () => ({
   essential: [
-    {
-      title: "Valid Passport",
-      description: "Must be valid for at least 3 months beyond your planned stay with at least 2 blank pages",
-      required: true,
-      icon: BookMarked,
-    },
-    {
-      title: "Completed Visa Application Form",
-      description: "Fully filled and signed application form for Schengen visa",
-      required: true,
-      icon: ClipboardList,
-    },
-    {
-      title: "Recent Passport Photos",
-      description: "Two recent color photographs (35mm x 45mm) with white background",
-      required: true,
-      icon: Camera,
-    },
-    {
-      title: "Travel Insurance",
-      description: "Medical insurance coverage of minimum €30,000 valid across Schengen area",
-      required: true,
-      icon: ShieldCheck,
-    },
-    {
-      title: "Flight Reservation",
-      description: "Round-trip flight itinerary showing entry and exit dates",
-      required: true,
-      icon: Plane,
-    },
-    {
-      title: "Hotel Booking",
-      description: "Confirmed accommodation for entire stay in " + country,
-      required: true,
-      icon: Hotel,
-    },
+    { title: "req.passport" as MessageKey, description: "req.passportBody" as MessageKey, required: true, icon: BookMarked },
+    { title: "req.form" as MessageKey, description: "req.formBody" as MessageKey, required: true, icon: ClipboardList },
+    { title: "req.photos" as MessageKey, description: "req.photosBody" as MessageKey, required: true, icon: Camera },
+    { title: "req.insurance" as MessageKey, description: "req.insuranceBody" as MessageKey, required: true, icon: ShieldCheck },
+    { title: "req.flight" as MessageKey, description: "req.flightBody" as MessageKey, required: true, icon: Plane },
+    { title: "req.hotel" as MessageKey, description: "req.hotelBody" as MessageKey, required: true, icon: Hotel },
   ],
   financial: [
-    {
-      title: "Bank Statements",
-      description: "Last 6 months of bank statements showing sufficient funds",
-      required: true,
-      icon: Landmark,
-    },
-    {
-      title: "Employment Letter",
-      description: "Letter from employer confirming employment and approved leave",
-      required: true,
-      icon: Briefcase,
-    },
+    { title: "req.bank" as MessageKey, description: "req.bankBody" as MessageKey, required: true, icon: Landmark },
+    { title: "req.employment" as MessageKey, description: "req.employmentBody" as MessageKey, required: true, icon: Briefcase },
   ],
   additional: [
-    {
-      title: "Cover Letter",
-      description: "Personalized letter explaining purpose of visit and travel itinerary",
-      required: false,
-      icon: PenLine,
-    },
-    {
-      title: "Travel Itinerary",
-      description: "Day-by-day plan of activities and places to visit",
-      required: false,
-      icon: Map,
-    },
-    {
-      title: "Previous Visas",
-      description: "Copies of previous Schengen visas if applicable",
-      required: false,
-      icon: Stamp,
-    },
+    { title: "req.cover" as MessageKey, description: "req.coverBody" as MessageKey, required: false, icon: PenLine },
+    { title: "req.itinerary" as MessageKey, description: "req.itineraryBody" as MessageKey, required: false, icon: Map },
+    { title: "req.previous" as MessageKey, description: "req.previousBody" as MessageKey, required: false, icon: Stamp },
   ],
 })
 
@@ -144,6 +93,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
   const [open, setOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [currency, setCurrency] = useState<Currency>("AED")
+  const searchCountry = useMessage("apply.searchCountry")
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" })
@@ -192,7 +142,8 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
     return () => window.removeEventListener("nationalityChange", handleNationalityChange as EventListener)
   }, [selectedNationality])
 
-  const requirements = getDocumentRequirements(selectedCountry)
+  const requirements = getDocumentRequirements()
+  const countryAr = SCHENGEN_META[selectedCountry]?.ar || selectedCountry
 
   const handleNationalitySelect = (nationality: string) => {
     setSelectedNationality(nationality)
@@ -205,7 +156,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
     setSelectedCountry(country)
     setOpen(false)
     window.scrollTo({ top: 0, behavior: "smooth" })
-    router.push(getCountryUrl(country))
+    router.push(localizeHref(getCountryUrl(country)))
   }
 
   // Push Crisp chat widget up on mobile so it doesn't overlap the fixed CTA button
@@ -252,7 +203,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
               />
             </>
           }
-          description={`Complete checklist of documents required for your ${selectedCountry} tourist visa application.`}
+          description={<Msg id="req.checklist" values={{ country: selectedCountry }} valuesAr={{ country: countryAr }} />}
           backgroundImage={countryBackgrounds[selectedCountry] || countryBackgrounds.default}
         >
           {/* Country Selector */}
@@ -265,7 +216,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                 >
                   <div className="flex items-center">
                     <CountryFlag iso={SCHENGEN_META[selectedCountry]?.iso} title={selectedCountry} />
-                    <span className="text-lg font-semibold">{selectedCountry}</span>
+                    <span className="text-lg font-semibold"><CountryName name={selectedCountry} /></span>
                   </div>
                   <svg 
                     width="20" 
@@ -287,20 +238,20 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0" align="center">
                 <Command>
-                  <CommandInput placeholder="Search country..." autoFocus={!isMobile} />
+                  <CommandInput placeholder={searchCountry} autoFocus={!isMobile} />
                   <CommandList className="max-h-[400px]">
-                    <CommandEmpty>No country found.</CommandEmpty>
+                    <CommandEmpty><Msg id="apply.noCountry" /></CommandEmpty>
                     <CommandGroup>
                       {SCHENGEN_COUNTRIES.map((country) => (
                         <CommandItem
                           key={country}
-                          value={country}
+                          value={`${country} ${SCHENGEN_META[country]?.ar ?? ""}`}
                           onSelect={() => handleCountryChange(country)}
                           className="cursor-pointer py-3"
                         >
                           <div className="flex items-center gap-3 w-full">
                             <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
-                            <span className="flex-1">{country}</span>
+                            <span className="flex-1"><CountryName name={country} /></span>
                             {country === selectedCountry && <Check className="h-4 w-4 text-primary" />}
                           </div>
                         </CommandItem>
@@ -328,12 +279,12 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                     <AlertCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-600" />
                   </div>
                   <h2 className="text-lg md:text-2xl font-medium"><LangText en="Essential Documents" ar="المستندات الأساسية" /></h2>
-                  <span className="text-[10px] md:text-xs text-muted-foreground">(Required)</span>
+                  <span className="text-[10px] md:text-xs text-muted-foreground"><Msg id="req.required" /></span>
                 </div>
 
                 <div className="grid gap-3">
                   {requirements.essential.map((doc, index) => (
-                    <DocumentCard key={index} {...doc} />
+                    <DocumentCard key={index} {...doc} country={selectedCountry} countryAr={countryAr} />
                   ))}
                 </div>
               </motion.div>
@@ -349,12 +300,12 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                     <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 text-orange-600" />
                   </div>
                   <h2 className="text-lg md:text-2xl font-medium"><LangText en="Financial Documents" ar="المستندات المالية" /></h2>
-                  <span className="text-[10px] md:text-xs text-muted-foreground">(Required)</span>
+                  <span className="text-[10px] md:text-xs text-muted-foreground"><Msg id="req.required" /></span>
                 </div>
 
                 <div className="grid gap-3">
                   {requirements.financial.map((doc, index) => (
-                    <DocumentCard key={index} {...doc} />
+                    <DocumentCard key={index} {...doc} country={selectedCountry} countryAr={countryAr} />
                   ))}
                 </div>
               </motion.div>
@@ -370,12 +321,12 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                     <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-600" />
                   </div>
                   <h2 className="text-lg md:text-2xl font-medium"><LangText en="Additional Documents" ar="مستندات إضافية" /></h2>
-                  <span className="text-[10px] md:text-xs text-muted-foreground">(Recommended)</span>
+                  <span className="text-[10px] md:text-xs text-muted-foreground"><Msg id="req.recommended" /></span>
                 </div>
 
                 <div className="grid gap-3">
                   {requirements.additional.map((doc, index) => (
-                    <DocumentCard key={index} {...doc} />
+                    <DocumentCard key={index} {...doc} country={selectedCountry} countryAr={countryAr} />
                   ))}
                 </div>
               </motion.div>
@@ -397,7 +348,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
 
                   {/* Nationality Selector - Where are you from? */}
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-900">Where are you from?</label>
+                    <label className="text-sm font-semibold text-gray-900"><Msg id="hiw.from" /></label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -407,10 +358,12 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                           {selectedNationality ? (
                             <div className="flex items-center gap-3">
                               <CountryFlag iso={toCitizenshipIso(selectedNationality)} title={selectedNationality} />
-                              <span className="text-base font-medium text-gray-900">{selectedNationality}</span>
+                              <span className="text-base font-medium text-gray-900">
+                                <LangText en={citizenshipLabel(selectedNationality)} ar={citizenshipLabelAr(selectedNationality)} />
+                              </span>
                             </div>
                           ) : (
-                            <span className="text-base text-gray-500">Select your nationality</span>
+                            <span className="text-base text-gray-500"><Msg id="hiw.selectNationality" /></span>
                           )}
                           <svg 
                             width="20" 
@@ -432,24 +385,27 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                       </PopoverTrigger>
                       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                         <Command>
-                          <CommandInput placeholder="Search country..." autoFocus={!isMobile} />
+                          <CommandInput placeholder={searchCountry} autoFocus={!isMobile} />
                           <CommandList className="max-h-[300px]">
-                            <CommandEmpty>No country found.</CommandEmpty>
+                            <CommandEmpty><Msg id="apply.noCountry" /></CommandEmpty>
                             <CommandGroup>
-                              {fromCountries.map((country) => (
+                              {fromCountries.map((country) => {
+                                const option = CITIZENSHIP_OPTIONS.find((item) => item.name === country)
+                                return (
                                 <CommandItem
                                   key={country}
-                                  value={country}
+                                  value={option ? citizenshipSearchValue(option) : country}
                                   onSelect={() => handleNationalitySelect(country)}
                                   className="cursor-pointer py-3"
                                 >
                                   <div className="flex items-center gap-3 w-full">
                                     <CountryFlag iso={toCitizenshipIso(country)} title={country} />
-                                    <span className="flex-1">{country}</span>
+                                    <span className="flex-1"><LangText en={country} ar={citizenshipLabelAr(country)} /></span>
                                     {country === selectedNationality && <Check className="h-4 w-4 text-primary" />}
                                   </div>
                                 </CommandItem>
-                              ))}
+                                )
+                              })}
                             </CommandGroup>
                           </CommandList>
                         </Command>
@@ -463,12 +419,12 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                     asChild 
                     className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all rounded-xl"
                   >
-                    <Link href="/apply" className="flex items-center justify-center gap-2">
-                      Apply Now!
+                    <LocaleLink href="/apply" className="flex items-center justify-center gap-2">
+                      <Msg id="hiw.applyNowBang" />
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
-                    </Link>
+                    </LocaleLink>
                   </Button>
 
                   {/* Pricing and Benefits */}
@@ -477,25 +433,25 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                       <div className="text-3xl font-medium text-primary mb-1">
                         {formatPrice(PRICES.visaApplication, currency)}
                       </div>
-                      <div className="text-xs text-muted-foreground">Complete visa assistance</div>
+                      <div className="text-xs text-muted-foreground"><Msg id="hiw.assistance" /></div>
                     </div>
 
                     <div className="space-y-2.5">
                       <div className="flex items-center gap-2.5 text-sm">
                         <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
-                        <span className="text-gray-700">Document verification</span>
+                        <span className="text-gray-700"><Msg id="hiw.benefitDocs" /></span>
                       </div>
                       <div className="flex items-center gap-2.5 text-sm">
                         <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
-                        <span className="text-gray-700">Cover letter writing</span>
+                        <span className="text-gray-700"><Msg id="hiw.benefitCover" /></span>
                       </div>
                       <div className="flex items-center gap-2.5 text-sm">
                         <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
-                        <span className="text-gray-700">Travel itinerary creation</span>
+                        <span className="text-gray-700"><Msg id="hiw.benefitItinerary" /></span>
                       </div>
                       <div className="flex items-center gap-2.5 text-sm">
                         <Check className="h-4 w-4 text-green-600 flex-shrink-0" />
-                        <span className="text-gray-700">Application review</span>
+                        <span className="text-gray-700"><Msg id="hiw.benefitReview" /></span>
                       </div>
                     </div>
                   </div>
@@ -511,7 +467,21 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
   )
 }
 
-function DocumentCard({ title, description, required, icon: Icon }: { title: string; description: string; required: boolean; icon: React.ComponentType<{ className?: string }> }) {
+function DocumentCard({
+  title,
+  description,
+  required,
+  icon: Icon,
+  country,
+  countryAr,
+}: {
+  title: MessageKey
+  description: MessageKey
+  required: boolean
+  icon: React.ComponentType<{ className?: string }>
+  country: string
+  countryAr: string
+}) {
   return (
     <div className="bg-white rounded-lg p-3 md:p-4 border border-gray-200 hover:border-primary/50 hover:shadow-sm transition-all">
       <div className="flex items-start gap-2.5 md:gap-3">
@@ -524,14 +494,20 @@ function DocumentCard({ title, description, required, icon: Icon }: { title: str
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm md:text-base font-semibold">{title}</h3>
+            <h3 className="text-sm md:text-base font-semibold"><Msg id={title} /></h3>
             {required && (
               <span className="text-[9px] md:text-[10px] px-1.5 py-0.5 bg-green-100 text-green-700 rounded-full font-medium whitespace-nowrap">
-                Required
+                <Msg id="req.badgeRequired" />
               </span>
             )}
           </div>
-          <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">{description}</p>
+          <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
+            <Msg
+              id={description}
+              values={description === "req.hotelBody" ? { country } : undefined}
+              valuesAr={description === "req.hotelBody" ? { country: countryAr } : undefined}
+            />
+          </p>
         </div>
       </div>
     </div>

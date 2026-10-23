@@ -4,6 +4,7 @@ import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
+import { Msg } from "@/components/msg"
 import { useArabic } from "@/components/ready-line"
 
 export function FAQSection() {
@@ -25,9 +26,11 @@ export function FAQSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-12 lg:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-3 md:mb-4 leading-tight tracking-tight">Frequently asked questions</h2>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-3 md:mb-4 leading-tight tracking-tight">
+            <Msg id="faq.heading" />
+          </h2>
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Everything you need to know about our visa application service.
+            <Msg id="faq.intro" />
           </p>
         </motion.div>
 
@@ -91,7 +94,7 @@ export function FAQSection() {
                   className="w-full h-full object-cover"
                   src="https://videos.pexels.com/video-files/27497252/12153786_1440_2560_30fps.mp4"
                 >
-                  Your browser does not support the video tag.
+                  <Msg id="faq.videoFallback" />
                 </video>
               </div>
             </motion.div>

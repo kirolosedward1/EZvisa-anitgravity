@@ -6,18 +6,22 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronDown } from "lucide-react"
 import { COUNTRY_DATA, getCountryUrl } from "@/lib/countries"
+import { CountryOptionLabel } from "@/components/country-name"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
+import { localizeHref } from "@/components/locale-link"
 
 export function CountryDocumentSelector() {
   const [selectedCountry, setSelectedCountry] = useState("")
   const router = useRouter()
+  const placeholder = useMessage("docsCheck.placeholder")
 
   const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const countryName = e.target.value
     setSelectedCountry(countryName)
     
     if (countryName) {
-      const url = getCountryUrl(countryName)
-      router.push(url)
+      router.push(localizeHref(getCountryUrl(countryName)))
     }
   }
 
@@ -27,11 +31,11 @@ export function CountryDocumentSelector() {
         {/* Header */}
         <div className="mb-8">
           <h2 className="text-3xl text-foreground mb-3 font-medium">
-            Check Required Documents by Country
+            <Msg id="docsCheck.heading" />
           </h2>
           <div className="w-16 h-1 bg-primary mb-6" />
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Select your destination country to view the specific document requirements for your visa application
+            <Msg id="docsCheck.intro" />
           </p>
         </div>
 
@@ -42,10 +46,10 @@ export function CountryDocumentSelector() {
             onChange={handleCountryChange}
             className="w-full h-14 px-4 pr-12 text-base bg-white dark:bg-card border-2 border-border rounded-lg appearance-none cursor-pointer hover:border-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 transition-colors text-foreground"
           >
-            <option value="">Select a country...</option>
+            <option value="">{placeholder}</option>
             {COUNTRY_DATA.map((country) => (
               <option key={country.slug} value={country.name}>
-                {country.flag} {country.name}
+                {country.flag} <CountryOptionLabel name={country.name} />
               </option>
             ))}
           </select>
@@ -70,7 +74,7 @@ export function CountryDocumentSelector() {
 
         {/* Helper Text */}
         <p className="mt-4 text-sm text-muted-foreground">
-          Each country may have slightly different requirements. Make sure to check the specific requirements for your destination.
+          <Msg id="docsCheck.note" />
         </p>
       </div>
     </section>

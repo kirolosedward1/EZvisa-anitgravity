@@ -4,7 +4,7 @@ import { destinations } from "@/lib/destinations"
 import { Button } from "@/components/ui/button"
 import { LocaleLink } from "@/components/locale-link"
 import { Msg } from "@/components/msg"
-import { countryNameAr } from "@/components/country-name"
+import { countryNameAr } from "@/lib/countries"
 import { message } from "@/messages"
 
 /** Six Schengen countries that are not in the popular row (France, Italy, Spain, Germany, Switzerland). */

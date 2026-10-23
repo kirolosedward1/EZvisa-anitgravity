@@ -17,84 +17,27 @@ import {
   HandCoins 
 } from "lucide-react"
 import { CountryDocumentSelector } from "@/components/country-document-selector"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
+import type { MessageKey } from "@/messages"
 
-const documents = [
-  {
-    id: 1,
-    title: "Visa Application Form",
-    description: "Your official Schengen visa application form completed accurately without typos or blanks.",
-    image: "/images/documents/application-form.png",
-    icon: FileText,
-    type: "Embassy Required",
-  },
-  {
-    id: 2,
-    title: "Cover Letter",
-    description: "A professionally drafted cover letter highlighting your trip purpose, itinerary, and financial proof.",
-    image: "/images/documents/cover-letter.png",
-    icon: Mail,
-    type: "Personalized Draft",
-  },
-  {
-    id: 3,
-    title: "Travel Itinerary",
-    description: "A detailed day-by-day travel map displaying dates, destinations, and local connection plans.",
-    image: "/images/documents/itinerary.png",
-    icon: MapPin,
-    type: "Custom Itinerary",
-  },
-  {
-    id: 4,
-    title: "Flight Reservation",
-    description: "Embassy-compliant flight reservation matching your exact travel dates.",
-    image: "/images/documents/flight-reservation.png",
-    icon: Plane,
-    type: "Verified Booking",
-  },
-  {
-    id: 5,
-    title: "Hotel Booking",
-    description: "Confirmed hotel reservations aligned with your selected travel cities.",
-    image: "/images/documents/hotel-booking.png",
-    icon: Hotel,
-    type: "Verified Booking",
-  },
-  {
-    id: 6,
-    title: "Travel Insurance",
-    description: "Fully compliant Schengen travel insurance certificate with €30,000 minimum medical coverage.",
-    image: "/images/documents/travel-insurance.jpeg",
-    icon: Shield,
-    type: "Certified Policy",
-  },
-  {
-    id: 7,
-    title: "No Objection Certificate",
-    description: "Custom NOC format prepared for your employer's signature to confirm your leave period.",
-    image: "/images/documents/noc.png",
-    icon: Briefcase,
-    type: "Standard Template",
-  },
-  {
-    id: 8,
-    title: "Invitation Letter",
-    description: "Formatted host invitation templates designed to address strict consular guidelines.",
-    image: "/images/documents/invitation-letter.png",
-    icon: UserCheck,
-    type: "Host Template",
-  },
-  {
-    id: 9,
-    title: "Sponsorship Letter",
-    description: "Consulate-approved financial sponsorship letters to substantiate travel funding.",
-    image: "/images/documents/sponsorship-letter.png",
-    icon: HandCoins,
-    type: "Financial Draft",
-  },
+const documents: { id: number; title: MessageKey; description: MessageKey; image: string; icon: typeof FileText }[] = [
+  { id: 1, title: "dossier.formTitle", description: "dossier.formBody", image: "/images/documents/application-form.png", icon: FileText },
+  { id: 2, title: "dossier.coverTitle", description: "dossier.coverBody", image: "/images/documents/cover-letter.png", icon: Mail },
+  { id: 3, title: "dossier.itineraryTitle", description: "dossier.itineraryBody", image: "/images/documents/itinerary.png", icon: MapPin },
+  { id: 4, title: "dossier.flightTitle", description: "dossier.flightBody", image: "/images/documents/flight-reservation.png", icon: Plane },
+  { id: 5, title: "dossier.hotelTitle", description: "dossier.hotelBody", image: "/images/documents/hotel-booking.png", icon: Hotel },
+  { id: 6, title: "dossier.insuranceTitle", description: "dossier.insuranceBody", image: "/images/documents/travel-insurance.jpeg", icon: Shield },
+  { id: 7, title: "dossier.nocTitle", description: "dossier.nocBody", image: "/images/documents/noc.png", icon: Briefcase },
+  { id: 8, title: "dossier.inviteTitle", description: "dossier.inviteBody", image: "/images/documents/invitation-letter.png", icon: UserCheck },
+  { id: 9, title: "dossier.sponsorTitle", description: "dossier.sponsorBody", image: "/images/documents/sponsorship-letter.png", icon: HandCoins },
 ]
 
 export function WhatYouGetSection() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const previousLabel = useMessage("dossier.prev")
+  const nextLabel = useMessage("dossier.next")
+  const imageAlt = useMessage(documents[currentIndex]?.title ?? "dossier.formTitle")
 
   const goToPrevious = () => {
     setCurrentIndex((prev) => (prev === 0 ? documents.length - 1 : prev - 1))
@@ -129,13 +72,13 @@ export function WhatYouGetSection() {
         <div className="text-left max-w-2xl mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-5">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            Documents included
+            <Msg id="dossier.eyebrow" />
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
-            Your complete, <span className="text-primary">consolidated dossier.</span>
+            <Msg id="dossier.headingLead" /> <span className="text-primary"><Msg id="dossier.headingAccent" /></span>
           </h2>
           <p className="mt-4 text-base md:text-lg text-muted-foreground leading-relaxed">
-            EZvisa provides a fully compiled and filled-out Schengen visa application packet with all necessary paperwork configured for your profile.
+            <Msg id="dossier.intro" />
           </p>
         </div>
 
@@ -169,7 +112,7 @@ export function WhatYouGetSection() {
                   {/* Title */}
                   <div className="min-w-0">
                     <span className={`text-xs sm:text-sm font-medium whitespace-nowrap block leading-tight ${isSelected ? "text-primary" : "text-foreground"}`}>
-                      {doc.title}
+                      <Msg id={doc.title} />
                     </span>
                   </div>
                 </button>
@@ -187,11 +130,11 @@ export function WhatYouGetSection() {
                   <IconComponent className="h-4.5 w-4.5" strokeWidth={2.5} />
                 </div>
                 <h3 className="text-lg font-semibold text-primary tracking-tight">
-                  {currentDocument.title}
+                  <Msg id={currentDocument.title} />
                 </h3>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed pr-6">
-                {currentDocument.description}
+                <Msg id={currentDocument.description} />
               </p>
             </div>
 
@@ -201,7 +144,7 @@ export function WhatYouGetSection() {
               <button
                 onClick={goToPrevious}
                 className="absolute left-0 w-10 h-10 rounded-full bg-background border border-border text-[#5B6475] hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center z-10 cursor-pointer"
-                aria-label="Previous document"
+                aria-label={previousLabel}
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
@@ -226,7 +169,7 @@ export function WhatYouGetSection() {
                       >
                         <Image
                           src={currentDocument.image || "/placeholder.svg"}
-                          alt={currentDocument.title}
+                          alt={imageAlt}
                           fill
                           className="object-contain"
                           sizes="320px"
@@ -241,7 +184,7 @@ export function WhatYouGetSection() {
               <button
                 onClick={goToNext}
                 className="absolute right-0 w-10 h-10 rounded-full bg-background border border-border text-[#5B6475] hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center z-10 cursor-pointer"
-                aria-label="Next document"
+                aria-label={nextLabel}
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -250,21 +193,17 @@ export function WhatYouGetSection() {
             {/* Footer / Pagination controls */}
             <div className="flex flex-col sm:flex-row items-center justify-between border-t border-border/50 pt-6 gap-4">
               <span className="text-xs italic text-primary/80">
-                * For illustrative purposes only.
+                <Msg id="dossier.illustrative" />
               </span>
               
               {/* Dot Indicators */}
               <div className="flex gap-2">
                 {documents.map((_, index) => (
-                  <button
+                  <DocumentDot
                     key={index}
+                    index={index}
+                    selected={index === currentIndex}
                     onClick={() => goToSlide(index)}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      index === currentIndex
-                        ? "w-6 bg-primary"
-                        : "w-2 bg-primary/20 hover:bg-primary/45"
-                    }`}
-                    aria-label={`Go to document ${index + 1}`}
                   />
                 ))}
               </div>
@@ -276,5 +215,19 @@ export function WhatYouGetSection() {
         <CountryDocumentSelector />
       </div>
     </section>
+  )
+}
+
+function DocumentDot({ index, selected, onClick }: { index: number; selected: boolean; onClick: () => void }) {
+  const label = useMessage("dossier.goto", { n: index + 1 })
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-2 rounded-full transition-all duration-300 ${
+        selected ? "w-6 bg-primary" : "w-2 bg-primary/20 hover:bg-primary/45"
+      }`}
+      aria-label={label}
+    />
   )
 }

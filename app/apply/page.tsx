@@ -8,6 +8,7 @@ import { PaymentStep } from "@/components/apply/payment-step"
 import { WizardShell } from "@/components/apply/wizard-shell"
 import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 import { useSearchParams, useRouter } from "next/navigation"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
@@ -483,7 +484,7 @@ function ApplyPageContent() {
 
   const renderStepContent = () => {
     if (!isInitialized) {
-      return <div className="p-8 text-center text-muted-foreground">Loading...</div>
+      return <div className="p-8 text-center text-muted-foreground"><Msg id="apply.loading" /></div>
     }
 
     const stepSlug = getStepSlug(currentStep)
@@ -598,7 +599,7 @@ function ApplyPageContent() {
 
 export default function ApplyPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-[100dvh]">Loading...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[100dvh]"><Msg id="apply.loading" /></div>}>
       <ApplyPageContent />
     </Suspense>
   )

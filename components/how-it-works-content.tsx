@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { FileText, ArrowRight, Check, CreditCard, FileCheck, Download } from "lucide-react"
@@ -9,42 +8,24 @@ import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 import { WhatYouGetSection } from "@/components/what-you-get-section"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { CITIZENSHIP_OPTIONS, citizenshipLabel, citizenshipLabelAr, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
 import { CountryFlag } from "@/components/country-flag"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
+import { LangText } from "@/components/lang-text"
+import { LocaleLink } from "@/components/locale-link"
+import type { MessageKey } from "@/messages"
 
-const steps = [
-  {
-    icon: FileText,
-    title: "Submit Your Application",
-    description:
-      "Complete our online form with your personal information, travel destination, budget, travel dates, and spouse details if applicable. Upload required documents such as passports, NOC letters, and any supporting documents.",
-    duration: "10-15 minutes",
-  },
-  {
-    icon: CreditCard,
-    title: "Pay & Confirm",
-    description:
-      "Submit your completed application to EZvisa and make a secure payment. Your application will be immediately forwarded to our expert team for processing.",
-    duration: "Instant",
-  },
-  {
-    icon: FileCheck,
-    title: "We Prepare Your File",
-    description:
-      "Our visa experts review your application and prepare your complete visa file including application forms, hotel bookings, dummy travel tickets, travel insurance, cover letter, and all necessary supporting documents.",
-    duration: "1–2 days",
-  },
-  {
-    icon: Download,
-    title: "Download & Submit",
-    description:
-      "Your complete visa file is ready for download. Simply print the documents and submit them at your visa appointment at the embassy or visa application center.",
-    duration: "Ready to use",
-  },
+const steps: { icon: typeof FileText; title: MessageKey; description: MessageKey; duration: MessageKey }[] = [
+  { icon: FileText, title: "hiw.step1Title", description: "hiw.step1Body", duration: "hiw.step1Time" },
+  { icon: CreditCard, title: "hiw.step2Title", description: "hiw.step2Body", duration: "hiw.step2Time" },
+  { icon: FileCheck, title: "hiw.step3Title", description: "hiw.step3Body", duration: "hiw.step3Time" },
+  { icon: Download, title: "hiw.step4Title", description: "hiw.step4Body", duration: "hiw.step4Time" },
 ]
 
 export function HowItWorksContent() {
   const [currency, setCurrency] = useState<Currency>("AED")
+  const searchCountry = useMessage("apply.searchCountry")
   const [selectedNationality, setSelectedNationality] = useState<string>("")
   const [isMobile, setIsMobile] = useState(false)
 
@@ -150,12 +131,12 @@ export function HowItWorksContent() {
                       {/* Content */}
                       <div className="flex-1">
                         <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-2 mb-3">
-                          <h3 className="text-xl font-semibold text-foreground">{step.title}</h3>
+                          <h3 className="text-xl font-semibold text-foreground"><Msg id={step.title} /></h3>
                           <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1.5 rounded-full w-fit uppercase tracking-wider">
-                            {step.duration}
+                            <Msg id={step.duration} />
                           </span>
                         </div>
-                        <p className="text-muted-foreground leading-relaxed">{step.description}</p>
+                        <p className="text-muted-foreground leading-relaxed"><Msg id={step.description} /></p>
                       </div>
                     </div>
                   </div>
@@ -171,12 +152,12 @@ export function HowItWorksContent() {
 
           {/* CTA moved to mobile only */}
           <div className="mt-12 text-center lg:hidden">
-            <Link href="/apply">
+            <LocaleLink href="/apply">
               <Button size="lg" className="gap-2">
-                Start Your Application
+                <Msg id="documents.start" />
                 <ArrowRight className="w-4 h-4" />
               </Button>
-            </Link>
+            </LocaleLink>
           </div>
         </div>
 
@@ -185,12 +166,12 @@ export function HowItWorksContent() {
             <div className="space-y-6">
               {/* Header */}
               <div className="text-center pb-4 border-b border-border/60">
-                <h3 className="text-xl font-semibold text-foreground">Start your application</h3>
+                <h3 className="text-xl font-semibold text-foreground"><Msg id="hiw.start" /></h3>
               </div>
 
               {/* Nationality Selector - Where are you from? */}
               <div className="space-y-2 text-left">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1">Where are you from?</label>
+                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><Msg id="hiw.from" /></label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -199,11 +180,13 @@ export function HowItWorksContent() {
                     >
                       {selectedNationality ? (
                         <div className="flex items-center gap-3">
-                          <CountryFlag iso={toCitizenshipIso(selectedNationality)} title={citizenshipName(selectedNationality)} />
-                          <span className="text-base font-semibold text-foreground">{citizenshipName(selectedNationality) || selectedNationality}</span>
+                          <CountryFlag iso={toCitizenshipIso(selectedNationality)} title={citizenshipLabel(selectedNationality)} />
+                          <span className="text-base font-semibold text-foreground">
+                            <LangText en={citizenshipLabel(selectedNationality)} ar={citizenshipLabelAr(selectedNationality)} />
+                          </span>
                         </div>
                       ) : (
-                        <span className="text-sm font-medium text-muted-foreground">Select your nationality</span>
+                        <span className="text-sm font-medium text-muted-foreground"><Msg id="hiw.selectNationality" /></span>
                       )}
                       <svg 
                         width="20" 
@@ -225,9 +208,9 @@ export function HowItWorksContent() {
                   </PopoverTrigger>
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                     <Command>
-                      <CommandInput placeholder="Search country..." autoFocus={!isMobile} />
+                      <CommandInput placeholder={searchCountry} autoFocus={!isMobile} />
                       <CommandList className="max-h-[300px]">
-                        <CommandEmpty>No country found.</CommandEmpty>
+                        <CommandEmpty><Msg id="apply.noCountry" /></CommandEmpty>
                         <CommandGroup>
                           {CITIZENSHIP_OPTIONS.map((country) => (
                             <CommandItem
@@ -238,7 +221,7 @@ export function HowItWorksContent() {
                             >
                               <div className="flex items-center gap-3 w-full">
                                 <CountryFlag iso={country.iso} title={country.name} />
-                                <span className="flex-1">{country.name}</span>
+                                <span className="flex-1"><LangText en={country.name} ar={citizenshipLabelAr(country.iso)} /></span>
                                 {country.iso === selectedNationality && <Check className="h-4 w-4 text-primary" />}
                               </div>
                             </CommandItem>
@@ -256,12 +239,12 @@ export function HowItWorksContent() {
                 asChild 
                 className="w-full h-14 text-base font-semibold bg-primary hover:bg-primary/95 text-white shadow-lg hover:shadow-primary/10 transition-all rounded-xl cursor-pointer"
               >
-                <Link href="/apply" className="flex items-center justify-center gap-2">
-                  Apply Now
+                <LocaleLink href="/apply" className="flex items-center justify-center gap-2">
+                  <Msg id="hiw.applyNow" />
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                </Link>
+                </LocaleLink>
               </Button>
 
               {/* Pricing and Benefits */}
@@ -270,7 +253,7 @@ export function HowItWorksContent() {
                   <div className="text-3xl font-semibold text-primary mb-1">
                     {formatPrice(PRICES.visaApplication, currency)}
                   </div>
-                  <div className="text-xs text-muted-foreground">Complete visa assistance</div>
+                  <div className="text-xs text-muted-foreground"><Msg id="hiw.assistance" /></div>
                 </div>
 
                 <div className="space-y-3.5 text-left">
@@ -278,25 +261,25 @@ export function HowItWorksContent() {
                     <div className="h-5 w-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
                       <Check className="h-3 w-3 text-emerald-500" strokeWidth={3} />
                     </div>
-                    <span className="text-muted-foreground font-medium">Document verification</span>
+                    <span className="text-muted-foreground font-medium"><Msg id="hiw.benefitDocs" /></span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="h-5 w-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
                       <Check className="h-3 w-3 text-emerald-500" strokeWidth={3} />
                     </div>
-                    <span className="text-muted-foreground font-medium">Cover letter writing</span>
+                    <span className="text-muted-foreground font-medium"><Msg id="hiw.benefitCover" /></span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="h-5 w-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
                       <Check className="h-3 w-3 text-emerald-500" strokeWidth={3} />
                     </div>
-                    <span className="text-muted-foreground font-medium">Travel itinerary creation</span>
+                    <span className="text-muted-foreground font-medium"><Msg id="hiw.benefitItinerary" /></span>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <div className="h-5 w-5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
                       <Check className="h-3 w-3 text-emerald-500" strokeWidth={3} />
                     </div>
-                    <span className="text-muted-foreground font-medium">Application review</span>
+                    <span className="text-muted-foreground font-medium"><Msg id="hiw.benefitReview" /></span>
                   </div>
                 </div>
               </div>

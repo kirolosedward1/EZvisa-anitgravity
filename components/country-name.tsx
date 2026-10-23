@@ -2,11 +2,9 @@
 
 import { useLayoutEffect, useState } from "react"
 import { LangText } from "@/components/lang-text"
-import { SCHENGEN_META } from "@/lib/countries"
+import { countryNameAr } from "@/lib/countries"
 
-export function countryNameAr(name: string) {
-  return SCHENGEN_META[name]?.ar ?? name
-}
+export { countryNameAr }
 
 /** Visible country name. English and Arabic are both in the markup. */
 export function CountryName({ name }: { name: string }) {

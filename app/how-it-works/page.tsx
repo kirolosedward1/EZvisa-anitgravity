@@ -7,6 +7,7 @@ import { Mail, RefreshCw, CheckCircle2 } from "lucide-react"
 import { WhatYouGetSection } from "@/components/what-you-get-section" // Import WhatYouGetSection
 import { InnerHero } from "@/components/inner-hero"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 
 export const metadata: Metadata = {
@@ -45,7 +46,7 @@ export default function HowItWorksPage() {
               ar={<>كيف <span className="text-[#0436DC]">تعمل</span></>}
             />
           }
-          description="Get your European visa prepared in 4 simple steps. Fast, easy, and hassle-free."
+          description={<Msg id="hiw.heroDescription" />}
           gradientType="sunset"
         />
 
@@ -69,10 +70,10 @@ export default function HowItWorksPage() {
             <div className="text-center max-w-2xl mx-auto mb-16 md:mb-20">
               <div className="type-eyebrow mb-5 inline-flex items-center gap-2 rounded-full border border-[#E3E7EF] bg-[#F7F8FA] px-3 py-1.5 text-[#0436DC]">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Post-submission
+                <Msg id="hiw.postEyebrow" />
               </div>
               <h2 className="hero-copy text-balance text-white">
-                What happens<br/>after submission?
+                <Msg id="hiw.postLine1" /><br/><Msg id="hiw.postLine2" />
               </h2>
             </div>
             
@@ -83,9 +84,9 @@ export default function HowItWorksPage() {
                   <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <Mail className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Instant Confirmation</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-3"><Msg id="hiw.confirmTitle" /></h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Receive immediate email confirmation with your application reference number and payment receipt.
+                    <Msg id="hiw.confirmBody" />
                   </p>
                 </div>
               </div>
@@ -96,9 +97,9 @@ export default function HowItWorksPage() {
                   <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <RefreshCw className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Real-time Tracking</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-3"><Msg id="hiw.trackTitle" /></h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Monitor your application progress 24/7 with live status updates through your dashboard.
+                    <Msg id="hiw.trackBody" />
                   </p>
                 </div>
               </div>
@@ -109,9 +110,9 @@ export default function HowItWorksPage() {
                   <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <CheckCircle2 className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Ready to Travel</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-3"><Msg id="hiw.readyTitle" /></h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    Get instant notification when your complete visa package is approved and ready.
+                    <Msg id="hiw.readyBody" />
                   </p>
                 </div>
               </div>

@@ -13,7 +13,8 @@ import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
 import { LangText } from "@/components/lang-text"
 import { SCHENGEN_META } from "@/lib/countries"
-import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipNameAr, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { CountryName } from "@/components/country-name"
 import { CountryFlag } from "@/components/country-flag"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 import { stableIndex } from "@/lib/stable-index"
@@ -222,7 +223,10 @@ export function HeroSection() {
                             {fromCountry ? (
                               <div className="flex items-center gap-2">
                                 <CountryFlag iso={toCitizenshipIso(fromCountry)} title={fromLabel} />
-                                <span className="text-base font-semibold truncate text-foreground">{fromLabel}</span>
+                                <span className="text-base font-semibold truncate text-foreground">
+                                  <span className="rtl:hidden">{fromLabel}</span>
+                                  <span className="hidden rtl:inline">{citizenshipNameAr(fromCountry) || fromLabel}</span>
+                                </span>
                               </div>
                             ) : (
                               <span className="text-sm font-medium text-muted-foreground"><LangText en="Select nationality" ar="اختر الجنسية" /></span>
@@ -251,7 +255,10 @@ export function HeroSection() {
                                 >
                                   <div className="flex items-center gap-3">
                                     <CountryFlag iso={country.iso} title={country.name} />
-                                    <span className="font-medium">{country.name}</span>
+                                    <span className="font-medium">
+                                      <span className="rtl:hidden">{country.name}</span>
+                                      <span className="hidden rtl:inline">{citizenshipNameAr(country.iso) || country.name}</span>
+                                    </span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -282,7 +289,9 @@ export function HeroSection() {
                             {toCountry ? (
                               <div className="flex items-center gap-2">
                                 <CountryFlag iso={SCHENGEN_META[toCountry]?.iso} title={toCountry} />
-                                <span className="text-base font-semibold truncate text-foreground">{toCountry}</span>
+                                <span className="text-base font-semibold truncate text-foreground">
+                                  <CountryName name={toCountry} />
+                                </span>
                               </div>
                             ) : (
                               <span className="text-sm font-medium text-muted-foreground"><LangText en="Pick a destination" ar="اختر الوجهة" /></span>
@@ -305,13 +314,15 @@ export function HeroSection() {
                               {schengenCountries.map((country) => (
                                 <CommandItem
                                   key={country}
-                                  value={country}
+                                  value={`${country} ${SCHENGEN_META[country]?.ar ?? ""}`}
                                   onSelect={() => { setToCountry(country); setToOpen(false) }}
                                   className="cursor-pointer py-3 px-4 text-base rounded-xl hover:bg-primary/10 transition-colors my-1"
                                 >
                                   <div className="flex items-center gap-3">
                                     <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
-                                    <span className="font-medium">{country}</span>
+                                    <span className="font-medium">
+                                      <CountryName name={country} />
+                                    </span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -363,7 +374,7 @@ export function HeroSection() {
                             <div className="font-semibold text-foreground text-sm md:text-base">
                               <LangText
                                 en={`Schengen visa required for ${fromLabel} citizens visiting ${toCountry}`}
-                                ar={`تأشيرة شنغن مطلوبة لمواطني ${fromLabel} عند زيارة ${toCountry}`}
+                                ar={`تأشيرة شنغن مطلوبة لمواطني ${citizenshipNameAr(fromCountry) || fromLabel} عند زيارة ${SCHENGEN_META[toCountry]?.ar || toCountry}`}
                               />
                             </div>
                             <p className="text-xs md:text-sm text-muted-foreground mt-0.5 leading-relaxed">
@@ -403,7 +414,7 @@ export function HeroSection() {
           </div> {/* Content Wrapper close */}
           {heroBgCountryName && (
             <div className="absolute bottom-4 right-6 md:bottom-5 md:right-8 text-[9px] md:text-[10px] text-[#0A0F1F]/40 tracking-widest font-semibold uppercase z-20 pointer-events-none select-none">
-              {heroBgCountryName}
+              <CountryName name={heroBgCountryName} />
             </div>
           )}
         </motion.div>

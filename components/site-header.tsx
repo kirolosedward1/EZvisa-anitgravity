@@ -14,7 +14,9 @@ import { LangText } from "@/components/lang-text"
 import { CountryFlag } from "@/components/country-flag"
 import { UserMenu, useViewer } from "@/components/user-menu"
 import { cn } from "@/lib/utils"
-import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
+import { CountryName } from "@/components/country-name"
+import { Msg } from "@/components/msg"
+import { citizenshipName, citizenshipNameAr, toCitizenshipIso } from "@/lib/nationalities"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
 import { canonicalPath } from "@/lib/route-path"
 
@@ -357,8 +359,12 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                       >
                                         <CountryFlag iso={SCHENGEN_META[dest.name]?.iso} title={dest.name} />
                                         <div className="flex-1 min-w-0">
-                                          <div className="text-sm font-semibold text-foreground group-hover/item:text-primary transition-colors truncate">{dest.name}</div>
-                                          <div className="text-[11px] text-muted-foreground truncate">{dest.visaType}</div>
+                                          <div className="text-sm font-semibold text-foreground group-hover/item:text-primary transition-colors truncate">
+                                            <CountryName name={dest.name} />
+                                          </div>
+                                          <div className="text-[11px] text-muted-foreground truncate">
+                                            <Msg id="destinations.visaType" />
+                                          </div>
                                         </div>
                                       </LocaleLink>
                                     ))}
@@ -547,7 +553,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                       className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary/50 transition-colors"
                                     >
                                       <CountryFlag iso={SCHENGEN_META[dest.name]?.iso} title={dest.name} />
-                                      <span className="site-menu-item text-foreground">{dest.name}</span>
+                                      <span className="site-menu-item text-foreground">
+                                        <CountryName name={dest.name} />
+                                      </span>
                                     </LocaleLink>
                                   ))}
                                   <LocaleLink
@@ -597,7 +605,10 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                       {selectedNationality ? (
                         <div className="flex items-center gap-3">
                           <CountryFlag iso={toCitizenshipIso(selectedNationality)} title={citizenshipName(selectedNationality) || selectedNationality} />
-                          <span className="font-medium">{citizenshipName(selectedNationality) || selectedNationality}</span>
+                          <span className="font-medium">
+                            <span className="rtl:hidden">{citizenshipName(selectedNationality) || selectedNationality}</span>
+                            <span className="hidden rtl:inline">{citizenshipNameAr(selectedNationality) || selectedNationality}</span>
+                          </span>
                         </div>
                       ) : (
                         <span className="text-[#5B6475] font-medium"><LangText en="Select nationality" ar="اختر الجنسية" /></span>
@@ -624,7 +635,10 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                             >
                               <div className="flex items-center gap-3">
                                 <CountryFlag iso={toCitizenshipIso(nationality)} title={nationality} />
-                                <span className="font-medium">{nationality}</span>
+                                <span className="font-medium">
+                                  <span className="rtl:hidden">{nationality}</span>
+                                  <span className="hidden rtl:inline">{citizenshipNameAr(nationality) || nationality}</span>
+                                </span>
                               </div>
                               {selectedNationality === nationality && <Check className="h-5 w-5 text-primary" />}
                             </button>
