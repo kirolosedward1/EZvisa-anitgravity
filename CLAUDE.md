@@ -139,7 +139,7 @@ Usage rules:
 | Component | Purpose |
 |---|---|
 | `site-header.tsx` | Sticky translucent (`backdrop-blur`) top nav, centered hover-pill links, mobile drawer. **New pages must be added here (desktop + mobile).** |
-| `footer.tsx` | Dark footer with link sections + CTA |
+| `footer.tsx` | Footer with link sections + CTA. Customer pages (`/dashboard`, `/account`, `/track`, `/receipt`, `/trip`, `/continue`) get a one-line footer (copyright, WhatsApp, Help, legal) automatically. |
 | `hero-section.tsx` | Homepage hero: layered branded background (gradient wash + masked dot grid + radial glow), country selector, trust badges |
 | `services-section.tsx` | 3-column services card grid |
 | `how-it-works-simple.tsx` | Step process with icons |
