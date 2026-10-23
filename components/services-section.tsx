@@ -142,9 +142,12 @@ export function ServicesSection() {
             <span className="hidden size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary sm:flex">
               <BadgeCheck className="size-5" aria-hidden="true" />
             </span>
-            <p className="text-base font-semibold text-foreground">
-              <Msg id="services.fee" values={{ price: PRICE_AED }} />
-            </p>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-base font-semibold text-foreground">
+                <Msg id="services.fee" values={{ price: PRICE_AED }} />
+              </p>
+              <p className="text-sm text-muted-foreground">Money back if your visa is refused.</p>
+            </div>
           </div>
           <LocaleLink
             href="/apply"
