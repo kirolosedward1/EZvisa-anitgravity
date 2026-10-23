@@ -576,9 +576,7 @@ function ApplyPageContent() {
         <div className="relative z-10 container mx-auto px-4 pt-28 md:pt-36 pb-16 md:pb-24" ref={wizardContainerRef}>
           {/* Mobile: Title and Progress at Top */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            initial={false}
             className="mb-6 md:mb-8 text-center lg:hidden"
           >
             <h1 className="text-2xl md:text-4xl font-semibold tracking-tight text-foreground mb-2">Visa Application</h1>
@@ -596,7 +594,7 @@ function ApplyPageContent() {
               <div className="h-1.5 bg-[#E3E7EF] rounded-full overflow-hidden">
                 <motion.div
                   className="h-full bg-[#0436DC] rounded-full"
-                  initial={{ width: 0 }}
+                  initial={false}
                   animate={{ width: `${progressPercentage}%` }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
                 />
@@ -608,9 +606,7 @@ function ApplyPageContent() {
             <div className="w-full lg:w-80 shrink-0">
               {/* Desktop: Title, Progress, and Steps in Left Column */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                initial={false}
                 className="hidden lg:block mb-6"
               >
                 <h1 className="text-3xl text-foreground mb-2 font-medium tracking-tight">Visa Application</h1>
@@ -626,7 +622,7 @@ function ApplyPageContent() {
                   <div className="h-1.5 bg-[#E3E7EF] rounded-full overflow-hidden">
                     <motion.div
                       className="h-full bg-[#0436DC] rounded-full"
-                      initial={{ width: 0 }}
+                      initial={false}
                       animate={{ width: `${progressPercentage}%` }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
                     />
@@ -702,9 +698,7 @@ function ApplyPageContent() {
                 {steps.map((step, index) => (
                   <motion.div
                     key={step.number}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.05 }}
+                    initial={false}
                     onClick={() => handleStepClick(step.number)}
                     className={`flex items-start gap-4 p-4 rounded-md transition-all duration-300 ${
                       currentStep === step.number
@@ -756,7 +750,7 @@ function ApplyPageContent() {
                           opacity: 0,
                         }),
                       }}
-                      initial="enter"
+                      initial={false}
                       animate="center"
                       exit="exit"
                       transition={{

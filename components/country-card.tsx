@@ -12,13 +12,9 @@ interface CountryCardProps {
   index: number
 }
 
-export function CountryCard({ country, index }: CountryCardProps) {
+export function CountryCard({ country }: CountryCardProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-    >
+    <motion.div initial={false}>
       <Link
         href={`/documents/required-documents-to-apply-for-a-tourist-visa-in-${country.slug}`}
         className="block group"
