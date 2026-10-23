@@ -160,10 +160,11 @@ export function WizardShell({
 
   return (
     <div className="bg-[#FFFFFF] text-[#0A0F1F]">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height,72px)]">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height,72px)] lg:pt-[calc(var(--site-header-height,80px)+48px)]">
         <h1 className="sr-only">
           <LangText en="Visa application" ar="طلب التأشيرة" />
         </h1>
+        <div className="lg:grid lg:grid-cols-[minmax(0,560px)_340px] lg:items-start lg:justify-start lg:gap-x-10">
         <div
           className="sticky z-40 -mx-4 mb-3 border-b border-[#E3E7EF] bg-[#FFFFFF] px-4 lg:hidden"
           style={{ top: "var(--site-header-height, 80px)" }}
@@ -193,7 +194,7 @@ export function WizardShell({
           </button>
           {summaryOpen ? <SummaryRows formData={formData} /> : null}
         </div>
-        <div className="flex gap-6 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_#E3E7EF] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-6 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_#E3E7EF] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:col-start-1 lg:row-start-1">
           {STAGES.map((item) => {
             const current = item.id === stage
             return (
@@ -211,27 +212,26 @@ export function WizardShell({
           })}
         </div>
 
-        <div className="mt-8 flex items-start gap-10">
-          <div id="wizard-form" className="min-w-0 w-full max-w-[560px] scroll-mt-28">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={motionKey}
-                initial={enter}
-                animate={{ opacity: 1, x: 0 }}
-                exit={reduced ? { opacity: 0 } : { opacity: 0, x: offset * -1 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
-          </div>
+        <div id="wizard-form" className="mt-8 min-w-0 w-full max-w-[560px] scroll-mt-28 lg:col-start-1 lg:row-start-2">
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={motionKey}
+              initial={enter}
+              animate={{ opacity: 1, x: 0 }}
+              exit={reduced ? { opacity: 0 } : { opacity: 0, x: offset * -1 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              {children}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-          <aside className="sticky top-28 hidden w-[340px] shrink-0 border-s border-[#E3E7EF] ps-8 lg:block">
-            <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.06em] text-[#5B6475]">
-              <LangText en="Your application" ar="طلبك" />
-            </p>
-            <SummaryRows formData={formData} />
-          </aside>
+        <aside className="sticky top-[calc(var(--site-header-height,80px)+48px)] hidden w-[340px] shrink-0 border-s border-[#E3E7EF] ps-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block">
+          <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.06em] text-[#5B6475]">
+            <LangText en="Your application" ar="طلبك" />
+          </p>
+          <SummaryRows formData={formData} />
+        </aside>
         </div>
       </div>
     </div>
