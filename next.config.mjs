@@ -22,6 +22,8 @@ const csp = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Footer copyright year: fixed per build so server and client never render different text (hydration #418).
+  env: { NEXT_PUBLIC_BUILD_YEAR: String(new Date().getUTCFullYear()) },
   compress: true,
   typescript: {
     ignoreBuildErrors: true,

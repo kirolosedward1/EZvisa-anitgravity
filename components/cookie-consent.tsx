@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
+import { Analytics } from "@vercel/analytics/next"
 
 /**
  * Cookie consent (legal audit H1).
@@ -89,11 +90,14 @@ export function CookieConsent() {
   const [open, setOpen] = useState(false)
   const [manage, setManage] = useState(false)
   const [prefs, setPrefs] = useState<Prefs>(DENIED)
+  // Vercel Analytics is held until analytics consent (same stored choice as GA). Starts false on server and client.
+  const [analyticsOn, setAnalyticsOn] = useState(false)
 
   useEffect(() => {
     const stored = readPrefs()
     if (stored) {
       setPrefs(stored)
+      setAnalyticsOn(stored.analytics)
       applyPrefs(stored)
     } else {
       setOpen(true)
@@ -116,11 +120,18 @@ export function CookieConsent() {
     // Scripts that already loaded cannot be unloaded: reload so a withdrawn consent takes effect.
     const withdrawn = previous && ((previous.analytics && !p.analytics) || (previous.marketing && !p.marketing) || (previous.functional && !p.functional))
     if (withdrawn) window.location.reload()
-    else applyPrefs(p)
+    else {
+      setAnalyticsOn(p.analytics)
+      applyPrefs(p)
+    }
   }, [])
 
-  if (!open) return null
-  return <Banner manage={manage} setManage={setManage} prefs={prefs} setPrefs={setPrefs} save={save} />
+  return (
+    <>
+      {analyticsOn && <Analytics />}
+      {open && <Banner manage={manage} setManage={setManage} prefs={prefs} setPrefs={setPrefs} save={save} />}
+    </>
+  )
 }
 
 function Banner({ manage, setManage, prefs, setPrefs, save }: {
@@ -131,8 +142,8 @@ function Banner({ manage, setManage, prefs, setPrefs, save }: {
   save: (p: Prefs) => void
 }) {
   const pathname = usePathname()
-  // Pick the language explicitly (not via the rtl: CSS variant) so /ar always gets Arabic, even mid-navigation.
-  const ar = (pathname ?? "").startsWith("/ar") || (typeof document !== "undefined" && document.documentElement.dir === "rtl")
+  // Language from the URL only (never the DOM during render), so /ar always gets Arabic and renders are deterministic.
+  const ar = pathname === "/ar" || (pathname ?? "").startsWith("/ar/")
   const t = (en: string, arText: string) => (ar ? arText : en)
 
   // Sit directly above a fixed bottom bar (the wizard's Back/Continue bar) instead of covering it.

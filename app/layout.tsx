@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { headers } from "next/headers"
 import { Poppins } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
 import { CookieConsent } from "@/components/cookie-consent"
 import { ScrollRestoration } from "@/components/scroll-restoration"
 import { ContinueApplicationNotification } from "@/components/continue-application-notification"
@@ -153,8 +152,8 @@ export default async function RootLayout({
           <PageTransition>{children}</PageTransition>
         </main>
         <ContinueApplicationNotification />
+        {/* CookieConsent also mounts Vercel Analytics, only after analytics consent. */}
         <CookieConsent />
-        <Analytics />
       </body>
     </html>
   )

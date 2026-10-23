@@ -110,10 +110,13 @@ interface FooterProps {
 }
 
 /** Customer pages (dashboard, account, tracking, receipts): a one-line footer instead of the marketing footer. */
+/** Inlined at build time (next.config env), so the server HTML and the browser render the same year. */
+const BUILD_YEAR = process.env.NEXT_PUBLIC_BUILD_YEAR ?? "2026"
+
 const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip", "/continue"]
 
 function AccountFooter({ className }: { className?: string }) {
-  const year = new Date().getUTCFullYear()
+  const year = BUILD_YEAR
   const links = [
     { href: "/contact", en: "Help", ar: "المساعدة" },
     { href: "/privacy-policy", en: "Privacy", ar: "الخصوصية" },
@@ -125,8 +128,8 @@ function AccountFooter({ className }: { className?: string }) {
       <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-4 py-6 text-sm text-muted-foreground md:flex-row md:justify-between">
         <p>
           <LangText
-            en={<>&copy; <span suppressHydrationWarning>{year}</span> EZvisa</>}
-            ar={<>&copy; <span suppressHydrationWarning>{year}</span> إيزي فيزا</>}
+            en={<>&copy; {year} EZvisa</>}
+            ar={<>&copy; {year} إيزي فيزا</>}
           />
         </p>
         <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
@@ -155,7 +158,7 @@ export function Footer({
   transparent = false,
   limitWidth = false
 }: FooterProps) {
-  const currentYear = new Date().getUTCFullYear()
+  const currentYear = BUILD_YEAR
   const [openSection, setOpenSection] = useState<string | null>(null)
   const pathname = usePathname()
   const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
@@ -353,8 +356,8 @@ export function Footer({
 
             <p className="text-xs text-[#3A4150] text-center md:text-end">
               <LangText
-                en={<>&copy; <span suppressHydrationWarning>{currentYear}</span> {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. All rights reserved. · ` : ""}EZvisa</>}
-                ar={<>&copy; <span suppressHydrationWarning>{currentYear}</span> {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. جميع الحقوق محفوظة. · ` : ""}EZvisa</>}
+                en={<>&copy; {currentYear} {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. All rights reserved. · ` : ""}EZvisa</>}
+                ar={<>&copy; {currentYear} {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. جميع الحقوق محفوظة. · ` : ""}EZvisa</>}
               />
             </p>
           </div>
