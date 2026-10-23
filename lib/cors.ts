@@ -11,6 +11,10 @@ const STATIC_ORIGINS = [
   "http://127.0.0.1:8081",
 ]
 
+/** This project's Vercel preview hosts only. Production stays the exact ezvisa.net origins above. */
+const PREVIEW_HOST =
+  /^e-zvisa-anitgravit[a-z0-9-]*-kirolosedward1-gmailcoms-projects\.vercel\.app$/
+
 function extraOrigins(): string[] {
   return (process.env.PAYMENT_CORS_ORIGINS || "")
     .split(",")
@@ -18,10 +22,45 @@ function extraOrigins(): string[] {
     .filter(Boolean)
 }
 
+function deploymentOrigins(): string[] {
+  const origins: string[] = []
+  for (const host of [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL]) {
+    const value = host?.trim()
+    if (!value) continue
+    const withProtocol = /^https?:\/\//i.test(value) ? value : `https://${value}`
+    try {
+      const url = new URL(withProtocol)
+      if (url.protocol !== "https:") continue
+      origins.push(`https://${url.host}`)
+    } catch {
+      continue
+    }
+  }
+  return origins
+}
+
+function isProjectPreviewOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin)
+    if (url.protocol !== "https:" || url.username || url.password || url.port) return false
+    if (url.pathname !== "/" || url.search || url.hash) return false
+    return PREVIEW_HOST.test(url.hostname)
+  } catch {
+    return false
+  }
+}
+
 /** Web app plus the Expo web preview (localhost and *.exp.direct / *.expo.dev tunnels). */
 export function isAllowedPaymentOrigin(origin: string | null): boolean {
   if (!origin) return false
-  if (STATIC_ORIGINS.includes(origin) || extraOrigins().includes(origin)) return true
+  if (
+    STATIC_ORIGINS.includes(origin) ||
+    extraOrigins().includes(origin) ||
+    deploymentOrigins().includes(origin) ||
+    isProjectPreviewOrigin(origin)
+  ) {
+    return true
+  }
   try {
     const url = new URL(origin)
     const host = url.hostname

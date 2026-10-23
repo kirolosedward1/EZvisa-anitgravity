@@ -31,8 +31,14 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const [hoveredNavItem, setHoveredNavItem] = useState<string | null>(null)
   const [isMobileDestinationsOpen, setIsMobileDestinationsOpen] = useState(false)
 
+  const [pageUrl, setPageUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    setPageUrl(window.location.href)
+  }, [pathname])
+
   const getWhatsAppMessage = () => {
-    const baseUrl = typeof window !== 'undefined' ? window.location.href : ''
+    const baseUrl = pageUrl ?? ""
     if (isWizardPage) return `Hi! I need help with my visa application. I'm currently on the application page: ${baseUrl}`
     if (pathname === '/') return `Hi! I'm interested in applying for a Schengen visa. Can you help me get started?`
     if (pathname?.startsWith('/destinations')) return `Hi! I have questions about travel destinations and document checklists. Page: ${baseUrl}`
@@ -231,7 +237,10 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                               transition={{ duration: 0.2 }}
                               className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-[600px] z-50 cursor-default"
                             >
-                              <div className="bg-background/95 border border-border/60 shadow-2xl shadow-black/10 rounded-3xl p-6 relative overflow-hidden">
+                              <div
+                                className="bg-[#FFFFFF] text-[#0A0F1F] border border-[#E3E7EF] rounded-3xl p-6 relative overflow-hidden"
+                                style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3E7EF", boxShadow: "0 8px 24px rgba(10,15,31,0.08)" }}
+                              >
                                 {/* Subtle background glow */}
                                 <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
                                 

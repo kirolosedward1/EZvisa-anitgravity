@@ -11,17 +11,7 @@ import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
-import type { ReactNode } from "react"
-
-/** Both languages are in the HTML. The /ar script sets dir=rtl before paint, so Arabic shows at the same size. */
-function LangText({ en, ar }: { en: ReactNode; ar: ReactNode }) {
-  return (
-    <>
-      <span className="rtl:hidden">{en}</span>
-      <span className="hidden rtl:inline">{ar}</span>
-    </>
-  )
-}
+import { LangText } from "@/components/lang-text"
 import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, flagSrc, toCitizenshipIso } from "@/lib/nationalities"
 
 const countryFlags: Record<string, string> = {
@@ -277,7 +267,7 @@ export function HeroSection() {
                         </button>
                       </PopoverTrigger>
                       <PopoverContent
-                        className="w-[320px] p-0 bg-background border border-border shadow-2xl rounded-2xl"
+                        className="w-[320px] p-0 rounded-2xl"
                         align="start"
                         sideOffset={8}
                         onOpenAutoFocus={(e) => e.preventDefault()}
@@ -351,7 +341,7 @@ export function HeroSection() {
                         </button>
                       </PopoverTrigger>
                       <PopoverContent
-                        className="w-[320px] p-0 bg-background border border-border shadow-2xl rounded-2xl"
+                        className="w-[320px] p-0 rounded-2xl"
                         align="end"
                         sideOffset={8}
                         onOpenAutoFocus={(e) => e.preventDefault()}

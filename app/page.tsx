@@ -153,7 +153,7 @@ export default function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteHeader />
-      <main id="main-content" className="min-h-screen">
+      <div id="main-content" className="min-h-screen">
         <HeroSection />
         <ServicesSection />
         <PopularDestinations />
@@ -164,7 +164,7 @@ export default function Home() {
         <FAQSection />
         <ContactSection />
         <Footer />
-      </main>
+      </div>
     </>
   )
 }

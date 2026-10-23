@@ -131,7 +131,7 @@ export function CustomDatePicker({
           <CalendarIcon className="h-5 w-5 text-muted-foreground/60 shrink-0 ml-2" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 z-50 bg-popover border border-border rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95" align="start">
+      <PopoverContent className="w-auto p-0 z-50 rounded-xl" align="start">
         <Calendar
           mode="single"
           selected={selectedDate}

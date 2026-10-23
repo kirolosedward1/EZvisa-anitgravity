@@ -6,9 +6,9 @@ import Image from "next/image"
 import { destinations } from "@/lib/destinations"
 
 interface InnerHeroProps {
-  badge?: string
+  badge?: React.ReactNode
   title: React.ReactNode
-  description?: string
+  description?: React.ReactNode
   backgroundImage?: string
   randomizeBackground?: boolean
   gradientType?: "default" | "ocean" | "sunset" | "aurora"

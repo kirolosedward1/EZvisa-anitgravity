@@ -103,7 +103,7 @@ export function Footer({
   transparent = false,
   limitWidth = false
 }: FooterProps) {
-  const currentYear = new Date().getFullYear()
+  const currentYear = new Date().getUTCFullYear()
   const [openSection, setOpenSection] = useState<string | null>(null)
 
   const toggleSection = (title: string) => {
@@ -297,7 +297,7 @@ export function Footer({
             </div>
 
             <p className="text-xs text-muted-foreground text-center md:text-right">
-              &copy; {currentYear} EZvisa · ezvisa.net
+              &copy; <span suppressHydrationWarning>{currentYear}</span> EZvisa · ezvisa.net
             </p>
           </div>
         </div>

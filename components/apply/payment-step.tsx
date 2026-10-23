@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Check, AlertCircle, Lock, ShieldCheck, FileText, ClipboardList, Loader2 } from "lucide-react"
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { getDefaultCurrency, type CurrencyInfo } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import type { FormData } from "@/lib/form-types"
@@ -19,10 +19,40 @@ interface PaymentStepProps {
   paymentError?: string | null
 }
 
+type SavedCheckout = {
+  fingerprint: string
+  applicationId: string
+  trackingToken?: string
+}
+
+const CHECKOUT_STORAGE_KEY = "ez_checkout_application"
+
+function readSavedCheckout(fingerprint: string): SavedCheckout | null {
+  try {
+    const raw = sessionStorage.getItem(CHECKOUT_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as SavedCheckout
+    if (parsed.fingerprint === fingerprint && parsed.applicationId) return parsed
+  } catch {
+    return null
+  }
+  return null
+}
+
+function rememberCheckout(saved: SavedCheckout) {
+  try {
+    sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(saved))
+  } catch {
+    // Retry still works for this page view via the in-memory copy.
+  }
+}
+
 export function PaymentStep({ formData, onBack, isLoading, paymentError }: PaymentStepProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [currency, setCurrency] = useState<CurrencyInfo>(getDefaultCurrency())
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const inFlightRef = useRef<string | null>(null)
+  const savedCheckoutRef = useRef<SavedCheckout | null>(null)
 
   const router = useRouter()
 
@@ -52,48 +82,73 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
   const paymentAmount = basePrice * multiplier
 
   const handlePayment = async () => {
+    const fingerprint = JSON.stringify(formData)
+    const existing =
+      savedCheckoutRef.current?.fingerprint === fingerprint
+        ? savedCheckoutRef.current
+        : readSavedCheckout(fingerprint)
+    if (inFlightRef.current) return
+    inFlightRef.current = existing?.applicationId ?? "pending"
+
     setIsProcessing(true)
     trackEvent("checkout_started", { destination: formData.destination, amount: paymentAmount })
     setSubmitError(null)
     const started = performance.now()
     const controller = new AbortController()
     const timer = window.setTimeout(() => controller.abort(), 20000)
+    let redirecting = false
 
     try {
-      // The application row is created here, when the customer proceeds to payment.
-      const submitResponse = await fetch("/api/submit-application", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-        signal: controller.signal,
-      })
+      let applicationId = existing?.applicationId
+      let trackingToken = existing?.trackingToken
 
-      if (!submitResponse.ok) {
-        throw new Error("Failed to save application. Please try again.")
-      }
-
-      const submitData = await submitResponse.json()
-
-      // Queue the HubSpot lead once, here, before Ziina. The route acks
-      // immediately and finishes the lead with waitUntil, so this await is
-      // only the ack — not the HubSpot API — and the redirect cannot cancel it.
-      try {
-        await fetch("/api/hubspot/create-lead", {
+      if (!applicationId) {
+        // The application row is created here, once, when the customer first proceeds to payment.
+        const submitResponse = await fetch("/api/submit-application", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(formData),
+          signal: controller.signal,
         })
-      } catch (hubspotError) {
-        console.error("HubSpot lead creation failed:", hubspotError)
+
+        if (!submitResponse.ok) {
+          throw new Error("Failed to save application. Please try again.")
+        }
+
+        const submitData = await submitResponse.json()
+        if (typeof submitData.applicationId !== "string" || !submitData.applicationId) {
+          throw new Error("Failed to save application. Please try again.")
+        }
+
+        const createdId: string = submitData.applicationId
+        applicationId = createdId
+        trackingToken = typeof submitData.trackingToken === "string" ? submitData.trackingToken : undefined
+        const saved: SavedCheckout = { fingerprint, applicationId: createdId, trackingToken }
+        savedCheckoutRef.current = saved
+        rememberCheckout(saved)
+
+        // Queue the HubSpot lead once, here, before Ziina. Retry must not call this again.
+        try {
+          await fetch("/api/hubspot/create-lead", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formData),
+          })
+        } catch (hubspotError) {
+          console.error("HubSpot lead creation failed:", hubspotError)
+        }
       }
 
+      if (!applicationId) throw new Error("Failed to save application. Please try again.")
+      inFlightRef.current = applicationId
+
       const successUrl = new URL("/payment-success", window.location.origin)
-      if (submitData.trackingToken) successUrl.searchParams.set("token", submitData.trackingToken)
-      if (submitData.applicationId) successUrl.searchParams.set("appId", submitData.applicationId)
+      if (trackingToken) successUrl.searchParams.set("token", trackingToken)
+      successUrl.searchParams.set("appId", applicationId)
       if (formData.destination) successUrl.searchParams.set("dest", formData.destination)
 
       const response = await fetch("/api/create-payment", {
@@ -102,7 +157,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          applicationId: submitData.applicationId,
+          applicationId,
           amount: paymentAmount,
           currency: currency.code,
           success_url: successUrl.toString(),
@@ -121,8 +176,8 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
       })
 
       if (data.redirect_url) {
-        sessionStorage.setItem("lastCompletedToken", submitData.trackingToken || "")
-        sessionStorage.setItem("lastCompletedAppId", submitData.applicationId || "")
+        sessionStorage.setItem("lastCompletedToken", trackingToken || "")
+        sessionStorage.setItem("lastCompletedAppId", applicationId)
         sessionStorage.setItem("lastCompletedDest", formData.destination || "")
         sessionStorage.setItem("pendingApplication", JSON.stringify({
           ...formData,
@@ -131,6 +186,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           currencySymbol: currency.symbol,
         }))
 
+        redirecting = true
         window.location.href = data.redirect_url
         return
       }
@@ -147,6 +203,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
       trackEvent("payment_failed", { destination: formData.destination, error: errorMsg })
       setIsProcessing(false)
     } finally {
+      if (!redirecting) inFlightRef.current = null
       window.clearTimeout(timer)
     }
   }

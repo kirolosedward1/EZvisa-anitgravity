@@ -1,31 +1,44 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useLayoutEffect, useState } from "react"
+import { usePathname } from "next/navigation"
 import { APPLICATION_READY, APPLICATION_READY_AR, PREPARATION_TIME, PREPARATION_TIME_AR } from "@/lib/copy"
+import { LangText } from "@/components/lang-text"
 
-export function useArabic() {
-  const [arabic, setArabic] = useState(false)
-  useEffect(() => {
-    const read = () => {
-      const path = window.location.pathname
-      const saved = window.localStorage.getItem("ez_lang")
-      setArabic(path === "/ar" || path.startsWith("/ar/") || document.documentElement.dir === "rtl" || saved === "ar")
-    }
-    read()
-    window.addEventListener("ez_language_change", read)
-    return () => window.removeEventListener("ez_language_change", read)
-  }, [])
-  return arabic
+function isArabicPath(path: string | null | undefined) {
+  return path === "/ar" || !!path?.startsWith("/ar/")
 }
 
-/** "Ready in 1–2 days", in Arabic on /ar. */
+/**
+ * True only for the current /ar URL.
+ * The first render uses the route (same on server and client). The address bar is
+ * applied before paint, and a previous /ar visit is dropped as soon as the route changes.
+ */
+export function useArabic() {
+  const pathname = usePathname()
+  const [browserPath, setBrowserPath] = useState<string | null>(null)
+
+  useLayoutEffect(() => {
+    setBrowserPath(window.location.pathname)
+  }, [pathname])
+
+  return isArabicPath(browserPath ?? pathname)
+}
+
+/** "Ready in 1–2 days". Arabic is in the markup and shows when the route sets dir=rtl. */
 export function ReadyLine({ className }: { className?: string }) {
-  const arabic = useArabic()
-  return <span className={className}>{arabic ? APPLICATION_READY_AR : APPLICATION_READY}</span>
+  return (
+    <span className={className}>
+      <LangText en={APPLICATION_READY} ar={APPLICATION_READY_AR} />
+    </span>
+  )
 }
 
 /** The FAQ processing sentence, in Arabic on /ar. */
 export function PreparationLine({ className }: { className?: string }) {
-  const arabic = useArabic()
-  return <span className={className}>{arabic ? PREPARATION_TIME_AR : PREPARATION_TIME}</span>
+  return (
+    <span className={className}>
+      <LangText en={PREPARATION_TIME} ar={PREPARATION_TIME_AR} />
+    </span>
+  )
 }

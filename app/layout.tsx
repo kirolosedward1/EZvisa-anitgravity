@@ -7,6 +7,7 @@ import { ScrollRestoration } from "@/components/scroll-restoration"
 import { ContinueApplicationNotification } from "@/components/continue-application-notification"
 import { NavigationProgressBar } from "@/components/navigation-progress"
 import { PageTransition } from "@/components/page-transition"
+import { LocaleDirection } from "@/components/locale-direction"
 import Script from "next/script"
 import "./globals.css"
 
@@ -111,11 +112,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="bg-background">
+    <html lang="en" className="bg-background" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=location.pathname;var m=document.cookie.match(/(?:^|; )ez_lang=([^;]*)/);var ar=p==="/ar"||p.indexOf("/ar/")===0||(m&&decodeURIComponent(m[1])==="ar");if(ar){document.documentElement.lang="ar";document.documentElement.dir="rtl";}}catch(e){}})();`,
+            __html: `(function(){try{var p=location.pathname;var ar=p==="/ar"||p.indexOf("/ar/")===0;if(ar){document.documentElement.lang="ar";document.documentElement.dir="rtl";}}catch(e){}})();`,
           }}
         />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
@@ -165,6 +166,7 @@ export default function RootLayout({
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
+        <LocaleDirection />
         <NavigationProgressBar />
         <ScrollRestoration />
         {/* overflow-x-clip (not hidden): hidden would turn <main> into a scroll container and stop position: sticky from working on every page */}

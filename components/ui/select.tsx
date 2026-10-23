@@ -54,6 +54,7 @@ function SelectContent({
   className,
   children,
   position = 'popper',
+  style,
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
@@ -61,12 +62,20 @@ function SelectContent({
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
-          'bg-white text-[#0A0F1F] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border border-[#E3E7EF] shadow-[0_8px_24px_rgba(10,15,31,0.08)]',
+          'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md',
           position === 'popper' &&
             'data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1',
           className,
+          'bg-[#FFFFFF] text-[#0A0F1F] border border-[#E3E7EF] shadow-[0_8px_24px_rgba(10,15,31,0.08)] backdrop-blur-none',
         )}
         position={position}
+        style={{
+          ...style,
+          backgroundColor: "#FFFFFF",
+          border: "1px solid #E3E7EF",
+          boxShadow: "0 8px 24px rgba(10,15,31,0.08)",
+          backdropFilter: "none",
+        }}
         {...props}
       >
         <SelectScrollUpButton />

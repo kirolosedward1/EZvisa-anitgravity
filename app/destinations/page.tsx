@@ -4,6 +4,7 @@ import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
 import { DestinationsCatalog } from "@/components/destinations-catalog"
 import { ScrollToTop } from "@/components/scroll-to-top"
+import { LangText } from "@/components/lang-text"
 
 export const metadata: Metadata = {
   title: "Schengen Visa Destinations & Document Checklists | EZvisa",
@@ -36,13 +37,19 @@ export default function DestinationsPage() {
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-[#F7F8FA]">
         <InnerHero
-          badge="Destinations"
+          badge={<LangText en="Destinations" ar="الوجهات" />}
           title={
-            <>
-              Explore Schengen <span className="text-[#0436DC]">Destinations</span>
-            </>
+            <LangText
+              en={<>Explore Schengen <span className="text-[#0436DC]">Destinations</span></>}
+              ar={<>استكشف وجهات <span className="text-[#0436DC]">شنغن</span></>}
+            />
           }
-          description="Find tailored visa checklists, processing times, and prices for all 29 Schengen member states. We make visa applications simple."
+          description={
+            <LangText
+              en="Find tailored visa checklists, processing times, and prices for all 29 Schengen member states. We make visa applications simple."
+              ar="اعثر على قوائم المستندات وأوقات التجهيز والأسعار لدول شنغن الـ ٢٩. نجعل طلب التأشيرة بسيطًا."
+            />
+          }
           gradientType="default"
           randomizeBackground={true}
         />

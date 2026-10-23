@@ -217,7 +217,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full p-1 bg-popover/95 border border-border/80 shadow-2xl rounded-xl">
+            <PopoverContent className="w-full p-1 rounded-xl">
               <Command>
                 <CommandInput placeholder="Search country..." autoFocus={!isMobile} className="border-none focus:ring-0" />
                 <CommandList>

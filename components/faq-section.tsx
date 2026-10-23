@@ -1,25 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
+import { useArabic } from "@/components/ready-line"
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
-  const [lang, setLang] = useState<"en" | "ar">("en")
-
-  useEffect(() => {
-    const read = () => {
-      const saved = window.localStorage.getItem("ez_lang")
-      setLang(document.documentElement.dir === "rtl" || saved === "ar" ? "ar" : "en")
-    }
-    read()
-    window.addEventListener("ez_language_change", read)
-    return () => window.removeEventListener("ez_language_change", read)
-  }, [])
-
-  const faqs = lang === "ar" ? FAQ_AR : FAQ_EN
+  const arabic = useArabic()
+  const faqs = arabic ? FAQ_AR : FAQ_EN
 
   const toggleFAQ = (index: number) => {
     setOpenIndex(openIndex === index ? null : index)

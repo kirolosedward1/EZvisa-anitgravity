@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
 import { ReadyLine } from "@/components/ready-line"
+import { LangText } from "@/components/lang-text"
 
 type TabType = "all" | "schengen" | "non-schengen"
 
@@ -176,7 +177,9 @@ export function DestinationsCatalog() {
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
                   <Compass className="w-8 h-8 animate-pulse" />
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-3">Non-Schengen Visa Support</h3>
+                <h3 className="text-2xl font-bold text-foreground mb-3">
+                  <LangText en="Non-Schengen Visa Support" ar="دعم تأشيرات خارج شنغن" />
+                </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto mb-8">
                   We're currently expanding our platform to support visa applications for the United States, 
                   United Kingdom, Canada, Australia, and more. 
