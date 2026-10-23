@@ -28,6 +28,7 @@ import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "..
 import { SwipeToDiscard, SwipeLock, SwipeActive } from "../../../components/SwipeToDiscard";
 import { useAvatar } from "../../../lib/avatar";
 import { onTabScroll } from "../../../lib/tabBarScroll";
+import { Explore, FaqSection } from "../../../components/home/Sections";
 
 const fmtDay = (s: string, lang: string) => new Date(s.slice(0, 10) + "T12:00:00").toLocaleDateString(lang === "ar" ? "ar" : undefined, { day: "numeric", month: "short" });
 const tripDates = (a: Application, lang: string) => (a.entry_date ? [fmtDay(a.entry_date, lang), a.exit_date && a.exit_date.slice(0, 10) !== a.entry_date.slice(0, 10) && fmtDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
@@ -185,7 +186,7 @@ function Story({ name }: { name: string }) {
           {photo ? <Image source={photo} style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.card }} contentFit="cover" cachePolicy="memory" recyclingKey={name} /> : <Flag country={name} size={inner} />}
         </View>
       </View>
-      <Text variant="caption" weight="500" numberOfLines={1} center>{t(name)}</Text>
+      <Text variant="caption" weight="500" numberOfLines={2} center style={{ width: RING + 8 }}>{t(name)}</Text>
     </PressScale>
   );
 }
@@ -271,11 +272,13 @@ export default function Home() {
         <Icon name="magnifyingglass" size={ICON.md} color={c.secondaryLabel} weight="medium" />
         <Text variant="body" tone="secondary">{t("Search destinations")}</Text>
       </PressScale>
-      <AppList items={others} title={heroKey ? t("Other applications") : t("Your applications")} />
       <SectionHeader title={t("Popular countries")} action={t("See all")} onAction={() => router.navigate("/countries")} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: S.lg - 4, gap: S.xs }} testID="popular-stories">
         {STORIES.map((n) => <Story key={n} name={n} />)}
       </ScrollView>
+      <AppList items={others} title={heroKey ? t("Other applications") : t("Your applications")} />
+      <Explore />
+      <FaqSection />
     </ScrollView>
     </SwipeLock.Provider>
   );

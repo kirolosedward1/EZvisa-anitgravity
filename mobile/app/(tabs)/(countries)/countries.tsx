@@ -22,11 +22,11 @@ const Row = ({ name }: { name: string }) => { const { t } = useT(); return (
 ); };
 
 /** Grid card: the country photo, a dark fade at the bottom, flag + name in capitals, then the Schengen short-stay limit. */
-function Card({ name, w }: { name: string; w: number }) {
+export function Card({ name, w, ratio = 1.3 }: { name: string; w: number; ratio?: number }) {
   const c = useColors(); const { t } = useT(); const slug = toSlug(name); const on = c.onAccent;
   return (
     <PressScale onPress={() => { select(); router.push(`/country/${slug}`); }} accessibilityRole="button" accessibilityLabel={t(name)} testID="country-card"
-      style={[{ width: w, height: Math.round(w * 1.3), borderRadius: R.card, overflow: "hidden", backgroundColor: c.card }, curve]}>
+      style={[{ width: w, height: Math.round(w * ratio), borderRadius: R.card, overflow: "hidden", backgroundColor: c.card }, curve]}>
       <Image source={PHOTOS[slug]} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory" accessibilityIgnoresInvertColors />
       <LinearGradient colors={["transparent", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.9)"]} locations={[0.3, 0.62, 1]} style={StyleSheet.absoluteFill} />
       <View style={{ flex: 1, justifyContent: "flex-end", padding: S.md, gap: S.sm }}>

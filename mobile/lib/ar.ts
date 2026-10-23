@@ -607,4 +607,7 @@ export const AR: Record<string, string> = {
   "Enter a valid email address.": "أدخل بريدًا إلكترونيًا صحيحًا.",
   "Check {e} and tap the link to confirm the change.": "افتح {e} واضغط على الرابط لتأكيد التغيير.",
   "We'll send a confirmation link to the new address.": "سنرسل رابط تأكيد إلى العنوان الجديد.",
+  "Explore countries": "استكشف الدول",
+  "View all {n} countries": "عرض جميع الدول الـ{n}",
+  "Questions": "أسئلة شائعة",
 };
