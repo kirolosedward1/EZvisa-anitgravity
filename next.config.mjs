@@ -38,6 +38,13 @@ const nextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
     minimumCacheTTL: 31536000,
   },
+  async redirects() {
+    // /reviews (hardcoded testimonials) was removed; keep old links working.
+    return [
+      { source: '/reviews', destination: '/', permanent: true },
+      { source: '/ar/reviews', destination: '/ar', permanent: true },
+    ]
+  },
   async headers() {
     return [
       {

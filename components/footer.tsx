@@ -168,8 +168,8 @@ export function Footer({
 
                 <p className="text-[#3A4150] leading-relaxed max-w-md">
                   <LangText
-                    en="Schengen visa specialists trusted by 5,000+ travelers from across the UAE."
-                    ar="متخصصون في تأشيرات شنغن، ويثق بنا أكثر من ٥٬٠٠٠ مسافر في الإمارات."
+                    en="Schengen visa application preparation for travelers across the UAE."
+                    ar="تجهيز طلبات تأشيرة شنغن للمسافرين في جميع أنحاء الإمارات."
                   />
                 </p>
 

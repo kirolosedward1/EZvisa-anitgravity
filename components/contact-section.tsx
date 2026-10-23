@@ -66,7 +66,7 @@ export function ContactSection() {
               </motion.h2>
 
               <p className="text-base md:text-lg text-[#5B6475] max-w-md leading-relaxed mb-10">
-                Join thousands of travelers who trusted us with their Schengen visa applications.
+                Let us prepare your complete Schengen visa file.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">

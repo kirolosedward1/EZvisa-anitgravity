@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, ShieldCheck, Star, Clock, BookOpen, Plane, ChevronDown, Tag } from "lucide-react"
+import { ArrowRight, ShieldCheck, Clock, BookOpen, Plane, ChevronDown, Tag } from "lucide-react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import Link from "next/link"
@@ -168,13 +168,8 @@ export function HeroSection() {
               variants={itemVariants} 
               className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F7F8FA] border border-[#E3E7EF] text-xs font-semibold text-[#0A0F1F] cursor-default"
             >
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                ))}
-              </div>
               <span className="tracking-wide uppercase text-[10px] font-semibold text-[#0A0F1F]">
-                <LangText en="4.9/5 from 5,000+ travelers" ar="٤٫٩/٥ من أكثر من ٥٬٠٠٠ مسافر" />
+                <LangText en="Schengen visa application preparation from the UAE" ar="تجهيز طلبات تأشيرة شنغن من الإمارات" />
               </span>
             </motion.div>
 

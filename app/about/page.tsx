@@ -84,7 +84,7 @@ export default function AboutPage() {
                     <div>
                       <h3 className="font-semibold text-foreground mb-2">Expert Guidance</h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        Our team of visa experts has years of experience processing thousands of successful applications
+                        Our team of visa experts has years of experience preparing Schengen visa applications
                         across all European countries.
                       </p>
                     </div>
@@ -148,9 +148,8 @@ export default function AboutPage() {
                 struggling with confusing requirements, rejected applications, and endless paperwork.
               </p>
               <p className="text-muted-foreground leading-relaxed mt-4">
-                Today, we're proud to serve thousands of satisfied customers, helping them explore Europe with
-                confidence. Our success is measured by the smiles of travelers who've achieved their goals with our
-                help.
+                Today, we help travelers across the UAE prepare complete, consistent Schengen visa files, so they
+                can apply with confidence.
               </p>
             </div>
 
@@ -158,8 +157,8 @@ export default function AboutPage() {
             <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 shadow-primary/[0.02]">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
-                  <div className="text-3xl font-semibold text-primary mb-1">5,000+</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Visas Processed</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">1–2 days</div>
+                  <div className="text-sm font-semibold text-muted-foreground">Typical preparation time</div>
                 </div>
                 <div>
                   <div className="text-3xl font-semibold text-primary mb-1">29</div>

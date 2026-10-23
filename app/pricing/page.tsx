@@ -143,7 +143,7 @@ export default function PricingPage() {
               </Button>
             </Link>
             <p className="text-muted-foreground">
-              Join 5,000+ travelers who prepared their visa file with EZvisa
+              Prepare your complete visa file with EZvisa
             </p>
           </div>
 

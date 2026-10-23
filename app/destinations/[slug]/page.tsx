@@ -3,7 +3,6 @@ import { PreparationLine } from "@/components/ready-line"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
-import { TestimonialsSection } from "@/components/testimonials-section"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { InnerHero } from "@/components/inner-hero"
@@ -16,7 +15,6 @@ import {
   Check, 
   X, 
   ArrowRight, 
-  Star, 
   Sparkles, 
   FileText, 
   UserCheck, 
@@ -221,8 +219,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white/90">
-            <Star className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
-            <span>Over 5,000+ Schengen visas processed successfully.</span>
+            <span>Forms, cover letter, itinerary and reservations, prepared for you.</span>
           </div>
         </div>
       </InnerHero>
@@ -357,7 +354,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
               <span>Application</span>
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-              Why thousands of travelers use EZvisa instead of dealing with complex paperwork alone.
+              Why travelers use EZvisa instead of dealing with complex paperwork alone.
             </p>
           </div>
 
@@ -435,9 +432,6 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           </Accordion>
         </div>
       </section>
-
-      {/* 6. Reviews Section */}
-      <TestimonialsSection />
 
       {/* 7. Bottom Final CTA Banner */}
       <section className="py-20 bg-primary text-primary-foreground text-center relative overflow-hidden">
