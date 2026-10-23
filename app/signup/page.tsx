@@ -109,7 +109,7 @@ function SignupForm() {
         </Button>
       </form>
 
-      <GoogleSignInButton next={next} />
+      <GoogleSignInButton next={next} label="Sign up with Google" />
 
       <div className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}

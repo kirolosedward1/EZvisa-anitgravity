@@ -156,6 +156,7 @@ Usage rules:
 | `user-menu.tsx` | Header account dropdown (signed-out: sign in / sign up / track / app / help; signed-in: applications, documents, account, sign out). |
 | `app-promo-section.tsx` | Homepage app section with iPhone mockups (reuses `components/app/*`). The app link lives in the footer, not the header nav. |
 | `payment-marks.tsx` | Footer payment badges (official Simple Icons paths). |
+| `auth/auth-split-layout.tsx`, `auth/google-sign-in.tsx` | Sign-in page frame (brand panel + app preview on desktop, form only on mobile) and the Google button with the official "G" logo. |
 
 ---
 
