@@ -186,7 +186,7 @@ export function HeroSection() {
 
             {/* Country selector card */}
             <motion.div variants={itemVariants} className="mt-10 w-full max-w-3xl relative z-10">
-              <div className="bg-[#FFFFFF] border border-[#E3E7EF] rounded-[2rem] p-6 md:p-8 shadow-[0_8px_24px_rgba(10,15,31,0.08)]">
+              <div className="rounded-[2rem] border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl p-6 shadow-[0_8px_32px_rgba(10,15,31,0.28)] md:p-8">
               <div className="flex flex-col gap-4">
                 
                 {/* Selectors Row */}
@@ -194,15 +194,15 @@ export function HeroSection() {
                   
                   {/* Selector 1 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="١. جنسيتي" /></span>
+                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="1. جنسيتي" /></span>
                     <Popover open={fromOpen} onOpenChange={setFromOpen}>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
                           className={`w-full group flex items-center gap-3 px-4 py-3 h-14 rounded-2xl border transition-all text-left shadow-xs hover:shadow-sm cursor-pointer ${
                             fromOpen
-                              ? "border-primary bg-primary/5 ring-2 ring-primary/10"
-                              : "border-border bg-background hover:bg-secondary/50"
+                              ? "border-primary bg-background ring-2 ring-primary/30"
+                              : "border-transparent bg-background hover:bg-secondary"
                           }`}
                         >
                           <div className="h-9 w-9 rounded-full bg-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
@@ -254,15 +254,15 @@ export function HeroSection() {
 
                   {/* Selector 2 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="٢. وجهتي" /></span>
+                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="2. وجهتي" /></span>
                     <Popover open={toOpen} onOpenChange={setToOpen}>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
                           className={`w-full group flex items-center gap-3 px-4 py-3 h-14 rounded-2xl border transition-all text-left shadow-xs hover:shadow-sm cursor-pointer ${
                             toOpen
-                              ? "border-primary bg-primary/5 ring-2 ring-primary/10"
-                              : "border-border bg-background hover:bg-secondary/50"
+                              ? "border-primary bg-background ring-2 ring-primary/30"
+                              : "border-transparent bg-background hover:bg-secondary"
                           }`}
                         >
                           <div className="h-9 w-9 rounded-full bg-primary/5 flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
@@ -341,22 +341,22 @@ export function HeroSection() {
                       animate={{ opacity: 1, height: "auto", y: 0 }}
                       exit={{ opacity: 0, height: 0, y: -10 }}
                       transition={{ type: "spring", stiffness: 120, damping: 14 }}
-                      className="overflow-hidden border-t border-border pt-4 mt-2"
+                      className="overflow-hidden border-t border-primary-foreground/15 pt-4 mt-2"
                     >
-                      <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row items-center justify-between gap-4 text-left">
+                      <div className="rounded-2xl border border-primary-foreground/15 bg-primary-foreground/10 p-4 md:p-5 flex flex-col md:flex-row items-center justify-between gap-4 text-left">
                         <div className="flex items-start gap-3">
                           <div className="flex items-center -space-x-2.5 flex-shrink-0 mt-1">
                             <CountryFlag iso={toCitizenshipIso(fromCountry)} title={fromLabel} />
                             <CountryFlag iso={SCHENGEN_META[toCountry]?.iso} title={toCountry} />
                           </div>
                           <div>
-                            <div className="font-semibold text-foreground text-sm md:text-base">
+                            <div className="font-semibold text-primary-foreground text-sm md:text-base">
                               <LangText
                                 en={`Schengen visa required for ${fromLabel} citizens visiting ${toCountry}`}
                                 ar={`تأشيرة شنغن مطلوبة لمواطني ${fromLabel} عند زيارة ${toCountry}`}
                               />
                             </div>
-                            <p className="text-xs md:text-sm text-muted-foreground mt-0.5 leading-relaxed">
+                            <p className="text-xs md:text-sm text-primary-foreground/80 mt-0.5 leading-relaxed">
                               <LangText
                                 en="Let's prepare your full visa dossier. We check everything (cover letter, reservations and itinerary) before you submit."
                                 ar="لنجهّز ملف التأشيرة كاملًا. نراجع كل شيء (خطاب التغطية والحجوزات وخط السير) قبل التقديم."
@@ -374,18 +374,18 @@ export function HeroSection() {
             </div>
 
             {/* Reassurance row under form */}
-            <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-6 font-medium text-[#0A0F1F] mx-auto">
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
-                <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
+            <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-6 font-medium text-primary-foreground mx-auto">
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
+                <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
                 <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="Full refund before we start" ar="استرداد كامل قبل بدء التجهيز" /></span>
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
                 <ReadyLine className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left" />
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
-                <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
-                <span className="font-semibold text-[#0A0F1F] text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="All-Inclusive File" ar="ملف شامل" /></span>
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
+                <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
+                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="All-Inclusive File" ar="ملف شامل" /></span>
               </div>
             </motion.div>
           </motion.div>

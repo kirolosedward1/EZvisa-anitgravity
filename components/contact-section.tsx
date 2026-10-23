@@ -1,10 +1,11 @@
 "use client"
 
 import { ArrowRight, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
+import { LangText } from "@/components/lang-text"
 
 export function ContactSection() {
   const benefits = [
@@ -16,126 +17,63 @@ export function ContactSection() {
   ]
 
   return (
-    <section id="contact" className="relative py-24 md:py-32 overflow-hidden bg-background">
-      <div className="container mx-auto px-6 max-w-6xl">
+    <section id="contact" className="bg-background py-20 md:py-28">
+      <div className="container mx-auto max-w-6xl px-4 sm:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
-          className="relative overflow-hidden rounded-3xl text-[#0A0F1F] shadow-[0_8px_24px_rgba(10,15,31,0.08)] border border-[#E3E7EF] bg-[#FFFFFF]"
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.5 }}
+          className="grid overflow-hidden rounded-[2rem] border border-border/70 bg-card shadow-sm lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]"
         >
-          {/* Subtle grid pattern overlay */}
-          <div
-            className="absolute inset-0 opacity-[0.08] pointer-events-none"
-            style={{
-              backgroundImage: "none",
-              backgroundSize: "20px 20px",
-            }}
-          />
-
-          {/* Background image tint */}
-          <div className="absolute inset-0">
-            <Image
-              src="/images/6802.jpg"
-              alt="Happy traveler in Europe"
-              fill
-              sizes="(max-width: 1024px) 100vw, 1200px"
-              className="object-cover opacity-[0.12] mix-blend-overlay"
-            />
+          <div className="relative order-first h-56 sm:h-72 lg:order-last lg:h-auto">
+            <Image src="/images/6802.jpg" alt="Traveller on a bridge in Budapest" fill sizes="(max-width: 1024px) 100vw, 480px" className="object-cover object-[30%_35%]" />
           </div>
 
-          <div className="relative grid lg:grid-cols-[1.25fr_1fr] gap-12 lg:gap-16 p-8 md:p-14 lg:p-16 z-10">
-            
-            {/* Left - Text Headline & Actions */}
-            <div className="flex flex-col justify-center text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#F7F8FA] text-[#0436DC] border border-[#E3E7EF] text-xs font-semibold uppercase tracking-wider mb-6 self-start">
-                <span className="w-1.5 h-1.5 rounded-full bg-sky-300 animate-pulse" />
-                Ready when you are
-              </div>
-              
-              <motion.h2
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-[1.15] tracking-tight text-[#0A0F1F] mb-6 text-balance"
-              >
-                Start your Schengen <br className="hidden sm:inline" />
-                visa application <span className="text-[#0436DC]">today.</span>
-              </motion.h2>
-
-              <p className="text-base md:text-lg text-[#5B6475] max-w-md leading-relaxed mb-10">
-                Let us prepare your complete Schengen visa file.
+          <div className="flex flex-col items-start gap-6 p-8 md:p-12 lg:p-14">
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Ready when you are</span>
+            <div className="flex flex-col gap-4">
+              <h2 className="text-balance text-foreground">Start your Schengen visa application today.</h2>
+              <p className="max-w-md text-base leading-relaxed text-muted-foreground md:text-lg">
+                <LangText en="Let us prepare your complete Schengen visa file." ar="دعنا نجهّز ملف تأشيرة شنغن الكامل الخاص بك." />
               </p>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  asChild
-                  size="lg"
-                  className="h-12 px-7 bg-[#0436DC] text-white hover:bg-[#0436DC]/90 rounded-xl font-semibold shadow-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                >
-                  <Link href="/apply" className="flex items-center">
-                    Start application
-                    <ArrowRight className="ml-2 h-4 w-4 text-white" strokeWidth={2.5} />
-                  </Link>
-                </Button>
-
-                <Button
-                  asChild
-                  size="lg"
-                  variant="outline"
-                  className="h-12 px-7 bg-white border border-[#E3E7EF] text-[#0A0F1F] hover:bg-[#F7F8FA] rounded-xl font-semibold transition-all duration-300 hover:scale-[1.02] cursor-pointer"
-                >
-                  <Link href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application." target="_blank" rel="noopener noreferrer" className="flex items-center">
-                    Chat on WhatsApp
-                    <svg className="ml-2 h-4.5 w-4.5" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-                    </svg>
-                  </Link>
-                </Button>
-              </div>
             </div>
 
-            {/* Right - Glass Benefits Box */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="lg:self-center w-full"
-            >
-              <div className="rounded-3xl bg-[#F7F8FA] border border-[#E3E7EF] p-8 text-left">
-                <div className="text-xs font-semibold tracking-widest text-[#0436DC] mb-6">What you get</div>
-                <div className="space-y-4">
-                  {benefits.map((benefit, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.3, delay: 0.3 + index * 0.08 }}
-                      className="flex gap-3.5 items-center"
-                    >
-                      <div className="h-6 w-6 rounded-full bg-[#0436DC]/10 flex items-center justify-center flex-shrink-0">
-                        <Check className="h-3.5 w-3.5 text-[#0436DC]" strokeWidth={3} />
-                      </div>
-                      <span className="text-sm md:text-base text-[#0A0F1F] font-medium leading-none">{benefit}</span>
-                    </motion.div>
-                  ))}
-                </div>
+            <ul className="grid w-full grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+              {benefits.map((benefit) => (
+                <li key={benefit} className="flex items-center gap-2.5 text-sm font-medium text-foreground">
+                  <Check className="size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
+                  {benefit}
+                </li>
+              ))}
+            </ul>
 
-                <div className="mt-8 pt-6 border-t border-[#E3E7EF] flex items-center justify-between">
-                  <div>
-                    <span className="text-xs tracking-wider uppercase text-[#5B6475] block">Starting at</span>
-                    <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-3xl font-semibold text-[#0A0F1F]">249</span>
-                      <span className="text-xs font-semibold text-[#5B6475]">AED</span>
-                    </div>
-                  </div>
-                </div>
+            <div className="flex w-full flex-col gap-5 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Starting at <span className="text-2xl font-semibold tabular-nums text-foreground">{PRICE_AED}</span>{" "}
+                <span className="font-semibold text-foreground">AED</span>
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/apply"
+                  className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  Start application
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
+                </Link>
+                <Link
+                  href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+                >
+                  <svg className="size-4 text-[#1A7F37]" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                    </svg>
+                  Chat on WhatsApp
+                </Link>
               </div>
-            </motion.div>
+            </div>
           </div>
         </motion.div>
       </div>

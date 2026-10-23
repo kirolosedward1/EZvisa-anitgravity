@@ -16,14 +16,16 @@ import { PRICE_AED } from "@/lib/shared/wizard-contract"
 type TabType = "all" | "schengen" | "non-schengen"
 
 /** Photo card: the whole card opens the destination page; "Apply" goes straight to the wizard. */
-function DestinationCard({ country }: { country: Destination }) {
+/** `compact` (narrow five-across rows) drops the Type column so Ready in and Fee keep their room. */
+export function DestinationCard({ country, compact = false }: { country: Destination; compact?: boolean }) {
   const name = country.name
   const nameAr = destinationNameAr(country.slug) || name
-  const specs = [
+  const allSpecs = [
     { label: "Type", ar: "النوع", value: country.region === "Schengen" ? "Schengen" : country.visaType, valueAr: country.region === "Schengen" ? "شنغن" : country.visaType },
     { label: "Ready in", ar: "جاهز خلال", value: "1–2 days", valueAr: "١–٢ يوم" },
     { label: "Fee", ar: "الرسوم", value: `${PRICE_AED} AED`, valueAr: `${PRICE_AED} درهم` },
   ]
+  const specs = compact ? allSpecs.slice(1) : allSpecs
   return (
     <div className="photo-card group relative aspect-[3/4] overflow-hidden rounded-[1.75rem] bg-foreground shadow-md ring-1 ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/15 focus-within:ring-2 focus-within:ring-ring">
       <Image
@@ -49,7 +51,7 @@ function DestinationCard({ country }: { country: Destination }) {
           <LangText en={name} ar={nameAr} />
         </h3>
 
-        <dl className="grid w-full grid-cols-3 border-y border-primary-foreground/15 py-3">
+        <dl className={`grid w-full border-y border-primary-foreground/15 py-3 ${compact ? "grid-cols-2" : "grid-cols-3"}`}>
           {specs.map((spec) => (
             <div key={spec.label} className="flex flex-col items-center gap-1">
               <dt className="text-[10px] font-medium uppercase tracking-[0.12em] text-primary-foreground/55">
