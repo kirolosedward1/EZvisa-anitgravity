@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 
 function SignupForm() {
   const router = useRouter()
@@ -49,7 +50,7 @@ function SignupForm() {
   if (success) {
     return (
       <div className="w-full max-w-md space-y-6 p-8 bg-card rounded-xl shadow-lg border border-border/50 text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-emerald-600">Check your email</h2>
+        <h2 className="text-2xl font-semibold tracking-tight text-emerald-600">Check your email</h2>
         <p className="text-muted-foreground">We sent you a verification link to {email}. Please verify your account to continue.</p>
         <Button variant="outline" className="mt-4" onClick={() => router.push("/login")}>Back to login</Button>
       </div>
@@ -59,7 +60,7 @@ function SignupForm() {
   return (
     <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
       <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Create an account</h2>
+        <h2 className="text-3xl font-semibold tracking-tight text-foreground">Create an account</h2>
         <p className="text-muted-foreground mt-2">Sign up to track and manage your visa applications</p>
       </div>
 
@@ -107,6 +108,8 @@ function SignupForm() {
           )}
         </Button>
       </form>
+
+      <GoogleSignInButton next={next} />
 
       <div className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}

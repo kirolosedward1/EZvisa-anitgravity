@@ -1,6 +1,6 @@
 import { AppointmentCard } from "../../../components/Appointment";
-import { useCallback, useEffect, useState } from "react";
-import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View, type ScrollViewInstance } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
@@ -12,17 +12,24 @@ import { SupportButton } from "../../../components/Support";
 import { whatsapp } from "../../../lib/api";
 import { intentStatus, knownPayment, money, startPayment, usePaying, useQuote } from "../../../lib/payments";
 import { Linking } from "react-native";
-import { success, error as hError } from "../../../lib/haptics";
+import { success, error as hError, tap } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
-import { useT } from "../../../lib/i18n";
+import { useT, ltr } from "../../../lib/i18n";
 import { router } from "expo-router";
 import { countdown } from "../../../lib/countdown";
 import { askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
 import { Pressable } from "react-native";
-import { Icon } from "../../../components/ui";
+import { Icon, Chevron } from "../../../components/ui";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from "react-native-reanimated";
 
 let LOC: string | undefined;
 const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
+/** "Jan 13 – Jan 20, 2027": the year once when both dates share it, so the range fits on one row. */
+const fmtRange = (a: string, b?: string | null) => {
+  if (!b || b.slice(0, 10) === a.slice(0, 10)) return fmtD(a);
+  const x = new Date(a.slice(0, 10) + "T12:00:00"), y = new Date(b.slice(0, 10) + "T12:00:00");
+  return x.getFullYear() === y.getFullYear() ? `${x.toLocaleDateString(LOC, { day: "numeric", month: "short" })} – ${fmtD(b)}` : `${fmtD(a)} – ${fmtD(b)}`;
+};
 const EDITABLE = UPLOAD_STATUSES;
 const REFRESH_MS = 30_000;
 
@@ -78,6 +85,11 @@ export default function ApplicationDetail() {
   const quote = useQuote(unpaid ? a!.id : null, a?.updated_at);
   // Ziina status of the checkout this device opened (server proxy), so a paid-but-not-yet-recorded payment shows as confirming.
   useEffect(() => { let on = true; if (unpaid) knownPayment(a!.id).then((p) => p && intentStatus(p.paymentId)).then((s) => on && setZiina(s ?? null)).catch(() => {}); return () => { on = false; }; }, [a?.id, a?.payment_status]);
+  // The locked Trip plan row only scrolls to the payment step; paying always needs its own tap there.
+  const scroller = useRef<ScrollViewInstance>(null); const payY = useRef(0); const docsY = useRef(0);
+  const [flash, setFlash] = useState<{ id: string; n: number } | null>(null);
+  const toDocs = (firstId?: string) => { tap(); scroller.current?.scrollTo({ y: Math.max(0, docsY.current - 16), animated: true }); if (firstId) setTimeout(() => setFlash((f) => ({ id: firstId, n: (f?.n ?? 0) + 1 })), 350); };
+  const toPayStep = () => { tap(); scroller.current?.scrollTo({ y: Math.max(0, payY.current - S.md), animated: true }); };
   const pay = async () => {
     if (!a || paying) return; setUpErr(null);
     try { const o = await startPayment(a.id); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }); }
@@ -96,7 +108,7 @@ export default function ApplicationDetail() {
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg } }} />
       {/* Mirrors the real layout: hero, Status timeline (4 steps), Trip group */}
       <View accessible accessibilityLabel={t("Loading")} style={{ gap: S.md }} testID="detail-skeleton">
-        <Skeleton w={72} h={72} r={R.round} /><Skeleton w="55%" h={34} r={R.md} />
+        <Skeleton w={56} h={56} r={R.round} /><Skeleton w="55%" h={34} r={R.md} />
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Skeleton w="35%" h={16} /><Skeleton w={84} h={22} r={R.sm} /></View>
         <Skeleton w={90} h={20} style={{ marginTop: S.lg }} />
         <View style={{ borderRadius: R.card, padding: S.md, gap: S.lg, backgroundColor: c.card }}>{[0, 1, 2, 3].map((i) => <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}><Skeleton w={14} h={14} r={R.round} /><Skeleton w={`${60 - i * 8}%` as `${number}%`} h={16} /></View>)}</View>
@@ -115,7 +127,7 @@ export default function ApplicationDetail() {
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
+    <ScrollView ref={scroller} contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.tint} />}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
@@ -123,14 +135,15 @@ export default function ApplicationDetail() {
           <SupportButton header context={`application ${a.reference}`} />
         </View>) }} />
       <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xxl, gap: S.xs }}>
-        <Flag country={name} size={72} />
+        <Flag country={name} size={56} />
         <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text variant="subhead" tone="secondary" tabular>{a.reference}</Text>
-          <StatusPill v={a.status} />
+          <Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text>
+          <StatusPill v={a.status} a={a} />
         </View>
       </View>
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
+      {locked && <View onLayout={(e) => { payY.current = e.nativeEvent.layout.y; }} />}
       {locked && (
         <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
           {ziina === "completed" || ziina === "pending"
@@ -140,26 +153,37 @@ export default function ApplicationDetail() {
       )}
       {needsContinue(a) && (
         <ListGroup header={t("Next step")} footer={t("Then upload your documents below.")} inset={58}>
-          <ListRow icon="briefcase.fill" iconColor={c.tint} title={t("Continue application")} subtitle={t("Add your passport number and employment details.")} onPress={() => router.push(`/continue/${a.id}`)} />
+          <NextStepCard icon="briefcase.fill" title={t("Continue application")} subtitle={t("Add your passport number and employment details.")} target={t("opens application form")} onPress={() => { tap(); router.push(`/continue/${a.id}`); }} />
+        </ListGroup>
+      )}
+      {paid && !needsContinue(a) && list && list.customer.length - done > 0 && (
+        <ListGroup header={t("Next step")} inset={58}>
+          <NextStepCard icon="arrow.up.doc.fill" title={t(list.customer.length - done === 1 ? "Submit 1 document" : "Submit {n} documents", { n: list.customer.length - done })} target={t("opens documents")}
+            subtitle={(() => { const o = list.customer.filter(isOpen).map((i) => t(i.req.title)); return o.slice(0, 3).join(", ") + (o.length > 3 ? " " + t("+{n} more", { n: o.length - 3 }) : ""); })()}
+            onPress={() => toDocs(list.customer.find(isOpen)?.req.id)} />
         </ListGroup>
       )}
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
-        <ListRow title={t("Dates")} value={`${fmtD(a.entry_date)} – ${fmtD(a.exit_date)}`} />
+        {!!a.entry_date && <ListRow title={t("Dates")} value={fmtRange(a.entry_date, a.exit_date)} />}
+        {paid && <ListRow title={t("Paid")} value={fmtD(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null)} />}
         {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
-        {a.status !== "cancelled" && <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />}
+        {a.status !== "cancelled" && (paid
+          ? <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />
+          : <ListRow icon="lock.fill" iconColor={c.grey} title={t("Trip plan")} subtitle={t("Your trip plan unlocks after payment")} onPress={toPayStep} />)}
       </ListGroup>
       <AppointmentCard a={a} />
       {locked ? (
         <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
       ) : list ? (<>
+        <View onLayout={(e) => { docsY.current = e.nativeEvent.layout.y; }} />
         <ListGroup header={t("Your documents · {i} of {n}", { i: done, n: list.customer.length })} footer={canUpload ? t("PDF or image · max 5 MB. Tap a missing item to upload it.") : undefined} inset={58}>
           <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} accessible accessibilityLabel={`${done} of ${list.customer.length} documents provided`}>
-            <View style={{ height: 6, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 6, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
+            <View style={{ height: 4, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 4, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
           </View>
-          {list.customer.map((i) => <CheckRow key={i.req.id} i={i} busy={busyType(i.req.document_type)} canUpload={canUpload}
+          {list.customer.map((i) => <CheckRow key={i.req.id} flash={flash?.id === i.req.id ? flash.n : 0} i={i} busy={busyType(i.req.document_type)} canUpload={canUpload}
             onPress={() => (isOpen(i) ? (canUpload ? pickFile(i.req.document_type, i.req.id) : undefined) : i.doc && open(i.doc.storage_path))} />)}
         </ListGroup>
         {!!list.ezvisa.length && (
@@ -183,7 +207,7 @@ export default function ApplicationDetail() {
       </ListGroup>}
       <InlineError text={upErr} />
       <ListGroup inset={58}>
-        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} />)}
+        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} onPress={paid ? () => router.push(`/receipt/${a.id}`) : undefined} a11yHint={paid ? t("Payment receipt") : undefined} />)}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>
@@ -214,8 +238,26 @@ function UploadRow({ j }: { j: UploadJob }) {
   );
 }
 
-function CheckRow({ i, busy, canUpload, onPress }: { i: CheckItem; busy: boolean; canUpload: boolean; onPress?: () => void }) {
+function NextStepCard({ icon, title, subtitle, target, onPress }: { icon: "briefcase.fill" | "arrow.up.doc.fill"; title: string; subtitle?: string; target: string; onPress: () => void }) {
+  const c = useColors();
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}, ${target}`} accessibilityHint={subtitle}
+      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm + 2, backgroundColor: pressed ? c.fillSubtle : "transparent" })}>
+      <View style={{ width: 32, height: 32, borderRadius: R.sm, backgroundColor: c.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={16} color={c.accent} /></View>
+      <View style={{ flex: 1 }}>
+        <Text variant="headline">{title}</Text>
+        {!!subtitle && <Text variant="subhead" tone="secondary" numberOfLines={2}>{subtitle}</Text>}
+      </View>
+      <Chevron />
+    </Pressable>
+  );
+}
+
+function CheckRow({ i, busy, canUpload, onPress, flash = 0 }: { i: CheckItem; busy: boolean; canUpload: boolean; onPress?: () => void; flash?: number }) {
   const c = useColors(); const { t } = useT();
+  const hl = useSharedValue(0);
+  useEffect(() => { if (flash) hl.value = withSequence(withTiming(1, { duration: 150 }), withTiming(0, { duration: 1200, easing: Easing.out(Easing.quad) })); }, [flash]);
+  const hlStyle = useAnimatedStyle(() => ({ opacity: hl.value }));
   const map: Record<CheckItem["state"], { icon: "checkmark.circle.fill" | "circle" | "exclamationmark.circle.fill" | "clock.fill" | "hourglass"; color: string; label: string }> = {
     missing: { icon: "circle", color: c.tertiaryLabel, label: t(i.req.is_mandatory ? "Missing" : "Optional") },
     // The rejection reason is staff text from document_reviews: shown as written
@@ -229,8 +271,8 @@ function CheckRow({ i, busy, canUpload, onPress }: { i: CheckItem; busy: boolean
   const m = map[i.state];
   const label = busy ? t("Uploading…") : m.label;
   const title = t(i.req.title);
-  return <ListRow icon={m.icon} iconColor={m.color} title={title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
+  return <View><ListRow icon={m.icon} iconColor={m.color} title={title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
     trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">{t("Upload")}</Text> : undefined}
-    a11yLabel={`${title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} />;
+    a11yLabel={`${title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} /><Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, backgroundColor: "rgba(4,54,220,0.10)" }, hlStyle]} /></View>;
 }
 

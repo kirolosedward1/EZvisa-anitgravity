@@ -1,10 +1,12 @@
 // Profile photo: picked from the photo library, cropped square, stored on this phone as a small JPEG (256 px) for the
 // signed-in user, and wiped on sign-out (lib/userData.ts). Shown on Account and as the Account tab icon.
-// Not synced to other devices yet: that needs a storage bucket on the server (a schema change, not made here).
+// Also uploaded to the private `avatars` bucket at <user_id>/avatar.jpg; the path is kept in user_metadata.avatar_path
+// and loaded with a 1-hour signed URL, so the photo survives sign-out and shows on other devices.
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
+import { supabase } from "./supabase";
 
 export const AVATAR_KEY = "ezvisa.avatar.v1";
 const SIZE = 256;
@@ -16,8 +18,46 @@ async function load() { if (loaded) return; loaded = true; try { const r = await
 /** The photo for this user (null when none, or when it belongs to someone else). */
 export function useAvatar(uid?: string | null): string | null {
   const [, set] = useState(0);
-  useEffect(() => { const f = () => set((n) => n + 1); subs.add(f); load(); return () => { subs.delete(f); }; }, []);
+  useEffect(() => { const f = () => set((n) => n + 1); subs.add(f); load().then(() => { if (uid) syncRemote(uid); }); return () => { subs.delete(f); }; }, [uid]);
   return uid && cur?.uid === uid ? cur.uri : null;
+}
+
+const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/jpg": "jpg", "image/png": "png", "image/webp": "webp", "image/heic": "heic", "image/heif": "heif" };
+/** <uid>/avatar.<ext>; the real path (with its extension) is what user_metadata.avatar_path stores. */
+const PATH = (uid: string, type = "image/jpeg") => `${uid}/avatar.${EXT[type] ?? "jpg"}`;
+let syncing: string | null = null;
+/** No photo on this phone (e.g. after sign-out): fetch the saved one from storage. */
+async function syncRemote(uid: string) {
+  if (!supabase || syncing === uid || (cur?.uid === uid && cur.uri)) return; syncing = uid;
+  try {
+    const { data } = await supabase.auth.getSession(); const u = data.session?.user;
+    const path = u?.id === uid ? (u.user_metadata?.avatar_path as string | undefined) : undefined; if (!path) return;
+    const r = await supabase.storage.from("avatars").createSignedUrl(path, 3600);
+    if (r.data?.signedUrl && !(cur?.uid === uid)) { cur = { uid, uri: r.data.signedUrl }; emit(); }
+  } catch {} finally { syncing = null; }
+}
+const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function b64ToBytes(b64: string): Uint8Array {
+  const s = b64.replace(/[^A-Za-z0-9+/]/g, ""); const bytes: number[] = []; let buf = 0, bits = 0;
+  for (const ch of s) { buf = (buf << 6) | B64.indexOf(ch); bits += 6; if (bits >= 8) { bits -= 8; bytes.push((buf >> bits) & 255); } }
+  return new Uint8Array(bytes);
+}
+/** Upload to avatars/<uid>/avatar.jpg (upsert) and remember the path in user_metadata. Best effort: the local copy still shows. */
+async function upload(uid: string, dataUri: string, hint?: string) {
+  if (!supabase) return;
+  // Native gives a base64 data URI (above); web's picker gives a blob: URL, so read its bytes.
+  const m = /^data:(image\/[\w.+-]+);base64,(.*)$/.exec(dataUri);
+  let bytes: Uint8Array; let type: string;
+  if (m) { type = m[1].toLowerCase(); bytes = b64ToBytes(m[2]); }
+  else { const blob = await (await fetch(dataUri)).blob(); type = (blob.type || hint || "image/jpeg").toLowerCase(); bytes = new Uint8Array(await blob.arrayBuffer()); }
+  if (!bytes.length) return;
+  if (!EXT[type]) type = "image/jpeg";
+  const path = PATH(uid, type);
+  const { data: s0 } = await supabase.auth.getSession(); const old = s0.session?.user.user_metadata?.avatar_path as string | undefined;
+  const { error } = await supabase.storage.from("avatars").upload(path, bytes, { contentType: type, upsert: true });
+  if (error) throw error;
+  await supabase.auth.updateUser({ data: { avatar_path: path } });
+  if (old && old !== path) await supabase.storage.from("avatars").remove([old]).catch(() => {}); // a different format replaced it
 }
 
 async function save(next: Stored | null) {
@@ -31,6 +71,8 @@ export async function pickAvatar(uid: string): Promise<boolean> {
   const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 1, exif: false });
   if (r.canceled || !r.assets?.[0]) return false;
   const a = r.assets[0];
+  const mt = (a.mimeType ?? "").toLowerCase() || (/\.(\w+)(\?|$)/.exec(a.fileName ?? "")?.[1] ? "image/" + /\.(\w+)(\?|$)/.exec(a.fileName ?? "")![1].toLowerCase().replace("jpg", "jpeg") : "");
+  if (mt && !["image/jpeg", "image/jpg", "image/png", "image/webp", "image/heic", "image/heif"].includes(mt)) throw new Error("Use a JPG, PNG, WebP or HEIC photo");
   let uri = a.uri;
   if (Platform.OS !== "web") {
     const { ImageManipulator, SaveFormat } = require("expo-image-manipulator") as typeof import("expo-image-manipulator");
@@ -40,8 +82,13 @@ export async function pickAvatar(uid: string): Promise<boolean> {
     uri = out.base64 ? `data:image/jpeg;base64,${out.base64}` : out.uri;
   }
   await save({ uid, uri });
+  await upload(uid, uri, a.mimeType ?? undefined).catch(() => {});
   return true;
 }
-export const removeAvatar = () => save(null);
+export async function removeAvatar() {
+  const uid = cur?.uid; await save(null);
+  if (uid && supabase) { const { data: s0 } = await supabase.auth.getSession(); const path = (s0.session?.user.user_metadata?.avatar_path as string | undefined) ?? PATH(uid);
+    await supabase.storage.from("avatars").remove([path]).catch(() => {}); await supabase.auth.updateUser({ data: { avatar_path: null } }).catch(() => {}); }
+}
 /** Sign-out (lib/userData.ts): forget the photo in memory too. */
 export function resetAvatar() { cur = null; loaded = false; emit(); }

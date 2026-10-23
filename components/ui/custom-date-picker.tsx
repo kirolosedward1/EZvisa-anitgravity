@@ -1,16 +1,12 @@
-'use client'
+"use client"
 
 import * as React from "react"
 import { Calendar as CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
 
 import { cn } from "@/lib/utils"
+import { formatDisplayDate, parseCalendarDate } from "@/lib/dates"
 import { Calendar } from "@/components/ui/calendar"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 interface CustomDatePickerProps {
   value?: string // YYYY-MM-DD
@@ -21,6 +17,7 @@ interface CustomDatePickerProps {
   max?: string // YYYY-MM-DD
   className?: string
   id?: string
+  invalid?: boolean
 }
 
 export function CustomDatePicker({
@@ -32,17 +29,17 @@ export function CustomDatePicker({
   max,
   className,
   id,
+  invalid = false,
 }: CustomDatePickerProps) {
   const [open, setOpen] = React.useState(false)
 
-  // Parse YYYY-MM-DD in local time
   const parseDateString = React.useCallback((dateStr?: string) => {
-    if (!dateStr) return undefined
-    const [year, month, day] = dateStr.split("-").map(Number)
+    const parsed = parseCalendarDate(dateStr)
+    if (!parsed) return undefined
+    const [year, month, day] = parsed.iso.split("-").map(Number)
     return new Date(year, month - 1, day)
   }, [])
 
-  // Format to YYYY-MM-DD in local time
   const formatDateString = React.useCallback((date: Date) => {
     const y = date.getFullYear()
     const m = String(date.getMonth() + 1).padStart(2, "0")
@@ -54,30 +51,22 @@ export function CustomDatePicker({
   const minDate = React.useMemo(() => parseDateString(min), [min, parseDateString])
   const maxDate = React.useMemo(() => parseDateString(max), [max, parseDateString])
 
-  const disabledMatcher = React.useCallback((date: Date) => {
-    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-    if (minDate) {
-      const minD = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())
-      if (d < minD) return true
-    }
-    if (maxDate) {
-      const maxD = new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())
-      if (d > maxD) return true
-    }
-    return false
-  }, [minDate, maxDate])
+  const disabledMatcher = React.useCallback(
+    (date: Date) => {
+      const d = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+      if (minDate && d < new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate())) return true
+      if (maxDate && d > new Date(maxDate.getFullYear(), maxDate.getMonth(), maxDate.getDate())) return true
+      return false
+    },
+    [minDate, maxDate],
+  )
 
   const handleSelect = (date: Date | undefined) => {
-    if (date) {
-      onChange(formatDateString(date))
-    } else {
-      onChange("")
-    }
+    onChange(date ? formatDateString(date) : "")
     setOpen(false)
   }
 
-  // Format display text
-  const displayText = selectedDate ? format(selectedDate, "PPP") : ""
+  const displayText = formatDisplayDate(value)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -87,23 +76,18 @@ export function CustomDatePicker({
           type="button"
           disabled={disabled}
           className={cn(
-            "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 hover:border-blue-500/50 hover:bg-background/80 focus-visible:border-blue-500 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:outline-none shadow-sm flex items-center justify-between text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/10 w-full select-none",
-            !value && "text-muted-foreground/60 font-normal",
-            className
+            "flex h-14 w-full cursor-pointer select-none items-center justify-between rounded-xl border border-[#E3E7EF] bg-[#FFFFFF] px-4 text-left text-[15px] font-normal text-[#0A0F1F] outline-none transition-colors focus-visible:border-[#0436DC] disabled:cursor-not-allowed disabled:opacity-50",
+            !displayText && "text-[#5B6475]",
+            invalid && "border-[#B83200]",
+            className,
           )}
         >
           {displayText || placeholder}
-          <CalendarIcon className="h-5 w-5 text-muted-foreground/60 shrink-0 ml-2" />
+          <CalendarIcon className="ml-2 h-5 w-5 shrink-0 text-[#5B6475]" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 z-50 bg-popover border border-border rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95" align="start">
-        <Calendar
-          mode="single"
-          selected={selectedDate}
-          onSelect={handleSelect}
-          disabled={disabledMatcher}
-          initialFocus
-        />
+      <PopoverContent className="z-50 w-auto rounded-xl p-0" align="start">
+        <Calendar mode="single" selected={selectedDate} onSelect={handleSelect} disabled={disabledMatcher} initialFocus />
       </PopoverContent>
     </Popover>
   )

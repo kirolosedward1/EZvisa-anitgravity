@@ -51,7 +51,7 @@ export default async function DossierPage({ params }: { params: Promise<{ token:
   const isPaid = appData.payment_status === "completed" || appData.payment_status === "paid"
 
   if (!isPaid) {
-    redirect(`/track/${token}`)
+    redirect(`/track/${token}#pay`)
   }
 
   const dossierHtml = generateCompleteDossierPack(appData)

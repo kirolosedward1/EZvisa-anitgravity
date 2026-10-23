@@ -66,10 +66,10 @@ export function ContactForm() {
       <div
         className="absolute inset-0 opacity-[0.12] pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+          backgroundImage: "none",
           backgroundSize: "24px 24px",
-          maskImage: "radial-gradient(circle at 50% 50%, black 75%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(circle at 50% 50%, black 75%, transparent 100%)",
+          maskImage: "none",
+          WebkitMaskImage: "none",
         }}
       />
 
@@ -82,7 +82,7 @@ export function ContactForm() {
             exit={{ opacity: 0 }}
             className="relative z-10"
           >
-            <h2 className="text-2xl font-bold mb-2 text-primary">Send us a message</h2>
+            <h2 className="text-2xl font-semibold mb-2 text-primary">Send us a message</h2>
             <p className="text-sm text-muted-foreground mb-8 font-medium">
               Fill out the form below and one of our visa coordinators will get in touch with you shortly.
             </p>
@@ -178,7 +178,7 @@ export function ContactForm() {
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="w-full md:w-auto px-8 h-12 rounded-xl font-bold bg-primary hover:bg-primary/95 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/35 hover:-translate-y-0.5 transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+                className="w-full md:w-auto px-8 h-12 rounded-xl font-semibold bg-primary hover:bg-primary/95 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/35 hover:-translate-y-0.5 transition-all cursor-pointer inline-flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
@@ -205,7 +205,7 @@ export function ContactForm() {
             <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h3 className="text-2xl font-bold text-foreground mb-3">Message Sent!</h3>
+            <h3 className="text-2xl font-semibold text-foreground mb-3">Message Sent!</h3>
             <p className="text-sm text-muted-foreground max-w-md mb-8 leading-relaxed font-medium">
               Thank you for reaching out, <span className="text-foreground font-semibold">{name}</span>. One of our visa coordinators will review your query and get back to you at <span className="text-foreground font-semibold">{email}</span> within 2 hours.
             </p>
@@ -218,7 +218,7 @@ export function ContactForm() {
                 setMessage("")
               }}
               variant="outline"
-              className="rounded-xl border-border hover:bg-muted font-bold text-sm h-12 px-6"
+              className="rounded-xl border-border hover:bg-muted font-semibold text-sm h-12 px-6"
             >
               Send another message
             </Button>

@@ -28,6 +28,10 @@ export const ICON = { xs: 11, sm: 13, md: 17, lg: 22, xl: 28, hero: 40 } as cons
 /** Flag / avatar diameters. */
 export const AVATAR = { sm: 28, md: 40, lg: 56, xl: 72, xxl: 88 } as const;
 export const TAB_BAR_HEIGHT = 56;
+/** Detail-screen photo header: share of the window height, and how far the rounded sheet overlaps it. */
+export const HERO = { ratio: 0.34, overlap: 32 } as const;
+/** expo-blur intensities: small controls over photos, and bars/chrome. */
+export const BLUR = { control: 50, chrome: 70 } as const;
 
 export const isIOS = Platform.OS === "ios";
 /** iOS continuous (squircle) corners. */

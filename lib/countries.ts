@@ -1,36 +1,9 @@
-export const SCHENGEN_COUNTRIES = [
-  "Austria",
-  "Belgium",
-  "Bulgaria",
-  "Croatia",
-  "Czech Republic",
-  "Denmark",
-  "Estonia",
-  "Finland",
-  "France",
-  "Germany",
-  "Greece",
-  "Hungary",
-  "Iceland",
-  "Italy",
-  "Latvia",
-  "Liechtenstein",
-  "Lithuania",
-  "Luxembourg",
-  "Malta",
-  "Netherlands",
-  "Norway",
-  "Poland",
-  "Portugal",
-  "Romania",
-  "Slovakia",
-  "Slovenia",
-  "Spain",
-  "Sweden",
-  "Switzerland",
-] as const
+// Schengen destinations come from the website ↔ app contract (lib/shared/wizard-contract.ts).
+import { SCHENGEN, countrySlug } from "@/lib/shared/wizard-contract"
 
-export type SchengenCountry = (typeof SCHENGEN_COUNTRIES)[number]
+export const SCHENGEN_COUNTRIES: readonly string[] = SCHENGEN
+
+export type SchengenCountry = string
 
 export const countryFlags: Record<string, string> = {
   Austria: "🇦🇹",
@@ -64,8 +37,40 @@ export const countryFlags: Record<string, string> = {
   Switzerland: "🇨🇭",
 }
 
+export const SCHENGEN_META: Record<string, { iso: string; ar: string }> = {
+  Austria: { iso: "AT", ar: "النمسا" },
+  Belgium: { iso: "BE", ar: "بلجيكا" },
+  Bulgaria: { iso: "BG", ar: "بلغاريا" },
+  Croatia: { iso: "HR", ar: "كرواتيا" },
+  "Czech Republic": { iso: "CZ", ar: "التشيك" },
+  Denmark: { iso: "DK", ar: "الدنمارك" },
+  Estonia: { iso: "EE", ar: "إستونيا" },
+  Finland: { iso: "FI", ar: "فنلندا" },
+  France: { iso: "FR", ar: "فرنسا" },
+  Germany: { iso: "DE", ar: "ألمانيا" },
+  Greece: { iso: "GR", ar: "اليونان" },
+  Hungary: { iso: "HU", ar: "المجر" },
+  Iceland: { iso: "IS", ar: "آيسلندا" },
+  Italy: { iso: "IT", ar: "إيطاليا" },
+  Latvia: { iso: "LV", ar: "لاتفيا" },
+  Liechtenstein: { iso: "LI", ar: "ليختنشتاين" },
+  Lithuania: { iso: "LT", ar: "ليتوانيا" },
+  Luxembourg: { iso: "LU", ar: "لوكسمبورغ" },
+  Malta: { iso: "MT", ar: "مالطا" },
+  Netherlands: { iso: "NL", ar: "هولندا" },
+  Norway: { iso: "NO", ar: "النرويج" },
+  Poland: { iso: "PL", ar: "بولندا" },
+  Portugal: { iso: "PT", ar: "البرتغال" },
+  Romania: { iso: "RO", ar: "رومانيا" },
+  Slovakia: { iso: "SK", ar: "سلوفاكيا" },
+  Slovenia: { iso: "SI", ar: "سلوفينيا" },
+  Spain: { iso: "ES", ar: "إسبانيا" },
+  Sweden: { iso: "SE", ar: "السويد" },
+  Switzerland: { iso: "CH", ar: "سويسرا" },
+}
+
 export function countryToSlug(country: string): string {
-  return country.toLowerCase().replace(/\s+/g, "-")
+  return countrySlug(country)
 }
 
 export function slugToCountry(slug: string): string | null {
@@ -86,7 +91,7 @@ export const COUNTRY_DATA: CountryData[] = SCHENGEN_COUNTRIES.map((country) => (
   slug: countryToSlug(country),
   flag: countryFlags[country],
   description: `Complete visa document requirements for ${country}`,
-  processingTime: "10-15 business days",
+  processingTime: "Ready in 1–2 days",
 }))
 
 export function getCountryBySlug(slug: string): CountryData | null {

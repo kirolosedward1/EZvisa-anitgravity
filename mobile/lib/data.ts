@@ -42,11 +42,11 @@ export type Application = VisaRow & {
 
 const need = () => { if (!supabase) throw new Error("Backend not configured"); return supabase; };
 async function me() {
-  const { data, error } = await need().auth.getUser();
-  // Offline / server unreachable: keep the original (retryable) error so autosave keeps retrying instead of giving up.
-  if (error && error.name === "AuthRetryableFetchError") throw error;
-  if (!data.user?.email) throw new Error("Please sign in first");
-  return { id: data.user.id, email: data.user.email.toLowerCase() };
+  // getSession reads the stored session (no network round trip). getUser() can hang on React Native
+  // after OAuth / a session restore, which left screens such as Continue application loading forever.
+  const { data } = await need().auth.getSession(); const user = data.session?.user;
+  if (!user?.email) throw new Error("Please sign in first");
+  return { id: user.id, email: user.email.toLowerCase() };
 }
 export const parseNotes = (s: string | null): Notes => { if (!s) return {}; try { const j = JSON.parse(s); return j && typeof j === "object" ? j : {}; } catch { return { }; } };
 /** Same display reference the website uses (#EZ-XXXXXXXX). The live table has no tracking_token column, so it is derived from the id. */
@@ -145,12 +145,14 @@ export async function listApplications(): Promise<Application[]> {
 }
 export async function getApplication(id: string): Promise<Application> {
   const u = await me();
-  const { data, error } = await need().from("visa_applications").select("*").eq("id", id).eq("email", u.email).single();
-  if (error) throw error;
+  if (!id) throw new Error("We couldn't find this application on your account. Make sure you're signed in with the email you applied with.");
+  const { data, error } = await need().from("visa_applications").select("*").eq("id", id).eq("email", u.email).maybeSingle();
+  if (error) throw new Error(error.message || "Couldn't load");
+  if (!data) throw new Error("We couldn't find this application on your account. Make sure you're signed in with the email you applied with.");
   return toApplication(data);
 }
 
-const days = (a: string, b: string) => Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+const days = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000) + 1;
 /** Column mapping identical to web /api/submit-application, plus the full wizard state for cross-device resume. */
 function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, question?: string): VisaUpdate {
   const t = (s: string) => (s ?? "").trim();
@@ -555,4 +557,9 @@ export async function cancelApplication(id: string): Promise<boolean> {
     .in("application_status", ["draft", "submitted"]).not("payment_status", "in", "(paid,completed)").select("id, application_status");
   if (error) throw error;
   return !!data?.some((r: any) => r.application_status === "cancelled");
+}
+
+/** Rejects after ms so a screen never waits forever. */
+export function withTimeout<T>(p: Promise<T>, ms = 12000): Promise<T> {
+  return new Promise<T>((res, rej) => { const h = setTimeout(() => rej(new Error("This is taking too long. Check your connection and try again.")), ms); p.then((v) => { clearTimeout(h); res(v); }, (e) => { clearTimeout(h); rej(e); }); });
 }

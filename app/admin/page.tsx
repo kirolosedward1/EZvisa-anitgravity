@@ -192,7 +192,7 @@ export default function AdminPage() {
           <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center mb-6 border border-blue-500/20">
             <Lock className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Staff Case Management</h1>
+          <h1 className="text-2xl font-semibold text-white mb-2">Staff Case Management</h1>
           <p className="text-slate-400 text-sm mb-6">
             Enter the authorized staff secret to access case operations.
           </p>
@@ -237,7 +237,7 @@ export default function AdminPage() {
                 Authorized Operations Console
               </span>
             </div>
-            <h1 className="text-3xl font-bold text-white">Visa Case Management</h1>
+            <h1 className="text-3xl font-semibold text-white">Visa Case Management</h1>
           </div>
 
           <div className="flex items-center gap-3">
@@ -282,7 +282,7 @@ export default function AdminPage() {
         {/* Filter & Search Bar */}
         <div className="flex flex-col md:flex-row gap-4 justify-between bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
           <div className="flex flex-wrap gap-2">
-            {["all", "submitted", "reviewing", "ready", "cancelled"].map((st) => (
+            {["all", "draft", "submitted", "reviewing", "awaiting_documents", "ready", "completed", "rejected", "cancelled"].map((st) => (
               <button
                 key={st}
                 onClick={() => {
@@ -414,7 +414,7 @@ export default function AdminPage() {
 
                       <td className="p-4">
                         <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold capitalize ${
+                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
                             c.application_status === "ready"
                               ? "bg-emerald-600 text-white"
                               : c.application_status === "reviewing"

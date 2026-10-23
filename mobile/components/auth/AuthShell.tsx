@@ -21,12 +21,12 @@ export function AuthShell({ title, subtitle, nav = "close", children, testID }: 
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined} testID={testID}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: S.lg, paddingTop: Platform.OS === "ios" ? S.md : insets.top + S.xs, minHeight: 56 }}>
         {nav === "back" ? (
-          <PressScale onPress={back} accessibilityRole="button" accessibilityLabel={t("Back")} hitSlop={4} style={{ width: HIT, height: HIT, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}>
+          <PressScale onPress={back} accessibilityRole="button" accessibilityLabel={t("Back")} hitSlop={4} style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: "center", justifyContent: "center" }}>
             <Icon name="chevron.left" size={16} color={c.label} weight="bold" style={{ transform: [{ scaleX: rtl || I18nManager.isRTL ? -1 : 1 }] }} />
           </PressScale>
         ) : <Logo height={22} />}
         {nav === "close" && (
-          <PressScale onPress={() => { tap(); closeAuth(); }} accessibilityRole="button" accessibilityLabel={t("Close")} hitSlop={4} style={{ width: HIT, height: HIT, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}>
+          <PressScale onPress={() => { tap(); closeAuth(); }} accessibilityRole="button" accessibilityLabel={t("Close")} hitSlop={4} style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: "center", justifyContent: "center" }}>
             <Icon name="xmark" size={14} color={c.label} weight="bold" />
           </PressScale>
         )}
@@ -41,13 +41,14 @@ export function AuthShell({ title, subtitle, nav = "close", children, testID }: 
   );
 }
 
-/** Text input on the card fill, 56pt tall, Dynamic Type capped at 1.6x so it never clips. */
+/** Text input: white with a hairline, blue while typing, 48pt tall; Dynamic Type capped at 1.6x so it never clips. */
 export function Field({ trailing, ...p }: TextInputProps & { trailing?: React.ReactNode }) {
-  const c = useColors();
+  const c = useColors(); const [focused, setFocused] = useState(false);
   return (
-    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: c.card, borderRadius: R.input, minHeight: 56, paddingHorizontal: S.md, gap: S.xs }}>
+    <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: c.surface, borderRadius: R.lg, minHeight: 48, paddingHorizontal: S.md, gap: S.xs, borderWidth: focused ? 1.5 : 1, borderColor: focused ? c.accent : c.border }}>
       <TextInput placeholderTextColor={c.secondaryLabel} maxFontSizeMultiplier={1.6} accessibilityLabel={p.placeholder} {...p}
-        style={[T.body, { flex: 1, color: c.label, minHeight: 56, paddingVertical: 0, textAlign: "auto" }, Platform.OS === "web" && ({ outlineStyle: "none" } as object)]} />
+        onFocus={(e) => { setFocused(true); p.onFocus?.(e); }} onBlur={(e) => { setFocused(false); p.onBlur?.(e); }}
+        style={[T.body, { flex: 1, color: c.label, minHeight: 46, paddingVertical: 0, textAlign: "auto" }, Platform.OS === "web" && ({ outlineStyle: "none" } as object)]} />
       {trailing}
     </View>
   );

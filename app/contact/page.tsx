@@ -34,7 +34,7 @@ export default function ContactPage() {
           badge="Contact Us"
           title={
             <>
-              Get in <span className="text-primary bg-clip-text bg-gradient-to-r from-primary via-blue-500 to-primary/80">Touch</span>
+              Get in <span className="text-primary bg-[#0436DC]">Touch</span>
             </>
           }
           description="Have questions about your visa application? Our team of experts is available 24/7."
@@ -44,14 +44,14 @@ export default function ContactPage() {
         {/* Main Content */}
         <section className="relative container mx-auto px-6 py-12 lg:py-16 max-w-6xl z-10">
           {/* Subtle background glow */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary/5 rounded-full pointer-events-none" />
 
           <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start z-10">
             
             {/* Left Column: Info & FAQs */}
             <div className="lg:col-span-5 space-y-6">
               <div className="text-left">
-                <h2 className="text-2xl font-bold text-primary mb-3">Support Channels</h2>
+                <h2 className="text-2xl font-semibold text-primary mb-3">Support Channels</h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6 font-medium">
                   Choose the most convenient way to reach us. Our team responds instantly to WhatsApp queries.
                 </p>
@@ -78,7 +78,7 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors text-base">WhatsApp Support</h3>
+                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors text-base">WhatsApp Support</h3>
                   <span className="text-primary hover:underline font-semibold text-sm">
                     +971 54 710 9533
                   </span>
@@ -95,7 +95,7 @@ export default function ContactPage() {
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground mb-1 group-hover:text-primary transition-colors text-base">Email Us</h3>
+                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors text-base">Email Us</h3>
                   <span className="text-primary hover:underline font-semibold text-sm">
                     info@ezvisa.net
                   </span>
@@ -112,7 +112,7 @@ export default function ContactPage() {
                   <Phone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-foreground mb-1 group-hover:text-primary transition-colors text-base">Phone Call</h3>
+                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors text-base">Phone Call</h3>
                   <span className="text-primary hover:underline font-semibold text-sm">
                     +971 54 710 9533
                   </span>
@@ -122,12 +122,12 @@ export default function ContactPage() {
 
               {/* FAQ Quick Link */}
               <div className="bg-card border border-border/80 shadow-sm rounded-2xl p-6 text-left">
-                <h3 className="font-bold text-primary mb-2 text-base">Looking for quick answers?</h3>
+                <h3 className="font-semibold text-primary mb-2 text-base">Looking for quick answers?</h3>
                 <p className="text-xs text-muted-foreground mb-4 leading-relaxed font-medium">
                   Check out our FAQ section for instant answers to common visa application questions.
                 </p>
                 <a href="/#faq">
-                  <Button variant="outline" size="sm" className="rounded-xl font-bold border-primary/20 text-primary hover:bg-primary/5 hover:text-primary cursor-pointer">
+                  <Button variant="outline" size="sm" className="rounded-xl font-semibold border-primary/20 text-primary hover:bg-primary/5 hover:text-primary cursor-pointer">
                     View FAQ
                   </Button>
                 </a>
