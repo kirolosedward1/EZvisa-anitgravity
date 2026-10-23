@@ -90,7 +90,7 @@ export async function POST(request: Request) {
   try {
     // Rate limiting (Redis-based)
     const clientIp = getClientIp(request)
-    const rateLimitResult = await checkRateLimit(`submit-app:${clientIp}`, RATE_LIMITS.standard)
+    const rateLimitResult = await checkRateLimit(`submit-app:${clientIp}`, RATE_LIMITS.standard, { onError: "memory" })
     
     if (!rateLimitResult.success) {
       return NextResponse.json(
