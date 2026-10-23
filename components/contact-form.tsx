@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
+import { message as copy } from "@/messages"
 
 export function ContactForm() {
+  const namePlaceholder = useMessage("contactForm.namePlaceholder")
+  const emailPlaceholder = useMessage("contactForm.emailPlaceholder")
+  const subjectPlaceholder = useMessage("contactForm.subjectPlaceholder")
+  const messagePlaceholder = useMessage("contactForm.messagePlaceholder")
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [subject, setSubject] = useState("")
@@ -34,13 +41,14 @@ export function ContactForm() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to send message. Please try again.");
+        throw new Error(data.message || copy("en", "contactForm.sendFailed"));
       }
 
       setIsSuccess(true)
     } catch (error: any) {
       setIsError(true)
-      setErrorMessage(error.message || "An unexpected network error occurred. Please try again later.")
+      const fallback = copy(document.documentElement.lang === "ar" ? "ar" : "en", "contactForm.networkError")
+      setErrorMessage(error.message || fallback)
     } finally {
       setIsSubmitting(false)
     }
@@ -68,9 +76,9 @@ export function ContactForm() {
             exit={{ opacity: 0 }}
             className="relative z-10"
           >
-            <h2 className="text-2xl font-semibold mb-2 text-primary">Send us a message</h2>
+            <h2 className="text-2xl font-semibold mb-2 text-primary"><Msg id="contactForm.title" /></h2>
             <p className="text-sm text-muted-foreground mb-8 font-medium">
-              Fill out the form below and one of our visa coordinators will get in touch with you shortly.
+              <Msg id="contactForm.intro" />
             </p>
 
             {isError && (
@@ -87,13 +95,13 @@ export function ContactForm() {
                     htmlFor="name"
                     className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
                   >
-                    Full Name
+                    <Msg id="contactForm.name" />
                   </Label>
                   <Input
                     id="name"
                     type="text"
                     autoComplete="name"
-                    placeholder="John Doe"
+                    placeholder={namePlaceholder}
                     required
                     disabled={isSubmitting}
                     value={name}
@@ -106,13 +114,13 @@ export function ContactForm() {
                     htmlFor="email"
                     className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
                   >
-                    Email Address
+                    <Msg id="contactForm.email" />
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     autoComplete="email"
-                    placeholder="john@example.com"
+                    placeholder={emailPlaceholder}
                     required
                     disabled={isSubmitting}
                     value={email}
@@ -127,12 +135,12 @@ export function ContactForm() {
                   htmlFor="subject"
                   className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
                 >
-                  Subject
+                  <Msg id="contactForm.subject" />
                 </Label>
                 <Input
                   id="subject"
                   type="text"
-                  placeholder="Question about visa application"
+                  placeholder={subjectPlaceholder}
                   required
                   disabled={isSubmitting}
                   value={subject}
@@ -146,11 +154,11 @@ export function ContactForm() {
                   htmlFor="message"
                   className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
                 >
-                  Your Message
+                  <Msg id="contactForm.message" />
                 </Label>
                 <Textarea
                   id="message"
-                  placeholder="Tell us how we can help you..."
+                  placeholder={messagePlaceholder}
                   required
                   disabled={isSubmitting}
                   rows={5}
@@ -169,12 +177,12 @@ export function ContactForm() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                    Sending...
+                    <Msg id="contactForm.sending" />
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Send Message
+                    <Msg id="contactForm.send" />
                   </>
                 )}
               </Button>
@@ -191,9 +199,11 @@ export function ContactForm() {
             <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6">
               <CheckCircle2 className="w-10 h-10" />
             </div>
-            <h3 className="text-2xl font-semibold text-foreground mb-3">Message Sent!</h3>
+            <h3 className="text-2xl font-semibold text-foreground mb-3"><Msg id="contactForm.sentTitle" /></h3>
             <p className="text-sm text-muted-foreground max-w-md mb-8 leading-relaxed font-medium">
-              Thank you for reaching out, <span className="text-foreground font-semibold">{name}</span>. One of our visa coordinators will review your query and get back to you at <span className="text-foreground font-semibold">{email}</span> within 2 hours.
+              <Msg id="contactForm.sentBefore" /> <span className="text-foreground font-semibold">{name}</span>
+              <Msg id="contactForm.sentMiddle" /> <span className="text-foreground font-semibold">{email}</span>{" "}
+              <Msg id="contactForm.sentAfter" />
             </p>
             <Button
               onClick={() => {
@@ -206,7 +216,7 @@ export function ContactForm() {
               variant="outline"
               className="rounded-xl border-border hover:bg-muted font-semibold text-sm h-12 px-6"
             >
-              Send another message
+              <Msg id="contactForm.another" />
             </Button>
           </motion.div>
         )}

@@ -1,34 +1,32 @@
 "use client"
 
 import { motion } from "framer-motion"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, ClipboardList, CreditCard, FileCheck, PlaneTakeoff } from "lucide-react"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
+import type { MessageKey } from "@/messages"
 
-const steps = [
+const steps: { icon: typeof ClipboardList; title: MessageKey; description: MessageKey }[] = [
   {
-    number: "1",
     icon: ClipboardList,
-    title: "Tell us your plans",
-    description: "Share your travel dates, destination, and basic info. Takes about 5 minutes.",
+    title: "how.step1Title",
+    description: "how.step1Body",
   },
   {
-    number: "2",
     icon: CreditCard,
-    title: "Pay securely",
-    description: "Complete your application with secure payment processing. Money-back guarantee.",
+    title: "how.step2Title",
+    description: "how.step2Body",
   },
   {
-    number: "3",
     icon: FileCheck,
-    title: "We prepare your file",
-    description: "Our experts prepare every document — itinerary, cover letter, reservations.",
+    title: "how.step3Title",
+    description: "how.step3Body",
   },
   {
-    number: "4",
     icon: PlaneTakeoff,
-    title: "Submit & travel",
-    description: "Download your file, walk into your appointment, and get approved.",
+    title: "how.step4Title",
+    description: "how.step4Body",
   },
 ]
 
@@ -44,16 +42,16 @@ export function HowItWorksSimple() {
           <div className="max-w-2xl text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              How it works
+              <Msg id="how.eyebrow" />
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
-              Four simple steps to your <span className="text-primary">approved visa.</span>
+              <Msg id="how.headingLead" /> <span className="text-primary"><Msg id="how.headingAccent" /></span>
             </h2>
           </div>
           <Button asChild variant="outline" className="hidden md:inline-flex rounded-xl font-semibold border-primary/20 text-primary hover:bg-primary/5 hover:text-primary transition-all duration-300">
-            <Link href="/how-it-works" className="flex items-center gap-2">
-              See full process <ArrowRight className="h-4 w-4" />
-            </Link>
+            <LocaleLink href="/how-it-works" className="flex items-center gap-2">
+              <Msg id="how.seeFull" /> <ArrowRight className="h-4 w-4" />
+            </LocaleLink>
           </Button>
         </div>
 
@@ -85,10 +83,10 @@ export function HowItWorksSimple() {
 
                   {/* Title & Description */}
                   <h3 className="text-lg font-semibold mb-2.5 leading-tight tracking-tight text-foreground">
-                    {step.title}
+                    <Msg id={step.title} />
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    {step.description}
+                    <Msg id={step.description} />
                   </p>
                 </motion.div>
               )
@@ -99,9 +97,9 @@ export function HowItWorksSimple() {
         {/* Mobile CTA */}
         <div className="text-center mt-10 md:hidden">
           <Button asChild variant="outline" className="w-full sm:w-auto rounded-xl font-semibold border-primary/20 text-primary hover:bg-primary/5 hover:text-primary">
-            <Link href="/how-it-works" className="flex items-center gap-2 justify-center">
-              See full process <ArrowRight className="h-4 w-4" />
-            </Link>
+            <LocaleLink href="/how-it-works" className="flex items-center gap-2 justify-center">
+              <Msg id="how.seeFull" /> <ArrowRight className="h-4 w-4" />
+            </LocaleLink>
           </Button>
         </div>
       </div>

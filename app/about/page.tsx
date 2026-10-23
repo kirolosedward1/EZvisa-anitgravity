@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 
 export const metadata: Metadata = {
   title: "About EZvisa - Expert Schengen Visa Service | 98% Approval Rate",
@@ -54,7 +55,7 @@ export default function AboutPage() {
               ar={<>شريكك الموثوق لـ <span className="text-primary">تأشيرات شنغن</span></>}
             />
           }
-          description="At EZvisa, we combine technology and expertise to simplify your travel preparation so embassies say yes."
+          description={<Msg id="about.description" />}
           gradientType="ocean"
         />
 
@@ -64,17 +65,15 @@ export default function AboutPage() {
             
             {/* Mission */}
             <div className="prose prose-gray max-w-none">
-              <h2 className="text-2xl font-semibold mb-4 text-primary">Our Mission</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-primary"><Msg id="about.missionTitle" /></h2>
               <p className="text-muted-foreground leading-relaxed">
-                At EZvisa, we believe that travel should be accessible to everyone. Our mission is to simplify the
-                complex visa application process, making it easy, transparent, and stress-free for travelers from the
-                UAE and beyond. We combine expert knowledge with modern technology to deliver exceptional visa services.
+                <Msg id="about.missionBody" />
               </p>
             </div>
 
             {/* Why Choose Us */}
             <div>
-              <h2 className="text-2xl font-semibold mb-6 text-primary">Why Choose EZvisa?</h2>
+              <h2 className="text-2xl font-semibold mb-6 text-primary"><Msg id="about.whyTitle" /></h2>
               <div className="grid md:grid-cols-2 gap-6">
                 
                 <div className="bg-card/75 border border-border/80 shadow-md hover:shadow-xl hover:border-primary/20 hover:-translate-y-1 rounded-2xl p-6 transition-all duration-300">
@@ -83,10 +82,9 @@ export default function AboutPage() {
                       <CheckCircle className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">Expert Guidance</h3>
+                      <h3 className="font-semibold text-foreground mb-2"><Msg id="about.expertTitle" /></h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        Our team of visa experts has years of experience processing thousands of successful applications
-                        across all European countries.
+                        <Msg id="about.expertBody" />
                       </p>
                     </div>
                   </div>
@@ -98,10 +96,9 @@ export default function AboutPage() {
                       <Users className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">Dedicated Support</h3>
+                      <h3 className="font-semibold text-foreground mb-2"><Msg id="about.supportTitle" /></h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        Get personalized assistance throughout your application journey with our responsive support team
-                        available via chat, email, and phone.
+                        <Msg id="about.supportBody" />
                       </p>
                     </div>
                   </div>
@@ -113,10 +110,9 @@ export default function AboutPage() {
                       <Globe className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">All European Countries</h3>
+                      <h3 className="font-semibold text-foreground mb-2"><Msg id="about.countriesTitle" /></h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        We handle visa applications for all 29 Schengen countries plus the UK, covering your entire
-                        European travel needs.
+                        <Msg id="about.countriesBody" />
                       </p>
                     </div>
                   </div>
@@ -128,10 +124,9 @@ export default function AboutPage() {
                       <Award className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground mb-2">Transparent Pricing</h3>
+                      <h3 className="font-semibold text-foreground mb-2"><Msg id="about.pricingTitle" /></h3>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        No hidden fees, no surprises. Our flat rate includes document review, application preparation,
-                        and expert consultation.
+                        <Msg id="about.pricingBody" />
                       </p>
                     </div>
                   </div>
@@ -142,16 +137,12 @@ export default function AboutPage() {
 
             {/* Our Story */}
             <div className="prose prose-gray max-w-none">
-              <h2 className="text-2xl font-semibold mb-4 text-primary">Our Story</h2>
+              <h2 className="text-2xl font-semibold mb-4 text-primary"><Msg id="about.storyTitle" /></h2>
               <p className="text-muted-foreground leading-relaxed">
-                Founded by experienced travel professionals who understand the challenges of visa applications, EZvisa
-                was created to bridge the gap between travelers and their European dreams. We saw too many people
-                struggling with confusing requirements, rejected applications, and endless paperwork.
+                <Msg id="about.story1" />
               </p>
               <p className="text-muted-foreground leading-relaxed mt-4">
-                Today, we're proud to serve thousands of satisfied customers, helping them explore Europe with
-                confidence. Our success is measured by the smiles of travelers who've achieved their goals with our
-                help.
+                <Msg id="about.story2" />
               </p>
             </div>
 
@@ -160,19 +151,19 @@ export default function AboutPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
                   <div className="text-3xl font-semibold text-primary mb-1">5,000+</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Visas Processed</div>
+                  <div className="text-sm font-semibold text-muted-foreground"><Msg id="about.statVisas" /></div>
                 </div>
                 <div>
                   <div className="text-3xl font-semibold text-primary mb-1">29</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Countries Covered</div>
+                  <div className="text-sm font-semibold text-muted-foreground"><Msg id="about.statCountries" /></div>
                 </div>
                 <div>
                   <div className="text-3xl font-semibold text-primary mb-1">98%</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Success Rate</div>
+                  <div className="text-sm font-semibold text-muted-foreground"><Msg id="about.statRate" /></div>
                 </div>
                 <div>
                   <div className="text-3xl font-semibold text-primary mb-1">24/7</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Support Available</div>
+                  <div className="text-sm font-semibold text-muted-foreground"><Msg id="about.statSupport" /></div>
                 </div>
               </div>
             </div>

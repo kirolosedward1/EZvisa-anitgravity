@@ -4,8 +4,11 @@ import { useState, useEffect } from "react"
 import { Search, Rocket } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { CountryCard } from "@/components/country-card"
-import { COUNTRY_DATA } from "@/lib/countries"
-import Link from "next/link"
+import { COUNTRY_DATA, SCHENGEN_META } from "@/lib/countries"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
+import { countryNameAr } from "@/components/country-name"
 import Image from "next/image"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -15,14 +18,19 @@ import { LangText } from "@/components/lang-text"
 
 export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
+  const searchPlaceholder = useMessage("documents.search")
+  const scenicAlt = useMessage("documents.scenicAlt")
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" })
   }, [])
 
-  const filteredCountries = COUNTRY_DATA.filter((country) =>
-    country.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  const query = searchQuery.trim().toLowerCase()
+  const filteredCountries = COUNTRY_DATA.filter((country) => {
+    if (!query) return true
+    const arabicName = (SCHENGEN_META[country.name]?.ar ?? countryNameAr(country.name)).toLowerCase()
+    return country.name.toLowerCase().includes(query) || arabicName.includes(query)
+  })
 
   return (
     <>
@@ -36,14 +44,14 @@ export default function DocumentsPage() {
               ar={<>متطلبات مستندات <span className="text-[#0436DC]">تأشيرة شنغن</span></>}
             />
           }
-          description="Find complete document requirements for your destination country. We help you prepare everything you need for a successful application."
+          description={<Msg id="documents.description" />}
           randomizeBackground={true}
         >
           {/* Search Bar */}
           <div className="relative max-w-md mx-auto">
             <Input
               type="text"
-              placeholder="Search for a country..."
+              placeholder={searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-11 h-13 text-base bg-white text-[#0A0F1F] placeholder:text-[#5B6475] border border-[#E3E7EF] rounded-2xl shadow-[0_8px_24px_rgba(10,15,31,0.08)]"
@@ -63,7 +71,7 @@ export default function DocumentsPage() {
               </div>
             ) : (
               <div className="text-center py-12">
-                <p className="text-lg text-muted-foreground">No countries found matching your search.</p>
+                <p className="text-lg text-muted-foreground"><Msg id="documents.empty" /></p>
               </div>
             )}
           </div>
@@ -81,7 +89,7 @@ export default function DocumentsPage() {
               <div className="absolute inset-0 z-0 select-none pointer-events-none">
                 <Image
                   src="/images/countries/italy.jpg"
-                  alt="Scenic Italy"
+                  alt={scenicAlt}
                   fill
                   className="object-cover opacity-85 contrast-[1.05]"
                   sizes="(max-width: 1200px) 100vw, 1152px"
@@ -106,14 +114,14 @@ export default function DocumentsPage() {
                   <LangText en="Need Help With Your Application?" ar="هل تحتاج مساعدة في طلبك؟" />
                 </h2>
                 <p className="text-white/85 text-base md:text-lg mb-8 leading-relaxed max-w-xl font-medium">
-                  Our experts will review your documents and ensure everything is perfect before submission.
+                  <Msg id="documents.helpBody" />
                 </p>
-                <Link href="/apply">
+                <LocaleLink href="/apply">
                   <button className="px-8 py-3.5 bg-white text-primary hover:bg-slate-50 transition-all duration-300 font-semibold inline-flex items-center gap-2.5 shadow-xl hover:-translate-y-0.5 cursor-pointer rounded-xl">
                     <Rocket className="h-5 w-5 text-primary" />
-                    Start Your Application
+                    <Msg id="documents.start" />
                   </button>
-                </Link>
+                </LocaleLink>
               </div>
             </div>
           </div>

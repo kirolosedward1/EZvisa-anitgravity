@@ -1,3 +1,5 @@
+import { CITIZENSHIP_AR } from "@/messages/ar-citizenship"
+
 /** Citizenship options for people who need a Schengen visa.
  * GCC countries (AE, BH, KW, OM, QA, SA) are excluded. One row per ISO code.
  */
@@ -162,7 +164,12 @@ export function citizenshipName(value?: string | null): string {
   return citizenshipByIso(value)?.name ?? ""
 }
 
-/** Search matches the English name and the ISO code. */
+export function citizenshipNameAr(value?: string | null): string {
+  const iso = toCitizenshipIso(value)
+  return (iso && CITIZENSHIP_AR[iso]) || citizenshipName(value)
+}
+
+/** Search matches the English name, the Arabic name, and the ISO code. */
 export function citizenshipSearchValue(country: Citizenship): string {
-  return `${country.name} ${country.iso}`
+  return `${country.name} ${CITIZENSHIP_AR[country.iso] ?? ""} ${country.iso}`
 }

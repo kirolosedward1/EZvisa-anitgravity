@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 import { ContactForm } from "@/components/contact-form"
 
 export const metadata: Metadata = {
@@ -39,7 +40,7 @@ export default function ContactPage() {
               ar={<>تواصل <span className="text-primary">معنا</span></>}
             />
           }
-          description="Have questions about your visa application? Our team of experts is available 24/7."
+          description={<Msg id="contact.description" />}
           gradientType="default"
         />
 
@@ -53,9 +54,9 @@ export default function ContactPage() {
             {/* Left Column: Info & FAQs */}
             <div className="lg:col-span-5 space-y-6">
               <div className="text-left">
-                <h2 className="text-2xl font-semibold text-primary mb-3">Support Channels</h2>
+                <h2 className="text-2xl font-semibold text-primary mb-3"><Msg id="contact.channelsTitle" /></h2>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-6 font-medium">
-                  Choose the most convenient way to reach us. Our team responds instantly to WhatsApp queries.
+                  <Msg id="contact.channelsBody" />
                 </p>
               </div>
 
@@ -80,11 +81,11 @@ export default function ContactPage() {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors text-base">WhatsApp Support</h3>
+                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors text-base"><Msg id="contact.whatsappTitle" /></h3>
                   <span className="text-primary hover:underline font-semibold text-sm">
                     +971 54 710 9533
                   </span>
-                  <span className="block text-[11px] text-muted-foreground mt-1 font-medium">Average reply time: &lt; 5 minutes</span>
+                  <span className="block text-[11px] text-muted-foreground mt-1 font-medium"><Msg id="contact.whatsappReply" /></span>
                 </div>
               </a>
 
@@ -97,11 +98,11 @@ export default function ContactPage() {
                   <Mail className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors text-base">Email Us</h3>
+                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors text-base"><Msg id="contact.emailTitle" /></h3>
                   <span className="text-primary hover:underline font-semibold text-sm">
                     info@ezvisa.net
                   </span>
-                  <span className="block text-[11px] text-muted-foreground mt-1 font-medium">Average response time: &lt; 2 hours</span>
+                  <span className="block text-[11px] text-muted-foreground mt-1 font-medium"><Msg id="contact.emailReply" /></span>
                 </div>
               </a>
 
@@ -114,23 +115,23 @@ export default function ContactPage() {
                   <Phone className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors text-base">Phone Call</h3>
+                  <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors text-base"><Msg id="contact.phoneTitle" /></h3>
                   <span className="text-primary hover:underline font-semibold text-sm">
                     +971 54 710 9533
                   </span>
-                  <span className="block text-[11px] text-muted-foreground mt-1 font-medium">Direct line (9 AM - 6 PM)</span>
+                  <span className="block text-[11px] text-muted-foreground mt-1 font-medium"><Msg id="contact.phoneHours" /></span>
                 </div>
               </a>
 
               {/* FAQ Quick Link */}
               <div className="bg-card border border-border/80 shadow-sm rounded-2xl p-6 text-left">
-                <h3 className="font-semibold text-primary mb-2 text-base">Looking for quick answers?</h3>
+                <h3 className="font-semibold text-primary mb-2 text-base"><Msg id="contact.faqTitle" /></h3>
                 <p className="text-xs text-muted-foreground mb-4 leading-relaxed font-medium">
-                  Check out our FAQ section for instant answers to common visa application questions.
+                  <Msg id="contact.faqBody" />
                 </p>
                 <a href="/#faq">
                   <Button variant="outline" size="sm" className="rounded-xl font-semibold border-primary/20 text-primary hover:bg-primary/5 hover:text-primary cursor-pointer">
-                    View FAQ
+                    <Msg id="contact.faqButton" />
                   </Button>
                 </a>
               </div>

@@ -3,7 +3,10 @@
 import { destinations } from "@/lib/destinations"
 import { ReadyLine } from "@/components/ready-line"
 import { ArrowRight, MoveRight } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
+import { useMessage, usePageArabic } from "@/components/use-message"
+import { countryNameAr } from "@/components/country-name"
 import Image from "next/image"
 import { motion } from "framer-motion"
 import { CountryFlag } from "@/components/country-flag"
@@ -12,6 +15,8 @@ import { SCHENGEN_META } from "@/lib/countries"
 export function PopularDestinations() {
   // Filter only popular destinations (first 5: France, Italy, Spain, Germany, Switzerland)
   const popular = destinations.filter((d) => d.popular).slice(0, 5)
+  const imageAlt = useMessage("destinations.imageAlt")
+  const arabic = usePageArabic()
 
   return (
     <section className="py-16 md:py-24 bg-background overflow-hidden">
@@ -20,19 +25,19 @@ export function PopularDestinations() {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
             <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
-              Top Travel Spots
+              <Msg id="destinations.eyebrow" />
             </span>
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-3">
-              Popular Destinations
+              <Msg id="destinations.heading" />
             </h2>
           </div>
-          <Link
+          <LocaleLink
             href="/destinations"
             className="group inline-flex items-center gap-2 text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
           >
-            <span>View All Destinations</span>
+            <span><Msg id="destinations.viewAll" /></span>
             <MoveRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-          </Link>
+          </LocaleLink>
         </div>
 
         {/* Responsive Grid Container */}
@@ -46,14 +51,14 @@ export function PopularDestinations() {
               transition={{ duration: 0.4, delay: idx * 0.08 }}
               className="h-full"
             >
-              <Link
+              <LocaleLink
                 href={`/destinations/${country.slug}`}
                 className="group relative aspect-[3/4] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl hover:scale-[1.03] transition-all duration-300 bg-muted block cursor-pointer w-full h-full"
               >
                 {/* Country Background Image */}
                 <Image
                   src={country.image}
-                  alt={`${country.name} visa documents`}
+                  alt={imageAlt.replace("{country}", arabic ? countryNameAr(country.name) : country.name)}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
                   className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
@@ -74,14 +79,15 @@ export function PopularDestinations() {
                 <div className="absolute bottom-6 left-5 right-5 z-20 text-white flex flex-col transition-transform duration-300 group-hover:-translate-y-1">
                   <span className="text-xs font-semibold text-accent/90 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                     <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
-                    <span>{country.visaType}</span>
+                    <span><Msg id="destinations.visaType" /></span>
                   </span>
                   <h3 className="text-xl font-semibold tracking-tight mb-1">
-                    {country.name}
+                    <span className="rtl:hidden">{country.name}</span>
+                    <span className="hidden rtl:inline">{countryNameAr(country.name)}</span>
                   </h3>
                   <ReadyLine className="text-xs text-white/60" />
                 </div>
-              </Link>
+              </LocaleLink>
             </motion.div>
           ))}
         </div>

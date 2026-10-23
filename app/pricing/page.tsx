@@ -1,5 +1,7 @@
 import type { Metadata } from "next"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
+import type { MessageKey } from "@/messages"
 import { Button } from "@/components/ui/button"
 import { Check, X, Shield, Rocket, Info } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
@@ -45,12 +47,12 @@ export default function PricingPage() {
               ar={<>خدمة <span className="text-[#0436DC]">تأشيرة شاملة</span></>}
             />
           }
-          description="One-time payment • No hidden fees • Full support"
+          description={<Msg id="pricing.description" />}
           gradientType="default"
         >
           <div className="flex flex-col items-center gap-3">
             <div className="inline-flex items-center gap-2 bg-[#0436DC] px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider text-white">
-              Most Popular Choice
+              <Msg id="pricing.popular" />
             </div>
             <div className="flex items-baseline justify-center gap-4 mt-2">
               <span className="text-5xl lg:text-6xl font-semibold text-foreground">249 AED</span>
@@ -69,24 +71,24 @@ export default function PricingPage() {
                 <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
                   <Check className="w-7 h-7 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-semibold text-[#0A0F1F]">What's Included</h3>
+                <h3 className="text-2xl font-semibold text-[#0A0F1F]"><Msg id="pricing.includedTitle" /></h3>
               </div>
               <div className="space-y-5">
-                {[
-                  "Complete document review and verification",
-                  "Personalized visa requirements checklist",
-                  "Application form preparation and filling",
-                  "Expert consultation and guidance",
-                  "Dummy flight and hotel bookings",
-                  "Customized cover letter",
-                  "Day-by-day travel itinerary",
-                  "24/7 customer support via chat and email",
-                ].map((item, index) => (
+                {([
+                  "pricing.included1",
+                  "pricing.included2",
+                  "pricing.included3",
+                  "pricing.included4",
+                  "pricing.included5",
+                  "pricing.included6",
+                  "pricing.included7",
+                  "pricing.included8",
+                ] as MessageKey[]).map((item, index) => (
                   <div key={index} className="flex items-start gap-4 group">
                     <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0 mt-0.5 group-hover:bg-green-200 transition-colors">
                       <Check className="w-4 h-4 text-green-600" />
                     </div>
-                    <span className="text-gray-700 text-base leading-relaxed">{item}</span>
+                    <span className="text-gray-700 text-base leading-relaxed"><Msg id={item} /></span>
                   </div>
                 ))}
               </div>
@@ -98,20 +100,20 @@ export default function PricingPage() {
                 <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
                   <X className="w-7 h-7 text-gray-600" />
                 </div>
-                <h3 className="text-2xl font-semibold text-[#0A0F1F]">Not Included</h3>
+                <h3 className="text-2xl font-semibold text-[#0A0F1F]"><Msg id="pricing.excludedTitle" /></h3>
               </div>
               <div className="space-y-5">
-                {[
-                  "Embassy/consulate visa fees (paid directly to embassy)",
-                  "Travel insurance (if required)",
-                  "Document attestation or translation fees",
-                  "Courier or shipping charges",
-                ].map((item, index) => (
+                {([
+                  "pricing.excluded1",
+                  "pricing.excluded2",
+                  "pricing.excluded3",
+                  "pricing.excluded4",
+                ] as MessageKey[]).map((item, index) => (
                   <div key={index} className="flex items-start gap-4">
                     <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                       <X className="w-4 h-4 text-gray-600" />
                     </div>
-                    <span className="text-gray-600 text-base leading-relaxed">{item}</span>
+                    <span className="text-gray-600 text-base leading-relaxed"><Msg id={item} /></span>
                   </div>
                 ))}
               </div>
@@ -123,10 +125,9 @@ export default function PricingPage() {
                     <Info className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900 mb-2">Important Note</p>
+                    <p className="font-semibold text-gray-900 mb-2"><Msg id="pricing.noteTitle" /></p>
                     <p className="text-gray-700 leading-relaxed">
-                      Embassy visa fees vary by country (typically 300-500 AED) and must be paid separately during
-                      your appointment.
+                      <Msg id="pricing.noteBody" />
                     </p>
                   </div>
                 </div>
@@ -136,14 +137,14 @@ export default function PricingPage() {
 
           {/* CTA Section */}
           <div className="max-w-2xl mx-auto text-center">
-            <Link href="/apply" className="block mb-6">
+            <LocaleLink href="/apply" className="block mb-6">
               <Button size="lg" className="w-full text-xl h-16 shadow-xl hover:shadow-2xl transition-all">
                 <Rocket className="w-5 h-5 mr-2" />
-                Get Started Now
+                <Msg id="pricing.start" />
               </Button>
-            </Link>
+            </LocaleLink>
             <p className="text-muted-foreground">
-              Join 5,000+ satisfied customers who got their visa approved
+              <Msg id="pricing.social" />
             </p>
           </div>
 
@@ -155,16 +156,15 @@ export default function PricingPage() {
                   <Shield className="w-12 h-12 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl lg:text-3xl font-semibold mb-3 text-[#0A0F1F]">100% Money-Back Guarantee</h3>
+                  <h3 className="text-2xl lg:text-3xl font-semibold mb-3 text-[#0A0F1F]"><Msg id="pricing.guaranteeTitle" /></h3>
                   <p className="text-base text-gray-700 leading-relaxed">
-                    If we cannot process your application due to our error, we'll provide a full refund. Your
-                    satisfaction and trust are our top priorities.{" "}
-                    <Link
+                    <Msg id="pricing.guaranteeBefore" />{" "}
+                    <LocaleLink
                       href="/refund-policy"
                       className="text-primary font-semibold hover:underline inline-flex items-center"
                     >
-                      Read our refund policy
-                    </Link>
+                      <Msg id="pricing.guaranteeLink" />
+                    </LocaleLink>
                   </p>
                 </div>
               </div>

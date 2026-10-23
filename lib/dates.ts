@@ -101,6 +101,21 @@ export function formatTravelMonth(value?: string | null): string {
   return `${MONTHS_LONG[month - 1]} ${match[1]}`
 }
 
+/** Page-language date. Arabic uses ar-EG digits, for example ١١ نوفمبر. */
+export function formatPageDate(value: string, arabic: boolean, withYear = false) {
+  const parsed = parseCalendarDate(value)
+  if (!parsed) return value
+  const [year, month, day] = parsed.iso.split("-").map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day, 12))
+  return new Intl.DateTimeFormat(arabic ? "ar-EG" : "en-GB", {
+    day: "numeric",
+    month: arabic ? "long" : "short",
+    timeZone: "UTC",
+    ...(withYear ? { year: "numeric" as const } : {}),
+    ...(arabic ? { numberingSystem: "arab" as const } : {}),
+  }).format(date)
+}
+
 export function upcomingTravelMonths(count = 12, now = new Date()) {
   const year = now.getUTCFullYear()
   const month = now.getUTCMonth()
