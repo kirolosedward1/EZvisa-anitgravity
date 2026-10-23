@@ -82,6 +82,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
   const [showErrors, setShowErrors] = useState(false)
   const [maxDob, setMaxDob] = useState("")
   const seeded = useRef(false)
+  const dobDigits = useRef("")
   const withSpouse = formData.spouseAccompanying === "yes"
   const spousePrice = priceForTravellers("yes")
   const phone = composePhone(nationalNumber(localPhone(formData.phone || "")))
@@ -307,7 +308,21 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
           type="date"
           max={maxDob || undefined}
           value={formData.dateOfBirth || ""}
-          onChange={(event) => set({ dateOfBirth: toWesternDigits(event.target.value) })}
+          onBeforeInput={(event) => {
+            const data = event.nativeEvent.data
+            if (!data || toWesternDigits(data) === data) return
+            event.preventDefault()
+            const digits = (dobDigits.current + toWesternDigits(data).replace(/\D/g, "")).slice(-8)
+            dobDigits.current = digits
+            if (digits.length === 8) {
+              set({ dateOfBirth: `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}` })
+              dobDigits.current = ""
+            }
+          }}
+          onChange={(event) => {
+            dobDigits.current = ""
+            set({ dateOfBirth: toWesternDigits(event.target.value) })
+          }}
           aria-invalid={invalid("dateOfBirth")}
           className={cn(fieldClass, invalidClass("dateOfBirth"))}
         />
