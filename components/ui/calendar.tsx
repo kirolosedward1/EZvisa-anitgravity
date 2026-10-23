@@ -11,7 +11,9 @@ import { DayButton, DayPicker, getDefaultClassNames, type MonthCaptionProps } fr
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { LangText } from '@/components/lang-text'
-import { MONTHS_AR, MONTHS_LONG, WEEKDAYS_AR, WEEKDAYS_EN } from '@/lib/dates'
+import { usePageArabic } from '@/components/use-message'
+import { message } from '@/messages'
+import { formatPageDate, MONTHS_AR, MONTHS_LONG, WEEKDAYS_AR, WEEKDAYS_EN } from '@/lib/dates'
 
 function Calendar({
   className,
@@ -205,18 +207,29 @@ function CalendarDayButton({
   ...props
 }: React.ComponentProps<typeof DayButton>) {
   const defaultClassNames = getDefaultClassNames()
+  const arabic = usePageArabic()
 
   const ref = React.useRef<HTMLButtonElement>(null)
   React.useEffect(() => {
     if (modifiers.focused) ref.current?.focus()
   }, [modifiers.focused])
 
+  const iso = `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, "0")}-${String(day.date.getDate()).padStart(2, "0")}`
+  const { "aria-label": englishLabel, ...rest } = props
+  const ariaLabel = arabic
+    ? message("ar", "calendar.day", {
+        weekday: WEEKDAYS_AR[day.date.getDay()] ?? "",
+        date: formatPageDate(iso, true),
+      })
+    : englishLabel
+
   return (
     <Button
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={`${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, "0")}-${String(day.date.getDate()).padStart(2, "0")}`}
+      data-day={iso}
+      aria-label={ariaLabel}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
@@ -231,7 +244,7 @@ function CalendarDayButton({
         defaultClassNames.day,
         className,
       )}
-      {...props}
+      {...rest}
     />
   )
 }

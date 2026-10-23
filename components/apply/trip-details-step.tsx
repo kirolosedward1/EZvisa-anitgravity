@@ -7,7 +7,7 @@ import { BriefcaseBusiness, CircleEllipsis, GraduationCap, Plus, Stethoscope, Tr
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
-import { datesInOrder, formatDisplayDate, isValidCalendarDate, schengenStayDays } from "@/lib/dates"
+import { datesInOrder, formatDisplayDate, formatPageDate, isValidCalendarDate, schengenStayDays } from "@/lib/dates"
 import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import { TravelDatesField } from "@/components/apply/travel-dates-field"
 import { WizardBar } from "@/components/apply/wizard-bar"
@@ -593,7 +593,12 @@ export function TripDetailsStep({
                               <LangText en={visit.country} ar={SCHENGEN_META[visit.country]?.ar || visit.country} />
                             </p>
                             <p className="text-[13px] text-[#5B6475]" dir="ltr">
-                              {formatDisplayDate(visit.arrivalDate)} – {formatDisplayDate(visit.departureDate)}
+                              <span className="rtl:hidden">
+                                {formatDisplayDate(visit.arrivalDate)} – {formatDisplayDate(visit.departureDate)}
+                              </span>
+                              <span className="hidden rtl:inline">
+                                {formatPageDate(visit.arrivalDate, true)} – {formatPageDate(visit.departureDate, true)}
+                              </span>
                             </p>
                           </div>
                           <button

@@ -11,7 +11,7 @@ import { CURRENCIES, applicantCount, priceForTravellers } from "@/lib/currency"
 import { message } from "@/messages"
 import { submitBody } from "@/lib/application-notes"
 import { SCHENGEN_META } from "@/lib/countries"
-import { citizenshipName } from "@/lib/nationalities"
+import { citizenshipName, citizenshipNameAr } from "@/lib/nationalities"
 import { trackEvent } from "@/lib/analytics"
 import type { FormData } from "@/lib/form-types"
 import { CHECKOUT_STORAGE_KEY } from "@/lib/wizard-storage"
@@ -248,9 +248,11 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
 
   const country = formData.destination?.trim() || ""
   const countryAr = (country && SCHENGEN_META[country]?.ar) || country
-  const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
   const nationality = citizenshipName(formData.nationality)
-  const travellerBits = [travellerName, nationality, formData.passportNumber?.trim()].filter(Boolean)
+  const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
+  const passport = formData.passportNumber?.trim()
+  const travellerEn = [travellerName, citizenshipName(formData.nationality), passport].filter(Boolean)
+  const travellerAr = [travellerName, citizenshipNameAr(formData.nationality), passport].filter(Boolean)
   const withSpouse = applicantCount(formData.spouseAccompanying, formData.travelingWith) > 1
 
   return (
@@ -268,7 +270,11 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
       </ReviewRow>
 
       <ReviewRow label="Traveller" labelAr="المسافر" onEdit={onEditTraveller}>
-        {travellerBits.length ? travellerBits.join(" · ") : "—"}
+        {travellerEn.length ? (
+          <LangText en={travellerEn.join(" · ")} ar={travellerAr.join(" · ")} />
+        ) : (
+          "—"
+        )}
       </ReviewRow>
 
       <ReviewRow
