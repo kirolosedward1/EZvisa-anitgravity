@@ -1,6 +1,6 @@
 import { AppointmentCard } from "../../../components/Appointment";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View } from "react-native";
+import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View, type ScrollViewInstance } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
@@ -80,7 +80,7 @@ export default function ApplicationDetail() {
   // Ziina status of the checkout this device opened (server proxy), so a paid-but-not-yet-recorded payment shows as confirming.
   useEffect(() => { let on = true; if (unpaid) knownPayment(a!.id).then((p) => p && intentStatus(p.paymentId)).then((s) => on && setZiina(s ?? null)).catch(() => {}); return () => { on = false; }; }, [a?.id, a?.payment_status]);
   // The locked Trip plan row only scrolls to the payment step; paying always needs its own tap there.
-  const scroller = useRef<ScrollView>(null); const payY = useRef(0); const docsY = useRef(0);
+  const scroller = useRef<ScrollViewInstance>(null); const payY = useRef(0); const docsY = useRef(0);
   const [flash, setFlash] = useState<{ id: string; n: number } | null>(null);
   const toDocs = (firstId?: string) => { tap(); scroller.current?.scrollTo({ y: Math.max(0, docsY.current - 16), animated: true }); if (firstId) setTimeout(() => setFlash((f) => ({ id: firstId, n: (f?.n ?? 0) + 1 })), 350); };
   const toPayStep = () => { tap(); scroller.current?.scrollTo({ y: Math.max(0, payY.current - S.md), animated: true }); };

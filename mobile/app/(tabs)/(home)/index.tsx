@@ -1,4 +1,4 @@
-import { ScrollView, View, RefreshControl, StyleSheet } from "react-native";
+import { ScrollView, View, RefreshControl, StyleSheet, type ScrollViewInstance } from "react-native";
 import { Image } from "expo-image";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -215,7 +215,7 @@ export default function Home() {
   const photo = useAvatar(session?.user.id);
   const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
   useResumePayment();
-  const scroll = useRef<ScrollView>(null); const apptY = useRef<number | null>(null);
+  const scroll = useRef<ScrollViewInstance>(null); const apptY = useRef<number | null>(null);
   const name = (session?.user.user_metadata?.full_name as string | undefined)?.split(" ")[0];
   const items = useItems(session ? apps : null);
   const server = session ? apps ?? [] : [];

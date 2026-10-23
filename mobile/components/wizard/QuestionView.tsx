@@ -1,7 +1,7 @@
 // One question per screen: title, answer UI by kind, notes, inline error and the Continue bar. Shared by the wizard
 // (app/apply, before payment) and Continue application (app/continue/[id], after payment), so both look and behave the same.
 import React, { useRef } from "react";
-import { ScrollView, View, Platform, TextInput, I18nManager } from "react-native";
+import { ScrollView, View, Platform, TextInput, I18nManager, type TextInputInstance } from "react-native";
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Text, Shake, PressScale } from "../ui";
@@ -39,7 +39,7 @@ const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean)
 
 export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, children }: Props) {
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
-  const inputRef = useRef<TextInput>(null); const input2Ref = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null); const input2Ref = useRef<TextInputInstance>(null);
   // Lift the screen (and its Continue bar) above the iOS keyboard; S.md between button and keyboard.
   const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
   const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));

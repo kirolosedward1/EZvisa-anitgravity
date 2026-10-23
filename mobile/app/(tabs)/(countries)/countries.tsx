@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -64,7 +64,7 @@ export default function Countries() {
   const [grid, setGrid] = useState(true); // the photo grid is the default; "list" is remembered when chosen
   useEffect(() => { AsyncStorage.getItem(VIEW_KEY).then((v) => setGrid(v !== "list")).catch(() => {}); }, []);
   const setView = (g: boolean) => { select(); setGrid(g); AsyncStorage.setItem(VIEW_KEY, g ? "grid" : "list").catch(() => {}); };
-  const scroll = useRef<ScrollView>(null); const ys = useRef<Record<string, number>>({}); const allY = useRef(0); const wrapY = useRef(0);
+  const scroll = useRef<ScrollViewInstance>(null); const ys = useRef<Record<string, number>>({}); const allY = useRef(0); const wrapY = useRef(0);
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <Stack.Screen options={{ headerShown: false }} />

@@ -9,7 +9,7 @@ import Animated, { useSharedValue, useAnimatedStyle, useAnimatedReaction, withSp
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BlurView } from "expo-blur";
 import { GlassView, isLiquidGlassAvailable } from "expo-glass-effect";
-import { router } from "expo-router";
+import { router, useSegments } from "expo-router";
 import type { BottomTabBarProps } from "expo-router/tabs";
 import { useColors, useIsDark, elevation, SPRING, TAB_BAR_HEIGHT, S, R, ICON, SIZE, DUR } from "../../lib/theme";
 import { select, tap } from "../../lib/haptics";
@@ -90,7 +90,8 @@ function Tab({ label, icons, on, progress, reduce, onPress, onLayout, testID, ph
 /** The first screen of each tab's stack (its list). */
 const TAB_ROOT: Record<string, string> = { "(home)": "index", "(countries)": "countries", applications: "index", account: "index" };
 
-export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export function TabBar({ state, descriptors, emitter, navigateToTab }: BottomTabBarProps) {
+  const segments = useSegments() as string[];
   const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const reduce = !!useReducedMotion();
   const { session } = useAuth(); const photo = useAvatar(session?.user.id);
   const [kb, setKb] = useState(false);
@@ -101,9 +102,9 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   }, []);
   const focused = state.routes[state.index];
   // Hidden on every pushed/detail screen (also when it's the only route in its stack, e.g. opened from another tab).
-  const nested = focused.state as { index?: number; routes?: { name: string }[] } | undefined;
-  const top = nested?.routes?.[nested.index ?? 0]?.name;
-  const hidden = kb || (nested?.index ?? 0) > 0 || (!!top && !["index", "countries"].includes(top));
+  // SDK 58: routes no longer carry nested stack state; derive the focused tab's top screen from the URL segments.
+  const top = segments[0] === "(tabs)" && segments[1] === focused.name ? (segments[2] ?? "index") : undefined;
+  const hidden = kb || (!!top && !["index", "countries"].includes(top));
   const bottom = insets.bottom > 0 ? Math.max(insets.bottom - S.xs, S.xs) : S.md;
   const ty = useSharedValue(0);
   useEffect(() => { ty.value = withSpring(hidden ? H + bottom + S.x3 : 0, SPRING.press); }, [hidden, bottom]);
@@ -139,15 +140,16 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
   const go = (i: number) => {
     const route = state.routes[i]; const on = state.index === i;
-    const e = navigation.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
-    if (!e.defaultPrevented && !on) { select(); navigation.navigate(route.name, route.params); return; }
+    const e = emitter.emit({ type: "tabPress", target: route.key, canPreventDefault: true });
+    if (!e.defaultPrevented && !on) { select(); navigateToTab(route.key); return; }
     moveTo(state.index);
     // Tapping the open tab goes back to its list. The stack pops to the top on its own; but a screen opened without the
     // list under it (after a payment, Continue, a notification) is the stack's only screen, so reset the stack to the list.
-    const stack = (route as any).state as { key?: string; routes?: { name: string }[] } | undefined;
     const root = TAB_ROOT[route.name];
-    if (!e.defaultPrevented && on && root && stack?.key && stack.routes?.[0]?.name !== root)
-      navigation.dispatch({ type: "RESET", payload: { index: 0, routes: [{ name: root }] }, target: stack.key } as any);
+    if (!e.defaultPrevented && on && root && top && top !== root) {
+      if (router.canDismiss()) router.dismissAll();
+      else router.replace((route.name === "(home)" ? "/" : `/${root === "index" ? route.name : root}`) as any);
+    }
   };
   // Drag the lens across tabs (horizontal pans only, so taps and vertical scrolls are untouched); release snaps + selects.
   const nearest = (cx: number) => { let best = state.index, d = 1e9; slots.current.forEach((s, i) => { if (!s) return; const dd = Math.abs(s.x + s.w / 2 - cx); if (dd < d) { d = dd; best = i; } }); return best; };
