@@ -16,6 +16,7 @@ import { priceForTravellers } from "@/lib/currency"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
+import { normalizePassport, toWesternDigits } from "@/lib/digits"
 
 interface NationalityStepProps {
   formData: FormData
@@ -39,7 +40,7 @@ function isValidEmail(email: string) {
 }
 
 function isValidPhone(phone: string) {
-  const digitsOnly = phone.replace(/[^\d]/g, "")
+  const digitsOnly = toWesternDigits(phone).replace(/[^\d]/g, "")
   if (digitsOnly.length < 7 || digitsOnly.length > 15) return false
   if (/^(\d)\1+$/.test(digitsOnly)) return false
   if (digitsOnly.length >= 8) {
@@ -53,20 +54,20 @@ function isValidPhone(phone: string) {
 
 /** The visible prefix is always +971. Digits are stored as "+971 5xxxxxxx". */
 function localPhone(phone: string) {
-  const trimmed = phone.trim()
+  const trimmed = toWesternDigits(phone).trim()
   if (trimmed.startsWith("+971")) return trimmed.slice(4).replace(/[^\d]/g, "")
   return trimmed.replace(/[^\d]/g, "")
 }
 
 function composePhone(local: string) {
-  const digits = local.replace(/[^\d]/g, "")
+  const digits = toWesternDigits(local).replace(/[^\d]/g, "")
   return digits ? `+971 ${digits}` : ""
 }
 
 /** UAE numbers are usually written 050 123 4567 or pasted with 971 / 00971: keep only the national number after
  *  +971 ("+971 0501234567" is not a valid international number). Applied when the step is submitted. */
 function nationalNumber(local: string) {
-  let digits = local.replace(/[^\d]/g, "")
+  let digits = toWesternDigits(local).replace(/[^\d]/g, "")
   if (digits.startsWith("00971")) digits = digits.slice(5)
   else if (digits.startsWith("971") && digits.length >= 11) digits = digits.slice(3)
   return digits.replace(/^0/, "")
@@ -81,6 +82,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
   const [showErrors, setShowErrors] = useState(false)
   const [maxDob, setMaxDob] = useState("")
   const seeded = useRef(false)
+  const dobDigits = useRef("")
   const withSpouse = formData.spouseAccompanying === "yes"
   const spousePrice = priceForTravellers("yes")
   const phone = composePhone(nationalNumber(localPhone(formData.phone || "")))
@@ -192,9 +194,10 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
           id="passportNumber"
           value={formData.passportNumber || ""}
           onChange={(event) => {
-            const passportNumber = event.target.value.toUpperCase()
+            const passportNumber = normalizePassport(event.target.value)
             set({ passportNumber, hasValidPassport: passportNumber.trim() ? "yes" : undefined })
           }}
+          inputMode="text"
           placeholder="e.g. N1234567"
           autoCapitalize="characters"
           autoCorrect="off"
@@ -225,7 +228,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
           <input
             id="phone"
             type="tel"
-            inputMode="tel"
+            inputMode="numeric"
             autoComplete="tel-national"
             dir="ltr"
             value={localPhone(formData.phone || "")}
@@ -305,7 +308,21 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
           type="date"
           max={maxDob || undefined}
           value={formData.dateOfBirth || ""}
-          onChange={(event) => set({ dateOfBirth: event.target.value })}
+          onBeforeInput={(event) => {
+            const data = event.nativeEvent.data
+            if (!data || toWesternDigits(data) === data) return
+            event.preventDefault()
+            const digits = (dobDigits.current + toWesternDigits(data).replace(/\D/g, "")).slice(-8)
+            dobDigits.current = digits
+            if (digits.length === 8) {
+              set({ dateOfBirth: `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6, 8)}` })
+              dobDigits.current = ""
+            }
+          }}
+          onChange={(event) => {
+            dobDigits.current = ""
+            set({ dateOfBirth: toWesternDigits(event.target.value) })
+          }}
           aria-invalid={invalid("dateOfBirth")}
           className={cn(fieldClass, invalidClass("dateOfBirth"))}
         />
