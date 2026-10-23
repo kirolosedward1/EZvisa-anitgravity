@@ -25,14 +25,13 @@ export async function POST(request: NextRequest) {
       return json({ error: "Invalid origin" }, { status: 403 })
     }
     
-    // Rate limiting - strict for payment routes (Redis-based)
+    // Strict per-IP limit. A Redis error uses an in-memory window instead of allowing the request.
+    // Redis is abandoned after 3s so a hung Upstash call cannot stall checkout.
     const clientIp = getClientIp(request)
-    const rateLimitResult = await Promise.race([
-      checkRateLimit(`payment:${clientIp}`, RATE_LIMITS.strict),
-      new Promise<Awaited<ReturnType<typeof checkRateLimit>>>((resolve) =>
-        setTimeout(() => resolve({ success: true, remaining: RATE_LIMITS.strict.limit, resetIn: RATE_LIMITS.strict.windowSeconds }), 3000),
-      ),
-    ])
+    const rateLimitResult = await checkRateLimit(`payment:${clientIp}`, RATE_LIMITS.strict, {
+      onError: "memory",
+      timeoutMs: 3000,
+    })
     
     if (!rateLimitResult.success) {
       console.log("[v0] Rate limit exceeded for payment")
