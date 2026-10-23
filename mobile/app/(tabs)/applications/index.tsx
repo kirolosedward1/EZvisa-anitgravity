@@ -2,7 +2,7 @@ import { useState } from "react";
 import { ScrollView, View, RefreshControl } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
+import { Chevron, SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
 import { buildTimeline, doneCount } from "../../../lib/timeline";
 import { useT, ltr } from "../../../lib/i18n";
 import { useColors, useIsDark, S, R, curve, card, ICON } from "../../../lib/theme";
@@ -35,7 +35,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
             pointerEvents={swiping ? "auto" : "none"} style={{ opacity: swiping ? 1 : 0, width: 36, height: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
             <Icon name="trash" size={16} color={c.red} />
           </PressScale>
-        ) : <Icon name="chevron.right" size={ICON.sm} color={c.tertiaryLabel} weight="semibold" />}
+        ) : <Chevron />}
       </View>
       <View style={{ gap: S.xs }}>
         <ProgressSegments count={steps.length} index={doneCount(steps)} fraction={0} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t(STATUS_LABEL[a.status] ?? a.status)} />

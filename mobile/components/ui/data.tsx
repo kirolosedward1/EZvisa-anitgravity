@@ -13,7 +13,7 @@ import { buildTimeline, type Step } from "../../lib/timeline";
 import { useT, ltr } from "../../lib/i18n";
 import { tap, success as hSuccess } from "../../lib/haptics";
 import { Text } from "./Text";
-import { Icon, PressScale } from "./core";
+import { Icon, PressScale, Chevron } from "./core";
 
 /** Circular flag (HatScripts circle-flags, MIT) with a hairline ring. Memoised: list rows re-render on every search keystroke,
  *  and re-rendering an SVG tree per row was the main cost of the country / nationality lists. */
@@ -168,7 +168,7 @@ export function ApplicationRow({ a }: { a: Application }) {
     </PressScale>
   );
 }
-const ChevronR = () => { const c = useColors(); return <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />; };
+const ChevronR = () => <Chevron size={13} />;
 
 export function CountryRow({ name, onPress }: { name: string; onPress: () => void }) {
   return (

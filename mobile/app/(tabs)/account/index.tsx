@@ -1,6 +1,5 @@
 import { stage } from "../../../lib/stage";
 import { ActionSheetIOS, Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
-import { shareReceipt } from "../../../lib/receipt";
 import { useAvatar, pickAvatar, removeAvatar } from "../../../lib/avatar";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -210,7 +209,7 @@ export default function Account() {
       {!!paidApps.length && (
         <ListGroup header={t("Receipts")} footer={t("From your payment record. Tap to save or share a PDF.")} inset={58}>
           {paidApps.map((a) => <ListRow key={a.id} icon="doc.text.fill" iconColor={c.green} title={`${t("Receipt")} · ${ltr(a.reference)}`} subtitle={t(a.countries?.name ?? a.destination_country ?? "")}
-            value={`${Number(a.payment_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => shareReceipt(a, full, u.email ?? "")} />)}
+            value={`${Number(a.payment_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => router.push(`/receipt/${a.id}`)} />)}
         </ListGroup>
       )}
       <ListGroup inset={58}>

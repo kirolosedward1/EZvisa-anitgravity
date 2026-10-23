@@ -118,13 +118,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const x = useSharedValue(0); const w = useSharedValue(0); const sx = useSharedValue(1); const sy = useSharedValue(1); const shown = useSharedValue(0);
   const progress = [useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0)];
   // Row width (the tab-row container the lens lives in). The lens x is always clamped inside it: [PAD, rowW - DOT - PAD].
-  const rowW = useRef(0);
+  const rowW = useRef(0); const lensBase = useRef(0);
   const clampX = (v: number) => (rowW.current > 0 ? Math.min(Math.max(v, PAD), rowW.current - DOT - PAD) : v);
   const moveTo = (i: number, animate = true) => {
     const s = slots.current[i];
     // Nothing is shown until this tab's slot and the row are measured (no stray circle at x = 0 on first render / remount).
     if (!s || !(s.w > 0) || rowW.current <= 0) { shown.value = 0; return; }
-    const tx = clampX(s.x);
+    const tx = clampX(s.x) - lensBase.current; // relative to where layout put the lens (left in LTR; Android RTL swaps left/right)
     // First placement (mount, remount, after a re-measure) jumps; only a real tab change animates translateX.
     if (!animate || reduce || !shown.value) { x.value = reduce && shown.value ? withTiming(tx, { duration: DUR.fast }) : tx; w.value = DOT; shown.value = 1; return; }
     x.value = withSpring(tx, LENS); w.value = DOT; // fixed 44x44 circle: only translateX animates
@@ -156,8 +156,8 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const pan = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
     onPanResponderGrant: () => { startX.current = x.value; },
-    onPanResponderMove: (_, g) => { const max = Math.max(...slots.current.filter(Boolean).map((s) => s.x)); x.value = clampX(Math.min(Math.max(startX.current + g.dx, PAD), max)); },
-    onPanResponderRelease: () => { live.current.go(live.current.nearest(x.value + w.value / 2)); },
+    onPanResponderMove: (_, g) => { const max = Math.max(...slots.current.filter(Boolean).map((s) => s.x)); x.value = clampX(Math.min(Math.max(startX.current + lensBase.current + g.dx, PAD), max)) - lensBase.current; },
+    onPanResponderRelease: () => { live.current.go(live.current.nearest(x.value + lensBase.current + w.value / 2)); },
     onPanResponderTerminate: () => { live.current.moveTo(live.current.idx); },
   })).current;
   // PanResponder callbacks are created once; keep the latest closures reachable.
@@ -170,7 +170,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         <View {...pan.panHandlers} onLayout={onRow} style={{ height: H, flexDirection: "row", alignItems: "center", paddingHorizontal: PAD, borderRadius: H / 2, overflow: "hidden" }} accessibilityRole="tablist">
           {/* Physical `left` on purpose: the lens is positioned by translateX from measured layout x, which is always
               measured from the left edge, so it lines up in LTR and RTL alike. */}
-          <Animated.View pointerEvents="none" testID="tab-lens" style={[{ position: "absolute", left: 0, top: (H - DOT) / 2, width: DOT, height: DOT, borderRadius: DOT / 2, overflow: "hidden",
+          <Animated.View pointerEvents="none" testID="tab-lens" onLayout={(e) => { const bx = e.nativeEvent.layout.x; if (Math.abs(bx - lensBase.current) > 0.5) { lensBase.current = bx; moveTo(state.index, false); } }} style={[{ position: "absolute", left: 0, top: (H - DOT) / 2, width: DOT, height: DOT, borderRadius: DOT / 2, overflow: "hidden",
             backgroundColor: c.lens, borderWidth: 1, borderColor: c.lensRim },
             dark ? null : { shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: PAD, shadowOffset: { width: 0, height: 2 } }, lens]}>
             {glass && <GlassView glassEffectStyle="clear" style={[StyleSheet.absoluteFill, { borderRadius: DOT / 2 }]} />}

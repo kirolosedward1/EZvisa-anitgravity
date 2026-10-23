@@ -9,6 +9,16 @@ import { LOGO_PNG } from "./logoData";
 export type Receipt = { title: string; rows: [string, string][]; footer: string; reference: string };
 const esc = (x: string) => x.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));
 
+/** Display values for the in-app receipt (same source as the PDF). */
+export function receiptInfo(a: Application, lang: string) {
+  const amt = a.payment_amount ?? a.total_amount;
+  const pay = a.payments?.find((p) => ["paid", "completed"].includes(p.status));
+  const at = (pay as any)?.updated_at ?? pay?.created_at ?? a.updated_at ?? a.created_at;
+  return { amount: amt != null ? `${Number(amt).toLocaleString("en", { maximumFractionDigits: 2 })} ${a.currency || "AED"}` : "",
+    date: at ? new Date(at).toLocaleDateString(lang === "ar" ? "ar-AE" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "",
+    destination: a.countries?.name ?? a.destination_country ?? "" };
+}
+
 /** Built only from the stored payment record (no invented fields). Later: fetch siteUrl(`/api/invoice/${a.id}`). */
 export async function receiptData(a: Application, name: string, mail: string): Promise<Receipt> {
   const amt = a.payment_amount ?? a.total_amount;
@@ -35,10 +45,15 @@ export async function shareReceipt(a: Application, name: string, mail: string) {
       // Web: open the receipt in a new tab (the user can print/save it as PDF there); if pop-ups are blocked, download the HTML.
       const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
       const w = window.open(url, "_blank");
-      if (!w) { const el = document.createElement("a"); el.href = url; el.download = `EZvisa-receipt-${r.reference}.html`; document.body.appendChild(el); el.click(); el.remove(); }
+      if (!w) { const el = document.createElement("a"); el.href = url; el.download = `EZvisa-Receipt-${r.reference}.html`; document.body.appendChild(el); el.click(); el.remove(); }
       setTimeout(() => URL.revokeObjectURL(url), 60000); return;
     }
-    const { uri } = await Print.printToFileAsync({ html });
+    const { uri: tmp } = await Print.printToFileAsync({ html });
+    // Named EZvisa-Receipt-<ref>.pdf (print output has a random name).
+    const FS = require("expo-file-system/legacy") as typeof import("expo-file-system/legacy");
+    const uri = `${FS.cacheDirectory}EZvisa-Receipt-${r.reference}.pdf`;
+    await FS.deleteAsync(uri, { idempotent: true }).catch(() => {});
+    await FS.moveAsync({ from: tmp, to: uri });
     if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: `${r.title} ${r.reference}` });
   } catch (e: any) { Alert.alert("Couldn't create the receipt", e?.message ?? String(e)); }
 }

@@ -59,7 +59,7 @@ export function PhoneField({ country, local, onChange, error, autoFocus }: { cou
   return (
     <View style={{ flexDirection: "row", alignItems: "stretch", backgroundColor: c.card, borderRadius: R.input, minHeight: 56, overflow: "hidden", borderWidth: 1, borderColor: error ? c.red : c.separator, direction: "ltr" } as any}>
       <PressScale onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${t("Country code")} ${t(w.name)}, +${w.dial}`} testID="phone-country"
-        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.md, minWidth: 44, opacity: pressed ? 0.6 : 1, borderRightWidth: 1, borderRightColor: c.separator })}>
+        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.md, minWidth: 44, opacity: pressed ? 0.6 : 1, borderEndWidth: 1, borderEndColor: c.separator })}>
         <Flag country={w.name} size={22} />
         <Text variant="body" tabular>+{w.dial}</Text>
         <Icon name="chevron.down" size={11} color={c.secondaryLabel} weight="semibold" />
