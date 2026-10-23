@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { ChevronDown } from "lucide-react"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 import { CountryFlag } from "@/components/country-flag"
 import { applicantCount, priceForTravellers } from "@/lib/currency"
 import { SCHENGEN_META } from "@/lib/countries"
@@ -142,7 +143,7 @@ export function WizardShell({
           <LangText en="Visa application" ar="طلب التأشيرة" />
         </h1>
         <div
-          className="sticky z-40 -mx-4 border-b border-[#E3E7EF] bg-[#FFFFFF] px-4 lg:hidden"
+          className="sticky z-40 -mx-4 mb-3 border-b border-[#E3E7EF] bg-[#FFFFFF] px-4 lg:hidden"
           style={{ top: "var(--site-header-height, 80px)" }}
         >
           <button
@@ -152,12 +153,16 @@ export function WizardShell({
             className="flex w-full items-center justify-between gap-3 py-2.5 text-[13px] text-[#3A4150]"
           >
             <span className="min-w-0 truncate">
-              <span className="rtl:hidden">
-                {line.country || "—"}
-              </span>
-              <span className="hidden rtl:inline">
-                {line.countryAr || "—"}
-              </span>
+              {line.country ? (
+                <>
+                  <span className="rtl:hidden">{line.country}</span>
+                  <span className="hidden rtl:inline">{line.countryAr}</span>
+                </>
+              ) : (
+                <span className="text-[#5B6475]">
+                  <Msg id="summary.yourTrip" />
+                </span>
+              )}
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-[#0A0F1F]" dir="ltr">
               {line.price} AED
