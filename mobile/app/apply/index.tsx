@@ -5,6 +5,7 @@ import { PressScale } from "../../components/ui";
 // Choices and Yes / No auto-advance with haptics; questions that don't apply are skipped; every answer is autosaved
 // (phone + the account's draft row) and the flow resumes at the exact question. Review lets you edit one answer and
 // come straight back. Links keep the website's params: /apply?step=<slug>&from=<nationality>&to=<destination>.
+import { citizenshipName } from "../../lib/citizenship";
 import { useEffect, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
@@ -79,7 +80,7 @@ export default function Apply() {
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   setAccountEmail(session?.user.email); // before any activeQuestions() below: signed in = no email question
   // Citizenship saved in Account details prefills the nationality step (only if it is still empty and visa-required).
-  const citizenship = session?.user.user_metadata?.citizenship as string | undefined;
+  const citizenship = citizenshipName(session?.user.user_metadata?.citizenship as string | undefined) || undefined; // ISO code (or an older saved name)
   useEffect(() => { if (hydrated && citizenship && needsSchengenVisa(citizenship)) setForm((x) => (x.nationality ? x : { ...x, nationality: citizenship })); }, [hydrated, citizenship]);
   const uid = session?.user.id ?? null;
   const [dir, setDir] = useState(1);

@@ -4,7 +4,7 @@ import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
 import { buildTimeline, doneCount } from "../../../lib/timeline";
-import { useT } from "../../../lib/i18n";
+import { useT, ltr } from "../../../lib/i18n";
 import { useColors, useIsDark, S, R, curve, card, ICON } from "../../../lib/theme";
 import { STATUS_LABEL, type Application } from "../../../lib/data";
 import { nextAction } from "../../../lib/nextStep";
@@ -28,7 +28,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
       style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={44} />
-        <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[a.reference, range(a.entry_date, a.exit_date)].filter(Boolean).join(" · ")}</Text></View>
+        <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[ltr(a.reference), ltr(range(a.entry_date, a.exit_date))].filter(Boolean).join(" · ")}</Text></View>
         {onDiscard ? (
           // At rest the trash is invisible and untappable (swipe or long-press to discard); it shows only once swiped.
           <PressScale disabled={!swiping} onPress={() => askDiscard(onDiscard, t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Discard")} accessibilityElementsHidden={!swiping} importantForAccessibility={swiping ? "auto" : "no-hide-descendants"} testID="app-discard"

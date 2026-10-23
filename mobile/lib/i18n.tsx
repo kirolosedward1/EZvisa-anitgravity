@@ -46,3 +46,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   return <C.Provider value={{ lang, rtl: lang === "ar", ready, t, setLang }}>{children}</C.Provider>;
 }
 export const useT = () => useContext(C);
+
+/** Wraps IDs and amounts in Unicode first-strong isolates so they keep LTR order inside Arabic text ("إيصال · ⁨EZ-36218265⁩"). */
+export const ltr = (s: string | number | null | undefined) => (s == null || s === "" ? "" : `\u2068${s}\u2069`);

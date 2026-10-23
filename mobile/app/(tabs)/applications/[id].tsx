@@ -15,7 +15,7 @@ import { Linking } from "react-native";
 import { success, error as hError, tap } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
 import { shareReceipt } from "../../../lib/receipt";
-import { useT } from "../../../lib/i18n";
+import { useT, ltr } from "../../../lib/i18n";
 import { router } from "expo-router";
 import { countdown } from "../../../lib/countdown";
 import { askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
@@ -130,7 +130,7 @@ export default function ApplicationDetail() {
         <Flag country={name} size={72} />
         <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text variant="subhead" tone="secondary" tabular>{a.reference}</Text>
+          <Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text>
           <StatusPill v={a.status} a={a} />
         </View>
       </View>

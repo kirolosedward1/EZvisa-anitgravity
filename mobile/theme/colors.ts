@@ -98,7 +98,7 @@ export const withAliases = (p: Palette) => ({
   ...p,
   bg: p.background, card: p.surface, raised: p.surfaceRaised, fill2: p.fillSubtle,
   label: p.text, secondaryLabel: p.textSecondary, tertiaryLabel: p.textTertiary,
-  hairline: p.border, ring: p.border,
+  hairline: p.border, ring: "#E5E5EA", // flag ring (1pt)
   green: p.success, orange: p.warning, red: p.danger, grey: p.textTertiary,
   tint: p.accent, tintFill: p.accentFill, brand: p.accentFill, onTint: p.onAccent,
   blue: p.accent, indigo: p.accent, teal: p.accent,

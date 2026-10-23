@@ -71,6 +71,8 @@ export async function pickAvatar(uid: string): Promise<boolean> {
   const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 1, exif: false });
   if (r.canceled || !r.assets?.[0]) return false;
   const a = r.assets[0];
+  const mt = (a.mimeType ?? "").toLowerCase() || (/\.(\w+)(\?|$)/.exec(a.fileName ?? "")?.[1] ? "image/" + /\.(\w+)(\?|$)/.exec(a.fileName ?? "")![1].toLowerCase().replace("jpg", "jpeg") : "");
+  if (mt && !["image/jpeg", "image/jpg", "image/png", "image/heic", "image/heif"].includes(mt)) throw new Error("Use a JPG, PNG or HEIC photo");
   let uri = a.uri;
   if (Platform.OS !== "web") {
     const { ImageManipulator, SaveFormat } = require("expo-image-manipulator") as typeof import("expo-image-manipulator");
