@@ -31,4 +31,6 @@ export const FAQ: Faq[] = [
   { id: "later", q: { en: "Can I pay first and finish later?", ar: "هل يمكنني الدفع أولًا والإكمال لاحقًا؟" },
     a: { en: "Yes. After payment, open Continue application to add your remaining details, then upload your documents.",
          ar: "نعم. بعد الدفع، افتح «متابعة الطلب» لإضافة بقية بياناتك، ثم ارفع مستنداتك." } },
+  { id: "prep-time", q: { en: "How long does EZvisa take?", ar: "كم يستغرق EZvisa؟" },
+    a: { en: "We prepare your application in 1–2 days after you pay and send your documents. The embassy decides on the visa and sets its own timeline.", ar: "نجهّز طلبك خلال يوم إلى يومين بعد الدفع وإرسال مستنداتك. السفارة هي التي تقرر بشأن التأشيرة وتحدد مدتها." } },
 ];

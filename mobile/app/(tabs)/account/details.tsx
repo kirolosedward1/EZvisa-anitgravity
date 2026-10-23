@@ -9,6 +9,11 @@ import { useAuth } from "../../../lib/auth";
 import { useT } from "../../../lib/i18n";
 import { supabase } from "../../../lib/supabase";
 import { SCHENGEN_VISA_REQUIRED } from "../../../lib/wizard";
+import { WORLD } from "../../../lib/world";
+import { citizenshipIso, citizenshipName } from "../../../lib/citizenship";
+import { parseSaved, displayPhone, formatNational, toE164, phoneError } from "../../../lib/phone";
+import { PhoneField } from "../../../components/CountryPicker";
+import { Flag } from "../../../components/ui";
 import { success, error as hError, select } from "../../../lib/haptics";
 
 type Edit = null | "name" | "email" | "phone" | "citizenship" | "password";
@@ -28,7 +33,9 @@ export default function AccountDetails() {
   const [busy, setBusy] = useState(false); const [err, setErr] = useState<string | null>(null); const [note, setNote] = useState<string | null>(null);
   const header = <Stack.Screen options={{ title: t("Account details"), headerLargeTitle: false }} />;
   const u = session?.user;
-  const list = useMemo(() => { const s = q.trim().toLowerCase(); return SCHENGEN_VISA_REQUIRED.filter((n) => !s || n.toLowerCase().includes(s) || t(n).includes(q.trim())); }, [q, t]);
+  const [pIso, setPIso] = useState("AE"); const [pE164, setPE164] = useState("");
+  // Name, Arabic name or ISO code (e.g. "in", "IN").
+  const list = useMemo(() => { const s = q.trim().toLowerCase(); return SCHENGEN_VISA_REQUIRED.filter((n) => { const iso = WORLD.find((w) => w.name === n)?.iso2 ?? ""; return !s || n.toLowerCase().includes(s) || t(n).includes(q.trim()) || iso.toLowerCase() === s; }); }, [q, t]);
   if (!u) return <View style={{ flex: 1, backgroundColor: c.background, justifyContent: "center" }}>{header}<EmptyState icon="person.crop.circle" title={t("Sign in")} action={<Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />} /></View>;
   const meta = (u.user_metadata ?? {}) as Record<string, any>;
   const ids = ((u.identities ?? []) as { provider: string }[]).map((i) => i.provider);
@@ -36,14 +43,15 @@ export default function AccountDetails() {
   const hasEmailPw = providers.includes("email");
   const label = (p: string) => t(p === "google" ? "Google" : p === "apple" ? "Apple" : "Email");
   const full = (meta.full_name as string | undefined) ?? "";
-  const open = (e: Edit) => { select(); setErr(null); setNote(null); setQ(""); setV2(""); setV1(e === "name" ? full : e === "email" ? u.email ?? "" : e === "phone" ? meta.phone ?? "" : e === "citizenship" ? meta.citizenship ?? "" : ""); setEdit(e); };
+  const open = (e: Edit) => { select(); setErr(null); setNote(null); setQ(""); setV2(""); if (e === "phone") { const p = parseSaved(meta.phone); setPIso(p.iso); setV1(formatNational(p.iso, p.digits)); setPE164(toE164(p.iso, p.digits) ?? ""); setEdit(e); return; }
+    setV1(e === "name" ? full : e === "email" ? u.email ?? "" : e === "citizenship" ? citizenshipIso(meta.citizenship) : ""); setEdit(e); };
   const close = () => { if (!busy) setEdit(null); };
   const save = async (val?: string) => {
     if (!supabase) return; setErr(null);
     let payload: any; let done: string | null = null;
     if (edit === "name") { const n = v1.trim().replace(/\s+/g, " "); if (n.length < 2) return setErr(t("Enter your full name.")); payload = { data: { full_name: n } }; }
-    else if (edit === "phone") { const p = normUaePhone(v1); if (!p) return setErr(t("Enter a UAE mobile number, e.g. +971 50 123 4567.")); payload = { data: { phone: p } }; }
-    else if (edit === "citizenship") { const n = val ?? v1; if (!SCHENGEN_VISA_REQUIRED.includes(n)) return; payload = { data: { citizenship: n } }; }
+    else if (edit === "phone") { if (!pE164) return setErr(t(phoneError(pIso))); payload = { data: { phone: pE164 } }; } // E.164
+    else if (edit === "citizenship") { const n = val ?? v1; if (!SCHENGEN_VISA_REQUIRED.includes(citizenshipName(n))) return; payload = { data: { citizenship: citizenshipIso(n) } }; }
     else if (edit === "email") { const m = v1.trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m)) return setErr(t("Enter a valid email address.")); if (m === u.email) return setEdit(null); payload = { email: m }; done = t("Check {e} and tap the link to confirm the change.", { e: m }); }
     else if (edit === "password") { if (v1.length < MIN_PW) return setErr(t("Use at least {n} characters.", { n: MIN_PW })); if (v1 !== v2) return setErr(t("The passwords don't match.")); payload = { password: v1 }; }
     else return;
@@ -59,8 +67,10 @@ export default function AccountDetails() {
       <ListGroup header={t("Personal")} inset={16}>
         {row(t("Name"), full, "name")}
         {row(t("Email"), u.email ?? "", "email")}
-        {row(t("Phone number"), meta.phone, "phone")}
-        {row(t("Citizenship"), meta.citizenship ? t(meta.citizenship) : "", "citizenship")}
+        {row(t("Phone number"), displayPhone(meta.phone) ? "\u2068" + displayPhone(meta.phone) + "\u2069" : "", "phone")}
+        {meta.citizenship
+          ? <ListRow title={t("Citizenship")} trailing={<View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}><Flag country={citizenshipName(meta.citizenship)} size={20} /><Text variant="body" tone="secondary">{t(citizenshipName(meta.citizenship))}</Text></View>} onPress={() => open("citizenship")} />
+          : row(t("Citizenship"), "", "citizenship")}
       </ListGroup>
       <ListGroup header={t("Sign-in")} inset={16}>
         <ListRow title={t("Sign-in methods")} value={providers.map(label).join(" · ")} />
@@ -75,11 +85,12 @@ export default function AccountDetails() {
             <TextField label={t("Search nationality...")} placeholder={t("Search nationality...")} value={q} onChangeText={setQ} autoCorrect={false} />
             <Text variant="footnote" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text>
             <View style={{ borderRadius: R.card, overflow: "hidden", backgroundColor: c.surface }}>
-              {list.map((n) => (
-                <Pressable key={n} onPress={() => save(n)} accessibilityRole="button" accessibilityState={{ selected: meta.citizenship === n }} style={({ pressed }) => ({ minHeight: 48, paddingHorizontal: S.md, flexDirection: "row", alignItems: "center", backgroundColor: pressed ? c.fill : "transparent" })}>
-                  <Text variant="body" style={{ flex: 1 }}>{t(n)}</Text>{meta.citizenship === n && <Icon name="checkmark" size={16} color={c.accent} />}
+              {list.map((n) => { const on = citizenshipName(meta.citizenship) === n; return (
+                <Pressable key={n} onPress={() => save(n)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={t(n)} style={({ pressed }) => ({ minHeight: 52, paddingHorizontal: S.md, gap: S.sm, flexDirection: "row", alignItems: "center", backgroundColor: pressed ? c.fill : "transparent" })}>
+                  <Flag country={n} size={28} />
+                  <Text variant="body" style={{ flex: 1 }}>{t(n)}</Text>{on && <Icon name="checkmark" size={16} color={c.accent} weight="bold" />}
                 </Pressable>
-              ))}
+              ); })}
             </View>
           </View>
         ) : (
@@ -88,14 +99,17 @@ export default function AccountDetails() {
               <TextField label={t("New password")} value={v1} onChangeText={setV1} secureTextEntry autoCapitalize="none" textContentType="newPassword" autoFocus />
               <TextField label={t("Confirm password")} value={v2} onChangeText={setV2} secureTextEntry autoCapitalize="none" textContentType="newPassword" onSubmitEditing={() => save()} />
               <Text variant="footnote" tone="secondary">{t("At least {n} characters.", { n: MIN_PW })}</Text>
-            </> : (
+            </> : edit === "phone" ? (
+              <PhoneField country={pIso} local={v1} autoFocus error={!!err} onChange={(iso, local, e164) => { setPIso(iso); setV1(local); setPE164(e164); setErr(null); }} />
+            ) : (
               <TextField label={edit ? titles[edit] : ""} value={v1} onChangeText={setV1} autoFocus onSubmitEditing={() => save()} returnKeyType="done"
-                placeholder={edit === "phone" ? "+971 50 123 4567" : undefined} keyboardType={edit === "phone" ? "phone-pad" : edit === "email" ? "email-address" : "default"}
-                autoCapitalize={edit === "name" ? "words" : "none"} autoCorrect={false} textContentType={edit === "email" ? "emailAddress" : edit === "phone" ? "telephoneNumber" : "name"} />
+                keyboardType={edit === "email" ? "email-address" : "default"}
+                autoCapitalize={edit === "name" ? "words" : "none"} autoCorrect={false} textContentType={edit === "email" ? "emailAddress" : "name"} />
             )}
             {edit === "email" && <Text variant="footnote" tone="secondary">{t("We'll send a confirmation link to the new address.")}</Text>}
             <InlineError text={err} />
-            <Button title={t("Save")} loading={busy} onPress={() => save()} />
+            {edit === "phone" && !!v1 && !pE164 && <Text variant="footnote" tone="secondary">{t(phoneError(pIso))}</Text>}
+            <Button title={t("Save")} loading={busy} disabled={edit === "phone" && !pE164} onPress={() => save()} />
           </View>
         )}
       </Sheet>

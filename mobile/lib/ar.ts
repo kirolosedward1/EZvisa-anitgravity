@@ -373,7 +373,7 @@ export const AR: Record<string, string> = {
   "Trip length": "مدة الرحلة",
   "UAE residence visa / Emirates ID": "إقامة الإمارات / الهوية الإماراتية",
   "UAE visa & ID": "الإقامة والهوية",
-  "Upload documents": "رفع المستندات", "Action required": "إجراء مطلوب",
+  "Upload documents": "رفع المستندات", "Receipt no.": "رقم الإيصال", "Service": "الخدمة", "Schengen visa application service": "خدمة طلب تأشيرة شنغن", "Paid via Ziina": "تم الدفع عبر Ziina", "Paid on": "تاريخ الدفع", "Download PDF": "تنزيل PDF", "No receipt yet": "لا يوجد إيصال بعد", "The receipt appears after payment.": "يظهر الإيصال بعد الدفع.", "Payment": "الدفع", "Share": "مشاركة", "Destination": "الوجهة", "Embassy and VFS fees are not included and are paid at the appointment.": "رسوم السفارة وVFS غير مشمولة وتُدفع عند الموعد.",  "Country code": "رمز الدولة", "Enter a valid UAE mobile number": "أدخل رقم جوال إماراتي صحيح", "Enter a valid phone number": "أدخل رقم هاتف صحيح", "Use a JPG, PNG, WebP or HEIC photo": "استخدم صورة بصيغة JPG أو PNG أو WebP أو HEIC",  "Action required": "إجراء مطلوب",
   "We'll prepare this": "سنجهّز هذا",
   "Your application is already in review, so it can't be changed here. Please message us on WhatsApp.": "طلبك قيد المراجعة بالفعل، لذا لا يمكن تعديله هنا. يرجى مراسلتنا على واتساب.",
   "Your applications": "طلباتك",

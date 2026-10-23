@@ -14,8 +14,7 @@ import { intentStatus, knownPayment, money, startPayment, usePaying, useQuote } 
 import { Linking } from "react-native";
 import { success, error as hError, tap } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
-import { shareReceipt } from "../../../lib/receipt";
-import { useT } from "../../../lib/i18n";
+import { useT, ltr } from "../../../lib/i18n";
 import { router } from "expo-router";
 import { countdown } from "../../../lib/countdown";
 import { askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
@@ -130,7 +129,7 @@ export default function ApplicationDetail() {
         <Flag country={name} size={72} />
         <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text variant="subhead" tone="secondary" tabular>{a.reference}</Text>
+          <Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text>
           <StatusPill v={a.status} a={a} />
         </View>
       </View>
@@ -197,7 +196,7 @@ export default function ApplicationDetail() {
       </ListGroup>}
       <InlineError text={upErr} />
       <ListGroup inset={58}>
-        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} onPress={paid ? () => shareReceipt(a, a.full_name ?? "", a.email ?? "") : undefined} a11yHint={paid ? t("Payment receipt") : undefined} />)}
+        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} onPress={paid ? () => router.push(`/receipt/${a.id}`) : undefined} a11yHint={paid ? t("Payment receipt") : undefined} />)}
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>

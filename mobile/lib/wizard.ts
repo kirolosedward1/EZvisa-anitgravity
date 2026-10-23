@@ -134,7 +134,7 @@ export function validatePersonal(f: WizardForm): Errors {
   if (!f.firstName.trim()) e.firstName = "First name is required";
   if (!f.lastName.trim()) e.lastName = "Last name is required";
   if (!f.email.trim()) e.email = "Email is required"; else if (!isValidEmail(f.email.trim())) e.email = "Please enter a valid email address. Check for typos in the domain.";
-  if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = "Please enter a valid phone number (7-15 digits).";
+  if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = (f.phoneCountry || "AE") === "AE" ? "Enter a valid UAE mobile number" : "Enter a valid phone number";
   if (!f.maritalStatus) e.maritalStatus = "Please select your marital status";
   if (f.maritalStatus === "married" && !f.spouseAccompanying) e.spouseAccompanying = "Please choose Yes or No";
   return e;

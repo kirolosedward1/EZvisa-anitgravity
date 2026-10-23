@@ -1,6 +1,5 @@
 import { stage } from "../../../lib/stage";
 import { ActionSheetIOS, Alert, Linking, Modal, Platform, ScrollView, Switch, View } from "react-native";
-import { shareReceipt } from "../../../lib/receipt";
 import { useAvatar, pickAvatar, removeAvatar } from "../../../lib/avatar";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
@@ -10,7 +9,7 @@ import { pendingUploads } from "../../../lib/uploads";
 import { EMAIL } from "../../../lib/config";
 import { useEffect, useState } from "react";
 import { remindersEnabled, remindersSupported, setRemindersEnabled, planReminders, getPassportExpiry, setPassportExpiry, syncReminders } from "../../../lib/reminders";
-import { useT, type Lang } from "../../../lib/i18n";
+import { useT, type Lang, ltr } from "../../../lib/i18n";
 import { lockSupported, lockEnabled, setLockEnabled, biometricLabel, lockAfter, setLockAfter, LOCK_AFTER } from "../../../lib/lock";
 import { DateAnswer } from "../../../components/wizard/answers";
 import { Stack, router } from "expo-router";
@@ -162,7 +161,7 @@ export default function Account() {
   const u = session.user;
   /** Profile photo: choose one from Photos, or remove it (kept on this phone, lib/avatar.ts). */
   const editPhoto = () => {
-    const choose = () => { pickAvatar(u.id).catch((e) => Alert.alert(t("Couldn't load"), e?.message ?? String(e))); };
+    const choose = () => { pickAvatar(u.id).catch((e) => { const m = t(e?.message ?? String(e)); if (Platform.OS === "web") window.alert(m); else Alert.alert(t("Couldn't load"), m); }); };
     if (!photo || Platform.OS === "web") { if (photo && Platform.OS === "web" && window.confirm(t("Remove photo?"))) { removeAvatar(); return; } choose(); return; }
     if (Platform.OS === "ios") { ActionSheetIOS.showActionSheetWithOptions({ options: [t("Choose photo"), t("Remove photo"), t("Cancel")], destructiveButtonIndex: 1, cancelButtonIndex: 2 }, (i) => { if (i === 0) choose(); if (i === 1) removeAvatar(); }); return; }
     Alert.alert(t("Profile photo"), undefined, [{ text: t("Choose photo"), onPress: choose }, { text: t("Remove photo"), style: "destructive", onPress: () => { removeAvatar(); } }, { text: t("Cancel"), style: "cancel" }]);
@@ -204,13 +203,13 @@ export default function Account() {
       {!!apps?.length && (
         <ListGroup header={t("Application history")} inset={S.md + 28 + S.md}>
           {apps.map((a) => <ListRow key={a.id} leading={<Flag country={a.countries?.name ?? a.destination_country ?? ""} size={28} />} title={t(a.countries?.name ?? a.destination_country ?? "Application")}
-            subtitle={`${a.reference} · ${t(stage(a).label)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`, { withAnchor: true })} />)}
+            subtitle={`${ltr(a.reference)} · ${t(stage(a).label)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`, { withAnchor: true })} />)}
         </ListGroup>
       )}
       {!!paidApps.length && (
         <ListGroup header={t("Receipts")} footer={t("From your payment record. Tap to save or share a PDF.")} inset={58}>
-          {paidApps.map((a) => <ListRow key={a.id} icon="doc.text.fill" iconColor={c.green} title={`${t("Receipt")} · ${a.reference}`} subtitle={t(a.countries?.name ?? a.destination_country ?? "")}
-            value={`${Number(a.payment_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => shareReceipt(a, full, u.email ?? "")} />)}
+          {paidApps.map((a) => <ListRow key={a.id} icon="doc.text.fill" iconColor={c.green} title={`${t("Receipt")} · ${ltr(a.reference)}`} subtitle={t(a.countries?.name ?? a.destination_country ?? "")}
+            value={`${Number(a.payment_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => router.push(`/receipt/${a.id}`)} />)}
         </ListGroup>
       )}
       <ListGroup inset={58}>

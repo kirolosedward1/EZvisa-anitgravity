@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../../components/Logo";
-import { ActionPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
+import { Chevron, ActionPill, StatusPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
 import { AppointmentCard } from "../../../components/Appointment";
 import { useColors, S, R, curve, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
@@ -73,7 +73,7 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
           <Flag country={name} size={64} />
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: S.xs, marginTop: S.xs }}>
-          <Text variant="callout" weight="600" tone={a.status === "cancelled" ? "secondary" : "accent"} color={a.status === "rejected" ? c.red : undefined} testID="hero-status">{status}</Text>
+          <View testID="hero-status"><StatusPill v={a.status} a={a} /></View>
           {pending && <ActionPill label={t(pending.label)} />}
           {!!tripDates(a, lang) && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" tabular testID="hero-dates">{tripDates(a, lang)}</Text></>}
           {!!cd && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" testID="countdown">{cd}</Text></>}
@@ -156,17 +156,17 @@ function AppList({ items, title }: { items: Item[]; title: string }) {
          <SwipeToDiscard enabled={!!i.remove} onDiscard={() => i.remove?.()} testID="home-swipe">
           <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: c.surface }}>
           <PressScale onPress={() => { tap(); i.open(); }} onLongPress={i.remove ? () => askDiscard(i.remove!, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
-            style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: S.md, paddingLeft: S.md, paddingRight: i.remove ? 0 : S.md, minHeight: 56 }}>
+            style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: S.md, paddingStart: S.md, paddingEnd: i.remove ? 0 : S.md, minHeight: 56 }}>
             {i.country ? <Flag country={i.country} size={28} /> : <View style={{ width: 28, height: 28, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={13} color={c.tint} /></View>}
             <View style={{ flex: 1, paddingVertical: S.xs }}>
               <Text variant="body" numberOfLines={1}>{t(i.country || "New application")}</Text>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><Text variant="footnote" tone={i.tone ?? "secondary"} numberOfLines={1} style={{ flexShrink: 1 }}>{i.status}</Text>{!!i.action && <ActionPill label={i.action} />}</View>
             </View>
-            {!i.remove && <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />}
+            {!i.remove && <Chevron size={13} />}
           </PressScale>
           {i.remove && (
             <SwipeActive.Consumer>{(sw) => sw ? null : <PressScale onPress={() => { tap(); askDiscard(i.remove!, t); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
-              style={{ width: 44, height: 44, marginRight: S.xs, alignItems: "center", justifyContent: "center" }}>
+              style={{ width: 44, height: 44, marginEnd: S.xs, alignItems: "center", justifyContent: "center" }}>
               <Icon name="trash" size={17} color={c.red} />
             </PressScale>}</SwipeActive.Consumer>
           )}
