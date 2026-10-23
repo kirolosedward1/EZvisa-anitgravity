@@ -114,6 +114,15 @@ const sp = (id) => ({ appId: APP, paymentId: id, redirectUrl: `https://www.ezvis
     for (const p of page.ctx.pages()) if (p !== page) await p.close().catch(() => {});
     await page.ctx.close(); }
 
+  // Late confirmation (the 22 Oct case): nothing confirmed in the first 30 s, the server marks it paid at ~45 s;
+  // the screen must switch from "not confirmed" to "Payment received" on its own (no tap).
+  { const t0 = Date.now(); const page = await open(browser, { signedIn: true, m: { db: () => (Date.now() - t0 > 45000 ? { payment_status: "paid", payment_amount: 249 } : {}) } });
+    await page.goto(base() + `/payment/${APP}?returned=success`);
+    const first = await waitState(page, ["Payment not confirmed yet"], 45000);
+    const later = await waitState(page, ["Payment received"], 60000);
+    log(first === "Payment not confirmed yet" && later === "Payment received", "late confirmation upgrades the screen without a tap", `"${first}" -> "${later}" after ${Math.round((Date.now() - t0) / 1000)} s`);
+    await page.ctx.close(); }
+
   // App killed after paying: next launch (Home) shows the result from the server.
   { const page = await open(browser, { signedIn: true, stored: { [APP]: sp("pi_1") }, m: { intents: { pi_1: "completed" }, db: (c) => (c.checkId >= 3 ? { payment_status: "paid", payment_amount: 249 } : {}) } });
     await page.goto(base() + "/"); const got = await waitState(page, ["Payment received"], 40000);

@@ -23,6 +23,8 @@ import { track } from "../../lib/analytics";
 type State = "checking" | "paid" | "confirming" | "pending" | "failed" | "cancelled" | "offline";
 type Signals = { server?: ServerStatus | null; db?: string | null; intent?: string | null; offline: boolean };
 const POLL_MS = 2000, POLL_FOR = 30_000, POLL_SHORT = 8_000;
+/** After the first window: keep checking quietly while "not confirmed / updating" is on screen (webhook delay). */
+const QUIET_EVERY = 10_000, QUIET_FOR = 5 * 60_000;
 const PAID = ["paid", "completed"];
 const PROCESSING = ["pending", "requires_user_action"];
 
@@ -80,7 +82,26 @@ export default function PaymentResult() {
     }
   };
 
+  // Quiet re-check (no "checking" flash): upgrades pending/confirming to paid or failed as soon as the server knows.
+  const openedAt = useRef(Date.now()); const quietBusy = useRef(false);
+  const quiet = async () => {
+    if (quietBusy.current || !["pending", "confirming"].includes(stateRef.current)) return;
+    quietBusy.current = true; const me = run.current;
+    try {
+      const s = await read();
+      if (run.current !== me || !["pending", "confirming"].includes(stateRef.current) || s.offline) return;
+      const done = settled(s);
+      if (done === "paid") { show("paid"); success(); forgetPayment(id!); if (session) setupPush(true).catch(() => {}); }
+      else if (done === "failed") { show("failed"); hError(); forgetPayment(id!); }
+      else if (s.intent === "completed" && stateRef.current !== "confirming") { show("confirming"); success(); }
+    } finally { quietBusy.current = false; }
+  };
+
   useEffect(() => { const h = setTimeout(verify, 0); return () => { clearTimeout(h); run.current++; }; }, [id, !!session]);
+  useEffect(() => {
+    const tick = setInterval(() => { if (Date.now() - openedAt.current < QUIET_FOR) quiet(); }, QUIET_EVERY);
+    return () => clearInterval(tick);
+  }, [id, !!session]);
   // Back online (NetInfo, plus a light 5 s retry while offline), or back from another app (e.g. a banking app for
   // 3-D Secure): check again if not settled.
   useEffect(() => {

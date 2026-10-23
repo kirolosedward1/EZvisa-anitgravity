@@ -4,6 +4,7 @@ import { Text, Icon, Button } from "../ui";
 import { useColors, S, R, ICON } from "../../lib/theme";
 import { STEP_TITLES, label, EMPLOYMENT, PURPOSES, COMPANIONS, FUNDING, BALANCE, HOTELS, tripDays, showSpouse, type WizardForm, type WizardStep } from "../../lib/wizard";
 import { fmtShort, Note } from "./fields";
+import { phoneDisplay } from "../../lib/questions";
 
 const yn = (v: string) => (v === "yes" ? "Yes" : v === "no" ? "No" : "N/A");
 const lab = (opts: { value: string; label: string }[], v: string) => (v ? label(opts, v) : "N/A");
@@ -89,7 +90,7 @@ export function PaymentStep({ f, amount, incomplete, onFix, signedIn, onSignIn, 
           <Text variant="footnote" weight="700" style={{ textTransform: "uppercase", letterSpacing: 0.6 }}>Visa Dossier Summary</Text>
         </View>
         <KV k="Full Name"><V>{f.firstName} {f.lastName}</V></KV>
-        <KV k="Contact Information"><V>{f.email}</V><Sub>{f.phone}</Sub></KV>
+        <KV k="Contact Information"><V>{f.email}</V><Sub>{phoneDisplay(f.phone)}</Sub></KV>
         <KV k="Nationality"><V>{f.nationality}</V></KV>
         <KV k="Destination & Residence"><V>{f.destination} (Applying from {f.cityOfResidence}, {f.countryOfResidence})</V></KV>
         <KV k="Intended Travel Dates"><V>{fmtShort(f.travelStartDate)} to {fmtShort(f.travelEndDate)} ({days} days)</V><Sub>Dates Flexible: {yn(f.datesFlexible)}</Sub></KV>

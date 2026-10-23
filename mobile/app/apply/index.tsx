@@ -5,6 +5,7 @@ import { PressScale } from "../../components/ui";
 // Choices and Yes / No auto-advance with haptics; questions that don't apply are skipped; every answer is autosaved
 // (phone + the account's draft row) and the flow resumes at the exact question. Review lets you edit one answer and
 // come straight back. Links keep the website's params: /apply?step=<slug>&from=<nationality>&to=<destination>.
+import { citizenshipName } from "../../lib/citizenship";
 import { useEffect, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
@@ -21,6 +22,7 @@ import { useColors, S, R, curve } from "../../lib/theme";
 import { fromSlug } from "../../lib/countries";
 import { useForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
+import { needsSchengenVisa } from "../../lib/wizard";
 import { useT } from "../../lib/i18n";
 import { SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp } from "../../lib/api";
@@ -66,6 +68,9 @@ export default function Apply() {
   const guestId = useRef<string | null>(null); // one id per guest submit: a retry after a lost reply can't add a second row
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   setAccountEmail(session?.user.email); // before any activeQuestions() below: signed in = no email question
+  // Citizenship saved in Account details prefills the nationality step (only if it is still empty and visa-required).
+  const citizenship = citizenshipName(session?.user.user_metadata?.citizenship as string | undefined) || undefined; // ISO code (or an older saved name)
+  useEffect(() => { if (hydrated && citizenship && needsSchengenVisa(citizenship)) setForm((x) => (x.nationality ? x : { ...x, nationality: citizenship })); }, [hydrated, citizenship]);
   const uid = session?.user.id ?? null;
   const [dir, setDir] = useState(1);
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
@@ -319,7 +324,7 @@ export default function Apply() {
         }} />
         {submitted.guestEmail && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead" testID="guest-note">{paidGuest ? t("Next: sign in with {e} to add your details and upload documents.", { e: submitted.guestEmail }) : t("After paying, sign in with {e} to continue.", { e: submitted.guestEmail })}</Text></Note>}
         {submitted.guestEmail ? <Button title={t("Sign in to continue")} variant={paidGuest ? "primary" : "secondary"} onPress={() => { router.replace({ pathname: "/auth", params: { mode: "signup", email: submitted.guestEmail } }); setTimeout(() => setSubmitted(null), 400); }} /> :
-        <Button title={t("Plan my trip")} icon="map.fill" variant="secondary" onPress={() => { const id = submitted.applicationId; router.navigate(`/applications/${id}`, { withAnchor: true }); setTimeout(() => { router.push(`/trip/${id}`); setSubmitted(null); }, 350); }} />}
+        null /* the trip plan unlocks after payment (lib/itinerary planAllowed) */}
         <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference}.`)} />
         {!submitted.guestEmail && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications", { withAnchor: true }); setTimeout(() => setSubmitted(null), 400); }} />}
       </View>

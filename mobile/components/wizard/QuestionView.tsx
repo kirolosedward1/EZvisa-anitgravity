@@ -1,12 +1,13 @@
 // One question per screen: title, answer UI by kind, notes, inline error and the Continue bar. Shared by the wizard
 // (app/apply, before payment) and Continue application (app/continue/[id], after payment), so both look and behave the same.
 import React, { useRef, useState } from "react";
-import { ScrollView, View, Platform, TextInput, I18nManager } from "react-native";
+import { ScrollView, View, Platform, TextInput, I18nManager, type TextInputInstance } from "react-native";
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Text, Shake, PressScale } from "../ui";
 import { PhoneField } from "../CountryPicker";
 import { Checkbox, Note } from "./fields";
+import { DatesAnswer, DatesSummary } from "./dates";
 import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries } from "./answers";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
@@ -39,7 +40,7 @@ const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean,
 
 export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, children }: Props) {
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
-  const inputRef = useRef<TextInput>(null); const input2Ref = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null); const input2Ref = useRef<TextInputInstance>(null);
   // Lift the screen (and its Continue bar) above the iOS keyboard; S.md between button and keyboard.
   const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
   const kbPad = useAnimatedStyle(() => ({ paddingBottom: Platform.OS === "ios" ? Math.max(0, kb.height.value - barBottom + S.md) : 0 }));
@@ -124,13 +125,14 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
               {([[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const).map(([n, l]) => {
                 const [y, m, d] = f.travelStartDate.split("-").map(Number); const v = isoLocal(new Date(y, m - 1, d + n)); const on = f.travelEndDate === v;
                 return <PressScale key={n} onPress={() => { select(); patch({ travelEndDate: v }); }} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t(l)}
-                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? c.tintFill : c.card }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? c.tint : c.label}>{t(l)}</Text></PressScale>;
+                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? "#0436DC" : c.card, borderWidth: on ? 0 : 1, borderColor: "#E3E7EF" }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? "#FFFFFF" : c.label}>{t(l)}</Text></PressScale>;
               })}
             </View>
           )}
           <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />
         </View>
       );
+      case "dates": return <DatesAnswer f={f} patch={patch} />;
       case "countries": return <AdditionalCountries f={f} onChange={(v) => patch({ additionalCountries: v })} />;
       default: return null;
     }
@@ -141,6 +143,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
   const btnTitle = !q.required && !answered ? t("Skip") : doneLabel ?? t("Continue");
   const bar = showBtn ? (
     <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: barBottom, backgroundColor: c.bg }}>
+      {q.kind === "dates" && <DatesSummary f={f} patch={patch} />}
       <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} disabled={!!liveErr && (q.required || answered)} onPress={advance} />
     </View>
   ) : <View style={{ height: barBottom }} />;
@@ -155,7 +158,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
           <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
             {title}
             {body}
-            {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" tone="secondary">{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
+            {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" color={c.label}>{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
             {noteBox}
             {errBox}
           </ScrollView>

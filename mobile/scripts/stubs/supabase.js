@@ -23,6 +23,7 @@ export const supabase = {
   from: q,
   auth: {
     getUser: async () => ({ data: { user: db.user }, error: null }),
+    getSession: async () => ({ data: { session: db.user ? { user: db.user, access_token: "stub" } : null }, error: null }),
     updateUser: async ({ data }) => {
       db.calls.push({ updateUser: db.user?.id, data });
       db.user.user_metadata = { ...db.user.user_metadata, ...data };
