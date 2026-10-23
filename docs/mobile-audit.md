@@ -508,6 +508,8 @@ Re-checked in a second QA pass: `main` unchanged at `1934aee` (same 28 errors, s
 
 **Regression found on `main` (not from this chat's commits):** commit `de75fd8` (PR #15, "wizard rebuild") changed `mobile/app/apply/index.tsx` to import `SheetAnswer`, `FixedValue`, `cleanForm`, `NATIONALITY_OPTIONS`, `reviewQuestions`, `answer`, `employmentQuestions`, but the files that export them were not in the commit. Metro still bundles it, but in the browser the first wizard question renders **no answers and a disabled Continue**: nobody can start an application from `main`'s mobile code. A fix exists on branch `claude/festive-goodall-8qekxb` (`c87580f`, no PR yet): 0 type errors, and the wizard renders its destination picker. `mobile-app` (which CI publishes to the EAS `preview` channel) does not contain `de75fd8` and type-checks clean. `main` and `mobile-app` have diverged; neither contains the other.
 
+**Resolved on `main` (2026-10-23, `e2e7340`):** PRs #49 (`mobile-app` merged into `main`) and #50 replaced the broken wizard. Re-checked: `npx tsc --noEmit` 0 errors; in the web build the wizard runs destination → nationality (visa-required list) → city (7 emirates) → name with no page errors. The fix branch `claude/festive-goodall-8qekxb` is now obsolete: it conflicts with `main` and must not be merged.
+
 **Still open from §10 on `main`:** B3 (webhook secret optional), B4 (EAS preview DB), B5, H3 (receipt fallback), M15, M16. Fixed on `main` by later chats: B2 (upload auth + paid check), H4 (synthesised dossier row removed), H5 (SecureStore session + wipe on sign-out), M1 (ESLint), M2 (`eas.json`); B1 has a script (`scripts/006_tighten_visa_applications_rls.sql`), not confirmed applied.
 
 ---
