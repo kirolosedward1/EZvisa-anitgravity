@@ -54,7 +54,7 @@ export function ComparisonSection() {
     { name: "Complete file checklist", ar: "قائمة تحقق كاملة للملف", others: false },
     { name: "Tailored cover letter & itinerary", ar: "خطاب تغطية وخط سير مخصّصان", others: false },
     { name: "Flight & hotel reservations for your visa application", ar: "حجوزات طيران وفنادق لطلب التأشيرة", others: true },
-    { name: "Ready in 1–2 days", ar: "جاهز خلال ١–٢ يوم", others: false },
+    { name: "Ready in 1–2 days", ar: "جاهز خلال 1–2 يوم", others: false },
     { name: "No hidden agency markups", ar: "بدون رسوم خفية", others: false },
   ]
 

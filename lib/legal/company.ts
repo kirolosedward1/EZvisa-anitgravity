@@ -18,12 +18,12 @@ export const COMPANY = {
   EMAIL: "[EMAIL]",
   /** "Last updated" date on the legal pages. */
   LEGAL_UPDATED: "24 October 2026",
-  LEGAL_UPDATED_AR: "٢٤ أكتوبر ٢٠٢٦",
+  LEGAL_UPDATED_AR: "24 أكتوبر 2026",
   PHONE_DISPLAY: "+971 54 710 9533",
   PHONE_E164: "+971547109533",
   WHATSAPP_URL: "https://wa.me/971547109533",
   SUPPORT_HOURS_EN: "9:00 am – 6:00 pm (UAE time)",
-  SUPPORT_HOURS_AR: "من ٩:٠٠ صباحًا إلى ٦:٠٠ مساءً (بتوقيت الإمارات)",
+  SUPPORT_HOURS_AR: "من 9:00 صباحًا إلى 6:00 مساءً (بتوقيت الإمارات)",
 } as const
 
 const ENTITY_TOKENS = /\{\{(COMPANY_LEGAL_NAME|TRADE_LICENCE_NO|ISSUING_AUTHORITY|REGISTERED_ADDRESS|EMAIL)\}\}/
