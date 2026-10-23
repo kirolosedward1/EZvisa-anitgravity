@@ -55,13 +55,25 @@ export async function POST(request: NextRequest) {
     // Only the path from the client is kept. A missing Origin stays allowed (the native app sends none):
     // preview then returns to https://$VERCEL_BRANCH_URL or https://$VERCEL_URL, and production stays on the official site.
     // A present Origin must be allowed, and on preview must be exactly one of those two hosts.
+    // Ziina's payment intent has no test/live flag, so the mode is stamped on the return URLs (zmode=test). Reuse
+    // below requires identical return URLs, so a live checkout is never reopened in test mode, and vice versa.
+    const withMode = (url: string) => {
+      try {
+        const u = new URL(url)
+        u.searchParams.delete("zmode")
+        if (test) u.searchParams.set("zmode", "test")
+        return u.toString()
+      } catch {
+        return url
+      }
+    }
     const toReturn = (u: unknown, fallbackPath: string) =>
-      paymentReturnUrl({
+      withMode(paymentReturnUrl({
         clientUrl: typeof u === "string" ? u : undefined,
         fallbackPath,
         requestOrigin: origin,
         isDev,
-      })
+      }))
     const successUrl = toReturn(success_url, "/payment-success")
     const cancelUrl = toReturn(cancel_url, "/payment-failed")
     const failureUrl = toReturn(failure_url, "/payment-failed")
