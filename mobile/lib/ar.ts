@@ -357,7 +357,7 @@ export const AR: Record<string, string> = {
   "Customer": "العميل",
   "Amount paid": "المبلغ المدفوع",
   "Payment method": "طريقة الدفع",
-  "Ziina payment ID": "رقم عملية الدفع (Ziina)",
+  "Ziina payment ID": "رقم عملية الدفع عبر Ziina",
   "Date": "التاريخ",
   "Payment receipt": "إيصال الدفع",
   "EZvisa visa application service": "خدمة EZvisa لطلبات التأشيرة",

@@ -1,7 +1,7 @@
 // One question per screen, built ONLY from the website wizard (lib/wizard.ts mirrors web lib/wizard-steps.ts +
 import { parsePhoneNumberFromString } from "libphonenumber-js/min";
 /** "+971500000000" -> "+971 50 000 0000" (shown as typed when it can't be parsed). */
-const phoneDisplay = (v: string) => { try { return parsePhoneNumberFromString(v)?.formatInternational() ?? v; } catch { return v; } };
+export const phoneDisplay = (v: string) => { try { return parsePhoneNumberFromString(v)?.formatInternational() ?? v; } catch { return v; } };
 // components/apply/*): the same fields, labels, options, order and validation. Each question owns one or more form keys;
 // its errors are exactly validateStep(step) filtered to those keys, so the rules can never drift from the web.
 import { WORLD } from "./world";
