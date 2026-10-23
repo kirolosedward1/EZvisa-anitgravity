@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { CheckCircle2, Clock, Download, FileSearch, LifeBuoy, Printer, Upload, Wallet } from "lucide-react"
+import { ArrowRight, CheckCircle2, Clock, Download, FileSearch, LifeBuoy, Printer, Upload, Wallet } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PayNowButton } from "@/components/dashboard/pay-now-button"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
@@ -7,13 +7,6 @@ import { detailsMissing, getDocumentProgress, isPaid, type Stage } from "@/lib/a
 import { PREPARATION_TIME } from "@/lib/copy"
 import { getCaseTrackingWhatsAppUrl, getDocumentHelpWhatsAppUrl } from "@/lib/whatsapp"
 import type { VisaApplication } from "@/lib/types/visa-application"
-
-const DOSSIER_CONTENTS = [
-  "Step-by-step submission order",
-  "Cover letter tailored to the consulate",
-  "Day-by-day travel itinerary",
-  "Appointment-day guide",
-]
 
 export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stage }) {
   const token = app.tracking_token ?? ""
@@ -75,17 +68,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
         return {
           icon: CheckCircle2,
           title: "Your visa file is ready",
-          body: "Everything you need for your appointment is ready to review, print and take with you.",
-          extra: (
-            <ul className="grid gap-2 sm:grid-cols-2">
-              {DOSSIER_CONTENTS.map((item) => (
-                <li key={item} className="flex items-center gap-2 text-sm text-foreground">
-                  <CheckCircle2 className="size-4 shrink-0 text-primary" aria-hidden="true" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-          ),
+          body: "Your submission order, cover letter, day-by-day itinerary and appointment-day guide are ready to print and take with you.",
           actions: (
             <>
               <Button asChild className="rounded-full px-5">
@@ -127,13 +110,19 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
     }
   })()
 
-  if (stage !== "cancelled" && isPaid(app) && detailsMissing(app) && app.id) {
+  // Trip/passport/employment answers still missing. Not for finished files (ready, refused, cancelled): there is
+  // nothing left to fill in, and "continue" would contradict the status.
+  const inProgress = stage === "documents" || stage === "review" || stage === "preparation"
+  if (inProgress && isPaid(app) && detailsMissing(app) && app.id) {
     content.icon = FileSearch
     content.title = "Continue your application"
     content.body = "Payment is confirmed. Add your trip details, passport and employment, then upload your documents."
     content.actions = (
       <Button asChild className="rounded-full px-5">
-        <Link href={`/continue/${app.id}`}>Continue application</Link>
+        <Link href={`/continue/${app.id}`}>
+          Continue application
+          <ArrowRight className="rtl:rotate-180" />
+        </Link>
       </Button>
     )
   }
@@ -141,19 +130,19 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
   const Icon = content.icon
 
   return (
-    <div id={stage === "payment" ? "pay" : undefined} className="flex flex-col gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-5 sm:p-6">
-      <div className="flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
-        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="size-5" aria-hidden="true" />
-        </span>
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-medium uppercase tracking-wide text-primary">Next step</p>
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">{content.title}</h3>
+    <div
+      id={stage === "payment" ? "pay" : undefined}
+      className="flex flex-col gap-4 rounded-xl border border-border/70 bg-secondary/50 p-5"
+    >
+      <div className="flex min-w-0 items-start gap-3.5">
+        <Icon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" />
+        <div className="flex min-w-0 flex-col gap-1">
+          <p className="text-xs font-medium text-muted-foreground">Next step</p>
+          <h3 className="text-foreground">{content.title}</h3>
           <p className="text-sm leading-relaxed text-muted-foreground">{content.body}</p>
         </div>
       </div>
-      {"extra" in content && content.extra && <div className="sm:pl-14">{content.extra}</div>}
-      {content.actions && <div className="flex flex-wrap items-start gap-3 sm:pl-14">{content.actions}</div>}
+      {content.actions && <div className="flex flex-wrap items-center gap-2 ps-[2.125rem]">{content.actions}</div>}
     </div>
   )
 }

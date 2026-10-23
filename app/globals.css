@@ -295,6 +295,10 @@ h2.panel-title.panel-title-lg {
 }
 
 /* Destination photo cards: the country name sits on the photo. */
+.photo-card h2 {
+  color: #ffffff;
+}
+
 .photo-card h3 {
   color: #ffffff;
   font-size: 22px;
@@ -320,6 +324,11 @@ h2.wizard-question {
 @media (min-width: 768px) {
   h1 {
     font-size: 44px;
+  }
+
+  /* Customer dashboard greeting: a page title, not a marketing headline. */
+  h1.app-title {
+    font-size: 32px;
   }
 
   h2 {

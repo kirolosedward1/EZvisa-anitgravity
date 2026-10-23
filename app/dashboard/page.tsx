@@ -109,7 +109,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     return (
       <>
         <SiteHeader />
-        <main id="main-content" className="bg-background">
+        <main id="main-content" className="min-h-screen bg-secondary/40">
           <DashboardHeader
             badge="My account"
             title={firstName ? `Welcome, ${firstName}` : "Your account"}
@@ -156,27 +156,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="bg-background">
+      <main id="main-content" className="min-h-screen bg-secondary/40">
         {mainApp?.id ? <SupportApplication id={mainApp.id} country={mainApp.destination_country} status={getStatusLabel(mainApp).label} step="overview" /> : null}
         <DashboardHeader
           badge="My account"
           title={firstName ? `Welcome back, ${firstName}` : "Your visa applications"}
-          description={
-            <>
-              Track your visa file, upload documents and download everything you need for your appointment.
-              <span className="mt-1 block text-sm">Signed in as {user.email}</span>
-            </>
-          }
+          description={<>Signed in as <span className="ltr-isolate">{user.email}</span></>}
           actions={
-            <>
-              <Button asChild className="rounded-full px-5 shadow-lg shadow-primary/20">
-                <Link href="/apply">
-                  <Plus />
-                  New application
-                </Link>
-              </Button>
-              <SignOutButton label={isDemo ? "Exit demo" : "Sign out"} />
-            </>
+            <Button asChild className="rounded-full px-5">
+              <Link href="/apply">
+                <Plus />
+                New application
+              </Link>
+            </Button>
           }
         />
 

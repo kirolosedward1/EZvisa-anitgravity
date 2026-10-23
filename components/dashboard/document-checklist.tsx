@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { FileText, Upload } from "lucide-react"
+import { Check, Upload } from "lucide-react"
 import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashboard-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getDocumentProgress, REQUIRED_DOCUMENTS } from "@/lib/application-status"
@@ -14,7 +14,7 @@ export function DocumentChecklist({ app }: { app: VisaApplication }) {
     <DashboardCard aria-label="Supporting documents">
       <DashboardCardHeader
         title="Supporting documents"
-        icon={FileText}
+        description={`${received} of ${total} received`}
         action={
           received < total ? (
             <Link
@@ -28,15 +28,9 @@ export function DocumentChecklist({ app }: { app: VisaApplication }) {
         }
       />
 
-      <div className="flex flex-col gap-2 px-6 pt-5">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">
-            <span className="font-semibold text-foreground">{received}</span> of {total} received
-          </span>
-          <span className="text-muted-foreground">{percent}%</span>
-        </div>
+      <div className="px-6 pt-3">
         <div
-          className="h-2 overflow-hidden rounded-full bg-secondary"
+          className="h-1.5 overflow-hidden rounded-full bg-muted"
           role="progressbar"
           aria-valuenow={received}
           aria-valuemin={0}
@@ -47,15 +41,19 @@ export function DocumentChecklist({ app }: { app: VisaApplication }) {
         </div>
       </div>
 
-      <ul className="flex flex-col divide-y divide-border/60 px-2 py-3">
+      <ul className="flex flex-col divide-y divide-border/60 px-2 pb-2 pt-3">
         {REQUIRED_DOCUMENTS.map((doc) => {
           const isReceived = Boolean(app[doc.key])
           return (
             <li key={doc.key} className="flex items-center justify-between gap-4 rounded-xl px-4 py-3">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-                  <FileText className="size-4" aria-hidden="true" />
-                </span>
+                {isReceived ? (
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
+                    <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />
+                  </span>
+                ) : (
+                  <span className="size-7 shrink-0 rounded-full border-2 border-dashed border-border" aria-hidden="true" />
+                )}
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-foreground">{doc.label}</p>
                   <p className="truncate text-xs text-muted-foreground">{doc.hint}</p>

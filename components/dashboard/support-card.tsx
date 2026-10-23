@@ -6,9 +6,9 @@ import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
 /** `id` gives the EZ- reference the customer sees; the tracking token is only a fallback. */
 export function SupportCard({ id, token, destination }: { id?: string; token: string; destination?: string }) {
   return (
-    <DashboardCard aria-label="Support" className="flex flex-col gap-4 bg-secondary/60 p-6">
+    <DashboardCard aria-label="Support" className="flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-1">
-        <h2 className="text-base font-semibold tracking-tight text-foreground">Questions about your file?</h2>
+        <h2 className="panel-title text-foreground">Questions about your file?</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">
           Our Dubai-based visa specialists reply on WhatsApp, usually within minutes.
         </p>
@@ -18,9 +18,9 @@ export function SupportCard({ id, token, destination }: { id?: string; token: st
           href={getCaseTrackingWhatsAppUrl(id || token, destination)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-border/60 bg-background px-5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-secondary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#1A7F37] px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[#166C2F]"
         >
-          <WhatsAppIcon className="size-4 text-whatsapp" />
+          <WhatsAppIcon className="size-4" />
           Chat with a specialist
         </a>
         <a
