@@ -1,47 +1,80 @@
 "use client"
 
-// Pays an existing unpaid case (e.g. one started in the app or left unpaid): the server prices it and the Ziina
-// checkout returns to the website, exactly like the wizard's payment step and the app's Pay button.
 import { useState } from "react"
 import { CreditCard, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
-export function PayNowButton({ applicationId, destination, trackingToken, className, label = "Pay now" }: { applicationId?: string; destination?: string | null; trackingToken?: string | null; className?: string; label?: string }) {
-  const [busy, setBusy] = useState(false)
+interface PayNowButtonProps {
+  applicationId?: string
+  trackingToken?: string
+  destination?: string
+  amount?: number
+  className?: string
+  label?: string
+}
+
+export function PayNowButton({ applicationId, trackingToken, destination, amount = 249, className, label }: PayNowButtonProps) {
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const pay = async () => {
-    setBusy(true)
+  const handlePay = async () => {
+    setLoading(true)
     setError(null)
+    const started = performance.now()
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), 20000)
     try {
-      if (!applicationId) throw new Error("This application could not be identified.")
       const successUrl = new URL("/payment-success", window.location.origin)
-      successUrl.searchParams.set("appId", applicationId)
       if (trackingToken) successUrl.searchParams.set("token", trackingToken)
+      if (applicationId) successUrl.searchParams.set("appId", applicationId)
       if (destination) successUrl.searchParams.set("dest", destination)
+
       const res = await fetch("/api/create-payment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ applicationId, success_url: successUrl.toString(), cancel_url: `${window.location.origin}/payment-failed` }),
+        body: JSON.stringify({
+          applicationId,
+          amount,
+          currency: "AED",
+          success_url: successUrl.toString(),
+          cancel_url: `${window.location.origin}/payment-failed`,
+          test: false,
+        }),
+        signal: controller.signal,
       })
       const data = await res.json().catch(() => ({}))
-      if (res.status === 409) throw new Error(data.error || "This application is already paid.")
-      if (!res.ok || !data.redirect_url) throw new Error(data.error || "Online payment isn't available right now. Please message us on WhatsApp.")
+      console.info("[payment] create-payment", {
+        ms: Math.round(performance.now() - started),
+        status: res.status,
+        error: data.error || null,
+        elapsedMs: data.elapsedMs ?? null,
+      })
+      if (!res.ok || !data.redirect_url) throw new Error(data.error || "Could not start payment")
       window.location.href = data.redirect_url
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not start the payment")
-      setBusy(false)
+    } catch (err) {
+      console.error("Payment start failed:", err)
+      const aborted = err instanceof Error && err.name === "AbortError"
+      setError(aborted ? "Ziina didn't open within 20 seconds." : "We couldn't open the payment page.")
+      setLoading(false)
+    } finally {
+      window.clearTimeout(timer)
     }
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <Button type="button" onClick={pay} disabled={busy} className={cn("font-semibold", className)}>
-        {busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CreditCard className="w-4 h-4 mr-2" />}
-        {busy ? "Opening secure payment…" : label}
+      <Button onClick={handlePay} disabled={loading} className={`rounded-full px-5 ${className ?? ""}`}>
+        {loading ? <Loader2 className="animate-spin" /> : <CreditCard />}
+        {loading ? "Opening Ziina…" : label ?? `Pay ${amount} AED`}
       </Button>
-      {error && <p className="text-xs text-destructive" role="alert">{error}</p>}
+      {error && (
+        <div role="alert" className="flex flex-col items-start gap-2">
+          <p className="text-xs text-destructive">{error}</p>
+          <Button type="button" variant="outline" onClick={handlePay} disabled={loading} className="h-8 rounded-full px-4 text-xs">
+            Retry
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

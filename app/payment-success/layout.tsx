@@ -1,11 +1,12 @@
-import { Metadata } from 'next'
+import type { Metadata } from "next"
+import { headers } from "next/headers"
 
-export const metadata: Metadata = {
-  title: "Payment Success | EZvisa",
-  robots: {
-    index: false,
-    follow: false,
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const arabic = (await headers()).get("x-ez-locale") === "ar"
+  return {
+    title: arabic ? "تأكيد الدفع" : "Payment Success | EZvisa",
+    robots: { index: false, follow: false },
+  }
 }
 
 export default function PaymentSuccessLayout({

@@ -1,6 +1,7 @@
 /**
- * The official public URL of the site. Every absolute link we send out (emails, payment
- * return URLs, auth redirects, share links) must use this, never localhost or *.vercel.app.
+ * The official public URL of the site. Every absolute link we send out (emails, auth
+ * redirects, share links) must use this, never localhost or *.vercel.app.
+ * Preview payment returns are the exception: lib/cors.ts paymentReturnUrl.
  *
  * NEXT_PUBLIC_SITE_URL (or the older NEXT_PUBLIC_APP_URL) may override it, but in production
  * a localhost override is ignored so a stray dev value can never leak into customer emails.

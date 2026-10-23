@@ -10,15 +10,15 @@ export function DashboardHeader({
   actions?: React.ReactNode
 }) {
   return (
-    <section className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-secondary/60 to-background pb-10 pt-28 md:pt-32">
+    <section className="relative overflow-hidden border-b border-border/60 pb-10 pt-28 md:pt-32">
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 opacity-60"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, color-mix(in oklch, var(--primary) 18%, transparent) 1px, transparent 0)",
+          backgroundImage: "none",
           backgroundSize: "24px 24px",
-          maskImage: "radial-gradient(ellipse 70% 80% at 50% 0%, black 30%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 70% 80% at 50% 0%, black 30%, transparent 100%)",
+          maskImage: "none",
+          WebkitMaskImage: "none",
         }}
       />
       <div className="container relative mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6 md:flex-row md:items-end md:justify-between">

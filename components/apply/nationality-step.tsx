@@ -1,510 +1,416 @@
 "use client"
 
-// Step 1: Personal Information. Fields, order, option lists and validation come from the website ↔ app contract
-// (lib/shared/wizard-contract.ts), so the app's wizard (mobile/lib/questions.ts) asks exactly the same things.
-// The passport NUMBER is asked after payment ("Continue application"); validity and expiry are asked here.
 import type React from "react"
-import { useMemo, useState, useEffect } from "react"
+import { useEffect, useRef, useState } from "react"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { CitizenshipPicker } from "@/components/citizenship-picker"
+import { CountryFlag } from "@/components/country-flag"
+import { LangText } from "@/components/lang-text"
+import { WizardBar } from "@/components/apply/wizard-bar"
+import {
+  ChoiceList,
+  ChoiceRow,
+  FieldError,
+  WizardQuestion,
+  wizardFieldClass,
+  wizardLabelClass,
+} from "@/components/apply/wizard-choices"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Check, ChevronsUpDown, Info, Loader2, ArrowLeft } from "lucide-react"
-import { CustomDatePicker } from "@/components/ui/custom-date-picker"
-import { CountryFlag } from "@/components/apply/country-flag"
-import { cn } from "@/lib/utils"
+import { priceForTravellers } from "@/lib/currency"
+import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { trackEvent } from "@/lib/analytics"
-import {
-  SCHENGEN, UAE_NATIONALITIES, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, DEFAULT_RESIDENCE, UAE_EMIRATES, MARITAL,
-  validatePersonal, adultMax, iso, type Errors,
-} from "@/lib/shared/wizard-contract"
+import { cn } from "@/lib/utils"
 
 interface NationalityStepProps {
   formData: FormData
   updateFormData: (data: FormDataUpdate) => void
   onNext: () => void
+  onBack: () => void
   isLoading?: boolean
 }
 
-// Shared style constants
-const inputStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none shadow-sm"
-const selectStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
-const labelStyles = "text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
-const toggleActiveStyles =
-  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
-const toggleInactiveStyles =
-  "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
-const errorStyles = "border-destructive bg-destructive/5 focus:ring-destructive/10"
+const fieldClass = cn(wizardFieldClass, "h-[52px]")
 
-const ALL_NATIONALITIES = [...SCHENGEN_VISA_REQUIRED].sort((a, b) => a.localeCompare(b))
+function isValidEmail(email: string) {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+  if (!emailRegex.test(email)) return false
+  const parts = email.split("@")
+  if (parts.length !== 2) return false
+  const [localPart, domain] = parts
+  if (localPart.length < 2 || !domain.includes(".")) return false
+  const invalidDomains = ["gmial.com", "yahooo.com", "hotmial.com", "gmai.com"]
+  return !invalidDomains.includes(domain.toLowerCase())
+}
 
-export function NationalityStep({ formData, updateFormData, onNext, isLoading }: NationalityStepProps) {
-  const [nationalityOpen, setNationalityOpen] = useState(false)
-  const [showAllNationalities, setShowAllNationalities] = useState(false)
-  const [destinationOpen, setDestinationOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
+function isValidPhone(phone: string) {
+  const digitsOnly = phone.replace(/[^\d]/g, "")
+  if (digitsOnly.length < 7 || digitsOnly.length > 15) return false
+  if (/^(\d)\1+$/.test(digitsOnly)) return false
+  if (digitsOnly.length >= 8) {
+    const sequential = digitsOnly
+      .split("")
+      .every((digit, index, arr) => index === 0 || Number.parseInt(digit) === Number.parseInt(arr[index - 1]) + 1)
+    if (sequential) return false
+  }
+  return true
+}
+
+/** The visible prefix is always +971. Digits are stored as "+971 5xxxxxxx". */
+function localPhone(phone: string) {
+  const trimmed = phone.trim()
+  if (trimmed.startsWith("+971")) return trimmed.slice(4).replace(/[^\d]/g, "")
+  return trimmed.replace(/[^\d]/g, "")
+}
+
+function composePhone(local: string) {
+  const digits = local.replace(/[^\d]/g, "")
+  return digits ? `+971 ${digits}` : ""
+}
+
+export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading }: NationalityStepProps) {
   const [showErrors, setShowErrors] = useState(false)
+  const [destinationOpen, setDestinationOpen] = useState(false)
+  const [maxDob, setMaxDob] = useState("")
+  const [touchKeyboard, setTouchKeyboard] = useState(false)
+  const seeded = useRef(false)
+  const withSpouse = formData.spouseAccompanying === "yes"
+  const spousePrice = priceForTravellers("yes")
+  const phone = composePhone(localPhone(formData.phone || ""))
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 1024 || "ontouchstart" in window)
-    }
-    checkMobile()
-    window.addEventListener("resize", checkMobile)
-    return () => window.removeEventListener("resize", checkMobile)
+    const date = new Date()
+    date.setFullYear(date.getFullYear() - 18)
+    setMaxDob(date.toISOString().slice(0, 10))
+    setTouchKeyboard(window.matchMedia("(pointer: coarse)").matches)
   }, [])
 
-  const errors: Errors = useMemo(() => validatePersonal(formData), [formData])
-  const isFormValid = Object.keys(errors).length === 0
+  useEffect(() => {
+    if (seeded.current) return
+    seeded.current = true
+    const patch: FormDataUpdate = {}
+    if (formData.passportNumber.trim() && formData.hasValidPassport !== "yes") patch.hasValidPassport = "yes"
+    if (formData.spouseAccompanying !== "yes") {
+      if (!formData.maritalStatus) patch.maritalStatus = "single"
+      if (formData.spouseAccompanying !== "no") patch.spouseAccompanying = "no"
+    }
+    if (Object.keys(patch).length) updateFormData(patch)
+  }, [formData.hasValidPassport, formData.maritalStatus, formData.passportNumber, formData.spouseAccompanying, updateFormData])
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const errors = {
+    firstName: !formData.firstName.trim(),
+    lastName: !formData.lastName.trim(),
+    nationality: !formData.nationality,
+    passport: !formData.passportNumber.trim(),
+    phone: !phone || !isValidPhone(phone),
+    email: !formData.email.trim() || !isValidEmail(formData.email.trim()),
+    dateOfBirth: !formData.dateOfBirth,
+    destination: !formData.destination,
+  }
+  const isFormValid = !Object.values(errors).some(Boolean)
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
     if (!isFormValid) {
       setShowErrors(true)
-      // Auto-scroll to the first field with an error
-      setTimeout(() => {
-        const firstError = document.querySelector(".border-destructive")
-        if (firstError) {
-          firstError.scrollIntoView({ behavior: "smooth", block: "center" })
-        }
-      }, 100)
+      requestAnimationFrame(() => {
+        document.querySelector("[data-invalid='true']")?.scrollIntoView({ behavior: "smooth", block: "center" })
+      })
       return
     }
     onNext()
   }
 
-  const set = (data: FormDataUpdate) => {
-    updateFormData(data)
+  const set = (patch: FormDataUpdate) => {
+    updateFormData(patch)
     setShowErrors(false)
   }
-  const errorClass = (field: keyof FormData) => (showErrors && errors[field] ? errorStyles : "")
-  const errorText = (field: keyof FormData) =>
-    showErrors && errors[field] ? (
-      <p className="text-xs text-red-600 mt-1" role="alert">
-        {errors[field]}
-      </p>
-    ) : null
 
-  const nationalityList = showAllNationalities ? ALL_NATIONALITIES : UAE_NATIONALITIES
+  const invalid = (key: keyof typeof errors) => (showErrors && errors[key] ? "true" : undefined)
+  const invalidClass = (key: keyof typeof errors) =>
+    showErrors && errors[key] ? "border-[#B83200] focus:border-[#B83200] focus:shadow-none" : ""
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
-      <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-        This information helps us tailor your cover letter and strengthen your return-to-home justification.
-      </p>
+    <form onSubmit={handleSubmit} noValidate>
+      <WizardQuestion
+        title="Who is travelling?"
+        titleAr="من المسافر؟"
+        helper="Enter details exactly as they appear in your passport."
+        helperAr="أدخل البيانات كما تظهر في جواز سفرك."
+      />
 
-      {showErrors && !isFormValid && (
-        <div
-          className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl text-foreground text-sm"
-          role="alert"
-          aria-live="polite"
-        >
-          <Info className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <span>{Object.values(errors)[0] ?? "Please fill in all required fields before continuing."}</span>
-          </div>
-        </div>
-      )}
-
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Destination Country (Schengen) */}
-        <div>
-          <label className={labelStyles}>Destination Country (Schengen) *</label>
-          <Popover open={destinationOpen} onOpenChange={setDestinationOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={destinationOpen}
-                className={cn(inputStyles, "w-full justify-between font-medium", errorClass("destination"))}
-              >
-                {formData.destination ? (
-                  <div className="flex items-center gap-2">
-                    <CountryFlag country={formData.destination} />
-                    <span className="font-medium text-foreground">{formData.destination}</span>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground/60 font-normal">Select destination country</span>
-                )}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-1 bg-popover/95 md:backdrop-blur-md border border-border/80 shadow-2xl rounded-xl">
-              <Command>
-                <CommandInput placeholder="Search country..." autoFocus={!isMobile} className="border-none focus:ring-0" />
-                <CommandList>
-                  <CommandEmpty>No country found.</CommandEmpty>
-                  <CommandGroup>
-                    {SCHENGEN.map((country) => (
-                      <CommandItem
-                        key={country}
-                        value={country}
-                        className="rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
-                        onSelect={() => {
-                          set({ destination: country })
-                          setDestinationOpen(false)
-                          trackEvent("destination_selected", { destination: country })
-                        }}
-                      >
-                        <Check className={cn("mr-2 h-4 w-4 text-blue-600", formData.destination === country ? "opacity-100" : "opacity-0")} />
-                        <CountryFlag country={country} className="mr-2" />
-                        <span className="text-foreground">{country}</span>
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          {errorText("destination")}
-        </div>
-
-        {/* Nationality: the top UAE resident nationalities, then "Other nationality" opens the full visa-required list */}
-        <div>
-          <label className={labelStyles}>Nationality *</label>
-          <Popover
-            open={nationalityOpen}
-            onOpenChange={(open) => {
-              setNationalityOpen(open)
-              if (!open) setShowAllNationalities(false)
-            }}
-          >
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={nationalityOpen}
-                className={cn(inputStyles, "w-full justify-between font-medium", errorClass("nationality"))}
-              >
-                {formData.nationality ? (
-                  <div className="flex items-center gap-2">
-                    <CountryFlag country={formData.nationality} />
-                    <span className="font-medium text-foreground">{formData.nationality}</span>
-                  </div>
-                ) : (
-                  <span className="text-muted-foreground/60 font-normal">Select nationality</span>
-                )}
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-1 bg-popover/95 md:backdrop-blur-md border border-border/80 shadow-2xl rounded-xl">
-              <Command>
-                <CommandInput placeholder="Search nationality..." autoFocus={!isMobile} className="border-none focus:ring-0" />
-                <CommandList>
-                  <CommandEmpty>No nationality found.</CommandEmpty>
-                  <CommandGroup>
-                    {showAllNationalities && (
-                      <CommandItem
-                        value="Back to common nationalities"
-                        className="rounded-lg text-primary font-medium cursor-pointer"
-                        onSelect={() => setShowAllNationalities(false)}
-                      >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to common nationalities
-                      </CommandItem>
-                    )}
-                    {nationalityList.map((country) => (
-                      <CommandItem
-                        key={country}
-                        value={country}
-                        className="rounded-lg hover:bg-primary/5 transition-colors cursor-pointer"
-                        onSelect={() => {
-                          if (country === OTHER_NATIONALITY) {
-                            setShowAllNationalities(true)
-                            return
-                          }
-                          set({ nationality: country })
-                          setNationalityOpen(false)
-                          setShowAllNationalities(false)
-                          trackEvent("nationality_selected", { nationality: country })
-                        }}
-                      >
-                        <Check className={cn("mr-2 h-4 w-4 text-blue-600", formData.nationality === country ? "opacity-100" : "opacity-0")} />
-                        {country === OTHER_NATIONALITY ? (
-                          <span className="text-primary font-medium">{country}</span>
-                        ) : (
-                          <>
-                            <CountryFlag country={country} className="mr-2" />
-                            <span className="text-foreground">{country}</span>
-                          </>
-                        )}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          {errorText("nationality")}
-          <p className="text-xs text-muted-foreground mt-1.5">Only nationalities that need a Schengen visa are listed.</p>
-        </div>
-
-        {/* Country of Residence (UAE only, from the shared contract) */}
-        <div>
-          <span className={labelStyles}>Country of Residence *</span>
-          <div className={cn(inputStyles, "w-full flex items-center gap-2 font-medium")} aria-label={`Country of Residence: ${DEFAULT_RESIDENCE}`}>
-            <CountryFlag country={DEFAULT_RESIDENCE} />
-            <span className="font-medium text-foreground">{formData.countryOfResidence || DEFAULT_RESIDENCE}</span>
-          </div>
-        </div>
-
-        {/* City of Residence = emirate */}
-        <div>
-          <label htmlFor="cityOfResidence" className={labelStyles}>
-            City of Residence *
-          </label>
-          <select
-            id="cityOfResidence"
-            value={formData.cityOfResidence || ""}
-            onChange={(e) => set({ cityOfResidence: e.target.value })}
-            required
-            className={cn(selectStyles, "w-full", errorClass("cityOfResidence"), !formData.cityOfResidence && "text-muted-foreground/60")}
-          >
-            <option value="" disabled>Select emirate</option>
-            {UAE_EMIRATES.map((e) => <option key={e} value={e}>{e}</option>)}
-          </select>
-          {errorText("cityOfResidence")}
-        </div>
-
-        {/* Emirates ID - Next to City of Residence */}
-        {formData.countryOfResidence === "United Arab Emirates" && (
-          <div>
-            <label className={labelStyles}>Do you have an Emirates ID? *</label>
-            <div className="flex gap-3 mt-1">
-              <button type="button" className={cn("flex-1", formData.hasEmiratesId === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ hasEmiratesId: "yes" })}>
-                Yes
-              </button>
-              <button type="button" className={cn("flex-1", formData.hasEmiratesId === "no" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ hasEmiratesId: "no" })}>
-                No
-              </button>
-            </div>
-            {errorText("hasEmiratesId")}
-          </div>
-        )}
-
-        {/* Divider */}
-        <div className="md:col-span-2 my-2">
-          <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        </div>
-
-        {/* First Name */}
-        <div>
-          <label htmlFor="firstName" className={labelStyles}>
-            First Name *
+      <div className="grid grid-cols-2 gap-3">
+        <div data-invalid={invalid("firstName")} className="min-w-0">
+          <label htmlFor="firstName" className={wizardLabelClass}>
+            <LangText en="First name" ar="الاسم الأول" />
           </label>
           <input
             id="firstName"
             autoComplete="given-name"
             value={formData.firstName || ""}
-            onChange={(e) => set({ firstName: e.target.value })}
-            placeholder="Enter first name"
-            required
-            className={cn(inputStyles, "w-full", errorClass("firstName"))}
+            onChange={(event) => set({ firstName: event.target.value })}
+            aria-invalid={invalid("firstName")}
+            className={cn(fieldClass, invalidClass("firstName"))}
           />
-          <p className="text-xs text-muted-foreground mt-1.5">As on your passport.</p>
+          {showErrors && errors.firstName ? (
+            <FieldError>
+              <LangText en="Enter your first name." ar="أدخل الاسم الأول." />
+            </FieldError>
+          ) : null}
         </div>
-
-        {/* Last Name */}
-        <div>
-          <label htmlFor="lastName" className={labelStyles}>
-            Last Name *
+        <div data-invalid={invalid("lastName")} className="min-w-0">
+          <label htmlFor="lastName" className={wizardLabelClass}>
+            <LangText en="Last name" ar="اسم العائلة" />
           </label>
           <input
             id="lastName"
             autoComplete="family-name"
             value={formData.lastName || ""}
-            onChange={(e) => set({ lastName: e.target.value })}
-            placeholder="Enter last name"
-            required
-            className={cn(inputStyles, "w-full", errorClass("lastName"))}
+            onChange={(event) => set({ lastName: event.target.value })}
+            aria-invalid={invalid("lastName")}
+            className={cn(fieldClass, invalidClass("lastName"))}
           />
+          {showErrors && errors.lastName ? (
+            <FieldError>
+              <LangText en="Enter your last name." ar="أدخل اسم العائلة." />
+            </FieldError>
+          ) : null}
         </div>
+      </div>
 
-        {/* Email */}
-        <div>
-          <label htmlFor="email" className={labelStyles}>
-            Email Address *
-          </label>
-          <input
-            id="email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
-            value={formData.email || ""}
-            onChange={(e) => set({ email: e.target.value })}
-            placeholder="your.email@example.com"
-            required
-            className={cn(inputStyles, "w-full", errorClass("email"))}
-          />
-          {errorText("email")}
-        </div>
+      <div className="mt-7" data-invalid={invalid("nationality")}>
+        <span className={wizardLabelClass}>
+          <LangText en="Nationality" ar="الجنسية" />
+        </span>
+        <CitizenshipPicker
+          value={formData.nationality}
+          placeholder="Select nationality"
+          placeholderAr="اختر الجنسية"
+          onChange={(iso) => {
+            set({ nationality: iso })
+            trackEvent("nationality_selected", { nationality: iso })
+          }}
+          className={cn(
+            "h-[52px] rounded-[10px] border-[#E3E7EF] bg-[#FFFFFF] px-4 text-[15px] font-normal shadow-none hover:bg-[#FFFFFF]",
+            invalidClass("nationality"),
+          )}
+        />
+        {showErrors && errors.nationality ? (
+          <FieldError>
+            <LangText en="Choose your nationality." ar="اختر الجنسية." />
+          </FieldError>
+        ) : null}
+      </div>
 
-        {/* Phone */}
-        <div>
-          <label htmlFor="phone" className={labelStyles}>
-            Phone Number *
-          </label>
+      <div className="mt-7" data-invalid={invalid("passport")}>
+        <label htmlFor="passportNumber" className={wizardLabelClass}>
+          <LangText en="Passport number" ar="رقم الجواز" />
+        </label>
+        <input
+          id="passportNumber"
+          value={formData.passportNumber || ""}
+          onChange={(event) => {
+            const passportNumber = event.target.value.toUpperCase()
+            set({ passportNumber, hasValidPassport: passportNumber.trim() ? "yes" : undefined })
+          }}
+          placeholder="e.g. N1234567"
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-invalid={invalid("passport")}
+          className={cn(fieldClass, "uppercase", invalidClass("passport"))}
+        />
+        {showErrors && errors.passport ? (
+          <FieldError>
+            <LangText en="Enter your passport number." ar="أدخل رقم الجواز." />
+          </FieldError>
+        ) : null}
+      </div>
+
+      <div className="mt-7" data-invalid={invalid("phone")}>
+        <label htmlFor="phone" className={wizardLabelClass}>
+          <LangText en="Phone" ar="الهاتف" />
+        </label>
+        <div
+          className={cn(
+            "flex h-[52px] items-center rounded-[10px] border border-[#E3E7EF] bg-[#FFFFFF] focus-within:border-[#0436DC] focus-within:shadow-[0_0_0_3px_rgba(4,54,220,0.12)]",
+            showErrors && errors.phone && "border-[#B83200] focus-within:border-[#B83200] focus-within:shadow-none",
+          )}
+        >
+          <span className="ps-4 text-[15px] text-[#0A0F1F]" dir="ltr">
+            +971
+          </span>
           <input
             id="phone"
             type="tel"
             inputMode="tel"
-            autoComplete="tel"
-            value={formData.phone || ""}
-            onChange={(e) => set({ phone: e.target.value.replace(/[^\d+\-() ]/g, "") })}
-            placeholder="+971 50 123 4567"
-            required
-            aria-required="true"
-            aria-invalid={showErrors && !!errors.phone}
-            aria-describedby={showErrors && errors.phone ? "phone-error" : undefined}
-            className={cn(inputStyles, "w-full", errorClass("phone"))}
+            autoComplete="tel-national"
+            dir="ltr"
+            value={localPhone(formData.phone || "")}
+            onChange={(event) => set({ phone: composePhone(event.target.value) })}
+            placeholder="50 123 4567"
+            aria-invalid={invalid("phone")}
+            className="h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-[15px] text-[#0A0F1F] outline-none placeholder:text-[#5B6475]"
           />
-          {showErrors && errors.phone && (
-            <p id="phone-error" className="text-xs text-red-600 mt-1" role="alert">
-              {errors.phone}
-            </p>
-          )}
-          <div className="flex items-center gap-2 mt-2">
-            <input
-              type="checkbox"
-              id="whatsappOptIn"
-              checked={formData.whatsappOptIn !== false}
-              onChange={(e) => updateFormData({ whatsappOptIn: e.target.checked })}
-              className="h-4 w-4 rounded border-border text-primary focus:ring-primary/20 accent-[#25D366]"
+        </div>
+        {showErrors && errors.phone ? (
+          <FieldError>
+            <LangText
+              en={phone ? "Enter a valid phone number." : "Enter your phone number."}
+              ar={phone ? "أدخل رقم هاتف صحيحًا." : "أدخل رقم الهاتف."}
             />
-            <label htmlFor="whatsappOptIn" className="text-xs text-muted-foreground flex items-center gap-1.5 cursor-pointer select-none">
-              <svg className="w-3.5 h-3.5 text-[#25D366] shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-              </svg>
-              <span>Receive application updates via WhatsApp</span>
-            </label>
-          </div>
-        </div>
+          </FieldError>
+        ) : null}
+      </div>
 
-        {/* Date of Birth (18+) */}
-        <div>
-          <label htmlFor="dateOfBirth" className={labelStyles}>
-            Date of Birth *
-          </label>
-          <input
-            id="dateOfBirth"
-            type="date"
-            max={iso(adultMax())}
-            value={formData.dateOfBirth || ""}
-            onChange={(e) => set({ dateOfBirth: e.target.value })}
-            required
-            className={cn(inputStyles, "w-full", errorClass("dateOfBirth"))}
+      <div className="mt-7">
+        <span id="travelling-with" className={wizardLabelClass}>
+          <LangText en="Travelling with" ar="المسافرون" />
+        </span>
+        <ChoiceList label="Travelling with">
+          <ChoiceRow
+            indicator="radio"
+            title="Just me"
+            titleAr="أنا فقط"
+            description="One applicant"
+            descriptionAr="متقدم واحد"
+            selected={!withSpouse}
+            onSelect={() => set({ maritalStatus: "single", spouseAccompanying: "no" })}
           />
-          {errorText("dateOfBirth")}
-        </div>
+          <ChoiceRow
+            indicator="radio"
+            title="With my spouse"
+            titleAr="مع الزوج أو الزوجة"
+            description={`Two applicants, AED ${spousePrice}`}
+            descriptionAr={`متقدمان، ${spousePrice} درهم`}
+            selected={withSpouse}
+            onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes" })}
+          />
+        </ChoiceList>
+      </div>
 
-        {/* Valid Passport */}
-        <div>
-          <label className={labelStyles}>Do you have a valid passport? *</label>
-          <div className="flex gap-3 mt-1">
-            <button type="button" className={cn("flex-1", formData.hasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ hasValidPassport: "yes" })}>
-              Yes
-            </button>
-            <button
+      {/* Saved on the application. The trip step does not ask for these. */}
+      <div className="mt-7" data-invalid={invalid("email")}>
+        <label htmlFor="email" className={wizardLabelClass}>
+          <LangText en="Email" ar="البريد الإلكتروني" />
+        </label>
+        <input
+          id="email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={formData.email || ""}
+          onChange={(event) => set({ email: event.target.value })}
+          aria-invalid={invalid("email")}
+          className={cn(fieldClass, invalidClass("email"))}
+        />
+        {showErrors && errors.email ? (
+          <FieldError>
+            <LangText
+              en={formData.email.trim() ? "Enter a valid email address." : "Enter your email."}
+              ar={formData.email.trim() ? "أدخل بريدًا إلكترونيًا صحيحًا." : "أدخل البريد الإلكتروني."}
+            />
+          </FieldError>
+        ) : null}
+      </div>
+
+      <div className="mt-7" data-invalid={invalid("dateOfBirth")}>
+        <label htmlFor="dateOfBirth" className={wizardLabelClass}>
+          <LangText en="Date of birth" ar="تاريخ الميلاد" />
+        </label>
+        <input
+          id="dateOfBirth"
+          type="date"
+          max={maxDob || undefined}
+          value={formData.dateOfBirth || ""}
+          onChange={(event) => set({ dateOfBirth: event.target.value })}
+          aria-invalid={invalid("dateOfBirth")}
+          className={cn(fieldClass, invalidClass("dateOfBirth"))}
+        />
+        {showErrors && errors.dateOfBirth ? (
+          <FieldError>
+            <LangText en="Enter your date of birth." ar="أدخل تاريخ الميلاد." />
+          </FieldError>
+        ) : null}
+      </div>
+
+      <div className="mt-7" data-invalid={invalid("destination")}>
+        <span className={wizardLabelClass}>
+          <LangText en="Destination" ar="الوجهة" />
+        </span>
+        <Popover open={destinationOpen} onOpenChange={setDestinationOpen}>
+          <PopoverTrigger asChild>
+            <Button
               type="button"
-              className={cn("flex-1", formData.hasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => set({ hasValidPassport: "no", passportNumber: "", passportExpiry: "" })}
+              variant="outline"
+              role="combobox"
+              aria-expanded={destinationOpen}
+              aria-invalid={invalid("destination")}
+              className={cn(
+                "h-[52px] w-full justify-between rounded-[10px] border-[#E3E7EF] bg-[#FFFFFF] px-4 text-[15px] font-normal shadow-none hover:bg-[#FFFFFF]",
+                invalidClass("destination"),
+              )}
             >
-              No
-            </button>
-          </div>
-          {showErrors && errors.hasValidPassport && formData.hasValidPassport !== "no" && errorText("hasValidPassport")}
-          {formData.hasValidPassport === "yes" && (
-            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
-              <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Your passport should have at least 6 months validity from your travel date. We will ask for the passport number after payment.</span>
-            </p>
-          )}
-          {formData.hasValidPassport === "no" && (
-            <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/20" role="alert">
-              <Info className="w-4.5 h-4.5 text-amber-500 shrink-0 mt-0.5" />
-              <span>You need a valid passport (at least 6 months validity from your travel date) before applying.</span>
-            </p>
-          )}
-        </div>
-
-        {/* Passport Expiry Date (only with a valid passport) */}
-        {formData.hasValidPassport === "yes" && (
-          <div>
-            <label htmlFor="passportExpiry" className={labelStyles}>
-              Passport Expiry Date *
-            </label>
-            <CustomDatePicker
-              id="passportExpiry"
-              placeholder="Select expiry date"
-              min={iso(new Date())}
-              value={formData.passportExpiry || ""}
-              onChange={(val) => set({ passportExpiry: val })}
-              className={cn(errorClass("passportExpiry"))}
-            />
-            {errorText("passportExpiry")}
-          </div>
-        )}
-
-        {/* Marital Status */}
-        <div>
-          <label htmlFor="maritalStatus" className={labelStyles}>
-            Marital Status *
-          </label>
-          <select
-            id="maritalStatus"
-            value={formData.maritalStatus || ""}
-            onChange={(e) => {
-              const v = e.target.value as FormData["maritalStatus"]
-              set({ maritalStatus: v, ...(v !== "married" ? { spouseAccompanying: "" } : {}) })
-            }}
-            className={cn(selectStyles, "w-full", errorClass("maritalStatus"))}
-            required
-          >
-            <option value="">Select status</option>
-            {MARITAL.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          {errorText("maritalStatus")}
-        </div>
-
-        {/* Spouse Accompanying */}
-        {formData.maritalStatus === "married" && (
-          <div>
-            <label className={labelStyles}>Will your spouse accompany you? *</label>
-            <div className="flex gap-3 mt-1">
-              <button type="button" className={cn("flex-1", formData.spouseAccompanying === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ spouseAccompanying: "yes" })}>
-                Yes
-              </button>
-              <button type="button" className={cn("flex-1", formData.spouseAccompanying === "no" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ spouseAccompanying: "no" })}>
-                No
-              </button>
-            </div>
-            {errorText("spouseAccompanying")}
-          </div>
-        )}
+              {formData.destination ? (
+                <span className="flex min-w-0 items-center gap-2">
+                  <CountryFlag iso={SCHENGEN_META[formData.destination]?.iso} title={formData.destination} />
+                  <span className="truncate text-[#0A0F1F]">
+                    <LangText en={formData.destination} ar={SCHENGEN_META[formData.destination]?.ar || formData.destination} />
+                  </span>
+                </span>
+              ) : (
+                <span className="font-normal text-[#5B6475]">
+                  <LangText en="Select destination" ar="اختر الوجهة" />
+                </span>
+              )}
+              <ChevronsUpDown className="ms-2 size-4 shrink-0 text-[#5B6475]" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Search country..." autoFocus={!touchKeyboard} />
+              <CommandList>
+                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandGroup>
+                  {SCHENGEN_COUNTRIES.map((country) => (
+                    <CommandItem
+                      key={country}
+                      value={country}
+                      onSelect={() => {
+                        set({ destination: country })
+                        setDestinationOpen(false)
+                        trackEvent("destination_selected", { destination: country })
+                      }}
+                    >
+                      <Check className={cn("me-2 size-4", formData.destination === country ? "opacity-100" : "opacity-0")} />
+                      <span className="me-2">
+                        <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
+                      </span>
+                      <LangText en={country} ar={SCHENGEN_META[country]?.ar || country} />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+        {showErrors && errors.destination ? (
+          <FieldError>
+            <LangText en="Choose a destination." ar="اختر الوجهة." />
+          </FieldError>
+        ) : null}
       </div>
 
-      <div className="md:flex md:justify-end fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20">
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full md:w-auto h-14 rounded-xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Continue"
-          )}
-        </Button>
-      </div>
+      <WizardBar
+        onBack={onBack}
+        loading={isLoading}
+        continueLabel={withSpouse ? "Continue" : "Continue to Review & Pay"}
+        continueLabelAr={withSpouse ? "تابع" : "تابع إلى المراجعة والدفع"}
+        loadingLabel="Please wait"
+        loadingLabelAr="لحظات"
+      />
     </form>
   )
 }

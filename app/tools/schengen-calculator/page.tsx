@@ -41,10 +41,10 @@ export default function SchengenCalculatorPage() {
       <main className="flex-1 py-12 md:py-16">
         <div className="container max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-bold uppercase tracking-widest text-primary mb-2 block">
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-2 block">
               Free Traveler Utility
             </span>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight">
               Schengen 90/180-Day Calculator
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">

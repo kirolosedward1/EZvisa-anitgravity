@@ -41,6 +41,16 @@ export function getCurrencyInfo(currency: Currency): CurrencyInfo {
   return CURRENCIES[currency]
 }
 
+/** Travellers charged on one application. A spouse travelling with the applicant counts as two. */
+export function applicantCount(spouseAccompanying?: string | null): number {
+  return spouseAccompanying === "yes" ? 2 : 1
+}
+
+/** AED total from the base price. Never a literal amount at the call site. */
+export function priceForTravellers(spouseAccompanying?: string | null): number {
+  return CURRENCIES.AED.basePrice * applicantCount(spouseAccompanying)
+}
+
 export function getDefaultCurrency(): CurrencyInfo {
   if (typeof window !== "undefined") {
     const saved = localStorage.getItem("selectedCurrency") as Currency

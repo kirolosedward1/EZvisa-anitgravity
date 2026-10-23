@@ -44,7 +44,14 @@ function StepCopy({ step, active }: { step: WalkthroughStep; active: boolean }) 
       )}
     >
       <span className={cn("text-sm font-semibold", active ? "text-primary" : "text-muted-foreground")}>{step.tab}</span>
-      <h3 className="text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{step.title}</h3>
+      <h3
+        className={cn(
+          "text-2xl font-semibold leading-tight tracking-tight sm:text-3xl",
+          active ? "text-[#0A0F1F]" : "text-[#5B6475]",
+        )}
+      >
+        {step.title}
+      </h3>
       <p className="text-base leading-relaxed text-muted-foreground md:text-lg">{step.body}</p>
       <ul className="flex flex-col gap-2.5">
         {step.details.map((detail) => (

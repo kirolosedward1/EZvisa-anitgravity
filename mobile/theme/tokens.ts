@@ -3,11 +3,11 @@ import { Platform, ViewStyle } from "react-native";
 // ---- Spacing: 8pt grid. 4 and 12 are half-steps for fine detail only (icon gaps, row padding). ----
 export const S = {
   none: 0, xxs: 4, xs: 8, sm: 12, md: 16,
-  /** @deprecated was 20 (off-grid). Now equals `gutter`; use `gutter` for screen edges, `xl` for section gaps. */
-  lg: 16,
+  /** @deprecated use `gutter` for screen edges, `xl` for section gaps. Equals `gutter`. */
+  lg: 20,
   xl: 24, xxl: 32, x3: 40, x4: 48, x5: 64, x6: 80,
-  /** Screen edge margin (iOS compact readable margin). */
-  gutter: 16,
+  /** Screen edge margin: 20 for a calmer, more spacious page. */
+  gutter: 20,
 } as const;
 /** Alias with the plain name. */
 export const space = S;

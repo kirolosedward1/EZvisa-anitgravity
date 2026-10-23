@@ -1,14 +1,25 @@
 "use client"
 
-// Trip Details step: option lists and validation come from the website ↔ app contract (lib/shared/wizard-contract.ts).
 import type React from "react"
-import { Button } from "@/components/ui/button"
-import { Plus, X, AlertCircle, Loader2, Info } from "lucide-react"
-import { useMemo, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
+import { Plus, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
-import { SCHENGEN, PURPOSES, COMPANIONS, FUNDING, BALANCE, HOTELS, validateTrip, earliestDeparture, iso, tripDays, MAX_STAY_DAYS, type Errors } from "@/lib/shared/wizard-contract"
+import { datesInOrder, formatDisplayDate, isValidCalendarDate, schengenStayDays } from "@/lib/dates"
+import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
+import { TravelDatesField } from "@/components/apply/travel-dates-field"
+import { WizardBar } from "@/components/apply/wizard-bar"
+import { LangText } from "@/components/lang-text"
+import {
+  ChoiceList,
+  ChoiceRow,
+  FieldError,
+  WizardQuestion,
+  wizardFieldClass,
+  wizardLabelClass,
+} from "@/components/apply/wizard-choices"
 
 interface TripDetailsStepProps {
   formData: FormData
@@ -16,511 +27,616 @@ interface TripDetailsStepProps {
   onNext: () => void
   onBack: () => void
   isLoading?: boolean
+  screen: number
+  onScreenChange: (screen: number) => void
 }
 
-const inputStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-100 shadow-sm"
-const selectStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 appearance-none cursor-pointer hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none pr-10 shadow-sm"
-const labelStyles = "text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
-const toggleActiveStyles =
-  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
-const toggleInactiveStyles =
-  "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
-const errorStyles = "border-destructive bg-destructive/5 focus:ring-destructive/10"
+const purposes = [
+  { value: "tourism", en: "Tourism", ar: "سياحة", desc: "A holiday or a short visit.", descAr: "عطلة أو زيارة قصيرة." },
+  { value: "business", en: "Business", ar: "عمل", desc: "Meetings or work travel.", descAr: "اجتماعات أو سفر عمل." },
+  { value: "family", en: "Family visit", ar: "زيارة عائلية", desc: "Seeing family in Europe.", descAr: "زيارة العائلة في أوروبا." },
+  { value: "medical", en: "Medical treatment", ar: "علاج", desc: "Care at a clinic or hospital.", descAr: "علاج في عيادة أو مستشفى." },
+  { value: "education", en: "Education or training", ar: "دراسة أو تدريب", desc: "A course or a study trip.", descAr: "دورة أو رحلة دراسية." },
+  { value: "other", en: "Other", ar: "سبب آخر", desc: "A reason not listed here.", descAr: "سبب غير موجود في القائمة." },
+]
 
-export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLoading }: TripDetailsStepProps) {
+const companions = [
+  { value: "alone", en: "Alone", ar: "بمفردي", desc: "Just you on this trip.", descAr: "أنت فقط في هذه الرحلة." },
+  { value: "spouse", en: "With spouse", ar: "مع الزوج أو الزوجة", desc: "Your husband or wife is travelling too.", descAr: "الزوج أو الزوجة يسافر معك." },
+  { value: "family", en: "With family", ar: "مع العائلة", desc: "Family members on the same trip.", descAr: "أفراد العائلة في الرحلة نفسها." },
+  { value: "friends", en: "With friends", ar: "مع الأصدقاء", desc: "Friends travelling with you.", descAr: "أصدقاء يسافرون معك." },
+  { value: "group", en: "With a tour group", ar: "مع مجموعة سياحية", desc: "An organised group tour.", descAr: "جولة مع مجموعة منظّمة." },
+]
+
+const hotels = [
+  { value: "3-star", en: "3-star hotel", ar: "فندق ٣ نجوم", desc: "A mid-range hotel.", descAr: "فندق متوسط." },
+  { value: "4-star", en: "4-star hotel", ar: "فندق ٤ نجوم", desc: "A premium hotel.", descAr: "فندق مميز." },
+  { value: "5-star", en: "5-star hotel", ar: "فندق ٥ نجوم", desc: "A luxury hotel.", descAr: "فندق فاخر." },
+  { value: "sponsor", en: "Staying with a host", ar: "الإقامة عند مضيف", desc: "A sponsor's home.", descAr: "منزل الكفيل." },
+]
+
+const funding = [
+  { value: "self", en: "Self-funded", ar: "على حسابي", desc: "Paid from your own savings.", descAr: "من مدخراتك." },
+  { value: "sponsor", en: "Sponsored by family", ar: "كفالة عائلية", desc: "A relative is paying.", descAr: "أحد الأقارب يتحمّل التكلفة." },
+  { value: "company", en: "Sponsored by an employer", ar: "كفالة جهة العمل", desc: "Your company is paying.", descAr: "شركتك تتحمّل التكلفة." },
+]
+
+const balances = [
+  { value: "under-10000", en: "Under 10,000 AED", ar: "أقل من ١٠٬٠٠٠ درهم", desc: "Closing balance under 10,000.", descAr: "الرصيد الختامي أقل من ١٠٬٠٠٠." },
+  { value: "10000-25000", en: "10,000 to 25,000 AED", ar: "من ١٠٬٠٠٠ إلى ٢٥٬٠٠٠ درهم", desc: "A mid closing balance.", descAr: "رصيد ختامي متوسط." },
+  { value: "25000-50000", en: "25,000 to 50,000 AED", ar: "من ٢٥٬٠٠٠ إلى ٥٠٬٠٠٠ درهم", desc: "A stronger closing balance.", descAr: "رصيد ختامي أعلى." },
+  { value: "50000-plus", en: "50,000 AED or more", ar: "٥٠٬٠٠٠ درهم أو أكثر", desc: "A high closing balance.", descAr: "رصيد ختامي مرتفع." },
+]
+
+const LAST_SCREEN = 9
+
+function datesAreValid(formData: FormData) {
+  const stay = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
+  if (formData.datesFlexible === "yes") {
+    return (
+      !!formData.travelMonth &&
+      !!formData.tripLength &&
+      isValidCalendarDate(formData.travelStartDate) &&
+      isValidCalendarDate(formData.travelEndDate) &&
+      stay > 1 &&
+      stay <= 90
+    )
+  }
+  return (
+    formData.datesFlexible === "no" &&
+    isValidCalendarDate(formData.travelStartDate) &&
+    isValidCalendarDate(formData.travelEndDate) &&
+    datesInOrder(formData.travelStartDate, formData.travelEndDate) &&
+    stay > 1 &&
+    stay <= 90
+  )
+}
+
+export function TripDetailsStep({
+  formData,
+  updateFormData,
+  onNext,
+  onBack,
+  isLoading,
+  screen,
+  onScreenChange,
+}: TripDetailsStepProps) {
+  const [direction, setDirection] = useState(1)
+  const [showErrors, setShowErrors] = useState(false)
+  const [refusalBlurred, setRefusalBlurred] = useState(false)
+  const [ready, setReady] = useState(false)
+  const [rtl, setRtl] = useState(false)
+  const reduced = useReducedMotion()
+
   const [newCountry, setNewCountry] = useState("")
   const [newArrivalDate, setNewArrivalDate] = useState("")
   const [newDepartureDate, setNewDepartureDate] = useState("")
   const [dateError, setDateError] = useState("")
-  const [showErrors, setShowErrors] = useState(false)
 
   const additionalCountries = formData.additionalCountries || []
-  const tripDuration = tripDays(formData)
 
-  const errors: Errors = useMemo(() => validateTrip(formData), [formData])
-  const isFormValid = Object.keys(errors).length === 0
+  const skipScroll = useRef(true)
 
-  const set = (data: FormDataUpdate) => {
-    updateFormData(data)
-    setShowErrors(false)
-  }
-  const errorClass = (field: keyof FormData) => (showErrors && errors[field] ? errorStyles : "")
-  const errorText = (field: keyof FormData) =>
-    showErrors && errors[field] ? (
-      <p className="text-xs text-red-600 mt-1" role="alert">
-        {errors[field]}
-      </p>
-    ) : null
+  useEffect(() => {
+    setReady(true)
+    setRtl(document.documentElement.dir === "rtl")
+  }, [])
 
-  const handleArrivalDateChange = (value: string) => {
-    setNewArrivalDate(value)
-    setDateError("")
-    if (newDepartureDate && value && new Date(newDepartureDate) <= new Date(value)) {
-      setNewDepartureDate("")
-      setDateError("Departure date must be after arrival date")
-    }
-  }
-
-  const handleDepartureDateChange = (value: string) => {
-    if (newArrivalDate && value && new Date(value) <= new Date(newArrivalDate)) {
-      setDateError("Departure date must be after arrival date")
+  useEffect(() => {
+    if (skipScroll.current) {
+      skipScroll.current = false
       return
     }
-    setDateError("")
-    setNewDepartureDate(value)
+    document.getElementById("wizard-form")?.scrollIntoView({ block: "start" })
+  }, [screen])
+
+  const go = (next: number) => {
+    setShowErrors(false)
+    setDirection(next > screen ? 1 : -1)
+    onScreenChange(next)
   }
 
-  const handleAddCountry = () => {
-    if (newCountry && newArrivalDate && newDepartureDate) {
-      if (new Date(newDepartureDate) <= new Date(newArrivalDate)) {
-        setDateError("Departure date must be after arrival date")
-        return
-      }
-      const existingCountry = additionalCountries.find((c) => c.country === newCountry)
-      if (existingCountry) {
-        setDateError(`${newCountry} is already added to your itinerary`)
-        return
-      }
-      updateFormData({
-        additionalCountries: [
-          ...additionalCountries,
-          { country: newCountry, arrivalDate: newArrivalDate, departureDate: newDepartureDate },
-        ],
-      })
-      setNewCountry("")
-      setNewArrivalDate("")
-      setNewDepartureDate("")
-      setDateError("")
-    }
-  }
-
-  const handleRemoveCountry = (country: string) => {
-    updateFormData({
-      additionalCountries: additionalCountries.filter((c) => c.country !== country),
-    })
+  const screenValid = () => {
+    if (screen === 0) return !!formData.purposeOfTrip
+    if (screen === 1) return datesAreValid(formData)
+    if (screen === 2) return !!formData.travelingWith
+    if (screen === 3) return !!formData.hotelCategory
+    if (screen === 4) return !!formData.fundingSource
+    if (screen === 5) return !!formData.balanceRange
+    if (screen === 6) return !!formData.isFirstSchengenVisa
+    if (screen === 7) return !!formData.previousRefusals && (formData.previousRefusals !== "yes" || !!formData.refusalDetails?.trim())
+    return true
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isFormValid) {
+    if (!screenValid()) {
       setShowErrors(true)
-      setTimeout(() => {
-        const firstError = document.querySelector(".border-destructive")
-        if (firstError) {
-          firstError.scrollIntoView({ behavior: "smooth", block: "center" })
-        }
-      }, 100)
+      return
+    }
+    if (screen < LAST_SCREEN) {
+      go(screen + 1)
       return
     }
     onNext()
   }
 
+  const handleBack = () => {
+    if (screen > 0) {
+      go(screen - 1)
+      return
+    }
+    onBack()
+  }
+
+  const select = (patch: FormDataUpdate) => {
+    updateFormData(patch)
+    setShowErrors(false)
+  }
+
+  const handleAddCountry = () => {
+    if (!newCountry || !newArrivalDate || !newDepartureDate) return
+    if (new Date(newDepartureDate) <= new Date(newArrivalDate)) {
+      setDateError("order")
+      return
+    }
+    if (additionalCountries.some((c) => c.country === newCountry)) {
+      setDateError("duplicate")
+      return
+    }
+    updateFormData({
+      additionalCountries: [
+        ...additionalCountries,
+        { country: newCountry, arrivalDate: newArrivalDate, departureDate: newDepartureDate },
+      ],
+    })
+    setNewCountry("")
+    setNewArrivalDate("")
+    setNewDepartureDate("")
+    setDateError("")
+  }
+
+  const offset = (rtl ? -1 : 1) * direction * 12
+  const enter = !ready ? false : reduced ? { opacity: 0 } : { opacity: 0, x: offset }
+  const showRefusalError = (showErrors || refusalBlurred) && formData.previousRefusals === "yes" && !formData.refusalDetails?.trim()
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
-      {showErrors && !isFormValid && (
-        <div className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl text-foreground text-sm" role="alert" aria-live="polite">
-          <Info className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <span>{Object.values(errors)[0] ?? "Please fill in all required travel details before continuing."}</span>
-          </div>
-        </div>
-      )}
-
-      {/* Purpose of Trip */}
-      <div>
-        <label htmlFor="purposeOfTrip" className={labelStyles}>
-          Purpose of Trip *
-        </label>
-        <select
-          id="purposeOfTrip"
-          value={formData.purposeOfTrip || ""}
-          onChange={(e) => set({ purposeOfTrip: e.target.value })}
-          className={cn(selectStyles, "w-full", errorClass("purposeOfTrip"))}
+    <form onSubmit={handleSubmit}>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={screen}
+          initial={enter}
+          animate={{ opacity: 1, x: 0 }}
+          exit={reduced ? { opacity: 0 } : { opacity: 0, x: offset * -1 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
         >
-          <option value="">Select purpose of trip</option>
-          {PURPOSES.map((purpose) => (
-            <option key={purpose.value} value={purpose.value}>
-              {purpose.label}
-            </option>
-          ))}
-        </select>
-        {errorText("purposeOfTrip")}
-      </div>
-
-      {/* Travel Dates */}
-      <div className="grid gap-6 md:grid-cols-2 p-6 bg-muted/20 rounded-2xl border border-border/60">
-        <div>
-          <label htmlFor="travelStartDate" className={labelStyles}>
-            Intended Departure Date *
-          </label>
-          <CustomDatePicker
-            id="travelStartDate"
-            placeholder="Select departure date"
-            min={iso(earliestDeparture())}
-            value={formData.travelStartDate || ""}
-            onChange={(val) => set({ travelStartDate: val })}
-            className={cn(errorClass("travelStartDate"))}
-          />
-          <p className="text-xs text-muted-foreground mt-1.5">At least 15 days from today.</p>
-          {errorText("travelStartDate")}
-        </div>
-
-        <div>
-          <label htmlFor="travelEndDate" className={labelStyles}>
-            Intended Return Date *
-          </label>
-          <CustomDatePicker
-            id="travelEndDate"
-            placeholder="Select return date"
-            min={formData.travelStartDate || iso(new Date())}
-            value={formData.travelEndDate || ""}
-            onChange={(val) => set({ travelEndDate: val })}
-            className={cn(errorClass("travelEndDate"))}
-          />
-          {errorText("travelEndDate")}
-        </div>
-
-        {tripDuration > 0 && (
-          <div className="md:col-span-2 text-sm text-muted-foreground flex items-center gap-2.5 bg-blue-500/5 p-3.5 rounded-xl border border-blue-500/20">
-            <Info className="w-4.5 h-4.5 text-blue-500 shrink-0" />
-            <span>
-              Total Stay Duration: <strong>{tripDuration} days</strong>.
-              {tripDuration > MAX_STAY_DAYS && (
-                <span className="text-destructive block mt-1 font-medium">
-                  Schengen tourist visas permit a maximum stay of {MAX_STAY_DAYS} days.
-                </span>
-              )}
-            </span>
-          </div>
-        )}
-
-        {/* Date Flexibility */}
-        <div className="md:col-span-2">
-          <label className={labelStyles}>Are your travel dates flexible? *</label>
-          <div className="flex gap-3 mt-1">
-            <button type="button" className={cn("flex-1", formData.datesFlexible === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ datesFlexible: "yes" })}>
-              Yes
-            </button>
-            <button type="button" className={cn("flex-1", formData.datesFlexible === "no" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ datesFlexible: "no" })}>
-              No
-            </button>
-          </div>
-          {errorText("datesFlexible")}
-        </div>
-      </div>
-
-      {/* Companions and Accommodation Preferences */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label htmlFor="travelingWith" className={labelStyles}>
-            Who are you traveling with? *
-          </label>
-          <select
-            id="travelingWith"
-            value={formData.travelingWith || ""}
-            onChange={(e) => set({ travelingWith: e.target.value })}
-            className={cn(selectStyles, "w-full", errorClass("travelingWith"))}
-          >
-            <option value="">Select companion option</option>
-            {COMPANIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {errorText("travelingWith")}
-        </div>
-
-        <div>
-          <label htmlFor="hotelCategory" className={labelStyles}>
-            Accommodation Preferences *
-          </label>
-          <select
-            id="hotelCategory"
-            value={formData.hotelCategory || ""}
-            onChange={(e) => set({ hotelCategory: e.target.value })}
-            className={cn(selectStyles, "w-full", errorClass("hotelCategory"))}
-          >
-            <option value="">Select hotel category</option>
-            {HOTELS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {errorText("hotelCategory")}
-        </div>
-      </div>
-
-      {/* Financial Funding Details */}
-      <div className="grid gap-6 md:grid-cols-2 p-6 bg-muted/20 rounded-2xl border border-border/60">
-        <div>
-          <label htmlFor="fundingSource" className={labelStyles}>
-            Funding Source *
-          </label>
-          <select
-            id="fundingSource"
-            value={formData.fundingSource || ""}
-            onChange={(e) => set({ fundingSource: e.target.value })}
-            className={cn(selectStyles, "w-full", errorClass("fundingSource"))}
-          >
-            <option value="">Select funding source</option>
-            {FUNDING.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {errorText("fundingSource")}
-        </div>
-
-        <div>
-          <label htmlFor="balanceRange" className={labelStyles}>
-            Approx. Bank Balance Range *
-          </label>
-          <select
-            id="balanceRange"
-            value={formData.balanceRange || ""}
-            onChange={(e) => set({ balanceRange: e.target.value })}
-            className={cn(selectStyles, "w-full", errorClass("balanceRange"))}
-          >
-            <option value="">Select balance range</option>
-            {BALANCE.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          {errorText("balanceRange")}
-        </div>
-      </div>
-
-      {/* Visa History & Refusals */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label className={labelStyles}>Is this your first Schengen Visa? *</label>
-          <div className="flex gap-3 mt-1">
-            <button type="button" className={cn("flex-1", formData.isFirstSchengenVisa === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ isFirstSchengenVisa: "yes" })}>
-              Yes
-            </button>
-            <button type="button" className={cn("flex-1", formData.isFirstSchengenVisa === "no" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ isFirstSchengenVisa: "no" })}>
-              No
-            </button>
-          </div>
-          {errorText("isFirstSchengenVisa")}
-        </div>
-
-        <div>
-          <label className={labelStyles}>Have you ever had a visa refusal? *</label>
-          <div className="flex gap-3 mt-1">
-            <button type="button" className={cn("flex-1", formData.previousRefusals === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ previousRefusals: "yes" })}>
-              Yes
-            </button>
-            <button type="button" className={cn("flex-1", formData.previousRefusals === "no" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ previousRefusals: "no", refusalDetails: "" })}>
-              No
-            </button>
-          </div>
-          {errorText("previousRefusals")}
-        </div>
-
-        {formData.previousRefusals === "yes" && (
-          <div className="md:col-span-2 p-6 bg-red-500/5 border border-red-500/20 rounded-2xl space-y-2">
-            <label htmlFor="refusalDetails" className={labelStyles}>
-              Refusal Details *
-            </label>
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Please specify the country, date, and reason stated in the refusal letter. We will formulate a mitigation explanation in your cover letter.
-            </p>
-            <textarea
-              id="refusalDetails"
-              value={formData.refusalDetails || ""}
-              onChange={(e) => set({ refusalDetails: e.target.value })}
-              placeholder="e.g., Rejected by France in Nov 2025 due to insufficient justification of travel purpose..."
-              rows={3}
-              required
-              className={cn(inputStyles, "w-full h-auto py-4 resize-none", errorClass("refusalDetails"))}
-            />
-            {errorText("refusalDetails")}
-          </div>
-        )}
-      </div>
-
-      {/* Visiting Other Countries Connector */}
-      <div className="space-y-4">
-        <div className="max-w-md">
-          <label className={labelStyles}>Will you be visiting other Schengen countries?</label>
-          <div className="flex gap-3 mt-1">
-            <button type="button" className={cn("flex-1", formData.willVisitOtherCountries === "yes" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ willVisitOtherCountries: "yes" })}>
-              Yes
-            </button>
-            <button type="button" className={cn("flex-1", formData.willVisitOtherCountries === "no" ? toggleActiveStyles : toggleInactiveStyles)} onClick={() => set({ willVisitOtherCountries: "no", additionalCountries: [] })}>
-              No
-            </button>
-          </div>
-        </div>
-
-        {formData.willVisitOtherCountries === "yes" && (
-          <>
+          {screen === 0 ? (
             <div>
-              <label className={labelStyles}>Additional Countries to Visit</label>
-              <p className="text-sm text-muted-foreground mt-1">
-                Add other Schengen countries you plan to visit during your trip
-              </p>
-            </div>
-
-            <div className="p-6 bg-muted/20 rounded-2xl border border-border/60 space-y-4">
-              <select
-                value={newCountry}
-                onChange={(e) => setNewCountry(e.target.value)}
-                className={cn(selectStyles, "w-full")}
-                aria-label="Additional country"
-              >
-                <option value="">Select a country</option>
-                {SCHENGEN
-                  .filter((country) => !additionalCountries.find((c) => c.country === country) && country !== formData.destination)
-                  .map((country) => (
-                    <option key={country} value={country}>
-                      {country}
-                    </option>
-                  ))}
-              </select>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="arrivalDate" className={labelStyles}>
-                    Arrival Date
-                  </label>
-                  <CustomDatePicker
-                    id="arrivalDate"
-                    placeholder={!newCountry ? "Select a country first" : "Select arrival date"}
-                    disabled={!newCountry}
-                    min={formData.travelStartDate || iso(new Date())}
-                    max={formData.travelEndDate || undefined}
-                    value={newArrivalDate}
-                    onChange={handleArrivalDateChange}
+              <WizardQuestion
+                title="What is this trip for?"
+                titleAr="ما الغرض من الرحلة؟"
+                helper="Embassies use this as the reason for the visa."
+                helperAr="تستخدم السفارات هذا السبب في طلب التأشيرة."
+              />
+              <ChoiceList label="Purpose of trip">
+                {purposes.map((item) => (
+                  <ChoiceRow
+                    key={item.value}
+                    title={item.en}
+                    titleAr={item.ar}
+                    description={item.desc}
+                    descriptionAr={item.descAr}
+                    selected={formData.purposeOfTrip === item.value}
+                    onSelect={() => select({ purposeOfTrip: item.value })}
                   />
-                </div>
-                <div>
-                  <label htmlFor="departureDate" className={labelStyles}>
-                    Departure Date
-                  </label>
-                  <CustomDatePicker
-                    id="departureDate"
-                    placeholder={
-                      !newCountry
-                        ? "Select a country first"
-                        : !newArrivalDate
-                        ? "Select arrival date first"
-                        : "Select departure date"
-                    }
-                    disabled={!newCountry || !newArrivalDate}
-                    min={
-                      newArrivalDate
-                        ? new Date(new Date(newArrivalDate).getTime() + 86400000).toISOString().split("T")[0]
-                        : ""
-                    }
-                    max={formData.travelEndDate || undefined}
-                    value={newDepartureDate}
-                    onChange={handleDepartureDateChange}
-                  />
-                </div>
-              </div>
-
-              {dateError && (
-                <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/5 p-3 rounded-xl border border-destructive/20">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
-                  <span>{dateError}</span>
-                </div>
-              )}
-
-              <button
-                type="button"
-                onClick={handleAddCountry}
-                disabled={!newCountry || !newArrivalDate || !newDepartureDate || !!dateError}
-                className={cn(toggleInactiveStyles, "w-full disabled:opacity-50 h-12 rounded-xl flex items-center justify-center")}
-              >
-                <Plus className="h-4 w-4 mr-2 inline" />
-                Add Country
-              </button>
-            </div>
-
-            {additionalCountries.length > 0 && (
-              <div className="space-y-3">
-                {additionalCountries.map((countryVisit) => (
-                  <div
-                    key={countryVisit.country}
-                    className="flex items-center justify-between bg-background/50 border border-border/65 rounded-xl p-4 hover:border-blue-500/30 hover:shadow-md transition-all duration-300"
-                  >
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-base text-foreground">{countryVisit.country}</h4>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {new Date(countryVisit.arrivalDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}{" "}
-                        to{" "}
-                        {new Date(countryVisit.departureDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCountry(countryVisit.country)}
-                      className="text-muted-foreground hover:text-destructive transition-colors p-2 hover:bg-destructive/5 rounded-lg"
-                      aria-label={`Remove ${countryVisit.country}`}
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
                 ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+              </ChoiceList>
+              {showErrors && !formData.purposeOfTrip ? (
+                <FieldError>
+                  <LangText en="Choose a purpose." ar="اختر الغرض من الرحلة." />
+                </FieldError>
+              ) : null}
+            </div>
+          ) : null}
 
-      {/* Itinerary */}
-      <div>
-        <label htmlFor="itinerary" className={labelStyles}>
-          Travel Itinerary (Optional)
-        </label>
-        <p className="text-sm text-muted-foreground mb-2">
-          Provide details about your planned activities, accommodations, and schedule
-        </p>
-        <textarea
-          id="itinerary"
-          value={formData.itinerary || ""}
-          onChange={(e) => set({ itinerary: e.target.value })}
-          placeholder="Example: Day 1-3: Paris (Hotel XYZ), Day 4-6: Rome (Hotel ABC)..."
-          rows={5}
-          className={cn(inputStyles, "w-full h-auto py-4 resize-none")}
-        />
-      </div>
+          {screen === 1 ? (
+            <div>
+              <WizardQuestion
+                title="When are you travelling?"
+                titleAr="متى تسافر؟"
+                helper="Pick a range, or a month if the dates can move."
+                helperAr="اختر فترة، أو شهرًا إذا كانت المواعيد مرنة."
+              />
+              <TravelDatesField
+                formData={formData}
+                updateFormData={updateFormData}
+                showErrors={showErrors}
+                onClearErrors={() => setShowErrors(false)}
+              />
+            </div>
+          ) : null}
 
-      {/* Action Buttons */}
-      <div className="md:flex md:justify-between md:pt-4 fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex justify-between gap-3">
-        <Button
-          type="button"
-          onClick={onBack}
-          variant="outline"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base border border-border bg-background/40 hover:bg-background/80 text-foreground hover:text-foreground transition-all duration-300 active:scale-95 px-8"
-        >
-          Back
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Continue to Review & Payment"
-          )}
-        </Button>
-      </div>
+          {screen === 2 ? (
+            <div>
+              <WizardQuestion
+                title="Who is travelling with you?"
+                titleAr="من يسافر معك؟"
+                helper="This is who is on the trip with you."
+                helperAr="من يرافقك في هذه الرحلة."
+              />
+              <ChoiceList label="Travel companions">
+                {companions.map((item) => (
+                  <ChoiceRow
+                    key={item.value}
+                    title={item.en}
+                    titleAr={item.ar}
+                    description={item.desc}
+                    descriptionAr={item.descAr}
+                    selected={formData.travelingWith === item.value}
+                    onSelect={() => select({ travelingWith: item.value })}
+                  />
+                ))}
+              </ChoiceList>
+              {showErrors && !formData.travelingWith ? (
+                <FieldError>
+                  <LangText en="Choose who is travelling with you." ar="اختر من يسافر معك." />
+                </FieldError>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === 3 ? (
+            <div>
+              <WizardQuestion
+                title="Where will you stay?"
+                titleAr="أين ستقيم؟"
+                helper="We plan the accommodation around this."
+                helperAr="نرتب الإقامة بناءً على هذا الاختيار."
+              />
+              <ChoiceList label="Accommodation">
+                {hotels.map((item) => (
+                  <ChoiceRow
+                    key={item.value}
+                    title={item.en}
+                    titleAr={item.ar}
+                    description={item.desc}
+                    descriptionAr={item.descAr}
+                    selected={formData.hotelCategory === item.value}
+                    onSelect={() => select({ hotelCategory: item.value })}
+                  />
+                ))}
+              </ChoiceList>
+              {showErrors && !formData.hotelCategory ? (
+                <FieldError>
+                  <LangText en="Choose where you will stay." ar="اختر مكان الإقامة." />
+                </FieldError>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === 4 ? (
+            <div>
+              <WizardQuestion
+                title="Who is paying for the trip?"
+                titleAr="من يتحمّل تكلفة الرحلة؟"
+                helper="This is the funding source on the application."
+                helperAr="هذا مصدر تمويل الطلب."
+              />
+              <ChoiceList label="Funding source">
+                {funding.map((item) => (
+                  <ChoiceRow
+                    key={item.value}
+                    title={item.en}
+                    titleAr={item.ar}
+                    description={item.desc}
+                    descriptionAr={item.descAr}
+                    selected={formData.fundingSource === item.value}
+                    onSelect={() => select({ fundingSource: item.value })}
+                  />
+                ))}
+              </ChoiceList>
+              {showErrors && !formData.fundingSource ? (
+                <FieldError>
+                  <LangText en="Choose who is paying for the trip." ar="اختر من يتحمّل التكلفة." />
+                </FieldError>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === 5 ? (
+            <div>
+              <WizardQuestion
+                title="What is your approximate bank balance?"
+                titleAr="ما رصيدك التقريبي في البنك؟"
+                helper="An approximate range is enough."
+                helperAr="يكفي نطاق تقريبي."
+              />
+              <ChoiceList label="Bank balance">
+                {balances.map((item) => (
+                  <ChoiceRow
+                    key={item.value}
+                    title={item.en}
+                    titleAr={item.ar}
+                    description={item.desc}
+                    descriptionAr={item.descAr}
+                    selected={formData.balanceRange === item.value}
+                    onSelect={() => select({ balanceRange: item.value })}
+                  />
+                ))}
+              </ChoiceList>
+              {showErrors && !formData.balanceRange ? (
+                <FieldError>
+                  <LangText en="Choose a balance range." ar="اختر نطاق الرصيد." />
+                </FieldError>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === 6 ? (
+            <div>
+              <WizardQuestion
+                title="Is this your first Schengen visa?"
+                titleAr="هل هذه أول تأشيرة شنغن لك؟"
+                helper="A previous visa can strengthen an application."
+                helperAr="تأشيرة سابقة قد تدعم الطلب."
+              />
+              <ChoiceList label="First Schengen visa">
+                <ChoiceRow
+                  title="Yes"
+                  titleAr="نعم"
+                  description="This is my first Schengen visa."
+                  descriptionAr="هذه أول تأشيرة شنغن لي."
+                  selected={formData.isFirstSchengenVisa === "yes"}
+                  onSelect={() => select({ isFirstSchengenVisa: "yes" })}
+                />
+                <ChoiceRow
+                  title="No"
+                  titleAr="لا"
+                  description="I have held a Schengen visa before."
+                  descriptionAr="حصلت على تأشيرة شنغن من قبل."
+                  selected={formData.isFirstSchengenVisa === "no"}
+                  onSelect={() => select({ isFirstSchengenVisa: "no" })}
+                />
+              </ChoiceList>
+              {showErrors && !formData.isFirstSchengenVisa ? (
+                <FieldError>
+                  <LangText en="Choose yes or no." ar="اختر نعم أو لا." />
+                </FieldError>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === 7 ? (
+            <div>
+              <WizardQuestion
+                title="Have you had a visa refusal?"
+                titleAr="هل رُفض لك طلب تأشيرة من قبل؟"
+                helper="A refusal does not stop the application."
+                helperAr="الرفض السابق لا يمنع تقديم الطلب."
+              />
+              <ChoiceList label="Visa refusal">
+                <ChoiceRow
+                  title="Yes"
+                  titleAr="نعم"
+                  description="I have had a visa refused."
+                  descriptionAr="رُفض لي طلب تأشيرة."
+                  selected={formData.previousRefusals === "yes"}
+                  onSelect={() => select({ previousRefusals: "yes" })}
+                />
+                <ChoiceRow
+                  title="No"
+                  titleAr="لا"
+                  description="I have not had a visa refused."
+                  descriptionAr="لم يُرفض لي طلب تأشيرة."
+                  selected={formData.previousRefusals === "no"}
+                  onSelect={() => {
+                    select({ previousRefusals: "no", refusalDetails: "" })
+                    setRefusalBlurred(false)
+                  }}
+                />
+              </ChoiceList>
+              {showErrors && !formData.previousRefusals ? (
+                <FieldError>
+                  <LangText en="Choose yes or no." ar="اختر نعم أو لا." />
+                </FieldError>
+              ) : null}
+              {formData.previousRefusals === "yes" ? (
+                <div className="mt-6 border-t border-[#E3E7EF] pt-6">
+                  <label htmlFor="refusalDetails" className={wizardLabelClass}>
+                    <LangText en="Refusal details" ar="تفاصيل الرفض" />
+                  </label>
+                  <textarea
+                    id="refusalDetails"
+                    value={formData.refusalDetails || ""}
+                    onChange={(e) => select({ refusalDetails: e.target.value })}
+                    onBlur={() => setRefusalBlurred(true)}
+                    placeholder="Country, date, and the reason on the letter."
+                    rows={4}
+                    className={cn(wizardFieldClass, "min-h-28 py-3", showRefusalError && "border-[#B83200]")}
+                  />
+                  {showRefusalError ? (
+                    <FieldError>
+                      <LangText en="Add a short note about the refusal." ar="أضف ملاحظة قصيرة عن الرفض." />
+                    </FieldError>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === 8 ? (
+            <div>
+              <WizardQuestion
+                title="Will you visit other Schengen countries?"
+                titleAr="هل ستزور دول شنغن أخرى؟"
+                helper="Add each extra country with the days you will be there."
+                helperAr="أضف كل دولة إضافية مع أيام وجودك فيها."
+              />
+              <ChoiceList label="Other Schengen countries">
+                <ChoiceRow
+                  title="Yes"
+                  titleAr="نعم"
+                  description="I will visit more than one country."
+                  descriptionAr="سأزور أكثر من دولة."
+                  selected={formData.willVisitOtherCountries === "yes"}
+                  onSelect={() => select({ willVisitOtherCountries: "yes" })}
+                />
+                <ChoiceRow
+                  title="No"
+                  titleAr="لا"
+                  description="I will stay in one country."
+                  descriptionAr="سأبقى في دولة واحدة."
+                  selected={formData.willVisitOtherCountries === "no"}
+                  onSelect={() => select({ willVisitOtherCountries: "no", additionalCountries: [] })}
+                />
+              </ChoiceList>
+
+              {formData.willVisitOtherCountries === "yes" ? (
+                <div className="mt-6 space-y-4 border-t border-[#E3E7EF] pt-6">
+                  <ChoiceList label="Country to add">
+                    <div className="max-h-64 space-y-2 overflow-y-auto">
+                      {SCHENGEN_COUNTRIES.filter(
+                        (country) => country !== formData.destination && !additionalCountries.some((c) => c.country === country),
+                      ).map((country) => (
+                        <ChoiceRow
+                          key={country}
+                          title={country}
+                          titleAr={SCHENGEN_META[country]?.ar || country}
+                          description="Add this stop to the itinerary."
+                          descriptionAr="أضف هذه المحطة إلى خط السير."
+                          selected={newCountry === country}
+                          onSelect={() => {
+                            setNewCountry(country)
+                            setDateError("")
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </ChoiceList>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label htmlFor="arrivalDate" className={wizardLabelClass}>
+                        <LangText en="Arrival" ar="الوصول" />
+                      </label>
+                      <CustomDatePicker
+                        id="arrivalDate"
+                        placeholder="Select date"
+                        disabled={!newCountry}
+                        min={formData.travelStartDate || undefined}
+                        max={formData.travelEndDate || undefined}
+                        value={newArrivalDate}
+                        onChange={(value) => {
+                          setNewArrivalDate(value)
+                          setDateError("")
+                          if (newDepartureDate && value && newDepartureDate <= value) setNewDepartureDate("")
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="departureDate" className={wizardLabelClass}>
+                        <LangText en="Departure" ar="المغادرة" />
+                      </label>
+                      <CustomDatePicker
+                        id="departureDate"
+                        placeholder="Select date"
+                        disabled={!newCountry || !newArrivalDate}
+                        min={newArrivalDate || undefined}
+                        max={formData.travelEndDate || undefined}
+                        value={newDepartureDate}
+                        onChange={(value) => {
+                          setNewDepartureDate(value)
+                          setDateError("")
+                        }}
+                      />
+                    </div>
+                  </div>
+                  {dateError === "order" ? (
+                    <FieldError>
+                      <LangText en="Departure has to be after arrival." ar="يجب أن تكون المغادرة بعد الوصول." />
+                    </FieldError>
+                  ) : null}
+                  {dateError === "duplicate" ? (
+                    <FieldError>
+                      <LangText en="That country is already on the itinerary." ar="هذه الدولة مضافة إلى خط السير." />
+                    </FieldError>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={handleAddCountry}
+                    disabled={!newCountry || !newArrivalDate || !newDepartureDate}
+                    className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-[#E3E7EF] text-[15px] font-medium text-[#0A0F1F] disabled:opacity-50"
+                  >
+                    <Plus className="size-4" aria-hidden />
+                    <LangText en="Add country" ar="أضف الدولة" />
+                  </button>
+                  {additionalCountries.length > 0 ? (
+                    <ul className="divide-y divide-[#E3E7EF] border-y border-[#E3E7EF]">
+                      {additionalCountries.map((visit) => (
+                        <li key={visit.country} className="flex items-center justify-between gap-3 py-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-[15px] font-medium text-[#0A0F1F]">
+                              <LangText en={visit.country} ar={SCHENGEN_META[visit.country]?.ar || visit.country} />
+                            </p>
+                            <p className="text-[13px] text-[#5B6475]" dir="ltr">
+                              {formatDisplayDate(visit.arrivalDate)} – {formatDisplayDate(visit.departureDate)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateFormData({
+                                additionalCountries: additionalCountries.filter((c) => c.country !== visit.country),
+                              })
+                            }
+                            className="grid size-10 shrink-0 place-items-center text-[#5B6475]"
+                          >
+                            <X className="size-4" aria-hidden />
+                            <span className="sr-only">
+                              <LangText en={`Remove ${visit.country}`} ar={`حذف ${SCHENGEN_META[visit.country]?.ar || visit.country}`} />
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {screen === 9 ? (
+            <div>
+              <WizardQuestion
+                title="Anything else about the plan?"
+                titleAr="هل هناك تفاصيل أخرى عن الخطة؟"
+                helper="Optional. A short plan helps us draft your letter."
+                helperAr="اختياري. خطة قصيرة تساعدنا في صياغة الخطاب."
+              />
+              <label htmlFor="itinerary" className={wizardLabelClass}>
+                <LangText en="Travel plan" ar="خطة السفر" />
+              </label>
+              <textarea
+                id="itinerary"
+                value={formData.itinerary || ""}
+                onChange={(e) => updateFormData({ itinerary: e.target.value })}
+                placeholder="Paris for three days, then Rome."
+                rows={5}
+                className={cn(wizardFieldClass, "min-h-32 py-3")}
+              />
+            </div>
+          ) : null}
+        </motion.div>
+      </AnimatePresence>
+
+      <WizardBar
+        onBack={screen > 0 ? handleBack : undefined}
+        showBack={screen > 0}
+        loading={isLoading}
+        continueLabel="Continue"
+        continueLabelAr="تابع"
+        loadingLabel="Processing..."
+        loadingLabelAr="جارٍ المعالجة..."
+      />
     </form>
   )
 }

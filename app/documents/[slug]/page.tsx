@@ -1,7 +1,7 @@
 import { DocumentRequirementsPage } from "@/components/document-requirements-page"
 import { getCountryBySlug } from "@/lib/countries"
 import { SCHENGEN_COUNTRIES } from "@/lib/countries"
-import { VISA_RULES, getProviderForDestination } from "@/lib/visa-rules"
+import { VISA_RULES } from "@/lib/visa-rules"
 import { notFound } from "next/navigation"
 
 const PREFIX = "required-documents-to-apply-for-a-tourist-visa-in-"
@@ -60,8 +60,6 @@ export default async function DocumentSlugPage({ params }: { params: Promise<{ s
     notFound()
   }
 
-  const provider = getProviderForDestination(countrySlug)
-
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -88,13 +86,7 @@ export default async function DocumentSlugPage({ params }: { params: Promise<{ s
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <DocumentRequirementsPage 
-        initialCountry={country.name}
-        provider={provider}
-        processingTime={VISA_RULES.schengen.processingTime}
-        fee={VISA_RULES.schengen.standardFee}
-        lastReviewed={VISA_RULES.lastReviewed}
-      />
+      <DocumentRequirementsPage initialCountry={country.name} />
     </>
   )
 }

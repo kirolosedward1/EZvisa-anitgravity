@@ -5,6 +5,8 @@ import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashb
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getReference, isPaid, type Stage } from "@/lib/application-status"
+import { isDiscardable } from "@/lib/active-applications"
+import { DiscardButton } from "@/components/dashboard/discard-button"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
 function formatDate(value?: string, pattern = "MMM d, yyyy") {
@@ -15,10 +17,12 @@ export function CaseSummary({
   app,
   stage,
   showTrackingLink = true,
+  allowDiscard = false,
 }: {
   app: VisaApplication
   stage: Stage
   showTrackingLink?: boolean
+  allowDiscard?: boolean
 }) {
   const token = app.tracking_token ?? ""
   const reference = getReference(token)
@@ -28,6 +32,8 @@ export function CaseSummary({
     showTrackingLink && { href: `/track/${token}`, label: "Shareable tracking page", icon: ExternalLink },
     paid && stage !== "ready" && { href: `/track/${token}/upload`, label: "Upload documents", icon: Upload },
     stage === "ready" && { href: `/track/${token}/dossier`, label: "Print visa file (A4)", icon: Printer },
+    paid && app.id && typeof app.payment_amount === "number" && { href: `/receipt/${app.id}`, label: "View receipt", icon: Receipt },
+    paid && app.id && { href: `/trip/${app.id}`, label: "Trip plan", icon: ExternalLink },
   ].filter(Boolean) as { href: string; label: string; icon: typeof ExternalLink }[]
 
   return (
@@ -36,7 +42,7 @@ export function CaseSummary({
       <dl className="flex flex-col gap-3 px-6 py-5 text-sm">
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Reference</dt>
-          <dd className="flex items-center gap-1 font-semibold tabular-nums text-foreground">
+          <dd className="ltr-isolate flex items-center gap-1 font-semibold tabular-nums text-foreground">
             {reference}
             {reference && <CopyButton value={reference} label="Copy reference" />}
           </dd>
@@ -44,12 +50,14 @@ export function CaseSummary({
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Payment</dt>
           <dd>
-            <StatusBadge tone={paid ? "success" : "warning"}>{paid ? "Paid" : "Pending"}</StatusBadge>
+            <StatusBadge tone={(app.application_status || "").toLowerCase() === "cancelled" ? "neutral" : paid ? "success" : "warning"}>
+              {(app.application_status || "").toLowerCase() === "cancelled" ? "Cancelled" : paid ? "Paid" : "Pending"}
+            </StatusBadge>
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Amount</dt>
-          <dd className="font-medium text-foreground">{app.payment_amount || 249} AED</dd>
+          <dd className="ltr-isolate font-medium text-foreground">{app.payment_amount || 249} AED</dd>
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Created</dt>
@@ -62,6 +70,8 @@ export function CaseSummary({
           </dd>
         </div>
       </dl>
+
+      {allowDiscard && app.id && isDiscardable(app) && <DiscardButton applicationId={app.id} />}
 
       {links.length > 0 && (
         <ul className="flex flex-col border-t border-border/60 p-2">

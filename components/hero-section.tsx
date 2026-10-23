@@ -10,7 +10,13 @@ import Image from "next/image"
 import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
-import { SCHENGEN, FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
+import { ReadyLine, useArabic } from "@/components/ready-line"
+import { LangText } from "@/components/lang-text"
+import { SCHENGEN_META } from "@/lib/countries"
+import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { CountryFlag } from "@/components/country-flag"
+import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
+import { stableIndex } from "@/lib/stable-index"
 
 const countryFlags: Record<string, string> = {
   Austria: "🇦🇹", Belgium: "🇧🇪", Croatia: "🇭🇷", "Czech Republic": "🇨🇿",
@@ -25,9 +31,17 @@ const countryFlags: Record<string, string> = {
   "Russian Federation": "🇷🇺", Syria: "🇸🇾",
 }
 
-// Destinations and nationalities come from the website ↔ app contract (same lists as the app's wizard).
-const schengenCountries = SCHENGEN
-const fromCountries = FEATURED_NATIONALITIES
+const schengenCountries = [
+  "Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark",
+  "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland",
+  "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta",
+  "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia",
+  "Slovenia", "Spain", "Sweden", "Switzerland",
+]
+
+const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+  .map((name) => CITIZENSHIP_OPTIONS.find((country) => country.name === name))
+  .filter((country): country is NonNullable<typeof country> => Boolean(country))
 
 function getApprovalRate(from: string, to: string) {
   if (!from || !to) return "98.0%";
@@ -48,9 +62,11 @@ export function HeroSection() {
   const [fromOpen, setFromOpen] = useState(false)
   const [toOpen, setToOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const arabic = useArabic()
 
-  const [heroBgImage, setHeroBgImage] = useState<string | undefined>(undefined)
-  const [heroBgCountryName, setHeroBgCountryName] = useState<string | undefined>(undefined)
+  const homeDestination = destinations[stableIndex("home", destinations.length)]
+  const heroBgImage = homeDestination?.image
+  const heroBgCountryName = homeDestination?.name
 
   useEffect(() => {
     const checkMobile = () => {
@@ -62,18 +78,9 @@ export function HeroSection() {
   }, [])
 
   useEffect(() => {
-    const randomIndex = Math.floor(Math.random() * destinations.length)
-    const randomDest = destinations[randomIndex]
-    if (randomDest && randomDest.image) {
-      setHeroBgImage(randomDest.image)
-      setHeroBgCountryName(randomDest.name)
-    }
-  }, [])
-
-  useEffect(() => {
     const savedFrom = localStorage.getItem("hero-from-country")
     const savedTo = localStorage.getItem("hero-to-country")
-    if (savedFrom) setFromCountry(savedFrom)
+    if (savedFrom) setFromCountry(toCitizenshipIso(savedFrom) || savedFrom)
     if (savedTo) setToCountry(savedTo)
   }, [])
 
@@ -86,7 +93,8 @@ export function HeroSection() {
 
   useEffect(() => {
     const handleNationalityChange = (e: CustomEvent<{ nationality: string }>) => {
-      if (e.detail.nationality !== fromCountry) setFromCountry(e.detail.nationality)
+      const incoming = toCitizenshipIso(e.detail.nationality) || e.detail.nationality
+      if (incoming !== fromCountry) setFromCountry(incoming)
     }
     window.addEventListener("nationalityChange", handleNationalityChange as EventListener)
     return () => window.removeEventListener("nationalityChange", handleNationalityChange as EventListener)
@@ -95,6 +103,8 @@ export function HeroSection() {
   useEffect(() => {
     if (toCountry) localStorage.setItem("hero-to-country", toCountry)
   }, [toCountry])
+
+  const fromLabel = citizenshipName(fromCountry) || fromCountry
 
   const handleGetStarted = () => {
     const params = new URLSearchParams()
@@ -120,23 +130,7 @@ export function HeroSection() {
   } as const
 
   return (
-    <section id="hero" className="relative overflow-hidden border-b border-border bg-background pt-12">
-      {/* Premium Subtle Grid & Radial Glow */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full bg-primary/5 blur-[120px] dark:bg-primary/10 hidden md:block" />
-        {/* Subtle, structured grid overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.25] dark:opacity-[0.15] hidden md:block"
-          style={{
-            backgroundImage: "radial-gradient(circle at 1px 1px, oklch(0.45 0.25 264 / 0.15) 1.5px, transparent 0)",
-            backgroundSize: "24px 24px",
-            maskImage: "radial-gradient(ellipse 60% 60% at 50% 30%, black 70%, transparent 100%)",
-            WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 50% 30%, black 70%, transparent 100%)",
-          }}
-        />
-        {/* Border transition gradient lines */}
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
-      </div>
+    <section id="hero" className="relative overflow-hidden border-b border-border bg-[#FFFFFF] pt-12">
 
       <div className="relative container mx-auto px-4 pt-6 md:pt-10 lg:pt-12 pb-10 md:pb-12 max-w-6xl">
         {/* Top Left Flight Path */}
@@ -165,9 +159,9 @@ export function HeroSection() {
 
         <motion.div 
           variants={containerVariants}
-          initial="hidden"
+          initial={false}
           animate="visible"
-          className="relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-border/40 shadow-2xl p-6 py-12 md:p-12 lg:p-16 flex flex-col items-center text-center bg-slate-950 z-20"
+          className="photo-hero relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-[#E3E7EF] shadow-2xl p-6 py-12 md:p-12 lg:p-16 flex flex-col items-center text-center bg-[#FFFFFF] z-20"
         >
           {/* Background Image */}
           <Image
@@ -178,48 +172,53 @@ export function HeroSection() {
             sizes="(max-width: 768px) 100vw, 1200px"
             className="object-cover object-center pointer-events-none"
           />
-          {/* Dark overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/60 to-black/75 pointer-events-none" />
+          <PhotoHeroOverlay />
 
           {/* Content Wrapper */}
           <div className="relative z-10 w-full flex flex-col items-center">
             {/* Trust badge */}
             <motion.div 
               variants={itemVariants} 
-              className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-white cursor-default"
+              className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F7F8FA] border border-[#E3E7EF] text-xs font-semibold text-[#0A0F1F] cursor-default"
             >
               <div className="flex items-center gap-0.5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
                 ))}
               </div>
-              <span className="tracking-wide uppercase text-[10px] font-bold text-white/95">
-                4.9/5 from 5,000+ travelers
+              <span className="tracking-wide uppercase text-[10px] font-semibold text-[#0A0F1F]">
+                <LangText en="4.9/5 from 5,000+ travelers" ar="٤٫٩/٥ من أكثر من ٥٬٠٠٠ مسافر" />
               </span>
             </motion.div>
 
             {/* Headline */}
-            <motion.h1 variants={itemVariants} className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.15] tracking-tight text-balance max-w-4xl text-white">
-              Get your Schengen visa approved, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-indigo-200 to-sky-200 animate-gradient-x">the easy way.</span>
+            <motion.h1 variants={itemVariants} className="hero-copy max-w-4xl text-balance text-white">
+              <LangText
+                en={<>Get your Schengen visa approved, the <span className="text-[#0436DC]">easy</span> way.</>}
+                ar={<>احصل على تأشيرة شنغن، <span className="text-[#0436DC]">بسهولة.</span></>}
+              />
             </motion.h1>
 
             {/* Subheading */}
-            <motion.p variants={itemVariants} className="mt-5 max-w-2xl text-base md:text-lg text-blue-100/90 leading-relaxed font-medium">
-              We prepare your complete visa file — forms, cover letter, itinerary, and bookings — so embassies say yes.
+            <motion.p variants={itemVariants} className="hero-copy mt-5 max-w-2xl text-white/90">
+              <LangText
+                en="We prepare your complete visa file — forms, cover letter, itinerary, and bookings — so embassies say yes."
+                ar="نجهّز ملف التأشيرة كاملًا — النماذج وخطاب التغطية وخط السير والحجوزات — حتى توافق السفارة."
+              />
             </motion.p>
 
             {/* Country selector card */}
             <motion.div variants={itemVariants} className="mt-10 w-full max-w-3xl relative z-10">
-              <div className="bg-background/95 dark:bg-card/95 md:backdrop-blur-md border border-border/50 rounded-[2rem] p-6 md:p-8 shadow-2xl">
+              <div className="bg-[#FFFFFF] border border-[#E3E7EF] rounded-[2rem] p-6 md:p-8 shadow-[0_8px_24px_rgba(10,15,31,0.08)]">
               <div className="flex flex-col gap-4">
                 
                 {/* Visual Widget Header */}
                 <div className="flex items-center justify-between mb-2 border-b border-border/50 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Start Visa Application</span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"><LangText en="Start Visa Application" ar="ابدأ طلب التأشيرة" /></span>
                   </div>
-                  <span className="text-[10px] font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md uppercase tracking-wider">Schengen Area</span>
+                  <span className="text-[10px] font-semibold text-[#0436DC] bg-[#0436DC]/10 px-2.5 py-1 rounded-md uppercase tracking-wider"><LangText en="Schengen Area" ar="منطقة شنغن" /></span>
                 </div>
 
                 {/* Selectors Row */}
@@ -227,7 +226,7 @@ export function HeroSection() {
                   
                   {/* Selector 1 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">1. My Nationality</span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="١. جنسيتي" /></span>
                     <Popover open={fromOpen} onOpenChange={setFromOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -244,52 +243,37 @@ export function HeroSection() {
                           <div className="min-w-0 flex-1">
                             {fromCountry ? (
                               <div className="flex items-center gap-2">
-                                <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                                  <Image
-                                    src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-")}.png`}
-                                    alt=""
-                                    fill
-                                    sizes="24px"
-                                    className="object-cover"
-                                  />
-                                </span>
-                                <span className="text-base font-bold truncate text-foreground">{fromCountry}</span>
+                                <CountryFlag iso={toCitizenshipIso(fromCountry)} title={fromLabel} />
+                                <span className="text-base font-semibold truncate text-foreground">{fromLabel}</span>
                               </div>
                             ) : (
-                              <span className="text-sm font-medium text-muted-foreground">Select nationality</span>
+                              <span className="text-sm font-medium text-muted-foreground"><LangText en="Select nationality" ar="اختر الجنسية" /></span>
                             )}
                           </div>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <ChevronDown className="h-4 w-4 text-[#5B6475] flex-shrink-0" />
                         </button>
                       </PopoverTrigger>
                       <PopoverContent
-                        className="w-[320px] p-0 bg-background border border-border shadow-2xl rounded-2xl"
+                        className="w-[320px] p-0 rounded-2xl"
                         align="start"
                         sideOffset={8}
                         onOpenAutoFocus={(e) => e.preventDefault()}
                       >
                         <Command className="bg-transparent">
-                          <CommandInput placeholder="Search country..." className="h-12 text-base border-b-0" autoFocus={!isMobile} />
+                          <CommandInput placeholder={arabic ? "ابحث عن دولة..." : "Search country..."} className="h-12 text-base border-b-0" autoFocus={!isMobile} />
                           <CommandList className="max-h-[300px] p-2">
-                            <CommandEmpty>No country found.</CommandEmpty>
+                            <CommandEmpty><LangText en="No country found." ar="لم يُعثر على دولة." /></CommandEmpty>
                             <CommandGroup>
                               {fromCountries.map((country) => (
                                 <CommandItem
-                                  key={country}
-                                  value={country}
-                                  onSelect={() => { setFromCountry(country); setFromOpen(false) }}
+                                  key={country.iso}
+                                  value={citizenshipSearchValue(country)}
+                                  onSelect={() => { setFromCountry(country.iso); setFromOpen(false) }}
                                   className="cursor-pointer py-3 px-4 text-base rounded-xl hover:bg-primary/10 transition-colors my-1"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                                      <Image
-                                        src={`/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`}
-                                        alt=""
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </span>
-                                    <span className="font-medium">{country}</span>
+                                    <CountryFlag iso={country.iso} title={country.name} />
+                                    <span className="font-medium">{country.name}</span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -302,7 +286,7 @@ export function HeroSection() {
 
                   {/* Selector 2 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">2. My Destination</span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="٢. وجهتي" /></span>
                     <Popover open={toOpen} onOpenChange={setToOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -319,33 +303,26 @@ export function HeroSection() {
                           <div className="min-w-0 flex-1">
                             {toCountry ? (
                               <div className="flex items-center gap-2">
-                                <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                                  <Image
-                                    src={`/flags/${toCountry.toLowerCase().replace(/\s+/g, "-")}.png`}
-                                    alt=""
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </span>
-                                <span className="text-base font-bold truncate text-foreground">{toCountry}</span>
+                                <CountryFlag iso={SCHENGEN_META[toCountry]?.iso} title={toCountry} />
+                                <span className="text-base font-semibold truncate text-foreground">{toCountry}</span>
                               </div>
                             ) : (
-                              <span className="text-sm font-medium text-muted-foreground">Pick a destination</span>
+                              <span className="text-sm font-medium text-muted-foreground"><LangText en="Pick a destination" ar="اختر الوجهة" /></span>
                             )}
                           </div>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <ChevronDown className="h-4 w-4 text-[#5B6475] flex-shrink-0" />
                         </button>
                       </PopoverTrigger>
                       <PopoverContent
-                        className="w-[320px] p-0 bg-background border border-border shadow-2xl rounded-2xl"
+                        className="w-[320px] p-0 rounded-2xl"
                         align="end"
                         sideOffset={8}
                         onOpenAutoFocus={(e) => e.preventDefault()}
                       >
                         <Command className="bg-transparent">
-                          <CommandInput placeholder="Search country..." className="h-12 text-base border-b-0" autoFocus={!isMobile} />
+                          <CommandInput placeholder={arabic ? "ابحث عن دولة..." : "Search country..."} className="h-12 text-base border-b-0" autoFocus={!isMobile} />
                           <CommandList className="max-h-[300px] p-2">
-                            <CommandEmpty>No country found.</CommandEmpty>
+                            <CommandEmpty><LangText en="No country found." ar="لم يُعثر على دولة." /></CommandEmpty>
                             <CommandGroup>
                               {schengenCountries.map((country) => (
                                 <CommandItem
@@ -355,14 +332,7 @@ export function HeroSection() {
                                   className="cursor-pointer py-3 px-4 text-base rounded-xl hover:bg-primary/10 transition-colors my-1"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                                      <Image
-                                        src={`/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`}
-                                        alt=""
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </span>
+                                    <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
                                     <span className="font-medium">{country}</span>
                                   </div>
                                 </CommandItem>
@@ -382,12 +352,12 @@ export function HeroSection() {
                       className="w-full md:w-auto"
                     >
                       <Button
-                        className="w-full md:w-auto h-14 py-4 px-8 text-base font-bold rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all bg-primary hover:bg-primary/95 text-white cursor-pointer"
+                        className="w-full md:w-auto h-14 py-4 px-8 text-base font-semibold rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all bg-primary hover:bg-primary/95 text-white cursor-pointer"
                         disabled={!fromCountry || !toCountry}
                         asChild
                       >
                         <Link href={handleGetStarted()}>
-                          Get started <ArrowRight className="ml-2 h-5 w-5" />
+                          <LangText en="Get started" ar="ابدأ" /> <ArrowRight className="ml-2 h-5 w-5" />
                         </Link>
                       </Button>
                     </motion.div>
@@ -408,29 +378,21 @@ export function HeroSection() {
                       <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 md:p-5 flex flex-col md:flex-row items-center justify-between gap-4 text-left">
                         <div className="flex items-start gap-3">
                           <div className="flex items-center -space-x-2.5 flex-shrink-0 mt-1">
-                            <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-xs border border-background z-10 bg-secondary/50">
-                              <Image
-                                src={`/flags/${fromCountry.toLowerCase().replace(/\s+/g, "-")}.png`}
-                                alt={fromCountry}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-xs border border-background bg-secondary/50">
-                              <Image
-                                src={`/flags/${toCountry.toLowerCase().replace(/\s+/g, "-")}.png`}
-                                alt={toCountry}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
+                            <CountryFlag iso={toCitizenshipIso(fromCountry)} title={fromLabel} />
+                            <CountryFlag iso={SCHENGEN_META[toCountry]?.iso} title={toCountry} />
                           </div>
                           <div>
-                            <div className="font-bold text-foreground text-sm md:text-base">
-                              Schengen visa required for {fromCountry} citizens visiting {toCountry}
+                            <div className="font-semibold text-foreground text-sm md:text-base">
+                              <LangText
+                                en={`Schengen visa required for ${fromLabel} citizens visiting ${toCountry}`}
+                                ar={`تأشيرة شنغن مطلوبة لمواطني ${fromLabel} عند زيارة ${toCountry}`}
+                              />
                             </div>
                             <p className="text-xs md:text-sm text-muted-foreground mt-0.5 leading-relaxed">
-                              Let's prepare your full visa dossier. We verify everything (cover letter, bookings, and itinerary) for a successful embassy submission.
+                              <LangText
+                                en="Let's prepare your full visa dossier. We verify everything (cover letter, bookings, and itinerary) for a successful embassy submission."
+                                ar="لنجهّز ملف التأشيرة كاملًا. نراجع كل شيء (خطاب التغطية والحجوزات وخط السير) لتقديم ناجح للسفارة."
+                              />
                             </p>
                           </div>
                         </div>
@@ -438,11 +400,11 @@ export function HeroSection() {
                         <div className="flex flex-row md:flex-col gap-3 md:gap-1.5 w-full md:w-auto text-xs font-semibold text-muted-foreground/90 flex-shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
                           <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
                             <Clock className="h-3.5 w-3.5 text-primary" />
-                            <span>Ready: 24-48h</span>
+                            <ReadyLine />
                           </div>
                           <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
                             <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-                            <span>{getApprovalRate(fromCountry, toCountry)} Approval</span>
+                            <span>{getApprovalRate(fromCountry, toCountry)} <LangText en="Approval" ar="نسبة القبول" /></span>
                           </div>
                         </div>
                       </div>
@@ -454,25 +416,25 @@ export function HeroSection() {
             </div>
 
             {/* Reassurance row under form */}
-            <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-6 font-medium text-white/95 mx-auto">
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
-                <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
-                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Money-back guarantee</span>
+            <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-6 font-medium text-[#0A0F1F] mx-auto">
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
+                <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
+                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="Money-back guarantee" ar="ضمان استرداد المبلغ" /></span>
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
-                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">Ready in 24-48 hours</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
+                <ReadyLine className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left" />
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-white/5 border border-white/10 backdrop-blur-md shadow-xs rounded-xl p-2 px-3 sm:px-4">
-                <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-blue-300 flex-shrink-0" />
-                <span className="font-bold text-white text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left">All-Inclusive File</span>
+              <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 bg-[#F7F8FA] border border-[#E3E7EF] shadow-xs rounded-xl p-2 px-3 sm:px-4">
+                <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-[#0436DC] flex-shrink-0" />
+                <span className="font-semibold text-[#0A0F1F] text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="All-Inclusive File" ar="ملف شامل" /></span>
               </div>
             </motion.div>
           </motion.div>
 
           </div> {/* Content Wrapper close */}
           {heroBgCountryName && (
-            <div className="absolute bottom-4 right-6 md:bottom-5 md:right-8 text-[9px] md:text-[10px] text-white/35 tracking-widest font-semibold uppercase z-20 pointer-events-none select-none">
+            <div className="absolute bottom-4 right-6 md:bottom-5 md:right-8 text-[9px] md:text-[10px] text-[#0A0F1F]/40 tracking-widest font-semibold uppercase z-20 pointer-events-none select-none">
               {heroBgCountryName}
             </div>
           )}

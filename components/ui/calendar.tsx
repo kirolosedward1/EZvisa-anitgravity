@@ -6,10 +6,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from 'lucide-react'
-import { DayButton, DayPicker, getDefaultClassNames } from 'react-day-picker'
+import { DayButton, DayPicker, getDefaultClassNames, type MonthCaptionProps } from 'react-day-picker'
 
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { LangText } from '@/components/lang-text'
+import { MONTHS_AR, MONTHS_LONG, WEEKDAYS_AR, WEEKDAYS_EN } from '@/lib/dates'
 
 function Calendar({
   className,
@@ -27,6 +29,7 @@ function Calendar({
 
   return (
     <DayPicker
+      weekStartsOn={1}
       showOutsideDays={showOutsideDays}
       className={cn(
         'bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent',
@@ -37,7 +40,8 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString('default', { month: 'short' }),
+          date.toLocaleString('en-GB', { month: 'short' }),
+        formatWeekdayName: (date) => String(date.getDay()),
         ...formatters,
       }}
       classNames={{
@@ -104,13 +108,13 @@ function Calendar({
           defaultClassNames.day,
         ),
         range_start: cn(
-          'rounded-l-md bg-accent',
+          'rounded-l-md bg-[#F2F5FF]',
           defaultClassNames.range_start,
         ),
-        range_middle: cn('rounded-none', defaultClassNames.range_middle),
-        range_end: cn('rounded-r-md bg-accent', defaultClassNames.range_end),
+        range_middle: cn('rounded-none bg-[#F2F5FF]', defaultClassNames.range_middle),
+        range_end: cn('rounded-r-md bg-[#F2F5FF]', defaultClassNames.range_end),
         today: cn(
-          'bg-accent text-accent-foreground rounded-md data-[selected=true]:rounded-none',
+          'rounded-md data-[selected=true]:rounded-none',
           defaultClassNames.today,
         ),
         outside: cn(
@@ -156,6 +160,8 @@ function Calendar({
           )
         },
         DayButton: CalendarDayButton,
+        MonthCaption: CalendarMonthCaption,
+        Weekday: CalendarWeekday,
         WeekNumber: ({ children, ...props }) => {
           return (
             <td {...props}>
@@ -169,6 +175,26 @@ function Calendar({
       }}
       {...props}
     />
+  )
+}
+
+function CalendarMonthCaption({ calendarMonth, displayIndex: _displayIndex, ...props }: MonthCaptionProps) {
+  const month = calendarMonth.date.getMonth()
+  const year = calendarMonth.date.getFullYear()
+  return (
+    <div {...props}>
+      <LangText en={`${MONTHS_LONG[month]} ${year}`} ar={`${MONTHS_AR[month]} ${year}`} />
+    </div>
+  )
+}
+
+function CalendarWeekday({ children, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
+  const index = Number(children)
+  const { 'aria-label': _label, ...rest } = props
+  return (
+    <th {...rest}>
+      <LangText en={WEEKDAYS_EN[index] ?? ''} ar={WEEKDAYS_AR[index] ?? ''} />
+    </th>
   )
 }
 
@@ -190,7 +216,7 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={`${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, "0")}-${String(day.date.getDate()).padStart(2, "0")}`}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
@@ -201,7 +227,7 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        'data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground data-[range-middle=true]:bg-accent data-[range-middle=true]:text-accent-foreground data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md [&>span]:text-xs [&>span]:opacity-70',
+        'data-[selected-single=true]:bg-[#0436DC] data-[selected-single=true]:text-white data-[range-middle=true]:bg-transparent data-[range-middle=true]:text-[#0A0F1F] data-[range-start=true]:bg-[#0436DC] data-[range-start=true]:text-white data-[range-end=true]:bg-[#0436DC] data-[range-end=true]:text-white group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md [&>span]:text-xs [&>span]:opacity-70',
         defaultClassNames.day,
         className,
       )}

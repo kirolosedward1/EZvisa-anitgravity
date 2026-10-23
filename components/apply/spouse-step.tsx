@@ -1,13 +1,11 @@
 "use client"
 
-// Step 2 (only when married and the spouse travels): same fields and rules as the app (lib/shared/wizard-contract.ts).
 import type React from "react"
-import { useMemo, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Info, Loader2 } from "lucide-react"
+import { useState, useEffect } from "react"
+import { WizardBar } from "@/components/apply/wizard-bar"
+import { Info } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { FormData, FormDataUpdate } from "@/lib/form-types"
-import { validateSpouse, type Errors } from "@/lib/shared/wizard-contract"
+import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
 
 interface SpouseStepProps {
   formData: FormData
@@ -18,23 +16,29 @@ interface SpouseStepProps {
 }
 
 const inputStyles =
-  "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none shadow-sm"
+  "h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 placeholder:font-normal hover:border-blue-500/50 hover:bg-background/80 focus:border-blue-500 focus:bg-background focus:ring-4 focus:ring-blue-500/10 focus:outline-none shadow-sm"
 const labelStyles = "text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
 const toggleActiveStyles =
-  "h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/10 flex items-center justify-center cursor-pointer border border-transparent scale-[1.01]"
+  "h-12 rounded-xl font-semibold text-sm bg-[#0436DC] text-white flex items-center justify-center cursor-pointer border border-transparent"
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
-const errorStyles = "border-destructive bg-destructive/5 focus:ring-destructive/10"
 
 export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading }: SpouseStepProps) {
+  const [isMobile, setIsMobile] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
 
-  const errors: Errors = useMemo(() => validateSpouse(formData), [formData])
-  const isFormValid = Object.keys(errors).length === 0
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || "ontouchstart" in window)
+    }
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
+    
     if (!isFormValid) {
       setShowErrors(true)
       setTimeout(() => {
@@ -48,25 +52,27 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
     onNext()
   }
 
-  const set = (data: FormDataUpdate) => {
-    updateFormData(data)
+  const handleFieldChange = (field: keyof FormData, value: string) => {
+    updateFormData({ [field]: value })
     setShowErrors(false)
   }
-  const errorClass = (field: keyof FormData) => (showErrors && errors[field] ? errorStyles : "")
-  const errorText = (field: keyof FormData) =>
-    showErrors && errors[field] ? (
-      <p className="text-xs text-red-600 mt-1" role="alert">
-        {errors[field]}
-      </p>
-    ) : null
+
+  const isFormValid =
+    formData.spouseFirstName &&
+    formData.spouseLastName &&
+    formData.spouseHasValidPassport
+
+  const getErrorClass = (fieldValue: FieldValue) => {
+    return showErrors && !fieldValue ? "border-destructive bg-destructive/5 focus:ring-destructive/10" : ""
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-28 md:pb-0">
+    <form onSubmit={handleSubmit} className="space-y-6 pb-44 md:pb-0">
       {/* Helper Text */}
       <div className="flex items-start gap-3.5 p-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl shadow-sm">
         <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Please provide your spouse&apos;s information for the visa application.
+          Please provide your spouse's information for the visa application.
         </p>
       </div>
 
@@ -92,12 +98,11 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           <input
             id="spouseFirstName"
             value={formData.spouseFirstName || ""}
-            onChange={(e) => set({ spouseFirstName: e.target.value })}
+            onChange={(e) => handleFieldChange("spouseFirstName", e.target.value)}
             placeholder="Enter first name"
             required
-            className={cn(inputStyles, "w-full", errorClass("spouseFirstName"))}
+            className={cn(inputStyles, "w-full", getErrorClass(formData.spouseFirstName))}
           />
-          {errorText("spouseFirstName")}
         </div>
 
         {/* Last Name */}
@@ -108,12 +113,11 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           <input
             id="spouseLastName"
             value={formData.spouseLastName || ""}
-            onChange={(e) => set({ spouseLastName: e.target.value })}
+            onChange={(e) => handleFieldChange("spouseLastName", e.target.value)}
             placeholder="Enter last name"
             required
-            className={cn(inputStyles, "w-full", errorClass("spouseLastName"))}
+            className={cn(inputStyles, "w-full", getErrorClass(formData.spouseLastName))}
           />
-          {errorText("spouseLastName")}
         </div>
 
         {/* Valid Passport */}
@@ -122,24 +126,35 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           <div className="flex gap-3 mt-1">
             <button
               type="button"
-              className={cn("flex-1", formData.spouseHasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => set({ spouseHasValidPassport: "yes" })}
+              className={cn(
+                "flex-1",
+                formData.spouseHasValidPassport === "yes" ? toggleActiveStyles : toggleInactiveStyles
+              )}
+              onClick={() => {
+                updateFormData({ spouseHasValidPassport: "yes" })
+                setShowErrors(false)
+              }}
             >
               Yes
             </button>
             <button
               type="button"
-              className={cn("flex-1", formData.spouseHasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => set({ spouseHasValidPassport: "no" })}
+              className={cn(
+                "flex-1",
+                formData.spouseHasValidPassport === "no" ? toggleActiveStyles : toggleInactiveStyles
+              )}
+              onClick={() => {
+                updateFormData({ spouseHasValidPassport: "no" })
+                setShowErrors(false)
+              }}
             >
               No
             </button>
           </div>
-          {errorText("spouseHasValidPassport")}
           {formData.spouseHasValidPassport === "yes" && (
             <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
               <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Your spouse&apos;s passport should have at least 6 months validity from your travel date.</span>
+              <span>Your spouse's passport should have at least 6 months validity from your travel date.</span>
             </p>
           )}
           {formData.spouseHasValidPassport === "no" && (
@@ -158,7 +173,7 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           <input
             id="spouseOccupation"
             value={formData.spouseOccupation || ""}
-            onChange={(e) => set({ spouseOccupation: e.target.value })}
+            onChange={(e) => handleFieldChange("spouseOccupation", e.target.value)}
             placeholder="Enter occupation"
             className={cn(inputStyles, "w-full")}
           />
@@ -166,31 +181,14 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
       </div>
 
       {/* Navigation Buttons */}
-      <div className="md:flex md:justify-between md:gap-4 fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex gap-3">
-        <Button
-          type="button"
-          onClick={onBack}
-          variant="outline"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base border border-border bg-background/40 hover:bg-background/80 text-foreground hover:text-foreground transition-all duration-300 active:scale-95 px-8"
-        >
-          Back
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Continue to Trip Details"
-          )}
-        </Button>
-      </div>
+      <WizardBar
+        onBack={onBack}
+        loading={isLoading}
+        continueLabel="Continue to Review & Pay"
+        continueLabelAr="تابع إلى المراجعة والدفع"
+        loadingLabel="Processing..."
+        loadingLabelAr="جارٍ المعالجة..."
+      />
     </form>
   )
 }

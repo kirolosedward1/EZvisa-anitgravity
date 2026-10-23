@@ -89,7 +89,7 @@ export function generateOrganizationSchema() {
       height: 200,
     },
     description:
-      "Professional Schengen visa document preparation service for 27 European countries.",
+      "Professional Schengen visa document preparation service for 29 European countries.",
     address: {
       "@type": "PostalAddress",
       addressCountry: "AE",
@@ -97,7 +97,7 @@ export function generateOrganizationSchema() {
     },
     contactPoint: {
       "@type": "ContactPoint",
-      telephone: "+971-58-586-4446",
+      telephone: "+971 54 710 9533",
       contactType: "Customer Service",
       availableLanguage: ["en", "ar"],
       email: "hello@ezvisa.net",

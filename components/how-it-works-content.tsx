@@ -9,11 +9,8 @@ import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 import { WhatYouGetSection } from "@/components/what-you-get-section"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-
-import { FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
-
-// Same nationality list as the wizard and the app (website ↔ app contract).
-const fromCountries = FEATURED_NATIONALITIES
+import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { CountryFlag } from "@/components/country-flag"
 
 const steps = [
   {
@@ -35,7 +32,7 @@ const steps = [
     title: "We Prepare Your File",
     description:
       "Our visa experts review your application and prepare your complete visa file including application forms, hotel bookings, dummy travel tickets, travel insurance, cover letter, and all necessary supporting documents.",
-    duration: "24-48 hours",
+    duration: "1–2 days",
   },
   {
     icon: Download,
@@ -81,8 +78,9 @@ export function HowItWorksContent() {
   // Listen for nationality changes from header or hero
   useEffect(() => {
     const handleNationalityChange = (e: CustomEvent<{ nationality: string }>) => {
-      if (e.detail.nationality !== selectedNationality) {
-        setSelectedNationality(e.detail.nationality)
+      const incoming = toCitizenshipIso(e.detail.nationality) || e.detail.nationality
+      if (incoming !== selectedNationality) {
+        setSelectedNationality(incoming)
       }
     }
 
@@ -132,7 +130,7 @@ export function HowItWorksContent() {
                 <div key={index} className="relative">
                   {/* Connector Line */}
                   {index < steps.length - 1 && (
-                    <div className="hidden lg:block absolute left-12 top-20 bottom-[-32px] w-[2px] bg-gradient-to-b from-primary/30 to-primary/5" />
+                    <div className="hidden lg:block absolute left-12 top-20 bottom-[-32px] w-[2px] bg-[#0436DC]" />
                   )}
 
                   <div className="bg-card border border-border/80 rounded-2xl p-6 lg:p-8 relative shadow-sm hover:border-primary/50 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 transition-all duration-300 group">
@@ -201,15 +199,8 @@ export function HowItWorksContent() {
                     >
                       {selectedNationality ? (
                         <div className="flex items-center gap-3">
-                          <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                            <Image
-                              src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-")}.png`}
-                              alt=""
-                              fill
-                              className="object-cover"
-                            />
-                          </span>
-                          <span className="text-base font-semibold text-foreground">{selectedNationality}</span>
+                          <CountryFlag iso={toCitizenshipIso(selectedNationality)} title={citizenshipName(selectedNationality)} />
+                          <span className="text-base font-semibold text-foreground">{citizenshipName(selectedNationality) || selectedNationality}</span>
                         </div>
                       ) : (
                         <span className="text-sm font-medium text-muted-foreground">Select your nationality</span>
@@ -220,7 +211,7 @@ export function HowItWorksContent() {
                         viewBox="0 0 20 20" 
                         fill="none" 
                         xmlns="http://www.w3.org/2000/svg"
-                        className="text-gray-500"
+                        className="text-[#5B6475]"
                       >
                         <path 
                           d="M5 7.5L10 12.5L15 7.5" 
@@ -238,24 +229,17 @@ export function HowItWorksContent() {
                       <CommandList className="max-h-[300px]">
                         <CommandEmpty>No country found.</CommandEmpty>
                         <CommandGroup>
-                          {fromCountries.map((country) => (
+                          {CITIZENSHIP_OPTIONS.map((country) => (
                             <CommandItem
-                              key={country}
-                              value={country}
-                              onSelect={() => handleNationalitySelect(country)}
+                              key={country.iso}
+                              value={citizenshipSearchValue(country)}
+                              onSelect={() => handleNationalitySelect(country.iso)}
                               className="cursor-pointer py-3"
                             >
                               <div className="flex items-center gap-3 w-full">
-                                <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                                  <Image
-                                    src={`/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`}
-                                    alt=""
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </span>
-                                <span className="flex-1">{country}</span>
-                                {country === selectedNationality && <Check className="h-4 w-4 text-primary" />}
+                                <CountryFlag iso={country.iso} title={country.name} />
+                                <span className="flex-1">{country.name}</span>
+                                {country.iso === selectedNationality && <Check className="h-4 w-4 text-primary" />}
                               </div>
                             </CommandItem>
                           ))}

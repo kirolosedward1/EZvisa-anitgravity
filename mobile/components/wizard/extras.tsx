@@ -1,4 +1,4 @@
-// Wizard helpers (WIZARD-IDEAS.md top 8): route preview, document checklist, prefill offer.
+// Wizard helpers (docs/archive/WIZARD-IDEAS.md top 8): route preview, document checklist, prefill offer.
 // Content only from existing definitions: answers and the website upload checklist (lib/data.ts REQS).
 import { useState } from "react";
 import { View, Modal, ScrollView } from "react-native";
