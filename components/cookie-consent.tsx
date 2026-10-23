@@ -1,8 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useState } from "react"
-import { LangText } from "@/components/lang-text"
-import { LocaleLink } from "@/components/locale-link"
+import { usePathname } from "next/navigation"
 
 /**
  * Cookie consent (legal audit H1).
@@ -121,74 +120,118 @@ export function CookieConsent() {
   }, [])
 
   if (!open) return null
+  return <Banner manage={manage} setManage={setManage} prefs={prefs} setPrefs={setPrefs} save={save} />
+}
 
-  const toggles: { key: "functional" | "analytics" | "marketing"; en: string; ar: string; enD: string; arD: string }[] = [
-    { key: "functional", en: "Chat", ar: "المحادثة", enD: "Crisp live chat. Sets cookies to keep your conversation.", arD: "محادثة Crisp المباشرة. تحفظ ملفات تعريف الارتباط محادثتك." },
-    { key: "analytics", en: "Analytics", ar: "التحليلات", enD: "Google Analytics, to understand how the site is used.", arD: "تحليلات Google، لفهم طريقة استخدام الموقع." },
-    { key: "marketing", en: "Marketing", ar: "التسويق", enD: "Google Tag Manager ad tags, to measure our advertising.", arD: "وسوم الإعلانات عبر Google Tag Manager، لقياس إعلاناتنا." },
+function Banner({ manage, setManage, prefs, setPrefs, save }: {
+  manage: boolean
+  setManage: (v: boolean) => void
+  prefs: Prefs
+  setPrefs: (p: Prefs) => void
+  save: (p: Prefs) => void
+}) {
+  const pathname = usePathname()
+  // Pick the language explicitly (not via the rtl: CSS variant) so /ar always gets Arabic, even mid-navigation.
+  const ar = (pathname ?? "").startsWith("/ar") || (typeof document !== "undefined" && document.documentElement.dir === "rtl")
+  const t = (en: string, arText: string) => (ar ? arText : en)
+
+  // Sit directly above a fixed bottom bar (the wizard's Back/Continue bar) instead of covering it.
+  const [offset, setOffset] = useState(0)
+  useEffect(() => {
+    const measure = () => {
+      let h = 0
+      document.querySelectorAll<HTMLElement>("[data-wizard-bar]").forEach((el) => {
+        const r = el.getBoundingClientRect()
+        if (r.height > 0 && r.top < window.innerHeight) h = Math.max(h, window.innerHeight - r.top)
+      })
+      setOffset(Math.max(0, Math.round(h)))
+    }
+    measure()
+    const id = window.setInterval(measure, 400)
+    window.addEventListener("resize", measure)
+    return () => {
+      window.clearInterval(id)
+      window.removeEventListener("resize", measure)
+    }
+  }, [pathname])
+
+  // Never cover the Crisp chat icon: hide it while the banner is open.
+  useEffect(() => {
+    const w = window as W
+    w.$crisp?.push(["do", "chat:hide"])
+    return () => {
+      if (!document.documentElement.classList.contains("hide-crisp")) w.$crisp?.push(["do", "chat:show"])
+    }
+  }, [])
+
+  const toggles: { key: "functional" | "analytics" | "marketing"; label: string; desc: string }[] = [
+    { key: "functional", label: t("Chat", "المحادثة"), desc: t("Crisp live chat. Sets cookies to keep your conversation.", "محادثة Crisp المباشرة. تحفظ ملفات تعريف الارتباط محادثتك.") },
+    { key: "analytics", label: t("Analytics", "التحليلات"), desc: t("Google Analytics, to understand how the site is used.", "تحليلات Google، لفهم طريقة استخدام الموقع.") },
+    { key: "marketing", label: t("Marketing", "التسويق"), desc: t("Google Tag Manager ad tags, to measure our advertising.", "وسوم الإعلانات عبر Google Tag Manager، لقياس إعلاناتنا.") },
   ]
-
-  const btn = "h-10 min-w-28 rounded-lg px-4 text-sm font-semibold cursor-pointer transition-colors"
+  const policyHref = ar ? "/ar/cookie-policy" : "/cookie-policy"
+  const btn = "h-12 flex-1 whitespace-nowrap sm:flex-none sm:min-w-36 rounded-xl px-3 sm:px-5 text-[15px] font-semibold cursor-pointer transition-colors"
+  const solid = `${btn} bg-[#0436DC] text-white hover:bg-[#032bb0]`
+  const outline = `${btn} border border-[#E3E7EF] bg-white text-[#0A0F1F] hover:bg-[#F7F8FA]`
 
   return (
     <div
       role="dialog"
       aria-modal="false"
       aria-labelledby="cookie-banner-title"
-      className="fixed inset-x-3 bottom-3 z-[1000] mx-auto max-w-2xl rounded-xl border border-[#E3E7EF] bg-white p-5 text-[#0A0F1F] shadow-lg md:bottom-5"
+      dir={ar ? "rtl" : "ltr"}
+      lang={ar ? "ar" : "en"}
+      data-cookie-banner
+      style={{ bottom: offset }}
+      className="fixed inset-x-0 z-[1000] border-t border-[#E3E7EF] bg-white"
     >
-      <p id="cookie-banner-title" role="heading" aria-level={2} className="text-base font-semibold">
-        <LangText en="Cookies on EZvisa" ar="ملفات تعريف الارتباط في إيزي فيزا" />
-      </p>
-      <p className="mt-1.5 text-sm leading-relaxed text-[#3A4150]">
-        <LangText
-          en={<>We use necessary cookies to run the site and sign you in. With your permission we also use chat, analytics and marketing cookies. See our <LocaleLink href="/cookie-policy" className="text-[#0436DC] underline">cookie policy</LocaleLink>.</>}
-          ar={<>نستخدم ملفات تعريف الارتباط الضرورية لتشغيل الموقع وتسجيل دخولك. وبإذنك نستخدم أيضًا ملفات المحادثة والتحليلات والتسويق. راجع <LocaleLink href="/cookie-policy" className="text-[#0436DC] underline">سياسة ملفات تعريف الارتباط</LocaleLink>.</>}
-        />
-      </p>
+      <div className="mx-auto max-h-[70vh] w-full max-w-6xl overflow-y-auto px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <p id="cookie-banner-title" role="heading" aria-level={2} className="text-[15px] font-semibold text-[#0A0F1F]">
+          {t("Cookies on EZvisa", "ملفات تعريف الارتباط في إيزي فيزا")}
+        </p>
+        <p className="mt-1 text-[13px] leading-relaxed text-[#5B6475]">
+          {t(
+            "We use necessary cookies to run the site and sign you in. With your permission we also use chat, analytics and marketing cookies. See our ",
+            "نستخدم ملفات تعريف الارتباط الضرورية لتشغيل الموقع وتسجيل دخولك. وبإذنك نستخدم أيضًا ملفات المحادثة والتحليلات والتسويق. راجع ",
+          )}
+          <a href={policyHref} className="text-[#0436DC] underline">{t("cookie policy", "سياسة ملفات تعريف الارتباط")}</a>.
+        </p>
 
-      {manage && (
-        <div className="mt-4 divide-y divide-[#E3E7EF] rounded-lg border border-[#E3E7EF]">
-          <label className="flex items-start justify-between gap-3 p-3">
-            <span>
-              <span className="block text-sm font-semibold"><LangText en="Necessary" ar="الضرورية" /></span>
-              <span className="block text-xs text-[#5B6475]"><LangText en="Sign-in (Supabase) and your cookie choice. Always on." ar="تسجيل الدخول (Supabase) وحفظ اختيارك. مفعّلة دائمًا." /></span>
-            </span>
-            <input type="checkbox" checked disabled className="mt-1 h-4 w-4 accent-[#0436DC]" />
-          </label>
-          {toggles.map((t) => (
-            <label key={t.key} className="flex cursor-pointer items-start justify-between gap-3 p-3">
+        {manage && (
+          <div className="mt-3 divide-y divide-[#E3E7EF] border-y border-[#E3E7EF]">
+            <label className="flex items-start justify-between gap-3 py-3">
               <span>
-                <span className="block text-sm font-semibold"><LangText en={t.en} ar={t.ar} /></span>
-                <span className="block text-xs text-[#5B6475]"><LangText en={t.enD} ar={t.arD} /></span>
+                <span className="block text-[13px] font-semibold text-[#0A0F1F]">{t("Necessary", "الضرورية")}</span>
+                <span className="block text-[13px] text-[#5B6475]">{t("Sign-in (Supabase) and your cookie choice. Always on.", "تسجيل الدخول (Supabase) وحفظ اختيارك. مفعّلة دائمًا.")}</span>
               </span>
-              <input
-                type="checkbox"
-                checked={prefs[t.key]}
-                onChange={(e) => setPrefs({ ...prefs, [t.key]: e.target.checked })}
-                className="mt-1 h-4 w-4 cursor-pointer accent-[#0436DC]"
-              />
+              <input type="checkbox" checked disabled className="mt-1 h-4 w-4 accent-[#0436DC]" />
             </label>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={() => save(ALL)} className={`${btn} bg-[#0436DC] text-white hover:bg-[#032bb0]`}>
-          <LangText en="Accept all" ar="قبول الكل" />
-        </button>
-        <button type="button" onClick={() => save(DENIED)} className={`${btn} bg-[#0436DC] text-white hover:bg-[#032bb0]`}>
-          <LangText en="Reject" ar="رفض" />
-        </button>
-        {manage ? (
-          <button type="button" onClick={() => save(prefs)} className={`${btn} border border-[#E3E7EF] text-[#0A0F1F] hover:bg-[#F7F8FA]`}>
-            <LangText en="Save choices" ar="حفظ الاختيارات" />
-          </button>
-        ) : (
-          <button type="button" onClick={() => setManage(true)} className={`${btn} border border-[#E3E7EF] text-[#0A0F1F] hover:bg-[#F7F8FA]`}>
-            <LangText en="Manage" ar="إدارة" />
-          </button>
+            {toggles.map((o) => (
+              <label key={o.key} className="flex cursor-pointer items-start justify-between gap-3 py-3">
+                <span>
+                  <span className="block text-[13px] font-semibold text-[#0A0F1F]">{o.label}</span>
+                  <span className="block text-[13px] text-[#5B6475]">{o.desc}</span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={prefs[o.key]}
+                  onChange={(e) => setPrefs({ ...prefs, [o.key]: e.target.checked })}
+                  className="mt-1 h-4 w-4 cursor-pointer accent-[#0436DC]"
+                />
+              </label>
+            ))}
+          </div>
         )}
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button type="button" onClick={() => save(ALL)} className={solid}>{t("Accept all", "قبول الكل")}</button>
+          <button type="button" onClick={() => save(DENIED)} className={solid}>{t("Reject", "رفض")}</button>
+          {manage ? (
+            <button type="button" onClick={() => save(prefs)} className={outline}>{t("Save choices", "حفظ الاختيارات")}</button>
+          ) : (
+            <button type="button" onClick={() => setManage(true)} className={outline}>{t("Manage", "إدارة")}</button>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -163,15 +163,10 @@ export function HeroSection() {
 
           {/* Content Wrapper */}
           <div className="relative z-10 w-full flex flex-col items-center">
-            {/* Trust badge */}
-            <motion.div 
-              variants={itemVariants} 
-              className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F7F8FA] border border-[#E3E7EF] text-xs font-semibold text-[#0A0F1F] cursor-default"
-            >
-              <span className="tracking-wide uppercase text-[10px] font-semibold text-[#0A0F1F]">
-                <LangText en="Schengen visa application preparation from the UAE" ar="تجهيز طلبات تأشيرة شنغن من الإمارات" />
-              </span>
-            </motion.div>
+            {/* Plain intro line (replaced the removed rating badge) */}
+            <motion.p variants={itemVariants} className="mb-5 text-sm text-white/90">
+              <LangText en="Schengen visa application preparation from the UAE" ar="تجهيز طلبات تأشيرة شنغن من الإمارات" />
+            </motion.p>
 
             {/* Headline */}
             <motion.h1 variants={itemVariants} className="hero-copy max-w-4xl text-balance text-white">

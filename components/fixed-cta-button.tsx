@@ -26,6 +26,7 @@ export function FixedCTAButton({ country }: FixedCTAButtonProps) {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: isVisible ? 0 : 100, opacity: isVisible ? 1 : 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
+      data-wizard-bar
       className="fixed bottom-3 left-3 right-3 z-50 lg:hidden"
     >
       <Link
