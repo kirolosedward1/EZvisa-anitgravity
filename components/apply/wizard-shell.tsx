@@ -164,7 +164,10 @@ export function WizardShell({
         <h1 className="sr-only">
           <LangText en="Visa application" ar="طلب التأشيرة" />
         </h1>
-        <div className="lg:hidden">
+        <div
+          className="sticky z-40 -mx-4 border-b border-[#E3E7EF] bg-[#FFFFFF] px-4 lg:hidden"
+          style={{ top: "var(--site-header-height, 80px)" }}
+        >
           <button
             type="button"
             aria-expanded={summaryOpen}
