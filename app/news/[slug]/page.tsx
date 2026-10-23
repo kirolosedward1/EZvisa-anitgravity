@@ -8,7 +8,10 @@ import { ShareButtons } from "@/components/blog/share-buttons"
 import { BackToTop } from "@/components/blog/back-to-top"
 import { RelatedPosts } from "@/components/blog/related-posts"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
+import { NewsTag, NewsTitle } from "@/components/blog/news-copy"
+import { ARABIC_POSTS } from "@/lib/blog-ar"
 import { Rocket } from "lucide-react"
 import { TableOfContents } from "@/components/blog/table-of-contents"
 import { StartApplicationBox } from "@/components/start-application-box"
@@ -111,21 +114,26 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
           <div className="container mx-auto px-4 max-w-7xl">
             {/* Breadcrumb */}
             <nav className="mb-6 text-sm text-muted-foreground">
-              <Link href="/" className="hover:text-primary transition-colors">
-                Home
-              </Link>
+              <LocaleLink href="/" className="hover:text-primary transition-colors">
+                <Msg id="news.home" />
+              </LocaleLink>
               <span className="mx-2">/</span>
-              <Link href="/news" className="hover:text-primary transition-colors">
-                News
-              </Link>
+              <LocaleLink href="/news" className="hover:text-primary transition-colors">
+                <Msg id="news.crumb" />
+              </LocaleLink>
               <span className="mx-2">/</span>
-              <span className="text-foreground">{post.title}</span>
+              <span className="text-foreground"><NewsTitle slug={slug} fallback={post.title} /></span>
             </nav>
 
             <div className="flex flex-col xl:flex-row xl:gap-8 gap-12">
               <div className="flex-1 xl:max-w-[calc(100%-320px-2rem)] min-w-0">
                 <BlogPostHeader post={post} />
-                <BlogContent content={post.content} />
+                <div className="rtl:hidden">
+                  <BlogContent content={post.content} />
+                </div>
+                <div className="hidden rtl:block">
+                  <BlogContent content={ARABIC_POSTS[slug]?.content ?? post.content} />
+                </div>
 
                 {/* Tags */}
                 {post.tags && post.tags.length > 0 && (
@@ -136,7 +144,7 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
                           key={tag}
                           className="px-3 py-1 bg-primary/10 text-primary text-sm rounded-full font-medium"
                         >
-                          #{tag}
+                          #<NewsTag tag={tag} />
                         </span>
                       ))}
                     </div>
@@ -156,7 +164,12 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
 
               <aside className="xl:w-[320px] xl:flex-shrink-0 order-first xl:order-last">
                 <div className="xl:sticky xl:top-0 xl:pt-8 space-y-8">
-                  <TableOfContents content={post.content} />
+                  <div className="rtl:hidden">
+                    <TableOfContents content={post.content} />
+                  </div>
+                  <div className="hidden rtl:block">
+                    <TableOfContents content={ARABIC_POSTS[slug]?.content ?? post.content} />
+                  </div>
                   {/* Start Application Box - Desktop Only */}
                   <div className="hidden xl:block">
                     <StartApplicationBox />

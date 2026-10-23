@@ -175,7 +175,7 @@ export function HeroSection() {
                 ))}
               </div>
               <span className="tracking-wide uppercase text-[10px] font-semibold text-[#0A0F1F]">
-                <LangText en="4.9/5 from 5,000+ travelers" ar="٤٫٩/٥ من أكثر من ٥٬٠٠٠ مسافر" />
+                <LangText en="4.9/5 from 5,000+ travelers" ar="4.9/5 من أكثر من 5,000 مسافر" />
               </span>
             </motion.div>
 
@@ -205,7 +205,7 @@ export function HeroSection() {
                   
                   {/* Selector 1 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="١. جنسيتي" /></span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="1. جنسيتي" /></span>
                     <Popover open={fromOpen} onOpenChange={setFromOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -271,7 +271,7 @@ export function HeroSection() {
 
                   {/* Selector 2 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="٢. وجهتي" /></span>
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="2. وجهتي" /></span>
                     <Popover open={toOpen} onOpenChange={setToOpen}>
                       <PopoverTrigger asChild>
                         <button

@@ -1,7 +1,9 @@
 import { getAllPosts } from "@/lib/blog"
 import Image from "next/image"
-import Link from "next/link"
 import { Calendar, Clock } from "lucide-react"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
+import { NewsCategory, NewsDate, NewsReadTime, NewsTitle } from "@/components/blog/news-copy"
 
 export async function RelatedPosts({
   currentSlug,
@@ -20,10 +22,10 @@ export async function RelatedPosts({
   return (
     <section className="py-16 bg-muted/30 border-t">
       <div className="container mx-auto px-4" style={{ maxWidth: "85%" }}>
-        <h2 className="text-3xl font-semibold mb-8">Related Articles</h2>
+        <h2 className="text-3xl font-semibold mb-8"><Msg id="news.related" /></h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {relatedPosts.map((post) => (
-            <Link
+            <LocaleLink
               key={post.slug}
               href={`/news/${post.slug}`}
               className="group block bg-card border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
@@ -38,27 +40,23 @@ export async function RelatedPosts({
               </div>
               <div className="p-4">
                 <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium mb-2">
-                  {post.category}
+                  <NewsCategory category={post.category} />
                 </span>
                 <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                  {post.title}
+                  <NewsTitle slug={post.slug} fallback={post.title} />
                 </h3>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {new Date(post.publishedAt).toLocaleDateString("en-US", { timeZone: "UTC",
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    <NewsDate iso={post.publishedAt} />
                   </span>
                   <span className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
-                    {post.readTime}
+                    <NewsReadTime value={post.readTime} />
                   </span>
                 </div>
               </div>
-            </Link>
+            </LocaleLink>
           ))}
         </div>
       </div>

@@ -2,6 +2,7 @@ import { getAllPosts, categories } from "@/lib/blog"
 import { BlogHero } from "@/components/blog/blog-hero"
 import { CategoryFilter } from "@/components/blog/category-filter"
 import { BlogCard } from "@/components/blog/blog-card"
+import { Msg } from "@/components/msg"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
@@ -59,7 +60,7 @@ export default async function NewsPage({
 
             {filteredPosts.length === 0 && (
               <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg">No posts found in this category.</p>
+                <p className="text-muted-foreground text-lg"><Msg id="news.empty" /></p>
               </div>
             )}
           </div>

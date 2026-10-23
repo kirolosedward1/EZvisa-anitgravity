@@ -47,7 +47,7 @@ export default function DestinationsPage() {
           description={
             <LangText
               en="Find tailored visa checklists, processing times, and prices for all 29 Schengen member states. We make visa applications simple."
-              ar="اعثر على قوائم المستندات وأوقات التجهيز والأسعار لدول شنغن الـ ٢٩. نجعل طلب التأشيرة بسيطًا."
+              ar="اعثر على قوائم المستندات وأوقات التجهيز والأسعار لدول شنغن الـ 29. نجعل طلب التأشيرة بسيطًا."
             />
           }
           gradientType="default"

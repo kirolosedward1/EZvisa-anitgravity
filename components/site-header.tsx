@@ -347,7 +347,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                   <div className="flex items-center justify-between mb-4 px-2">
                                     <h3 className="text-sm font-semibold tracking-tight text-foreground"><LangText en="Popular Destinations" ar="وجهات شائعة" /></h3>
                                     <LocaleLink href="/destinations" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                                      <LangText en="View all" ar="عرض الكل" /> <span className="hidden sm:inline"><LangText en="29 countries" ar="٢٩ دولة" /></span> &rarr;
+                                      <LangText en="View all" ar="عرض الكل" /> <span className="hidden sm:inline"><LangText en="29 countries" ar="29 دولة" /></span> &rarr;
                                     </LocaleLink>
                                   </div>
                                   <div className="grid grid-cols-2 gap-2">

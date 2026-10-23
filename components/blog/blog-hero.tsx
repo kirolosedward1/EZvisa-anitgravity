@@ -3,6 +3,7 @@
 import React from "react"
 import { InnerHero } from "@/components/inner-hero"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 
 export function BlogHero() {
   return (
@@ -14,7 +15,7 @@ export function BlogHero() {
           ar={<>الأخبار و<span className="text-[#0436DC]">النصائح</span></>}
         />
       }
-      description="Expert visa guidance, travel tips, and the latest updates on Schengen visa applications."
+      description={<Msg id="news.heroBody" />}
       randomizeBackground={true}
     />
   )

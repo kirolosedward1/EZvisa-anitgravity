@@ -1,6 +1,7 @@
 import { destinations } from "@/lib/destinations"
 import { SCHENGEN_META } from "@/lib/countries"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 import { PreparationLine } from "@/components/ready-line"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -24,7 +25,7 @@ import {
   TicketCheck,
   Tag,
 } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import Image from "next/image"
 import { notFound } from "next/navigation"
 
@@ -88,106 +89,45 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
     notFound()
   }
 
-  // Common Schengen statistics / facts tailored for this destination
+  const name = destination.name
+  const nameAr = SCHENGEN_META[name]?.ar || name
+  const place = { name }
+  const placeAr = { name: nameAr }
+  const partnerCenter =
+    slug === "greece" || slug === "france" || slug === "italy" || slug === "germany" || slug === "spain" || slug === "switzerland" || slug === "netherlands" || slug === "austria"
+
   const fastFacts = [
-    {
-      icon: Clock,
-      label: "Our preparation",
-      value: "1–2 days",
-      description: "We prepare your application in 1–2 days. The embassy's decision takes longer."
-    },
-    {
-      icon: Calendar,
-      label: "Stay Duration",
-      value: "Up to 90 days",
-      description: "Short-stay Schengen visa (Type C) valid in 180-day window."
-    },
-    {
-      icon: MapPin,
-      label: "Where to Apply",
-      value: slug === "greece" || slug === "france" || slug === "italy" || slug === "germany" || slug === "spain" || slug === "switzerland" || slug === "netherlands" || slug === "austria"
-        ? "VFS Global / TLScontact"
-        : "VFS Global Center",
-      description: "Embassy partner centers in Dubai or Abu Dhabi based on nationality."
-    },
-    {
-      icon: Coins,
-      label: "Embassy Visa Fee",
-      value: "90 EUR (~360 AED)",
-      description: "Standard visa fee paid directly at the application center. Under 6 years free."
-    },
-    {
-      icon: Tag,
-      label: "EZvisa Price",
-      value: destination.price,
-      description: "Flat fee for full application form, itineraries, hotel/flight reservations & support."
-    },
-    {
-      icon: ShieldCheck,
-      label: "Refund Guarantee",
-      value: "100% Money-Back",
-      description: "Full refund of service fee in case of visa rejection. Real confidence."
-    }
-  ]
+    { icon: Clock, label: "dest.factPrepLabel", value: "dest.factPrepValue", description: "dest.factPrepBody" },
+    { icon: Calendar, label: "dest.factStayLabel", value: "dest.factStayValue", description: "dest.factStayBody" },
+    { icon: MapPin, label: "dest.factWhereLabel", value: partnerCenter ? "dest.factWhereVfs" : "dest.factWhereCenter", description: "dest.factWhereBody" },
+    { icon: Coins, label: "dest.factFeeLabel", value: "dest.factFeeValue", description: "dest.factFeeBody" },
+    { icon: Tag, label: "dest.factPriceLabel", value: "dest.factPriceValue", description: "dest.factPriceBody" },
+    { icon: ShieldCheck, label: "dest.factRefundLabel", value: "dest.factRefundValue", description: "dest.factRefundBody" },
+  ] as const
 
   const howItWorksSteps = [
-    {
-      step: "01",
-      icon: FileText,
-      title: "Check Requirements",
-      description: `View the precise checklist of document requirements for the ${destination.name} visa. Pre-fill basic info.`
-    },
-    {
-      step: "02",
-      icon: TicketCheck,
-      title: "Simplified Application",
-      description: "Complete our smart 5-minute online form. No confusing visa jargon or redundant fields."
-    },
-    {
-      step: "03",
-      icon: UserCheck,
-      title: "Expert File Review",
-      description: `Our agents draft your personal cover letter, day-by-day itinerary, flight and hotel bookings, and complete the official ${destination.name} form. We prepare your application in 1–2 days. The embassy's decision takes longer.`
-    },
-    {
-      step: "04",
-      icon: ShieldCheck,
-      title: "Submit & Get Visa",
-      description: "Print your completed package, attend the biometrics appointment we help organize, and wait for your visa stamp."
-    }
-  ]
+    { step: "01", icon: FileText, title: "dest.step1Title", description: "dest.step1Body" },
+    { step: "02", icon: TicketCheck, title: "dest.step2Title", description: "dest.step2Body" },
+    { step: "03", icon: UserCheck, title: "dest.step3Title", description: "dest.step3Body" },
+    { step: "04", icon: ShieldCheck, title: "dest.step4Title", description: "dest.step4Body" },
+  ] as const
 
   const comparisons = [
-    { metric: "Form-Filling Complexity", diy: "Confusing PDF forms with 37+ fields", ez: "Simple 5-minute web wizard" },
-    { metric: "Travel Itinerary Draft", diy: "Manual planning & layout matching", ez: "Expert-tailored day-by-day schedule" },
-    { metric: "Flight & Hotel Reservations", diy: "Expensive refundable bookings required", ez: "Included (verifiable reservations)" },
-    { metric: "Personal Cover Letter", diy: "Must write complex letter from scratch", ez: "Professional cover letter drafted for you" },
-    { metric: "Dossier Verification", diy: "High risk of rejection due to form errors", ez: "Double-checked by active visa specialists" },
-    { metric: "Price transparency", diy: "High agent commission (1,000+ AED)", ez: `Fixed transparent price (${destination.price})` }
-  ]
+    { metric: "dest.row1Label", diy: "dest.row1Diy", ez: "dest.row1Ez" },
+    { metric: "dest.row2Label", diy: "dest.row2Diy", ez: "dest.row2Ez" },
+    { metric: "dest.row3Label", diy: "dest.row3Diy", ez: "dest.row3Ez" },
+    { metric: "dest.row4Label", diy: "dest.row4Diy", ez: "dest.row4Ez" },
+    { metric: "dest.row5Label", diy: "dest.row5Diy", ez: "dest.row5Ez" },
+    { metric: "dest.row6Label", diy: "dest.row6Diy", ez: "dest.row6Ez" },
+  ] as const
 
   const faqs = [
-    {
-      question: `Do UAE residents need a visa to travel to ${destination.name}?`,
-      answer: `Yes. Most non-UAE nationals residing in the UAE (e.g., Indian, Pakistani, Egyptian, Filipino citizens) require a Schengen Visa to enter ${destination.name}. UAE passport holders (citizens) are visa-exempt for short stays up to 90 days.`
-    },
-    {
-      question: `Where is the ${destination.name} visa application center in the UAE?`,
-      answer: `Depending on the center assigned to ${destination.name}, you will submit your physical documents and biometrics at VFS Global (located in Wafi Mall, Dubai or Shining Tower, Abu Dhabi) or TLScontact (for countries like France and Switzerland in Dubai/Abu Dhabi). Our team provides full instructions on where to go.`
-    },
-    {
-      question: `Can I visit other European countries with a ${destination.name} visa?`,
-      answer: `Yes. ${destination.name} is a member of the Schengen Zone. Once you obtain your visa, you can travel freely across all 29 Schengen member states, provided that ${destination.name} remains your main destination (where you spend the most nights) or your first point of entry.`
-    },
-    {
-      question: `How far in advance should I apply for my ${destination.name} visa?`,
-      answer: "Embassies allow applications to be submitted up to 6 months before your departure date. We highly recommend starting your application with EZvisa at least 4 to 6 weeks in advance to secure prime biometrics appointment slots and avoid seasonal processing delays."
-    },
-    {
-      question: "What is your 100% money-back guarantee?",
-      answer: `If your ${destination.name} visa application is rejected by the embassy, EZvisa will refund 100% of our service fee (${destination.price}). Please note that third-party embassy/VFS fees are non-refundable. We offer this because our expert review process ensures a near-perfect success rate.`
-    }
-  ]
+    ["dest.faq1q", "dest.faq1a"],
+    ["dest.faq2q", "dest.faq2a"],
+    ["dest.faq3q", "dest.faq3a"],
+    ["dest.faq4q", "dest.faq4a"],
+    ["dest.faq5q", "dest.faq5a"],
+  ] as const
 
   return (
     <>
@@ -203,29 +143,29 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             ar={<>احصل على تأشيرة شنغن إلى <span className="text-[#0436DC]">{SCHENGEN_META[destination.name]?.ar || destination.name}</span> بسهولة.</>}
           />
         }
-        description={`Complete visa file preparation for ${destination.name}. We prepare your application forms, travel itinerary, flight reservations, and cover letter for a successful submission.`}
+        description={<Msg id="dest.heroBody" values={place} valuesAr={placeAr} />}
         backgroundImage={destination.image}
       >
         <div className="flex flex-col items-center gap-6 w-full">
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto justify-center">
-            <Link
+            <LocaleLink
               href={`/apply?to=${encodeURIComponent(destination.name)}`}
               className="w-full sm:w-auto px-8 py-4 bg-primary text-white text-base font-semibold rounded-2xl hover:bg-primary/95 transition-all shadow-lg shadow-primary/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
-              Start Application Wizard
+              <Msg id="dest.startWizard" />
               <ArrowRight className="h-5 w-5" />
-            </Link>
-            <Link
+            </LocaleLink>
+            <LocaleLink
               href={destination.documentPath}
               className="w-full sm:w-auto px-8 py-4 bg-white text-[#0A0F1F] border border-[#E3E7EF] text-base font-semibold rounded-2xl shadow-[0_8px_24px_rgba(10,15,31,0.08)] transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
-              Check Required Documents
-            </Link>
+              <Msg id="dest.checkDocs" />
+            </LocaleLink>
           </div>
 
           <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white/90">
             <Star className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
-            <span>Over 5,000+ Schengen visas processed successfully.</span>
+            <span><Msg id="dest.processed" /></span>
           </div>
         </div>
       </InnerHero>
@@ -235,13 +175,13 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <div className="container mx-auto px-6 max-w-6xl">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
-              Visa Information
+              <Msg id="dest.infoBadge" />
             </span>
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-4">
-              {destination.name} Visa Fast Facts
+              <Msg id="dest.factsTitle" values={place} valuesAr={placeAr} />
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-              Key application stats and requirements you need to know for your Schengen visa journey.
+              <Msg id="dest.factsBody" />
             </p>
           </div>
 
@@ -256,13 +196,13 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                 </div>
                 <div>
                   <h3 className="text-[11px] font-semibold text-[#5B6475] uppercase tracking-wider">
-                    {fact.label}
+                    <Msg id={fact.label} />
                   </h3>
                   <div className="text-base sm:text-lg font-semibold text-foreground mt-0.5">
-                    {fact.value}
+                    <Msg id={fact.value} />
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
-                    {fact.description}
+                    <Msg id={fact.description} />
                   </p>
                 </div>
               </div>
@@ -296,13 +236,13 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <div className="container mx-auto px-6 max-w-6xl relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-20">
             <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
-              The Process
+              <Msg id="dest.processBadge" />
             </span>
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-4">
-              How to Apply for {destination.name} Visa
+              <Msg id="dest.processTitle" values={place} valuesAr={placeAr} />
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-              We make the application process simple, quick, and stress-free. Here is what to expect.
+              <Msg id="dest.processBody" />
             </p>
           </div>
 
@@ -316,26 +256,26 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                   <step.icon className="h-7 w-7" />
                 </div>
                 <div className="text-[10px] font-semibold text-primary tracking-widest uppercase mb-1">
-                  Step {step.step}
+                  <Msg id="dest.stepLabel" values={{ n: step.step }} />
                 </div>
                 <h3 className="text-base font-semibold text-foreground">
-                  {step.title}
+                  <Msg id={step.title} values={place} valuesAr={placeAr} />
                 </h3>
                 <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
-                  {step.description}
+                  <Msg id={step.description} values={place} valuesAr={placeAr} />
                 </p>
               </div>
             ))}
           </div>
           
           <div className="text-center mt-14">
-            <Link 
+            <LocaleLink 
               href={`/apply?to=${encodeURIComponent(destination.name)}`}
               className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white font-semibold rounded-2xl hover:bg-primary/95 transition-all text-xs"
             >
-              Start {destination.name} Wizard Now
+              <Msg id="dest.startNow" values={place} valuesAr={placeAr} />
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </LocaleLink>
           </div>
         </div>
       </section>
@@ -345,10 +285,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <div className="container mx-auto px-6 max-w-4xl">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
-              Compare Options
+              <Msg id="dest.compareBadge" />
             </span>
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-4 flex items-center justify-center gap-2 flex-wrap">
-              <span>DIY vs.</span>
+              <span><Msg id="dest.compareDiy" /></span>
               <span className="relative inline-block w-36 h-11 align-middle">
                 <Image
                   src="/images/logo-main.png"
@@ -357,10 +297,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                   className="object-contain"
                 />
               </span>
-              <span>Application</span>
+              <span><Msg id="dest.compareApp" /></span>
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-              Why thousands of travelers use EZvisa instead of dealing with complex paperwork alone.
+              <Msg id="dest.compareBody" />
             </p>
           </div>
 
@@ -368,10 +308,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             <div className="border border-border rounded-3xl overflow-hidden shadow-xs bg-card min-w-[600px] md:min-w-full">
               {/* Table Header */}
               <div className="grid grid-cols-3 bg-muted/40 border-b border-border py-4 px-6 font-semibold text-xs uppercase tracking-wider text-muted-foreground items-center">
-              <div>Feature</div>
-              <div>Applying on your own</div>
+              <div><Msg id="dest.colFeature" /></div>
+              <div><Msg id="dest.colDiy" /></div>
               <div className="flex items-center gap-1 text-primary font-semibold">
-                <span>THE</span>
+                <span><Msg id="dest.colThe" /></span>
                 <span className="relative inline-block w-20 h-6 align-middle">
                   <Image
                     src="/images/logo-main.png"
@@ -380,7 +320,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                     className="object-contain"
                   />
                 </span>
-                <span>WAY</span>
+                <span><Msg id="dest.colWay" /></span>
               </div>
             </div>
 
@@ -388,14 +328,14 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             <div className="divide-y divide-border/60">
               {comparisons.map((item, idx) => (
                 <div key={idx} className="grid grid-cols-3 py-4.5 px-6 items-center text-xs sm:text-sm">
-                  <div className="font-semibold text-foreground">{item.metric}</div>
+                  <div className="font-semibold text-foreground"><Msg id={item.metric} /></div>
                   <div className="text-muted-foreground flex items-center gap-2 pr-4">
                     <X className="w-4 h-4 text-rose-500 flex-shrink-0" />
-                    <span>{item.diy}</span>
+                    <span><Msg id={item.diy} /></span>
                   </div>
                   <div className="text-foreground font-medium flex items-center gap-2">
                     <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                    <span>{item.ez}</span>
+                    <span><Msg id={item.ez} /></span>
                   </div>
                 </div>
               ))}
@@ -410,28 +350,28 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <div className="container mx-auto px-6 max-w-3xl">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
-              FAQ
+              <Msg id="dest.faqBadge" />
             </span>
             <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-4">
-              Frequently Asked Questions
+              <Msg id="dest.faqTitle" />
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-              Got questions about traveling to {destination.name}? Find answers to common inquiries here.
+              <Msg id="dest.faqBody" values={place} valuesAr={placeAr} />
             </p>
           </div>
 
           <Accordion type="single" collapsible className="w-full space-y-4">
-            {faqs.map((faq, idx) => (
+            {faqs.map(([question, answer], idx) => (
               <AccordionItem 
-                key={idx} 
+                key={question} 
                 value={`faq-${idx}`} 
                 className="border border-border bg-card rounded-2xl px-6 py-1 shadow-xs transition-shadow hover:shadow-sm"
               >
                 <AccordionTrigger className="text-sm sm:text-base font-semibold text-foreground hover:no-underline py-4">
-                  {faq.question}
+                  <Msg id={question} values={place} valuesAr={placeAr} />
                 </AccordionTrigger>
                 <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1 pb-4">
-                  {faq.answer}
+                  <Msg id={answer} values={place} valuesAr={placeAr} />
                 </AccordionContent>
               </AccordionItem>
             ))}
@@ -449,26 +389,26 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         
         <div className="relative container mx-auto px-6 max-w-4xl z-10">
           <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">
-            Ready to secure your {destination.name} Visa?
+            <Msg id="dest.ctaTitle" values={place} valuesAr={placeAr} />
           </h2>
           <p className="mt-4 text-blue-100/90 text-sm sm:text-base max-w-xl mx-auto">
-            <PreparationLine /> Secure and backed by our money-back guarantee.
+            <PreparationLine /> <Msg id="dest.ctaSecure" />
           </p>
           
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
+            <LocaleLink
               href={`/apply?to=${encodeURIComponent(destination.name)}`}
               className="w-full sm:w-auto px-8 py-3.5 bg-white text-primary text-sm font-semibold rounded-xl hover:bg-blue-50 transition-all shadow-md flex items-center justify-center gap-2"
             >
-              Start Application Wizard
+              <Msg id="dest.startWizard" />
               <ArrowRight className="h-4.5 w-4.5" />
-            </Link>
-            <Link
+            </LocaleLink>
+            <LocaleLink
               href={destination.documentPath}
               className="w-full sm:w-auto px-8 py-3.5 bg-primary-foreground/10 text-white border border-white/20 text-sm font-semibold rounded-xl hover:bg-primary-foreground/15 transition-all flex items-center justify-center"
             >
-              View Document Checklists
-            </Link>
+              <Msg id="dest.ctaDocs" />
+            </LocaleLink>
           </div>
         </div>
       </section>
