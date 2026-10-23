@@ -3,7 +3,7 @@ import { Image } from "expo-image";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../../components/Logo";
-import { ActionPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
+import { ActionPill, StatusPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
 import { AppointmentCard } from "../../../components/Appointment";
 import { useColors, S, R, curve, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
@@ -73,7 +73,7 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
           <Flag country={name} size={64} />
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: S.xs, marginTop: S.xs }}>
-          <Text variant="callout" weight="600" tone={a.status === "cancelled" ? "secondary" : "accent"} color={a.status === "rejected" ? c.red : undefined} testID="hero-status">{status}</Text>
+          <View testID="hero-status"><StatusPill v={a.status} a={a} /></View>
           {pending && <ActionPill label={t(pending.label)} />}
           {!!tripDates(a, lang) && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" tabular testID="hero-dates">{tripDates(a, lang)}</Text></>}
           {!!cd && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" testID="countdown">{cd}</Text></>}

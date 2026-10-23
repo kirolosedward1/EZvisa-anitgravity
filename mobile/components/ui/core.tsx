@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Platform, Pressable, PressableProps, View, ViewStyle, StyleProp, TextInput, TextInputProps, ActivityIndicator, StyleSheet, AccessibilityInfo } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, useReducedMotion, Easing } from "react-native-reanimated";
 import { SymbolView, SFSymbol } from "expo-symbols";
@@ -33,18 +33,19 @@ export function PressScale({ scaleTo = PRESS.scale, lift, style: style0, childre
 
 export function Button({ title, onPress, variant = "primary", size = "L", loading, disabled, icon, color, a11yLabel }: { title: string; onPress: () => void; variant?: "primary" | "secondary" | "plain" | "destructive"; size?: "L" | "M"; loading?: boolean; disabled?: boolean; icon?: IconName; color?: string; a11yLabel?: string }) {
   const c = useColors();
-  // Primary: ink pill (a `color` keeps a coloured one, e.g. WhatsApp). Secondary: outlined. Plain: a blue text link.
+  // Primary: brand-blue pill (a `color` keeps a coloured one, e.g. WhatsApp). Secondary: outlined. Plain: a blue text link.
   const bg = variant === "primary" ? (color ?? c.primaryFill) : variant === "secondary" ? c.surface : "transparent";
   const fg = variant === "primary" ? (color ? "#fff" : c.onPrimary) : variant === "destructive" ? c.red : variant === "secondary" ? c.label : (color ?? c.tint);
-  const off = disabled || loading;
+  const off = disabled || loading; const [down, setDown] = useState(false);
+  const fill = variant === "primary" && !color && down ? c.primaryPressed : bg;
   return (
-    <PressScale onPress={() => { tap(); onPress(); }} disabled={off} accessibilityRole="button" accessibilityLabel={a11yLabel ?? title} accessibilityState={{ disabled: !!disabled, busy: !!loading }}
-      style={[{ minHeight: size === "L" ? 48 : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: bg, opacity: disabled ? 0.4 : 1 },
+    <PressScale onPress={() => { tap(); onPress(); }} onPressIn={() => setDown(true)} onPressOut={() => setDown(false)} scaleTo={0.98} disabled={off} accessibilityRole="button" accessibilityLabel={a11yLabel ?? title} accessibilityState={{ disabled: !!disabled, busy: !!loading }}
+      style={[{ minHeight: size === "L" ? 48 : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: fill, opacity: disabled ? 0.4 : 1 },
         variant === "secondary" && { borderWidth: 1, borderColor: c.border }, curve]}>
       {loading ? <ActivityIndicator color={fg} /> : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
           {!!icon && <Icon name={icon} size={ICON.md} color={fg} weight="semibold" />}
-          <Text variant="headline" color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>
+          <Text variant="headline" weight="600" color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>
         </View>
       )}
     </PressScale>
