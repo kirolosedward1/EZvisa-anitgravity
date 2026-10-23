@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: "Application Wizard | EZvisa",
+  title: "Application Wizard",
   robots: {
     index: false,
     follow: false,

@@ -9,7 +9,7 @@ import { getApplicationByToken } from "@/lib/applications"
 import { continueAnswers, needsContinue, parseNotes, referenceOf } from "@/lib/shared/wizard-contract"
 
 export const metadata: Metadata = {
-  title: "Continue your application | EZvisa",
+  title: "Continue your application",
   robots: { index: false, follow: false },
 }
 

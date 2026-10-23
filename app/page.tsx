@@ -11,6 +11,7 @@ const ServicesSection = dynamic(() => import("@/components/services-section").th
 const HowItWorksSimple = dynamic(() => import("@/components/how-it-works-simple").then(mod => mod.HowItWorksSimple), { ssr: true })
 const ComparisonSection = dynamic(() => import("@/components/comparison-section").then(mod => mod.ComparisonSection), { ssr: true })
 const TestimonialsSection = dynamic(() => import("@/components/testimonials-section").then(mod => mod.TestimonialsSection), { ssr: true })
+const AppPromoSection = dynamic(() => import("@/components/app-promo-section").then(mod => mod.AppPromoSection), { ssr: true })
 const FAQSection = dynamic(() => import("@/components/faq-section").then(mod => mod.FAQSection), { ssr: true })
 const ContactSection = dynamic(() => import("@/components/contact-section").then(mod => mod.ContactSection), { ssr: true })
 const Footer = dynamic(() => import("@/components/footer").then(mod => mod.Footer), { ssr: true })
@@ -161,6 +162,7 @@ export default function Home() {
         <HowItWorksSimple />
         <ComparisonSection />
         <TestimonialsSection />
+        <AppPromoSection />
         <FAQSection />
         <ContactSection />
         <Footer />

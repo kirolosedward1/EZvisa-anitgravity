@@ -31,17 +31,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
+  // Most posts have no SEO overrides: fall back to the post's own title and excerpt so the tab title is never empty.
+  const metaTitle = post.seo?.metaTitle?.trim() || post.title
+  const metaDescription = post.seo?.metaDescription?.trim() || post.excerpt
+
   return {
-    title: post.seo.metaTitle,
-    description: post.seo.metaDescription,
+    title: metaTitle,
+    description: metaDescription,
     keywords: post.seo.keywords,
     authors: [{ name: post.author }],
     alternates: {
-      canonical: `https://ezvisa.net/news/${slug}`,
+      canonical: `https://www.ezvisa.net/news/${slug}`,
     },
     openGraph: {
-      title: post.seo.metaTitle,
-      description: post.seo.metaDescription,
+      title: metaTitle,
+      description: metaDescription,
       images: [
         {
           url: post.featuredImage,
@@ -53,12 +57,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: "article",
       publishedTime: post.publishedAt,
       authors: [post.author],
-      url: `https://ezvisa.net/news/${slug}`,
+      url: `https://www.ezvisa.net/news/${slug}`,
     },
     twitter: {
       card: "summary_large_image",
-      title: post.seo.metaTitle,
-      description: post.seo.metaDescription,
+      title: metaTitle,
+      description: metaDescription,
       images: [post.featuredImage],
     },
   }
@@ -89,12 +93,12 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
       name: "EZvisa",
       logo: {
         "@type": "ImageObject",
-        url: "https://ezvisa.net/images/logo-main.png",
+        url: "https://www.ezvisa.net/images/logo-main.png",
       },
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://ezvisa.net/news/${slug}`,
+      "@id": `https://www.ezvisa.net/news/${slug}`,
     },
   }
 

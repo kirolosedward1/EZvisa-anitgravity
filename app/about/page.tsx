@@ -49,7 +49,7 @@ export default function AboutPage() {
           badge="About Us"
           title={
             <>
-              Your trusted partner for <span className="text-primary bg-[#0436DC]">Schengen visas</span>
+              Your trusted partner for <span className="text-primary">Schengen visas</span>
             </>
           }
           description="At EZvisa, we combine technology and expertise to simplify your travel preparation so embassies say yes."

@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   if (!countryData) {
     return {
-      title: "Required Documents | EZvisa",
+      title: "Required Documents",
     }
   }
 

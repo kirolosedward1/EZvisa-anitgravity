@@ -9,7 +9,7 @@ import { InnerHero } from "@/components/inner-hero"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 
 export const metadata: Metadata = {
-  title: "How It Works - 4-Step Schengen Visa Application Process | EZvisa",
+  title: "How It Works - 4-Step Schengen Visa Application Process",
   description:
     "Learn how EZvisa prepares your Schengen visa file. Simple 4-step process. We prepare your application in 1–2 days. The embassy's decision takes longer.",
   keywords: [

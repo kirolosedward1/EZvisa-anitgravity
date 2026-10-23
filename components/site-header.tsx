@@ -4,7 +4,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { LocaleLink } from "@/components/locale-link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Rocket, ChevronDown, Check, UserRound } from "lucide-react"
+import { Menu, X, Rocket, ChevronDown, Check } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname, useRouter } from "next/navigation"
@@ -12,6 +12,7 @@ import { destinations } from "@/lib/destinations"
 import { SCHENGEN_META } from "@/lib/countries"
 import { LangText } from "@/components/lang-text"
 import { CountryFlag } from "@/components/country-flag"
+import { UserMenu } from "@/components/user-menu"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 
 const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
@@ -192,8 +193,6 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "FAQ", ar: "الأسئلة الشائعة", id: "faq", type: "scroll" },
     { label: "News", ar: "الأخبار", id: "/news", type: "link" },
     { label: "Videos", ar: "الفيديوهات", id: "/videos", type: "link" },
-    { label: "App", ar: "التطبيق", id: "/app", type: "link" },
-    { label: "Account", ar: "الحساب", id: "/account", type: "link" },
   ]
 
   return (
@@ -261,9 +260,6 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                 className="bg-[#FFFFFF] text-[#0A0F1F] border border-[#E3E7EF] rounded-3xl p-6 relative overflow-hidden"
                                 style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3E7EF", boxShadow: "0 8px 24px rgba(10,15,31,0.08)" }}
                               >
-                                {/* Subtle background glow */}
-                                <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
-                                
                                 <div className="relative z-10">
                                   <div className="flex items-center justify-between mb-4 px-2">
                                     <h3 className="text-sm font-semibold tracking-tight text-foreground"><LangText en="Popular Destinations" ar="وجهات شائعة" /></h3>
@@ -359,13 +355,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                 </AnimatePresence>
               </div>
 
-              <LocaleLink
-                href="/dashboard"
-                className="h-10 w-10 flex items-center justify-center rounded-full bg-secondary text-foreground hover:bg-primary/10 hover:text-primary transition-colors shadow-sm"
-                aria-label="My account / حسابي"
-              >
-                <UserRound className="h-5 w-5" />
-              </LocaleLink>
+              <UserMenu />
 
               {!isWizardPage && (
                 <>

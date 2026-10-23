@@ -7,7 +7,7 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { LangText } from "@/components/lang-text"
 
 export const metadata: Metadata = {
-  title: "Schengen Visa Destinations & Document Checklists | EZvisa",
+  title: "Schengen Visa Destinations & Document Checklists",
   description:
     "Explore Schengen countries supported by EZvisa UAE. View detailed document lists for France, Germany, Italy, Spain, Switzerland, and 24 other nations. Pre-fill your visa wizard and start your application today.",
   keywords: [

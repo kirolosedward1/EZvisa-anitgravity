@@ -3,14 +3,13 @@ import Link from "next/link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { 
-  Calendar, 
-  Wallet, 
-  MapPin, 
-  ArrowRight, 
-  ShieldCheck, 
-  Sparkles, 
-  CheckCircle2 
+import {
+  Calendar,
+  Wallet,
+  MapPin,
+  ArrowRight,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react"
 
 export const metadata: Metadata = {
@@ -104,7 +103,6 @@ export default function ToolsIndexPage() {
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
-              <Sparkles className="w-3.5 h-3.5" />
               <span>UAE Traveler Intelligence Suite</span>
             </div>
             <h1 className="text-3xl sm:text-5xl font-semibold text-foreground tracking-tight">

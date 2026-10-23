@@ -34,7 +34,7 @@ export default function ContactPage() {
           badge="Contact Us"
           title={
             <>
-              Get in <span className="text-primary bg-[#0436DC]">Touch</span>
+              Get in <span className="text-primary">Touch</span>
             </>
           }
           description="Have questions about your visa application? Our team of experts is available 24/7."

@@ -1,14 +1,14 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Check, X, Shield, Sparkles, Rocket } from "lucide-react"
+import { Check, X, Shield, Rocket, Info } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 
 export const metadata: Metadata = {
-  title: "Schengen Visa Pricing - 249 AED All-Inclusive | EZvisa",
+  title: "Schengen Visa Pricing - 249 AED All-Inclusive",
   description:
     "Simple, transparent Schengen visa application pricing. 249 AED flat rate includes AI-powered document review, itinerary planning, cover letter, hotel booking, and expert assistance. No hidden fees.",
   keywords: [
@@ -48,7 +48,6 @@ export default function PricingPage() {
         >
           <div className="flex flex-col items-center gap-3">
             <div className="inline-flex items-center gap-2 bg-[#0436DC] px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider text-white">
-              <Sparkles className="w-3.5 h-3.5" />
               Most Popular Choice
             </div>
             <div className="flex items-baseline justify-center gap-4 mt-2">
@@ -116,10 +115,10 @@ export default function PricingPage() {
               </div>
 
               {/* Info Card */}
-              <div className="mt-10 border border-blue-100 rounded-2xl p-6 bg-[#0436DC]">
+              <div className="mt-10 border border-primary/15 rounded-2xl p-6 bg-secondary">
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xl">💡</span>
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center flex-shrink-0">
+                    <Info className="w-5 h-5" aria-hidden="true" />
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900 mb-2">Important Note</p>
@@ -148,7 +147,7 @@ export default function PricingPage() {
 
           {/* Money Back Guarantee */}
           <div className="mt-20 max-w-5xl mx-auto">
-            <div className="border-2 border-green-200 rounded-3xl p-10 lg:p-12 bg-[#0436DC]">
+            <div className="border-2 border-emerald-200 rounded-3xl p-10 lg:p-12 bg-emerald-50 dark:bg-emerald-950/30">
               <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
                 <div className="w-24 h-24 rounded-2xl bg-white shadow-lg flex items-center justify-center flex-shrink-0">
                   <Shield className="w-12 h-12 text-green-600" />

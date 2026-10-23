@@ -152,6 +152,10 @@ Usage rules:
 | `country-card.tsx`, `country-document-selector.tsx`, `document-requirements-page.tsx` | Documents flow |
 | `start-application-box.tsx`, `fixed-cta-button.tsx`, `continue-application-notification.tsx` | Conversion helpers |
 | `cookie-consent.tsx`, `scroll-restoration.tsx`, `scroll-to-top.tsx`, `theme-provider.tsx` | App-wide utilities |
+| `country-flag.tsx` | **The only flag component**: round flag from `public/flags/<slug>.png` (by ISO or country name). Never render rectangular flags. |
+| `user-menu.tsx` | Header account dropdown (signed-out: sign in / sign up / track / app / help; signed-in: applications, documents, account, sign out). |
+| `app-promo-section.tsx` | Homepage app section with iPhone mockups (reuses `components/app/*`). The app link lives in the footer, not the header nav. |
+| `payment-marks.tsx` | Footer payment badges (official Simple Icons paths). |
 
 ---
 

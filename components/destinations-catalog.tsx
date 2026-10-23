@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { Search, ArrowRight, Compass, Sparkles, HelpCircle } from "lucide-react"
+import { Search, ArrowRight, Compass, HelpCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { destinations, Destination } from "@/lib/destinations"
 import { destinationNameAr } from "@/lib/destination-names-ar"
@@ -149,7 +149,6 @@ export function DestinationsCatalog() {
                         href={`/apply?to=${encodeURIComponent(country.name)}`}
                         className="px-3.5 py-2 bg-primary text-primary-foreground hover:bg-primary/95 text-[11px] font-semibold rounded-full shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95"
                       >
-                        <Sparkles className="w-3.5 h-3.5 text-accent" />
                         <span>Apply Now</span>
                       </Link>
                     </div>

@@ -49,6 +49,15 @@ const check = (name: string, ok: boolean, detail?: string) => { results.push({ o
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 const diff = (a: unknown, b: unknown) => `website=${JSON.stringify(a)}\n      app=${JSON.stringify(b)}`
 const eq = (name: string, a: unknown, b: unknown) => check(name, same(a, b), same(a, b) ? undefined : diff(a, b))
+// Calls a rule on both sides; a rule one side no longer exports is reported as drift, not a crash.
+const both = (name: string, fn: string, ...args: unknown[]) => {
+  const w = typeof web[fn] === "function", a = typeof app[fn] === "function"
+  if (!w || !a) return check(name, false, `${fn}() is missing on ${!w && !a ? "both sides" : !w ? "the website (lib/shared/wizard-contract.ts)" : "the app (mobile/lib/wizard.ts)"}`)
+  let wv: unknown, av: unknown
+  try { wv = web[fn](...args) } catch (e) { wv = `throws: ${(e as Error).message}` }
+  try { av = app[fn](...args) } catch (e) { av = `throws: ${(e as Error).message}` }
+  eq(name, wv, av)
+}
 
 // 1. Lists and option values (value + label must match: the value is what is stored, the label what both show).
 for (const k of ["SCHENGEN", "SCHENGEN_VISA_REQUIRED", "UAE_NATIONALITIES", "OTHER_NATIONALITY", "RESIDENCE_COUNTRIES", "DEFAULT_RESIDENCE", "UAE_EMIRATES", "MARITAL", "EMPLOYMENT", "SALARY", "PURPOSES", "COMPANIONS", "FUNDING", "BALANCE", "HOTELS", "STEP_TITLES"])
@@ -60,10 +69,10 @@ eq("answer defaults", web.emptyAnswers, app.emptyForm)
 
 // 3. Step order and legacy slugs.
 const married = { ...web.emptyAnswers, maritalStatus: "married", spouseAccompanying: "yes" }
-eq("visibleSteps (single)", web.visibleSteps(web.emptyAnswers), app.visibleSteps(app.emptyForm))
-eq("visibleSteps (spouse travels)", web.visibleSteps(married), app.visibleSteps(married))
+both("visibleSteps (single)", "visibleSteps", web.emptyAnswers)
+both("visibleSteps (spouse travels)", "visibleSteps", married)
 for (const s of ["personal", "spouse", "employment", "trip-details", "payment", "documents", "nonsense", undefined])
-  eq(`parseStep(${JSON.stringify(s)})`, web.parseStep(s), app.parseStep(s))
+  both(`parseStep(${JSON.stringify(s)})`, "parseStep", s)
 
 // 4. Validation: same error keys and messages on the same fixtures.
 const future = (months: number) => { const d = new Date(); d.setMonth(d.getMonth() + months); return d.toISOString().slice(0, 10) }
@@ -91,14 +100,14 @@ const fixtures: Record<string, any> = {
 }
 for (const [name, f] of Object.entries(fixtures)) {
   for (const step of ["personal", "spouse", "employment", "trip-details"])
-    eq(`validateStep(${step}) on "${name}"`, web.validateStep(step, f), app.validateStep(step, f))
-  eq(`validatePassportNumber on "${name}"`, web.validatePassportNumber(f), app.validatePassportNumber(f))
-  eq(`continueComplete on "${name}"`, web.continueComplete(f), app.continueComplete(f))
-  eq(`firstIncomplete on "${name}"`, web.firstIncomplete(f), app.firstIncomplete(f))
+    both(`validateStep(${step}) on "${name}"`, "validateStep", step, f)
+  both(`validatePassportNumber on "${name}"`, "validatePassportNumber", f)
+  both(`continueComplete on "${name}"`, "continueComplete", f)
+  both(`firstIncomplete on "${name}"`, "firstIncomplete", f)
 }
-eq("passportCoversTrip", [web.passportCoversTrip({ passportExpiry: future(2), travelEndDate: future(1) }), web.passportCoversTrip({ passportExpiry: future(5), travelEndDate: future(1) })],
-  [app.passportCoversTrip({ passportExpiry: future(2), travelEndDate: future(1) }), app.passportCoversTrip({ passportExpiry: future(5), travelEndDate: future(1) })])
-eq("coerceResidence", web.coerceResidence({ countryOfResidence: "Qatar", cityOfResidence: "dubai", hasEmiratesId: "yes" }), app.coerceResidence({ countryOfResidence: "Qatar", cityOfResidence: "dubai", hasEmiratesId: "yes" }))
+both("passportCoversTrip (2 months)", "passportCoversTrip", { passportExpiry: future(2), travelEndDate: future(1) })
+both("passportCoversTrip (5 months)", "passportCoversTrip", { passportExpiry: future(5), travelEndDate: future(1) })
+both("coerceResidence", "coerceResidence", { countryOfResidence: "Qatar", cityOfResidence: "dubai", hasEmiratesId: "yes" })
 
 // 5. Data layer: document types, statuses, bucket (regex on mobile/lib/data.ts; it imports native modules).
 const data = read("lib/data.ts")

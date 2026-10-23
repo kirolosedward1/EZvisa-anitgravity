@@ -9,7 +9,7 @@ import type { Metadata } from "next"
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: "Schengen Visa News, Guides & Travel Tips | EZvisa Blog",
+  title: "Schengen Visa News, Guides & Travel Tips",
   description:
     "Latest Schengen visa guides, travel tips, and document requirements for 2026. Expert advice on European visa applications, common mistakes, and success stories. Stay updated with visa policy changes.",
   keywords: [

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Link from "next/link"
-import { Printer, Download, ArrowLeft, CheckCircle2, ShieldAlert, Sparkles } from "lucide-react"
+import { Printer, Download, ArrowLeft, CheckCircle2, ShieldAlert, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface DossierViewerClientProps {
@@ -101,7 +101,7 @@ export function DossierViewerClient({
         <div className="bg-blue-50 dark:bg-blue-950/40 border-t border-blue-100 dark:border-blue-900/40 px-4 py-2 text-xs text-blue-800 dark:text-blue-300">
           <div className="container max-w-5xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" />
               <span>
                 <strong>Appointment Tip:</strong> Print on clean white A4 paper. Present documents in the exact order shown in the 11-step submission checklist.
               </span>
