@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
-import { safeNextPath } from "@/lib/safe-next";
+import { safeNext } from "@/lib/auth/redirect";
 
 async function processDemoLogin(scenarioParam: string | null, nextParam: string | null, originUrl: string, isJson: boolean) {
   const scenarioKey = (scenarioParam && scenarioParam in DEMO_CONFIGS ? scenarioParam : "ready") as DemoScenario;
   const config = DEMO_CONFIGS[scenarioKey];
 
-  const next = safeNextPath(nextParam);
+  const next = safeNext(nextParam);
 
   const cookieStore = await cookies();
 

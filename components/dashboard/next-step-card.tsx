@@ -31,7 +31,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
               applicationId={app.id}
               trackingToken={token}
               destination={app.destination_country}
-              amount={app.payment_amount || 249}
+              amount={app.payment_amount ?? 249}
             />
           ),
         }

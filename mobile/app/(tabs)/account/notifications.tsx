@@ -35,7 +35,8 @@ export default function Notifications() {
             <PressScale onPress={async () => { if (!n.read_at) { await markRead([n.id]).catch(() => {}); load(); } if (n.application_id) router.push(`/applications/${n.application_id}`, { withAnchor: true }); }}
               accessibilityRole="button" accessibilityLabel={`${n.read_at ? "" : "Unread. "}${n.title}. ${n.body ?? ""}`}
               style={{ marginHorizontal: S.gutter, backgroundColor: c.surface, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", gap: S.sm, minHeight: SIZE.rowTall,
-                borderTopStartRadius: first ? R.card : 0, borderTopEndRadius: first ? R.card : 0, borderBottomStartRadius: last ? R.card : 0, borderBottomEndRadius: last ? R.card : 0, borderBottomWidth: last ? 0 : StyleSheet.hairlineWidth, borderBottomColor: c.separator }}>
+                borderTopStartRadius: first ? R.card : 0, borderTopEndRadius: first ? R.card : 0, borderBottomStartRadius: last ? R.card : 0, borderBottomEndRadius: last ? R.card : 0,
+                borderColor: c.border, borderStartWidth: 1, borderEndWidth: 1, borderTopWidth: first ? 1 : 0, borderBottomWidth: last ? 1 : StyleSheet.hairlineWidth, ...(last ? {} : { borderBottomColor: c.separator }) }}>
               <View style={{ width: SIZE.dot, paddingTop: S.xs }}>{!n.read_at && <View style={{ width: SIZE.dot, height: SIZE.dot, borderRadius: R.round, backgroundColor: c.accent }} />}</View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: "row", gap: S.xs }}>

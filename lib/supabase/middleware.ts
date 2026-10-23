@@ -1,11 +1,13 @@
+// Session refresher used by the root middleware for signed-in, server-rendered pages. Tracking links
+// (/track/<token>) are secret URLs and never require a session; the dashboard pages redirect to /login themselves.
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
+import { supabaseServerEnv } from "@/lib/supabase/server"
 
 /**
- * Refreshes the Supabase session cookies for server-rendered signed-in pages. Server Components cannot write
- * cookies, so without this a refreshed (rotated) token was never saved and users were signed out once the access
- * token expired. Only refreshes: each page decides itself what to show when there is no user (the demo cookie
- * login has no Supabase user, so redirecting here would break it).
+ * Refreshes the Supabase session cookies. Server Components cannot write cookies, so without this a refreshed
+ * (rotated) token was never saved and users were signed out once the access token expired. Only refreshes: each
+ * page decides itself what to show when there is no user (the demo cookie login has no Supabase user).
  */
 export async function updateSession(
   request: NextRequest,
@@ -13,10 +15,9 @@ export async function updateSession(
    *  refreshed cookies (the request headers are read at that point). */
   makeResponse: (request: NextRequest) => NextResponse = (req) => NextResponse.next({ request: req }),
 ) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const { url, key, configured } = supabaseServerEnv()
   // Nothing to refresh without config or for visitors who never signed in.
-  if (!url || !key || !request.cookies.getAll().some((c) => c.name.startsWith("sb-"))) return makeResponse(request)
+  if (!configured || !request.cookies.getAll().some((c) => c.name.startsWith("sb-"))) return makeResponse(request)
 
   let refreshed: { name: string; value: string; options: Record<string, unknown> }[] = []
   const supabase = createServerClient(url, key, {

@@ -13,19 +13,19 @@ const isNetworkError = (e: any) => /network|fetch|timeout|timed out|offline|abor
   const sb = supabase!;
   const f = { ...emptyForm, destination: "France" };
 
-  // 1. The session check reads the stored session (lib/data.ts me() uses getSession, no network round trip). With a
-  //    session, a network failure on the query itself is a retryable network error, not "Please sign in first".
-  (sb.auth as any).getSession = async () => ({ data: { session: { user: { id: "u1", email: "a@b.c" } } }, error: null });
-  const realFetch = globalThis.fetch;
-  (globalThis as any).fetch = async () => { throw new TypeError("Network request failed"); }; // what React Native throws offline
+  // 1. Offline while the session is checked (lib/data me() reads getSession, which refreshes an expired token over the
+  //    network): the save fails with a retryable network error, not "Please sign in first".
+  const fetchFail = Object.assign(new Error("Failed to fetch"), { name: "AuthRetryableFetchError", status: 0 });
+  (sb.auth as any).getSession = async () => ({ data: { session: null }, error: fetchFail });
   const e1 = await saveDraft(f, "personal", "00000000-0000-4000-8000-000000000001", null, "q:nationality", [], false).then(() => null, (e) => e);
-  (globalThis as any).fetch = realFetch;
-  check(!!e1 && e1.message !== "Please sign in first" && isNetworkError(e1), "network failure while saving is retried (network error)", String(e1?.message));
+  check(!!e1 && e1.name === "AuthRetryableFetchError" && isNetworkError(e1), "network failure during the session check is retried (network error)", String(e1?.message));
 
-  // 2. Really signed out: still "Please sign in first" (not retried forever).
-  (sb.auth as any).getSession = async () => ({ data: { session: null }, error: null });
-  const e2 = await saveDraft(f, "personal", "00000000-0000-4000-8000-000000000001", null, "q:nationality", [], false).then(() => null, (e) => e);
-  check(!!e2 && e2.message === "Please sign in first" && !isNetworkError(e2), "signed out is not treated as a network error", String(e2?.message));
+  // 2. Really signed out (no stored session, or an auth error that isn't the network): still "Please sign in first" (not retried forever).
+  for (const error of [null, Object.assign(new Error("Auth session missing!"), { name: "AuthSessionMissingError", status: 400 })]) {
+    (sb.auth as any).getSession = async () => ({ data: { session: null }, error });
+    const e2 = await saveDraft(f, "personal", "00000000-0000-4000-8000-000000000001", null, "q:nationality", [], false).then(() => null, (e) => e);
+    check(!!e2 && e2.message === "Please sign in first" && !isNetworkError(e2), `signed out is not treated as a network error (${error ? error.name : "no session"})`, String(e2?.message));
+  }
 
   // 3. Fingerprint: same content in any key order and with undefined keys = same value; any answer change = different.
   const a = fingerprint({ destination: "France", nationality: "India" }, "personal", "q:city");

@@ -8,10 +8,12 @@ interface PayNowButtonProps {
   applicationId?: string
   trackingToken?: string
   destination?: string
-  amount: number
+  amount?: number
+  className?: string
+  label?: string
 }
 
-export function PayNowButton({ applicationId, trackingToken, destination, amount }: PayNowButtonProps) {
+export function PayNowButton({ applicationId, trackingToken, destination, amount = 249, className, label }: PayNowButtonProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -61,9 +63,9 @@ export function PayNowButton({ applicationId, trackingToken, destination, amount
 
   return (
     <div className="flex flex-col gap-2">
-      <Button onClick={handlePay} disabled={loading} className="rounded-full px-5">
+      <Button onClick={handlePay} disabled={loading} className={`rounded-full px-5 ${className ?? ""}`}>
         {loading ? <Loader2 className="animate-spin" /> : <CreditCard />}
-        {loading ? "Opening Ziina…" : `Pay ${amount} AED`}
+        {loading ? "Opening Ziina…" : label ?? `Pay ${amount} AED`}
       </Button>
       {error && (
         <div role="alert" className="flex flex-col items-start gap-2">

@@ -79,7 +79,7 @@ export default function UploadPreview() {
         <View style={{ width: 44 }} />
       </View>
 
-      <View style={[{ flex: 1, marginHorizontal: S.md, marginTop: S.xs, borderRadius: R.card, overflow: "hidden", backgroundColor: c.card }, curve]}>
+      <View style={[{ flex: 1, marginHorizontal: S.md, marginTop: S.xs, borderRadius: R.card, overflow: "hidden", backgroundColor: c.card, borderWidth: 1, borderColor: c.border }, curve]}>
         {fatal ? <EmptyState icon="exclamationmark.triangle.fill" title={t("Can't use this file")} message={fatal} />
           : kind === "image" ? (img && crop ? <CropBox uri={img.uri} width={img.width} height={img.height} rect={crop} onChange={setCrop} label={t("Drag the corners to the edges of the document.")} /> : <Skeleton r={0} style={{ flex: 1 }} />)
           : <PdfView uri={file.uri} name={file.name} />}
