@@ -138,7 +138,7 @@ export function WizardShell({
 
   return (
     <div className="bg-[#FFFFFF] text-[#0A0F1F]">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-24 md:pt-28">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height,80px)] lg:pt-32">
         <h1 className="sr-only">
           <LangText en="Visa application" ar="طلب التأشيرة" />
         </h1>
