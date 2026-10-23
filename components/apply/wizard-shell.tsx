@@ -96,19 +96,30 @@ function SummaryRows({ formData }: { formData: FormData }) {
         <span>
           <LangText en="Total" ar="المجموع" />
         </span>
-        <span dir="ltr">AED {price}</span>
+        <AedAmount amount={price} />
       </div>
       {applicants === 1 ? (
         <p className="mt-3 text-[14px] text-[#3A4150]">
           <span className="rtl:hidden">
-            <span dir="ltr">AED {spousePrice}</span> {message("en", "summary.withSpouse")}
+            <AedAmount amount={spousePrice} /> {message("en", "summary.withSpouse")}
           </span>
           <span className="hidden rtl:inline">
-            {message("ar", "summary.withSpouse")} <span dir="ltr">AED {spousePrice}</span>
+            {message("ar", "summary.withSpouse")} <AedAmount amount={spousePrice} />
           </span>
         </p>
       ) : null}
     </div>
+  )
+}
+
+function AedAmount({ amount }: { amount: number }) {
+  return (
+    <>
+      <span className="rtl:hidden" dir="ltr">
+        {amount} AED
+      </span>
+      <span className="hidden rtl:inline">{amount} درهم</span>
+    </>
   )
 }
 
@@ -149,7 +160,7 @@ export function WizardShell({
 
   return (
     <div className="bg-[#FFFFFF] text-[#0A0F1F]">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height,80px)] lg:pt-32">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height,72px)]">
         <h1 className="sr-only">
           <LangText en="Visa application" ar="طلب التأشيرة" />
         </h1>
@@ -176,7 +187,7 @@ export function WizardShell({
               )}
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-[#0A0F1F]">
-              <span dir="ltr">AED {line.price}</span>
+              <AedAmount amount={line.price} />
               <ChevronDown className={cn("size-4 text-[#5B6475]", summaryOpen && "rotate-180")} aria-hidden />
             </span>
           </button>

@@ -53,6 +53,7 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ hideNavigation = false, forceBackground = false }: SiteHeaderProps) {
   const headerRef = useRef<HTMLElement>(null)
+  const headerBarRef = useRef<HTMLDivElement>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showWhatsAppTooltip, setShowWhatsAppTooltip] = useState(false)
   const pathname = usePathname()
@@ -78,14 +79,17 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const supportCase = useSupportCase()
 
   useEffect(() => {
-    const el = headerRef.current
-    if (!el) return
+    const header = headerRef.current
+    const bar = headerBarRef.current
+    if (!header || !bar) return
     const apply = () => {
-      document.documentElement.style.setProperty("--site-header-height", `${Math.round(el.getBoundingClientRect().height)}px`)
+      // The fixed header's padding is transparent. Stick content to the visible bar, not the padding below it.
+      document.documentElement.style.setProperty("--site-header-height", `${Math.round(bar.getBoundingClientRect().bottom)}px`)
     }
     apply()
     const observer = new ResizeObserver(apply)
-    observer.observe(el, { box: "border-box" })
+    observer.observe(header, { box: "border-box" })
+    observer.observe(bar, { box: "border-box" })
     return () => observer.disconnect()
     // The minimal bar and the full header are different elements: measure whichever is mounted.
   }, [isMinimal])
@@ -273,7 +277,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
         }`}
       >
         <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-7xl">
-          <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
+          <div ref={headerBarRef} className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
             scrolled || forceBackground || !isFull
               ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
               : "bg-transparent border-transparent"
