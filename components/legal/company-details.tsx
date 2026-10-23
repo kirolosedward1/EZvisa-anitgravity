@@ -1,10 +1,11 @@
 import { LangText } from "@/components/lang-text"
 import { LegalMarkdown } from "@/components/legal/markdown"
 import { LEGAL_MD } from "@/lib/legal/content.generated"
-import { COMPANY } from "@/lib/legal/company"
+import { COMPANY, COMPANY_DETAILS_READY } from "@/lib/legal/company"
 
 /** Legal notice / company details (legal audit H2), used on About and Contact. Values come from lib/legal/company.ts. */
 export function CompanyLegalNotice({ className = "" }: { className?: string }) {
+  if (!COMPANY_DETAILS_READY) return null
   return (
     <section className={`container mx-auto max-w-3xl px-6 py-12 ${className}`} aria-labelledby="legal-notice-heading">
       {/* LEGAL DRAFT – pending Legal Auditor */}
@@ -19,6 +20,7 @@ export function CompanyLegalNotice({ className = "" }: { className?: string }) {
 
 /** Short company block for the footer. */
 export function CompanyFooterBlock() {
+  if (!COMPANY_DETAILS_READY) return null
   const c = COMPANY
   return (
     <div className="space-y-1.5">

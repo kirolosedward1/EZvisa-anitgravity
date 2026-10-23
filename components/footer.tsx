@@ -10,7 +10,7 @@ import { LocaleLink } from "@/components/locale-link"
 import { PaymentMarks } from "@/components/payment-marks"
 import { openCookieSettings } from "@/components/cookie-consent"
 import { CompanyFooterBlock } from "@/components/legal/company-details"
-import { COMPANY } from "@/lib/legal/company"
+import { COMPANY, COMPANY_DETAILS_READY } from "@/lib/legal/company"
 
 const socialLinks = [
   {
@@ -313,8 +313,8 @@ export function Footer({
 
             <p className="text-xs text-[#3A4150] text-center md:text-end">
               <LangText
-                en={<>&copy; <span suppressHydrationWarning>{currentYear}</span> {COMPANY.COMPANY_LEGAL_NAME}. All rights reserved. · EZvisa · ezvisa.net</>}
-                ar={<>&copy; <span suppressHydrationWarning>{currentYear}</span> {COMPANY.COMPANY_LEGAL_NAME}. جميع الحقوق محفوظة. · إيزي فيزا · ezvisa.net</>}
+                en={<>&copy; <span suppressHydrationWarning>{currentYear}</span> {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. All rights reserved. · ` : ""}EZvisa</>}
+                ar={<>&copy; <span suppressHydrationWarning>{currentYear}</span> {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. جميع الحقوق محفوظة. · ` : ""}EZvisa</>}
               />
             </p>
           </div>
