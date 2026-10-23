@@ -14,13 +14,13 @@ SQL editor: no session so far could reach that database (the Supabase connector 
 | Surface | Live now | Evidence |
 |---|---|---|
 | Website www.ezvisa.net | `main` @ `7be29de` (PR #30), Vercel production READY | Vercel deployments |
-| Expo Go, channel `preview` | Last verified publish: `mobile-app` @ `aad5052` (v10.3), update group `7e64bbdb-1e36-459e-be20-07b8b5f1e9d2`. `mobile-app` has had v10.4-v10.7 pushed since (now `2137710`); each push publishes automatically, so check the newest "EAS Update (preview)" run | GitHub Actions run 22; its bundle check confirmed `dravvaykssrbktztmrlj` and not the old `rjbgteqgqaxalcfnksjc` |
+| Expo Go, channel `preview` | Last verified publish: `mobile-app` @ `aad5052` (v10.3), update group `7e64bbdb-1e36-459e-be20-07b8b5f1e9d2`. `mobile-app` has had v10.4 and later pushed since (now `de95dcf`); each push publishes automatically, so check the newest "EAS Update (preview)" run | GitHub Actions run 22; its bundle check confirmed `dravvaykssrbktztmrlj` and not the old `rjbgteqgqaxalcfnksjc` |
 | Database ezvisa-uae (`dravvaykssrbktztmrlj`) | *(pending SQL)*: policies, buckets, columns, triggers, realtime, migrations 0001-0013 | `docs/live-state-check.sql` |
 | Vercel production env (names) | `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`, `NEXT_PUBLIC_ezvisaSUPABASE_*`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY`, `ZIINA_API_KEY`, `ZIINA_WEBHOOK_SECRET`, **`ZIINA_TEST_MODE=true`**, HubSpot, Resend, Blob, KV/Redis, Postgres | Vercel env list (names only; `ZIINA_TEST_MODE` is a plain-text variable) |
 | Store builds | None. No `eas build` has been made; App Store / Play listings do not exist | |
 
 ### 0.2 What is merged where
-- `mobile-app` is **6 commits ahead of `main`** (`71c638a` v10.2 … `2137710` v10.7, app code only; nothing outside `mobile/`).
+- `mobile-app` is **7 commits ahead of `main`** (`71c638a` v10.2 … `de95dcf`, app code only; nothing outside `mobile/`).
   So Expo preview runs newer app code than `main`. Merging `mobile-app` into `main` cannot change the website.
 - `main` has app files `mobile-app` doesn't: leftovers of `de75fd8` (PR #15) that nothing imports: `lib/search.ts`,
   `metro.config.js`, `scripts/ts-hooks.mjs`, `scripts/wizard-rules.test.ts` (fails: imports `NATIONALITY_OPTIONS`, which
@@ -56,11 +56,13 @@ SQL editor: no session so far could reach that database (the Supabase connector 
 | 10 | No real-device pass (VoiceOver, Dynamic Type, Face ID, camera, push, real upload, real payment) and no development build | OPEN | Owner + dev |
 | 11 | App submissions send no "application submitted" email and no HubSpot lead (audit H7); staff see app cases only in the table | OPEN | Owner decision, then dev (website route) |
 | 12 | Website wizard/draft parity: `nice-faraday` vs PR #19 (`trusting-bell`) overlap; the website still asks the passport number and trip before payment, the app after | OPEN | Owner picks one branch |
+| 13 | Rate limiting fails open in production: the configured Upstash host no longer resolves (found by the session on `claude/blissful-babbage-1u96lk`, commit `99bf6b3`). `check-payment`, `create-payment` and upload limits are not enforced | OPEN; fix (in-memory fallback) is on that branch, unmerged; Upstash env is owner's | Owner (Upstash) + review `99bf6b3` |
+| 14 | Remote branch clean-up (the 13 `claude/*` branches marked Delete in 0.5; `app-return`, `pay-server-price`, `wizard-ux` are merged too) was approved by the owner but blocked by this session's permission rules | OPEN | Owner: delete in GitHub, or allow `git push --delete` |
 
 Closed since the 22 Oct notes: B2 upload auth (live), B3 Ziina webhook (HMAC enforced, secret set on production, every
 status re-verified with Ziina), B4 preview on the old DB (`7e64bbdb…`, CI checks the DB ref on every publish), H2 one
-open payment per application (live), H9 `check-payment` validation + rate limit (live, `?applicationId=` works in
-production), H1 (`mobile-app` changes nothing outside `mobile/`).
+open payment per application (live), H9 `check-payment` validation (live, `?applicationId=` works in
+production; its rate limit fails open, #13), H1 (`mobile-app` changes nothing outside `mobile/`).
 
 ### 0.4 Rules that still contradict each other (owner to settle)
 - §5 says never merge into `main` and that a push to `mobile-app` is the deploy; the root `CLAUDE.md` says to merge every
@@ -83,7 +85,8 @@ production), H1 (`mobile-app` changes nothing outside `mobile/`).
 | `claude/nifty-meitner-gtmztg` | Superseded by later wizard work (`00a858e`, 8 conflicts) | Delete |
 | `claude/ios-expo-app` | Superseded: the first Expo app (10-11 Oct) | Delete |
 | `claude/mobile-status-audit-d3tww9` | Duplicate of this audit's SQL (§0.3 #8) | Owner decides |
-| `app-return`, `pay-server-price`, `wizard-ux`, `claude/blissful-babbage-1u96lk`, `claude/sweet-wozniak-fqxk36`, `claude/awesome-goodall-nt66td`, `claude/dreamy-babbage-wrfbwx`, `claude/exciting-knuth-7tbcir`, `claude/hopeful-fermi-kt6hbd`, `claude/inspiring-turing-breyok`, `claude/trusting-bardeen-54koiu`, `claude/trusting-turing-pgtmb3`, `claude/upbeat-cori-re61og`, `claude/vibrant-dijkstra-rrtz3m` | Fully merged into `main` | Delete |
+| `claude/blissful-babbage-1u96lk` | PR #14 merged; then `99bf6b3` (2026-10-23 00:16 UTC, unmerged): payment success confirmed by the server, daily reconcile cron, payment audit log, rate limit without Redis | Keep (review, #13) |
+| `app-return`, `pay-server-price`, `wizard-ux`, `claude/sweet-wozniak-fqxk36`, `claude/awesome-goodall-nt66td`, `claude/dreamy-babbage-wrfbwx`, `claude/exciting-knuth-7tbcir`, `claude/hopeful-fermi-kt6hbd`, `claude/inspiring-turing-breyok`, `claude/trusting-bardeen-54koiu`, `claude/trusting-turing-pgtmb3`, `claude/upbeat-cori-re61og`, `claude/vibrant-dijkstra-rrtz3m` | Fully merged into `main` | Delete |
 
 ## 1. What the app talks to
 
