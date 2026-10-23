@@ -290,6 +290,7 @@ h3.panel-title {
   letter-spacing: -0.005em;
 }
 
+h1.panel-title.panel-title-lg,
 h2.panel-title.panel-title-lg,
 h3.panel-title.panel-title-lg {
   font-size: 20px;
