@@ -36,7 +36,6 @@ export const ar: Record<MessageKey, string> = {
   "services.sampleAlt": "نموذج {title}",
   "services.cardAria": "{title}: عرض نموذج",
   "services.fee": "الستة كلها مقابل {price} درهم، برسم واحد",
-  "services.guarantee": "استرداد المبلغ إذا رُفضت تأشيرتك.",
   "services.included": "مشمول في كل طلب",
   "services.start": "ابدأ طلبك",
   "services.consultantAlt": "مستشارة سفر إيزي فيزا",

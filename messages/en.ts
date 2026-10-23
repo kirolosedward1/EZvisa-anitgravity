@@ -34,7 +34,6 @@ export const en = {
   "services.sampleAlt": "Sample {title}",
   "services.cardAria": "{title}: view a sample",
   "services.fee": "All six for {price} AED, one flat fee",
-  "services.guarantee": "Money back if your visa is refused.",
   "services.included": "Included in every application",
   "services.start": "Start your application",
   "services.consultantAlt": "EZvisa Travel Consultant",
