@@ -40,6 +40,10 @@ export interface VisaApplication {
   paid_at?: string | null
   application_status?: string
   tracking_token?: string
+  appointment_at?: string | null
+  appointment_centre?: string | null
+  appointment_address?: string | null
+  appointment_reference?: string | null
 
   // Metadata
   submission_ip?: string

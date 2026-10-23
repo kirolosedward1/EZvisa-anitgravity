@@ -1,3 +1,5 @@
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
+
 export type Currency = "AED" | "USD"
 
 export interface CurrencyInfo {
@@ -5,20 +7,20 @@ export interface CurrencyInfo {
   symbol: string
   flag: string
   name: string
-  basePrice: number // Added basePrice to the CurrencyInfo interface
+  basePrice: number // service fee in this currency (AED is the real price; USD is a display conversion)
 }
 
+// Conversion rate from AED to USD (display only; Ziina always charges AED)
+const AED_TO_USD_RATE = 0.28
+
 export const CURRENCIES: Record<Currency, CurrencyInfo> = {
-  AED: { code: "AED", symbol: "د.إ", flag: "🇦🇪", name: "UAE Dirham", basePrice: 249 },
-  USD: { code: "USD", symbol: "$", flag: "🇺🇸", name: "US Dollar", basePrice: 70 }, // 249 AED * 0.28
+  AED: { code: "AED", symbol: "د.إ", flag: "🇦🇪", name: "UAE Dirham", basePrice: PRICE_AED },
+  USD: { code: "USD", symbol: "$", flag: "🇺🇸", name: "US Dollar", basePrice: Math.round(PRICE_AED * AED_TO_USD_RATE) },
 }
 
 export const PRICES = {
-  visaApplication: 249, // Base price in AED
+  visaApplication: PRICE_AED, // Base price in AED (shared with the app: lib/shared/wizard-contract.ts)
 }
-
-// Conversion rate from AED to USD
-const AED_TO_USD_RATE = 0.28
 
 export function formatPrice(amountAED: number, currency: Currency): string {
   if (currency === "USD") {

@@ -61,12 +61,12 @@ export function CaseSummary({
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Created</dt>
-          <dd className="font-medium text-foreground">{formatDate(app.created_at) ?? "—"}</dd>
+          <dd className="font-medium text-foreground">{formatDate(app.created_at ?? undefined) ?? "—"}</dd>
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">Last update</dt>
           <dd className="font-medium text-foreground">
-            {formatDate(app.updated_at || app.created_at, "MMM d, h:mm a") ?? "—"}
+            {formatDate(app.updated_at || app.created_at || undefined, "MMM d, h:mm a") ?? "—"}
           </dd>
         </div>
       </dl>

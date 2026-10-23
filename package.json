@@ -6,7 +6,9 @@
     "build": "next build --webpack",
     "dev": "next dev",
     "lint": "tsc --noEmit",
-    "start": "next start"
+    "start": "next start",
+    "sync:check": "node scripts/check-app-sync.mts",
+    "test:payments": "npx tsx scripts/test-ziina-payment.mts"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",

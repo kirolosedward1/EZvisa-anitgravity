@@ -282,7 +282,7 @@ export default function AdminPage() {
         {/* Filter & Search Bar */}
         <div className="flex flex-col md:flex-row gap-4 justify-between bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
           <div className="flex flex-wrap gap-2">
-            {["all", "submitted", "reviewing", "ready", "cancelled"].map((st) => (
+            {["all", "draft", "submitted", "reviewing", "awaiting_documents", "ready", "completed", "rejected", "cancelled"].map((st) => (
               <button
                 key={st}
                 onClick={() => {

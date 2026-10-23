@@ -1,36 +1,9 @@
-export const SCHENGEN_COUNTRIES = [
-  "Austria",
-  "Belgium",
-  "Bulgaria",
-  "Croatia",
-  "Czech Republic",
-  "Denmark",
-  "Estonia",
-  "Finland",
-  "France",
-  "Germany",
-  "Greece",
-  "Hungary",
-  "Iceland",
-  "Italy",
-  "Latvia",
-  "Liechtenstein",
-  "Lithuania",
-  "Luxembourg",
-  "Malta",
-  "Netherlands",
-  "Norway",
-  "Poland",
-  "Portugal",
-  "Romania",
-  "Slovakia",
-  "Slovenia",
-  "Spain",
-  "Sweden",
-  "Switzerland",
-] as const
+// Schengen destinations come from the website ↔ app contract (lib/shared/wizard-contract.ts).
+import { SCHENGEN, countrySlug } from "@/lib/shared/wizard-contract"
 
-export type SchengenCountry = (typeof SCHENGEN_COUNTRIES)[number]
+export const SCHENGEN_COUNTRIES: readonly string[] = SCHENGEN
+
+export type SchengenCountry = string
 
 export const countryFlags: Record<string, string> = {
   Austria: "🇦🇹",
@@ -97,7 +70,7 @@ export const SCHENGEN_META: Record<string, { iso: string; ar: string }> = {
 }
 
 export function countryToSlug(country: string): string {
-  return country.toLowerCase().replace(/\s+/g, "-")
+  return countrySlug(country)
 }
 
 export function slugToCountry(slug: string): string | null {
