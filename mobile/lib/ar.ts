@@ -563,7 +563,7 @@ export const AR: Record<string, string> = {
   "Edit photo": "تعديل الصورة", "Add photo": "إضافة صورة", "Remove photo": "إزالة الصورة", "Remove photo?": "إزالة الصورة؟", "Profile photo": "صورة الملف الشخصي",
   // ---- country screen (country v2) ----
 "Schengen visa for {c}": "تأشيرة شنغن إلى {c}", "Money back if the visa is refused": "استرداد المبلغ إذا رُفضت التأشيرة",
-  "Continue your {c} application": "أكمل طلبك إلى {c}", "View your application": "عرض طلبك", "Share": "مشاركة", "Schengen short-stay visa": "تأشيرة شنغن للإقامة القصيرة",
+  "Continue your {c} application": "أكمل طلبك إلى {c}", "View your application": "عرض طلبك", "Schengen short-stay visa": "تأشيرة شنغن للإقامة القصيرة",
   "At a glance": "نظرة سريعة", "Stay": "مدة الإقامة", "Up to 90 days in any 180 days": "حتى 90 يومًا خلال أي 180 يومًا", "When to apply": "متى تقدّم",
   "Between 6 months and 15 days before you travel": "بين 6 أشهر و15 يومًا قبل سفرك", "Visa centre": "مركز التأشيرات", "{p}, Dubai and Abu Dhabi": "\u200F{p}، دبي وأبوظبي",
   "Shows the addresses": "يعرض العناوين", "We prepare your file. Money back if the visa is refused.": "نحن نُعدّ ملفك. نردّ المبلغ إذا رُفضت التأشيرة.",
