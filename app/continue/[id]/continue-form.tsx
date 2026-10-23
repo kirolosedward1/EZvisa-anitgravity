@@ -12,6 +12,7 @@ import { EmploymentStep } from "@/components/apply/employment-step"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { ChoiceList, ChoiceRow, FieldError, WizardQuestion, wizardFieldClass, wizardLabelClass } from "@/components/apply/wizard-choices"
 import { LangText } from "@/components/lang-text"
+import { normalizePassport } from "@/lib/digits"
 import { cn } from "@/lib/utils"
 import type { DetailStep } from "@/lib/application-status"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
@@ -221,7 +222,8 @@ export function ContinueForm({
                 <input
                   id="passportNumber"
                   value={form.passportNumber || ""}
-                  onChange={(event) => { update({ passportNumber: event.target.value.toUpperCase() }); setPassportErrors(false) }}
+                  onChange={(event) => { update({ passportNumber: normalizePassport(event.target.value) }); setPassportErrors(false) }}
+                  inputMode="text"
                   placeholder="e.g. N1234567"
                   autoCapitalize="characters"
                   autoCorrect="off"
