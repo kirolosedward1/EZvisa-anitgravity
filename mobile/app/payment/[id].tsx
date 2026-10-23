@@ -57,7 +57,8 @@ export default function PaymentResult() {
   const [attempt, setAttempt] = useState(0);
   const headStart = preview === "slow" ? PAYMENT_SLOW_MS : preview === "stalled" ? PAYMENT_STALL_MS : 0;
   const elapsed = usePaymentWaitClock(state === "checking", attempt, headStart);
-  const run = useRef(0); const returned = useRef(returnedParam === "cancel" || returnedParam === "closed" ? returnedParam : "success");
+  const run = useRef(0); const pollSleep = useRef<(() => void) | null>(null);
+  const returned = useRef(returnedParam === "cancel" || returnedParam === "closed" ? returnedParam : "success");
   const stateRef = useRef<State>(initialState);
   const OUTCOME: Partial<Record<State, "paid" | "pending" | "failed" | "cancelled">> = { paid: "paid", confirming: "paid", pending: "pending", failed: "failed", cancelled: "cancelled" };
   const show = (s: State) => { const o = OUTCOME[s]; if (o && stateRef.current !== s) track("payment_finished", { outcome: o }); stateRef.current = s; setState(s); };
@@ -90,7 +91,16 @@ export default function PaymentResult() {
       if (s.intent === "completed" && stateRef.current !== "confirming") { show("confirming"); success(); }
       if (s.intent && (s.intent === "completed" || PROCESSING.includes(s.intent))) until = Math.max(until, started + POLL_FOR);
       if (Date.now() > until) { show(unsettled(s, returned.current)); return; }
-      await new Promise((r) => setTimeout(r, POLL_MS));
+      let cancel: () => void = () => {};
+      await new Promise<void>((resolve) => {
+        const timer = setTimeout(resolve, POLL_MS);
+        cancel = () => { clearTimeout(timer); resolve(); };
+        const previous = pollSleep.current;
+        pollSleep.current = cancel;
+        previous?.();
+      });
+      if (pollSleep.current === cancel) pollSleep.current = null;
+      if (run.current !== me) return;
     }
   };
 
@@ -109,7 +119,11 @@ export default function PaymentResult() {
     } finally { quietBusy.current = false; }
   };
 
-  useEffect(() => { if (preview) return; const h = setTimeout(verify, 0); return () => { clearTimeout(h); run.current++; }; }, [id, !!session, preview]);
+  useEffect(() => {
+    if (preview) return;
+    const h = setTimeout(verify, 0);
+    return () => { clearTimeout(h); const wake = pollSleep.current; pollSleep.current = null; wake?.(); run.current++; };
+  }, [id, !!session, preview]);
   useEffect(() => {
     if (preview) return;
     const tick = setInterval(() => { if (Date.now() - openedAt.current < QUIET_FOR) quiet(); }, QUIET_EVERY);
