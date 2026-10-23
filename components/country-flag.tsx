@@ -5,7 +5,7 @@ type FlagComponent = (props: SVGProps<SVGSVGElement>) => React.JSX.Element
 
 const FLAG_COMPONENTS = Flags as unknown as Record<string, FlagComponent | undefined>
 
-/** SVG flag from country-flag-icons. 20×15, 2px radius, 1px #E3E7EF border. */
+/** SVG flag from country-flag-icons. 3:2 at 24×16, 2px radius, 1px #E3E7EF border. No square frame. */
 export function CountryFlag({ iso, title }: { iso?: string | null; title?: string }) {
   const code = iso?.trim().toUpperCase() ?? ""
   const Flag = code ? FLAG_COMPONENTS[code] : undefined
@@ -13,7 +13,7 @@ export function CountryFlag({ iso, title }: { iso?: string | null; title?: strin
     return (
       <span
         aria-hidden
-        className="inline-block h-[15px] w-5 shrink-0 rounded-[2px] border border-[#E3E7EF] bg-[#F7F8FA]"
+        className="inline-block h-4 w-6 shrink-0 rounded-[2px] border border-[#E3E7EF] bg-[#F7F8FA]"
       />
     )
   }
@@ -22,7 +22,7 @@ export function CountryFlag({ iso, title }: { iso?: string | null; title?: strin
       role={title ? "img" : undefined}
       aria-label={title || undefined}
       aria-hidden={title ? undefined : true}
-      className="h-[15px] w-5 shrink-0 rounded-[2px] border border-[#E3E7EF] object-cover"
+      className="h-4 w-6 shrink-0 rounded-[2px] border border-[#E3E7EF] object-cover"
     />
   )
 }

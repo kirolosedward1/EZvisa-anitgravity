@@ -47,7 +47,7 @@ export default function PricingPage() {
           gradientType="default"
         >
           <div className="flex flex-col items-center gap-3">
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border border-emerald-500/20">
+            <div className="inline-flex items-center gap-2 bg-[#0436DC] px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider text-white">
               <Sparkles className="w-3.5 h-3.5" />
               Most Popular Choice
             </div>

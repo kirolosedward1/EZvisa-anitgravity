@@ -587,7 +587,7 @@ function ApplyPageContent() {
               <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                 <div className="flex items-center gap-2">
                   <span>Step {currentVisualStep} of {totalSteps}</span>
-                  {lastSaved && <span className="text-emerald-500 font-medium">✓ Saved</span>}
+                  {lastSaved && <span className="text-[13px] font-medium text-[#1A7F37]">✓ Saved</span>}
                 </div>
                 <span>{Math.round(progressPercentage)}% complete</span>
               </div>
@@ -615,7 +615,7 @@ function ApplyPageContent() {
                   <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
                     <div className="flex items-center gap-2">
                       <span>Step {currentVisualStep} of {totalSteps}</span>
-                      {lastSaved && <span className="text-emerald-500 font-medium">✓ Saved</span>}
+                      {lastSaved && <span className="text-[13px] font-medium text-[#1A7F37]">✓ Saved</span>}
                     </div>
                     <span>{Math.round(progressPercentage)}% complete</span>
                   </div>

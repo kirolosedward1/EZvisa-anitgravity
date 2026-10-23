@@ -322,7 +322,7 @@ body {
   line-height: 1.4;
 }
 
-/* Arabic is one step lighter: 600→500, 500→400, 400→300. */
+/* Arabic headings are one step lighter (600 → 500). Body stays 400. Labels stay 500. */
 [dir="rtl"] h1,
 [dir="rtl"] h2,
 [dir="rtl"] h3,
@@ -333,12 +333,12 @@ body {
 [dir="rtl"] .font-medium,
 [dir="rtl"] .type-eyebrow,
 [dir="rtl"] .site-menu-item {
-  font-weight: 400;
+  font-weight: 500;
 }
 
 [dir="rtl"] body,
 [dir="rtl"] .font-normal {
-  font-weight: 300;
+  font-weight: 400;
 }
 
 /* Photo heroes use the dark pre-169d011 scrim, so copy is white.

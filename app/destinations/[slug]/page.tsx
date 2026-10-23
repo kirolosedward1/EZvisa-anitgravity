@@ -220,7 +220,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#5B6475]">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white/90">
             <Star className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
             <span>Over 5,000+ Schengen visas processed successfully.</span>
           </div>

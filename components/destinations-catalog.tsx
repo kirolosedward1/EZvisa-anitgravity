@@ -10,6 +10,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { ReadyLine } from "@/components/ready-line"
 import { LangText } from "@/components/lang-text"
+import { CountryFlag } from "@/components/country-flag"
+import { SCHENGEN_META } from "@/lib/countries"
 
 type TabType = "all" | "schengen" | "non-schengen"
 
@@ -132,14 +134,7 @@ export function DestinationsCatalog() {
                     {/* Bottom Info Details */}
                     <div className="absolute bottom-5 left-5 right-5 z-20 text-white flex flex-col pointer-events-none transition-transform duration-300 group-hover:-translate-y-1">
                       <span className="text-[10px] font-semibold text-accent uppercase tracking-wider mb-0.5 flex items-center gap-1.5">
-                        <span className="relative w-3.5 h-3.5 rounded-full overflow-hidden inline-block flex-shrink-0">
-                          <Image
-                            src={`/flags/${country.slug}.png`}
-                            alt=""
-                            fill
-                            className="object-cover"
-                          />
-                        </span>
+                        <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
                         <span>{country.visaType}</span>
                       </span>
                       <h3 className="text-lg font-semibold tracking-tight mb-1">

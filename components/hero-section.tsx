@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
 import { LangText } from "@/components/lang-text"
+import { SCHENGEN_META } from "@/lib/countries"
 import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
 import { CountryFlag } from "@/components/country-flag"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
@@ -302,7 +303,7 @@ export function HeroSection() {
                           <div className="min-w-0 flex-1">
                             {toCountry ? (
                               <div className="flex items-center gap-2">
-                                <CountryFlag iso={toCitizenshipIso(toCountry)} title={toCountry} />
+                                <CountryFlag iso={SCHENGEN_META[toCountry]?.iso} title={toCountry} />
                                 <span className="text-base font-semibold truncate text-foreground">{toCountry}</span>
                               </div>
                             ) : (
@@ -331,7 +332,7 @@ export function HeroSection() {
                                   className="cursor-pointer py-3 px-4 text-base rounded-xl hover:bg-primary/10 transition-colors my-1"
                                 >
                                   <div className="flex items-center gap-3">
-                                    <CountryFlag iso={toCitizenshipIso(country)} title={country} />
+                                    <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
                                     <span className="font-medium">{country}</span>
                                   </div>
                                 </CommandItem>
@@ -378,7 +379,7 @@ export function HeroSection() {
                         <div className="flex items-start gap-3">
                           <div className="flex items-center -space-x-2.5 flex-shrink-0 mt-1">
                             <CountryFlag iso={toCitizenshipIso(fromCountry)} title={fromLabel} />
-                            <CountryFlag iso={toCitizenshipIso(toCountry)} title={toCountry} />
+                            <CountryFlag iso={SCHENGEN_META[toCountry]?.iso} title={toCountry} />
                           </div>
                           <div>
                             <div className="font-semibold text-foreground text-sm md:text-base">

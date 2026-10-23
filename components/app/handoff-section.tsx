@@ -1,8 +1,8 @@
 "use client"
 
 import { useLayoutEffect, useRef, useState } from "react"
-import Image from "next/image"
 import { motion, useReducedMotion } from "framer-motion"
+import { CountryFlag } from "@/components/country-flag"
 import { Check, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -24,9 +24,7 @@ function ApplicationCard({ className }: { className?: string }) {
   return (
     <div className={cn("flex h-full w-full flex-col gap-2 rounded-2xl bg-primary p-4 text-primary-foreground", className)}>
       <div className="flex items-center gap-2">
-        <span className="relative h-6 w-6 overflow-hidden rounded-full">
-          <Image src="/flags/germany.png" alt="" fill sizes="24px" className="object-cover" />
-        </span>
+        <CountryFlag iso="DE" title="Germany" />
         <span className="text-sm font-semibold">Germany</span>
       </div>
       <span className="text-xs opacity-85">Draft · Trip details</span>

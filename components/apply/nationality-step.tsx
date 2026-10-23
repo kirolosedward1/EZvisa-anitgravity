@@ -2,8 +2,9 @@
 
 import { DEFAULT_RESIDENCE, UAE_EMIRATES } from "@/lib/residence"
 import type React from "react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { CountryFlag } from "@/components/country-flag"
+import { SCHENGEN_META } from "@/lib/countries"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
@@ -202,14 +203,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
               >
                 {formData.destination ? (
                   <div className="flex items-center gap-2">
-                    <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
-                      <Image
-                        src={`/flags/${formData.destination.toLowerCase().replace(/\s+/g, "-")}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
+                    <CountryFlag iso={SCHENGEN_META[formData.destination]?.iso} title={formData.destination} />
                     <span className="font-medium text-foreground">{formData.destination}</span>
                   </div>
                 ) : (
@@ -242,14 +236,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
                             formData.destination === country.name ? "opacity-100" : "opacity-0",
                           )}
                         />
-                        <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block mr-2 flex-shrink-0 border border-border/50">
-                          <Image
-                            src={`/flags/${country.name.toLowerCase().replace(/\s+/g, "-")}.png`}
-                            alt=""
-                            fill
-                            className="object-cover"
-                          />
-                        </span>
+                        <span className="mr-2"><CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} /></span>
                         <span className="text-foreground">{country.name}</span>
                       </CommandItem>
                     ))}
@@ -280,9 +267,7 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
         <div>
           <span className={labelStyles}>Country of Residence *</span>
           <div className={cn(inputStyles, "w-full flex items-center gap-2 font-medium")} aria-label="Country of Residence: United Arab Emirates">
-            <span className="relative w-5 h-5 rounded-full overflow-hidden inline-block flex-shrink-0 border border-border/50 shadow-sm">
-              <Image src="/flags/united-arab-emirates.png" alt="" fill className="object-cover" />
-            </span>
+            <CountryFlag iso="AE" title="United Arab Emirates" />
             <span className="font-medium text-foreground">{formData.countryOfResidence || DEFAULT_RESIDENCE}</span>
           </div>
         </div>

@@ -174,7 +174,7 @@ export function Footer({
                     href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[#25D366] hover:text-[#128C7E] hover:underline transition-colors font-medium"
+                    className="inline-flex items-center gap-1 text-[#1A7F37] hover:underline transition-colors font-medium"
                   >
                     <LangText en="Chat with us on WhatsApp" ar="تحدث معنا على واتساب" />
                     <ArrowUpRight className="h-3.5 w-3.5" />

@@ -6,6 +6,8 @@ import { ArrowRight, MoveRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
+import { CountryFlag } from "@/components/country-flag"
+import { SCHENGEN_META } from "@/lib/countries"
 
 export function PopularDestinations() {
   // Filter only popular destinations (first 5: France, Italy, Spain, Germany, Switzerland)
@@ -71,14 +73,7 @@ export function PopularDestinations() {
                 {/* Bottom Card Content */}
                 <div className="absolute bottom-6 left-5 right-5 z-20 text-white flex flex-col transition-transform duration-300 group-hover:-translate-y-1">
                   <span className="text-xs font-semibold text-accent/90 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <span className="relative w-4 h-4 rounded-full overflow-hidden inline-block flex-shrink-0">
-                      <Image
-                        src={`/flags/${country.slug}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
+                    <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
                     <span>{country.visaType}</span>
                   </span>
                   <h3 className="text-xl font-semibold tracking-tight mb-1">

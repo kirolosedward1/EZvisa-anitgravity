@@ -1,10 +1,10 @@
 "use client"
 
 import Link from "next/link"
-import Image from "next/image"
 import { ArrowRight } from "lucide-react"
 import { motion } from "framer-motion"
-import type { CountryData } from "@/lib/countries"
+import { SCHENGEN_META, type CountryData } from "@/lib/countries"
+import { CountryFlag } from "@/components/country-flag"
 import { ReadyLine } from "@/components/ready-line"
 
 interface CountryCardProps {
@@ -22,14 +22,7 @@ export function CountryCard({ country }: CountryCardProps) {
         {/* Mobile: compact horizontal layout */}
         <div className="md:hidden bg-card rounded-xl px-4 py-3 border border-border hover:border-primary hover:shadow-md transition-all duration-300">
           <div className="flex items-center gap-3">
-            <div className="relative w-8 h-8 rounded-full overflow-hidden shadow-sm border border-gray-100 flex-shrink-0">
-              <Image
-                src={`/flags/${country.slug}.png`}
-                alt=""
-                fill
-                className="object-cover"
-              />
-            </div>
+            <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
             <div className="flex-1 min-w-0">
               <h3 className="text-base font-medium group-hover:text-primary transition-colors">{country.name}</h3>
               <ReadyLine className="text-xs text-muted-foreground" />
@@ -41,14 +34,7 @@ export function CountryCard({ country }: CountryCardProps) {
         {/* Desktop: original vertical layout */}
         <div className="hidden md:block bg-card rounded-2xl p-6 border border-border hover:border-primary hover:shadow-lg transition-all duration-300 h-full">
           <div className="flex items-start justify-between mb-4">
-            <div className="relative w-12 h-12 rounded-full overflow-hidden shadow-sm border border-gray-100 flex-shrink-0">
-              <Image
-                src={`/flags/${country.slug}.png`}
-                alt=""
-                fill
-                className="object-cover"
-              />
-            </div>
+            <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
             <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
           <h3 className="text-xl font-medium mb-1 group-hover:text-primary transition-colors">{country.name}</h3>
