@@ -85,7 +85,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     }
     apply()
     const observer = new ResizeObserver(apply)
-    observer.observe(el)
+    observer.observe(el, { box: "border-box" })
     return () => observer.disconnect()
     // The minimal bar and the full header are different elements: measure whichever is mounted.
   }, [isMinimal])
