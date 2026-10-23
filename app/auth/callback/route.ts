@@ -1,13 +1,12 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { safeNextPath } from "@/lib/safe-next"
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get("code")
-  const rawNext = searchParams.get("next") ?? "/dashboard"
-  // Prevent open redirects: enforce internal relative path starting with / and not //
-  const isSafeRelativePath = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":")
-  const next = isSafeRelativePath ? rawNext : "/dashboard"
+  // Prevent open redirects (also rejects "/\\evil.com", which browsers read as "//evil.com").
+  const next = safeNextPath(searchParams.get("next"))
   const type = searchParams.get("type") // e.g. "recovery"
 
   if (code) {

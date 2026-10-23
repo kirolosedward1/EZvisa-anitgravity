@@ -11,12 +11,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
+import { safeNextPath } from "@/lib/safe-next"
 
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const rawNext = searchParams.get("next") || "/dashboard"
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const next = safeNextPath(searchParams.get("next"))
   const urlError = searchParams.get("error")
 
   const [mode, setMode] = useState<"password" | "magic-link">("password")

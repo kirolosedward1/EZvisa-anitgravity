@@ -40,13 +40,10 @@ async function getDashboardData(token: string) {
     return null;
   }
 
-  const { data: relatedApps } = await supabase
-    .from("visa_applications")
-    .select("id, tracking_token, destination_country, full_name, created_at, updated_at, application_status, payment_status, has_passport, has_photos, has_bank_statements, has_employment_proof")
-    .eq("email", mainApp.email)
-    .order('created_at', { ascending: false });
-
-  return { mainApp, relatedApps: relatedApps || [] };
+  // A tracking token is a bearer link for ONE application. Never list (or link to) other applications that share
+  // the email: the email on a guest application is unverified, so anyone could file a case under someone else's
+  // address and use its token to read their tokens. Signed-in owners see all their cases on /dashboard.
+  return { mainApp, relatedApps: [mainApp] };
 }
 
 

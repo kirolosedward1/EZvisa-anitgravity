@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { EmailService } from "@/lib/email/service";
+import { Templates } from "@/lib/email/templates";
 import { createClient } from "@supabase/supabase-js";
+import { hasBearerSecret } from "@/lib/bearer-auth";
 
 export async function POST(request: Request) {
   try {
     const authHeader = request.headers.get("Authorization");
     const secret = process.env.ADMIN_API_SECRET;
     
-    if (!secret || authHeader !== `Bearer ${secret}`) {
+    if (!hasBearerSecret(authHeader, secret)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -16,11 +18,17 @@ export async function POST(request: Request) {
     if (!event || !application_id) {
       return NextResponse.json({ error: "Missing event or application_id" }, { status: 400 });
     }
+    if (typeof event !== "string" || !Object.prototype.hasOwnProperty.call(Templates, event)) {
+      return NextResponse.json({ error: "Unknown email event" }, { status: 400 });
+    }
 
     // Fetch application details
     const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
-    const supabase = createClient(supabaseUrl!, supabaseKey!);
+    if (!supabaseUrl || !supabaseKey) {
+      return NextResponse.json({ error: "Database unconfigured" }, { status: 500 });
+    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     const { data: app, error } = await supabase
       .from("visa_applications")
@@ -69,6 +77,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[admin] trigger-email failed", error?.message);
+    return NextResponse.json({ error: "Could not send the email" }, { status: 500 });
   }
 }

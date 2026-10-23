@@ -8,13 +8,14 @@ import {
   generateCompleteDossierPack
 } from "@/lib/documents/templates"
 import crypto from "crypto"
+import { hasBearerSecret } from "@/lib/bearer-auth"
 
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get("Authorization");
     const secret = process.env.ADMIN_API_SECRET;
     
-    if (!secret || authHeader !== `Bearer ${secret}`) {
+    if (!hasBearerSecret(authHeader, secret)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

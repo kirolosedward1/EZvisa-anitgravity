@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { isAllowedPaymentOrigin, paymentCorsHeaders, paymentReturnUrl } from "@/lib/cors"
 import { applyIntentStatus, fetchIntent, isPaidStatus, OPEN_INTENT_STATUSES, priceForApplication, UUID_RE } from "@/lib/ziina"
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
       const errorText = await response.text()
       console.error("[v0] Ziina API error:", errorText)
       return json(
-        { error: "Failed to create payment intent", details: errorText },
+        { error: "Failed to create payment intent" },
         { status: response.status },
       )
     }
@@ -159,9 +160,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // LINK PAYMENT TO APPLICATION
-    const { error: linkError } = await supabase.from("visa_applications").update({ payment_id: data.id }).eq("id", applicationId)
-    if (linkError) console.error("[payment] Failed to link payment to application", linkError.code)
+    // LINK PAYMENT TO APPLICATION. The previously linked intent can still be open in another tab or device, so every
+    // intent ever issued for this application is also kept in additional_notes.paymentIntentIds; applyIntentStatus
+    // falls back to that list, so paying an older intent still marks the application paid instead of orphaning it.
+    await linkIntent(supabase, applicationId, data.id)
 
     console.log("[payment] Payment intent created", { id: data.id, ms: Date.now() - started })
     return json({ ...data, elapsedMs: Date.now() - started })
@@ -172,9 +174,34 @@ export async function POST(request: NextRequest) {
       {
         error: timedOut ? "Ziina took too long to respond. Retry." : "Failed to create payment intent",
         elapsedMs: Date.now() - started,
-        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: timedOut ? 504 : 500 },
     )
   }
+}
+
+async function linkIntent(supabase: SupabaseClient, applicationId: string, intentId: string) {
+  // Read-modify-write with a compare on updated_at; retried a few times if the row changed in between.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: cur, error } = await supabase
+      .from("visa_applications")
+      .select("additional_notes, updated_at")
+      .eq("id", applicationId)
+      .maybeSingle()
+    if (error || !cur) { console.error("[payment] Failed to load application to link payment", error?.code); return }
+    let notes: Record<string, any> = {}
+    try { const j = cur.additional_notes ? JSON.parse(cur.additional_notes) : {}; if (j && typeof j === "object") notes = j } catch { notes = { legacyNotes: cur.additional_notes } }
+    const ids: string[] = Array.isArray(notes.paymentIntentIds) ? notes.paymentIntentIds.filter((x: unknown) => typeof x === "string") : []
+    if (!ids.includes(intentId)) ids.push(intentId)
+    notes.paymentIntentIds = ids.slice(-20)
+    let q = supabase
+      .from("visa_applications")
+      .update({ payment_id: intentId, additional_notes: JSON.stringify(notes), updated_at: new Date().toISOString() })
+      .eq("id", applicationId)
+    q = cur.updated_at == null ? q.is("updated_at", null) : q.eq("updated_at", cur.updated_at)
+    const { data: rows, error: upError } = await q.select("id")
+    if (upError) { console.error("[payment] Failed to link payment to application", upError.code); return }
+    if (rows && rows.length) return
+  }
+  console.error("[payment] Could not link payment after retries", applicationId)
 }

@@ -1,7 +1,32 @@
 import type { VisaApplication } from "../types/visa-application"
 import { format, differenceInDays } from "date-fns"
+import { escapeHtml } from "../sanitize"
+
+/**
+ * Every value interpolated into these HTML documents comes from customer input (name, passport number, employer…)
+ * and the HTML is rendered on ezvisa.net (dossier viewer) and downloaded. Escape all strings, including the
+ * values inside additional_notes, before any template uses them.
+ */
+function escapeDeep(v: unknown): unknown {
+  if (typeof v === "string") return escapeHtml(v)
+  if (Array.isArray(v)) return v.map(escapeDeep)
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, escapeDeep(x)]))
+  return v
+}
+function safeApp(app: VisaApplication): VisaApplication {
+  const out: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(app)) {
+    if (k === "additional_notes") {
+      let notes: unknown = v
+      if (typeof v === "string") { try { notes = JSON.parse(v) } catch { notes = { legacyNotes: v } } }
+      out[k] = notes && typeof notes === "object" ? JSON.stringify(escapeDeep(notes)) : v
+    } else out[k] = escapeDeep(v)
+  }
+  return out as unknown as VisaApplication
+}
 
 export function generateCoverLetter(app: VisaApplication): string {
+  app = safeApp(app)
   // SOURCE OF TRUTH: Map each generated field back to the application/database.
   const fullName = app.full_name || "Applicant"
   const passportNumber = app.passport_number || "[MISSING_PASSPORT]"
@@ -83,6 +108,7 @@ export function generateCoverLetter(app: VisaApplication): string {
 }
 
 export function generateItinerary(app: VisaApplication): string {
+  app = safeApp(app)
   const fullName = app.full_name || "Applicant"
   const destination = app.destination_country || "[MISSING_DESTINATION]"
   let daysCount = 0;
@@ -150,6 +176,7 @@ export function generateItinerary(app: VisaApplication): string {
 }
 
 export function generateConsularChecklist(app: VisaApplication): string {
+  app = safeApp(app)
   const fullName = app.full_name || "Applicant"
   const passportNumber = app.passport_number || "[MISSING_PASSPORT]"
   const nationality = app.nationality || "[MISSING_NATIONALITY]"
@@ -296,6 +323,7 @@ export function generateConsularChecklist(app: VisaApplication): string {
 }
 
 export function generateAppointmentSurvivalGuide(app: VisaApplication): string {
+  app = safeApp(app)
   const fullName = app.full_name || "Applicant"
   const destination = app.destination_country || "[DESTINATION]"
   
@@ -372,11 +400,13 @@ export function generateAppointmentSurvivalGuide(app: VisaApplication): string {
   `.trim();
 }
 
-export function generateCompleteDossierPack(app: VisaApplication): string {
-  const coverLetter = generateCoverLetter(app)
-  const itinerary = generateItinerary(app)
-  const checklist = generateConsularChecklist(app)
-  const survivalGuide = generateAppointmentSurvivalGuide(app)
+export function generateCompleteDossierPack(rawApp: VisaApplication): string {
+  // The section generators escape on their own; escape here only for what this wrapper prints itself.
+  const coverLetter = generateCoverLetter(rawApp)
+  const itinerary = generateItinerary(rawApp)
+  const checklist = generateConsularChecklist(rawApp)
+  const survivalGuide = generateAppointmentSurvivalGuide(rawApp)
+  const app = safeApp(rawApp)
 
   return `
 <!DOCTYPE html>

@@ -1,117 +1,85 @@
 import { NextResponse } from "next/server"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
-import { sanitizeEmail } from "@/lib/sanitize"
+import { escapeHtml, sanitizeEmail } from "@/lib/sanitize"
 
-// Security: API key must come from environment variables only
+/**
+ * POST /api/send-email: the website contact form only.
+ * Body: { name, email, subject, message }. The recipient is always the EZvisa inbox and the HTML is built here,
+ * so this endpoint can't be used to send arbitrary mail from noreply@ezvisa.net (it used to accept to/subject/html).
+ */
 const RESEND_API_KEY = process.env.RESEND_API_KEY
-const ADMIN_EMAIL = "ezvisa.net@gmail.com"
-const FROM_EMAIL = "EZVisa <noreply@ezvisa.net>"
-const IS_SANDBOX_MODE = false
+const ADMIN_EMAIL = process.env.EMAIL_ADMIN_ADDRESS || "ezvisa.net@gmail.com"
+const FROM_EMAIL = "EZvisa <noreply@ezvisa.net>"
+
+const clean = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/[\r\n]+/g, " ").trim().slice(0, max) : "")
 
 export async function POST(request: Request) {
   try {
-    // Rate limiting (Redis-based)
     const clientIp = getClientIp(request)
-    const rateLimitResult = await checkRateLimit(`email:${clientIp}`, RATE_LIMITS.standard)
-    
+    // A Redis outage falls back to an in-memory window instead of letting every request through.
+    const rateLimitResult = await checkRateLimit(`contact:${clientIp}`, RATE_LIMITS.strict, { onError: "memory", timeoutMs: 3000 })
     if (!rateLimitResult.success) {
       return NextResponse.json(
-        { success: false, message: "Too many email requests" },
-        { status: 429, headers: rateLimitHeaders(rateLimitResult, RATE_LIMITS.standard) }
+        { success: false, message: "Too many messages. Please wait a minute and try again." },
+        { status: 429, headers: rateLimitHeaders(rateLimitResult, RATE_LIMITS.strict) },
       )
     }
 
-    const { to, subject, html, type } = await request.json()
-    
-    // Validate email recipient
-    const sanitizedTo = Array.isArray(to) ? to.map(sanitizeEmail).filter(Boolean) : sanitizeEmail(to)
-    if (!sanitizedTo || (Array.isArray(sanitizedTo) && sanitizedTo.length === 0)) {
-      return NextResponse.json({ success: false, message: "Invalid recipient email" }, { status: 400 })
+    const body = await request.json().catch(() => null)
+    const name = clean(body?.name, 120)
+    const email = sanitizeEmail(clean(body?.email, 200))
+    const subject = clean(body?.subject, 200)
+    const message = typeof body?.message === "string" ? body.message.trim().slice(0, 5000) : ""
+
+    if (!name || !email || !message) {
+      return NextResponse.json({ success: false, message: "Please fill in your name, a valid email and a message." }, { status: 400 })
     }
 
     if (!RESEND_API_KEY) {
-      console.error("[v0] RESEND_API_KEY not configured")
-      return NextResponse.json(
-        { success: false, message: "Email service not configured" },
-        { status: 500 }
-      )
+      console.error("[contact] RESEND_API_KEY not configured")
+      return NextResponse.json({ success: false, message: "Email service not configured" }, { status: 500 })
     }
 
-    // In sandbox mode, redirect all client emails to admin with a note
-    let finalRecipient = to
-    let finalSubject = subject
-    let finalHtml = html
-
-    if (IS_SANDBOX_MODE && type !== "admin_notification" && to !== ADMIN_EMAIL) {
-      console.log("[v0] Sandbox mode: Redirecting client email to admin")
-      finalRecipient = ADMIN_EMAIL
-      finalSubject = `[CLIENT EMAIL FOR: ${to}] ${subject}`
-      finalHtml = `
-        <div style="background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; padding: 16px; margin-bottom: 20px; font-family: Arial, sans-serif;">
-          <h3 style="margin: 0 0 8px 0; color: #856404;">📧 Testing Mode - Client Email</h3>
-          <p style="margin: 0; color: #856404;">
-            <strong>Original Recipient:</strong> ${to}<br>
-            <strong>Email Type:</strong> ${type}<br>
-            <strong>Note:</strong> To send to actual clients, verify your domain at resend.com/domains
-          </p>
-        </div>
-        ${html}
-      `
-    }
-
-    console.log("[v0] Final recipient:", finalRecipient)
+    const row = (label: string, value: string, shade: boolean) =>
+      `<tr${shade ? ' style="background: #f8fafc;"' : ""}><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold; width: 120px;">${label}</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${value}</td></tr>`
+    const html = `
+      <h2 style="color: #2563eb;">New Contact Form Submission</h2>
+      <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+        ${row("Name", escapeHtml(name), true)}
+        ${row("Email", escapeHtml(email), false)}
+        ${row("Subject", escapeHtml(subject || "(none)"), true)}
+        ${row("Message", escapeHtml(message).replace(/\n/g, "<br>"), false)}
+      </table>`
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
       body: JSON.stringify({
         from: FROM_EMAIL,
-        to: Array.isArray(finalRecipient) ? finalRecipient : [finalRecipient],
-        subject: finalSubject,
-        html: finalHtml,
+        to: [ADMIN_EMAIL],
+        reply_to: email,
+        subject: `EZvisa Contact: ${subject || name}`,
+        html,
       }),
+      signal: AbortSignal.timeout(12000),
     })
 
-    const data = await response.json()
-
     if (!response.ok) {
-      console.error("[v0] Resend API error:", data)
-      console.error("[v0] Error message:", data.message)
-      
-      // Return success anyway to not block the application flow
-      console.log("[v0] Returning success despite email error (non-blocking)")
+      const data = await response.json().catch(() => ({}))
+      console.error("[contact] Resend error:", response.status, data?.message)
+      // Tell the visitor: previously this returned success, so failed messages were silently lost.
       return NextResponse.json(
-        {
-          success: true,
-          message: "Application submitted (email pending)",
-          warning: "Email delivery pending domain verification",
-          error: data.message,
-        },
-        { status: 200 }
+        { success: false, message: "We couldn't send your message. Please try again or reach us on WhatsApp." },
+        { status: 502 },
       )
     }
 
-    console.log("[v0] Email sent successfully:", data.id)
-    return NextResponse.json({
-      success: true,
-      message: "Email sent successfully",
-      emailId: data.id,
-      sandboxMode: IS_SANDBOX_MODE && type !== "admin_notification",
-    })
+    return NextResponse.json({ success: true, message: "Message sent" })
   } catch (error) {
-    console.error("[v0] Email sending error:", error)
-    
-    // Return success to not block application flow
+    console.error("[contact] send error:", error instanceof Error ? error.message : error)
     return NextResponse.json(
-      {
-        success: true,
-        message: "Application submitted (email error occurred)",
-        error: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 200 }
+      { success: false, message: "We couldn't send your message. Please try again or reach us on WhatsApp." },
+      { status: 500 },
     )
   }
 }

@@ -322,7 +322,8 @@ export async function POST(request: Request) {
     }
 
     if (error || !data?.[0]) {
-      return NextResponse.json({ success: false, message: "Failed to save application", error }, { status: 500 })
+      console.error("[submit] insert failed:", error?.code)
+      return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
     }
 
     const application = data[0];
@@ -359,7 +360,6 @@ export async function POST(request: Request) {
       {
         success: false,
         message: "Error submitting application",
-        error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
     )

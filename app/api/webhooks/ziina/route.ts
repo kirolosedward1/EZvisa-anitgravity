@@ -69,29 +69,7 @@ export async function POST(request: Request) {
     }
     logger.log("Payment status verified", { paymentId: intent.id, status: result.status, changed: result.changed }, { prefix: "WEBHOOK", forceLog: true })
 
-    // Email once, on the transition only (Ziina retries and check-payment can apply the same status).
-    if (result.changed && (result.status === "paid" || result.status === "failed") && result.row.email) {
-      try {
-        const { EmailService } = await import("@/lib/email/service")
-        const application = result.row
-        await EmailService.sendEvent({
-          event: result.status === "paid" ? "payment.completed" : "payment.failed",
-          entityId: application.id,
-          recipient: application.email,
-          language: application.preferred_language || "en",
-          data: {
-            id: application.id,
-            trackingToken: application.tracking_token,
-            firstName: application.full_name?.split(" ")[0] || "Customer",
-            destination: application.destination_country || "",
-            paymentAmount: typeof intent.amount === "number" ? intent.amount / 100 : 0,
-            currency: intent.currency_code || "AED",
-          },
-        })
-      } catch (emailError) {
-        logger.error("Failed to send payment email", emailError, { prefix: "WEBHOOK" })
-      }
-    }
+    // The payment email is sent inside applyIntentStatus, on the stored transition (any path).
 
     return NextResponse.json({ success: true, message: "Webhook processed", paymentId: intent.id, status: result.status })
   } catch (error) {

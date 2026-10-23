@@ -66,16 +66,19 @@ export async function POST(request: Request) {
 
   const patch: Record<string, string> = { additional_notes: JSON.stringify(notes) }
   if (passportNumber) patch.passport_number = passportNumber
-  if (start) {
-    patch.entry_date = start
-    patch.travel_start_date = start
-  }
-  if (end) {
-    patch.exit_date = end
-    patch.travel_end_date = end
-  }
+  // entry_date / exit_date are the real columns (readers fall back to travel_*_date for old rows only). Writing
+  // travel_*_date too made the whole update fail where those columns don't exist.
+  if (start) patch.entry_date = start
+  if (end) patch.exit_date = end
 
-  const { error } = await supabase.from("visa_applications").update(patch).eq("id", id).eq("email", email)
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  const { data: saved, error } = await supabase.from("visa_applications").update(patch).eq("id", id).eq("email", email).select("id")
+  if (error) {
+    console.error("[continue-application] update failed", error.code)
+    return NextResponse.json({ error: "Could not save your answers. Please try again." }, { status: 400 })
+  }
+  // RLS only lets customers update draft/submitted/reviewing rows: zero rows means nothing was saved.
+  if (!saved?.length) {
+    return NextResponse.json({ error: "This application can no longer be edited here. Please contact support." }, { status: 409 })
+  }
   return NextResponse.json({ ok: true })
 }

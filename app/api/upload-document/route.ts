@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       userEmail = userData.user.email.toLowerCase()
     }
 
-    let query = supabase.from("visa_applications").select("id, email, payment_status");
+    let query = supabase.from("visa_applications").select("id, email, payment_status, application_status");
     if (trackingToken) query = query.eq("tracking_token", trackingToken);
     else query = query.eq("id", applicationId);
 
@@ -117,8 +117,12 @@ export async function POST(request: NextRequest) {
     if (appError || !appData || (userEmail && String(appData.email ?? "").toLowerCase() !== userEmail)) {
       return NextResponse.json({ error: "Application not found or unauthorized" }, { status: 403 })
     }
-    if (userEmail && !PAID.includes(String(appData.payment_status ?? ""))) {
+    // Same rule for the tracking-link path as for signed-in users: paid, open cases only.
+    if (!PAID.includes(String(appData.payment_status ?? ""))) {
       return NextResponse.json({ error: "Documents can be uploaded after payment" }, { status: 403 })
+    }
+    if (["cancelled", "rejected", "completed"].includes(String(appData.application_status ?? "").toLowerCase())) {
+      return NextResponse.json({ error: "This application is closed" }, { status: 403 })
     }
 
     const verifiedAppId = appData.id;
@@ -149,7 +153,8 @@ export async function POST(request: NextRequest) {
     // Update the boolean flag on the application based on document type
     const columnToUpdate = DOC_FLAGS[documentType];
     if (columnToUpdate) {
-      await supabase.from("visa_applications").update({ [columnToUpdate]: true }).eq("id", verifiedAppId);
+      const { error: flagError } = await supabase.from("visa_applications").update({ [columnToUpdate]: true }).eq("id", verifiedAppId);
+      if (flagError) console.error("[upload] could not set document flag", columnToUpdate, flagError.code)
     }
 
     return NextResponse.json({ success: true, path: uploadData.path })
