@@ -128,7 +128,7 @@ export function CookieConsent() {
     { key: "marketing", en: "Marketing", ar: "التسويق", enD: "Google Tag Manager ad tags, to measure our advertising.", arD: "وسوم الإعلانات عبر Google Tag Manager، لقياس إعلاناتنا." },
   ]
 
-  const btn = "h-10 rounded-lg px-4 text-sm font-semibold cursor-pointer transition-colors"
+  const btn = "h-10 min-w-28 rounded-lg px-4 text-sm font-semibold cursor-pointer transition-colors"
 
   return (
     <div
@@ -177,7 +177,7 @@ export function CookieConsent() {
         <button type="button" onClick={() => save(ALL)} className={`${btn} bg-[#0436DC] text-white hover:bg-[#032bb0]`}>
           <LangText en="Accept all" ar="قبول الكل" />
         </button>
-        <button type="button" onClick={() => save(DENIED)} className={`${btn} border border-[#0436DC] text-[#0436DC] hover:bg-[#0436DC]/5`}>
+        <button type="button" onClick={() => save(DENIED)} className={`${btn} bg-[#0436DC] text-white hover:bg-[#032bb0]`}>
           <LangText en="Reject" ar="رفض" />
         </button>
         {manage ? (

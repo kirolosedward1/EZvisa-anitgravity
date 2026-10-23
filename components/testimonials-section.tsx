@@ -1,5 +1,7 @@
 "use client"
 
+import { LangText } from "@/components/lang-text"
+
 import { Star, X, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -282,6 +284,7 @@ export function TestimonialsSection() {
           </motion.div>
         )}
       </AnimatePresence>
+      <div className="container mx-auto px-6"><p className="mt-6 text-center text-xs text-muted-foreground"><LangText en="Individual results vary. Visa decisions are made solely by the embassy/consulate." ar="النتائج تختلف من شخص لآخر. قرارات التأشيرة تصدر حصريًا عن السفارة أو القنصلية." /></p></div>
     </section>
   )
 }

@@ -79,7 +79,7 @@ Several providers store or access data outside the UAE (for example in the USA o
 | CRM leads that did not become customers | 12 months after last contact, or until you withdraw consent |
 | Marketing consent records | Until you unsubscribe, plus 2 years as proof of consent |
 | Analytics data | Up to 14 months (Google Analytics setting) |
-| Backups | Overwritten on a rolling cycle of up to [X] days |
+| Backups | Overwritten on a rolling cycle of up to 30 days |
 
 When retention ends, data is securely deleted or irreversibly anonymised.
 
@@ -100,7 +100,7 @@ Subject to applicable law, you have the right to:
 Send requests to {{EMAIL}} or WhatsApp +971 54 710 9533. We may need to verify your identity. We respond within 30 days (extendable where permitted by law). Requests are free unless manifestly unfounded or excessive.
 
 ## 9. Cookies
-We use essential cookies and, with your consent, analytics and chat/CRM cookies. See our [Cookie Policy](/cookie-policy) and manage choices via **Cookie settings** in the footer. Form data may be saved in your browser's local storage to preserve your progress until you submit it.
+We use essential cookies and, with your consent, analytics, marketing and chat cookies. See our [Cookie Policy](/cookie-policy) and manage choices via **Cookie settings** in the footer. Form data may be saved in your browser's local storage to preserve your progress until you submit it.
 
 ## 10. Third-party links
 Our site links to embassy, visa centre and other websites. We are not responsible for their privacy practices.
