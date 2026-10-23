@@ -1,235 +1,182 @@
 "use client"
 
-import { FileText, Plane, Hotel, Map, Mail, X, ShieldCheck } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
 import { useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
+import { motion } from "framer-motion"
+import { ArrowRight, FileText, Hotel, Mail, Map, Plane, ShieldCheck, BadgeCheck, Eye } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
-const services = [
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
+
+type Service = { icon: LucideIcon; title: string; summary: string; description: string; image: string }
+
+const services: Service[] = [
   {
     icon: FileText,
-    title: "Application forms",
+    title: "Application form",
+    summary: "Filled to the embassy's exact rules.",
     description: "Error-free visa application forms filled accurately to match official embassy and consulate guidelines.",
     image: "/images/documents/application-form.png",
   },
   {
     icon: Plane,
-    title: "Flight reservations",
+    title: "Flight reservation",
+    summary: "Verifiable, no full ticket needed.",
     description: "Verifiable flight reservations to satisfy embassy travel itinerary requirements without buying full tickets beforehand.",
     image: "/images/documents/flight-reservation.png",
   },
   {
     icon: Hotel,
-    title: "Hotel reservations",
+    title: "Hotel reservation",
+    summary: "Confirmed for every night of your stay.",
     description: "Confirmed hotel reservations covering your entire stay, matched directly to your daily travel itinerary.",
     image: "/images/documents/hotel-booking.png",
   },
   {
     icon: Map,
     title: "Travel itinerary",
+    summary: "Day by day, matched to your bookings.",
     description: "Custom day-by-day travel plan detailing your destination entry points, hotel stays, and planned activities.",
     image: "/images/documents/itinerary.png",
   },
   {
     icon: Mail,
     title: "Cover letter",
+    summary: "Your purpose, funds and ties, clearly put.",
     description: "Expertly drafted cover letter detailing your travel purpose, financial backing, and strong ties to your home country.",
     image: "/images/documents/cover-letter.png",
   },
   {
     icon: ShieldCheck,
     title: "Travel insurance",
+    summary: "€30,000 Schengen-compliant cover.",
     description: "Compliant Schengen medical travel insurance covering €30,000 for your entire stay in Europe.",
     image: "/images/documents/travel-insurance.jpeg",
   },
 ]
 
+function DocumentCard({ service, index, onOpen }: { service: Service; index: number; onOpen: () => void }) {
+  const Icon = service.icon
+  return (
+    <motion.button
+      type="button"
+      onClick={onOpen}
+      initial={{ opacity: 0, y: 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.4, delay: (index % 3) * 0.08 }}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-left shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
+      aria-label={`${service.title}: view a sample`}
+    >
+      {/* Sample preview: the real document as a sheet of paper, cropped and faded at the bottom */}
+      <div className="relative hidden h-52 overflow-hidden border-b border-border/70 bg-secondary sm:block">
+        <div className="absolute inset-x-8 top-6 bottom-0 overflow-hidden rounded-t-lg bg-background shadow-md ring-1 ring-border/70 transition-transform duration-500 group-hover:-translate-y-1.5 sm:inset-x-10">
+          <Image src={service.image} alt="" fill sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 360px" className="object-cover object-top" />
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-secondary to-transparent" />
+        <span className="absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-background/95 px-2.5 py-1 text-xs font-medium text-foreground opacity-0 shadow-sm ring-1 ring-border transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
+          <Eye className="size-3.5" aria-hidden="true" />
+          View sample
+        </span>
+      </div>
+
+      <div className="flex items-center gap-4 p-4 sm:items-start sm:gap-3.5 sm:p-5">
+        {/* Phones: a small thumbnail of the sample instead of the large preview */}
+        <span className="relative h-16 w-12 shrink-0 overflow-hidden rounded-md bg-background shadow-sm ring-1 ring-border sm:hidden">
+          <Image src={service.image} alt="" fill sizes="48px" className="object-cover object-top" />
+        </span>
+        <span className="hidden size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary sm:flex">
+          <Icon className="size-5" aria-hidden="true" />
+        </span>
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="text-base font-semibold tracking-tight text-foreground">{service.title}</span>
+          <span className="text-sm leading-relaxed text-muted-foreground">{service.summary}</span>
+        </span>
+        <ArrowRight className="ml-auto size-4 shrink-0 text-muted-foreground sm:hidden" aria-hidden="true" />
+      </div>
+    </motion.button>
+  )
+}
+
 export function ServicesSection() {
-  const [selectedService, setSelectedService] = useState<number | null>(null)
+  const [selected, setSelected] = useState<number | null>(null)
+  const current = selected === null ? null : services[selected]
+  const CurrentIcon = current?.icon
 
   return (
-    <section id="services" className="relative py-20 sm:py-28 bg-background/50 overflow-hidden">
-      {/* Background radial grid */}
-      <div
-        className="absolute inset-0 opacity-[0.12] pointer-events-none hidden md:block"
-        style={{
-          backgroundImage: "none",
-          backgroundSize: "32px 32px",
-          maskImage: "none",
-          WebkitMaskImage: "none",
-        }}
-      />
-
-      {/* Center Lady Image moved to grid */}
-
-      <div className="container mx-auto px-4 sm:px-6 md:px-12 relative z-10 max-w-7xl">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-            What's included
-          </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
-            Everything you need for a <br className="hidden sm:block" />
-            <span className="text-primary">successful visa application.</span>
+    <section id="services" className="relative overflow-hidden bg-background py-20 sm:py-28">
+      <div className="container relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">What&apos;s included</span>
+          <h2 className="text-3xl font-semibold leading-tight tracking-tight text-foreground text-balance sm:text-4xl md:text-5xl">
+            Every document your embassy file needs
           </h2>
-          <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
-            One flat fee. Five core documents prepared by seasoned travel visa experts. <span className="font-semibold text-foreground">Click any box below</span> to view full document details.
+          <p className="text-base leading-relaxed text-muted-foreground text-pretty">
+            Six documents, prepared and checked by our visa experts. Tap any of them to see a real sample.
           </p>
         </div>
 
-        {/* Surround Showcase Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
-          
-          {/* Left Side: 3 Document Cards */}
-          <div className="lg:col-span-4 flex flex-col gap-4">
-            {[0, 1, 2].map((index, i) => {
-              const service = services[index]
-              const Icon = service.icon
-              return (
-                <motion.button
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.1 }}
-                  whileHover={{ scale: 1.025, transition: { duration: 0.2 } }}
-                  onClick={() => setSelectedService(index)}
-                  className="group w-full text-left p-5 sm:p-6 rounded-3xl border border-border/80 bg-card hover:bg-primary/[0.02] hover:border-primary/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 cursor-pointer flex items-center gap-4.5"
-                >
-                  <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
-                    <Icon className="h-5.5 w-5.5" strokeWidth={2} />
-                  </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">
-                    {service.title}
-                  </h3>
-                </motion.button>
-              )
-            })}
-          </div>
-
-          {/* Center Hub: Soft Glowing Aura Background and Lady Image */}
-          <div className="lg:col-span-4 flex justify-center items-end relative py-8 lg:py-0 min-h-[400px] sm:min-h-[500px]">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-[800px] aspect-square rounded-full pointer-events-none" />
-            
-            <motion.div 
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="absolute -top-12 -bottom-20 -left-20 -right-20 z-0 pointer-events-none flex justify-center"
-            >
-              <Image
-                src="/images/woman-travel.png"
-                alt="EZvisa Travel Consultant"
-                fill
-                className="object-contain object-center select-none filter drop-shadow-2xl"
-                sizes="(max-width: 1024px) 100vw, 33vw"
-              />
-            </motion.div>
-          </div>
-
-          {/* Right Side: 3 Document Cards */}
-          <div className="lg:col-span-4 flex flex-col gap-4 justify-center">
-            {[3, 4, 5].map((index, i) => {
-              const service = services[index]
-              const Icon = service.icon
-              return (
-                <motion.button
-                  key={index}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.4, delay: i * 0.1 }}
-                  whileHover={{ scale: 1.025, transition: { duration: 0.2 } }}
-                  onClick={() => setSelectedService(index)}
-                  className="group w-full text-left p-5 sm:p-6 rounded-3xl border border-border/80 bg-card hover:bg-primary/[0.02] hover:border-primary/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-primary/10 cursor-pointer flex items-center gap-4.5"
-                >
-                  <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
-                    <Icon className="h-5.5 w-5.5" strokeWidth={2} />
-                  </div>
-                  <h3 className="text-base sm:text-lg font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">
-                    {service.title}
-                  </h3>
-                </motion.button>
-              )
-            })}
-          </div>
+        <div className="mt-10 grid grid-cols-1 gap-3 sm:mt-14 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+          {services.map((service, index) => (
+            <DocumentCard key={service.title} service={service} index={index} onOpen={() => setSelected(index)} />
+          ))}
         </div>
 
+        <div className="mt-8 flex flex-col items-center justify-between gap-5 rounded-2xl border border-border bg-secondary p-6 sm:flex-row sm:px-8">
+          <div className="flex items-center gap-4 text-center sm:text-left">
+            <span className="hidden size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary sm:flex">
+              <BadgeCheck className="size-5" aria-hidden="true" />
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <p className="text-base font-semibold text-foreground">
+                All six for {PRICE_AED} AED, one flat fee
+              </p>
+              <p className="text-sm text-muted-foreground">Money back if your visa is refused.</p>
+            </div>
+          </div>
+          <Link
+            href="/apply"
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+          >
+            Start your application
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+        </div>
       </div>
 
-      {/* Pop-up Modal Box */}
-      <AnimatePresence>
-        {selectedService !== null && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setSelectedService(null)}
-            className="fixed inset-0 bg-foreground/40 z-50 flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.92, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.92, y: 20 }}
-              transition={{ type: "spring" as const, damping: 26, stiffness: 340 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-background rounded-3xl max-w-3xl w-full shadow-2xl relative overflow-hidden border border-border flex flex-col md:flex-row max-h-[90vh] overflow-y-auto"
-            >
-              {/* Image Sample Panel */}
-              <div className="relative md:w-2/5 aspect-[16/11] md:aspect-auto min-h-[220px] bg-muted border-b md:border-b-0 md:border-r border-border/50">
-                <Image
-                  src={services[selectedService].image || "/placeholder.svg"}
-                  alt={services[selectedService].title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 400px"
-                  className="object-cover"
-                />
+      <Dialog open={current !== null} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto rounded-2xl p-0 sm:max-w-3xl">
+          {current && CurrentIcon ? (
+            <div className="flex flex-col md:flex-row">
+              <div className="relative aspect-[4/3] border-b border-border bg-secondary md:aspect-auto md:min-h-[440px] md:w-2/5 md:border-b-0 md:border-r">
+                <Image src={current.image} alt={`Sample ${current.title.toLowerCase()}`} fill sizes="(max-width: 768px) 100vw, 320px" className="object-contain p-4" />
               </div>
-
-              {/* Text Details Panel */}
-              <div className="flex-1 p-6 sm:p-8 md:p-10 relative flex flex-col justify-between">
-                {/* Close Button */}
-                <button
-                  onClick={() => setSelectedService(null)}
-                  className="absolute top-4 right-4 h-9 w-9 rounded-full bg-secondary border border-border hover:bg-muted text-muted-foreground hover:text-foreground transition-colors flex items-center justify-center z-10 cursor-pointer"
-                  aria-label="Close details"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-
-                <div>
-                  <div className="h-11 w-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4">
-                    {(() => {
-                      const SelectedIcon = services[selectedService].icon
-                      return <SelectedIcon className="h-5 w-5" strokeWidth={2} />
-                    })()}
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-semibold mb-3 tracking-tight text-foreground">
-                    {services[selectedService].title}
-                  </h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {services[selectedService].description}
-                  </p>
+              <div className="flex flex-1 flex-col justify-between gap-8 p-6 sm:p-8">
+                <div className="flex flex-col gap-4">
+                  <span className="flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <CurrentIcon className="size-5" aria-hidden="true" />
+                  </span>
+                  <DialogTitle className="text-2xl font-semibold leading-tight tracking-tight text-foreground">{current.title}</DialogTitle>
+                  <DialogDescription className="text-base leading-relaxed text-muted-foreground">{current.description}</DialogDescription>
                 </div>
-
-                <div className="mt-8 pt-5 border-t border-border flex items-center justify-between gap-4">
-                  <span className="text-xs text-muted-foreground font-medium">Included in Application Package</span>
+                <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-muted-foreground">Included in every application</span>
                   <Link
                     href="/apply"
-                    onClick={() => setSelectedService(null)}
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all shadow-md hover:shadow-xl hover:shadow-primary/20"
+                    onClick={() => setSelected(null)}
+                    className="inline-flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                   >
-                    Start Application
+                    Start your application
+                    <ArrowRight className="size-4" aria-hidden="true" />
                   </Link>
                 </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }
