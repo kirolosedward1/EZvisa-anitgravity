@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
+import { LangText } from "@/components/lang-text"
 
 export const metadata: Metadata = {
   title: "About EZvisa - Expert Schengen Visa Service | 98% Approval Rate",
@@ -46,11 +47,12 @@ export default function AboutPage() {
         />
 
         <InnerHero
-          badge="About Us"
+          badge={<LangText en="About Us" ar="من نحن" />}
           title={
-            <>
-              Your trusted partner for <span className="text-primary">Schengen visas</span>
-            </>
+            <LangText
+              en={<>Your trusted partner for <span className="text-primary">Schengen visas</span></>}
+              ar={<>شريكك الموثوق لـ <span className="text-primary">تأشيرات شنغن</span></>}
+            />
           }
           description="At EZvisa, we combine technology and expertise to simplify your travel preparation so embassies say yes."
           gradientType="ocean"

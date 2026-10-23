@@ -16,6 +16,7 @@ import { motion } from "framer-motion"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
+import { LangText } from "@/components/lang-text"
 import { FixedCTAButton } from "@/components/fixed-cta-button"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 
@@ -242,10 +243,13 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen">
         <InnerHero
-          badge="Requirements"
+          badge={<LangText en="Requirements" ar="المتطلبات" />}
           title={
             <>
-              Required Documents to Apply for a Tourist Visa in <span className="text-[#0436DC]">{selectedCountry}</span>
+              <LangText
+                en={<>Required Documents to Apply for a Tourist Visa in <span className="text-[#0436DC]">{selectedCountry}</span></>}
+                ar={<>المستندات المطلوبة لتأشيرة سياحية إلى <span className="text-[#0436DC]">{SCHENGEN_META[selectedCountry]?.ar || selectedCountry}</span></>}
+              />
             </>
           }
           description={`Complete checklist of documents required for your ${selectedCountry} tourist visa application.`}
@@ -323,7 +327,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                   <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-red-100 flex items-center justify-center">
                     <AlertCircle className="h-3.5 w-3.5 md:h-4 md:w-4 text-red-600" />
                   </div>
-                  <h2 className="text-lg md:text-2xl font-medium">Essential Documents</h2>
+                  <h2 className="text-lg md:text-2xl font-medium"><LangText en="Essential Documents" ar="المستندات الأساسية" /></h2>
                   <span className="text-[10px] md:text-xs text-muted-foreground">(Required)</span>
                 </div>
 
@@ -344,7 +348,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                   <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-orange-100 flex items-center justify-center">
                     <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 text-orange-600" />
                   </div>
-                  <h2 className="text-lg md:text-2xl font-medium">Financial Documents</h2>
+                  <h2 className="text-lg md:text-2xl font-medium"><LangText en="Financial Documents" ar="المستندات المالية" /></h2>
                   <span className="text-[10px] md:text-xs text-muted-foreground">(Required)</span>
                 </div>
 
@@ -365,7 +369,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                   <div className="h-7 w-7 md:h-8 md:w-8 rounded-full bg-blue-100 flex items-center justify-center">
                     <FileText className="h-3.5 w-3.5 md:h-4 md:w-4 text-blue-600" />
                   </div>
-                  <h2 className="text-lg md:text-2xl font-medium">Additional Documents</h2>
+                  <h2 className="text-lg md:text-2xl font-medium"><LangText en="Additional Documents" ar="مستندات إضافية" /></h2>
                   <span className="text-[10px] md:text-xs text-muted-foreground">(Recommended)</span>
                 </div>
 
@@ -388,7 +392,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                 <div className="space-y-6">
                   {/* Header */}
                   <div className="text-center">
-                    <h3 className="text-xl md:text-2xl font-medium text-gray-900 mb-2">Start your application</h3>
+                    <h3 className="text-xl md:text-2xl font-medium text-gray-900 mb-2"><LangText en="Start your application" ar="ابدأ طلبك" /></h3>
                   </div>
 
                   {/* Nationality Selector - Where are you from? */}

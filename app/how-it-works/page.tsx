@@ -6,6 +6,7 @@ import { HowItWorksContent } from "@/components/how-it-works-content"
 import { Mail, RefreshCw, CheckCircle2 } from "lucide-react"
 import { WhatYouGetSection } from "@/components/what-you-get-section" // Import WhatYouGetSection
 import { InnerHero } from "@/components/inner-hero"
+import { LangText } from "@/components/lang-text"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 
 export const metadata: Metadata = {
@@ -37,11 +38,12 @@ export default function HowItWorksPage() {
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-[#F7F8FA]">
         <InnerHero
-          badge="Process"
+          badge={<LangText en="Process" ar="الخطوات" />}
           title={
-            <>
-              How It <span className="text-[#0436DC]">Works</span>
-            </>
+            <LangText
+              en={<>How It <span className="text-[#0436DC]">Works</span></>}
+              ar={<>كيف <span className="text-[#0436DC]">تعمل</span></>}
+            />
           }
           description="Get your European visa prepared in 4 simple steps. Fast, easy, and hassle-free."
           gradientType="sunset"

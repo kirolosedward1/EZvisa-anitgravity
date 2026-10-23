@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
+import { LangText } from "@/components/lang-text"
 
 export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -28,11 +29,12 @@ export default function DocumentsPage() {
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen">
         <InnerHero
-          badge="Documents"
+          badge={<LangText en="Documents" ar="المستندات" />}
           title={
-            <>
-              Schengen Visa Document <span className="text-[#0436DC]">Requirements</span>
-            </>
+            <LangText
+              en={<>Schengen Visa Document <span className="text-[#0436DC]">Requirements</span></>}
+              ar={<>متطلبات مستندات <span className="text-[#0436DC]">تأشيرة شنغن</span></>}
+            />
           }
           description="Find complete document requirements for your destination country. We help you prepare everything you need for a successful application."
           randomizeBackground={true}
@@ -101,7 +103,7 @@ export default function DocumentsPage() {
               
               <div className="relative z-20 max-w-2xl mx-auto flex flex-col items-center">
                 <h2 className="hero-copy mb-4 text-balance text-white">
-                  Need Help With Your Application?
+                  <LangText en="Need Help With Your Application?" ar="هل تحتاج مساعدة في طلبك؟" />
                 </h2>
                 <p className="text-white/85 text-base md:text-lg mb-8 leading-relaxed max-w-xl font-medium">
                   Our experts will review your documents and ensure everything is perfect before submission.

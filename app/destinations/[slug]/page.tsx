@@ -1,4 +1,6 @@
 import { destinations } from "@/lib/destinations"
+import { SCHENGEN_META } from "@/lib/countries"
+import { LangText } from "@/components/lang-text"
 import { PreparationLine } from "@/components/ready-line"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -194,11 +196,12 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       
       {/* 1. Hero Block */}
       <InnerHero
-        badge="Apply from Dubai & Abu Dhabi"
+        badge={<LangText en="Apply from Dubai & Abu Dhabi" ar="قدّم من دبي وأبوظبي" />}
         title={
-          <>
-            Get your <span className="text-[#0436DC]">{destination.name}</span> Schengen Visa approved, easily.
-          </>
+          <LangText
+            en={<>Get your <span className="text-[#0436DC]">{destination.name}</span> Schengen Visa approved, easily.</>}
+            ar={<>احصل على تأشيرة شنغن إلى <span className="text-[#0436DC]">{SCHENGEN_META[destination.name]?.ar || destination.name}</span> بسهولة.</>}
+          />
         }
         description={`Complete visa file preparation for ${destination.name}. We prepare your application forms, travel itinerary, flight reservations, and cover letter for a successful submission.`}
         backgroundImage={destination.image}

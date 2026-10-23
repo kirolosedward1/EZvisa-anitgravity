@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { Play, Eye, Clock, Rocket } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { InnerHero } from "@/components/inner-hero"
+import { LangText } from "@/components/lang-text"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 import Link from "next/link"
 import Image from "next/image"
@@ -44,11 +45,12 @@ export default function VideosContent() {
       <SiteHeader forceBackground={true} />
       <main className="flex-1">
         <InnerHero
-          badge="Guides"
+          badge={<LangText en="Guides" ar="الأدلة" />}
           title={
-            <>
-              Video <span className="text-primary">Guides</span>
-            </>
+            <LangText
+              en={<>Video <span className="text-primary">Guides</span></>}
+              ar={<>أدلة <span className="text-primary">الفيديو</span></>}
+            />
           }
           description="Watch our expert video tutorials to learn everything about visa applications, document preparation, and avoiding common mistakes."
           gradientType="aurora"

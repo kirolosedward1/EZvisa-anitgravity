@@ -1,6 +1,7 @@
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
+import { LangText } from "@/components/lang-text"
 
 export const metadata = {
   title: "Privacy Policy",
@@ -13,8 +14,8 @@ export default function PrivacyPolicyPage() {
     <main className="min-h-screen bg-background">
       <SiteHeader forceBackground={true} />
       <InnerHero
-        badge="Legal"
-        title="Privacy Policy"
+        badge={<LangText en="Legal" ar="قانوني" />}
+        title={<LangText en="Privacy Policy" ar="سياسة الخصوصية" />}
         description="Last updated: January 7, 2026"
         gradientType="default"
       />

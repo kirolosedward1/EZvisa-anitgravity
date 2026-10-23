@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
+import { LangText } from "@/components/lang-text"
 
 export const metadata: Metadata = {
   title: "Schengen Visa Pricing - 249 AED All-Inclusive",
@@ -37,11 +38,12 @@ export default function PricingPage() {
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-background pb-12">
         <InnerHero
-          badge="Pricing Plan"
+          badge={<LangText en="Pricing Plan" ar="الأسعار" />}
           title={
-            <>
-              All-Inclusive <span className="text-[#0436DC]">Visa Service</span>
-            </>
+            <LangText
+              en={<>All-Inclusive <span className="text-[#0436DC]">Visa Service</span></>}
+              ar={<>خدمة <span className="text-[#0436DC]">تأشيرة شاملة</span></>}
+            />
           }
           description="One-time payment • No hidden fees • Full support"
           gradientType="default"

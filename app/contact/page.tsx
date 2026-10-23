@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
+import { LangText } from "@/components/lang-text"
 import { ContactForm } from "@/components/contact-form"
 
 export const metadata: Metadata = {
@@ -31,11 +32,12 @@ export default function ContactPage() {
       <div className="min-h-screen bg-background pb-12 relative overflow-hidden">
         
         <InnerHero
-          badge="Contact Us"
+          badge={<LangText en="Contact Us" ar="تواصل معنا" />}
           title={
-            <>
-              Get in <span className="text-primary">Touch</span>
-            </>
+            <LangText
+              en={<>Get in <span className="text-primary">Touch</span></>}
+              ar={<>تواصل <span className="text-primary">معنا</span></>}
+            />
           }
           description="Have questions about your visa application? Our team of experts is available 24/7."
           gradientType="default"
