@@ -9,6 +9,7 @@ import {
   LifeBuoy,
   LogIn,
   LogOut,
+  Newspaper,
   PlusCircle,
   Settings,
   Smartphone,
@@ -124,6 +125,7 @@ export function UserMenu() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator className="my-1.5" />
             <DropdownMenuGroup>
+              <MenuLink href="/news" icon={Newspaper} en="Blog" ar="المدونة" />
               <MenuLink href="/app" icon={Smartphone} en="Get the app" ar="حمّل التطبيق" />
               <MenuLink href="/contact" icon={LifeBuoy} en="Help & support" ar="المساعدة والدعم" />
             </DropdownMenuGroup>

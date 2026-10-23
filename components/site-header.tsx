@@ -35,6 +35,8 @@ const ACCOUNT_NAV = [
   { href: "/dashboard", en: "My applications", ar: "طلباتي" },
   { href: "/apply", en: "New application", ar: "طلب جديد" },
   { href: "/destinations", en: "Destinations", ar: "الوجهات" },
+  { href: "/documents", en: "Required documents", ar: "المستندات المطلوبة" },
+  { href: "/news", en: "Blog", ar: "المدونة" },
   { href: "/contact", en: "Help", ar: "المساعدة" },
 ]
 
@@ -281,7 +283,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
             </LocaleLink>
 
             {isAccount && !hideNavigation && (
-              <nav className="hidden md:flex items-center gap-1 px-1" aria-label="Account">
+              <nav className="hidden lg:flex items-center gap-1 px-1" aria-label="Account">
                 {ACCOUNT_NAV.map((item) => {
                   const active = item.href === "/dashboard" ? matches(path, ["/dashboard", "/track", "/continue"]) : matches(path, [item.href])
                   return (
