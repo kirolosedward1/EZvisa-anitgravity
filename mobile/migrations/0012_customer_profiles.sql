@@ -20,9 +20,13 @@ revoke all on public.customer_profiles from anon;
 grant select, insert, update, delete on public.customer_profiles to authenticated;
 
 -- Owner-only: a user can see and change exactly one row, their own. Staff use the service role (bypasses RLS).
+drop policy if exists "customer_profiles own select" on public.customer_profiles;
 create policy "customer_profiles own select" on public.customer_profiles for select to authenticated using (user_id = (select auth.uid()));
+drop policy if exists "customer_profiles own insert" on public.customer_profiles;
 create policy "customer_profiles own insert" on public.customer_profiles for insert to authenticated with check (user_id = (select auth.uid()));
+drop policy if exists "customer_profiles own update" on public.customer_profiles;
 create policy "customer_profiles own update" on public.customer_profiles for update to authenticated using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+drop policy if exists "customer_profiles own delete" on public.customer_profiles;
 create policy "customer_profiles own delete" on public.customer_profiles for delete to authenticated using (user_id = (select auth.uid()));
 
 create or replace function public.customer_profiles_touch() returns trigger language plpgsql set search_path to 'public' as $$

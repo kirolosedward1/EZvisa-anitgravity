@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { paymentCorsHeaders } from "@/lib/cors"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { applyIntentStatus, fetchIntent, isPaidStatus, OPEN_INTENT_STATUSES, priceForApplication, serviceClient, UUID_RE } from "@/lib/ziina"
 
@@ -10,7 +11,18 @@ import { applyIntentStatus, fetchIntent, isPaidStatus, OPEN_INTENT_STATUSES, pri
  * GET /api/check-payment?id=<payment intent id>  (legacy)
  *   Returns only { id, status } of that Ziina intent.
  */
+export async function OPTIONS(request: NextRequest) {
+  // The Expo web build sends Cache-Control, which makes the browser preflight this GET.
+  return new NextResponse(null, { status: 204, headers: paymentCorsHeaders(request.headers.get("origin")) })
+}
+
 export async function GET(request: NextRequest) {
+  const res = await handle(request)
+  for (const [k, v] of Object.entries(paymentCorsHeaders(request.headers.get("origin")))) res.headers.set(k, v)
+  return res
+}
+
+async function handle(request: NextRequest): Promise<NextResponse> {
   try {
     const rateLimitResult = await checkRateLimit(`check-payment:${getClientIp(request)}`, RATE_LIMITS.relaxed)
     if (!rateLimitResult.success) {

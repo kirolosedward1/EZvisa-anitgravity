@@ -85,10 +85,11 @@ export async function POST(request: NextRequest) {
     }
     if (!app) return json({ error: "Application not found" }, { status: 404 })
     if (isPaidStatus(app.payment_status)) {
-      return json({ error: "Application is already paid" }, { status: 409 })
+      return json({ error: "Application is already paid", code: "already_paid" }, { status: 409 })
     }
     if (["cancelled", "rejected"].includes(String(app.application_status ?? "").toLowerCase())) {
-      return json({ error: "Application is closed" }, { status: 409 })
+      // 410, not 409: the app treats 409 as "already paid" and would show the payment-success flow.
+      return json({ error: "Application is closed", code: "closed" }, { status: 410 })
     }
 
     const { amount: serverAmount, currency: validCurrency } = priceForApplication(app.additional_notes)
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
       const existing = await fetchIntent(app.payment_id)
       if (existing?.status === "completed") {
         await applyIntentStatus(supabase, existing)
-        return json({ error: "Application is already paid" }, { status: 409 })
+        return json({ error: "Application is already paid", code: "already_paid" }, { status: 409 })
       }
       if (
         existing &&
@@ -144,10 +145,8 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const errorText = await response.text()
       console.error("[v0] Ziina API error:", errorText)
-      return json(
-        { error: "Failed to create payment intent" },
-        { status: response.status },
-      )
+      // Never pass Ziina's own status through (a Ziina 409 would read as "already paid" in the app).
+      return json({ error: "Failed to create payment intent" }, { status: 502 })
     }
 
     const data = await response.json()

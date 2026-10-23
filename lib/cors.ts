@@ -100,8 +100,8 @@ export function paymentCorsHeaders(origin: string | null): Record<string, string
   if (!allow) return { Vary: "Origin" }
   return {
     "Access-Control-Allow-Origin": allow,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, apikey, x-client-info, Cache-Control",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   }
