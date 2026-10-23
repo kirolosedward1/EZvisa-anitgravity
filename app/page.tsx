@@ -17,7 +17,8 @@ const Footer = dynamic(() => import("@/components/footer").then(mod => mod.Foote
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Schengen Visa Application Service UAE | 98% Approval Rate | EZvisa",
+  // absolute: the root template would otherwise append a second "| EZvisa".
+  title: { absolute: "Schengen Visa Application Service UAE | 98% Approval Rate | EZvisa" },
   description:
     "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 29 European countries. Expert help with documents, itinerary planning, cover letters & more. 98% approval rate. Starting from 249 AED. Apply today!",
   keywords: [

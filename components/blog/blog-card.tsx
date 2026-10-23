@@ -42,7 +42,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
               <div className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" />
                 <time>
-                  {new Date(post.publishedAt).toLocaleDateString("en-US", {
+                  {new Date(post.publishedAt).toLocaleDateString("en-US", { timeZone: "UTC",
                     month: "short",
                     day: "numeric",
                     year: "numeric",

@@ -115,3 +115,15 @@ export function upcomingTravelMonths(count = 12, now = new Date()) {
     }
   })
 }
+
+/** Today's calendar date (YYYY-MM-DD) in the UAE (Asia/Dubai, UTC+4, no daylight saving), wherever this runs. */
+export function todayIsoUae(now = new Date()): string {
+  return new Date(now.getTime() + 4 * 60 * 60 * 1000).toISOString().slice(0, 10)
+}
+
+/** First travel day for a flexible month: the 1st, or today when the chosen month is the current one. */
+export function flexibleEntryDate(month: string, now = new Date()): string {
+  const first = `${month}-01`
+  const today = todayIsoUae(now)
+  return first < today ? today : first
+}

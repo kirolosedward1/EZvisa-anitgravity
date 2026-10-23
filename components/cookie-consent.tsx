@@ -30,6 +30,23 @@ export function CookieConsent() {
     }
   }, [])
 
+  /** Google Consent Mode: tell GA/GTM about the choice (app/layout.tsx applies a stored choice on load). */
+  const applyConsent = (p: { analytics: boolean; marketing: boolean }) => {
+    const w = window as unknown as { gtag?: (...args: unknown[]) => void; dataLayer?: unknown[] }
+    const update = {
+      analytics_storage: p.analytics ? "granted" : "denied",
+      ad_storage: p.marketing ? "granted" : "denied",
+      ad_user_data: p.marketing ? "granted" : "denied",
+      ad_personalization: p.marketing ? "granted" : "denied",
+    }
+    if (typeof w.gtag === "function") w.gtag("consent", "update", update)
+    else {
+      w.dataLayer = w.dataLayer || []
+      // Same shape gtag() pushes (an arguments object).
+      ;(function (..._args: unknown[]) { w.dataLayer!.push(arguments) })("consent", "update", update)
+    }
+  }
+
   const acceptAll = () => {
     const allAccepted = {
       necessary: true,
@@ -40,6 +57,7 @@ export function CookieConsent() {
     localStorage.setItem("cookie-consent", JSON.stringify(allAccepted))
     localStorage.setItem("cookie-consent-date", new Date().toISOString())
     setPreferences(allAccepted)
+    applyConsent(allAccepted)
     setShowBanner(false)
   }
 
@@ -53,12 +71,14 @@ export function CookieConsent() {
     localStorage.setItem("cookie-consent", JSON.stringify(necessaryOnly))
     localStorage.setItem("cookie-consent-date", new Date().toISOString())
     setPreferences(necessaryOnly)
+    applyConsent(necessaryOnly)
     setShowBanner(false)
   }
 
   const savePreferences = () => {
     localStorage.setItem("cookie-consent", JSON.stringify(preferences))
     localStorage.setItem("cookie-consent-date", new Date().toISOString())
+    applyConsent(preferences)
     setShowBanner(false)
     setShowPreferences(false)
   }

@@ -3,7 +3,7 @@ import { ThankYouClient } from "./thank-you-client"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Payment Successful - Thank You | EZvisa",
+  title: "Payment Successful - Thank You",
   description: "Your visa application payment has been received successfully. Check what happens next.",
   robots: {
     index: false,

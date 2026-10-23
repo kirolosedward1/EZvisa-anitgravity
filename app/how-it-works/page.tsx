@@ -9,7 +9,7 @@ import { InnerHero } from "@/components/inner-hero"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 
 export const metadata: Metadata = {
-  title: "How It Works - 4-Step Schengen Visa Application Process | EZvisa",
+  title: "How It Works - 4-Step Schengen Visa Application Process",
   description:
     "Learn how EZvisa prepares your Schengen visa file. Simple 4-step process. We prepare your application in 1–2 days. The embassy's decision takes longer.",
   keywords: [
@@ -20,12 +20,12 @@ export const metadata: Metadata = {
     "Europe visa process",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/how-it-works",
+    canonical: "https://www.ezvisa.net/how-it-works",
   },
   openGraph: {
     title: "How It Works - 4-Step Visa Application Process",
     description: "We prepare your application in 1–2 days. The embassy's decision takes longer.",
-    url: "https://ezvisa.net/how-it-works",
+    url: "https://www.ezvisa.net/how-it-works",
     type: "website",
   },
 }

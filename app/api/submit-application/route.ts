@@ -5,15 +5,18 @@ import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/li
 import { sanitizeInput, sanitizeEmail, sanitizePhone } from "@/lib/sanitize"
 import {
   datesInOrder,
+  flexibleEntryDate,
   formatTravelMonth,
   INVALID_DATE_MESSAGE,
   parseCalendarDate,
   RETURN_AFTER_DEPARTURE,
   schengenEndDate,
   schengenStayDays,
+  todayIsoUae,
   TRIP_LENGTHS,
 } from "@/lib/dates"
 import { toCitizenshipIso } from "@/lib/nationalities"
+import { canonicalSchengenCountry } from "@/lib/countries"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000
@@ -124,6 +127,20 @@ export async function POST(request: Request) {
       companyName: sanitizeInput(formData.companyName || "", 200),
     }
 
+    // Server-side required fields: the wizard can be deep-linked to ?step=payment, so the client checks alone are
+    // not enough (rows were saved with an empty name/email or a destination outside the Schengen list).
+    const destination = canonicalSchengenCountry(formData.destination)
+    if (!destination) {
+      return NextResponse.json({ success: false, message: "Choose a Schengen destination." }, { status: 400 })
+    }
+    sanitizedData.destination = destination
+    if (!sanitizedData.firstName.trim() || !sanitizedData.lastName.trim() || !sanitizedData.email || !sanitizedData.phone) {
+      return NextResponse.json(
+        { success: false, message: "Please complete the traveller details (name, email and phone)." },
+        { status: 400 },
+      )
+    }
+
     const flexible = formData.datesFlexible === "yes"
     let flexibleNote = ""
     let startDate = formData.travelStartDate ? parseCalendarDate(formData.travelStartDate) : null
@@ -139,7 +156,8 @@ export async function POST(request: Request) {
           { status: 400 },
         )
       }
-      const entry = parseCalendarDate(`${month[1]}-${month[2]}-01`)
+      // The current month starts today, not on the 1st (that date is already in the past).
+      const entry = parseCalendarDate(flexibleEntryDate(`${month[1]}-${month[2]}`))
       const exit = entry ? parseCalendarDate(schengenEndDate(entry.iso, length)) : null
       if (!entry || !exit) {
         return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
@@ -162,6 +180,9 @@ export async function POST(request: Request) {
       }
       if (!datesInOrder(startDate.iso, endDate.iso)) {
         return NextResponse.json({ success: false, message: RETURN_AFTER_DEPARTURE }, { status: 400 })
+      }
+      if (startDate.iso < todayIsoUae()) {
+        return NextResponse.json({ success: false, message: "Your departure date is in the past. Please choose new dates." }, { status: 400 })
       }
     }
 
@@ -194,9 +215,29 @@ export async function POST(request: Request) {
     const endIso = endDate?.iso ?? null
     let userIdColumnMissing = false
 
+    // "Pay" again after editing answers: the client sends the application it created earlier (id + tracking token
+    // as proof). That unpaid row is updated in place, so the stored answers and the server price (spouse = 2
+    // travellers) match what the customer sees, instead of paying the stale row.
+    let replaceTarget: { id: string; tracking_token: string | null; additional_notes: string | null } | null = null
+    const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (typeof formData.replaceApplicationId === "string" && UUID.test(formData.replaceApplicationId)
+      && typeof formData.replaceTrackingToken === "string" && UUID.test(formData.replaceTrackingToken)) {
+      const { data: old } = await supabase
+        .from("visa_applications")
+        .select("id, tracking_token, additional_notes, payment_status, application_status")
+        .eq("id", formData.replaceApplicationId)
+        .eq("tracking_token", formData.replaceTrackingToken)
+        .maybeSingle()
+      if (old && !["paid", "completed"].includes(String(old.payment_status ?? "")) && ["draft", "submitted"].includes(String(old.application_status ?? ""))) {
+        replaceTarget = old
+      }
+    }
+
     // Reuse a row only for the signed-in user. Prefer user_id when that column
     // exists. Otherwise match auth.getUser().email, never the email in the body.
-    if (session) {
+    if (replaceTarget) {
+      // Updating the customer's own unpaid application (checked above): no duplicate or limit checks.
+    } else if (session) {
       const { data: duplicate, error: duplicateError } = await tripScoped(
         supabase
           .from("visa_applications")
@@ -266,7 +307,7 @@ export async function POST(request: Request) {
       }
     }
 
-    if (sanitizedData.email) {
+    if (sanitizedData.email && !replaceTarget) {
       const { data: existing } = await supabase
         .from("visa_applications")
         .select("id, payment_status, application_status")
@@ -302,16 +343,42 @@ export async function POST(request: Request) {
       payment_status: "pending",
       application_status: "submitted",
       additional_notes: JSON.stringify({
+        ...previousNotes(replaceTarget?.additional_notes),
         maritalStatus: formData.maritalStatus,
         employmentStatus: formData.employmentStatus,
         jobTitle: sanitizedData.jobTitle,
         companyName: sanitizedData.companyName,
-        monthlySalary: formData.monthlySalary,
-        spouseAccompanying: formData.spouseAccompanying,
+        monthlySalary: text(formData.monthlySalary, 50),
+        spouseAccompanying: formData.spouseAccompanying === "yes" ? "yes" : "no",
         ...(flexibleNote ? { flexibleDates: flexibleNote } : {}),
+        // Answers from the trip and spouse screens (previously collected but never saved anywhere).
+        wizard: wizardAnswers(formData),
       }),
     }
     if (session && !userIdColumnMissing) applicationRow.user_id = session.id
+
+    if (replaceTarget) {
+      delete applicationRow.payment_status
+      applicationRow.updated_at = new Date().toISOString()
+      const { data: rows, error: updateError } = await supabase
+        .from("visa_applications")
+        .update(applicationRow)
+        .eq("id", replaceTarget.id)
+        .eq("tracking_token", replaceTarget.tracking_token)
+        .not("payment_status", "in", "(paid,completed)")
+        .select("id, tracking_token")
+      if (updateError || !rows?.[0]) {
+        console.error("[submit] update of existing application failed:", updateError?.code ?? "no row")
+        return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
+      }
+      return NextResponse.json({
+        success: true,
+        message: "Application updated",
+        applicationId: rows[0].id,
+        trackingToken: rows[0].tracking_token ?? undefined,
+        created: false,
+      })
+    }
 
     let { data, error } = await supabase.from("visa_applications").insert([applicationRow]).select()
     if (error && "user_id" in applicationRow && isMissingUserIdColumn(error)) {
@@ -363,5 +430,43 @@ export async function POST(request: Request) {
       },
       { status: 500 },
     )
+  }
+}
+
+function previousNotes(raw: string | null | undefined): Record<string, unknown> {
+  if (!raw) return {}
+  try { const j = JSON.parse(raw); return j && typeof j === "object" ? j : {} } catch { return {} }
+}
+
+const text = (v: unknown, max = 200) => (typeof v === "string" ? sanitizeInput(v, max) : "")
+const yesNo = (v: unknown) => (v === "yes" || v === "no" ? v : "")
+
+function wizardAnswers(f: Record<string, any>) {
+  const visits = Array.isArray(f.additionalCountries) ? f.additionalCountries.slice(0, 10) : []
+  return {
+    countryOfResidence: text(f.countryOfResidence, 100),
+    cityOfResidence: text(f.cityOfResidence, 100),
+    hasEmiratesId: yesNo(f.hasEmiratesId),
+    hasValidPassport: yesNo(f.hasValidPassport),
+    spouseFirstName: text(f.spouseFirstName, 100),
+    spouseLastName: text(f.spouseLastName, 100),
+    spouseHasValidPassport: yesNo(f.spouseHasValidPassport),
+    spouseOccupation: text(f.spouseOccupation, 100),
+    employmentStartDate: text(f.employmentStartDate, 20),
+    hasNOC: yesNo(f.hasNOC),
+    averageMonthlyIncome: text(f.averageMonthlyIncome, 50),
+    travelingWith: text(f.travelingWith, 50),
+    isFirstSchengenVisa: text(f.isFirstSchengenVisa, 10),
+    willVisitOtherCountries: yesNo(f.willVisitOtherCountries),
+    additionalCountries: visits.map((v: any) => ({ country: text(v?.country, 60), arrivalDate: text(v?.arrivalDate, 20), departureDate: text(v?.departureDate, 20) })),
+    itinerary: text(f.itinerary, 2000),
+    hotelCategory: text(f.hotelCategory, 50),
+    fundingSource: text(f.fundingSource, 50),
+    balanceRange: text(f.balanceRange, 50),
+    previousRefusals: text(f.previousRefusals, 10),
+    refusalDetails: text(f.refusalDetails, 1000),
+    travelMonth: text(f.travelMonth, 10),
+    tripLength: text(f.tripLength, 5),
+    datesFlexible: text(f.datesFlexible, 5),
   }
 }

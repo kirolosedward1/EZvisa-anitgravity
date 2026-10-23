@@ -28,6 +28,19 @@ export function calculateSchengenStay(
   plannedTrip?: TripInterval
 ): CalculationResult {
   const warnings: string[] = []
+
+  // A planned trip that ends before it starts can't be evaluated (it used to report "90 days remaining, valid").
+  if (plannedTrip && plannedTrip.startDate && plannedTrip.endDate && plannedTrip.endDate < plannedTrip.startDate) {
+    return {
+      isValid: false,
+      totalDaysInWindow: 0,
+      remainingDays: 0,
+      isOverstay: false,
+      overstayDays: 0,
+      dailyBreakdown: [],
+      warnings: ["Your planned trip ends before it starts. Check the dates."],
+    }
+  }
   
   // Collect all trip days as unique timestamp keys (YYYY-MM-DD)
   const allTrips = [...pastTrips]
@@ -64,7 +77,8 @@ export function calculateSchengenStay(
   // If there's a planned trip, evaluate each day of the planned trip
   const evaluationTarget = plannedTrip && plannedTrip.startDate && plannedTrip.endDate 
     ? plannedTrip 
-    : validTrips[validTrips.length - 1]
+    // No planned trip: the latest trip by date (trips can be entered in any order).
+    : validTrips.reduce((latest, t) => (t.endDate > latest.endDate ? t : latest), validTrips[0])
 
   const evalStart = new Date(evaluationTarget.startDate + "T00:00:00Z")
   const evalEnd = new Date(evaluationTarget.endDate + "T00:00:00Z")

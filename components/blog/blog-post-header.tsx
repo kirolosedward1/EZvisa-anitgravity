@@ -20,7 +20,7 @@ export function BlogPostHeader({ post }: { post: BlogPost }) {
         <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           <time>
-            {new Date(post.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            {new Date(post.publishedAt).toLocaleDateString("en-US", { timeZone: "UTC", month: "long", day: "numeric", year: "numeric" })}
           </time>
         </div>
         <div className="flex items-center gap-2">

@@ -29,11 +29,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   
   if (!countryData) {
     return {
-      title: "Required Documents | EZvisa",
+      title: "Required Documents",
     }
   }
 
-  const title = `Required Documents for ${countryData.name} Tourist Visa | EZvisa`
+  const title = `Required Documents for ${countryData.name} Tourist Visa`
   const description = `Complete checklist of documents needed for ${countryData.name} Schengen tourist visa application. Prepare your ${countryData.name} visa file correctly.`
 
   return {
