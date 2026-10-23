@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useRef, type ReactNode } from "react"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 import { LocaleLink } from "@/components/locale-link"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { WizardQuestion } from "@/components/apply/wizard-choices"
 import { getReference } from "@/lib/application-status"
-import { CURRENCIES, priceForTravellers } from "@/lib/currency"
+import { CURRENCIES, applicantCount, priceForTravellers } from "@/lib/currency"
+import { message } from "@/messages"
 import { submitBody } from "@/lib/application-notes"
 import { SCHENGEN_META } from "@/lib/countries"
 import { citizenshipName } from "@/lib/nationalities"
@@ -248,7 +250,8 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
   const countryAr = (country && SCHENGEN_META[country]?.ar) || country
   const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
   const nationality = citizenshipName(formData.nationality)
-  const travellerBits = [travellerName, formData.passportNumber?.trim(), formData.spouseAccompanying === "yes" ? "with spouse" : ""].filter(Boolean)
+  const travellerBits = [travellerName, nationality, formData.passportNumber?.trim()].filter(Boolean)
+  const withSpouse = applicantCount(formData.spouseAccompanying, formData.travelingWith) > 1
 
   return (
     <div>
@@ -266,6 +269,14 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
 
       <ReviewRow label="Traveller" labelAr="المسافر" onEdit={onEditTraveller}>
         {travellerBits.length ? travellerBits.join(" · ") : "—"}
+      </ReviewRow>
+
+      <ReviewRow
+        label={message("en", "review.travellers")}
+        labelAr={message("ar", "review.travellers")}
+        onEdit={onEditTraveller}
+      >
+        <Msg id={withSpouse ? "review.travellersWithSpouse" : "review.travellersSolo"} />
       </ReviewRow>
 
       <div className="flex items-center justify-between border-t border-[#E3E7EF] py-[18px] text-[16px] font-semibold text-[#0A0F1F]">
