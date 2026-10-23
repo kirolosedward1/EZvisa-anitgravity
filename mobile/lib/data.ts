@@ -44,7 +44,10 @@ const need = () => { if (!supabase) throw new Error("Backend not configured"); r
 async function me() {
   // getSession reads the stored session (no network round trip). getUser() can hang on React Native
   // after OAuth / a session restore, which left screens such as Continue application loading forever.
-  const { data } = await need().auth.getSession(); const user = data.session?.user;
+  const { data, error } = await need().auth.getSession(); const user = data.session?.user;
+  // Offline while an expired session is refreshed: keep the retryable network error, so saves retry instead of
+  // telling a signed-in person to sign in.
+  if (!user && error?.name === "AuthRetryableFetchError") throw error;
   if (!user?.email) throw new Error("Please sign in first");
   return { id: user.id, email: user.email.toLowerCase() };
 }
