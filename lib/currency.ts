@@ -41,14 +41,14 @@ export function getCurrencyInfo(currency: Currency): CurrencyInfo {
   return CURRENCIES[currency]
 }
 
-/** Travellers charged on one application. A spouse travelling with the applicant counts as two. */
-export function applicantCount(spouseAccompanying?: string | null): number {
-  return spouseAccompanying === "yes" ? 2 : 1
+/** Travellers charged on one application. "With spouse" on the trip, or a spouse travelling along, counts as two. */
+export function applicantCount(spouseAccompanying?: string | null, travelingWith?: string | null): number {
+  return spouseAccompanying === "yes" || travelingWith === "spouse" ? 2 : 1
 }
 
 /** AED total from the base price. Never a literal amount at the call site. */
-export function priceForTravellers(spouseAccompanying?: string | null): number {
-  return CURRENCIES.AED.basePrice * applicantCount(spouseAccompanying)
+export function priceForTravellers(spouseAccompanying?: string | null, travelingWith?: string | null): number {
+  return CURRENCIES.AED.basePrice * applicantCount(spouseAccompanying, travelingWith)
 }
 
 export function getDefaultCurrency(): CurrencyInfo {

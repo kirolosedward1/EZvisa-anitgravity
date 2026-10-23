@@ -12,6 +12,7 @@ import { EmploymentStep } from "@/components/apply/employment-step"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { ChoiceList, ChoiceRow, FieldError, WizardQuestion, wizardFieldClass, wizardLabelClass } from "@/components/apply/wizard-choices"
 import { LangText } from "@/components/lang-text"
+import { useMessage } from "@/components/use-message"
 import { cn } from "@/lib/utils"
 import type { DetailStep } from "@/lib/application-status"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
@@ -79,6 +80,7 @@ export function ContinueForm({
   initial: Partial<FormData>
 }) {
   const router = useRouter()
+  const passportPlaceholder = useMessage("apply.passportPlaceholderN")
   const [index, setIndex] = useState(0)
   const [tripScreen, setTripScreen] = useState(0)
   const [form, setForm] = useState<Partial<FormData>>({ ...EMPTY, ...initial })
@@ -222,7 +224,7 @@ export function ContinueForm({
                   id="passportNumber"
                   value={form.passportNumber || ""}
                   onChange={(event) => { update({ passportNumber: event.target.value.toUpperCase() }); setPassportErrors(false) }}
-                  placeholder="e.g. N1234567"
+                  placeholder={passportPlaceholder}
                   autoCapitalize="characters"
                   autoCorrect="off"
                   spellCheck={false}

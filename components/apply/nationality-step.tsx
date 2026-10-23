@@ -3,6 +3,7 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { LangText } from "@/components/lang-text"
+import { useMessage } from "@/components/use-message"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import {
   ChoiceList,
@@ -80,6 +81,7 @@ function localIso(date: Date) {
 export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading }: NationalityStepProps) {
   const [showErrors, setShowErrors] = useState(false)
   const [maxDob, setMaxDob] = useState("")
+  const passportPlaceholder = useMessage("apply.passportPlaceholderN")
   const seeded = useRef(false)
   const withSpouse = formData.spouseAccompanying === "yes"
   const spousePrice = priceForTravellers("yes")
@@ -195,7 +197,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             const passportNumber = event.target.value.toUpperCase()
             set({ passportNumber, hasValidPassport: passportNumber.trim() ? "yes" : undefined })
           }}
-          placeholder="e.g. N1234567"
+          placeholder={passportPlaceholder}
           autoCapitalize="characters"
           autoCorrect="off"
           spellCheck={false}
@@ -257,7 +259,13 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             description="One applicant"
             descriptionAr="متقدم واحد"
             selected={!withSpouse}
-            onSelect={() => set({ maritalStatus: "single", spouseAccompanying: "no" })}
+            onSelect={() =>
+              set({
+                maritalStatus: "single",
+                spouseAccompanying: "no",
+                ...(formData.travelingWith === "spouse" ? { travelingWith: "alone" } : {}),
+              })
+            }
           />
           <ChoiceRow
             indicator="radio"
@@ -266,7 +274,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             description={`Two applicants, ${spousePrice} AED. Spouse details after payment.`}
             descriptionAr={`متقدمان، ${spousePrice} درهم. بيانات الزوج أو الزوجة بعد الدفع.`}
             selected={withSpouse}
-            onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes" })}
+            onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes", travelingWith: "spouse" })}
           />
         </ChoiceList>
       </div>

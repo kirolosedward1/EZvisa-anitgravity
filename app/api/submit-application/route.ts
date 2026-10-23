@@ -18,6 +18,7 @@ import {
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { canonicalSchengenCountry } from "@/lib/countries"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
+import { applicantCount } from "@/lib/currency"
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000
 
@@ -351,7 +352,9 @@ export async function POST(request: Request) {
         jobTitle: sanitizedData.jobTitle,
         companyName: sanitizedData.companyName,
         monthlySalary: text(formData.monthlySalary, 50),
-        spouseAccompanying: formData.spouseAccompanying === "yes" ? "yes" : "no",
+        travelingWith: text(formData.travelingWith, 50),
+        spouseAccompanying: formData.spouseAccompanying === "yes" || formData.travelingWith === "spouse" ? "yes" : "no",
+        applicantCount: applicantCount(formData.spouseAccompanying, formData.travelingWith),
         ...(flexibleNote ? { flexibleDates: flexibleNote } : {}),
         // Answers from the trip and spouse screens (previously collected but never saved anywhere).
         wizard: wizardAnswers(formData),
