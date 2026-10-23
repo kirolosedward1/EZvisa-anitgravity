@@ -3,6 +3,8 @@
 > **Superseded 2026-10-23 for status** (what is live, merged or still open, incl. §10 B1-B5/H1-H9, §12 and §13): see `mobile/HANDOFF.md` §0 and `docs/live-state-check.sql`. The code analysis below describes the commits it names.
 
 Date: 2026-10-22. Branch: `mobile-app` (base `591aced`). Read-and-report only; the one build fix is listed in §9.
+> *Current status lives in `mobile/HANDOFF.md` §0 (2026-10-23). §14 below holds that audit's evidence and branch table; §1-13 are historical.*
+
 This describes the code at commit `0451206`. Later chats changed a lot (see §13 for what a QA pass found on `main` afterwards, and the corrections made to this document).
 
 Contents
@@ -19,6 +21,7 @@ Contents
 11. [Plan for chats 02–15](#11-plan-for-chats-0215)
 12. [Waiting for approval](#12-waiting-for-approval)
 13. [QA review](#13-qa-review-2026-10-22-later-the-same-day)
+14. [Status audit 2026-10-23](#14-status-audit-2026-10-23)
 
 Evidence is quoted as `path:line` on the `mobile-app` branch. Website references are to **`main`** (what Vercel deploys), not the copy of the website on `mobile-app` (see §1).
 
@@ -506,3 +509,50 @@ Re-checked in a second QA pass: `main` unchanged at `1934aee` (same 28 errors, s
 **Regression found on `main` (not from this chat's commits):** commit `de75fd8` (PR #15, "wizard rebuild") changed `mobile/app/apply/index.tsx` to import `SheetAnswer`, `FixedValue`, `cleanForm`, `NATIONALITY_OPTIONS`, `reviewQuestions`, `answer`, `employmentQuestions`, but the files that export them were not in the commit. Metro still bundles it, but in the browser the first wizard question renders **no answers and a disabled Continue**: nobody can start an application from `main`'s mobile code. A fix exists on branch `claude/festive-goodall-8qekxb` (`c87580f`, no PR yet): 0 type errors, and the wizard renders its destination picker. `mobile-app` (which CI publishes to the EAS `preview` channel) does not contain `de75fd8` and type-checks clean. `main` and `mobile-app` have diverged; neither contains the other.
 
 **Still open from §10 on `main`:** B3 (webhook secret optional), B4 (EAS preview DB), B5, H3 (receipt fallback), M15, M16. Fixed on `main` by later chats: B2 (upload auth + paid check), H4 (synthesised dossier row removed), H5 (SecureStore session + wipe on sign-out), M1 (ESLint), M2 (`eas.json`); B1 has a script (`scripts/006_tighten_visa_applications_rls.sql`), not confirmed applied.
+
+---
+
+## 14. Status audit (2026-10-23)
+
+Goal: one accurate picture of what exists and what is live. The summary and the blocker table are in `mobile/HANDOFF.md` §0;
+this section keeps the evidence. Read-only except docs: no app behaviour was changed.
+
+### 14.1 Branches (origin, fetched 2026-10-23 ~00:20 UTC)
+Judged by content, not SHA (several PRs were rebase-merged). "Into main" = what `git merge-tree` says a merge would do.
+
+| Branch | Verdict | Notes / commits worth keeping |
+|---|---|---|
+| `app-return`, `pay-server-price`, `wizard-ux` | merged (PRs #5, #4, #3) | – |
+| `claude/blissful-babbage-1u96lk` | merged (PR #14) | check-payment by applicationId is live |
+| `claude/exciting-knuth-7tbcir` | merged (PR #15, de75fd8) | its leftovers remain on `main` only |
+| `claude/sweet-wozniak-fqxk36` | merged (PR #22 into `mobile-app`, then `main`) | – |
+| `claude/ezvisa-mobile-dev-e9zw25`, `trusting-bardeen-54koiu`, `upbeat-cori-re61og`, `vibrant-dijkstra-rrtz3m`, `awesome-goodall-nt66td`, `dreamy-babbage-wrfbwx`, `hopeful-fermi-kt6hbd`, `inspiring-turing-breyok`, `trusting-turing-pgtmb3` | merged | – |
+| `claude/festive-goodall-8qekxb` | superseded | its fix for de75fd8 is no longer needed (`main`'s `apply/index.tsx` is `mobile-app`'s); the v10 features it completes would need a re-port (5 conflicts) |
+| `claude/nifty-meitner-gtmztg` | superseded | only the date-range picker idea |
+| `claude/ios-expo-app` | superseded | – |
+| `claude/vibrant-wright-ez44ch` | **unmerged, keep** | 18718cd, 8a05aab, 10b873a, 783d202, 17b6d52, ed2d51d, 508d08b + e2e part of 2d6911d (manual merge) |
+| `claude/nice-faraday-r722ry` | **unmerged, keep** | all 15 (website draft sync); merges into `main` cleanly, reverts nothing |
+| `claude/trusting-bell-9yvqmh` (PR #19) | **unmerged, competing** | e4a0620 already on `main`; b26e583/3ce66d9/b7ecc5a = nice-faraday's first three; 271c89a + 431f9d1 = separate website rewrite |
+| `claude/bold-feynman-ssk2ur` | **unmerged, keep** | fedc1a0, 1664e54 (port; don't take its 0012 → 0013 rename) |
+| `claude/lucid-noether-l06cin` | **unmerged, partly** | 836b046 (applies cleanly), bd9ff69, 9a33639, parts of c5785c9 / 683495a, 7644a05 (proposal) |
+
+### 14.2 Checks run (cloud container, no device, no live DB)
+| Check | `main` 7be29de | `mobile-app` aad5052 |
+|---|---|---|
+| `npm ci`, `npx tsc --noEmit` | pass, 0 errors | pass, 0 errors |
+| `npx eslint .` | 0 errors, 160 warnings | 0 errors, 165 warnings |
+| upload 24, privacy 41, secure storage 12, check-push 12, push tests 29, timeline 53, appointment 18, payment split 25, profile 31 | pass | pass |
+| `run-test-after-payment.mjs` | 37 pass | crash (stub without `getSession`; v10.7 says it updated the stub) |
+| `drafts-check.ts` (with its documented env) | 6 pass | **1 FAIL**: real regression, HANDOFF §0.3 N1 |
+| `wizard-rules.test.ts` | FAIL (imports exports that don't exist) | not present |
+| web e2e (mock DB): drafts 17, drafts QA 7, continue 32, nav 9, UI 19, pay 20 | pass | pass |
+| `auth-e2e-web.mjs`, `e2e-prefill-web.mjs` (on `ebc4f9a`) | 27/29 and stalls: outdated assertions | not run |
+| first wizard question in Expo web (de75fd8 bug) | renders 29 destinations; tapping one opens Nationality | – |
+| website `pnpm install`, `pnpm build` | pass | – |
+| website `pnpm lint` (= `tsc --noEmit`) | 2 errors (§0.3 N5) | – |
+
+### 14.3 Live checks (2026-10-23)
+- Vercel: www.ezvisa.net → project `e-zvisa-anitgravity`; Production deployment = `7be29de`, READY. Env names in HANDOFF §0.1 (values not read).
+- `GET https://www.ezvisa.net/api/check-payment?applicationId=00000000-0000-4000-8000-000000000000` → 404 `{"error":"Application not found"}`.
+- EAS: GitHub run 26 published update group `5a2c2adf-d73c-404d-b7f6-a567db092f02` (`mobile-app` 2137710, runtime exposdk:57.0.0) after the bundle guard passed.
+- Supabase `ezvisa-uae`: not reachable from the connector (it lists only `rjbgteqgqaxalcfnksjc` and other projects). The owner runs `docs/live-state-check.sql`.
