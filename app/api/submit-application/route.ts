@@ -12,7 +12,13 @@ const DUPLICATE_WINDOW_MS = 10 * 60 * 1000
 type OwnedApplication = {
   id: string
   tracking_token: string | null
-  user_id: string | null
+  user_id?: string | null
+  email?: string | null
+}
+
+type SessionUser = {
+  id: string
+  email: string | null
 }
 
 function isMissingUserIdColumn(error: { code?: string; message?: string } | null): boolean {
@@ -40,13 +46,34 @@ function tripScoped(
   return scoped
 }
 
+function sessionEmail(email: string | null | undefined): string | null {
+  const value = email?.trim().toLowerCase() ?? ""
+  return value.length > 0 ? value : null
+}
+
+function reusedApplication(row: OwnedApplication) {
+  return NextResponse.json({
+    success: true,
+    message: "Application submitted successfully",
+    applicationId: row.id,
+    trackingToken: row.tracking_token ?? undefined,
+    created: false,
+  })
+}
+
 /** Signed-in user from the cookie session, or from a bearer token. Never from the request body. */
-async function sessionUserId(request: Request, admin: SupabaseClient): Promise<string | null> {
+async function sessionUser(request: Request, admin: SupabaseClient): Promise<SessionUser | null> {
+  const fromAuthUser = (user: { id?: string; email?: string | null } | null | undefined): SessionUser | null => {
+    const id = user?.id?.trim().toLowerCase() ?? ""
+    if (!id) return null
+    return { id, email: sessionEmail(user?.email) }
+  }
+
   try {
     const cookieClient = await createServerClient()
     const { data } = await cookieClient.auth.getUser()
-    const cookieId = data.user?.id?.trim().toLowerCase()
-    if (cookieId) return cookieId
+    const cookieUser = fromAuthUser(data.user)
+    if (cookieUser) return cookieUser
   } catch (error) {
     console.error("[submit] cookie session lookup failed:", error instanceof Error ? error.name : "unknown")
   }
@@ -55,9 +82,8 @@ async function sessionUserId(request: Request, admin: SupabaseClient): Promise<s
   const jwt = /^Bearer\s+(\S+)/i.exec(header)?.[1] ?? ""
   if (!jwt) return null
   const { data, error } = await admin.auth.getUser(jwt)
-  if (error || !data.user?.id) return null
-  const bearerId = data.user.id.trim().toLowerCase()
-  return bearerId || null
+  if (error) return null
+  return fromAuthUser(data.user)
 }
 
 export async function POST(request: Request) {
@@ -126,20 +152,20 @@ export async function POST(request: Request) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
-    const userId = await sessionUserId(request, supabase)
+    const session = await sessionUser(request, supabase)
     const since = new Date(Date.now() - DUPLICATE_WINDOW_MS).toISOString()
     const startIso = startDate?.iso ?? null
     const endIso = endDate?.iso ?? null
     let userIdColumnMissing = false
 
-    // Reuse a row only when it belongs to the signed-in user. The identity is
-    // auth.getUser(), never the email or any other field from the body.
-    if (userId) {
+    // Reuse a row only for the signed-in user. Prefer user_id when that column
+    // exists. Otherwise match auth.getUser().email, never the email in the body.
+    if (session) {
       const { data: duplicate, error: duplicateError } = await tripScoped(
         supabase
           .from("visa_applications")
           .select("id, tracking_token, user_id")
-          .eq("user_id", userId)
+          .eq("user_id", session.id)
           .order("created_at", { ascending: false })
           .limit(1),
         sanitizedData.destination,
@@ -148,24 +174,37 @@ export async function POST(request: Request) {
         since,
       ).maybeSingle()
 
-      if (duplicateError) {
-        if (!isMissingUserIdColumn(duplicateError)) {
-          console.error("[submit] duplicate lookup failed:", duplicateError.code)
-          return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
-        }
-        // No user_id column, and this change cannot add one. Do not fall back
-        // to the email in the body, and do not return any existing row.
-        userIdColumnMissing = true
-      } else {
+      if (!duplicateError) {
         const owned = duplicate as OwnedApplication | null
-        if (owned?.id && owned.user_id?.toLowerCase() === userId) {
-          return NextResponse.json({
-            success: true,
-            message: "Application submitted successfully",
-            applicationId: owned.id,
-            trackingToken: owned.tracking_token ?? undefined,
-            created: false,
-          })
+        if (owned?.id && owned.user_id?.toLowerCase() === session.id) {
+          return reusedApplication(owned)
+        }
+      } else if (!isMissingUserIdColumn(duplicateError)) {
+        console.error("[submit] duplicate lookup failed:", duplicateError.code)
+        return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
+      } else {
+        userIdColumnMissing = true
+        if (session.email) {
+          const { data: byEmail, error: emailError } = await tripScoped(
+            supabase
+              .from("visa_applications")
+              .select("id, tracking_token, email")
+              .eq("email", session.email)
+              .order("created_at", { ascending: false })
+              .limit(1),
+            sanitizedData.destination,
+            startIso,
+            endIso,
+            since,
+          ).maybeSingle()
+          if (emailError) {
+            console.error("[submit] duplicate lookup failed:", emailError.code)
+            return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
+          }
+          const owned = byEmail as OwnedApplication | null
+          if (owned?.id && sessionEmail(owned.email) === session.email) {
+            return reusedApplication(owned)
+          }
         }
       }
     } else if (sanitizedData.email) {
@@ -238,7 +277,7 @@ export async function POST(request: Request) {
         spouseAccompanying: formData.spouseAccompanying,
       }),
     }
-    if (userId && !userIdColumnMissing) applicationRow.user_id = userId
+    if (session && !userIdColumnMissing) applicationRow.user_id = session.id
 
     let { data, error } = await supabase.from("visa_applications").insert([applicationRow]).select()
     if (error && "user_id" in applicationRow && isMissingUserIdColumn(error)) {
