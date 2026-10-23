@@ -58,7 +58,6 @@
     page.tsx, loading.tsx
     /thank-you                        # Post-submission page (+ thank-you-client.tsx)
   /about /contact /pricing /how-it-works /videos
-  /app                                # Mobile app landing page (iPhone mockups + store badges)
   /news                               # Blog
     page.tsx, /[slug], not-found.tsx
   /documents                          # Required-documents hub
@@ -75,7 +74,6 @@
 
 /components                           # React components (see section 5)
   /ui                                 # shadcn/ui primitives
-  /app                                # /app page: content (copy + screens), iphone-frame, hero-device, walkthrough, status-timeline, handoff-section, store-badges, reveal
   /apply /blog /thank-you             # feature-specific component groups
 
 /lib
@@ -153,7 +151,6 @@ Usage rules:
 | `top-destinations-carousel.tsx` | Animated destination/flag carousel (Embla) |
 | `country-card.tsx`, `country-document-selector.tsx`, `document-requirements-page.tsx` | Documents flow |
 | `start-application-box.tsx`, `fixed-cta-button.tsx`, `continue-application-notification.tsx` | Conversion helpers |
-| `app/content.ts`, `app/iphone-frame.tsx`, `app/hero-device.tsx`, `app/walkthrough.tsx`, `app/status-timeline.tsx`, `app/handoff-section.tsx`, `app/store-badges.tsx`, `app/reveal.tsx` | `/app` page: all copy + screenshot list in `content.ts`; pure-CSS iPhone frame (scales via container units, accepts children); auto-cycling hero phone with tilt; sticky scroll-driven walkthrough (tabs below `lg`); animated status card; browser-to-phone handoff; App Store / Google Play badges (URLs + "Coming soon" flag live here); `useRevealPhase` keeps server HTML visible and honours `prefers-reduced-motion`. Note: `<main>` in `app/layout.tsx` uses `overflow-x-clip` so `position: sticky` works site-wide |
 | `cookie-consent.tsx`, `scroll-restoration.tsx`, `scroll-to-top.tsx`, `theme-provider.tsx` | App-wide utilities |
 
 ---
@@ -220,7 +217,6 @@ Never log or expose secrets. Check the exact required names in the route/handler
 | Edit testimonials / FAQ / footer | the matching `components/*-section.tsx` / `footer.tsx` |
 | Add a Schengen country | `lib/countries.ts` + new `app/documents/required-documents-to-apply-for-a-tourist-visa-in-<country>/page.tsx` |
 | Update pricing | `app/pricing/page.tsx` + price lines in hero/contact |
-| Mobile app page: store links / screenshots | `components/app/store-badges.tsx` (`APP_STORE_URL`, `GOOGLE_PLAY_URL`, `GOOGLE_PLAY_AVAILABLE`); screenshots in `public/app/screenshots/*.png` (1179×2556), OG image `public/app/og.png` |
 | Visa application logic | `app/apply/*`, `lib/wizard-steps.ts`, `lib/form-types.ts`, `lib/actions/visa-application.ts`, `app/api/submit-application` |
 | Payments | `app/api/create-payment`, `app/api/webhooks/ziina`, `app/payment-success`, `app/payment-failed` |
 | Email templates | `lib/email-templates.tsx` + `app/api/send-email` |
@@ -241,11 +237,35 @@ pnpm lint         # eslint
 
 - After UI changes, verify in the browser at mobile/tablet/desktop breakpoints.
 - A passing build/lint is **not** proof of correct behavior — exercise the actual user path.
-- **Owner's workflow: deploy after every edit.** Once a change is verified, commit, push, open/merge the PR into `main`; Vercel builds production from `main` automatically. Confirm the deployment is READY and the live page responds before reporting done.
 
 ---
 
-## 10. What NOT to Do
+## 10. Website ↔ App sync (IMPORTANT)
+
+The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this repo (never merged into `main`;
+`tsconfig.json` excludes `mobile/`). Both clients share one Supabase table, one Ziina checkout and one set of rules.
+
+- **`lib/shared/wizard-contract.ts` is the single source of truth** (zero imports): price rule, country/option
+  lists, wizard answers + step order + validators, statuses and labels, document types → `has_*` flags, the
+  `additional_notes` JSON shape (`applicationColumns`), the `EZ-XXXXXXXX` reference. The app mirrors it in
+  `mobile/lib/wizard.ts`. Never add a private copy of a list or rule in a component or route: import it.
+- **`lib/auth/errors.ts`** mirrors `mobile/lib/authErrors.ts` (same sign-in messages). `lib/applications.ts`
+  reads applications the way the app does (ownership = row email equals the signed-in email).
+- **Google sign-in** is always offered on `/login` and `/signup` (`components/auth/social-buttons.tsx`); it works
+  once the Google provider is enabled on the Supabase project (`docs/AUTH_SETUP.md`). Apple shows when enabled.
+- **`pnpm sync:check`** (`scripts/check-app-sync.mts`) compares the contract with the app's files and exits 1 on
+  drift; `.github/workflows/app-sync.yml` runs it on every push/PR to `main` and `mobile-app`. Run it before
+  committing a change to anything in the contract.
+- **`GET /api/app-config`** serves the contract as JSON for the app to fetch at launch.
+- Routes the app depends on (keep on `main`): `/api/create-payment`, `/api/check-payment`, `/api/webhooks/ziina`,
+  `/api/upload-document` (Bearer + `applicationId` + `uploadId`), `/api/continue-application`, `/app-return`.
+- Journey on both platforms: wizard (personal → spouse → trip → payment) → pay → **continue application**
+  (passport number + employment: `/dashboard/continue`, `/track/[token]/continue`) → upload documents → track.
+- Change procedure, auth/Supabase configuration and known leftovers: `docs/APP_WEB_SYNC.md`, `docs/AUTH_SETUP.md`.
+
+---
+
+## 11. What NOT to Do
 
 - Don't reintroduce serif/italic display headings, glassmorphism, `bg-mesh`/`bg-grain`, or decorative gradient blobs.
 - Don't use purple/violet prominently.
@@ -259,4 +279,4 @@ pnpm lint         # eslint
 
 ---
 
-_Last updated: 2026-10-22 — reflects the current Poppins + bright-blue (Atlys-style) design system, the redesigned header/hero, and the interactive `/app` page._
+_Last updated: 2026-10-22 — adds the website ↔ app contract (`lib/shared`), the sync check and shared auth flow, plus the interactive `/app` page; design system unchanged (Poppins + bright-blue, Atlys-style)._

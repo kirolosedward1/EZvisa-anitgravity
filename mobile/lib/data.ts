@@ -42,11 +42,11 @@ export type Application = VisaRow & {
 
 const need = () => { if (!supabase) throw new Error("Backend not configured"); return supabase; };
 async function me() {
-  const { data, error } = await need().auth.getUser();
-  // Offline / server unreachable: keep the original (retryable) error so autosave keeps retrying instead of giving up.
-  if (error && error.name === "AuthRetryableFetchError") throw error;
-  if (!data.user?.email) throw new Error("Please sign in first");
-  return { id: data.user.id, email: data.user.email.toLowerCase() };
+  // getSession reads the stored session (no network round trip). getUser() can hang on React Native
+  // after OAuth / a session restore, which left screens such as Continue application loading forever.
+  const { data } = await need().auth.getSession(); const user = data.session?.user;
+  if (!user?.email) throw new Error("Please sign in first");
+  return { id: user.id, email: user.email.toLowerCase() };
 }
 export const parseNotes = (s: string | null): Notes => { if (!s) return {}; try { const j = JSON.parse(s); return j && typeof j === "object" ? j : {}; } catch { return { }; } };
 /** Same display reference the website uses (#EZ-XXXXXXXX). The live table has no tracking_token column, so it is derived from the id. */
@@ -145,12 +145,14 @@ export async function listApplications(): Promise<Application[]> {
 }
 export async function getApplication(id: string): Promise<Application> {
   const u = await me();
-  const { data, error } = await need().from("visa_applications").select("*").eq("id", id).eq("email", u.email).single();
-  if (error) throw error;
+  if (!id) throw new Error("We couldn't find this application on your account. Make sure you're signed in with the email you applied with.");
+  const { data, error } = await need().from("visa_applications").select("*").eq("id", id).eq("email", u.email).maybeSingle();
+  if (error) throw new Error(error.message || "Couldn't load");
+  if (!data) throw new Error("We couldn't find this application on your account. Make sure you're signed in with the email you applied with.");
   return toApplication(data);
 }
 
-const days = (a: string, b: string) => Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+const days = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000) + 1;
 /** Column mapping identical to web /api/submit-application, plus the full wizard state for cross-device resume. */
 function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, question?: string): VisaUpdate {
   const t = (s: string) => (s ?? "").trim();
@@ -504,29 +506,42 @@ export async function markRead(ids: string[]) {
   await AsyncStorage.setItem(READ_KEY, JSON.stringify([...s]));
 }
 
-const PUSH_TOKEN_KEY = "ezvisa.push.token";
+const PUSH_TOKEN_KEY = "ezvisa.push.token"; // the token last saved to the server for the signed-in user
+const savingTokens = new Set<Promise<void>>();
+let releasedSession: string | null = null; // access token of the session whose phone token was removed at sign-out
 /** Stores this phone's Expo push token in device_tokens for the signed-in user (RLS: own rows only; user_id/email come from the session server-side).
- * claim_device_token (migration 0012) also takes the token off any other account that last used this phone. Until it is applied,
- * a plain insert is used and an existing row gets a fresh updated_at (notify-status sends a shared token only to its latest owner). */
-export async function registerPushToken(token: string) {
-  const prev = await AsyncStorage.getItem(PUSH_TOKEN_KEY).catch(() => null);
-  await AsyncStorage.setItem(PUSH_TOKEN_KEY, token).catch(() => {});
+ * claim_device_token (migration 0013) also takes the token off any other account that last used this phone. Until it is applied,
+ * a plain insert is used and an existing row gets a fresh updated_at (notify-status sends a shared token only to its latest owner).
+ * A rotated token's old row is deleted only after the new one is saved. */
+export function registerPushToken(token: string): Promise<void> {
+  const p = saveTokenRow(token).finally(() => { savingTokens.delete(p); });
+  savingTokens.add(p);
+  return p;
+}
+async function saveTokenRow(token: string) {
   if (!supabase) return;
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session) return;
+  if (!session || session.access_token === releasedSession) return; // signed out, or signing out right now
+  const prev = await AsyncStorage.getItem(PUSH_TOKEN_KEY).catch(() => null);
   const platform = Platform.OS === "android" ? "android" : "ios";
-  if (prev && prev !== token) await supabase.from("device_tokens" as any).delete().eq("token", prev).then(() => {}, () => {}); // rotated token
   const claim: { error: { code?: string } | null } = await (supabase as any).rpc("claim_device_token", { p_token: token, p_platform: platform });
-  if (!claim.error) return;
-  if (claim.error.code !== "PGRST202") throw claim.error; // PGRST202 = function not in the database yet
-  const { error } = await supabase.from("device_tokens" as any).insert({ token, platform } as any);
-  if (error?.code === "23505") { await supabase.from("device_tokens" as any).update({ updated_at: new Date().toISOString() } as any).eq("token", token); return; }
-  if (error) throw error;
+  if (claim.error) {
+    if (claim.error.code !== "PGRST202") throw claim.error; // PGRST202 = function not in the database yet
+    const { error } = await supabase.from("device_tokens" as any).insert({ token, platform } as any);
+    if (error?.code === "23505") await supabase.from("device_tokens" as any).update({ updated_at: new Date().toISOString() } as any).eq("token", token);
+    else if (error) throw error;
+  }
+  await AsyncStorage.setItem(PUSH_TOKEN_KEY, token).catch(() => {});
+  if (prev && prev !== token) await supabase.from("device_tokens" as any).delete().eq("token", prev).then(() => {}, () => {}); // rotated token
 }
-/** Removes this phone's token from the signed-in account. false = the server could not be reached, so pushes would continue. */
+/** Removes this phone's token from the signed-in account (called before signing out). Waits for a save already in flight,
+ * and no later save for this session goes through. false = the server could not be reached, so pushes would continue. */
 export async function unregisterPushToken(): Promise<boolean> {
+  if (!supabase) return true;
+  releasedSession = (await supabase.auth.getSession().catch(() => null))?.data.session?.access_token ?? null;
+  await Promise.all([...savingTokens].map((p) => p.catch(() => {})));
   const token = await AsyncStorage.getItem(PUSH_TOKEN_KEY).catch(() => null);
-  if (!token || !supabase) return true;
+  if (!token) return true;
   try {
     const { error } = await supabase.from("device_tokens" as any).delete().eq("token", token);
     return !error;
@@ -542,4 +557,9 @@ export async function cancelApplication(id: string): Promise<boolean> {
     .in("application_status", ["draft", "submitted"]).not("payment_status", "in", "(paid,completed)").select("id, application_status");
   if (error) throw error;
   return !!data?.some((r: any) => r.application_status === "cancelled");
+}
+
+/** Rejects after ms so a screen never waits forever. */
+export function withTimeout<T>(p: Promise<T>, ms = 12000): Promise<T> {
+  return new Promise<T>((res, rej) => { const h = setTimeout(() => rej(new Error("This is taking too long. Check your connection and try again.")), ms); p.then((v) => { clearTimeout(h); res(v); }, (e) => { clearTimeout(h); rej(e); }); });
 }

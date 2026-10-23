@@ -7,7 +7,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import Image from "next/image"
+import { CountryFlag } from "@/components/country-flag"
+import { flagIso } from "@/lib/nationalities"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 
 const fromCountries = [
@@ -27,24 +28,6 @@ const fromCountries = [
   "Kenya",
   "South Africa",
 ]
-
-const fromCountryFlags: Record<string, string> = {
-  Egypt: "🇪🇬",
-  India: "🇮🇳",
-  Jordan: "🇯🇴",
-  Pakistan: "🇵🇰",
-  "Russian Federation": "🇷🇺",
-  Syria: "🇸🇾",
-  Turkey: "🇹🇷",
-  "United Arab Emirates": "🇦🇪",
-  "Saudi Arabia": "🇸🇦",
-  Philippines: "🇵🇭",
-  Bangladesh: "🇧🇩",
-  "Sri Lanka": "🇱🇰",
-  Nigeria: "🇳🇬",
-  Kenya: "🇰🇪",
-  "South Africa": "🇿🇦",
-}
 
 export function StartApplicationBox() {
   const [selectedNationality, setSelectedNationality] = useState("")
@@ -80,7 +63,7 @@ export function StartApplicationBox() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="sticky top-24 bg-gray-50/80 md:backdrop-blur- rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-lg"
+      className="sticky top-24 bg-gray-50/80 rounded-2xl p-6 sm:p-8 border border-gray-200 shadow-lg"
     >
       <div className="space-y-6">
         {/* Header */}
@@ -99,14 +82,7 @@ export function StartApplicationBox() {
               >
                 {selectedNationality ? (
                   <div className="flex items-center gap-3">
-                    <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                      <Image
-                        src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
+                    <CountryFlag iso={flagIso(selectedNationality)} title={selectedNationality} />
                     <span className="text-base font-medium text-gray-900">{selectedNationality}</span>
                   </div>
                 ) : (
@@ -144,14 +120,7 @@ export function StartApplicationBox() {
                         className="cursor-pointer py-3"
                       >
                         <div className="flex items-center gap-3 w-full">
-                          <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                            <Image
-                              src={`/flags/${country.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                              alt=""
-                              fill
-                              className="object-cover"
-                            />
-                          </span>
+                          <CountryFlag iso={flagIso(country)} title={country} />
                           <span className="flex-1">{country}</span>
                           {country === selectedNationality && <Check className="h-4 w-4 text-primary" />}
                         </div>

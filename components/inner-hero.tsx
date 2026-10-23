@@ -1,14 +1,17 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { destinations } from "@/lib/destinations"
+import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
+import { stableIndex } from "@/lib/stable-index"
 
 interface InnerHeroProps {
-  badge?: string
+  badge?: React.ReactNode
   title: React.ReactNode
-  description?: string
+  description?: React.ReactNode
   backgroundImage?: string
   randomizeBackground?: boolean
   gradientType?: "default" | "ocean" | "sunset" | "aurora"
@@ -22,54 +25,14 @@ export function InnerHero({
   description,
   backgroundImage,
   randomizeBackground = false,
-  gradientType = "default",
   children,
   className = "",
 }: InnerHeroProps) {
-  const [heroBgImage, setHeroBgImage] = useState<string | undefined>(backgroundImage)
-  const [heroBgCountryName, setHeroBgCountryName] = useState<string | undefined>(undefined)
-
-  useEffect(() => {
-    if (randomizeBackground) {
-      const randomIndex = Math.floor(Math.random() * destinations.length)
-      const randomDest = destinations[randomIndex]
-      if (randomDest && randomDest.image) {
-        setHeroBgImage(randomDest.image)
-        setHeroBgCountryName(randomDest.name)
-      }
-    } else {
-      setHeroBgImage(backgroundImage)
-      // Look up country name by image path
-      const matchingDest = destinations.find(d => d.image === backgroundImage)
-      if (matchingDest) {
-        setHeroBgCountryName(matchingDest.name)
-      } else {
-        setHeroBgCountryName(undefined)
-      }
-    }
-  }, [backgroundImage, randomizeBackground])
-
-  // Define blob color configurations based on gradientType
-  const blobColors = {
-    default: {
-      blob1: "bg-primary/10",
-      blob2: "bg-blue-500/10",
-    },
-    ocean: {
-      blob1: "bg-cyan-500/10",
-      blob2: "bg-blue-600/10",
-    },
-    sunset: {
-      blob1: "bg-orange-500/10",
-      blob2: "bg-amber-500/10",
-    },
-    aurora: {
-      blob1: "bg-emerald-500/10",
-      blob2: "bg-teal-500/10",
-    },
-  }
-
-  const selectedBlobs = blobColors[gradientType] || blobColors.default
+  const pathname = usePathname()
+  const picked = randomizeBackground ? destinations[stableIndex(pathname || "inner", destinations.length)] : undefined
+  const named = destinations.find((destination) => destination.image === backgroundImage)
+  const heroBgImage = backgroundImage || picked?.image
+  const heroBgCountryName = named?.name || picked?.name
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -118,17 +81,13 @@ export function InnerHero({
       </div>
 
       <div className="container mx-auto max-w-6xl">
-        <div className={`relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-border/40 shadow-2xl px-6 py-24 md:py-28 flex flex-col items-center text-center ${
-          heroBgImage ? "bg-slate-950" : "bg-card"
-        }`}>
-          {/* Background Elements */}
+        <div className={`relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-[#E3E7EF] shadow-2xl px-6 py-24 md:py-28 flex flex-col items-center text-center bg-[#FFFFFF] ${heroBgImage ? "photo-hero" : ""}`}>
           {heroBgImage ? (
             <>
-              {/* Background Image Layer */}
               <div className="absolute inset-0 w-full h-full pointer-events-none">
                 <Image
                   src={heroBgImage}
-                  alt="Hero background"
+                  alt=""
                   fill
                   priority
                   quality={75}
@@ -136,38 +95,14 @@ export function InnerHero({
                   className="object-cover object-center"
                 />
               </div>
-              {/* High-contrast dark gradient overlay for text readability */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/60 to-black/75 pointer-events-none" />
+              <PhotoHeroOverlay />
             </>
-          ) : (
-            <>
-              {/* Static Mesh Blobs - Optimized for GPU/Battery */}
-              <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden hidden md:block transform-gpu">
-                <div
-                  className={`absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full ${selectedBlobs.blob1} blur-[90px]`}
-                />
-                <div
-                  className={`absolute top-20 -left-32 w-[400px] h-[400px] rounded-full ${selectedBlobs.blob2} blur-[90px]`}
-                />
-              </div>
-            </>
-          )}
-
-          {/* Decorative Subtle Dot Grid */}
-          <div
-            className="absolute inset-0 opacity-[0.25] pointer-events-none"
-            style={{
-              backgroundImage: "radial-gradient(circle at 1px 1px, oklch(0.45 0.25 264 / 0.15) 1px, transparent 0)",
-              backgroundSize: "24px 24px",
-              maskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 50%, transparent 100%)",
-              WebkitMaskImage: "radial-gradient(ellipse 80% 80% at 50% 50%, black 50%, transparent 100%)",
-            }}
-          />
+          ) : null}
 
           {/* Content Container */}
           <motion.div
             variants={containerVariants}
-            initial="hidden"
+            initial={false}
             animate="visible"
             className="relative z-10 flex flex-col items-center max-w-3xl mx-auto w-full"
           >
@@ -175,11 +110,7 @@ export function InnerHero({
             {badge && (
               <motion.div
                 variants={itemVariants}
-                className={`mb-5 inline-flex items-center px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wider md:backdrop-blur-md shadow-sm cursor-default ${
-                  heroBgImage
-                    ? "bg-white/10 text-white/90 border-white/20"
-                    : "bg-primary/5 text-primary border-primary/10"
-                }`}
+                className="mb-5 inline-flex items-center px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wider shadow-sm cursor-default bg-[#F7F8FA] text-[#0436DC] border-[#E3E7EF]"
               >
                 {badge}
               </motion.div>
@@ -188,9 +119,7 @@ export function InnerHero({
             {/* Title */}
             <motion.h1
               variants={itemVariants}
-              className={`text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.15] text-balance ${
-                heroBgImage ? "text-white drop-shadow-md" : "text-foreground"
-              }`}
+              className={`text-balance ${heroBgImage ? "hero-copy text-white" : "text-[#0A0F1F]"}`}
             >
               {title}
             </motion.h1>
@@ -199,9 +128,7 @@ export function InnerHero({
             {description && (
               <motion.p
                 variants={itemVariants}
-                className={`mt-4 text-base sm:text-lg leading-relaxed max-w-2xl font-medium ${
-                  heroBgImage ? "text-white/80 drop-shadow-sm" : "text-muted-foreground"
-                }`}
+                className={`mt-4 max-w-2xl ${heroBgImage ? "hero-copy text-white/90" : "text-[#3A4150]"}`}
               >
                 {description}
               </motion.p>
@@ -215,7 +142,7 @@ export function InnerHero({
             )}
           </motion.div>
           {heroBgCountryName && (
-            <div className="absolute bottom-4 right-6 md:bottom-5 md:right-8 text-[9px] md:text-[10px] text-white/35 tracking-widest font-semibold uppercase z-20 pointer-events-none select-none">
+            <div className={`absolute bottom-4 end-6 md:bottom-5 md:end-8 text-[9px] md:text-[10px] tracking-widest font-semibold uppercase z-20 pointer-events-none select-none ${heroBgImage ? "text-white/70" : "text-[#0A0F1F]/40"}`}>
               {heroBgCountryName}
             </div>
           )}

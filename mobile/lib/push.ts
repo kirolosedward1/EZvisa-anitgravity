@@ -20,10 +20,19 @@ export function notifications(): N | null {
   return mod;
 }
 
+const projectId = () => Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+let lastToken: string | null = null;
 async function saveToken(N: N) {
-  const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
-  const { data } = await N.getExpoPushTokenAsync({ projectId });
+  const { data } = await N.getExpoPushTokenAsync({ projectId: projectId() });
+  lastToken = data;
   await registerPushToken(data);
+}
+/** The push-token event fires on every device-token fetch, not only on rotation (expo-notifications TokenEmitter), so the
+ *  listener uses the token it is given (no fetch, no loop) and skips the one just saved. */
+function onDeviceToken(N: N, device: import("expo-notifications").DevicePushToken) {
+  N.getExpoPushTokenAsync({ projectId: projectId(), devicePushToken: device })
+    .then(({ data }) => { if (data === lastToken) return; lastToken = data; return registerPushToken(data); })
+    .catch(() => {});
 }
 
 let tokenSub: { remove: () => void } | null = null;
@@ -37,38 +46,44 @@ export async function setupPush(ask = false): Promise<string> {
     const Device = require("expo-device") as typeof import("expo-device");
     if (!Device.isDevice) return "simulator";
     let { status, canAskAgain } = await N.getPermissionsAsync();
-    if (status !== "granted" && (!ask || !canAskAgain)) return status === "denied" ? "denied" : "not-asked";
+    // A "Don't allow" is final here on both platforms (Android 13+ would let us ask once more): Settings can change it.
+    if (status === "denied") return "denied";
+    if (status !== "granted" && (!ask || !canAskAgain)) return "not-asked";
     if (status !== "granted") status = (await N.requestPermissionsAsync()).status;
     if (status !== "granted") return "denied";
     await saveToken(N);
     // APNs/FCM can rotate the device token; re-save so the server never keeps sending to a dead one.
-    tokenSub ??= N.addPushTokenListener(() => { saveToken(N).catch(() => {}); });
+    tokenSub ??= N.addPushTokenListener((t) => onDeviceToken(N, t));
     return "registered";
   } catch (e: any) {
     return `unavailable: ${e?.message ?? e}`;
   }
 }
 
-type Gate = { ready: boolean; signedIn: boolean };
+/** ready: the stored session is known. signedIn: a session. inApp: signed in or guest, so the app's screens exist
+ *  (app/_layout.tsx Routes); a guest restarted on Welcome gets the screen after "Continue without an account". */
+type Gate = { ready: boolean; signedIn: boolean; inApp: boolean };
 function openPending(pending: { current: string | null }, g: Gate) {
   const url = pending.current;
-  if (!url || !g.ready || (needsSession(url) && !g.signedIn)) return;
+  if (!url || !g.ready || !g.inApp || (needsSession(url) && !g.signedIn)) return;
   pending.current = null;
   router.push(url as any, { withAnchor: true });
 }
 
 /** Opens the screen a tapped notification points to, warm (listener) or cold start (last response), each tap once.
  * Waits until the root is ready; application screens wait for a session. */
-export function useNotificationRouting(ready: boolean, signedIn: boolean) {
+export function useNotificationRouting(ready: boolean, signedIn: boolean, inApp: boolean) {
   const pending = useRef<string | null>(null);
-  const gate = useRef<Gate>({ ready, signedIn });
+  const gate = useRef<Gate>({ ready, signedIn, inApp });
   useEffect(() => {
     const N = notifications();
     if (!N) return;
     const seen = new Set<string>();
     const take = (r: import("expo-notifications").NotificationResponse | null) => {
       if (!r || r.actionIdentifier !== N.DEFAULT_ACTION_IDENTIFIER) return;
-      const id = r.notification.request.identifier;
+      // One delivery = identifier + date. The cold-start response can also reach the listener (same delivery), while a
+      // reminder rescheduled under the same identifier (ezvisa-rem-draft) is a new delivery and must open again.
+      const id = `${r.notification.request.identifier}@${r.notification.date}`;
       if (seen.has(id)) return;
       seen.add(id);
       N.clearLastNotificationResponse();
@@ -79,5 +94,5 @@ export function useNotificationRouting(ready: boolean, signedIn: boolean) {
     const sub = N.addNotificationResponseReceivedListener(take);
     return () => sub.remove();
   }, []);
-  useEffect(() => { gate.current = { ready, signedIn }; openPending(pending, gate.current); }, [ready, signedIn]);
+  useEffect(() => { gate.current = { ready, signedIn, inApp }; openPending(pending, gate.current); }, [ready, signedIn, inApp]);
 }

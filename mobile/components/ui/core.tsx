@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Platform, Pressable, PressableProps, View, ViewStyle, StyleProp, TextInput, TextInputProps, ActivityIndicator, StyleSheet, AccessibilityInfo } from "react-native";
+import React, { useEffect, useState } from "react";
+import { I18nManager, Platform, Pressable, PressableProps, View, ViewStyle, StyleProp, TextInput, TextInputProps, ActivityIndicator, StyleSheet, AccessibilityInfo } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, withTiming, useReducedMotion, Easing } from "react-native-reanimated";
 import { SymbolView, SFSymbol } from "expo-symbols";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -10,12 +10,19 @@ import { Image } from "expo-image";
 import { useShake } from "../../lib/motion";
 import { tap, select } from "../../lib/haptics";
 import { Text } from "./Text";
+import { useT } from "../../lib/i18n";
 
-const ION: Record<string, string> = { "chevron.up.chevron.down": "chevron-expand", "lightbulb.fill": "bulb", "wifi.slash": "cloud-offline", "alarm.fill": "alarm", "arrow.up.circle.fill": "cloud-upload", "exclamationmark.circle.fill": "alert-circle", "exclamationmark": "alert", "calendar.badge.plus": "calendar", "house.fill": "home", "globe.europe.africa.fill": "earth", "doc.text.fill": "document-text", "person.crop.circle.fill": "person-circle", "bubble.left.and.bubble.right.fill": "chatbubbles", "chevron.right": "chevron-forward", "checkmark": "checkmark", "checkmark.circle.fill": "checkmark-circle", "airplane": "airplane", "bed.double.fill": "bed", "envelope.fill": "mail", "phone.fill": "call", "calendar": "calendar", "creditcard.fill": "card", "clock.fill": "time", "shield.checkered": "shield-checkmark", "doc.on.doc.fill": "documents", "list.bullet.clipboard.fill": "clipboard", "pencil.and.list.clipboard": "create", "map.fill": "map", "magnifyingglass": "search", "arrow.up.right.square": "share-outline", "exclamationmark.triangle.fill": "warning", "tray": "file-tray-outline", "person.badge.key.fill": "key", "wand.and.stars": "sparkles", "safari.fill": "compass", "questionmark.circle.fill": "help-circle", "questionmark.circle": "help-circle-outline", "lock.fill": "lock-closed", "sparkles": "sparkles", "person.fill": "person", "briefcase.fill": "briefcase", "eurosign.circle.fill": "cash", "star.fill": "star", "bolt.fill": "flash", "arrow.right": "arrow-forward", "logo.whatsapp": "logo-whatsapp", "bell.fill": "notifications", "sun.max.fill": "sunny", "moon.stars.fill": "moon", "cloud.sun.fill": "partly-sunny", "cloud.moon.fill": "cloudy-night", "cloud.fill": "cloud", "cloud.fog.fill": "cloud", "cloud.drizzle.fill": "rainy", "cloud.rain.fill": "rainy", "cloud.snow.fill": "snow", "cloud.heavyrain.fill": "rainy", "cloud.bolt.rain.fill": "thunderstorm", "plus": "add", "arrow.clockwise": "refresh", "chevron.down": "chevron-down", "chevron.up": "chevron-up", "xmark": "close", "rectangle.portrait.and.arrow.right": "log-out-outline", "house": "home-outline", "globe.europe.africa": "earth-outline", "doc.text": "document-text-outline", "person.crop.circle": "person-circle-outline", "bell": "notifications-outline", "bell.slash": "notifications-off-outline", "eye": "eye-outline", "eye.slash": "eye-off-outline", "doc.fill": "document", "paperplane.fill": "paper-plane", "info.circle": "information-circle-outline", "arrow.up.doc.fill": "cloud-upload", "circle": "ellipse-outline", "checkmark.seal.fill": "checkmark-done-circle", "xmark.circle.fill": "close-circle", "hourglass": "hourglass-outline", "airplane.departure": "airplane", "airplane.arrival": "airplane", "person.2.fill": "people", "chevron.left": "chevron-back", "cross.case.fill": "medkit", "graduationcap.fill": "school", "ellipsis.circle.fill": "ellipsis-horizontal-circle", "building.2.fill": "business", "laptopcomputer": "laptop", "leaf.fill": "leaf", "person.crop.circle.badge.plus": "person-add", "person.text.rectangle": "id-card", "camera.fill": "camera", "building.columns.fill": "business", "fork.knife": "restaurant", "bag.fill": "bag-handle", "square.and.arrow.up": "share-outline", "pencil": "pencil", "trash": "trash-outline", "faceid": "scan", "photo.on.rectangle": "images", "doc.viewfinder": "scan-outline", "clock": "time-outline", "dollarsign.circle": "cash-outline", "powerplug.fill": "flash-outline", "phone.badge.waveform.fill": "call", "globe": "globe-outline", "arrow.counterclockwise": "refresh", "character.bubble": "language", "applelogo": "logo-apple", "lock.shield.fill": "shield", "creditcard": "card-outline", "airplane.circle.fill": "airplane", "list.bullet": "list", "square.grid.2x2": "grid-outline" };
+const ION: Record<string, string> = { "chevron.up.chevron.down": "chevron-expand", "lightbulb.fill": "bulb", "wifi.slash": "cloud-offline", "alarm.fill": "alarm", "arrow.up.circle.fill": "cloud-upload", "exclamationmark.circle.fill": "alert-circle", "exclamationmark": "alert", "calendar.badge.plus": "calendar", "house.fill": "home", "globe.europe.africa.fill": "earth", "doc.text.fill": "document-text", "person.crop.circle.fill": "person-circle", "bubble.left.and.bubble.right.fill": "chatbubbles", "chevron.right": "chevron-forward", "checkmark": "checkmark", "checkmark.circle.fill": "checkmark-circle", "airplane": "airplane", "bed.double.fill": "bed", "envelope.fill": "mail", "phone.fill": "call", "calendar": "calendar", "creditcard.fill": "card", "clock.fill": "time", "shield.checkered": "shield-checkmark", "doc.on.doc.fill": "documents", "list.bullet.clipboard.fill": "clipboard", "pencil.and.list.clipboard": "create", "map.fill": "map", "magnifyingglass": "search", "arrow.up.right.square": "share-outline", "exclamationmark.triangle.fill": "warning", "tray": "file-tray-outline", "person.badge.key.fill": "key", "wand.and.stars": "sparkles", "safari.fill": "compass", "questionmark.circle.fill": "help-circle", "questionmark.circle": "help-circle-outline", "lock.fill": "lock-closed", "sparkles": "sparkles", "person.fill": "person", "briefcase.fill": "briefcase", "eurosign.circle.fill": "cash", "star.fill": "star", "bolt.fill": "flash", "arrow.right": "arrow-forward", "logo.whatsapp": "logo-whatsapp", "bell.fill": "notifications", "sun.max.fill": "sunny", "moon.stars.fill": "moon", "cloud.sun.fill": "partly-sunny", "cloud.moon.fill": "cloudy-night", "cloud.fill": "cloud", "cloud.fog.fill": "cloud", "cloud.drizzle.fill": "rainy", "cloud.rain.fill": "rainy", "cloud.snow.fill": "snow", "cloud.heavyrain.fill": "rainy", "cloud.bolt.rain.fill": "thunderstorm", "plus": "add", "minus": "remove", "arrow.clockwise": "refresh", "chevron.down": "chevron-down", "chevron.up": "chevron-up", "xmark": "close", "rectangle.portrait.and.arrow.right": "log-out-outline", "house": "home-outline", "globe.europe.africa": "earth-outline", "doc.text": "document-text-outline", "person.crop.circle": "person-circle-outline", "bell": "notifications-outline", "bell.slash": "notifications-off-outline", "eye": "eye-outline", "eye.slash": "eye-off-outline", "doc.fill": "document", "paperplane.fill": "paper-plane", "info.circle": "information-circle-outline", "arrow.up.doc.fill": "cloud-upload", "circle": "ellipse-outline", "checkmark.seal.fill": "checkmark-done-circle", "xmark.circle.fill": "close-circle", "hourglass": "hourglass-outline", "airplane.departure": "airplane", "airplane.arrival": "airplane", "person.2.fill": "people", "chevron.left": "chevron-back", "cross.case.fill": "medkit", "graduationcap.fill": "school", "ellipsis.circle.fill": "ellipsis-horizontal-circle", "building.2.fill": "business", "laptopcomputer": "laptop", "leaf.fill": "leaf", "person.crop.circle.badge.plus": "person-add", "person.text.rectangle": "id-card", "camera.fill": "camera", "building.columns.fill": "business", "fork.knife": "restaurant", "bag.fill": "bag-handle", "square.and.arrow.up": "share-outline", "pencil": "pencil", "trash": "trash-outline", "faceid": "scan", "photo.on.rectangle": "images", "doc.viewfinder": "scan-outline", "clock": "time-outline", "dollarsign.circle": "cash-outline", "powerplug.fill": "flash-outline", "phone.badge.waveform.fill": "call", "globe": "globe-outline", "arrow.counterclockwise": "refresh", "character.bubble": "language", "applelogo": "logo-apple", "lock.shield.fill": "shield", "creditcard": "card-outline", "airplane.circle.fill": "airplane", "list.bullet": "list", "square.grid.2x2": "grid-outline" };
 export type IconName = SFSymbol | "logo.whatsapp";
 export function Icon({ name, size = 17, color, weight, style }: { name: IconName; size?: number; color: string; weight?: "regular" | "medium" | "semibold" | "bold"; style?: StyleProp<ViewStyle> }) {
   if (Platform.OS === "ios" && !name.startsWith("logo.")) return <SymbolView name={name as SFSymbol} size={size} tintColor={color} weight={weight} style={[{ width: size, height: size }, style]} />;
   return <Ionicons name={(ION[name] ?? "ellipse") as any} size={size} color={color} style={style as any} />;
+}
+
+/** Forward chevron (row disclosure): mirrored in Arabic so it points to the reading direction's end. */
+export function Chevron({ size = ICON.sm, color, weight = "semibold" }: { size?: number; color?: string; weight?: "regular" | "medium" | "semibold" | "bold" }) {
+  const c = useColors(); const { rtl } = useT();
+  return <Icon name="chevron.right" size={size} color={color ?? c.tertiaryLabel} weight={weight} style={(rtl || I18nManager.isRTL) ? { transform: [{ scaleX: -1 }] } : undefined} />;
 }
 
 /** Bottom padding so content clears the floating tab bar. */
@@ -33,16 +40,19 @@ export function PressScale({ scaleTo = PRESS.scale, lift, style: style0, childre
 
 export function Button({ title, onPress, variant = "primary", size = "L", loading, disabled, icon, color, a11yLabel }: { title: string; onPress: () => void; variant?: "primary" | "secondary" | "plain" | "destructive"; size?: "L" | "M"; loading?: boolean; disabled?: boolean; icon?: IconName; color?: string; a11yLabel?: string }) {
   const c = useColors();
-  const bg = variant === "primary" ? (color ?? c.tintFill) : variant === "secondary" ? c.fill : "transparent";
-  const fg = variant === "primary" ? "#fff" : variant === "destructive" ? c.red : variant === "secondary" ? c.label : (color ?? c.tint);
-  const off = disabled || loading;
+  // Primary: brand-blue pill (a `color` keeps a coloured one, e.g. WhatsApp). Secondary: outlined. Plain: a blue text link.
+  const bg = variant === "primary" ? (color ?? c.primaryFill) : variant === "secondary" ? c.surface : "transparent";
+  const fg = variant === "primary" ? (color ? "#fff" : c.onPrimary) : variant === "destructive" ? c.red : variant === "secondary" ? c.label : (color ?? c.tint);
+  const off = disabled || loading; const [down, setDown] = useState(false);
+  const fill = variant === "primary" && !color && down ? c.primaryPressed : bg;
   return (
-    <PressScale onPress={() => { tap(); onPress(); }} disabled={off} accessibilityRole="button" accessibilityLabel={a11yLabel ?? title} accessibilityState={{ disabled: !!disabled, busy: !!loading }}
-      style={[{ minHeight: size === "L" ? 56 : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: bg, opacity: disabled ? 0.4 : 1 }, curve, variant === "primary" && !off && elevation(1, false)]}>
+    <PressScale onPress={() => { tap(); onPress(); }} onPressIn={() => setDown(true)} onPressOut={() => setDown(false)} scaleTo={0.98} disabled={off} accessibilityRole="button" accessibilityLabel={a11yLabel ?? title} accessibilityState={{ disabled: !!disabled, busy: !!loading }}
+      style={[{ minHeight: size === "L" ? 48 : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: fill, opacity: disabled ? 0.4 : 1 },
+        variant === "secondary" && { borderWidth: 1, borderColor: c.border }, curve]}>
       {loading ? <ActivityIndicator color={fg} /> : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
           {!!icon && <Icon name={icon} size={ICON.md} color={fg} weight="semibold" />}
-          <Text variant="headline" color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>
+          <Text variant="headline" weight="600" color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>
         </View>
       )}
     </PressScale>
@@ -58,8 +68,8 @@ export function Surface({ children, style, level = 1 }: { children: React.ReactN
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginHorizontal: S.lg, marginBottom: S.sm, minHeight: S.xl }}>
-      <Text variant="title3" accessibilityRole="header" style={{ flexShrink: 1 }}>{title}</Text>
-      {!!action && <PressScale onPress={() => { tap(); onAction?.(); }} hitSlop={12} accessibilityRole="button"><Text variant="subhead" tone="secondary" weight="600">{action}</Text></PressScale>}
+      <Text variant="overline" tone="secondary" accessibilityRole="header" style={{ flexShrink: 1 }}>{title}</Text>
+      {!!action && <PressScale onPress={() => { tap(); onAction?.(); }} hitSlop={12} accessibilityRole="button"><Text variant="subhead" tone="accent" weight="600">{action}</Text></PressScale>}
     </View>
   );
 }
@@ -85,7 +95,7 @@ export function ListGroup({ header, footer, action, onAction, children, inset = 
 /** Neutral icon tile (restrained palette): neutral fill, label-coloured symbol. Only destructive red and brand WhatsApp keep their colour. */
 export function IconTile({ name, color, size = 32 }: { name: IconName; color: string; size?: number }) {
   const c = useColors(); const keep = color === c.red || color === c.whatsapp;
-  return <View style={[{ width: size, height: size, borderRadius: R.sm, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={ICON.md} color={keep ? color : c.label} weight="medium" /></View>;
+  return <View style={[{ width: size, height: size, borderRadius: R.sm, backgroundColor: c.fillSubtle, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={ICON.md - 1} color={keep ? color : c.label} weight="regular" /></View>;
 }
 
 export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPress, onLongPress, chevron = !!onPress, trailing, destructive, tint, bold, a11yLabel, a11yHint, minHeight = 44 }: { title: string; subtitle?: string; leading?: React.ReactNode; icon?: IconName; iconColor?: string; value?: string; onPress?: () => void; onLongPress?: () => void; chevron?: boolean; trailing?: React.ReactNode; destructive?: boolean; tint?: boolean; bold?: boolean; a11yLabel?: string; a11yHint?: string; minHeight?: number }) {
@@ -100,7 +110,7 @@ export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPr
       </View>
       {!!value && <Text variant="body" tone="secondary" numberOfLines={1} ellipsizeMode="middle" style={{ flexShrink: 1, maxWidth: "60%", textAlign: "right" }} tabular>{value}</Text>}
       {trailing}
-      {chevron && <Icon name="chevron.right" size={ICON.sm} color={c.tertiaryLabel} weight="semibold" />}
+      {chevron && <Chevron />}
     </PressScale>
   );
 }
@@ -135,13 +145,13 @@ export function FormRow({ label, error, ...p }: TextInputProps & { label: string
 export function SegmentedControl({ options, value, onChange, label }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void; label: string }) {
   const c = useColors(); const dark = useIsDark();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[{ flexDirection: "row", backgroundColor: c.fill, borderRadius: R.md, padding: S.xxs }, curve]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[{ flexDirection: "row", backgroundColor: c.fill, borderRadius: R.round, padding: 3 }, curve]}>
       {options.map((o) => {
         const on = o.value === value;
         return (
           <PressScale key={o.value} onPress={() => { select(); onChange(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={o.label}
-            style={[{ flex: 1, minHeight: HIT, borderRadius: R.sm, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xxs }, on && { backgroundColor: dark ? "#636366" : "#fff", ...elevation(1, false) }]}>
-            <Text variant="footnote" weight={on ? "600" : "500"} numberOfLines={2} center>{o.label}</Text>
+            style={[{ flex: 1, minHeight: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xs }, on && { backgroundColor: dark ? "#636366" : c.surface, ...elevation(1, false) }]}>
+            <Text variant="footnote" weight={on ? "600" : "500"} color={on ? c.label : c.textSecondary} numberOfLines={2} center>{o.label}</Text>
           </PressScale>
         );
       })}
@@ -158,8 +168,8 @@ export function ChipGroup({ options, value, onChange, label }: { options: { valu
         const on = o.value === value;
         return (
           <PressScale key={o.value} onPress={() => { select(); onChange(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={o.label}
-            style={[{ minHeight: HIT, paddingHorizontal: S.md, borderRadius: R.round, justifyContent: "center", backgroundColor: on ? c.accentFill : c.fill }]}>
-            <Text variant="subhead" weight="500" color={on ? "#fff" : c.label}>{o.label}</Text>
+            style={[{ minHeight: 36, paddingHorizontal: S.md, borderRadius: R.round, justifyContent: "center", backgroundColor: on ? c.accentSoft : c.surface, borderWidth: on ? 1.5 : 1, borderColor: on ? c.accent : c.border }]}>
+            <Text variant="subhead" weight={on ? "600" : "500"} color={on ? c.accent : c.label}>{o.label}</Text>
           </PressScale>
         );
       })}
@@ -222,7 +232,7 @@ export function HeaderIconButton({ icon, onPress, label, dot }: { icon: IconName
   return (
     <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={{ width: HIT, height: HIT, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
       <Icon name={icon} size={ICON.md} color={c.label} weight="medium" />
-      {dot && <View style={{ position: "absolute", top: S.xs, right: S.xs, width: 8, height: 8, borderRadius: R.round, backgroundColor: c.red, borderWidth: 1.5, borderColor: c.bg }} />}
+      {dot && <View style={{ position: "absolute", top: S.xs, end: S.xs, width: 8, height: 8, borderRadius: R.round, backgroundColor: c.red, borderWidth: 1.5, borderColor: c.bg }} />}
     </PressScale>
   );
 }

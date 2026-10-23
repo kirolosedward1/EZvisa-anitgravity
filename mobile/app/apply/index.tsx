@@ -5,22 +5,24 @@ import { PressScale } from "../../components/ui";
 // Choices and Yes / No auto-advance with haptics; questions that don't apply are skipped; every answer is autosaved
 // (phone + the account's draft row) and the flow resumes at the exact question. Review lets you edit one answer and
 // come straight back. Links keep the website's params: /apply?step=<slug>&from=<nationality>&to=<destination>.
+import { citizenshipName } from "../../lib/citizenship";
 import { useEffect, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
-import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
+import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, withTiming, Easing } from "react-native-reanimated";
 import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { Button, Text, Icon, SuccessCheck, InlineError } from "../../components/ui";
-import { CircleButton } from "../../components/flow";
+import { CircleButton, StepIndicator, type FlowStep } from "../../components/flow";
 import { Note } from "../../components/wizard/fields";
 import { useFmtDate } from "../../components/wizard/answers";
-import { useColors, S, R, curve, SPRING } from "../../lib/theme";
+import { useColors, S, R, curve } from "../../lib/theme";
 import { fromSlug } from "../../lib/countries";
 import { useForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
+import { needsSchengenVisa } from "../../lib/wizard";
 import { useT } from "../../lib/i18n";
 import { SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp } from "../../lib/api";
@@ -49,25 +51,14 @@ const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f,
 const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
-/** Progress grouped by the website's steps: one animated segment per step. */
+/** Where you are: Details (the questions before payment) -> Review -> Payment. The line after Details fills as you answer. */
 function Progress({ f, page }: { f: WizardForm; page: string }) {
-  const c = useColors(); const { t } = useT();
+  const { t } = useT();
   const p = progressOf(f, page); const cur = p.segs[p.stepIndex];
-  return (
-    <View accessible accessibilityRole="progressbar" accessibilityLabel={t("{step}, step {i} of {n}", { step: t(STEP_TITLES[p.curStep].title), i: p.stepIndex + 1, n: p.steps.length })} style={{ gap: S.xs }}>
-      <View style={{ flexDirection: "row", gap: S.xxs }}>{p.segs.map((s) => <Seg key={s.step} fill={s.fill} />)}</View>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text variant="caption" weight="600" tone="secondary">{t(STEP_TITLES[p.curStep].title)}</Text>
-        {p.curStep !== "payment" && cur && <Text variant="caption" tone="secondary" tabular>{t("{i} of {n}", { i: cur.index, n: cur.count })}</Text>}
-      </View>
-    </View>
-  );
-}
-function Seg({ fill }: { fill: number }) {
-  const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
-  useEffect(() => { w.value = reduce ? fill : withSpring(fill, SPRING.enter); }, [fill, reduce]);
-  const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
-  return <View style={{ flex: 1, height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
+  const review = p.curStep === "payment";
+  const steps: FlowStep[] = [{ key: "details", label: t("Details"), icon: "person.text.rectangle" }, { key: "review", label: t("Review"), icon: "doc.text" }, { key: "pay", label: t("Payment"), icon: "creditcard" }];
+  const label = t("{step}, step {i} of {n}", { step: t(STEP_TITLES[p.curStep].title), i: p.stepIndex + 1, n: p.steps.length }) + (!review && cur ? ", " + t("{i} of {n}", { i: cur.index, n: cur.count }) : "");
+  return <StepIndicator steps={steps} current={review ? 1 : 0} fraction={review ? 0 : cur?.fill ?? 0} a11yLabel={label} />;
 }
 
 export default function Apply() {
@@ -77,6 +68,9 @@ export default function Apply() {
   const guestId = useRef<string | null>(null); // one id per guest submit: a retry after a lost reply can't add a second row
   const { session } = useAuth(); const [paidGuest, setPaidGuest] = useState(false);
   setAccountEmail(session?.user.email); // before any activeQuestions() below: signed in = no email question
+  // Citizenship saved in Account details prefills the nationality step (only if it is still empty and visa-required).
+  const citizenship = citizenshipName(session?.user.user_metadata?.citizenship as string | undefined) || undefined; // ISO code (or an older saved name)
+  useEffect(() => { if (hydrated && citizenship && needsSchengenVisa(citizenship)) setForm((x) => (x.nationality ? x : { ...x, nationality: citizenship })); }, [hydrated, citizenship]);
   const uid = session?.user.id ?? null;
   const [dir, setDir] = useState(1);
   const [showErr, setShowErr] = useState(false); const [errTick, setErrTick] = useState(0); // re-shake on every failed Continue
@@ -330,7 +324,7 @@ export default function Apply() {
         }} />
         {submitted.guestEmail && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead" testID="guest-note">{paidGuest ? t("Next: sign in with {e} to add your details and upload documents.", { e: submitted.guestEmail }) : t("After paying, sign in with {e} to continue.", { e: submitted.guestEmail })}</Text></Note>}
         {submitted.guestEmail ? <Button title={t("Sign in to continue")} variant={paidGuest ? "primary" : "secondary"} onPress={() => { router.replace({ pathname: "/auth", params: { mode: "signup", email: submitted.guestEmail } }); setTimeout(() => setSubmitted(null), 400); }} /> :
-        <Button title={t("Plan my trip")} icon="map.fill" variant="secondary" onPress={() => { const id = submitted.applicationId; router.navigate(`/applications/${id}`, { withAnchor: true }); setTimeout(() => { router.push(`/trip/${id}`); setSubmitted(null); }, 350); }} />}
+        null /* the trip plan unlocks after payment (lib/itinerary planAllowed) */}
         <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp(`Hi EZvisa, I'd like to pay for application ${submitted.reference}.`)} />
         {!submitted.guestEmail && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => { const id = submitted.applicationId; router.navigate(id ? `/applications/${id}` : "/applications", { withAnchor: true }); setTimeout(() => setSubmitted(null), 400); }} />}
       </View>

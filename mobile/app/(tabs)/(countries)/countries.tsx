@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,11 +22,11 @@ const Row = ({ name }: { name: string }) => { const { t } = useT(); return (
 ); };
 
 /** Grid card: the country photo, a dark fade at the bottom, flag + name in capitals, then the Schengen short-stay limit. */
-function Card({ name, w }: { name: string; w: number }) {
+export function Card({ name, w, ratio = 1.3 }: { name: string; w: number; ratio?: number }) {
   const c = useColors(); const { t } = useT(); const slug = toSlug(name); const on = c.onAccent;
   return (
     <PressScale onPress={() => { select(); router.push(`/country/${slug}`); }} accessibilityRole="button" accessibilityLabel={t(name)} testID="country-card"
-      style={[{ width: w, height: Math.round(w * 1.3), borderRadius: R.card, overflow: "hidden", backgroundColor: c.card }, curve]}>
+      style={[{ width: w, height: Math.round(w * ratio), borderRadius: R.card, overflow: "hidden", backgroundColor: c.card }, curve]}>
       <Image source={PHOTOS[slug]} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory" accessibilityIgnoresInvertColors />
       <LinearGradient colors={["transparent", "rgba(0,0,0,0.55)", "rgba(0,0,0,0.9)"]} locations={[0.3, 0.62, 1]} style={StyleSheet.absoluteFill} />
       <View style={{ flex: 1, justifyContent: "flex-end", padding: S.md, gap: S.sm }}>
@@ -61,10 +61,10 @@ export default function Countries() {
     return [...m.entries()];
   }, [rtl, tr]);
   const { width } = useWindowDimensions(); const cardW = Math.floor((width - S.gutter * 2 - S.sm) / 2);
-  const [grid, setGrid] = useState(false);
-  useEffect(() => { AsyncStorage.getItem(VIEW_KEY).then((v) => setGrid(v === "grid")).catch(() => {}); }, []);
+  const [grid, setGrid] = useState(true); // the photo grid is the default; "list" is remembered when chosen
+  useEffect(() => { AsyncStorage.getItem(VIEW_KEY).then((v) => setGrid(v !== "list")).catch(() => {}); }, []);
   const setView = (g: boolean) => { select(); setGrid(g); AsyncStorage.setItem(VIEW_KEY, g ? "grid" : "list").catch(() => {}); };
-  const scroll = useRef<ScrollView>(null); const ys = useRef<Record<string, number>>({}); const allY = useRef(0); const wrapY = useRef(0);
+  const scroll = useRef<ScrollViewInstance>(null); const ys = useRef<Record<string, number>>({}); const allY = useRef(0); const wrapY = useRef(0);
   return (
     <View style={{ flex: 1, backgroundColor: c.background }}>
       <Stack.Screen options={{ headerShown: false }} />

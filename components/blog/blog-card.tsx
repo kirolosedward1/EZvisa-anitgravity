@@ -56,7 +56,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
             </div>
 
             {/* Title */}
-            <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
+            <h3 className="text-lg font-semibold mb-2 group-hover:text-primary transition-colors line-clamp-2 leading-snug">
               {post.title}
             </h3>
 

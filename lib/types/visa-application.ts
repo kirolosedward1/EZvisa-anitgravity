@@ -34,11 +34,16 @@ export interface VisaApplication {
   additional_notes?: string
 
   // Payment & Status
-  payment_status?: "pending" | "paid" | "processing" | "completed"
-  payment_amount?: number
+  payment_status?: "pending" | "paid" | "processing" | "completed" | "failed" | string
+  payment_amount?: number | null
   payment_id?: string
-  application_status?: "submitted" | "reviewing" | "approved" | "ready" | "rejected"
+  paid_at?: string | null
+  application_status?: string
   tracking_token?: string
+  appointment_at?: string | null
+  appointment_centre?: string | null
+  appointment_address?: string | null
+  appointment_reference?: string | null
 
   // Metadata
   submission_ip?: string

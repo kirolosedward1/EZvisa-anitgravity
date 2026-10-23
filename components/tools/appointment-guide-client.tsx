@@ -76,7 +76,7 @@ export function AppointmentGuideClient() {
             <CalendarDays className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">UAE Appointment Center Map & Rules</h2>
+            <h2 className="text-base font-semibold text-foreground">UAE Appointment Center Map & Rules</h2>
             <p className="text-xs text-muted-foreground">
               Official operating locations, slot release habits, and biometrics rules for Dubai and Abu Dhabi centers.
             </p>
@@ -99,7 +99,7 @@ export function AppointmentGuideClient() {
                 : "bg-card border-border/80 text-foreground hover:bg-muted/30"
             }`}
           >
-            <div className="font-bold text-base">{item.provider}</div>
+            <div className="font-semibold text-base">{item.provider}</div>
             <div className={`text-xs mt-1 ${selectedProvider === key ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
               {item.countries.slice(0, 3).join(", ")}
               {item.countries.length > 3 && ` +${item.countries.length - 3} more`}
@@ -116,7 +116,7 @@ export function AppointmentGuideClient() {
             <div className="flex items-center justify-between border-b border-border/40 pb-3">
               <div className="flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-primary" />
-                <h3 className="font-bold text-lg text-foreground">{active.provider} UAE Overview</h3>
+                <h3 className="font-semibold text-lg text-foreground">{active.provider} UAE Overview</h3>
               </div>
               <a
                 href={active.bookingUrl}
@@ -131,7 +131,7 @@ export function AppointmentGuideClient() {
             {/* Locations */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-4 rounded-xl bg-muted/20 border border-border/50 space-y-1">
-                <span className="text-[11px] font-bold text-primary uppercase tracking-wider block">
+                <span className="text-[11px] font-semibold text-primary uppercase tracking-wider block">
                   Dubai Application Center
                 </span>
                 <p className="text-xs text-foreground font-medium flex items-start gap-1.5 mt-1">
@@ -141,7 +141,7 @@ export function AppointmentGuideClient() {
               </div>
 
               <div className="p-4 rounded-xl bg-muted/20 border border-border/50 space-y-1">
-                <span className="text-[11px] font-bold text-primary uppercase tracking-wider block">
+                <span className="text-[11px] font-semibold text-primary uppercase tracking-wider block">
                   Abu Dhabi Application Center
                 </span>
                 <p className="text-xs text-foreground font-medium flex items-start gap-1.5 mt-1">
@@ -182,7 +182,7 @@ export function AppointmentGuideClient() {
 
           {/* 59-Month Biometrics Rule Card */}
           <div className="bg-muted/10 border border-border/50 rounded-2xl p-6 space-y-3">
-            <div className="flex items-center gap-2 text-foreground font-bold text-sm">
+            <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
               <Fingerprint className="w-5 h-5 text-primary" />
               <span>The 59-Month Biometrics Exemption Rule</span>
             </div>
@@ -195,13 +195,13 @@ export function AppointmentGuideClient() {
         {/* Right Column: Appointment Day Protocol */}
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-card border border-border/80 rounded-2xl p-6 shadow-md space-y-6">
-            <h3 className="font-bold text-base text-foreground uppercase tracking-wider text-xs border-b border-border/40 pb-3">
+            <h3 className="font-semibold text-base text-foreground uppercase tracking-wider text-xs border-b border-border/40 pb-3">
               Appointment Day Survival Protocol
             </h3>
 
             <div className="space-y-3.5 text-xs text-muted-foreground">
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px]">
+                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-semibold text-[10px]">
                   1
                 </div>
                 <div>
@@ -211,7 +211,7 @@ export function AppointmentGuideClient() {
               </div>
 
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px]">
+                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-semibold text-[10px]">
                   2
                 </div>
                 <div>
@@ -221,7 +221,7 @@ export function AppointmentGuideClient() {
               </div>
 
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px]">
+                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-semibold text-[10px]">
                   3
                 </div>
                 <div>
@@ -231,7 +231,7 @@ export function AppointmentGuideClient() {
               </div>
 
               <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-[10px]">
+                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-semibold text-[10px]">
                   4
                 </div>
                 <div>
@@ -245,7 +245,7 @@ export function AppointmentGuideClient() {
             <div className="pt-2 border-t border-border/40 space-y-3">
               <Button
                 asChild
-                className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20"
+                className="w-full h-12 text-base font-semibold text-white shadow-lg shadow-blue-500/20 bg-[#0436DC]"
               >
                 <Link href="/apply" className="flex items-center justify-center gap-2">
                   <span>Prepare My Complete Visa Dossier</span>
@@ -260,7 +260,7 @@ export function AppointmentGuideClient() {
 
           {/* Premium Lounge Note */}
           <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-5 space-y-2">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-sm">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-semibold text-sm">
               <ShieldAlert className="w-4 h-4 shrink-0" />
               <span>VIP / Premium Lounge Warning</span>
             </div>

@@ -1,7 +1,7 @@
 // Startup / screen benchmark for the exported web build (react-native-web), CPU throttled to approximate a phone.
 // Usage: npx expo export --platform web --output-dir dist && node scripts/bench-web.mjs dist <label> [runs]
 // Needs Playwright + Chromium (PLAYWRIGHT_MODULE / CHROMIUM env vars; defaults match the Claude cloud container).
-const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "/opt/node-tools/node_modules/playwright/index.mjs");
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "playwright-core");
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";

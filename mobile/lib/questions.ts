@@ -1,4 +1,7 @@
 // One question per screen, built ONLY from the website wizard (lib/wizard.ts mirrors web lib/wizard-steps.ts +
+import { parsePhoneNumberFromString } from "libphonenumber-js/min";
+/** "+971500000000" -> "+971 50 000 0000" (shown as typed when it can't be parsed). */
+export const phoneDisplay = (v: string) => { try { return parsePhoneNumberFromString(v)?.formatInternational() ?? v; } catch { return v; } };
 // components/apply/*): the same fields, labels, options, order and validation. Each question owns one or more form keys;
 // its errors are exactly validateStep(step) filtered to those keys, so the rules can never drift from the web.
 import { WORLD } from "./world";
@@ -8,7 +11,7 @@ import {
 } from "./wizard";
 
 export type Opt = { value: string; label: string };
-export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "contact" | "textarea" | "countries" | "pair";
+export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "dates" | "contact" | "textarea" | "countries" | "pair";
 /** One text field of a "pair" screen (two fields on one page). */
 export type PairField = { key: keyof WizardForm; label: string; placeholder: string; contentType?: string; autoComplete?: string };
 export type Question = {
@@ -64,10 +67,8 @@ export const QUESTIONS: Question[] = [
   // ======== AFTER PAYMENT (Continue application) ========
   // ---- Trip Details ----
   { id: "purposeOfTrip", step: "trip-details", keys: ["purposeOfTrip"], label: "Purpose of Trip", required: true, kind: "choice", options: PURPOSES },
-  { id: "travelStartDate", step: "trip-details", keys: ["travelStartDate"], label: "Intended Departure Date", required: true, kind: "date", placeholder: "Select departure date", min: () => iso(earliestDeparture()), dateStyle: "calendar",
-    hint: "At least 15 days from today." },
-  { id: "travelEndDate", step: "trip-details", keys: ["travelEndDate"], label: "Intended Return Date", required: true, kind: "date", placeholder: "Select return date", min: (f) => f.travelStartDate || todayIso(), dateStyle: "calendar" },
-  { id: "datesFlexible", step: "trip-details", keys: ["datesFlexible"], label: "Are your travel dates flexible?", required: true, kind: "yesno" },
+  // Departure + return (+ flexible) on one screen: "Fixed dates" range calendar or "Flexible" window.
+  { id: "dates", step: "trip-details", keys: ["travelStartDate", "travelEndDate", "datesFlexible"], label: "When are you travelling?", required: true, kind: "dates" },
   { id: "travelingWith", step: "trip-details", keys: ["travelingWith"], label: "Who are you traveling with?", required: true, kind: "choice", options: COMPANIONS },
   { id: "hotelCategory", step: "trip-details", keys: ["hotelCategory"], label: "Accommodation Preferences", required: true, kind: "choice", options: HOTELS },
   { id: "fundingSource", step: "trip-details", keys: ["fundingSource"], label: "Funding Source", required: true, kind: "choice", options: FUNDING },
@@ -161,6 +162,7 @@ export function normalizePage(p: string | null | undefined, f: WizardForm): stri
   if (p === "q:nationalityOther") return "q:nationality"; // removed free-text question
   if (p === "q:firstName" || p === "q:lastName") return "q:name"; // merged screens
   if (p === "q:email" || p === "q:phone") return "q:contact";
+  if (p === "q:travelStartDate" || p === "q:travelEndDate" || p === "q:datesFlexible") p = "q:dates"; // merged into one Dates screen
   if (p === "q:countryOfResidence" || p === "q:hasEmiratesId") p = "q:cityOfResidence"; // no screen any more / asked after payment
   if (p === REVIEW || p === "payment" || p === "documents") return REVIEW;
   // A question that is now asked after payment (old drafts): continue at the first open question, or Review.
@@ -198,7 +200,8 @@ export function displayValue(q: Question, f: WizardForm, t: (s: string) => strin
     case "choice": return v ? t(optLabel(q.options!, v)) : "";
     case "yesno": return v === "yes" ? t("Yes") : v === "no" ? t("No") : "";
     case "date": return v ? fmtDate(v) : "";
-    case "contact": return [accountEmail ? "" : f.email.trim(), f.phone].filter(Boolean).join(" · ");
+    case "dates": return f.travelStartDate ? `${fmtDate(f.travelStartDate)}${f.travelEndDate ? ` – ${fmtDate(f.travelEndDate)}` : ""}${f.datesFlexible === "yes" ? ` · ${t("Flexible")}` : ""}` : "";
+    case "contact": return [accountEmail ? "" : f.email.trim(), phoneDisplay(f.phone)].filter(Boolean).join(" · ");
     case "pair": return (q.fields ?? []).map((x) => String(f[x.key] ?? "").trim()).filter(Boolean).join(q.id === "jobCompany" ? " · " : " ");
     case "countries": return f.additionalCountries.map((a) => `${t(a.country)} (${fmtDate(a.arrivalDate)} – ${fmtDate(a.departureDate)})`).join("\n");
     case "country": return v ? t(v) : "";

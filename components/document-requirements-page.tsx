@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import Link from "next/link"
-import Image from "next/image"
-import { SCHENGEN_COUNTRIES, countryFlags, getCountryUrl } from "@/lib/countries"
+import { CountryFlag } from "@/components/country-flag"
+import { SCHENGEN_COUNTRIES, SCHENGEN_META, getCountryUrl } from "@/lib/countries"
+import { toCitizenshipIso } from "@/lib/nationalities"
 import { motion } from "framer-motion"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -135,15 +136,6 @@ const getDocumentRequirements = (country: string) => ({
 // Nationality list from hero component
 const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
 
-const fromCountryFlags: Record<string, string> = {
-  Egypt: "🇪🇬",
-  India: "🇮🇳",
-  Jordan: "🇯🇴",
-  Pakistan: "🇵🇰",
-  "Russian Federation": "🇷🇺",
-  Syria: "🇸🇾",
-}
-
 export function DocumentRequirementsPage({ initialCountry }: DocumentRequirementsPageProps) {
   const router = useRouter()
   const [selectedCountry, setSelectedCountry] = useState<string>(initialCountry)
@@ -248,12 +240,12 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-gray-50">
+      <div className="min-h-screen">
         <InnerHero
           badge="Requirements"
           title={
             <>
-              Required Documents to Apply for a Tourist Visa in <span className="text-blue-300">{selectedCountry}</span>
+              Required Documents to Apply for a Tourist Visa in <span className="text-[#0436DC]">{selectedCountry}</span>
             </>
           }
           description={`Complete checklist of documents required for your ${selectedCountry} tourist visa application.`}
@@ -265,17 +257,10 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
-                  className="min-w-[240px] md:min-w-[280px] h-12 md:h-14 justify-between text-left font-normal bg-white/10 dark:bg-black/30 text-white border-white/20 hover:border-white/30 hover:bg-white/20 focus:border-white/50 rounded-2xl shadow-inner md:backdrop-blur-"
+                  className="min-w-[240px] md:min-w-[280px] h-12 md:h-14 justify-between text-left font-normal bg-white text-[#0A0F1F] border border-[#E3E7EF] rounded-2xl shadow-[0_8px_24px_rgba(10,15,31,0.08)]"
                 >
                   <div className="flex items-center">
-                    <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block mr-3 flex-shrink-0 shadow-xs">
-                      <Image
-                        src={`/flags/${selectedCountry.toLowerCase().replace(/\s+/g, "-")}.png`}
-                        alt=""
-                        fill
-                        className="object-cover"
-                      />
-                    </span>
+                    <CountryFlag iso={SCHENGEN_META[selectedCountry]?.iso} title={selectedCountry} />
                     <span className="text-lg font-semibold">{selectedCountry}</span>
                   </div>
                   <svg 
@@ -310,14 +295,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                           className="cursor-pointer py-3"
                         >
                           <div className="flex items-center gap-3 w-full">
-                            <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block mr-2 flex-shrink-0 shadow-xs">
-                              <Image
-                                src={`/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`}
-                                alt=""
-                                fill
-                                className="object-cover"
-                              />
-                            </span>
+                            <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
                             <span className="flex-1">{country}</span>
                             {country === selectedCountry && <Check className="h-4 w-4 text-primary" />}
                           </div>
@@ -405,7 +383,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
-                className="sticky top-24 bg-gray-50/80 md:backdrop-blur- rounded-2xl p-8 border border-gray-200 shadow-lg"
+                className="sticky top-24 bg-gray-50/80 rounded-2xl p-8 border border-gray-200 shadow-lg"
               >
                 <div className="space-y-6">
                   {/* Header */}
@@ -424,14 +402,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                         >
                           {selectedNationality ? (
                             <div className="flex items-center gap-3">
-                              <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                                <Image
-                                  src={`/flags/${selectedNationality.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                                  alt=""
-                                  fill
-                                  className="object-cover"
-                                />
-                              </span>
+                              <CountryFlag iso={toCitizenshipIso(selectedNationality)} title={selectedNationality} />
                               <span className="text-base font-medium text-gray-900">{selectedNationality}</span>
                             </div>
                           ) : (
@@ -469,14 +440,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                                   className="cursor-pointer py-3"
                                 >
                                   <div className="flex items-center gap-3 w-full">
-                                    <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                                      <Image
-                                        src={`/flags/${country.toLowerCase().replace(/\s+/g, "-").replace("russian-federation", "russia")}.png`}
-                                        alt=""
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </span>
+                                    <CountryFlag iso={toCitizenshipIso(country)} title={country} />
                                     <span className="flex-1">{country}</span>
                                     {country === selectedNationality && <Check className="h-4 w-4 text-primary" />}
                                   </div>

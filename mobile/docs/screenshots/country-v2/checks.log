@@ -1,0 +1,247 @@
+PASS  italy-390-light-en: no processing time
+PASS  italy-390-light-en: no price
+PASS  italy-390-light-en: no approval rate or visa count
+PASS  italy-390-light-en: no emoji
+PASS  italy-390-light-en: no page errors
+PASS  italy-390-light-en: glance, requirements and questions shown
+PASS  italy-390-light-en: visa centre shown only where mapped
+PASS  italy-390-light-en: funds only in the preview (hidden until confirmed)
+PASS  italy-390-light-en: Your application card only with an application
+PASS  italy-390-light-en: glance row reads as one element  · Stay, Up to 90 days in any 180 days
+PASS  italy-390-light-en: footer button for "none"  · Apply for Italy / Money back if the visa is refused
+PASS  italy-390-light-en: Back and Share are 44pt  · 44x44
+PASS  italy-390-light-en: Back on the left
+PASS  italy-390-light-en: photo is 34% of the screen  · 0.340
+PASS  italy-390-light-en: compact bar appears once the title scrolls under it  · 0 -> 1
+PASS  italy-390-light-en: last row not hidden behind the footer  · 719 <= 744
+PASS  italy-390-light-en: footer hairline only while content is under it  · 1 -> 0
+PASS  italy-390-light-en: rows without a tip are not buttons
+PASS  italy-390-light-en: passport tip sheet  · Passport bio page
+
+Your passport must be valid for at least
+PASS  italy-390-light-ar: no processing time
+PASS  italy-390-light-ar: no price
+PASS  italy-390-light-ar: no approval rate or visa count
+PASS  italy-390-light-ar: no emoji
+PASS  italy-390-light-ar: no page errors
+PASS  italy-390-light-ar: glance, requirements and questions shown
+PASS  italy-390-light-ar: visa centre shown only where mapped
+PASS  italy-390-light-ar: funds only in the preview (hidden until confirmed)
+PASS  italy-390-light-ar: Your application card only with an application
+PASS  italy-390-light-ar: glance row reads as one element  · مدة الإقامة, حتى 90 يومًا خلال أي 180 يومًا
+PASS  italy-390-light-ar: footer button for "none"  · قدّم على إيطاليا / استرداد المبلغ إذا رُفضت التأشيرة
+PASS  italy-390-light-ar: Back and Share are 44pt  · 44x44
+PASS  italy-390-light-ar: Back on the right (RTL)
+PASS  italy-390-light-ar: photo is 34% of the screen  · 0.340
+PASS  italy-390-light-ar: compact bar appears once the title scrolls under it  · 0 -> 1
+PASS  italy-390-light-ar: last row not hidden behind the footer  · 719 <= 744
+PASS  italy-390-light-ar: footer hairline only while content is under it  · 1 -> 0
+PASS  italy-390-light-ar: rows without a tip are not buttons
+PASS  italy-430-light-en: no processing time
+PASS  italy-430-light-en: no price
+PASS  italy-430-light-en: no approval rate or visa count
+PASS  italy-430-light-en: no emoji
+PASS  italy-430-light-en: no page errors
+PASS  italy-430-light-ar: no processing time
+PASS  italy-430-light-ar: no price
+PASS  italy-430-light-ar: no approval rate or visa count
+PASS  italy-430-light-ar: no emoji
+PASS  italy-430-light-ar: no page errors
+PASS  italy-390-light-en-largest: no processing time
+PASS  italy-390-light-en-largest: no price
+PASS  italy-390-light-en-largest: no approval rate or visa count
+PASS  italy-390-light-en-largest: no emoji
+PASS  italy-390-light-en-largest: no page errors
+PASS  italy-390-light-en-largest: no text clipped sideways at the largest size  · 0 clipped boxes
+PASS  italy-390-light-en-largest: footer stays on screen and tappable  · 121pt
+PASS  italy-430-light-ar-largest: no processing time
+PASS  italy-430-light-ar-largest: no price
+PASS  italy-430-light-ar-largest: no approval rate or visa count
+PASS  italy-430-light-ar-largest: no emoji
+PASS  italy-430-light-ar-largest: no page errors
+PASS  italy-430-light-ar-largest: no text clipped sideways at the largest size  · 0 clipped boxes
+PASS  italy-430-light-ar-largest: footer stays on screen and tappable  · 121pt
+PASS  italy-funds-preview-390-light-en: no processing time
+PASS  italy-funds-preview-390-light-en: no price
+PASS  italy-funds-preview-390-light-en: no approval rate or visa count
+PASS  italy-funds-preview-390-light-en: no emoji
+PASS  italy-funds-preview-390-light-en: no page errors
+PASS  italy-funds-preview-390-light-en: glance, requirements and questions shown
+PASS  italy-funds-preview-390-light-en: visa centre shown only where mapped
+PASS  italy-funds-preview-390-light-en: funds only in the preview (hidden until confirmed)
+PASS  italy-funds-preview-390-light-en: Your application card only with an application
+PASS  italy-funds-preview-390-light-en: glance row reads as one element  · Stay, Up to 90 days in any 180 days
+PASS  italy-funds-preview-390-light-en: footer button for "none"  · Apply for Italy / Money back if the visa is refused
+PASS  italy-funds-preview-390-light-en: Back and Share are 44pt  · 44x44
+PASS  italy-funds-preview-390-light-en: Back on the left
+PASS  italy-funds-preview-390-light-en: photo is 34% of the screen  · 0.340
+PASS  italy-funds-preview-390-light-en: compact bar appears once the title scrolls under it  · 0 -> 1
+PASS  italy-funds-preview-390-light-en: last row not hidden behind the footer  · 719 <= 744
+PASS  italy-funds-preview-390-light-en: footer hairline only while content is under it  · 1 -> 0
+PASS  italy-funds-preview-390-light-en: rows without a tip are not buttons
+PASS  italy-funds-preview-390-light-en: passport tip sheet  · Passport bio page
+
+Your passport must be valid for at least
+PASS  italy-funds-preview-390-light-en: stepper 10 → 11 days updates the total (€450 → €495)  · Total with a hotel booking, €450 → Total with a hotel booking, €495
+PASS  italy-funds-preview-390-light-en: stepper is one adjustable element (VoiceOver swipe up/down)  · slider
+PASS  italy-funds-preview-390-light-ar: no processing time
+PASS  italy-funds-preview-390-light-ar: no price
+PASS  italy-funds-preview-390-light-ar: no approval rate or visa count
+PASS  italy-funds-preview-390-light-ar: no emoji
+PASS  italy-funds-preview-390-light-ar: no page errors
+PASS  italy-funds-preview-390-light-ar: glance, requirements and questions shown
+PASS  italy-funds-preview-390-light-ar: visa centre shown only where mapped
+PASS  italy-funds-preview-390-light-ar: funds only in the preview (hidden until confirmed)
+PASS  italy-funds-preview-390-light-ar: Your application card only with an application
+PASS  italy-funds-preview-390-light-ar: glance row reads as one element  · مدة الإقامة, حتى 90 يومًا خلال أي 180 يومًا
+PASS  italy-funds-preview-390-light-ar: footer button for "none"  · قدّم على إيطاليا / استرداد المبلغ إذا رُفضت التأشيرة
+PASS  italy-funds-preview-390-light-ar: Back and Share are 44pt  · 44x44
+PASS  italy-funds-preview-390-light-ar: Back on the right (RTL)
+PASS  italy-funds-preview-390-light-ar: photo is 34% of the screen  · 0.340
+PASS  italy-funds-preview-390-light-ar: compact bar appears once the title scrolls under it  · 0 -> 1
+PASS  italy-funds-preview-390-light-ar: last row not hidden behind the footer  · 719 <= 744
+PASS  italy-funds-preview-390-light-ar: footer hairline only while content is under it  · 1 -> 0
+PASS  italy-funds-preview-390-light-ar: rows without a tip are not buttons
+PASS  italy-funds-preview-390-light-ar: stepper 10 → 11 days updates the total (€450 → €495)  · المجموع مع حجز فندق, ‏450 € → المجموع مع حجز فندق, ‏495 €
+PASS  italy-funds-preview-390-light-ar: stepper is one adjustable element (VoiceOver swipe up/down)  · slider
+PASS  italy-funds-preview-390-light-en-largest: no processing time
+PASS  italy-funds-preview-390-light-en-largest: no price
+PASS  italy-funds-preview-390-light-en-largest: no approval rate or visa count
+PASS  italy-funds-preview-390-light-en-largest: no emoji
+PASS  italy-funds-preview-390-light-en-largest: no page errors
+PASS  italy-funds-preview-390-light-en-largest: no text clipped sideways at the largest size  · 0 clipped boxes
+PASS  italy-funds-preview-390-light-en-largest: footer stays on screen and tappable  · 121pt
+PASS  portugal-no-funds-390-light-en: no processing time
+PASS  portugal-no-funds-390-light-en: no price
+PASS  portugal-no-funds-390-light-en: no approval rate or visa count
+PASS  portugal-no-funds-390-light-en: no emoji
+PASS  portugal-no-funds-390-light-en: no page errors
+PASS  portugal-no-funds-390-light-en: glance, requirements and questions shown
+PASS  portugal-no-funds-390-light-en: visa centre shown only where mapped
+PASS  portugal-no-funds-390-light-en: funds only in the preview (hidden until confirmed)
+PASS  portugal-no-funds-390-light-en: Your application card only with an application
+PASS  portugal-no-funds-390-light-en: glance row reads as one element  · Stay, Up to 90 days in any 180 days
+PASS  portugal-no-funds-390-light-en: footer button for "none"  · Apply for Portugal / Money back if the visa is refused
+PASS  portugal-no-funds-390-light-en: Back and Share are 44pt  · 44x44
+PASS  portugal-no-funds-390-light-en: Back on the left
+PASS  portugal-no-funds-390-light-en: photo is 34% of the screen  · 0.340
+PASS  portugal-no-funds-390-light-en: compact bar appears once the title scrolls under it  · 0 -> 1
+PASS  portugal-no-funds-390-light-en: last row not hidden behind the footer  · 719 <= 744
+PASS  portugal-no-funds-390-light-en: footer hairline only while content is under it  · 1 -> 0
+PASS  portugal-no-funds-390-light-en: rows without a tip are not buttons
+PASS  portugal-no-funds-390-light-en: passport tip sheet  · Passport bio page
+
+Your passport must be valid for at least
+PASS  portugal-no-funds-430-light-ar: no processing time
+PASS  portugal-no-funds-430-light-ar: no price
+PASS  portugal-no-funds-430-light-ar: no approval rate or visa count
+PASS  portugal-no-funds-430-light-ar: no emoji
+PASS  portugal-no-funds-430-light-ar: no page errors
+PASS  portugal-no-funds-390-light-en-largest: no processing time
+PASS  portugal-no-funds-390-light-en-largest: no price
+PASS  portugal-no-funds-390-light-en-largest: no approval rate or visa count
+PASS  portugal-no-funds-390-light-en-largest: no emoji
+PASS  portugal-no-funds-390-light-en-largest: no page errors
+PASS  portugal-no-funds-390-light-en-largest: no text clipped sideways at the largest size  · 0 clipped boxes
+PASS  portugal-no-funds-390-light-en-largest: footer stays on screen and tappable  · 121pt
+PASS  malta-no-centre-390-light-en: no processing time
+PASS  malta-no-centre-390-light-en: no price
+PASS  malta-no-centre-390-light-en: no approval rate or visa count
+PASS  malta-no-centre-390-light-en: no emoji
+PASS  malta-no-centre-390-light-en: no page errors
+PASS  malta-no-centre-390-light-en: glance, requirements and questions shown
+PASS  malta-no-centre-390-light-en: visa centre shown only where mapped
+PASS  malta-no-centre-390-light-en: funds only in the preview (hidden until confirmed)
+PASS  malta-no-centre-390-light-en: Your application card only with an application
+PASS  malta-no-centre-390-light-en: glance row reads as one element  · Stay, Up to 90 days in any 180 days
+PASS  malta-no-centre-390-light-en: footer button for "none"  · Apply for Malta / Money back if the visa is refused
+PASS  malta-no-centre-390-light-en: Back and Share are 44pt  · 44x44
+PASS  malta-no-centre-390-light-en: Back on the left
+PASS  malta-no-centre-390-light-en: photo is 34% of the screen  · 0.340
+PASS  malta-no-centre-390-light-en: compact bar appears once the title scrolls under it  · 0 -> 1
+PASS  malta-no-centre-390-light-en: last row not hidden behind the footer  · 719 <= 744
+PASS  malta-no-centre-390-light-en: footer hairline only while content is under it  · 1 -> 0
+PASS  malta-no-centre-390-light-en: rows without a tip are not buttons
+PASS  malta-no-centre-390-light-en: passport tip sheet  · Passport bio page
+
+Your passport must be valid for at least
+PASS  malta-no-centre-430-light-ar: no processing time
+PASS  malta-no-centre-430-light-ar: no price
+PASS  malta-no-centre-430-light-ar: no approval rate or visa count
+PASS  malta-no-centre-430-light-ar: no emoji
+PASS  malta-no-centre-430-light-ar: no page errors
+PASS  malta-no-centre-390-light-en-largest: no processing time
+PASS  malta-no-centre-390-light-en-largest: no price
+PASS  malta-no-centre-390-light-en-largest: no approval rate or visa count
+PASS  malta-no-centre-390-light-en-largest: no emoji
+PASS  malta-no-centre-390-light-en-largest: no page errors
+PASS  malta-no-centre-390-light-en-largest: no text clipped sideways at the largest size  · 0 clipped boxes
+PASS  malta-no-centre-390-light-en-largest: footer stays on screen and tappable  · 121pt
+PASS  italy-draft-390-light-en: no processing time
+PASS  italy-draft-390-light-en: no price
+PASS  italy-draft-390-light-en: no approval rate or visa count
+PASS  italy-draft-390-light-en: no emoji
+PASS  italy-draft-390-light-en: no page errors
+PASS  italy-draft-390-light-en: glance, requirements and questions shown
+PASS  italy-draft-390-light-en: visa centre shown only where mapped
+PASS  italy-draft-390-light-en: funds only in the preview (hidden until confirmed)
+PASS  italy-draft-390-light-en: Your application card only with an application
+PASS  italy-draft-390-light-en: glance row reads as one element  · Stay, Up to 90 days in any 180 days
+PASS  italy-draft-390-light-en: footer button for "draft"  · Continue your Italy application
+PASS  italy-draft-390-light-en: Back and Share are 44pt  · 44x44
+PASS  italy-draft-390-light-en: Back on the left
+PASS  italy-draft-390-light-en: photo is 34% of the screen  · 0.340
+PASS  italy-draft-390-light-en: compact bar appears once the title scrolls under it  · 0 -> 1
+PASS  italy-draft-390-light-en: last row not hidden behind the footer  · 743 <= 768
+PASS  italy-draft-390-light-en: footer hairline only while content is under it  · 1 -> 0
+PASS  italy-draft-390-light-en: rows without a tip are not buttons
+PASS  italy-draft-390-light-en: passport tip sheet  · Passport bio page
+
+Your passport must be valid for at least
+PASS  italy-draft-430-light-ar: no processing time
+PASS  italy-draft-430-light-ar: no price
+PASS  italy-draft-430-light-ar: no approval rate or visa count
+PASS  italy-draft-430-light-ar: no emoji
+PASS  italy-draft-430-light-ar: no page errors
+PASS  italy-draft-390-light-en-largest: no processing time
+PASS  italy-draft-390-light-en-largest: no price
+PASS  italy-draft-390-light-en-largest: no approval rate or visa count
+PASS  italy-draft-390-light-en-largest: no emoji
+PASS  italy-draft-390-light-en-largest: no page errors
+PASS  italy-draft-390-light-en-largest: no text clipped sideways at the largest size  · 0 clipped boxes
+PASS  italy-draft-390-light-en-largest: footer stays on screen and tappable  · 124pt
+PASS  italy-active-390-light-en: no processing time
+PASS  italy-active-390-light-en: no price
+PASS  italy-active-390-light-en: no approval rate or visa count
+PASS  italy-active-390-light-en: no emoji
+PASS  italy-active-390-light-en: no page errors
+PASS  italy-active-390-light-en: glance, requirements and questions shown
+PASS  italy-active-390-light-en: visa centre shown only where mapped
+PASS  italy-active-390-light-en: funds only in the preview (hidden until confirmed)
+PASS  italy-active-390-light-en: Your application card only with an application
+PASS  italy-active-390-light-en: glance row reads as one element  · Stay, Up to 90 days in any 180 days
+PASS  italy-active-390-light-en: footer button for "active"  · View your application
+PASS  italy-active-390-light-en: active card, See all with 2 items
+PASS  italy-active-390-light-en: Back and Share are 44pt  · 44x44
+PASS  italy-active-390-light-en: Back on the left
+PASS  italy-active-390-light-en: photo is 34% of the screen  · 0.340
+PASS  italy-active-390-light-en: compact bar appears once the title scrolls under it  · 0 -> 1
+PASS  italy-active-390-light-en: last row not hidden behind the footer  · 743 <= 768
+PASS  italy-active-390-light-en: footer hairline only while content is under it  · 1 -> 0
+PASS  italy-active-390-light-en: rows without a tip are not buttons
+PASS  italy-active-390-light-en: passport tip sheet  · Passport bio page
+
+Your passport must be valid for at least
+PASS  italy-active-430-light-ar: no processing time
+PASS  italy-active-430-light-ar: no price
+PASS  italy-active-430-light-ar: no approval rate or visa count
+PASS  italy-active-430-light-ar: no emoji
+PASS  italy-active-430-light-ar: no page errors
+PASS  italy-active-390-light-en-largest: no processing time
+PASS  italy-active-390-light-en-largest: no price
+PASS  italy-active-390-light-en-largest: no approval rate or visa count
+PASS  italy-active-390-light-en-largest: no emoji
+PASS  italy-active-390-light-en-largest: no page errors
+PASS  italy-active-390-light-en-largest: no text clipped sideways at the largest size  · 0 clipped boxes
+PASS  italy-active-390-light-en-largest: footer stays on screen and tappable  · 126pt
+ALL PASS (0 failed)

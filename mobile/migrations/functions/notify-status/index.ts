@@ -1,4 +1,4 @@
-// v2 PROPOSED 2026-10-22, NOT DEPLOYED (v1 deployed 2026-10-21). Deploy only after owner approval:
+// v2 APPROVED by the owner 2026-10-23, NOT YET DEPLOYED (v1 deployed 2026-10-21 is still live). Deploy with messages.ts next to it:
 //   supabase functions deploy notify-status --no-verify-jwt --project-ref dravvaykssrbktztmrlj
 // (no JWT: it is called only by the visa_applications_notify trigger, which proves itself with the Vault shared secret.)
 // Changes from v1: no destination, reference or status words in the lock-screen text; data = { type, applicationId, url } only;

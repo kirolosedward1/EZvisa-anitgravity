@@ -40,6 +40,10 @@ export interface FormData {
   travelStartDate: string
   travelEndDate: string
   datesFlexible: string
+  /** YYYY-MM when dates are flexible. */
+  travelMonth: string
+  /** Inclusive stay length: 7, 14, 21, or 30. */
+  tripLength: string
   isFirstSchengenVisa: string
   previousTravel: string[]
   travelingWith: string
