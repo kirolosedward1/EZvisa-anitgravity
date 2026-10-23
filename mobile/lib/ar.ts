@@ -373,7 +373,7 @@ export const AR: Record<string, string> = {
   "Trip length": "مدة الرحلة",
   "UAE residence visa / Emirates ID": "إقامة الإمارات / الهوية الإماراتية",
   "UAE visa & ID": "الإقامة والهوية",
-  "Upload documents": "رفع المستندات",
+  "Upload documents": "رفع المستندات", "Action required": "إجراء مطلوب",
   "We'll prepare this": "سنجهّز هذا",
   "Your application is already in review, so it can't be changed here. Please message us on WhatsApp.": "طلبك قيد المراجعة بالفعل، لذا لا يمكن تعديله هنا. يرجى مراسلتنا على واتساب.",
   "Your applications": "طلباتك",
