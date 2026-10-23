@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation"
 import { trackEvent } from "@/lib/analytics"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Check, AlertCircle, Lock, ShieldCheck, FileText, ClipboardList } from "lucide-react"
+import { Check, AlertCircle, Lock, ShieldCheck, FileText, ClipboardList, Loader2 } from "lucide-react"
 import Image from "next/image"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { getDefaultCurrency, type CurrencyInfo } from "@/lib/currency"
 import { cn } from "@/lib/utils"
 import type { FormData } from "@/lib/form-types"
@@ -19,12 +19,50 @@ interface PaymentStepProps {
   paymentError?: string | null
 }
 
+type SavedCheckout = {
+  applicationId: string
+  trackingToken?: string
+}
+
+const CHECKOUT_STORAGE_KEY = "ez_checkout_application"
+
+function readSavedCheckout(): SavedCheckout | null {
+  try {
+    const raw = sessionStorage.getItem(CHECKOUT_STORAGE_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as SavedCheckout
+    if (typeof parsed.applicationId === "string" && parsed.applicationId) return parsed
+  } catch {
+    return null
+  }
+  return null
+}
+
+function rememberCheckout(saved: SavedCheckout) {
+  try {
+    sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(saved))
+  } catch {
+    // Retry still works for this page view via the in-memory copy.
+  }
+}
+
 export function PaymentStep({ formData, onBack, isLoading, paymentError }: PaymentStepProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [currency, setCurrency] = useState<CurrencyInfo>(getDefaultCurrency())
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [applicationId, setApplicationId] = useState<string | null>(null)
+  const inFlightRef = useRef<string | null>(null)
+  const trackingTokenRef = useRef<string | undefined>(undefined)
 
   const router = useRouter()
+
+  useEffect(() => {
+    const saved = readSavedCheckout()
+    if (saved) {
+      setApplicationId(saved.applicationId)
+      trackingTokenRef.current = saved.trackingToken
+    }
+  }, [])
 
   useEffect(() => {
     setCurrency(getDefaultCurrency())
@@ -52,89 +90,134 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
   const paymentAmount = basePrice * multiplier
 
   const handlePayment = async () => {
+    if (inFlightRef.current) return
+    const remembered = applicationId ? { applicationId, trackingToken: trackingTokenRef.current } : readSavedCheckout()
+    inFlightRef.current = remembered?.applicationId ?? "pending"
+
     setIsProcessing(true)
     trackEvent("checkout_started", { destination: formData.destination, amount: paymentAmount })
     setSubmitError(null)
+    const started = performance.now()
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), 20000)
+    let redirecting = false
 
     try {
-      // 1. Submit application to database (BLOCKING)
-      const submitResponse = await fetch("/api/submit-application", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      })
+      let checkoutId = remembered?.applicationId
+      let trackingToken = remembered?.trackingToken
 
-      if (!submitResponse.ok) {
-        throw new Error("Failed to save application. Please try again.")
-      }
-
-      const submitData = await submitResponse.json()
-
-      // 2. Send lead to HubSpot (NON-BLOCKING)
-      let hubspotContactId: string | null = null
-      try {
-        const hubspotResponse = await fetch("/api/hubspot/create-lead", {
+      if (!checkoutId) {
+        // The application row is created here, once, when the customer first proceeds to payment.
+        const submitResponse = await fetch("/api/submit-application", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(formData),
+          signal: controller.signal,
         })
-        
-        if (hubspotResponse.ok) {
-          const hubspotData = await hubspotResponse.json()
-          hubspotContactId = hubspotData.contactId || hubspotData.id
+
+        const submitData = await submitResponse.json().catch(() => ({}))
+        if (!submitResponse.ok) {
+          if (submitResponse.status === 409 && submitData?.error === "duplicate_application") {
+            throw new Error(
+              "An application with these details was just submitted. Please wait a few minutes before starting another one.",
+            )
+          }
+          const serverMessage = typeof submitData?.message === "string" ? submitData.message : ""
+          throw new Error(serverMessage || "Failed to save application. Please try again.")
         }
-      } catch (hubspotError) {
-        console.error("HubSpot lead creation failed:", hubspotError)
+
+        if (typeof submitData.applicationId !== "string" || !submitData.applicationId) {
+          throw new Error("Failed to save application. Please try again.")
+        }
+
+        const createdId: string = submitData.applicationId
+        checkoutId = createdId
+        trackingToken = typeof submitData.trackingToken === "string" ? submitData.trackingToken : undefined
+        const saved: SavedCheckout = { applicationId: createdId, trackingToken }
+        setApplicationId(createdId)
+        trackingTokenRef.current = trackingToken
+        rememberCheckout(saved)
+
+        // A reused row (same person, country, and dates within 10 minutes) already has its lead.
+        if (submitData.created === true) {
+          try {
+            await fetch("/api/hubspot/create-lead", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(formData),
+            })
+          } catch (hubspotError) {
+            console.error("HubSpot lead creation failed:", hubspotError)
+          }
+        }
       }
 
-      // 3. PAYMENT FLOW
+      if (!checkoutId) throw new Error("Failed to save application. Please try again.")
+      inFlightRef.current = checkoutId
+
       const successUrl = new URL("/payment-success", window.location.origin)
-      if (submitData.trackingToken) successUrl.searchParams.set("token", submitData.trackingToken)
-      if (submitData.applicationId) successUrl.searchParams.set("appId", submitData.applicationId)
+      if (trackingToken) successUrl.searchParams.set("token", trackingToken)
+      successUrl.searchParams.set("appId", checkoutId)
       if (formData.destination) successUrl.searchParams.set("dest", formData.destination)
 
-        const response = await fetch("/api/create-payment", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            applicationId: submitData.applicationId, // Pass the DB application ID
-            amount: paymentAmount,
-            currency: currency.code,
-            success_url: successUrl.toString(),
-            cancel_url: `${window.location.origin}/payment-failed`,
-            test: false,
-          }),
-        })
-        
-        const data = await response.json()
+      const response = await fetch("/api/create-payment", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          applicationId: checkoutId,
+          amount: paymentAmount,
+          currency: currency.code,
+          success_url: successUrl.toString(),
+          cancel_url: `${window.location.origin}/payment-failed`,
+          test: false,
+        }),
+        signal: controller.signal,
+      })
 
-        if (data.redirect_url) {
-          sessionStorage.setItem("lastCompletedToken", submitData.trackingToken || "")
-          sessionStorage.setItem("lastCompletedAppId", submitData.applicationId || "")
-          sessionStorage.setItem("lastCompletedDest", formData.destination || "")
-          sessionStorage.setItem("pendingApplication", JSON.stringify({
-            ...formData,
-            paymentAmount,
-            currency: currency.code,
-            currencySymbol: currency.symbol,
-          }))
-          
-          window.location.href = data.redirect_url
-        } else {
-          throw new Error("Failed to generate payment link. Please try again.")
+      const data = await response.json().catch(() => ({}))
+      console.info("[payment] create-payment", {
+        ms: Math.round(performance.now() - started),
+        status: response.status,
+        error: data.error || null,
+        elapsedMs: data.elapsedMs ?? null,
+      })
+
+      if (data.redirect_url) {
+        sessionStorage.setItem("lastCompletedToken", trackingToken || "")
+        sessionStorage.setItem("lastCompletedAppId", checkoutId)
+        sessionStorage.setItem("lastCompletedDest", formData.destination || "")
+        sessionStorage.setItem("pendingApplication", JSON.stringify({
+          ...formData,
+          paymentAmount,
+          currency: currency.code,
+          currencySymbol: currency.symbol,
+        }))
+
+        redirecting = true
+        window.location.href = data.redirect_url
+        return
       }
+      throw new Error(data.error || "Failed to generate payment link. Please try again.")
     } catch (error) {
       console.error("Payment flow error:", error)
-      const errorMsg = error instanceof Error ? error.message : "An unexpected error occurred. Please try again."
+      const aborted = error instanceof Error && error.name === "AbortError"
+      const errorMsg = aborted
+        ? "Ziina didn't open within 20 seconds. Check your connection and retry."
+        : error instanceof Error
+          ? error.message
+          : "An unexpected error occurred. Please try again."
       setSubmitError(errorMsg)
       trackEvent("payment_failed", { destination: formData.destination, error: errorMsg })
       setIsProcessing(false)
+    } finally {
+      if (!redirecting) inFlightRef.current = null
+      window.clearTimeout(timer)
     }
   }
 
@@ -170,7 +253,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-28 lg:pb-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-44 lg:pb-0">
         {/* Left Column: Dossier Review & Security info */}
         <div className="lg:col-span-7 space-y-6">
           <div>
@@ -223,20 +306,10 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
                 <span className="text-xs text-muted-foreground block">Traveling: {formatEnumValue(formData.travelingWith)}</span>
               </div>
 
-              {/* Row 4: Employment */}
+              {/* Employment is collected after payment, on /continue */}
               <div>
-                <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Employment Status</span>
-                <span className="font-medium text-foreground">{formatEnumValue(formData.employmentStatus)}</span>
-                {formData.employmentStatus === "employed" && (
-                  <span className="text-xs text-muted-foreground block">
-                    {formData.jobTitle} at {formData.companyName}
-                  </span>
-                )}
-                {(formData.employmentStatus === "business" || formData.employmentStatus === "freelancer") && (
-                  <span className="text-xs text-muted-foreground block">
-                    Owner of {formData.companyName}
-                  </span>
-                )}
+                <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Employment</span>
+                <span className="font-medium text-foreground">Asked after payment</span>
               </div>
               <div>
                 <span className="text-xs text-muted-foreground font-semibold uppercase tracking-wider block">Financials & Accommodation</span>
@@ -337,9 +410,9 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
 
         {/* Right Column: Receipt card & actions */}
         <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
-          <div className="bg-card/45 border border-border/60 rounded-3xl p-6 shadow-md md:backdrop-blur-xl relative overflow-hidden">
+          <div className="bg-card/45 border border-border/60 rounded-3xl p-6 shadow-md relative overflow-hidden">
             {/* Glow effect */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full pointer-events-none" />
 
             <h3 className="font-semibold text-base text-foreground mb-5 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-blue-500" />
@@ -393,7 +466,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
                 
                 <div className="flex justify-between items-baseline pt-2">
                   <span className="text-base font-semibold text-foreground">Total Fee</span>
-                  <span className="text-3xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+                  <span className="text-3xl font-extrabold tracking-tight text-primary">
                     {paymentAmount} {currency.code}
                   </span>
                 </div>
@@ -401,15 +474,20 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
             </div>
             
             {submitError && (
-              <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm font-medium flex items-start gap-2">
+              <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-xl text-destructive text-sm font-medium flex items-start gap-3">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <p>{submitError}</p>
+                <div className="flex flex-col items-start gap-2">
+                  <p>{submitError}</p>
+                  <Button type="button" variant="outline" onClick={handlePayment} disabled={isProcessing} className="h-9 rounded-full px-4">
+                    Retry
+                  </Button>
+                </div>
               </div>
             )}
           </div>
 
           {/* Action buttons */}
-          <div className="fixed lg:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:p-0 bg-background/95 md:backdrop-blur-lg border-t border-t-border/80 lg:border-t-0 lg:bg-transparent lg:backdrop-blur-none z-20 flex lg:flex-col gap-3">
+          <div className="fixed lg:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:p-0 bg-background/95 border-t border-t-border/80 lg:border-t-0 lg:bg-transparent z-20 flex lg:flex-col gap-3">
             <Button
               type="button"
               variant="outline"
@@ -423,10 +501,13 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
               type="button"
               onClick={handlePayment}
               disabled={isProcessing}
-              className="flex-1 lg:w-full h-14 rounded-2xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-98 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
+              className="flex-1 lg:w-full h-14 rounded-2xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-98 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
             >
               {isProcessing ? (
-                "Redirecting to payment..."
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Opening Ziina…
+                </>
               ) : (
                 <>
                   <Lock className="w-4 h-4" />

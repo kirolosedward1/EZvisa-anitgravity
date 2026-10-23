@@ -73,7 +73,7 @@ export function ApplicationSummaryCard({ applicationData }: ApplicationSummaryCa
 
   return (
     <Card className="sticky top-24 shadow-lg border-primary/20">
-      <CardHeader className="bg-gradient-to-br from-primary/5 to-primary/10 border-b">
+      <CardHeader className="border-b bg-[#F7F8FA]">
         <CardTitle className="text-lg font-semibold">Application Summary</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">

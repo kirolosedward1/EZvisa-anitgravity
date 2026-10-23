@@ -5,6 +5,7 @@ import { Calendar as CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 
 import { cn } from "@/lib/utils"
+import { INVALID_DATE_MESSAGE, parseCalendarDate } from "@/lib/dates"
 import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
@@ -34,6 +35,8 @@ export function CustomDatePicker({
   id,
 }: CustomDatePickerProps) {
   const [open, setOpen] = React.useState(false)
+  const [typed, setTyped] = React.useState("")
+  const [invalid, setInvalid] = React.useState(false)
 
   // Parse YYYY-MM-DD in local time
   const parseDateString = React.useCallback((dateStr?: string) => {
@@ -79,7 +82,39 @@ export function CustomDatePicker({
   // Format display text
   const displayText = selectedDate ? format(selectedDate, "PPP") : ""
 
+  const commitTyped = () => {
+    const trimmed = typed.trim()
+    if (!trimmed) {
+      setInvalid(false)
+      return
+    }
+    const parsed = parseCalendarDate(trimmed)
+    if (!parsed) {
+      setInvalid(true)
+      return
+    }
+    setInvalid(false)
+    setTyped("")
+    onChange(parsed.iso)
+  }
+
   return (
+    <div className="flex flex-col gap-2">
+    <input
+      type="text"
+      inputMode="numeric"
+      aria-label={placeholder}
+      placeholder="DD/MM/YYYY"
+      disabled={disabled}
+      value={typed}
+      onChange={(event) => {
+        setTyped(event.target.value)
+        setInvalid(false)
+      }}
+      onBlur={commitTyped}
+      className="h-12 rounded-xl border border-input bg-background px-4 text-base text-foreground"
+    />
+    {invalid && <p className="text-sm text-destructive">{INVALID_DATE_MESSAGE}</p>}
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <button
@@ -87,7 +122,7 @@ export function CustomDatePicker({
           type="button"
           disabled={disabled}
           className={cn(
-            "h-14 rounded-xl border border-border/80 bg-background/50 md:backdrop-blur-sm px-4 text-base font-medium text-foreground transition-all duration-300 hover:border-blue-500/50 hover:bg-background/80 focus-visible:border-blue-500 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:outline-none shadow-sm flex items-center justify-between text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/10 w-full select-none",
+            "h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 hover:border-blue-500/50 hover:bg-background/80 focus-visible:border-blue-500 focus-visible:bg-background focus-visible:ring-4 focus-visible:ring-blue-500/10 focus-visible:outline-none shadow-sm flex items-center justify-between text-left cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/10 w-full select-none",
             !value && "text-muted-foreground/60 font-normal",
             className
           )}
@@ -96,7 +131,7 @@ export function CustomDatePicker({
           <CalendarIcon className="h-5 w-5 text-muted-foreground/60 shrink-0 ml-2" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 z-50 bg-popover border border-border rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95" align="start">
+      <PopoverContent className="w-auto p-0 z-50 rounded-xl" align="start">
         <Calendar
           mode="single"
           selected={selectedDate}
@@ -106,5 +141,6 @@ export function CustomDatePicker({
         />
       </PopoverContent>
     </Popover>
+    </div>
   )
 }

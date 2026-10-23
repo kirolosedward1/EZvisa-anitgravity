@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 
 function SignupForm() {
   const router = useRouter()
@@ -107,6 +108,8 @@ function SignupForm() {
           )}
         </Button>
       </form>
+
+      <GoogleSignInButton next={next} />
 
       <div className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}

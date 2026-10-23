@@ -5,7 +5,7 @@ import { DashboardCard } from "@/components/dashboard/dashboard-card"
 export function DashboardSkeleton() {
   return (
     <main className="bg-background" aria-busy="true" aria-label="Loading your application">
-      <section className="border-b border-border/60 bg-gradient-to-b from-secondary/60 to-background pb-10 pt-28 md:pt-32">
+      <section className="border-b border-border/60 pb-10 pt-28 md:pt-32">
         <div className="container mx-auto flex max-w-6xl flex-col gap-3 px-4 sm:px-6">
           <Skeleton className="h-6 w-24 rounded-full" />
           <Skeleton className="h-10 w-72 max-w-full" />

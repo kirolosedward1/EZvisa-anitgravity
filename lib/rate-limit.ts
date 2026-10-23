@@ -1,31 +1,9 @@
 /**
- * Redis-based rate limiter for API routes using Upstash Redis
- * Provides distributed, persistent rate limiting across serverless instances
+ * Redis-based rate limiter for API routes using Upstash Redis.
+ * The client is created only when KV_REST_API_URL is an https URL and the token is set.
  */
 
 import { Redis } from "@upstash/redis"
-
-// Initialize Redis client (only when configured; otherwise the in-memory limiter below is used)
-const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
-  ? new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN })
-  : null
-
-// Per-instance fallback when Redis is missing or unreachable, so payment routes are never left unlimited.
-const memory = new Map<string, { count: number; resetAt: number }>()
-function checkMemory(key: string, config: RateLimitConfig): RateLimitResult {
-  const now = Date.now()
-  let entry = memory.get(key)
-  if (!entry || entry.resetAt <= now) {
-    entry = { count: 0, resetAt: now + config.windowSeconds * 1000 }
-    memory.set(key, entry)
-    if (memory.size > 5000) for (const [k, v] of memory) if (v.resetAt <= now) memory.delete(k)
-  }
-  entry.count++
-  const resetIn = Math.max(1, Math.ceil((entry.resetAt - now) / 1000))
-  return entry.count > config.limit
-    ? { success: false, remaining: 0, resetIn }
-    : { success: true, remaining: config.limit - entry.count, resetIn }
-}
 
 export interface RateLimitConfig {
   /** Maximum number of requests allowed in the window */
@@ -40,6 +18,107 @@ export interface RateLimitResult {
   resetIn: number
 }
 
+export interface RateLimitOptions {
+  /**
+   * What to do when Redis is not configured, throws, or times out.
+   * "open" allows the request. "memory" applies an in-memory window with the same limit.
+   * Default is "open".
+   */
+  onError?: "open" | "memory"
+  /** Give up on Redis after this many milliseconds and take the onError path. */
+  timeoutMs?: number
+}
+
+let redis: Redis | null = null
+let rateLimitDisabledWarned = false
+
+const memoryBuckets = new Map<string, { count: number; resetAt: number }>()
+
+function warnRateLimitDisabled() {
+  if (rateLimitDisabledWarned) return
+  rateLimitDisabledWarned = true
+  console.warn(
+    "[v0] Rate limiting is disabled. KV_REST_API_URL must start with https:// and KV_REST_API_TOKEN must be non-empty.",
+  )
+}
+
+function getRedis(): Redis | null {
+  const url = process.env.KV_REST_API_URL
+  const token = process.env.KV_REST_API_TOKEN?.trim() ?? ""
+  if (!url?.startsWith("https://") || token.length === 0) return null
+  if (!redis) {
+    redis = new Redis({ url, token })
+  }
+  return redis
+}
+
+function allow(config: RateLimitConfig): RateLimitResult {
+  return {
+    success: true,
+    remaining: config.limit,
+    resetIn: config.windowSeconds,
+  }
+}
+
+function memoryLimit(identifier: string, config: RateLimitConfig): RateLimitResult {
+  const now = Date.now()
+  if (memoryBuckets.size > 1000) {
+    for (const [key, bucket] of memoryBuckets) {
+      if (bucket.resetAt <= now) memoryBuckets.delete(key)
+    }
+  }
+
+  let bucket = memoryBuckets.get(identifier)
+  if (!bucket || bucket.resetAt <= now) {
+    bucket = { count: 0, resetAt: now + config.windowSeconds * 1000 }
+    memoryBuckets.set(identifier, bucket)
+  }
+
+  bucket.count += 1
+  const resetIn = Math.max(1, Math.ceil((bucket.resetAt - now) / 1000))
+  if (bucket.count > config.limit) {
+    return { success: false, remaining: 0, resetIn }
+  }
+  return {
+    success: true,
+    remaining: config.limit - bucket.count,
+    resetIn,
+  }
+}
+
+function resultFromCount(count: number, ttl: number, config: RateLimitConfig): RateLimitResult {
+  const resetIn = ttl > 0 ? ttl : config.windowSeconds
+  if (count > config.limit) {
+    return { success: false, remaining: 0, resetIn }
+  }
+  return {
+    success: true,
+    remaining: Math.max(0, config.limit - count),
+    resetIn,
+  }
+}
+
+async function readRedisLimit(
+  client: Redis,
+  identifier: string,
+  config: RateLimitConfig,
+): Promise<RateLimitResult> {
+  const key = `rate_limit:${identifier}`
+  // One transaction: increment, set the window only if the key has no TTL yet, then read that TTL.
+  const [count, , ttl] = await client
+    .multi()
+    .incr(key)
+    .expire(key, config.windowSeconds, "NX")
+    .ttl(key)
+    .exec()
+
+  const currentCount = Number(count)
+  if (!Number.isFinite(currentCount)) {
+    throw new Error("Rate limit Redis returned a non-numeric count")
+  }
+  return resultFromCount(currentCount, Number(ttl), config)
+}
+
 /**
  * Check if a request should be rate limited (async Redis version)
  * @param identifier - Unique identifier (IP address, user ID, etc.)
@@ -47,42 +126,55 @@ export interface RateLimitResult {
  */
 export async function checkRateLimit(
   identifier: string,
-  config: RateLimitConfig
+  config: RateLimitConfig,
+  options?: RateLimitOptions,
 ): Promise<RateLimitResult> {
-  const key = `rate_limit:${identifier}`
-  if (!redis) return checkMemory(key, config)
+  const onError = options?.onError ?? "open"
+  const client = getRedis()
+  if (!client) {
+    if (onError === "memory") return memoryLimit(identifier, config)
+    warnRateLimitDisabled()
+    return allow(config)
+  }
 
+  let redisResult: RateLimitResult | undefined
+  let redisError: unknown
+  const settled = readRedisLimit(client, identifier, config).then(
+    (result) => {
+      redisResult = result
+    },
+    (error: unknown) => {
+      redisError = error
+    },
+  )
+
+  const timeoutMs = options?.timeoutMs
+  let timer: ReturnType<typeof setTimeout> | undefined
   try {
-    // Use Redis INCR with expiration for atomic rate limiting
-    const currentCount = await redis.incr(key)
-    
-    // Set expiration only on first request (when count is 1)
-    if (currentCount === 1) {
-      await redis.expire(key, config.windowSeconds)
+    if (timeoutMs != null && timeoutMs > 0) {
+      await Promise.race([
+        settled,
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, timeoutMs)
+        }),
+      ])
+    } else {
+      await settled
     }
-    
-    // Get TTL to calculate resetIn
-    const ttl = await redis.ttl(key)
-    const resetIn = ttl > 0 ? ttl : config.windowSeconds
-    
-    // Check if limit exceeded
-    if (currentCount > config.limit) {
-      return {
-        success: false,
-        remaining: 0,
-        resetIn,
-      }
-    }
-    
-    return {
-      success: true,
-      remaining: config.limit - currentCount,
-      resetIn,
-    }
+
+    if (redisError) throw redisError
+    if (redisResult) return redisResult
+    throw new Error(`Rate limit Redis timed out after ${timeoutMs}ms`)
   } catch (error) {
-    // If Redis fails, fall back to the per-instance limiter instead of allowing everything
-    console.error("[rate-limit] Redis unavailable, using in-memory limiter:", error instanceof Error ? error.message : error)
-    return checkMemory(key, config)
+    const message = error instanceof Error ? error.message : "unknown"
+    if (onError === "memory") {
+      console.warn(`[v0] Rate limit Redis error; using in-memory limiter. ${message}`)
+      return memoryLimit(identifier, config)
+    }
+    console.warn(`[v0] Rate limit Redis error; allowing request. ${message}`)
+    return allow(config)
+  } finally {
+    if (timer) clearTimeout(timer)
   }
 }
 

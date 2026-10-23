@@ -55,7 +55,7 @@ export function PersonalStep({ f, set, patch, errors: e, show }: StepProps) {
         <Label>Phone Number *</Label>
         <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={has("phone")} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />
         <FieldError text={show && f.phone && e.phone ? "Please enter a valid phone number (8-15 digits)" : undefined} />
-        <Checkbox label="Receive application updates via WhatsApp" value={f.whatsappOptIn} onChange={set("whatsappOptIn")} icon="logo.whatsapp" iconColor="#25D366" />
+        <Checkbox label="Receive application updates via WhatsApp" value={f.whatsappOptIn} onChange={set("whatsappOptIn")} icon="logo.whatsapp" />
       </View>
       <FormField label="Date of Birth *" error={show && e.dateOfBirth ? "Please select your date of birth (must be 18+)" : undefined}>
         <DateField label="Date of Birth" value={f.dateOfBirth} onChange={set("dateOfBirth")} max={isoDate(adultMax())} placeholder="Select date of birth" error={has("dateOfBirth")} />

@@ -18,6 +18,9 @@ export function PayNowButton({ applicationId, trackingToken, destination, amount
   const handlePay = async () => {
     setLoading(true)
     setError(null)
+    const started = performance.now()
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), 20000)
     try {
       const successUrl = new URL("/payment-success", window.location.origin)
       if (trackingToken) successUrl.searchParams.set("token", trackingToken)
@@ -35,14 +38,24 @@ export function PayNowButton({ applicationId, trackingToken, destination, amount
           cancel_url: `${window.location.origin}/payment-failed`,
           test: false,
         }),
+        signal: controller.signal,
       })
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
+      console.info("[payment] create-payment", {
+        ms: Math.round(performance.now() - started),
+        status: res.status,
+        error: data.error || null,
+        elapsedMs: data.elapsedMs ?? null,
+      })
       if (!res.ok || !data.redirect_url) throw new Error(data.error || "Could not start payment")
       window.location.href = data.redirect_url
     } catch (err) {
       console.error("Payment start failed:", err)
-      setError("We couldn't open the payment page")
+      const aborted = err instanceof Error && err.name === "AbortError"
+      setError(aborted ? "Ziina didn't open within 20 seconds." : "We couldn't open the payment page.")
       setLoading(false)
+    } finally {
+      window.clearTimeout(timer)
     }
   }
 
@@ -50,12 +63,15 @@ export function PayNowButton({ applicationId, trackingToken, destination, amount
     <div className="flex flex-col gap-2">
       <Button onClick={handlePay} disabled={loading} className="rounded-full px-5">
         {loading ? <Loader2 className="animate-spin" /> : <CreditCard />}
-        {loading ? "Redirecting to payment…" : `Pay ${amount} AED`}
+        {loading ? "Opening Ziina…" : `Pay ${amount} AED`}
       </Button>
       {error && (
-        <p role="alert" className="text-xs text-destructive">
-          {error}. Please try again or message us on WhatsApp.
-        </p>
+        <div role="alert" className="flex flex-col items-start gap-2">
+          <p className="text-xs text-destructive">{error}</p>
+          <Button type="button" variant="outline" onClick={handlePay} disabled={loading} className="h-8 rounded-full px-4 text-xs">
+            Retry
+          </Button>
+        </div>
       )}
     </div>
   )

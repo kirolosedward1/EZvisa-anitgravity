@@ -4,6 +4,8 @@ import { useState, useEffect } from "react"
 import { Check, X } from "lucide-react"
 import { motion } from "framer-motion"
 import Image from "next/image"
+import { ReadyLine } from "@/components/ready-line"
+import { APPLICATION_READY } from "@/lib/copy"
 
 export function ComparisonSection() {
   const [currentCurrency, setCurrentCurrency] = useState<{ code: string; symbol: string; rate: number }>({
@@ -50,7 +52,7 @@ export function ComparisonSection() {
     { name: "Complete file validation", others: false },
     { name: "Tailored cover letter & itinerary", others: false },
     { name: "Flight & hotel bookings included", others: true },
-    { name: "24-48 hours fast processing", others: false },
+    { name: "Ready in 1–2 days", others: false },
     { name: "No hidden agency markups", others: false },
   ]
 
@@ -91,7 +93,7 @@ export function ComparisonSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-40px" }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="bg-card/75 md:backdrop-blur- border border-border/80 rounded-3xl p-8 shadow-sm flex flex-col justify-between"
+            className="bg-card/75 border border-border/80 rounded-3xl p-8 shadow-sm flex flex-col justify-between"
           >
             <div>
               <div className="mb-6">
@@ -109,7 +111,7 @@ export function ComparisonSection() {
                       <X className="w-4 h-4 text-muted-foreground/50 mt-0.5 flex-shrink-0" strokeWidth={3} />
                     )}
                     <span className={`text-sm ${feature.others ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      {feature.name}
+                      {feature.name === APPLICATION_READY ? <ReadyLine /> : feature.name}
                     </span>
                   </div>
                 ))}
@@ -151,7 +153,7 @@ export function ComparisonSection() {
                       <Check className="w-3 h-3 text-emerald-500" strokeWidth={3} />
                     </div>
                     <span className="text-sm text-foreground font-medium">
-                      {feature.name}
+                      {feature.name === APPLICATION_READY ? <ReadyLine /> : feature.name}
                     </span>
                   </div>
                 ))}

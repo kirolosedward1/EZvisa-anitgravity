@@ -74,7 +74,7 @@ export function NextStepsTimeline() {
       <CardContent className="pt-6">
         <div className="relative">
           {/* Timeline Line */}
-          <div className="absolute left-[18px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-500 via-primary to-muted" />
+          <div className="absolute left-[18px] top-0 bottom-0 w-0.5 bg-[#0436DC]" />
 
           <div className="space-y-8">
             {steps.map((step, index) => (

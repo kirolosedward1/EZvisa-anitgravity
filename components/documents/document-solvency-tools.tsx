@@ -34,8 +34,8 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
   return (
     <div className="mt-12 space-y-8">
       {/* Solvency Intelligence Banner */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 md:p-8 shadow-md border border-slate-700/60 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="text-white rounded-2xl p-6 md:p-8 shadow-md border border-slate-700/60 relative overflow-hidden bg-[#0A0F1F]">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full pointer-events-none" />
         
         <div className="relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -56,7 +56,7 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
               <span className="text-xs text-slate-300 block mb-1">Daily Subsistence Rate</span>
               <span className="text-xl font-bold text-white">
                 {funds.currency === "CHF" ? `${funds.dailyRate} CHF` : `€${funds.dailyRate}`}
@@ -64,7 +64,7 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
               <span className="text-[11px] text-slate-400 block mt-0.5">per person / day</span>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
               <span className="text-xs text-slate-300 block mb-1">10-Day Trip Minimum</span>
               <span className="text-xl font-bold text-emerald-400">
                 ~{funds.totalAed.toLocaleString()} AED
@@ -74,7 +74,7 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
               </span>
             </div>
 
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
               <span className="text-xs text-slate-300 block mb-1">Recommended Ending Buffer</span>
               <span className="text-xl font-bold text-blue-400">
                 ~{funds.recommendedBufferAed.toLocaleString()} AED

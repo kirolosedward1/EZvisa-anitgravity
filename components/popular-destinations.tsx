@@ -1,7 +1,8 @@
 "use client"
 
 import { destinations } from "@/lib/destinations"
-import { ArrowRight, MoveRight, Clock } from "lucide-react"
+import { ReadyLine } from "@/components/ready-line"
+import { ArrowRight, MoveRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -58,11 +59,11 @@ export function PopularDestinations() {
                 />
 
                 {/* Dark Vignette Overlay for legibility */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent z-10 group-hover:from-black/95 group-hover:via-black/45 transition-colors" />
+                <div className="absolute inset-0 z-10 transition-colors bg-[#0A0F1F]/70" />
 
                 {/* Top Right Circular Arrow Icon */}
                 <div className="absolute top-4 right-4 z-20">
-                  <div className="h-10 w-10 border border-white/30 rounded-full bg-black/20 md:backdrop-blur- text-white group-hover:bg-white group-hover:text-black flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm">
+                  <div className="h-10 w-10 border border-white/30 rounded-full bg-black/20 text-white group-hover:bg-white group-hover:text-black flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm">
                     <ArrowRight className="h-5 w-5 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </div>
@@ -83,10 +84,7 @@ export function PopularDestinations() {
                   <h3 className="text-xl font-bold tracking-tight mb-1">
                     {country.name}
                   </h3>
-                  <div className="text-xs font-medium text-white/70 flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-blue-400 inline" />
-                    <span>24-48h File Prep</span>
-                  </div>
+                  <ReadyLine className="text-xs text-white/60" />
                 </div>
               </Link>
             </motion.div>

@@ -8,8 +8,8 @@ module.exports = defineConfig([
     ignores: ["dist/*", "migrations/functions/*"], // Deno edge functions, not app code
   },
   {
-    files: ["scripts/**/*.{js,mjs}"], // Node scripts
-    languageOptions: { globals: { Buffer: "readonly", process: "readonly" } },
+    files: ["scripts/**/*.{js,mjs,cjs}"], // Node scripts
+    languageOptions: { globals: { Buffer: "readonly", process: "readonly", __dirname: "readonly", require: "readonly", module: "writable" } },
   },
   {
     // React Compiler rules (eslint-plugin-react-hooks 7). The app does not use the React Compiler, and these rules flag

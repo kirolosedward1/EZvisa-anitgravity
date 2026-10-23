@@ -116,12 +116,12 @@ export default function PaymentResult() {
         <Text variant="body" tone="secondary" center>{v.body}</Text>
       </View>
       <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
-        {state === "paid" && !guest && <Button title={needsEmp ? t("Continue application") : t("Upload documents")} onPress={() => router.replace(needsEmp ? `/continue/${id}` : `/applications/${id}`)} />}
+        {state === "paid" && !guest && <Button title={needsEmp ? t("Continue application") : t("Upload documents")} onPress={() => router.replace(needsEmp ? `/continue/${id}` : `/applications/${id}`, { withAnchor: true })} />}
         {guest && ["paid", "confirming", "pending"].includes(state) && <Button title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} />}
         {["pending", "confirming", "offline"].includes(state) && <Button title={t("Check again")} variant="secondary" onPress={verify} />}
         {(state === "failed" || state === "cancelled") && <Button title={paying ? t("Opening secure payment…") : t("Try again")} loading={paying} disabled={paying} onPress={retry} />}
         {(state === "failed" || state === "pending") && <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp("Hi EZvisa, I need help paying for my application.")} />}
-        {state !== "checking" && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => router.replace(session ? `/applications/${id}` : "/")} />}
+        {state !== "checking" && <Button title={t("Done")} variant="plain" color={c.label} onPress={() => router.replace(session ? `/applications/${id}` : "/", { withAnchor: true })} />}
       </View>
     </View>
   );

@@ -8,7 +8,7 @@ import { AppointmentCard } from "../../../components/Appointment";
 import { useColors, S, R, curve, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { PHOTOS, THUMBS } from "../../../lib/photos";
-import { STATUS_LABEL, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
+import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
 import { useApps } from "../../../lib/useApps";
 import { tap, error as hError } from "../../../lib/haptics";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +25,9 @@ import { countdown } from "../../../lib/countdown";
 import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
+import { SwipeToDiscard, SwipeLock } from "../../../components/SwipeToDiscard";
+import { useAvatar } from "../../../lib/avatar";
+import { onTabScroll } from "../../../lib/tabBarScroll";
 
 const fmtDay = (s: string, lang: string) => new Date(s.slice(0, 10) + "T12:00:00").toLocaleDateString(lang === "ar" ? "ar" : undefined, { day: "numeric", month: "short" });
 const tripDates = (a: Application, lang: string) => (a.entry_date ? [fmtDay(a.entry_date, lang), a.exit_date && fmtDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
@@ -38,7 +41,7 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
   const c = useColors(); const { t, lang } = useT();
   const [paying, setPaying] = useState(false);
   const name = a.countries?.name ?? "";
-  const items = buildChecklist(requirementsFor((a.notes?.wizard as any)?.employmentStatus), a.documents, a.status).customer;
+  const items = buildChecklist(requirementsFor(employmentOf(a)), a.documents, a.status).customer;
   const n = nextAction(a, items);
   const steps = buildTimeline(a); const done = doneCount(steps);
   const cd = ["completed", "rejected", "cancelled"].includes(a.status) ? null : countdown(a.entry_date, a.exit_date, t);
@@ -113,7 +116,7 @@ function HeroSkeleton() {
 
 /** The other applications (the hero one is left out): drafts saved on this phone + the signed-in user's server
  *  applications, most recently updated first. Only drafts and unpaid cases can be discarded. */
-type Item = { key: string; country: string; status: string; at: number; open: () => void; remove?: () => void; tone?: "accent" | "secondary"; draft?: string };
+type Item = { key: string; country: string; status: string; at: number; open: () => void; /** discards without asking (swipe); the trash button asks once */ remove?: () => void; tone?: "accent" | "secondary"; draft?: string };
 function useItems(apps: Application[] | null): Item[] | null {
   const { t } = useT(); const { hydrated, drafts, openDraft, removeDraft, openServerDraft } = useForm();
   if (!hydrated) return null;
@@ -122,7 +125,7 @@ function useItems(apps: Application[] | null): Item[] | null {
   return [
     ...drafts.filter((d) => hasAnswers(d.form) && !(d.draftId && linked.has(d.draftId) && server.find((a) => a.id === d.draftId)?.status !== "draft")).map((d): Item => ({
       key: d.draftId ? `s:${d.draftId}` : `l:${d.key}`, country: d.form.destination || (server.find((a) => a.id === d.draftId)?.destination_country ?? ""), status: `${t("Draft")} · ${t(draftStep(d))}`, at: d.savedAt, draft: draftStep(d),
-      open: () => { openDraft(d.key); router.push({ pathname: "/apply", params: { resume: "1" } }); }, remove: () => askDiscard(() => removeDraft(d.key), t) })),
+      open: () => { openDraft(d.key); router.push({ pathname: "/apply", params: { resume: "1" } }); }, remove: () => removeDraft(d.key) })),
     ...server.filter((a) => !(a.status === "draft" && drafts.some((d) => d.draftId === a.id)) && !isUserDiscarded(a)).map((a): Item => {
       const paid = isPaid(a);
       const status = a.status === "draft" ? t("Draft") : needsContinue(a) ? t("Continue application")
@@ -131,7 +134,7 @@ function useItems(apps: Application[] | null): Item[] | null {
         // A draft saved from the website or another device opens in the wizard, at the question it was left on.
         open: a.status === "draft" ? () => { openServerDraft(a.id).then((ok) => router.push(ok ? { pathname: "/apply", params: { resume: "1" } } : `/applications/${a.id}`)).catch(() => router.push(`/applications/${a.id}`)); }
           : () => router.push(status === t("Continue application") ? `/continue/${a.id}` : `/applications/${a.id}`, { withAnchor: true }),
-        remove: isAbandoned(a) ? () => askDiscard(() => { discardApplication(a).catch(() => {}); }, t) : undefined,
+        remove: isAbandoned(a) ? () => { discardApplication(a).catch(() => {}); } : undefined,
         draft: a.status === "draft" ? SERVER_STEP[a.notes?.wizardStep ?? ""] ?? "Personal" : undefined };
     }),
   ].sort((x, y) => y.at - x.at).filter(((n) => (i: Item) => !i.remove || n++ < ABANDONED_LIMIT)(0));
@@ -143,8 +146,10 @@ function AppList({ items, title }: { items: Item[]; title: string }) {
   return (
     <ListGroup header={title} inset={S.md + 28 + S.md} style={{ marginHorizontal: S.xxs }}>
       {items.map((i) => (
-        <Animated.View key={i.key} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT} style={{ flexDirection: "row", alignItems: "center" }} testID="home-app-row">
-          <PressScale onPress={() => { tap(); i.open(); }} onLongPress={i.remove} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
+        <Animated.View key={i.key} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT} testID="home-app-row">
+         <SwipeToDiscard enabled={!!i.remove} onDiscard={() => i.remove?.()} testID="home-swipe">
+          <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: c.surface }}>
+          <PressScale onPress={() => { tap(); i.open(); }} onLongPress={i.remove ? () => askDiscard(i.remove!, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
             style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: S.md, paddingLeft: S.md, paddingRight: i.remove ? 0 : S.md, minHeight: 56 }}>
             {i.country ? <Flag country={i.country} size={28} /> : <View style={{ width: 28, height: 28, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={13} color={c.tint} /></View>}
             <View style={{ flex: 1, paddingVertical: S.xs }}>
@@ -154,11 +159,13 @@ function AppList({ items, title }: { items: Item[]; title: string }) {
             {!i.remove && <Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" />}
           </PressScale>
           {i.remove && (
-            <PressScale onPress={() => { tap(); i.remove!(); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
+            <PressScale onPress={() => { tap(); askDiscard(i.remove!, t); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
               style={{ width: 44, height: 44, marginRight: S.xs, alignItems: "center", justifyContent: "center" }}>
               <Icon name="trash" size={17} color={c.red} />
             </PressScale>
           )}
+          </View>
+         </SwipeToDiscard>
         </Animated.View>
       ))}
     </ListGroup>
@@ -199,6 +206,8 @@ function useResumePayment() {
 export default function Home() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
   const { session, apps, unread, refreshing, refresh, err, load } = useApps(true, true);
+  const photo = useAvatar(session?.user.id);
+  const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
   useResumePayment();
   const scroll = useRef<ScrollView>(null); const apptY = useRef<number | null>(null);
   const name = (session?.user.user_metadata?.full_name as string | undefined)?.split(" ")[0];
@@ -219,14 +228,15 @@ export default function Home() {
   };
 
   return (
-    <ScrollView ref={scroll} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xs, paddingBottom: pb }}
+    <SwipeLock.Provider value={setSwiping}>
+    <ScrollView scrollEnabled={!swiping} onScroll={onTabScroll} scrollEventThrottle={16} ref={scroll} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xs, paddingBottom: pb }}
       refreshControl={session ? <RefreshControl refreshing={refreshing} onRefresh={() => { tap(); refresh(); }} tintColor={c.tint} /> : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: S.lg, minHeight: 48 }}>
         <Logo height={22} />
         <PressScale onPress={() => { tap(); router.push(session ? "/account/notifications" : { pathname: "/auth", params: { mode: "signin" } }); }} accessibilityRole="button" accessibilityLabel={session ? (unread ? `Notifications, ${unread} unread` : "Notifications") : "Sign in"} hitSlop={8}>
           {session ? (
-            <View><Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={36} />{unread > 0 && <View style={{ position: "absolute", top: -1, right: -1, width: 12, height: 12, borderRadius: R.xs, backgroundColor: c.red, borderWidth: 2, borderColor: c.bg }} />}</View>
+            <View><Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={36} uri={photo} />{unread > 0 && <View style={{ position: "absolute", top: -1, right: -1, width: 12, height: 12, borderRadius: R.xs, backgroundColor: c.red, borderWidth: 2, borderColor: c.bg }} />}</View>
           ) : <View style={{ width: 44, height: 44, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={16} color={c.label} /></View>}
         </PressScale>
       </View>
@@ -267,5 +277,6 @@ export default function Home() {
         {STORIES.map((n) => <Story key={n} name={n} />)}
       </ScrollView>
     </ScrollView>
+    </SwipeLock.Provider>
   );
 }

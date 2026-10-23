@@ -54,10 +54,10 @@ export function ServicesSection() {
       <div
         className="absolute inset-0 opacity-[0.12] pointer-events-none hidden md:block"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+          backgroundImage: "none",
           backgroundSize: "32px 32px",
-          maskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 70%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 70%, transparent 100%)",
+          maskImage: "none",
+          WebkitMaskImage: "none",
         }}
       />
 
@@ -111,7 +111,7 @@ export function ServicesSection() {
 
           {/* Center Hub: Soft Glowing Aura Background and Lady Image */}
           <div className="lg:col-span-4 flex justify-center items-end relative py-8 lg:py-0 min-h-[400px] sm:min-h-[500px]">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-[800px] aspect-square bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-sky-400/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-[800px] aspect-square rounded-full pointer-events-none" />
             
             <motion.div 
               initial={{ opacity: 0, y: 50 }}
@@ -168,7 +168,7 @@ export function ServicesSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedService(null)}
-            className="fixed inset-0 bg-foreground/40 md:backdrop-blur- z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-foreground/40 z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 20 }}

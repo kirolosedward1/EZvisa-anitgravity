@@ -3,7 +3,8 @@ import { CheckCircle2, Clock, Download, FileSearch, LifeBuoy, Printer, Upload, W
 import { Button } from "@/components/ui/button"
 import { PayNowButton } from "@/components/dashboard/pay-now-button"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
-import { getDocumentProgress, type Stage } from "@/lib/application-status"
+import { detailsMissing, getDocumentProgress, isPaid, type Stage } from "@/lib/application-status"
+import { PREPARATION_TIME } from "@/lib/copy"
 import { getCaseTrackingWhatsAppUrl, getDocumentHelpWhatsAppUrl } from "@/lib/whatsapp"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
@@ -24,7 +25,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
         return {
           icon: Wallet,
           title: "Complete your payment to get started",
-          body: "Your application is saved. Once payment is confirmed, our visa specialists start working on your file.",
+          body: `Your application is saved. Once payment is confirmed, our visa specialists start preparing your file. ${PREPARATION_TIME}`,
           actions: (
             <PayNowButton
               applicationId={app.id}
@@ -67,7 +68,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
         return {
           icon: Clock,
           title: "We're preparing your visa file",
-          body: "Your cover letter, travel itinerary and submission guide are being prepared. This usually takes 24–48 hours.",
+          body: PREPARATION_TIME,
           actions: null,
         }
       case "ready":
@@ -102,6 +103,13 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
             </>
           ),
         }
+      case "cancelled":
+        return {
+          icon: LifeBuoy,
+          title: "Cancelled",
+          body: "This application is cancelled. There is nothing to pay.",
+          actions: null,
+        }
       case "rejected":
         return {
           icon: LifeBuoy,
@@ -119,10 +127,21 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
     }
   })()
 
+  if (stage !== "cancelled" && isPaid(app) && detailsMissing(app) && app.id) {
+    content.icon = FileSearch
+    content.title = "Continue your application"
+    content.body = "Payment is confirmed. Add your travel dates, passport and employment details, then upload your documents."
+    content.actions = (
+      <Button asChild className="rounded-full px-5">
+        <Link href={`/continue/${app.id}`}>Continue application</Link>
+      </Button>
+    )
+  }
+
   const Icon = content.icon
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-5 sm:p-6">
+    <div id={stage === "payment" ? "pay" : undefined} className="flex flex-col gap-4 rounded-2xl border border-primary/15 bg-primary/5 p-5 sm:p-6">
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:gap-4">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Icon className="size-5" aria-hidden="true" />

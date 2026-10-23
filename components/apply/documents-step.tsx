@@ -123,7 +123,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
   }
 
   return (
-    <div className="space-y-4 pb-28 md:pb-0">
+    <div className="space-y-4 pb-44 md:pb-0">
       <div className="flex items-start gap-3.5 p-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl shadow-sm">
         <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
         <div className="flex-1">
@@ -157,7 +157,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
             <div
               key={doc.key}
               className={cn(
-                "rounded-xl p-5 border-2 transition-all duration-300 md:backdrop-blur-sm relative",
+                "rounded-xl p-5 border-2 transition-all duration-300 relative",
                 dragActive === doc.key
                   ? "border-dashed border-blue-500 bg-blue-500/5 shadow-inner scale-[1.005]"
                   : doc.file 
@@ -248,7 +248,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
         </div>
       )}
 
-      <div className="md:flex md:justify-between fixed md:static bottom-0 left-0 right-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 md:backdrop-blur-lg border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 md:backdrop-blur-none z-20 flex justify-between gap-3">
+      <div className="md:flex md:justify-between fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 z-20 flex justify-between gap-3">
         <Button
           type="button"
           onClick={onBack}
@@ -262,7 +262,7 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
           type="button"
           onClick={handleContinue}
           disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
+          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
         >
           {isLoading ? (
             <>

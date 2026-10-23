@@ -77,7 +77,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
       </Card>
 
       {/* Need Help Card */}
-      <Card className="shadow-lg bg-gradient-to-br from-primary/5 to-emerald-500/5 border-primary/20">
+      <Card className="shadow-lg border-primary/20 bg-[#F7F8FA]">
         <CardContent className="pt-6">
           <div className="flex items-start gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -97,7 +97,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               asChild
             >
               <a
-                href={`https://wa.me/971585864446?text=${encodeURIComponent(whatsappMessage)}`}
+                href={`https://wa.me/971547109533?text=${encodeURIComponent(whatsappMessage)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -112,9 +112,9 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               className="w-full justify-start gap-3 bg-transparent"
               asChild
             >
-              <a href="tel:+971585864446">
+              <a href="tel:+971547109533">
                 <Phone className="w-4 h-4" />
-                <span className="flex-1 text-left">+971 58 586 4446</span>
+                <span className="ltr-isolate flex-1 text-start">+971 54 710 9533</span>
               </a>
             </Button>
 
@@ -153,7 +153,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
       </Card>
 
       {/* Success Stats */}
-      <Card className="shadow-lg bg-gradient-to-br from-emerald-500/10 to-primary/5 border-emerald-500/20">
+      <Card className="shadow-lg border-emerald-500/20 bg-[#F7F8FA]">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3 mb-4">
             <CheckCircle2 className="w-8 h-8 text-emerald-600" />

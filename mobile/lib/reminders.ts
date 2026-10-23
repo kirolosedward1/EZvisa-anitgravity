@@ -47,18 +47,17 @@ export function planReminders(apps: Application[], now = new Date(), passportExp
   const seenPassports = new Set<string>();
   for (const a of apps) {
     if (!ACTIVE(a.status)) continue;
-    const where = a.countries?.name ?? "your trip";
     const url = `/applications/${a.id}`;
     if (a.entry_date) {
-      out.push({ id: `${PREFIX}${a.id}-trip7`, date: at9(a.entry_date, -7), title: `${where} in one week`, body: "Check your documents and travel insurance.", url });
-      out.push({ id: `${PREFIX}${a.id}-trip1`, date: at9(a.entry_date, -1), title: `${where} tomorrow`, body: "Have your passport and visa ready.", url });
+      out.push({ id: `${PREFIX}${a.id}-trip7`, date: at9(a.entry_date, -7), title: "Your trip is in one week", body: "Check your documents and travel insurance.", url });
+      out.push({ id: `${PREFIX}${a.id}-trip1`, date: at9(a.entry_date, -1), title: "Your trip is tomorrow", body: "Have your passport and visa ready.", url });
     }
     for (const p of a.applicants ?? []) {
       if (!p.passport_expiry_date) continue;
       const k = `${p.passport_number ?? p.id}-${p.passport_expiry_date}`;
       if (seenPassports.has(k)) continue;
       seenPassports.add(k);
-      const who = p.is_primary ? "Your passport" : `${p.first_name}'s passport`;
+      const who = p.is_primary ? "Your passport" : "A passport on your application"; // no names on the lock screen
       out.push({ id: `${PREFIX}${p.id}-pp6`, date: at9(p.passport_expiry_date, 0, -6), title: `${who} expires in 6 months`, body: "Many embassies need 3+ months validity after your trip.", url });
       out.push({ id: `${PREFIX}${p.id}-pp3`, date: at9(p.passport_expiry_date, 0, -3), title: `${who} expires in 3 months`, body: "Renew it before your next visa application.", url });
     }

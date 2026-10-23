@@ -117,10 +117,10 @@ export function WhatYouGetSection() {
       <div
         className="absolute inset-0 opacity-[0.1] pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+          backgroundImage: "none",
           backgroundSize: "32px 32px",
-          maskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 75%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 75%, transparent 100%)",
+          maskImage: "none",
+          WebkitMaskImage: "none",
         }}
       />
 
@@ -200,7 +200,7 @@ export function WhatYouGetSection() {
               {/* Previous Nav */}
               <button
                 onClick={goToPrevious}
-                className="absolute left-0 w-10 h-10 rounded-full bg-background border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center z-10 cursor-pointer"
+                className="absolute left-0 w-10 h-10 rounded-full bg-background border border-border text-[#5B6475] hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center z-10 cursor-pointer"
                 aria-label="Previous document"
               >
                 <ChevronLeft className="w-5 h-5" />
@@ -240,7 +240,7 @@ export function WhatYouGetSection() {
               {/* Next Nav */}
               <button
                 onClick={goToNext}
-                className="absolute right-0 w-10 h-10 rounded-full bg-background border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center z-10 cursor-pointer"
+                className="absolute right-0 w-10 h-10 rounded-full bg-background border border-border text-[#5B6475] hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center z-10 cursor-pointer"
                 aria-label="Next document"
               >
                 <ChevronRight className="w-5 h-5" />

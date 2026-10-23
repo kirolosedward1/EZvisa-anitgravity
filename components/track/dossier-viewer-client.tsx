@@ -45,7 +45,7 @@ export function DossierViewerClient({
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
       {/* Top Floating Control Toolbar (Hidden in print) */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm print:hidden">
+      <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 shadow-sm print:hidden">
         <div className="container max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button asChild variant="ghost" size="sm" className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground">

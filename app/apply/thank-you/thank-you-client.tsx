@@ -127,7 +127,7 @@ export function ThankYouClient() {
   return (
     <>
       <SiteHeader />
-      <main className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <main className="min-h-screen">
         {/* Hero Section with Success Animation */}
         <ThankYouHero applicationData={applicationData} />
 

@@ -29,7 +29,7 @@ async function openImage(f: Picked): Promise<Img> {
 }
 
 /** Back to the application (also when the preview was opened without a screen under it). */
-const close = (id: string) => (router.canGoBack() ? router.back() : router.replace(`/applications/${id}`));
+const close = (id: string) => (router.canGoBack() ? router.back() : router.replace(`/applications/${id}`, { withAnchor: true }));
 
 export default function UploadPreview() {
   const p = useLocalSearchParams<Params>();

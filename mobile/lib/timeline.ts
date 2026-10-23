@@ -6,8 +6,8 @@
 //  - uploads: additional_notes.uploads[].at (written when the file was stored) and the website's has_* flags (no time).
 //  - appointment_* columns (migrations/0003, staff only).
 //  - created_at / updated_at only. updated_at changes on any edit, so it is never shown as a step time.
-// migrations/0009 (proposed, not applied) adds a server-side history so every step gets a real time.
-import { isPaid, requirementsFor, type Application } from "./data";
+// migrations/0009 (approved 2026-10-22, not yet confirmed applied) adds a server-side history so every step gets a real time.
+import { employmentOf, isPaid, requirementsFor, type Application } from "./data";
 import { buildChecklist } from "./checklist";
 import { appointmentOf } from "./appointment";
 import { isDiscarded } from "./discard";
@@ -45,7 +45,7 @@ export function buildTimeline(a: Application): Step[] {
   steps.push({ key: "paid", label: pf && submitted ? pf : "Paid", state: paid || refunded ? "done" : pf && submitted && st !== "cancelled" ? "attention" : "todo", at: null, note: refunded ? "Refunded" : undefined });
 
   // 3. Documents: complete when every mandatory customer document is in (and none rejected), or staff moved the file past review.
-  const items = buildChecklist(requirementsFor(n.wizard?.employmentStatus ?? n.employmentStatus), a.documents).customer.filter((i) => i.req.is_mandatory);
+  const items = buildChecklist(requirementsFor(employmentOf(a)), a.documents, st).customer.filter((i) => i.req.is_mandatory);
   const rejected = items.filter((i) => i.state === "rejected");
   const complete = items.length > 0 && items.every((i) => i.state !== "missing" && i.state !== "rejected");
   const uploadTimes = (n.uploads ?? []).map((u: any) => valid(u?.at)).filter(Boolean) as string[];

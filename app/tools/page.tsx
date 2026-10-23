@@ -37,7 +37,7 @@ export default function ToolsIndexPage() {
       description: "Track previous trips, calculate remaining allowable days, and avoid unintentional overstay penalties across all 29 Schengen states.",
       href: "/tools/schengen-calculator",
       cta: "Calculate Stay Days",
-      color: "from-blue-500/10 via-sky-500/5 to-transparent",
+      color: "",
       badgeColor: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200",
       features: [
         "Official rolling 180-day calculation algorithm",
@@ -53,7 +53,7 @@ export default function ToolsIndexPage() {
       description: "Determine the exact closing balance required in your UAE bank statement for Spain, France, Italy, Germany, and Switzerland.",
       href: "/tools/bank-balance-calculator",
       cta: "Check Required Funds",
-      color: "from-emerald-500/10 via-teal-500/5 to-transparent",
+      color: "",
       badgeColor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200",
       features: [
         "Real-time AED conversions from EUR / CHF",
@@ -69,7 +69,7 @@ export default function ToolsIndexPage() {
       description: "Navigate visa application centers across Dubai (Wafi Mall, Sheikh Zayed Rd, Al Barsha) and Abu Dhabi with center procedures and biometrics rules.",
       href: "/tools/appointment-guide",
       cta: "Explore Visa Centers",
-      color: "from-amber-500/10 via-orange-500/5 to-transparent",
+      color: "",
       badgeColor: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200",
       features: [
         "Country-to-center jurisdiction mapping",
@@ -124,7 +124,7 @@ export default function ToolsIndexPage() {
                   key={tool.id} 
                   className="bg-card border border-border/80 rounded-3xl p-8 flex flex-col justify-between hover:shadow-xl hover:border-primary/40 transition-all duration-300 relative overflow-hidden group"
                 >
-                  <div className={"absolute inset-0 bg-gradient-to-br " + tool.color + " opacity-70 pointer-events-none group-hover:opacity-100 transition-opacity"} />
+                  <div className={"absolute inset-0 bg-[#F7F8FA]" + tool.color + " opacity-70 pointer-events-none group-hover:opacity-100 transition-opacity"} />
                   
                   <div className="relative z-10">
                     <div className="flex items-center justify-between gap-2 mb-6">
@@ -169,7 +169,7 @@ export default function ToolsIndexPage() {
 
           {/* Value Banner */}
           <div className="bg-slate-900 text-white rounded-3xl p-8 md:p-12 relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full pointer-events-none" />
             
             <div className="relative z-10 max-w-2xl">
               <div className="inline-flex items-center gap-2 text-primary-foreground/80 text-xs font-bold uppercase tracking-wider mb-4">

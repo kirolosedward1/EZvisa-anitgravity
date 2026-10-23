@@ -210,7 +210,7 @@ export function BankBalanceCalculatorClient() {
             {/* Action Button */}
             <Button
               asChild
-              className="w-full h-12 text-base font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/20"
+              className="w-full h-12 text-base font-bold text-white shadow-lg shadow-blue-500/20 bg-[#0436DC]"
             >
               <Link href={`/apply?to=${encodeURIComponent(funds.country)}`} className="flex items-center justify-center gap-2">
                 <span>Start {funds.country} Application File</span>
