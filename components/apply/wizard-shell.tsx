@@ -30,8 +30,8 @@ function SummaryRows({ formData }: { formData: FormData }) {
   const country = formData.destination?.trim() || ""
   const meta = country ? SCHENGEN_META[country] : undefined
   const nationality = citizenshipName(formData.nationality)
-  const applicants = applicantCount(formData.spouseAccompanying)
-  const price = priceForTravellers(formData.spouseAccompanying)
+  const applicants = applicantCount(formData.spouseAccompanying, formData.travelingWith)
+  const price = priceForTravellers(formData.spouseAccompanying, formData.travelingWith)
   const spousePrice = priceForTravellers("yes")
 
   const rows = [
@@ -103,7 +103,7 @@ function SummaryRows({ formData }: { formData: FormData }) {
 function summaryLine(formData: FormData) {
   const country = formData.destination?.trim() || ""
   const meta = country ? SCHENGEN_META[country] : undefined
-  const price = priceForTravellers(formData.spouseAccompanying)
+  const price = priceForTravellers(formData.spouseAccompanying, formData.travelingWith)
   return { country, countryAr: meta?.ar || country, price }
 }
 

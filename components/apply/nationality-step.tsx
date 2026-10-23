@@ -257,7 +257,13 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             description="One applicant"
             descriptionAr="متقدم واحد"
             selected={!withSpouse}
-            onSelect={() => set({ maritalStatus: "single", spouseAccompanying: "no" })}
+            onSelect={() =>
+              set({
+                maritalStatus: "single",
+                spouseAccompanying: "no",
+                ...(formData.travelingWith === "spouse" ? { travelingWith: "alone" } : {}),
+              })
+            }
           />
           <ChoiceRow
             indicator="radio"
@@ -266,7 +272,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             description={`Two applicants, ${spousePrice} AED. Spouse details after payment.`}
             descriptionAr={`متقدمان، ${spousePrice} درهم. بيانات الزوج أو الزوجة بعد الدفع.`}
             selected={withSpouse}
-            onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes" })}
+            onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes", travelingWith: "spouse" })}
           />
         </ChoiceList>
       </div>

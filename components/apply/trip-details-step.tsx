@@ -275,7 +275,18 @@ export function TripDetailsStep({
                     description={item.desc}
                     descriptionAr={item.descAr}
                     selected={formData.travelingWith === item.value}
-                    onSelect={() => select({ travelingWith: item.value })}
+                    onSelect={() =>
+                      select(
+                        item.value === "spouse"
+                          ? { travelingWith: "spouse", maritalStatus: "married", spouseAccompanying: "yes" }
+                          : {
+                              travelingWith: item.value,
+                              ...(formData.travelingWith === "spouse"
+                                ? { spouseAccompanying: "no", maritalStatus: "single" }
+                                : {}),
+                            },
+                      )
+                    }
                   />
                 ))}
               </ChoiceList>

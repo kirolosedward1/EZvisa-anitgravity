@@ -7,6 +7,7 @@ import { WizardBar } from "@/components/apply/wizard-bar"
 import { WizardQuestion } from "@/components/apply/wizard-choices"
 import { getReference } from "@/lib/application-status"
 import { CURRENCIES, priceForTravellers } from "@/lib/currency"
+import { submitBody } from "@/lib/application-notes"
 import { SCHENGEN_META } from "@/lib/countries"
 import { citizenshipName } from "@/lib/nationalities"
 import { trackEvent } from "@/lib/analytics"
@@ -96,7 +97,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
     }
   }, [])
 
-  const paymentAmount = priceForTravellers(formData.spouseAccompanying)
+  const paymentAmount = priceForTravellers(formData.spouseAccompanying, formData.travelingWith)
   const reference = getReference(trackingToken)
   const laterHref = applicationId ? `/dashboard?id=${applicationId}&pay=1#pay` : "/dashboard"
   const shownError = submitError || paymentError
@@ -133,8 +134,8 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
           },
           body: JSON.stringify(
             stale && remembered?.trackingToken
-              ? { ...formData, replaceApplicationId: remembered.applicationId, replaceTrackingToken: remembered.trackingToken }
-              : formData,
+              ? { ...submitBody(formData), replaceApplicationId: remembered.applicationId, replaceTrackingToken: remembered.trackingToken }
+              : submitBody(formData),
           ),
           signal: controller.signal,
         })
@@ -170,7 +171,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify(formData),
+              body: JSON.stringify(submitBody(formData)),
             })
           } catch (hubspotError) {
             console.error("HubSpot lead creation failed:", hubspotError)
