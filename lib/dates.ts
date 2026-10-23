@@ -85,6 +85,14 @@ export function formatDisplayDate(value?: string | null): string {
   return `${day} ${MONTHS_EN[month - 1]} ${year}`
 }
 
+/** '11 Nov'. Same fixed abbreviations, without the year. */
+export function formatShortDate(value?: string | null): string {
+  const parsed = parseCalendarDate(value)
+  if (!parsed) return ""
+  const [, month, day] = parsed.iso.split("-").map(Number)
+  return `${day} ${MONTHS_EN[month - 1]}`
+}
+
 export function formatTravelMonth(value?: string | null): string {
   const match = /^(\d{4})-(\d{2})$/.exec(value?.trim() ?? "")
   if (!match) return ""

@@ -282,6 +282,21 @@ h3 {
   color: #0a0f1f;
 }
 
+/* Wizard questions are a step tighter than the site H2 (22px, 28px from 768px). */
+h2.wizard-question {
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.27;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 768px) {
+  h2.wizard-question {
+    font-size: 28px;
+    line-height: 1.2;
+  }
+}
+
 @media (min-width: 768px) {
   h1 {
     font-size: 44px;

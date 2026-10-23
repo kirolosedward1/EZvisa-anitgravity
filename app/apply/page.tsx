@@ -1,17 +1,15 @@
 "use client"
 
 import { DEFAULT_RESIDENCE, coerceResidence } from "@/lib/residence"
-import { useState, Suspense, useCallback, useMemo, useEffect, useRef } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { useState, Suspense, useCallback, useEffect, useRef } from "react"
 import { NationalityStep } from "@/components/apply/nationality-step"
 import { TripDetailsStep } from "@/components/apply/trip-details-step"
-import { DocumentsStep } from "@/components/apply/documents-step"
 import { PaymentStep } from "@/components/apply/payment-step"
 import { SpouseStep } from "@/components/apply/spouse-step"
-import { CheckCircle2, ChevronDown } from "lucide-react"
+import { WizardShell } from "@/components/apply/wizard-shell"
 import { SiteHeader } from "@/components/site-header"
+import { LangText } from "@/components/lang-text"
 import { useSearchParams, useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -187,9 +185,8 @@ function ApplyPageContent() {
   const [formData, setFormData] = useState<WizardFormData>(defaultFormData)
   const [isInitialized, setIsInitialized] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
-  const [direction, setDirection] = useState(0)
-  const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [direction, setDirection] = useState(1)
+  const [tripScreen, setTripScreen] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
@@ -243,6 +240,7 @@ function ApplyPageContent() {
     
     const slug = getStepSlug(1)
     setCurrentStep(1)
+    setTripScreen(0)
     router.replace(
       `/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`,
       { scroll: false }
@@ -279,21 +277,16 @@ function ApplyPageContent() {
 
   const handleNext = useCallback(() => {
     trackEvent("application_step_completed", { step: currentStep, destination: formData.destination })
+    const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
+    const tentative = currentStep + 1
+    // Employment is asked after payment on /continue/[id]. Skip spouse when they are not travelling.
+    const nextStep =
+      tentative === 3 || (tentative === 2 && !shouldShowSpouse) ? 4 : Math.min(tentative, 5)
+    if (currentStep < 4 && nextStep === 4) setTripScreen(0)
     setDirection(1)
-    setCurrentStep((prevStep) => {
-      const nextStep = prevStep + 1
-      const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-      
-      // Skip spouse step (step 2) if not needed
-      // Employment is asked after payment on /continue/[id].
-      if (nextStep === 3 || (nextStep === 2 && !shouldShowSpouse)) {
-        return 4
-      }
-      
-      return Math.min(nextStep, 5)
-    })
+    setCurrentStep(nextStep)
     scrollToWizardTop()
-  }, [formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
+  }, [currentStep, formData.destination, formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
 
   const handleBack = useCallback(() => {
     setDirection(-1)
@@ -310,16 +303,6 @@ function ApplyPageContent() {
     })
     scrollToWizardTop()
   }, [formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
-
-  const handleStepClick = useCallback((stepNumber: number) => {
-    // Only allow navigation to completed steps (steps before current step)
-    if (stepNumber < currentStep) {
-      setDirection(stepNumber < currentStep ? -1 : 1)
-      setCurrentStep(stepNumber)
-      scrollToWizardTop()
-      setIsMobileDropdownOpen(false)
-    }
-  }, [currentStep, scrollToWizardTop])
 
   useEffect(() => {
     if (typeof window === "undefined" || isInitialized) return
@@ -436,29 +419,6 @@ function ApplyPageContent() {
     loadAuthenticatedUser()
   }, [])
 
-  const steps = useMemo(() => {
-    const shouldShowSpouseStep = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-
-    if (shouldShowSpouseStep) {
-      return [
-        { number: 1, title: "Personal Information", description: "Profile & contact details" },
-        { number: 2, title: "Spouse Information", description: "Spouse details" },
-        { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
-        { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
-      ]
-    }
-
-    return [
-      { number: 1, title: "Personal Information", description: "Profile & contact details" },
-      { number: 4, title: "Trip Details", description: "Travel intent & preferences" },
-      { number: 5, title: "Review & Payment", description: "Confirm & complete payment" },
-    ]
-  }, [formData.maritalStatus, formData.spouseAccompanying])
-
-  const totalSteps = steps.length
-  const currentVisualStep = Math.max(1, steps.findIndex((s) => s.number === currentStep) + 1)
-  const progressPercentage = ((currentVisualStep - 1) / (totalSteps - 1)) * 100
-
   useEffect(() => {
     if (!isInitialized || isUpdatingUrl.current || !isMounted.current) return
 
@@ -531,6 +491,8 @@ function ApplyPageContent() {
             onNext={handleNext}
             onBack={handleBack}
             isLoading={isTransitioning}
+            screen={tripScreen}
+            onScreenChange={setTripScreen}
           />
         )
       case "payment":
@@ -555,7 +517,6 @@ function ApplyPageContent() {
     saveTimeoutRef.current = setTimeout(() => {
       try {
         localStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify(formData))
-        setLastSaved(new Date())
       } catch (error) {
         console.error("Failed to save form data:", error)
       }
@@ -569,229 +530,40 @@ function ApplyPageContent() {
   }, [formData, isInitialized])
 
   return (
-    <div className="min-h-[100dvh] flex flex-col">
+    <div className="min-h-[100dvh] bg-[#FFFFFF]" ref={wizardContainerRef}>
       <SiteHeader />
-
-      <div className="flex-1 relative overflow-hidden bg-background">
-        <div className="relative z-10 container mx-auto px-4 pt-28 md:pt-36 pb-16 md:pb-24" ref={wizardContainerRef}>
-          {/* Mobile: Title and Progress at Top */}
-          <motion.div
-            initial={false}
-            className="mb-6 md:mb-8 text-center lg:hidden"
-          >
-            <h1 className="text-2xl md:text-4xl font-semibold tracking-tight text-foreground mb-2">Visa Application</h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              Complete your application in {totalSteps} simple steps
-            </p>
-            <div className="max-w-md mx-auto mt-4">
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                <div className="flex items-center gap-2">
-                  <span>Step {currentVisualStep} of {totalSteps}</span>
-                  {lastSaved && <span className="text-[13px] font-medium text-[#1A7F37]">✓ Saved</span>}
-                </div>
-                <span>{Math.round(progressPercentage)}% complete</span>
-              </div>
-              <div className="h-1.5 bg-[#E3E7EF] rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-[#0436DC] rounded-full"
-                  initial={false}
-                  animate={{ width: `${progressPercentage}%` }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
-                />
-              </div>
-            </div>
-          </motion.div>
-
-          <div className="mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8" style={{ maxWidth: '1312px' }}>
-            <div className="w-full lg:w-80 shrink-0">
-              {/* Desktop: Title, Progress, and Steps in Left Column */}
-              <motion.div
-                initial={false}
-                className="hidden lg:block mb-6"
-              >
-                <h1 className="text-3xl text-foreground mb-2 font-medium tracking-tight">Visa Application</h1>
-                
-                <div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
-                    <div className="flex items-center gap-2">
-                      <span>Step {currentVisualStep} of {totalSteps}</span>
-                      {lastSaved && <span className="text-[13px] font-medium text-[#1A7F37]">✓ Saved</span>}
-                    </div>
-                    <span>{Math.round(progressPercentage)}% complete</span>
-                  </div>
-                  <div className="h-1.5 bg-[#E3E7EF] rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-[#0436DC] rounded-full"
-                      initial={false}
-                      animate={{ width: `${progressPercentage}%` }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
-                    />
-                  </div>
-                </div>
-              </motion.div>
-              
-              {/* Mobile: Dropdown steps */}
-              <div className="lg:hidden mb-4">
-                <div
-                  onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
-                  className="flex items-center justify-between p-4 rounded-md bg-white dark:bg-slate-900 border border-border/80 shadow-sm cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:dark:bg-slate-950"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-sm flex items-center justify-center font-semibold bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20 shrink-0">
-                      {currentVisualStep}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm tracking-tight text-foreground">{steps.find((s) => s.number === currentStep)?.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {steps.find((s) => s.number === currentStep)?.description}
-                      </p>
-                    </div>
-                  </div>
-                  <ChevronDown className={`w-5 h-5 text-muted-foreground transition-transform duration-200 ${isMobileDropdownOpen ? "rotate-180" : ""}`} />
-                </div>
-
-                <AnimatePresence>
-                  {isMobileDropdownOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden mt-2 space-y-1 bg-white dark:bg-slate-900 rounded-md shadow-lg border border-border/80 p-1"
-                    >
-                      {steps.map((step, index) => (
-                        <div
-                          key={step.number}
-                          onClick={() => handleStepClick(step.number)}
-                          className={`flex items-start gap-4 p-3 rounded-md transition-all ${
-                            currentStep === step.number
-                                ? "bg-slate-50 dark:bg-slate-950 text-foreground font-semibold"
-                                : currentStep > step.number
-                                  ? "cursor-pointer hover:bg-slate-50 hover:dark:bg-slate-950"
-                                  : "cursor-not-allowed opacity-50"
-                          }`}
-                        >
-                          <div
-                            className={`w-8 h-8 rounded-sm flex items-center justify-center font-semibold text-xs shrink-0 ${
-                              currentStep === step.number
-                                ? "bg-primary text-primary-foreground"
-                                : currentStep > step.number
-                                  ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                                  : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
-                            }`}
-                          >
-                            {currentStep > step.number ? <CheckCircle2 className="w-4 h-4" /> : index + 1}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm text-foreground">{step.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Desktop: Vertical steps sidebar */}
-              <div className="hidden lg:block space-y-3">
-                {steps.map((step, index) => (
-                  <motion.div
-                    key={step.number}
-                    initial={false}
-                    onClick={() => handleStepClick(step.number)}
-                    className={`flex items-start gap-4 p-4 rounded-md transition-all duration-300 ${
-                      currentStep === step.number
-                        ? "bg-white dark:bg-slate-900 border border-border/80 shadow-md text-foreground font-medium scale-[1.02] relative pl-5 after:absolute after:left-0 after:top-3 after:bottom-3 after:w-[3px] after:bg-primary after:rounded-r-sm"
-                        : currentStep > step.number
-                          ? "bg-slate-50 dark:bg-slate-950/50 border border-border/40 cursor-pointer hover:bg-slate-100 hover:dark:bg-slate-900 text-foreground/80 hover:shadow-sm"
-                          : "bg-transparent border border-transparent cursor-not-allowed opacity-50 text-muted-foreground"
-                    }`}
-                  >
-                    <div
-                      className={`w-9 h-9 rounded-sm flex items-center justify-center font-semibold text-sm shrink-0 transition-all ${
-                        currentStep === step.number
-                          ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20"
-                          : currentStep > step.number
-                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
-                            : "bg-slate-100 dark:bg-slate-800 text-muted-foreground border border-border"
-                      }`}
-                    >
-                      {currentStep > step.number ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm tracking-tight">{step.title}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-
-            {/* Step Content */}
-            <div className="flex-1 pb-8">
-              <Card className="border border-border/80 bg-white dark:bg-slate-900 shadow-xl rounded-md overflow-hidden transition-all duration-300">
-                <CardContent className="p-6 md:p-8 overflow-hidden">
-                  <AnimatePresence mode="wait" custom={direction}>
-                    <motion.div
-                      key={currentStep}
-                      custom={direction}
-                      variants={{
-                        enter: (direction: number) => ({
-                          x: direction > 0 ? 50 : -50,
-                          opacity: 0,
-                        }),
-                        center: {
-                          x: 0,
-                          opacity: 1,
-                        },
-                        exit: (direction: number) => ({
-                          x: direction > 0 ? -50 : 50,
-                          opacity: 0,
-                        }),
-                      }}
-                      initial={false}
-                      animate="center"
-                      exit="exit"
-                      transition={{
-                        x: { type: "spring", stiffness: 380, damping: 38 },
-                        opacity: { duration: 0.15 },
-                      }}
-                    >
-                      {renderStepContent()}
-                    </motion.div>
-                  </AnimatePresence>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </div>
+      <WizardShell step={currentStep} motionKey={String(currentStep)} direction={direction} formData={formData}>
+        {renderStepContent()}
+      </WizardShell>
 
       {showResumeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/60 animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-slate-900 border border-border/80 shadow-xl rounded-md p-6 md:p-8 max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col gap-5">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0A0F1F]/40 p-4">
+          <div className="flex w-full max-w-md flex-col gap-5 border border-[#E3E7EF] bg-[#FFFFFF] p-6 md:p-8">
             <div className="space-y-2">
-              <h3 className="text-xl font-semibold tracking-tight text-foreground">Continue Application?</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                We found a previous in-progress visa application. Would you like to restore your details or start fresh?
+              <h2 className="wizard-question text-[#0A0F1F]">
+                <LangText en="Continue your application?" ar="هل تتابع طلبك؟" />
+              </h2>
+              <p className="text-[15px] leading-relaxed text-[#5B6475]">
+                <LangText
+                  en="We found an application you already started. Restore those details, or start again."
+                  ar="وجدنا طلبًا بدأته من قبل. يمكنك استعادة البيانات أو البدء من جديد."
+                />
               </p>
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={handleStartFresh}
-                className="flex-1 h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground cursor-pointer flex items-center justify-center active:scale-95"
+                className="flex h-12 flex-1 items-center justify-center rounded-xl border border-[#E3E7EF] text-[15px] font-medium text-[#0A0F1F]"
               >
-                Start Fresh
+                <LangText en="Start again" ar="ابدأ من جديد" />
               </button>
               <button
                 type="button"
                 onClick={handleContinuePrevious}
-                className="flex-1 h-12 rounded-xl font-semibold text-sm transition-all duration-300 bg-primary text-primary-foreground shadow-md shadow-blue-500/10 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 cursor-pointer flex items-center justify-center"
+                className="flex h-12 flex-1 items-center justify-center rounded-xl bg-[#0436DC] text-[15px] font-semibold text-white"
               >
-                Restore Details
+                <LangText en="Restore details" ar="استعد البيانات" />
               </button>
             </div>
           </div>

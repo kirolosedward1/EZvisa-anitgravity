@@ -250,9 +250,9 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start pb-44 lg:pb-0">
+      <div className="grid grid-cols-1 items-start gap-8 pb-8">
         {/* Left Column: Dossier Review & Security info */}
-        <div className="lg:col-span-7 space-y-6">
+        <div className="space-y-6">
           <div>
             <h3 className="font-semibold text-lg text-foreground mb-1">Review your Application Details</h3>
             <p className="text-xs text-muted-foreground">Verify your information before completing payment.</p>
@@ -406,7 +406,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
         </div>
 
         {/* Right Column: Receipt card & actions */}
-        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
+        <div className="space-y-6">
           <div className="bg-card/45 border border-border/60 rounded-3xl p-6 shadow-md relative overflow-hidden">
             {/* Glow effect */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full pointer-events-none" />

@@ -3,10 +3,11 @@
 import { useMemo } from "react"
 import { Calendar } from "@/components/ui/calendar"
 import { LangText } from "@/components/lang-text"
+import { ChoiceList, ChoiceRow, FieldError } from "@/components/apply/wizard-choices"
 import { cn } from "@/lib/utils"
 import {
   TRIP_LENGTHS,
-  formatDisplayDate,
+  formatShortDate,
   schengenEndDate,
   schengenStayDays,
   upcomingTravelMonths,
@@ -40,8 +41,12 @@ function minDepartureIso() {
   return isoFromDate(date)
 }
 
-function FieldError({ children }: { children: React.ReactNode }) {
-  return <p className="mt-2 text-[12px] leading-4 text-[#B83200]">{children}</p>
+function StayLine({ start, end, stay }: { start: string; end: string; stay: number }) {
+  return (
+    <p className="text-[15px] text-[#0A0F1F]" dir="ltr">
+      {formatShortDate(start)} – {formatShortDate(end)} · {stay} <LangText en="days" ar="يومًا" />
+    </p>
+  )
 }
 
 export function TravelDatesField({ formData, updateFormData, showErrors, onClearErrors }: TravelDatesFieldProps) {
@@ -130,55 +135,61 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
   const lengthMissing = showErrors && flexible && !formData.tripLength
 
   return (
-    <div className="space-y-4 rounded-2xl border border-[#E3E7EF] bg-[#FFFFFF] p-4 md:p-6">
-      <div>
-        <p className="type-eyebrow mb-2 text-[#5B6475]">
-          <LangText en="Are your travel dates flexible?" ar="هل مواعيد سفرك مرنة؟" />
-        </p>
-        <div className={cn("grid grid-cols-2 gap-2 rounded-xl", modeMissing && "rounded-xl ring-1 ring-[#B83200]")}>
-          <button
-            type="button"
-            onClick={() => setMode("no")}
-            className={cn(
-              "h-12 rounded-xl border text-[15px] font-semibold",
-              fixed ? "border-[#0436DC] bg-[#0436DC] text-white" : "border-[#E3E7EF] bg-[#FFFFFF] text-[#3A4150]",
-            )}
-          >
-            <LangText en="Fixed dates" ar="مواعيد محددة" />
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode("yes")}
-            className={cn(
-              "h-12 rounded-xl border text-[15px] font-semibold",
-              flexible ? "border-[#0436DC] bg-[#0436DC] text-white" : "border-[#E3E7EF] bg-[#FFFFFF] text-[#3A4150]",
-            )}
-          >
-            <LangText en="Flexible" ar="مرنة" />
-          </button>
-        </div>
-        {modeMissing ? (
-          <FieldError>
-            <LangText en="Choose fixed dates or flexible dates." ar="اختر مواعيد محددة أو مواعيد مرنة." />
-          </FieldError>
-        ) : null}
-      </div>
+    <div className="space-y-6">
+      <ChoiceList label="Fixed dates or flexible dates">
+        <ChoiceRow
+          title="Fixed dates"
+          titleAr="مواعيد محددة"
+          description="You know the departure and the return."
+          descriptionAr="تعرف تاريخ المغادرة وتاريخ العودة."
+          selected={fixed}
+          onSelect={() => setMode("no")}
+        />
+        <ChoiceRow
+          title="Flexible"
+          titleAr="مواعيد مرنة"
+          description="You know the month and how long you will stay."
+          descriptionAr="تعرف الشهر ومدة الإقامة."
+          selected={flexible}
+          onSelect={() => setMode("yes")}
+        />
+      </ChoiceList>
+      {modeMissing ? (
+        <FieldError>
+          <LangText en="Choose fixed dates or flexible dates." ar="اختر مواعيد محددة أو مواعيد مرنة." />
+        </FieldError>
+      ) : null}
 
       {fixed ? (
-        <div>
-          <p className="type-eyebrow mb-2 text-[#5B6475]">
-            <LangText en="Departure and return" ar="المغادرة والعودة" />
-          </p>
-          <div className={cn("overflow-hidden rounded-xl border border-[#E3E7EF]", (fixedMissing || fixedOrder) && "border-[#B83200]")}>
+        <div className="space-y-4 border-t border-[#E3E7EF] pt-6">
+          <div className={cn("overflow-x-auto", (fixedMissing || fixedOrder || fixedLong) && "rounded-xl border border-[#B83200]")}>
             <Calendar
               mode="range"
+              defaultMonth={dateFromIso(minIso)}
               selected={{ from: dateFromIso(start), to: dateFromIso(end) }}
               onSelect={onRangeSelect}
               disabled={{ before: dateFromIso(minIso) as Date }}
-              numberOfMonths={1}
+              numberOfMonths={2}
+              className="w-full p-0 [--cell-size:2.75rem] md:[--cell-size:2.15rem]"
+              classNames={{
+                root: "w-full",
+                months: "relative flex w-full flex-col gap-4 md:flex-row",
+                month: "flex w-full min-w-0 flex-col gap-3 md:flex-1",
+              }}
+              components={{
+                Month: ({ calendarMonth: _calendarMonth, displayIndex, className, children, ...props }) => (
+                  <div
+                    {...props}
+                    data-month-index={displayIndex}
+                    className={cn(className, (displayIndex ?? 0) > 0 && "max-md:!hidden")}
+                  >
+                    {children}
+                  </div>
+                ),
+              }}
             />
           </div>
-          <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="Trip length">
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Trip length">
             {TRIP_LENGTHS.map((length) => {
               const selected = !!start && end === schengenEndDate(start, length.days)
               return (
@@ -189,8 +200,8 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
                   aria-checked={selected}
                   onClick={() => applyLength(length.days)}
                   className={cn(
-                    "h-11 min-w-[4.5rem] flex-1 rounded-full border px-3 text-[15px] font-semibold",
-                    selected ? "border-[#0436DC] bg-[#0436DC]/10 text-[#0436DC]" : "border-[#E3E7EF] bg-[#FFFFFF] text-[#0A0F1F]",
+                    "h-11 min-w-[4.5rem] flex-1 rounded-full border px-3 text-[15px] font-medium",
+                    selected ? "border-[#0436DC] bg-[#F2F5FF] text-[#0436DC]" : "border-[#E3E7EF] bg-[#FFFFFF] text-[#0A0F1F]",
                   )}
                 >
                   <LangText en={length.en} ar={length.ar} />
@@ -198,12 +209,7 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
               )
             })}
           </div>
-          {start ? (
-            <p className="mt-3 text-[15px] text-[#3A4150]">
-              {formatDisplayDate(start)}
-              {end ? ` – ${formatDisplayDate(end)}` : ""}
-            </p>
-          ) : null}
+          {start && end && stay > 1 ? <StayLine start={start} end={end} stay={stay} /> : null}
           {fixedMissing ? (
             <FieldError>
               <LangText en="Select a departure date, then a return date." ar="اختر تاريخ المغادرة ثم تاريخ العودة." />
@@ -211,21 +217,21 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
           ) : null}
           {fixedOrder ? (
             <FieldError>
-              <LangText en="Return date can't be earlier than the departure date." ar="لا يمكن أن يسبق تاريخ العودة تاريخ المغادرة." />
+              <LangText en="Choose a return date after your departure." ar="اختر تاريخ عودة بعد المغادرة." />
             </FieldError>
           ) : null}
           {fixedLong ? (
             <FieldError>
-              <LangText en="Schengen tourist visas permit a maximum stay of 90 days." ar="تأشيرة شنغن السياحية تسمح بإقامة لا تتجاوز ٩٠ يومًا." />
+              <LangText en="A tourist stay can be 90 days at most." ar="الإقامة السياحية لا تتجاوز ٩٠ يومًا." />
             </FieldError>
           ) : null}
         </div>
       ) : null}
 
       {flexible ? (
-        <div className="space-y-4">
+        <div className="space-y-6 border-t border-[#E3E7EF] pt-6">
           <div>
-            <p className="type-eyebrow mb-2 text-[#5B6475]">
+            <p className="mb-3 text-[13px] font-medium text-[#0A0F1F]">
               <LangText en="When do you plan to travel?" ar="متى تخطط للسفر؟" />
             </p>
             <div className={cn("flex flex-wrap gap-2", monthMissing && "rounded-xl border border-[#B83200] p-2")}>
@@ -237,8 +243,8 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
                     type="button"
                     onClick={() => applyMonth(month.value)}
                     className={cn(
-                      "h-11 rounded-full border px-3 text-[15px] font-semibold",
-                      selected ? "border-[#0436DC] bg-[#0436DC]/10 text-[#0436DC]" : "border-[#E3E7EF] bg-[#FFFFFF] text-[#0A0F1F]",
+                      "h-11 rounded-full border px-3 text-[15px] font-medium",
+                      selected ? "border-[#0436DC] bg-[#F2F5FF] text-[#0436DC]" : "border-[#E3E7EF] bg-[#FFFFFF] text-[#0A0F1F]",
                     )}
                   >
                     <LangText en={month.en} ar={month.ar} />
@@ -253,7 +259,7 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
             ) : null}
           </div>
           <div>
-            <p className="type-eyebrow mb-2 text-[#5B6475]">
+            <p className="mb-3 text-[13px] font-medium text-[#0A0F1F]">
               <LangText en="Trip length" ar="مدة الرحلة" />
             </p>
             <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Trip length">
@@ -267,8 +273,8 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
                     aria-checked={selected}
                     onClick={() => applyFlexibleLength(length.days)}
                     className={cn(
-                      "h-11 min-w-[4.5rem] flex-1 rounded-full border px-3 text-[15px] font-semibold",
-                      selected ? "border-[#0436DC] bg-[#0436DC]/10 text-[#0436DC]" : "border-[#E3E7EF] bg-[#FFFFFF] text-[#0A0F1F]",
+                      "h-11 min-w-[4.5rem] flex-1 rounded-full border px-3 text-[15px] font-medium",
+                      selected ? "border-[#0436DC] bg-[#F2F5FF] text-[#0436DC]" : "border-[#E3E7EF] bg-[#FFFFFF] text-[#0A0F1F]",
                       lengthMissing && "border-[#B83200]",
                     )}
                   >
@@ -283,16 +289,8 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
               </FieldError>
             ) : null}
           </div>
+          {start && end && stay > 1 ? <StayLine start={start} end={end} stay={stay} /> : null}
         </div>
-      ) : null}
-
-      {stay > 1 && stay <= 90 ? (
-        <p className="text-[15px] leading-relaxed text-[#3A4150]">
-          <LangText en="Total Stay Duration:" ar="مدة الإقامة:" />{" "}
-          <span className="font-semibold text-[#0A0F1F]">
-            {stay} <LangText en="days" ar="يومًا" />
-          </span>
-        </p>
       ) : null}
     </div>
   )
