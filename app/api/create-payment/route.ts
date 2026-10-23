@@ -51,8 +51,9 @@ export async function POST(request: NextRequest) {
       return json({ error: "Invalid application" }, { status: 400 })
     }
 
-    // Only the path from the client is kept. Production always returns to the official site.
-    // Preview returns to this deployment only when Origin is exactly https://$VERCEL_URL or https://$VERCEL_BRANCH_URL.
+    // Only the path from the client is kept. A missing Origin stays allowed (the native app sends none):
+    // preview then returns to https://$VERCEL_BRANCH_URL or https://$VERCEL_URL, and production stays on the official site.
+    // A present Origin must be allowed, and on preview must be exactly one of those two hosts.
     const toReturn = (u: unknown, fallbackPath: string) =>
       paymentReturnUrl({
         clientUrl: typeof u === "string" ? u : undefined,

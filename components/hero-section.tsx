@@ -263,7 +263,7 @@ export function HeroSection() {
                               <span className="text-sm font-medium text-muted-foreground"><LangText en="Select nationality" ar="اختر الجنسية" /></span>
                             )}
                           </div>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <ChevronDown className="h-4 w-4 text-[#5B6475] flex-shrink-0" />
                         </button>
                       </PopoverTrigger>
                       <PopoverContent
@@ -337,7 +337,7 @@ export function HeroSection() {
                               <span className="text-sm font-medium text-muted-foreground"><LangText en="Pick a destination" ar="اختر الوجهة" /></span>
                             )}
                           </div>
-                          <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                          <ChevronDown className="h-4 w-4 text-[#5B6475] flex-shrink-0" />
                         </button>
                       </PopoverTrigger>
                       <PopoverContent

@@ -40,7 +40,18 @@ export function exactPreviewReturnOrigin(origin: string | null): string | null {
   return previewDeploymentOrigins().includes(origin) ? origin : null
 }
 
-/** Absolute payment return URL. Preview uses the validated deployment origin; everything else stays on the official site. */
+/**
+ * Preview return host when the client sent no Origin (the native app does not).
+ * Branch host first, then the deployment host. Production returns null so callers stay on the official site.
+ */
+function previewReturnFallback(): string | null {
+  if (process.env.VERCEL_ENV !== "preview") return null
+  const host = (process.env.VERCEL_BRANCH_URL || process.env.VERCEL_URL || "").trim()
+  if (!host || /[\s/]/.test(host)) return null
+  return `https://${host}`
+}
+
+/** Absolute payment return URL. Preview uses the validated Origin, or https://$VERCEL_BRANCH_URL || https://$VERCEL_URL when Origin is absent. Everything else stays on the official site. */
 export function paymentReturnUrl(options: {
   clientUrl: string | undefined
   fallbackPath: string
@@ -48,7 +59,7 @@ export function paymentReturnUrl(options: {
   isDev: boolean
 }): string {
   const { clientUrl, fallbackPath, requestOrigin, isDev } = options
-  const previewOrigin = exactPreviewReturnOrigin(requestOrigin)
+  const previewOrigin = exactPreviewReturnOrigin(requestOrigin) ?? (requestOrigin ? null : previewReturnFallback())
   const pathOf = (value: string) => {
     const parsed = new URL(value, SITE_URL)
     if (isDev && parsed.hostname === "localhost") return parsed.toString()

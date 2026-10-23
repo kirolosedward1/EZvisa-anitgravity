@@ -206,6 +206,44 @@
   unicode-bidi: isolate;
 }
 
+/* Payment return wait. Matches the mobile ring: 0.9s spin, one shake, both off for reduced motion. */
+.payment-wait-ring {
+  transform-origin: center;
+  animation: payment-wait-spin 0.9s linear infinite;
+}
+
+.payment-wait-bang {
+  animation: payment-wait-shake 0.2s linear 1;
+}
+
+@keyframes payment-wait-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes payment-wait-shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-8px);
+  }
+  65% {
+    transform: translateX(8px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .payment-wait-ring,
+  .payment-wait-bang {
+    animation: none;
+  }
+}
+
 @layer utilities {
   .animate-scroll-left {
     animation: scroll-left 30s linear infinite;

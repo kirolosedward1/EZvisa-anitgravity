@@ -3,17 +3,21 @@
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Check, Loader2, Mail, FileText, Clock, Headphones, Upload, RefreshCw } from "lucide-react"
+import { Check, Loader2, Mail, FileText, Clock, Headphones, Upload, RefreshCw, X } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
+import { LangText } from "@/components/lang-text"
+import { PaymentWaitBang, PaymentWaitRing } from "@/components/payment/payment-mark"
+import { useArabic } from "@/components/ready-line"
 import { useEffect, useState, Suspense } from "react"
 import { getPaymentConfirmationWhatsAppUrl } from "@/lib/whatsapp"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const POLL_MS = 2000
 const POLL_FOR_MS = 30_000
+const SLOW_MS = 8_000
 
-type PaymentOutcome = "checking" | "paid" | "pending" | "failed" | "missing"
+type PaymentOutcome = "checking" | "paid" | "pending" | "failed" | "missing" | "cancelled"
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams()
@@ -21,6 +25,8 @@ function PaymentSuccessContent() {
   const [destination, setDestination] = useState<string>("")
   const [outcome, setOutcome] = useState<PaymentOutcome>("checking")
   const [attempt, setAttempt] = useState(0)
+  const [confirmingSlow, setConfirmingSlow] = useState(false)
+  const arabic = useArabic()
 
   // Ziina's webhook only reaches production. Confirm the intent here through GET /api/check-payment,
   // which fetches it with our API key and stores the status. Landing on this URL is not proof of payment.
@@ -62,6 +68,10 @@ function PaymentSuccessContent() {
           return
         }
         const status = String(data.payment_status ?? "").toLowerCase()
+        if (res.ok && String(data.status ?? "").toLowerCase() === "cancelled") {
+          finish("cancelled")
+          return
+        }
         if (res.ok && (status === "paid" || status === "completed")) {
           finish("paid")
           return
@@ -87,6 +97,19 @@ function PaymentSuccessContent() {
     }
   }, [searchParams, attempt])
 
+  useEffect(() => {
+    if (outcome !== "checking") {
+      setConfirmingSlow(false)
+      return
+    }
+    setConfirmingSlow(false)
+    const timer = window.setTimeout(() => setConfirmingSlow(true), SLOW_MS)
+    return () => window.clearTimeout(timer)
+  }, [outcome, attempt])
+
+  const applicationPath = token ? `/track/${token}` : "/dashboard"
+  const applicationHref = `${arabic ? "/ar" : ""}${applicationPath}`
+
   const steps = [
     { icon: Mail, text: "Confirmation email sent to your inbox" },
     { icon: Clock, text: "Application reviewed within 24 hours by a specialist" },
@@ -101,39 +124,55 @@ function PaymentSuccessContent() {
         <div className="container max-w-xl mx-auto text-center">
           <div className="mb-8" role="status" aria-live="polite">
             {outcome === "checking" ? (
-              <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <div className="mx-auto flex h-24 w-24 items-center justify-center">
+                <PaymentWaitRing />
+              </div>
+            ) : outcome === "pending" ? (
+              <div className="mx-auto flex h-24 w-24 items-center justify-center">
+                <PaymentWaitBang />
               </div>
             ) : outcome === "paid" ? (
               <div className="w-24 h-24 mx-auto rounded-full bg-emerald-500 flex items-center justify-center animate-in zoom-in duration-300">
                 <Check className="w-12 h-12 text-primary-foreground stroke-[3]" />
+              </div>
+            ) : outcome === "cancelled" ? (
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-secondary">
+                <X className="h-12 w-12 text-[#5B6475]" />
               </div>
             ) : outcome === "failed" ? (
               <div className="w-24 h-24 mx-auto rounded-full bg-destructive/10 flex items-center justify-center">
                 <RefreshCw className="w-12 h-12 text-destructive" />
               </div>
             ) : (
-              <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-                <Clock className="w-12 h-12 text-primary" />
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-primary/10">
+                <Clock className="h-12 w-12 text-primary" />
               </div>
             )}
           </div>
 
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            {outcome === "checking" && "Confirming your payment"}
+            {outcome === "checking" && <LangText en="Confirming your payment" ar="جارٍ التحقق من الدفع…" />}
             {outcome === "paid" && "Payment Confirmed"}
             {outcome === "failed" && "Payment didn't go through"}
-            {outcome === "pending" && "Payment not confirmed yet"}
+            {outcome === "pending" && <LangText en="Payment not confirmed yet" ar="لم يتأكد الدفع بعد" />}
+            {outcome === "cancelled" && <LangText en="This application was cancelled" ar="تم إلغاء هذا الطلب" />}
             {outcome === "missing" && "We couldn't verify this payment"}
           </h1>
 
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            {outcome === "checking" && "We're checking this payment with Ziina. This takes a few seconds."}
+            {outcome === "checking" && <LangText en="We're checking this payment with Ziina. This takes a few seconds." ar={"نتحقق من هذا الدفع مع \u2068Ziina\u2069. يستغرق ذلك بضع ثوانٍ."} />}
             {outcome === "paid" && "Your Schengen visa application package has been received and is now assigned to our document preparation desk."}
             {outcome === "failed" && "You weren't charged. You can retry the payment whenever you're ready."}
-            {outcome === "pending" && "If you completed payment, it can take a minute to show. Check again, and we'll ask Ziina for the latest status."}
+            {outcome === "pending" && <LangText en="If you completed payment, it can take a minute to show. Check again, and we'll ask Ziina for the latest status." ar={"إذا دفعت فقد يستغرق ظهوره دقيقة. تحقق مجددًا وسنسأل \u2068Ziina\u2069 عن آخر حالة."} />}
+            {outcome === "cancelled" && <LangText en="There is nothing left to confirm for this application." ar="لا يوجد ما يحتاج إلى تأكيد لهذا الطلب." />}
             {outcome === "missing" && "This return link doesn't include an application we can check. If you paid, use your tracking reference or contact us on WhatsApp."}
           </p>
+
+          {outcome === "checking" && confirmingSlow && (
+            <p className="text-foreground mb-6 text-sm font-medium">
+              <LangText en="Still confirming with Ziina…" ar={"ما زلنا نؤكد الدفع مع \u2068Ziina\u2069…"} />
+            </p>
+          )}
 
           {/* Case Reference Badge */}
           {token && (
@@ -144,10 +183,24 @@ function PaymentSuccessContent() {
           )}
 
           {outcome === "pending" && (
-            <div className="mb-8">
-              <Button type="button" size="lg" className="h-12 px-6 rounded-xl" onClick={() => setAttempt((n) => n + 1)}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Check again
+            <div className="mb-8 flex flex-col items-center gap-2">
+              <Button type="button" size="lg" className="h-12 rounded-full bg-[#0436DC] px-6 text-primary-foreground hover:bg-[#0436DC]/90" onClick={() => setAttempt((n) => n + 1)}>
+                <LangText en="Check again" ar="تحقق مجددًا" />
+              </Button>
+              <Button asChild variant="ghost" className="h-12 bg-transparent px-4 text-sm font-semibold text-foreground shadow-none hover:bg-transparent">
+                <Link href={applicationHref}>
+                  <LangText en="Go to my application" ar="الانتقال إلى طلبي" />
+                </Link>
+              </Button>
+            </div>
+          )}
+
+          {outcome === "cancelled" && (
+            <div className="mb-8 flex flex-col items-center">
+              <Button asChild variant="ghost" className="h-12 bg-transparent px-4 text-sm font-semibold text-foreground shadow-none hover:bg-transparent">
+                <Link href={applicationHref}>
+                  <LangText en="Go to my application" ar="الانتقال إلى طلبي" />
+                </Link>
               </Button>
             </div>
           )}
