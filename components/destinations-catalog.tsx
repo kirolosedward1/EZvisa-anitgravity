@@ -44,7 +44,7 @@ function DestinationCard({ country }: { country: Destination }) {
       </span>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-4 p-5 text-center text-primary-foreground">
-        <CountryFlag iso={SCHENGEN_META[name]?.iso} title={name} className="size-10 ring-2 ring-primary-foreground/80 shadow-lg" />
+        <CountryFlag iso={SCHENGEN_META[name]?.iso} title={name} className="size-7 ring-2 ring-primary-foreground/80 shadow-md" />
         <h3>
           <LangText en={name} ar={nameAr} />
         </h3>
@@ -62,14 +62,19 @@ function DestinationCard({ country }: { country: Destination }) {
           ))}
         </dl>
 
-        <Link
-          href={`/apply?to=${encodeURIComponent(name)}`}
-          className="pointer-events-auto relative z-30 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary-foreground text-sm font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-          aria-label={`Apply for a ${name} visa`}
-        >
-          <LangText en={`Apply for ${name}`} ar={`قدّم على تأشيرة ${nameAr}`} />
-          <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-        </Link>
+        {/* Desktop: the button opens on hover (or keyboard focus). Touch screens have no hover, so it always shows there. */}
+        <div className="grid w-full transition-[grid-template-rows,opacity,margin] duration-300 ease-out lg:-mt-4 lg:grid-rows-[0fr] lg:opacity-0 lg:group-hover:mt-0 lg:group-hover:grid-rows-[1fr] lg:group-hover:opacity-100 lg:group-focus-within:mt-0 lg:group-focus-within:grid-rows-[1fr] lg:group-focus-within:opacity-100">
+          <div className="min-h-0 overflow-hidden">
+            <Link
+              href={`/apply?to=${encodeURIComponent(name)}`}
+              className="pointer-events-auto relative z-30 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary-foreground text-sm font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+              aria-label={`Apply for a ${name} visa`}
+            >
+              <LangText en={`Apply for ${name}`} ar={`قدّم على تأشيرة ${nameAr}`} />
+              <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )
