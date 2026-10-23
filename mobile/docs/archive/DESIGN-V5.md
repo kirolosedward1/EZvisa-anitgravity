@@ -1,3 +1,5 @@
+> **Archived 2026-10-23. Outdated planning doc, kept for history only. The v5 visual system was replaced by the v9 tokens in `theme/` (see `docs/design-system.md`) and the later UI phases. Current status: `mobile/HANDOFF.md` section 0.**
+
 # EZvisa v5 visual system
 
 References studied (Oct 2026):
