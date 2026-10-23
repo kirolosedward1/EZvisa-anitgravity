@@ -54,10 +54,10 @@ export function ServicesSection() {
       <div
         className="absolute inset-0 opacity-[0.12] pointer-events-none hidden md:block"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, var(--primary) 1px, transparent 0)",
+          backgroundImage: "none",
           backgroundSize: "32px 32px",
-          maskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 70%, transparent 100%)",
-          WebkitMaskImage: "radial-gradient(ellipse 60% 60% at 50% 50%, black 70%, transparent 100%)",
+          maskImage: "none",
+          WebkitMaskImage: "none",
         }}
       />
 
@@ -66,11 +66,11 @@ export function ServicesSection() {
       <div className="container mx-auto px-4 sm:px-6 md:px-12 relative z-10 max-w-7xl">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-wider uppercase mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             What's included
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight tracking-tight text-foreground text-balance">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
             Everything you need for a <br className="hidden sm:block" />
             <span className="text-primary">successful visa application.</span>
           </h2>
@@ -101,7 +101,7 @@ export function ServicesSection() {
                   <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
                     <Icon className="h-5.5 w-5.5" strokeWidth={2} />
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">
                     {service.title}
                   </h3>
                 </motion.button>
@@ -111,7 +111,7 @@ export function ServicesSection() {
 
           {/* Center Hub: Soft Glowing Aura Background and Lady Image */}
           <div className="lg:col-span-4 flex justify-center items-end relative py-8 lg:py-0 min-h-[400px] sm:min-h-[500px]">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-[800px] aspect-square bg-gradient-to-tr from-blue-500/10 via-indigo-500/5 to-sky-400/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] max-w-[800px] aspect-square rounded-full pointer-events-none" />
             
             <motion.div 
               initial={{ opacity: 0, y: 50 }}
@@ -149,7 +149,7 @@ export function ServicesSection() {
                   <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
                     <Icon className="h-5.5 w-5.5" strokeWidth={2} />
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">
                     {service.title}
                   </h3>
                 </motion.button>
@@ -168,7 +168,7 @@ export function ServicesSection() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedService(null)}
-            className="fixed inset-0 bg-foreground/40 md:backdrop-blur- z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-foreground/40 z-50 flex items-center justify-center p-4"
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.92, y: 20 }}
@@ -207,7 +207,7 @@ export function ServicesSection() {
                       return <SelectedIcon className="h-5 w-5" strokeWidth={2} />
                     })()}
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold mb-3 tracking-tight text-foreground">
+                  <h3 className="text-2xl sm:text-3xl font-semibold mb-3 tracking-tight text-foreground">
                     {services[selectedService].title}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
@@ -220,7 +220,7 @@ export function ServicesSection() {
                   <Link
                     href="/apply"
                     onClick={() => setSelectedService(null)}
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-primary hover:bg-primary/95 text-white text-xs font-bold transition-all shadow-md hover:shadow-xl hover:shadow-primary/20"
+                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all shadow-md hover:shadow-xl hover:shadow-primary/20"
                   >
                     Start Application
                   </Link>

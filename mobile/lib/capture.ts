@@ -1,7 +1,7 @@
 // Document capture for uploads: camera, photo library (expo-image-picker) or files (expo-document-picker).
 // Photos are cropped / rotated on the preview screen and re-encoded on the phone with expo-image-manipulator
 // (HEIC/PNG/WebP -> JPEG, resized and compressed under the size limit). All of this runs in Expo Go.
-// Real edge detection / auto-crop and MRZ reading need a native build (VisionKit / ML Kit), see AUDIT-V2.md.
+// Real edge detection / auto-crop and MRZ reading need a native build (VisionKit / ML Kit), see docs/archive/AUDIT-V2.md.
 import { ActionSheetIOS, Alert, Linking, Platform } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";

@@ -68,12 +68,12 @@ export function CookieConsent() {
   return (
     <>
       {/* Cookie Banner */}
-      <div className="fixed bottom-4 right-4 z-50 p-5 bg-background/95 md:backdrop-blur- border border-border shadow-2xl rounded-2xl max-w-md w-[calc(100vw-32px)] sm:w-[420px] max-h-[90vh] overflow-y-auto">
+      <div className="fixed bottom-4 right-4 z-50 p-5 bg-background/95 border border-border shadow-2xl rounded-2xl max-w-md w-[calc(100vw-32px)] sm:w-[420px] max-h-[90vh] overflow-y-auto">
         <div className="w-full">
           {!showPreferences ? (
             <div className="flex flex-col gap-3">
               <div>
-                <h3 className="font-bold text-base text-foreground mb-1">We value your privacy</h3>
+                <h3 className="font-semibold text-base text-foreground mb-1">We value your privacy</h3>
                 <p className="text-xs md:text-sm text-muted-foreground leading-relaxed">
                   We use cookies to enhance your experience and analyze traffic. Read our{" "}
                   <Link href="/privacy-policy" className="text-primary underline hover:no-underline font-medium">
@@ -85,7 +85,7 @@ export function CookieConsent() {
               <div className="flex items-center justify-end gap-2 mt-2">
                 <button 
                   onClick={() => setShowPreferences(true)} 
-                  className="px-3.5 py-2 text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-xl transition-all cursor-pointer"
+                  className="px-3.5 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/50 rounded-xl transition-all cursor-pointer"
                 >
                   Customize
                 </button>
@@ -109,7 +109,7 @@ export function CookieConsent() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold text-base text-foreground">Cookie Preferences</h3>
+                <h3 className="font-semibold text-base text-foreground">Cookie Preferences</h3>
                 <button 
                   onClick={() => setShowPreferences(false)} 
                   className="h-8 w-8 rounded-full bg-secondary/80 hover:bg-secondary transition-colors flex items-center justify-center text-foreground cursor-pointer"

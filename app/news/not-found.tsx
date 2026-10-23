@@ -8,13 +8,13 @@ export default function NewsNotFound() {
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-gray-50 flex items-center justify-center px-4">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <Newspaper className="w-10 h-10 text-primary" />
           </div>
 
-          <h1 className="text-2xl font-bold text-foreground mb-3">Article Not Found</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-3">Article Not Found</h1>
 
           <p className="text-muted-foreground mb-8">
             The news article you are looking for does not exist or has been removed. Browse our latest articles for more

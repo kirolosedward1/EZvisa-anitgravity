@@ -66,7 +66,7 @@ export function NextStepsTimeline() {
   return (
     <Card className="shadow-lg">
       <CardHeader className="border-b">
-        <CardTitle className="text-xl font-bold">What Happens Next</CardTitle>
+        <CardTitle className="text-xl font-semibold">What Happens Next</CardTitle>
         <p className="text-sm text-muted-foreground mt-1">
           Your visa application journey - step by step
         </p>
@@ -74,7 +74,7 @@ export function NextStepsTimeline() {
       <CardContent className="pt-6">
         <div className="relative">
           {/* Timeline Line */}
-          <div className="absolute left-[18px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-emerald-500 via-primary to-muted" />
+          <div className="absolute left-[18px] top-0 bottom-0 w-0.5 bg-[#0436DC]" />
 
           <div className="space-y-8">
             {steps.map((step, index) => (
@@ -117,7 +117,7 @@ export function NextStepsTimeline() {
               </p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-primary">5-7 Days</p>
+              <p className="text-lg font-semibold text-primary">5-7 Days</p>
               <p className="text-xs text-muted-foreground">Business days</p>
             </div>
           </div>

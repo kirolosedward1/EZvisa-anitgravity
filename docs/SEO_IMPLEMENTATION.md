@@ -191,7 +191,7 @@ Clean, semantic URLs:
 - Breadcrumb navigation
 - Related posts on blog
 - Contextual links in content
-- Country selector linking to all 27 countries
+- Country selector linking to all 29 countries
 
 #### Content Quality
 - Original, high-quality content

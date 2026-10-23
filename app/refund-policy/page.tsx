@@ -17,7 +17,7 @@ export default function RefundPolicyPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-gradient-to-b from-background to-gray-50">
+      <div className="min-h-screen">
         <InnerHero
           badge="Legal"
           title="Refund Policy"
@@ -98,7 +98,7 @@ export default function RefundPolicyPage() {
             </ul>
 
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 not-prose mt-8">
-              <h4 className="font-bold mb-2">Have Questions?</h4>
+              <h4 className="font-semibold mb-2">Have Questions?</h4>
               <p className="text-sm text-muted-foreground mb-4">
                 If you have any questions about our refund policy, please don't hesitate to contact us.
               </p>

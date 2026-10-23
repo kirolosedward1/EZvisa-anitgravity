@@ -150,7 +150,7 @@ export async function getApplication(id: string): Promise<Application> {
   return toApplication(data);
 }
 
-const days = (a: string, b: string) => Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
+const days = (a: string, b: string) => Math.round((Date.parse(b) - Date.parse(a)) / 86400000) + 1;
 /** Column mapping identical to web /api/submit-application, plus the full wizard state for cross-device resume. */
 function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, question?: string): VisaUpdate {
   const t = (s: string) => (s ?? "").trim();
