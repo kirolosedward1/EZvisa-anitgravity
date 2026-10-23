@@ -19,10 +19,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="applications" options={{ title: t("Applications") }} />
       <Tabs.Screen name="account" options={{ title: t("Account") }} />
     </Tabs>
-      {/* Status-bar backdrop: content scrolling under the clock and battery is blurred instead of colliding with them. */}
-      {insets.top > 0 && (Platform.OS === "ios"
-        ? <BlurView pointerEvents="none" intensity={60} tint="systemChromeMaterialLight" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: "rgba(255,255,255,0.55)" }} />
-        : <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, right: 0, height: insets.top, backgroundColor: "rgba(255,255,255,0.94)" }} />)}
+      {/* Status-bar backdrop lives in app/_layout.tsx (all screens). */}
     </View>
   );
 }

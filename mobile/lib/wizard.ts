@@ -184,6 +184,7 @@ export function validateTrip(f: WizardForm): Errors {
   if (!f.travelStartDate) e.travelStartDate = "Please select a departure date";
   else if (Date.parse(f.travelStartDate) < earliestDeparture().getTime() - day / 2) e.travelStartDate = "Departure must be at least 15 days from today";
   if (!f.travelEndDate) e.travelEndDate = "Please select a return date";
+  else if (!f.travelStartDate && Date.parse(f.travelEndDate) < earliestDeparture().getTime() + day / 2) e.travelEndDate = "Return date must be at least 16 days from today";
   else if (f.travelStartDate && tripDays(f) <= 0) e.travelEndDate = "Return date must be after departure date";
   else if (tripDays(f) > 90) e.travelEndDate = "Schengen visits are limited to 90 days";
   else if (f.passportExpiry && !passportCoversTrip(f)) e.travelEndDate = "Passport must be valid at least 3 months after your return date";

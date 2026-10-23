@@ -247,4 +247,3 @@ export default function Account() {
   );
 }
 
-const esc = (x: string) => x.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));

@@ -26,7 +26,13 @@ export async function shareReceipt(a: Application, name: string, mail: string) {
     const html = `<html><body style="font-family:-apple-system,Helvetica;padding:32px"><h1 style="margin:0">EZvisa</h1><p style="color:#666">${esc(r.title)} · EZvisa visa application service</p>
       <table style="width:100%;border-collapse:collapse;margin-top:24px">${r.rows.map(([k, v]) => `<tr><td style="padding:8px 0;color:#666;border-bottom:1px solid #eee">${esc(k)}</td><td style="padding:8px 0;text-align:right;border-bottom:1px solid #eee">${esc(v)}</td></tr>`).join("")}</table>
       <p style="color:#666;margin-top:24px;font-size:12px">${esc(r.footer)}</p></body></html>`;
-    if (Platform.OS === "web") { await Print.printAsync({ html }); return; }
+    if (Platform.OS === "web") {
+      // Web: open the receipt in a new tab (the user can print/save it as PDF there); if pop-ups are blocked, download the HTML.
+      const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      const w = window.open(url, "_blank");
+      if (!w) { const el = document.createElement("a"); el.href = url; el.download = `EZvisa-receipt-${r.reference}.html`; document.body.appendChild(el); el.click(); el.remove(); }
+      setTimeout(() => URL.revokeObjectURL(url), 60000); return;
+    }
     const { uri } = await Print.printToFileAsync({ html });
     if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: "application/pdf", UTI: "com.adobe.pdf", dialogTitle: `${r.title} ${r.reference}` });
   } catch (e: any) { Alert.alert("Couldn't create the receipt", e?.message ?? String(e)); }

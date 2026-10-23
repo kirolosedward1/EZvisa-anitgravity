@@ -26,7 +26,7 @@ const ICONS: Record<string, [IconName, IconName]> = {
 const H = TAB_BAR_HEIGHT;
 const PAD = S.xs - 2; // lens inset inside the capsule
 const COMPACT = 0.14; // how much the bar shrinks while scrolling down
-const DOT = TAB_BAR_HEIGHT - (S.xs - 2) * 2; // selected circle diameter (the bar height minus its inset)
+const DOT = 44; // selected circle diameter (the bar height minus its inset)
 const TAB_W = 56; // each tab is this wide: the bar hugs its content and sits centred, not edge to edge
 const glass = Platform.OS === "ios" && isLiquidGlassAvailable();
 
@@ -39,7 +39,7 @@ function Material({ radius }: { radius: number }) {
 }
 
 /** Centre "+" (between Countries and Applications): starts a new application via /apply, like the old floating button. */
-const FAB = SIZE.buttonM;
+const FAB = 56; // fixed 56x56 circle; only a uniform press scale, never width/scaleX
 function NewAppButton() {
   const c = useColors(); const { t } = useT(); const reduce = useReducedMotion(); const press = useSharedValue(1); const last = useRef(0);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: press.value }] }));
@@ -57,7 +57,7 @@ function NewAppButton() {
   );
 }
 
-const LENS = { damping: 18, stiffness: 260, mass: 0.7 };      // droplet travel: quick with a soft settle
+const LENS = { damping: 18, stiffness: 220 };      // droplet travel: quick with a soft settle
 const SETTLE = { damping: 12, stiffness: 320, mass: 0.6 };    // stretch / squash recovery
 
 /** One tab: the icon only (the label is read by VoiceOver), crossfading outline/filled and grey/tint, with a spring scale. */
@@ -121,14 +121,14 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     const s = slots.current[i]; if (!s) return;
     if (!animate || reduce || !shown.value) { x.value = reduce && shown.value ? withTiming(s.x, { duration: DUR.fast }) : s.x; w.value = s.w; shown.value = 1; return; }
     const far = Math.abs(s.x - x.value) > 4;
-    x.value = withSpring(s.x, LENS); w.value = withSpring(s.w, LENS);
-    if (far) { sx.value = withSequence(withSpring(1.22, { damping: 20, stiffness: 600 }), withSpring(1, SETTLE)); sy.value = withSequence(withSpring(0.86, { damping: 20, stiffness: 600 }), withSpring(1, SETTLE)); }
+    x.value = withSpring(s.x, LENS); w.value = DOT;
+    void far; // fixed 44x44 circle: only translateX animates (no squash, no width change)
   };
   useEffect(() => { moveTo(state.index); }, [state.index, reduce]);
   // The selected highlight is a circle (DOT x DOT) centred on the tab's icon.
   const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; slots.current[i] = { x: lx + (width - DOT) / 2, w: DOT }; if (i === state.index) moveTo(i, false); };
   // Always a true circle at rest (DOT x DOT); the squash/stretch only plays while it travels.
-  const lens = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ translateX: x.value }, { scaleX: sx.value }, { scaleY: sy.value }] }));
+  const lens = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ translateX: x.value }] }));
 
   const go = (i: number) => {
     const route = state.routes[i]; const on = state.index === i;
@@ -148,10 +148,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const startX = useRef(0);
   const pan = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
-    onPanResponderGrant: () => { startX.current = x.value; if (!reduce) { sx.value = withSpring(1.12, SETTLE); sy.value = withSpring(0.92, SETTLE); } },
+    onPanResponderGrant: () => { startX.current = x.value; },
     onPanResponderMove: (_, g) => { const max = Math.max(...slots.current.filter(Boolean).map((s) => s.x)); x.value = Math.min(Math.max(startX.current + g.dx, 0), max); },
-    onPanResponderRelease: () => { sx.value = withSpring(1, SETTLE); sy.value = withSpring(1, SETTLE); live.current.go(live.current.nearest(x.value + w.value / 2)); },
-    onPanResponderTerminate: () => { sx.value = withSpring(1, SETTLE); sy.value = withSpring(1, SETTLE); live.current.moveTo(live.current.idx); },
+    onPanResponderRelease: () => { live.current.go(live.current.nearest(x.value + w.value / 2)); },
+    onPanResponderTerminate: () => { live.current.moveTo(live.current.idx); },
   })).current;
   // PanResponder callbacks are created once; keep the latest closures reachable.
   return (

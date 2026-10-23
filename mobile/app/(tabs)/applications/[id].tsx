@@ -147,7 +147,7 @@ export default function ApplicationDetail() {
       {paid && !needsContinue(a) && list && list.customer.length - done > 0 && (
         <ListGroup header={t("Next step")} inset={58}>
           <ListRow icon="arrow.up.doc.fill" iconColor={c.tint} title={t(list.customer.length - done === 1 ? "Submit 1 document" : "Submit {n} documents", { n: list.customer.length - done })}
-            subtitle={list.customer.filter(isOpen).slice(0, 3).map((i) => t(i.req.title)).join(", ")} />
+            subtitle={(() => { const o = list.customer.filter(isOpen).map((i) => t(i.req.title)); return o.slice(0, 3).join(", ") + (o.length > 3 ? " " + t("+{n} more", { n: o.length - 3 }) : ""); })()} />
         </ListGroup>
       )}
       <ListGroup header={t("Trip")} inset={16}>

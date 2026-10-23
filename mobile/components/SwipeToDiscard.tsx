@@ -37,7 +37,7 @@ export function SwipeToDiscard({ onDiscard, radius = 0, enabled = true, testID, 
       if (over !== past.current) { past.current = over; select(); } // a tick when a release would discard
     },
     onPanResponderRelease: (_, g) => {
-      const { dir: d, snap: s, discard: go, drag: dr } = live.current; const dist = Math.abs(start.current + g.dx); dr(false);
+      const { dir: d, snap: s, discard: go, drag: dr } = live.current; const dist = Math.max(0, (start.current + g.dx) * d); dr(false); // only the trailing (left in LTR) direction counts
       if (dist > width.current / 2 || (dist > REVEAL && Math.abs(g.vx) > 1.2 && Math.sign(g.vx) === d)) go();
       else s(dist > REVEAL / 2 ? d * REVEAL : 0);
     },
