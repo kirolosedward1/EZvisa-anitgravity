@@ -228,6 +228,7 @@ Never log or expose secrets. Check the exact required names in the route/handler
 | Blog/news | `lib/blog.ts`, `/content`, `app/news/*`, `scripts/*blog*` |
 | SEO metadata | `lib/seo.ts` + each page's `export const metadata` |
 | DB migrations | `scripts/*.sql` |
+| Admin dashboard (staff console at `/admin`) | plan: `docs/ADMIN_DASHBOARD_PLAN.md`; code: `app/admin/*`, `app/api/admin/*`, `lib/admin/*` |
 
 ---
 
