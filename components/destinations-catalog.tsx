@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react"
 import { Search, ArrowRight, Compass, Sparkles, HelpCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { destinations, Destination } from "@/lib/destinations"
+import { destinationNameAr } from "@/lib/destination-names-ar"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
@@ -25,7 +26,11 @@ export function DestinationsCatalog() {
 
   // Filter destinations based on search query and active tab
   const filteredDestinations = destinations.filter((dest) => {
-    const matchesSearch = dest.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const query = searchQuery.trim()
+    const arabicName = destinationNameAr(dest.slug)
+    const matchesSearch =
+      dest.name.toLowerCase().includes(query.toLowerCase()) ||
+      (arabicName !== "" && arabicName.includes(query))
     
     if (activeTab === "schengen") {
       return matchesSearch && dest.region === "Schengen"
@@ -147,7 +152,7 @@ export function DestinationsCatalog() {
                         <span>{country.visaType}</span>
                       </span>
                       <h3 className="text-lg font-bold tracking-tight mb-1">
-                        {country.name}
+                        <LangText en={country.name} ar={destinationNameAr(country.slug) || country.name} />
                       </h3>
                       <p className="text-[11px] text-white/60"><ReadyLine /></p>
                     </div>

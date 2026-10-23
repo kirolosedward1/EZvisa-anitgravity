@@ -40,7 +40,7 @@ export default function PricingPage() {
           badge="Pricing Plan"
           title={
             <>
-              All-Inclusive <span className="text-primary bg-[#0436DC]">Visa Service</span>
+              All-Inclusive <span className="text-[#0436DC]">Visa Service</span>
             </>
           }
           description="One-time payment • No hidden fees • Full support"
@@ -68,7 +68,7 @@ export default function PricingPage() {
                 <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
                   <Check className="w-7 h-7 text-green-600" />
                 </div>
-                <h3 className="text-2xl font-bold">What's Included</h3>
+                <h3 className="text-2xl font-bold text-[#0A0F1F]">What's Included</h3>
               </div>
               <div className="space-y-5">
                 {[
@@ -97,7 +97,7 @@ export default function PricingPage() {
                 <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center">
                   <X className="w-7 h-7 text-gray-600" />
                 </div>
-                <h3 className="text-2xl font-bold">Not Included</h3>
+                <h3 className="text-2xl font-bold text-[#0A0F1F]">Not Included</h3>
               </div>
               <div className="space-y-5">
                 {[
@@ -154,7 +154,7 @@ export default function PricingPage() {
                   <Shield className="w-12 h-12 text-green-600" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl lg:text-3xl font-bold mb-3 text-gray-900">100% Money-Back Guarantee</h3>
+                  <h3 className="text-2xl lg:text-3xl font-bold mb-3 text-[#0A0F1F]">100% Money-Back Guarantee</h3>
                   <p className="text-base text-gray-700 leading-relaxed">
                     If we cannot process your application due to our error, we'll provide a full refund. Your
                     satisfaction and trust are our top priorities.{" "}

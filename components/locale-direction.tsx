@@ -14,8 +14,7 @@ export function LocaleDirection() {
   useLayoutEffect(() => {
     const arabic = isArabicPath(window.location.pathname)
     document.documentElement.lang = arabic ? "ar" : "en"
-    if (arabic) document.documentElement.dir = "rtl"
-    else document.documentElement.removeAttribute("dir")
+    document.documentElement.dir = arabic ? "rtl" : "ltr"
   }, [pathname])
 
   return null

@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
+import { headers } from "next/headers"
 import { Poppins } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { CookieConsent } from "@/components/cookie-consent"
@@ -106,19 +107,15 @@ export const viewport: Viewport = {
   themeColor: "#2563eb",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const arabic = (await headers()).get("x-ez-locale") === "ar"
   return (
-    <html lang="en" className="bg-background" suppressHydrationWarning>
+    <html lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} className="bg-background" suppressHydrationWarning>
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=location.pathname;var ar=p==="/ar"||p.indexOf("/ar/")===0;if(ar){document.documentElement.lang="ar";document.documentElement.dir="rtl";}}catch(e){}})();`,
-          }}
-        />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://client.crisp.chat" />

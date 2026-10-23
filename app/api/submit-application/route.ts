@@ -1,10 +1,64 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
+import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createServerClient } from "@/lib/supabase/server"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { sanitizeInput, sanitizeEmail, sanitizePhone } from "@/lib/sanitize"
 import { datesInOrder, INVALID_DATE_MESSAGE, parseCalendarDate, RETURN_AFTER_DEPARTURE } from "@/lib/dates"
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
+
+const DUPLICATE_WINDOW_MS = 10 * 60 * 1000
+
+type OwnedApplication = {
+  id: string
+  tracking_token: string | null
+  user_id: string | null
+}
+
+function isMissingUserIdColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false
+  const message = error.message?.toLowerCase() ?? ""
+  return (
+    (error.code === "PGRST204" || error.code === "42703") &&
+    message.includes("user_id")
+  )
+}
+
+function tripScoped(
+  query: any,
+  destination: string,
+  startIso: string | null,
+  endIso: string | null,
+  since: string,
+) {
+  let scoped = query
+    .eq("destination_country", destination)
+    .in("application_status", ["draft", "submitted"])
+    .gte("created_at", since)
+  scoped = startIso ? scoped.eq("entry_date", startIso) : scoped.is("entry_date", null)
+  scoped = endIso ? scoped.eq("exit_date", endIso) : scoped.is("exit_date", null)
+  return scoped
+}
+
+/** Signed-in user from the cookie session, or from a bearer token. Never from the request body. */
+async function sessionUserId(request: Request, admin: SupabaseClient): Promise<string | null> {
+  try {
+    const cookieClient = await createServerClient()
+    const { data } = await cookieClient.auth.getUser()
+    const cookieId = data.user?.id?.trim().toLowerCase()
+    if (cookieId) return cookieId
+  } catch (error) {
+    console.error("[submit] cookie session lookup failed:", error instanceof Error ? error.name : "unknown")
+  }
+
+  const header = request.headers.get("authorization") ?? ""
+  const jwt = /^Bearer\s+(\S+)/i.exec(header)?.[1] ?? ""
+  if (!jwt) return null
+  const { data, error } = await admin.auth.getUser(jwt)
+  if (error || !data.user?.id) return null
+  const bearerId = data.user.id.trim().toLowerCase()
+  return bearerId || null
+}
 
 export async function POST(request: Request) {
   try {
@@ -72,35 +126,68 @@ export async function POST(request: Request) {
     }
 
     const supabase = createClient(supabaseUrl, supabaseKey)
+    const userId = await sessionUserId(request, supabase)
+    const since = new Date(Date.now() - DUPLICATE_WINDOW_MS).toISOString()
+    const startIso = startDate?.iso ?? null
+    const endIso = endDate?.iso ?? null
+    let userIdColumnMissing = false
 
-    // Same person, same trip, within 10 minutes: return the row we already saved.
-    // App-level only. There is no unique constraint and no migration.
-    if (sanitizedData.email) {
-      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString()
-      let recent = supabase
-        .from("visa_applications")
-        .select("id, tracking_token")
-        .eq("email", sanitizedData.email)
-        .eq("destination_country", sanitizedData.destination)
-        .in("application_status", ["draft", "submitted"])
-        .gte("created_at", since)
-        .order("created_at", { ascending: false })
-        .limit(1)
-      recent = startDate ? recent.eq("entry_date", startDate.iso) : recent.is("entry_date", null)
-      recent = endDate ? recent.eq("exit_date", endDate.iso) : recent.is("exit_date", null)
-      const { data: duplicate, error: duplicateError } = await recent.maybeSingle()
+    // Reuse a row only when it belongs to the signed-in user. The identity is
+    // auth.getUser(), never the email or any other field from the body.
+    if (userId) {
+      const { data: duplicate, error: duplicateError } = await tripScoped(
+        supabase
+          .from("visa_applications")
+          .select("id, tracking_token, user_id")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(1),
+        sanitizedData.destination,
+        startIso,
+        endIso,
+        since,
+      ).maybeSingle()
+
       if (duplicateError) {
-        console.error("[submit] duplicate lookup failed:", duplicateError.code)
+        if (!isMissingUserIdColumn(duplicateError)) {
+          console.error("[submit] duplicate lookup failed:", duplicateError.code)
+          return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
+        }
+        // No user_id column, and this change cannot add one. Do not fall back
+        // to the email in the body, and do not return any existing row.
+        userIdColumnMissing = true
+      } else {
+        const owned = duplicate as OwnedApplication | null
+        if (owned?.id && owned.user_id?.toLowerCase() === userId) {
+          return NextResponse.json({
+            success: true,
+            message: "Application submitted successfully",
+            applicationId: owned.id,
+            trackingToken: owned.tracking_token ?? undefined,
+            created: false,
+          })
+        }
+      }
+    } else if (sanitizedData.email) {
+      // A guest who repeats the same trip must not receive someone else's id,
+      // reference, or payment link, and must not open a second application.
+      const { count, error: duplicateError } = await tripScoped(
+        supabase.from("visa_applications").select("created_at", { count: "exact", head: true }),
+        sanitizedData.destination,
+        startIso,
+        endIso,
+        since,
+      ).eq("email", sanitizedData.email)
+
+      if (duplicateError) {
+        console.error("[submit] guest duplicate lookup failed:", duplicateError.code)
         return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
       }
-      if (duplicate) {
-        return NextResponse.json({
-          success: true,
-          message: "Application submitted successfully",
-          applicationId: duplicate.id,
-          trackingToken: duplicate.tracking_token ?? undefined,
-          created: false,
-        })
+      if ((count ?? 0) > 0) {
+        return NextResponse.json(
+          { success: false, error: "duplicate_application" },
+          { status: 409 },
+        )
       }
     }
 
@@ -121,43 +208,47 @@ export async function POST(request: Request) {
       }
     }
 
-    const { data, error } = await supabase
-      .from("visa_applications")
-      .insert([
-        {
-          full_name: `${sanitizedData.firstName} ${sanitizedData.lastName}`,
-          email: sanitizedData.email,
-          phone: sanitizedData.phone,
-          nationality: sanitizedData.nationality,
-          destination_country: sanitizedData.destination,
-          date_of_birth: formData.dateOfBirth || null,
-          entry_date: startDate?.iso || null,
-          exit_date: endDate?.iso || null,
-          travel_purpose: sanitizedData.purposeOfTrip,
-          passport_number: formData.passportNumber || null,
-          duration_days:
-            startDate && endDate
-              ? Math.ceil((Date.parse(endDate.iso) - Date.parse(startDate.iso)) / (1000 * 60 * 60 * 24))
-              : null,
-          has_passport: false,
-          has_photos: false,
-          has_bank_statements: false,
-          has_employment_proof: false,
-          payment_status: "pending",
-          application_status: "submitted",
-          additional_notes: JSON.stringify({
-            maritalStatus: formData.maritalStatus,
-            employmentStatus: formData.employmentStatus,
-            jobTitle: sanitizedData.jobTitle,
-            companyName: sanitizedData.companyName,
-            monthlySalary: formData.monthlySalary,
-            spouseAccompanying: formData.spouseAccompanying,
-          }),
-        },
-      ])
-      .select()
+    const applicationRow: Record<string, unknown> = {
+      full_name: `${sanitizedData.firstName} ${sanitizedData.lastName}`,
+      email: sanitizedData.email,
+      phone: sanitizedData.phone,
+      nationality: sanitizedData.nationality,
+      destination_country: sanitizedData.destination,
+      date_of_birth: formData.dateOfBirth || null,
+      entry_date: startDate?.iso || null,
+      exit_date: endDate?.iso || null,
+      travel_purpose: sanitizedData.purposeOfTrip,
+      passport_number: formData.passportNumber || null,
+      duration_days:
+        startDate && endDate
+          ? Math.ceil((Date.parse(endDate.iso) - Date.parse(startDate.iso)) / (1000 * 60 * 60 * 24))
+          : null,
+      has_passport: false,
+      has_photos: false,
+      has_bank_statements: false,
+      has_employment_proof: false,
+      payment_status: "pending",
+      application_status: "submitted",
+      additional_notes: JSON.stringify({
+        maritalStatus: formData.maritalStatus,
+        employmentStatus: formData.employmentStatus,
+        jobTitle: sanitizedData.jobTitle,
+        companyName: sanitizedData.companyName,
+        monthlySalary: formData.monthlySalary,
+        spouseAccompanying: formData.spouseAccompanying,
+      }),
+    }
+    if (userId && !userIdColumnMissing) applicationRow.user_id = userId
 
-    if (error) {
+    let { data, error } = await supabase.from("visa_applications").insert([applicationRow]).select()
+    if (error && "user_id" in applicationRow && isMissingUserIdColumn(error)) {
+      delete applicationRow.user_id
+      const retry = await supabase.from("visa_applications").insert([applicationRow]).select()
+      data = retry.data
+      error = retry.error
+    }
+
+    if (error || !data?.[0]) {
       return NextResponse.json({ success: false, message: "Failed to save application", error }, { status: 500 })
     }
 

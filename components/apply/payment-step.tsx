@@ -117,11 +117,17 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           signal: controller.signal,
         })
 
+        const submitData = await submitResponse.json().catch(() => ({}))
         if (!submitResponse.ok) {
-          throw new Error("Failed to save application. Please try again.")
+          if (submitResponse.status === 409 && submitData?.error === "duplicate_application") {
+            throw new Error(
+              "An application with these details was just submitted. Please wait a few minutes before starting another one.",
+            )
+          }
+          const serverMessage = typeof submitData?.message === "string" ? submitData.message : ""
+          throw new Error(serverMessage || "Failed to save application. Please try again.")
         }
 
-        const submitData = await submitResponse.json()
         if (typeof submitData.applicationId !== "string" || !submitData.applicationId) {
           throw new Error("Failed to save application. Please try again.")
         }

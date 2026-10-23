@@ -8,7 +8,9 @@ export function middleware(request: NextRequest) {
 
   const url = request.nextUrl.clone()
   url.pathname = pathname.replace(/^\/ar/, "") || "/"
-  return NextResponse.rewrite(url)
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set("x-ez-locale", "ar")
+  return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
 }
 
 export const config = {

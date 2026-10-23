@@ -252,7 +252,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                   <fact.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  <h3 className="text-[11px] font-bold text-[#5B6475] uppercase tracking-wider">
                     {fact.label}
                   </h3>
                   <div className="text-base sm:text-lg font-bold text-foreground mt-0.5">
