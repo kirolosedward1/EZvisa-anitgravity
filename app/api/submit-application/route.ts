@@ -17,6 +17,7 @@ import {
 } from "@/lib/dates"
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { canonicalSchengenCountry } from "@/lib/countries"
+import { UUID_RE } from "@/lib/applications"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
 import { toWesternDigits, normalizePassport } from "@/lib/digits"
 
@@ -372,6 +373,8 @@ export async function POST(request: Request) {
         monthlySalary: text(formData.monthlySalary, 50),
         spouseAccompanying: formData.spouseAccompanying === "yes" ? "yes" : "no",
         ...(flexibleNote ? { flexibleDates: flexibleNote } : {}),
+        // The saved traveller the traveller step was filled from ("Who is travelling?"), if any.
+        ...(typeof formData.travellerId === "string" && UUID_RE.test(formData.travellerId) ? { travellerId: formData.travellerId } : {}),
         // Answers from the trip and spouse screens (previously collected but never saved anywhere).
         wizard: wizardAnswers(formData),
       }),

@@ -32,6 +32,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { CitizenshipPicker } from "@/components/citizenship-picker"
+import { SavedTravellers } from "@/components/account/saved-travellers"
 import { CountryFlag } from "@/components/country-flag"
 import { PhoneField } from "@/components/phone-field"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -322,6 +323,10 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
               onClick={() => open("citizenship")}
             />
           </div>
+        </Section>
+
+        <Section title="Saved travellers" description="The people you have applied for. Pick one in the wizard and their details are filled in.">
+          <SavedTravellers />
         </Section>
 
         <Section title="Sign-in">

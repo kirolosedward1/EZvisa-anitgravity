@@ -227,3 +227,111 @@ export function matchCountry(raw: string | undefined, list: string[]): string | 
 
 /** True when the user has typed or picked anything (used for autosave/resume). */
 export const hasAnswers = (f: WizardForm) => (Object.keys(emptyForm) as (keyof WizardForm)[]).some((k) => k !== "email" && JSON.stringify(f[k]) !== JSON.stringify(emptyForm[k]));
+
+// ---- Saved travellers (mirror of lib/shared/wizard-contract.ts "Saved travellers"; keep identical) ----
+// public.travellers (migrations/0015_travellers.sql): one row per person a customer applied for, owner = account email.
+// Read for the "Who is travelling?" question and Account → Saved travellers; written after payment (website server)
+// and after the after-payment step here (lib/travellers.ts). Passport numbers live only there, never in user_metadata.
+export const TRAVELLERS_TABLE = "travellers";
+export const TRAVELLER_RELATIONSHIPS = ["self", "spouse", "other"] as const;
+export type TravellerRelationship = (typeof TRAVELLER_RELATIONSHIPS)[number];
+export const TRAVELLER_SOURCES = ["application", "backfill", "manual"] as const;
+/** Wizard answers a saved traveller carries. Email is the account's and marital status drives the price: neither is one. */
+export const TRAVELLER_KEYS = ["firstName", "lastName", "dateOfBirth", "nationality", "passportNumber", "passportExpiry", "hasValidPassport", "phone", "phoneCountry", "phoneLocal", "cityOfResidence"] as const;
+export type TravellerKey = (typeof TRAVELLER_KEYS)[number];
+export type TravellerDetails = Partial<Pick<WizardForm, TravellerKey>>;
+export type Traveller = TravellerDetails & { id: string; relationship: TravellerRelationship; lastUsedAt?: string | null };
+
+const tstr = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+const tday = (v: unknown) => { const x = tstr(v).slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(x) && !isNaN(Date.parse(x)) ? x : ""; };
+/** Passport numbers compare upper-case, letters and digits only ("n 123-4567" = "N1234567"). */
+export const normalizePassport = (v?: string | null) => tstr(v).toUpperCase().replace(/[^A-Z0-9]/g, "");
+/** "••••4567": the last 4 characters of a passport number, for lists and the drop-down. */
+export const maskPassport = (v?: string | null) => { const p = normalizePassport(v); return p ? `••••${p.slice(-4)}` : ""; };
+const nameKey = (t: { firstName?: string; lastName?: string; dateOfBirth?: string }) =>
+  `n:${tstr(t.lastName).toLowerCase().replace(/\s+/g, " ")}|${tstr(t.firstName).toLowerCase().replace(/\s+/g, " ")}|${tday(t.dateOfBirth)}`;
+/** Dedupe key of a traveller: the passport number when known, else last name | first name | date of birth. */
+export const travellerKey = (t: { firstName?: string; lastName?: string; dateOfBirth?: string; passportNumber?: string }) => {
+  const p = normalizePassport(t.passportNumber);
+  return p ? `p:${p}` : nameKey(t);
+};
+/** Every key a row for this person may have been saved under (passport key first). */
+export const travellerKeys = (t: { firstName?: string; lastName?: string; dateOfBirth?: string; passportNumber?: string }) =>
+  [...new Set([travellerKey(t), nameKey(t), nameKey({ ...t, dateOfBirth: "" })])];
+export const travellerName = (t: { firstName?: string; lastName?: string }) => `${tstr(t.firstName)} ${tstr(t.lastName)}`.trim();
+/** "Kirolos Edward · ••••4567" (nationality and flag are shown by the UI, translated). */
+export const travellerLabel = (t: { firstName?: string; lastName?: string; passportNumber?: string }) =>
+  [travellerName(t), maskPassport(t.passportNumber)].filter(Boolean).join(" · ");
+
+/** The main applicant described by a set of answers, or null without a name. Nationality only when visa-required. */
+export function travellerFromAnswers(f: Partial<WizardForm>): TravellerDetails | null {
+  const firstName = tstr(f.firstName), lastName = tstr(f.lastName);
+  if (!firstName || !lastName) return null;
+  const passportNumber = normalizePassport(f.passportNumber);
+  const t: TravellerDetails = { firstName, lastName };
+  const dateOfBirth = tday(f.dateOfBirth); if (dateOfBirth) t.dateOfBirth = dateOfBirth;
+  if (needsSchengenVisa(tstr(f.nationality))) t.nationality = tstr(f.nationality);
+  if (passportNumber) t.passportNumber = passportNumber;
+  const passportExpiry = tday(f.passportExpiry); if (passportExpiry) t.passportExpiry = passportExpiry;
+  if (f.hasValidPassport === "yes" || f.hasValidPassport === "no") t.hasValidPassport = f.hasValidPassport;
+  else if (passportNumber) t.hasValidPassport = "yes";
+  if (tstr(f.phone)) { t.phone = tstr(f.phone); if (tstr(f.phoneCountry)) t.phoneCountry = tstr(f.phoneCountry); if (tstr(f.phoneLocal)) t.phoneLocal = tstr(f.phoneLocal); }
+  if (UAE_EMIRATES.includes(tstr(f.cityOfResidence))) t.cityOfResidence = tstr(f.cityOfResidence);
+  return t;
+}
+/** The spouse described by a set of answers (name + passport validity only), or null without a name. */
+export function spouseFromAnswers(f: Partial<WizardForm>): TravellerDetails | null {
+  const firstName = tstr(f.spouseFirstName), lastName = tstr(f.spouseLastName);
+  if (!firstName || !lastName) return null;
+  const t: TravellerDetails = { firstName, lastName };
+  if (f.spouseHasValidPassport === "yes" || f.spouseHasValidPassport === "no") t.hasValidPassport = f.spouseHasValidPassport;
+  return t;
+}
+/** Fills the traveller fields from a saved traveller. Every field stays editable afterwards. */
+export function applyTraveller<T extends Partial<WizardForm>>(f: T, t: TravellerDetails): T {
+  const out: Record<string, unknown> = { ...f };
+  for (const k of TRAVELLER_KEYS) {
+    const v = t[k];
+    if (v === undefined || v === null || v === "") continue;
+    if (k === "nationality" && !needsSchengenVisa(v as string)) continue;
+    out[k] = v;
+  }
+  if (tstr(t.phone) && !tstr(t.phoneLocal)) { out.phoneLocal = ""; out.phoneCountry = tstr(t.phoneCountry) || (f.phoneCountry ?? "AE"); }
+  if (normalizePassport(t.passportNumber) || tday(t.passportExpiry)) out.hasValidPassport = "yes";
+  return out as T;
+}
+/** Fills the spouse fields from a saved traveller. */
+export function applySpouseTraveller<T extends Partial<WizardForm>>(f: T, t: TravellerDetails): T {
+  return { ...f, spouseFirstName: tstr(t.firstName), spouseLastName: tstr(t.lastName), ...(t.hasValidPassport ? { spouseHasValidPassport: t.hasValidPassport } : {}) };
+}
+/** Pick the traveller to preselect on a fresh form: the one marked "self", else the most recently used, else the first. */
+export function defaultTraveller<T extends Traveller>(list: T[]): T | null {
+  if (!list.length) return null;
+  return list.find((t) => t.relationship === "self") ?? [...list].sort((a, b) => (b.lastUsedAt ?? "").localeCompare(a.lastUsedAt ?? ""))[0] ?? null;
+}
+/** public.travellers row -> Traveller. */
+export function travellerFromRow(row: Record<string, unknown>): Traveller {
+  const r = (k: string) => tstr(row[k]);
+  const t: Traveller = { id: r("id"), relationship: (TRAVELLER_RELATIONSHIPS as readonly string[]).includes(r("relationship")) ? (r("relationship") as TravellerRelationship) : "other", lastUsedAt: r("last_used_at") || null };
+  if (r("first_name")) t.firstName = r("first_name");
+  if (r("last_name")) t.lastName = r("last_name");
+  if (tday(row.date_of_birth)) t.dateOfBirth = tday(row.date_of_birth);
+  if (r("nationality")) t.nationality = r("nationality");
+  if (normalizePassport(r("passport_number"))) { t.passportNumber = normalizePassport(r("passport_number")); t.hasValidPassport = "yes"; }
+  if (tday(row.passport_expiry)) t.passportExpiry = tday(row.passport_expiry);
+  if (r("phone")) { t.phone = r("phone"); if (r("phone_country")) t.phoneCountry = r("phone_country"); }
+  if (r("city_of_residence")) t.cityOfResidence = r("city_of_residence");
+  return t;
+}
+/** Traveller -> public.travellers columns (id, timestamps and source are set by the caller / the database). */
+export function travellerToRow(t: TravellerDetails, email: string, relationship: TravellerRelationship) {
+  return {
+    email: tstr(email).toLowerCase(), relationship,
+    first_name: tstr(t.firstName), last_name: tstr(t.lastName),
+    date_of_birth: tday(t.dateOfBirth) || null, nationality: needsSchengenVisa(tstr(t.nationality)) ? tstr(t.nationality) : null,
+    passport_number: normalizePassport(t.passportNumber) || null, passport_expiry: tday(t.passportExpiry) || null,
+    phone: tstr(t.phone) || null, phone_country: tstr(t.phoneCountry) || null,
+    city_of_residence: UAE_EMIRATES.includes(tstr(t.cityOfResidence)) ? tstr(t.cityOfResidence) : null,
+    dedupe_key: travellerKey(t),
+  };
+}

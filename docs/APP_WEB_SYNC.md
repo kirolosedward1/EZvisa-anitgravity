@@ -17,6 +17,7 @@ of rules. This document says what is shared, where it lives, and how to change i
 | Required-documents checklist (NOC only for employees) | `lib/shared/wizard-contract.ts` (`REQUIREMENTS`, `requiredFlags`) | `mobile/lib/data.ts` |
 | `additional_notes` JSON written to the row (`wizard`, `uploads`, `source`, `platform`, …) | `lib/shared/wizard-contract.ts` (`applicationColumns`, `ApplicationNotes`) | `mobile/lib/data.ts` |
 | Case reference `EZ-` + first 8 hex of the id | `referenceOf` | `mobile/lib/data.ts` |
+| Saved travellers (`public.travellers`): keys, relationships, dedupe key, answers ↔ traveller ↔ row mapping | `lib/shared/wizard-contract.ts` (`TRAVELLER_KEYS`, `travellerKey`, `travellerFromAnswers`, `applyTraveller`, `travellerToRow`, …), server side `lib/travellers.ts` | `mobile/lib/wizard.ts` (same block), `mobile/lib/travellers.ts` |
 | Auth messages and Supabase error-code mapping | `lib/auth/errors.ts` | `mobile/lib/authErrors.ts` |
 | Payment return: the server prices the case, URLs are forced onto the official domain | `app/api/create-payment/route.ts`, `app/app-return/page.tsx` | `mobile/lib/payments.ts`, `mobile/app.json` (`scheme`) |
 
@@ -34,16 +35,26 @@ and the app can mirror it one-to-one.
 | `GET /api/upload-document?id=` (Bearer) or `?token=` | Checklist status + `required` flags |
 | `POST /api/continue-application` | After-payment step (passport number + employment), same JSON as the app's `saveContinueAnswers` |
 | `GET /app-return` | Hands Ziina's return back to the app (`ezvisa://payment-return`) |
-| `GET /api/app-config` | The whole contract as JSON (price, lists, steps, statuses, document types) |
+| `GET /api/app-config` | The whole contract as JSON (price, lists, steps, statuses, document types, traveller keys) |
+| `GET /api/travellers` (Bearer) · `POST` · `PATCH /api/travellers/[id]` · `DELETE` | Saved travellers of the account: the list (backfilled once from past paid/submitted cases), add, edit / mark used, remove. The app reads through GET and writes to the table directly (RLS). |
 
 ## 3. The customer journey, same on both
 
 1. **Wizard** — personal → spouse (if married and travelling together) → trip details → payment. No passport number,
    employment or documents before payment. Drafts are saved to one `draft` row per email and can be resumed on either
-   platform (`/apply?draft=<id>` on the website).
+   platform (`/apply?draft=<id>` on the website). Signed in with saved travellers: a **"Who is travelling?"** drop-down
+   (website traveller step) / question (app, right after the destination) fills the traveller fields from
+   `public.travellers`; the picked id is kept in `additional_notes.travellerId`.
 2. **Payment** — Ziina, 249 AED (498 with spouse). The server computes the amount.
 3. **Continue application** — passport number + employment, stored in `additional_notes.wizard` and
-   `passport_number`. Website: `/dashboard/continue?id=` or `/track/<token>/continue`.
+   `passport_number`. Website: `/dashboard/continue?id=` or `/track/<token>/continue`. The spouse step offers the
+   saved travellers too (`additional_notes.spouseTravellerId`).
+   **Saved travellers** are written automatically: when a case becomes paid (`lib/ziina.ts applyIntentStatus` →
+   `lib/travellers.ts rememberTravellersFromApplication`: main applicant, plus the spouse when travelling together),
+   after `/api/continue-application` (website) and after `saveAfterPayment` (app, `mobile/lib/travellers.ts`).
+   Customers manage them under Account → Saved travellers on both platforms. Schema: `scripts/007_travellers.sql`
+   = `mobile/migrations/0015_travellers.sql` (applied on `ezvisa-uae` 2026-10-23; owner = account email, owner-only RLS,
+   rows deleted with the account).
 4. **Documents** — passport, photo, bank statement and (employees) NOC. Website: `/dashboard/upload?id=` or
    `/track/<token>/upload`.
 5. **Tracking** — same status labels, next-step card and reference on `/dashboard`, `/track/<token>` and in the app.

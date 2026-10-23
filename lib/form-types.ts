@@ -17,8 +17,12 @@ export interface FormData {
   hasValidPassport: "yes" | "no" | undefined
   dateOfBirth: string
   passportNumber: string
+  /** Saved traveller (public.travellers) the traveller step was filled from; "none" = the customer chose "Someone else". */
+  travellerId?: string
 
   // Spouse Step
+  /** Saved traveller the spouse step was filled from (after payment). */
+  spouseTravellerId?: string
   spouseFirstName: string
   spouseLastName: string
   spouseHasValidPassport: "yes" | "no" | undefined
