@@ -12,17 +12,20 @@ import {
   citizenshipSearchValue,
   toCitizenshipIso,
 } from "@/lib/nationalities"
+import { LangText } from "@/components/lang-text"
 import { cn } from "@/lib/utils"
 
 export function CitizenshipPicker({
   value,
   onChange,
   placeholder = "Select nationality",
+  placeholderAr,
   className,
 }: {
   value?: string
   onChange: (iso: string) => void
   placeholder?: string
+  placeholderAr?: string
   className?: string
 }) {
   const [open, setOpen] = useState(false)
@@ -45,7 +48,9 @@ export function CitizenshipPicker({
               <span className="truncate text-foreground">{name}</span>
             </span>
           ) : (
-            <span className="font-normal text-muted-foreground">{placeholder}</span>
+            <span className="font-normal text-[#5B6475]">
+              <LangText en={placeholder} ar={placeholderAr || placeholder} />
+            </span>
           )}
           <ChevronsUpDown className="ms-2 size-4 shrink-0 opacity-50" />
         </Button>

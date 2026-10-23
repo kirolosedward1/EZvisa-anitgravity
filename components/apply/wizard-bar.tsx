@@ -38,7 +38,7 @@ export function WizardBar({
               type="button"
               onClick={onBack}
               disabled={loading}
-              className="grid size-12 shrink-0 place-items-center rounded-xl border border-[#E3E7EF] bg-[#FFFFFF] text-[#0A0F1F] disabled:opacity-50"
+              className="grid size-12 shrink-0 place-items-center rounded-full border border-[#E3E7EF] bg-[#FFFFFF] text-[#0A0F1F] disabled:opacity-50"
             >
               <ChevronLeft className="size-5" aria-hidden />
               <span className="sr-only">
@@ -50,7 +50,7 @@ export function WizardBar({
             type={continueType}
             onClick={onContinue}
             disabled={disabled || loading}
-            className="flex h-12 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-xl bg-[#0436DC] px-3 text-center text-[15px] font-semibold leading-tight text-white disabled:opacity-50"
+            className="flex h-12 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[10px] bg-[#0436DC] px-3 text-center text-[15px] font-semibold leading-tight text-white disabled:opacity-50"
           >
             {loading ? (
               <span className="inline-flex max-w-full items-center justify-center gap-2">

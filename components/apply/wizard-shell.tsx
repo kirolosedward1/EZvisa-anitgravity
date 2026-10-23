@@ -26,26 +26,36 @@ export function stageForStep(step: number): WizardStage {
   return "traveller"
 }
 
+const VISAS: Record<string, { en: string; ar: string }> = {
+  tourism: { en: "Schengen tourist", ar: "سياحة شنغن" },
+  business: { en: "Schengen business", ar: "عمل شنغن" },
+  family: { en: "Schengen family", ar: "زيارة عائلية" },
+  medical: { en: "Schengen medical", ar: "علاج" },
+  education: { en: "Schengen study", ar: "دراسة" },
+  other: { en: "Schengen visa", ar: "تأشيرة شنغن" },
+}
+
 function stayDays(formData: FormData) {
   const stay = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
-  return stay > 1 ? stay : 0
+  return stay > 0 ? stay : 0
 }
 
 function SummaryRows({ formData }: { formData: FormData }) {
   const country = formData.destination?.trim() || ""
   const meta = country ? SCHENGEN_META[country] : undefined
-  const name = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
   const stay = stayDays(formData)
   const start = formData.travelStartDate
   const end = formData.travelEndDate
   const flexibleMonth = formData.datesFlexible === "yes" ? formatTravelMonth(formData.travelMonth) : ""
+  const visa = VISAS[formData.purposeOfTrip] 
   const applicants = applicantCount(formData.spouseAccompanying)
   const price = priceForTravellers(formData.spouseAccompanying)
+  const spousePrice = priceForTravellers("yes")
 
   const rows = [
     {
-      label: "Country",
-      labelAr: "الدولة",
+      label: "Destination",
+      labelAr: "الوجهة",
       value: country ? (
         <span className="inline-flex items-center gap-2">
           <CountryFlag iso={meta?.iso} title={country} />
@@ -54,18 +64,17 @@ function SummaryRows({ formData }: { formData: FormData }) {
       ) : null,
     },
     {
-      label: "Traveller",
-      labelAr: "المسافر",
-      value: name || null,
+      label: "Visa",
+      labelAr: "التأشيرة",
+      value: visa ? <LangText en={visa.en} ar={visa.ar} /> : null,
     },
     {
       label: "Dates",
-      labelAr: "المواعيد",
+      labelAr: "التواريخ",
       value:
         start && end && stay ? (
           <span dir="ltr">
-            {formatShortDate(start)} – {formatShortDate(end)} · {stay}{" "}
-            <LangText en="days" ar="يومًا" />
+            {formatShortDate(start)} – {formatShortDate(end)}
           </span>
         ) : flexibleMonth ? (
           flexibleMonth
@@ -77,25 +86,39 @@ function SummaryRows({ formData }: { formData: FormData }) {
       value: String(applicants),
     },
     {
-      label: "Price",
-      labelAr: "السعر",
-      value: <span dir="ltr">AED {price}</span>,
+      label: "Processing",
+      labelAr: "المعالجة",
+      value: <LangText en="1–2 days" ar="١–٢ يوم" />,
     },
   ]
 
   return (
-    <dl className="divide-y divide-[#E3E7EF] border-y border-[#E3E7EF]">
-      {rows.map((row) => (
-        <div key={row.label} className="flex items-center justify-between gap-4 py-3">
-          <dt className="text-[13px] font-medium text-[#5B6475]">
-            <LangText en={row.label} ar={row.labelAr} />
-          </dt>
-          <dd className="min-w-0 truncate text-end text-[15px] font-medium text-[#0A0F1F]">
-            {row.value || <span className="font-normal text-[#5B6475]">—</span>}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <div>
+      <dl>
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-center justify-between gap-4 border-b border-[#E3E7EF] py-3 text-[14px]">
+            <dt className="text-[#5B6475]">
+              <LangText en={row.label} ar={row.labelAr} />
+            </dt>
+            <dd className="min-w-0 truncate text-end text-[#0A0F1F]">
+              {row.value || <span className="text-[#5B6475]">—</span>}
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-5 flex items-center justify-between text-[18px] font-semibold">
+        <span>
+          <LangText en="Total" ar="المجموع" />
+        </span>
+        <span dir="ltr">AED {price}</span>
+      </div>
+      {applicants === 1 ? (
+        <p className="mt-3 text-[14px] text-[#3A4150]">
+          <span className="rtl:hidden">AED {spousePrice} with a spouse</span>
+          <span className="hidden rtl:inline">مع الزوج أو الزوجة AED {spousePrice}</span>
+        </p>
+      ) : null}
+    </div>
   )
 }
 
@@ -141,7 +164,29 @@ export function WizardShell({
         <h1 className="sr-only">
           <LangText en="Visa application" ar="طلب التأشيرة" />
         </h1>
-        <div className="flex flex-wrap gap-x-4 gap-y-2 border-b border-[#E3E7EF]">
+        <div className="lg:hidden">
+          <button
+            type="button"
+            aria-expanded={summaryOpen}
+            onClick={() => setSummaryOpen((open) => !open)}
+            className="flex w-full items-center justify-between gap-3 py-2.5 text-[13px] text-[#3A4150]"
+          >
+            <span className="min-w-0 truncate">
+              <span className="rtl:hidden">
+                {[line.country, line.stay ? `${line.stay} days` : ""].filter(Boolean).join(" · ") || "—"}
+              </span>
+              <span className="hidden rtl:inline">
+                {[line.countryAr, line.stay ? `${line.stay} يومًا` : ""].filter(Boolean).join(" · ") || "—"}
+              </span>
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-[#0A0F1F]" dir="ltr">
+              AED {line.price}
+              <ChevronDown className={cn("size-4 text-[#5B6475]", summaryOpen && "rotate-180")} aria-hidden />
+            </span>
+          </button>
+          {summaryOpen ? <SummaryRows formData={formData} /> : null}
+        </div>
+        <div className="flex gap-6 overflow-x-auto border-b border-[#E3E7EF]">
           {STAGES.map((item) => {
             const current = item.id === stage
             return (
@@ -161,26 +206,6 @@ export function WizardShell({
 
         <div className="mt-8 flex items-start gap-10">
           <div id="wizard-form" className="min-w-0 w-full max-w-[560px] scroll-mt-28">
-            <div className="mb-6 border-b border-[#E3E7EF] lg:hidden">
-              <button
-                type="button"
-                aria-expanded={summaryOpen}
-                onClick={() => setSummaryOpen((open) => !open)}
-                className="flex w-full items-center gap-3 py-3 text-start"
-              >
-                <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-[#0A0F1F]">
-                  <span className="rtl:hidden">
-                    {[line.country, line.stay ? `${line.stay} days` : "", `AED ${line.price}`].filter(Boolean).join(" · ")}
-                  </span>
-                  <span className="hidden rtl:inline">
-                    {[line.countryAr, line.stay ? `${line.stay} يومًا` : "", `AED ${line.price}`].filter(Boolean).join(" · ")}
-                  </span>
-                </span>
-                <ChevronDown className={cn("size-4 shrink-0 text-[#5B6475]", summaryOpen && "rotate-180")} aria-hidden />
-              </button>
-              {summaryOpen ? <SummaryRows formData={formData} /> : null}
-            </div>
-
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={motionKey}
@@ -194,7 +219,10 @@ export function WizardShell({
             </AnimatePresence>
           </div>
 
-          <aside className="sticky top-28 hidden w-[340px] shrink-0 lg:block">
+          <aside className="sticky top-28 hidden w-[340px] shrink-0 border-s border-[#E3E7EF] ps-8 lg:block">
+            <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.06em] text-[#5B6475]">
+              <LangText en="Your application" ar="طلبك" />
+            </p>
             <SummaryRows formData={formData} />
           </aside>
         </div>

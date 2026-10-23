@@ -305,6 +305,19 @@ function ApplyPageContent() {
     scrollToWizardTop()
   }, [formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
 
+  const editTrip = useCallback(() => {
+    setDirection(-1)
+    setTripScreen(0)
+    setCurrentStep(1)
+    scrollToWizardTop()
+  }, [scrollToWizardTop])
+
+  const editTraveller = useCallback(() => {
+    setDirection(-1)
+    setCurrentStep(2)
+    scrollToWizardTop()
+  }, [scrollToWizardTop])
+
   useEffect(() => {
     if (typeof window === "undefined" || isInitialized) return
 
@@ -496,7 +509,16 @@ function ApplyPageContent() {
           />
         )
       case "payment":
-        return <PaymentStep formData={formData} onBack={handleBack} isLoading={isTransitioning} paymentError={paymentError} />
+        return (
+          <PaymentStep
+            formData={formData}
+            onBack={handleBack}
+            onEditTrip={editTrip}
+            onEditTraveller={editTraveller}
+            isLoading={isTransitioning}
+            paymentError={paymentError}
+          />
+        )
       default:
         return null
     }
