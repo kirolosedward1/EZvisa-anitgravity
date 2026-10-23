@@ -68,6 +68,7 @@ export function serviceClient(): SupabaseClient | null {
 export async function applyIntentStatus(
   supabase: SupabaseClient,
   intent: ZiinaIntent,
+  depth = 0,
 ): Promise<{ row: Record<string, any> | null; status: string | null; changed: boolean; error?: string }> {
   const { data: row, error } = await supabase
     .from("visa_applications")
@@ -81,12 +82,22 @@ export async function applyIntentStatus(
     const older = await findByEarlierIntent(supabase, intent.id)
     if (older.error) return { row: null, status: null, changed: false, error: older.error }
     if (!older.row) return { row: null, status: null, changed: false }
-    if (mapIntentStatus(intent.status) !== "paid" || isPaidStatus(older.row.payment_status)) return { row: older.row, status: older.row.payment_status, changed: false }
-    // Re-point the application at the intent that was actually paid, then apply its status normally.
-    const { error: relinkError } = await supabase.from("visa_applications").update({ payment_id: intent.id }).eq("id", older.row.id)
+    if (mapIntentStatus(intent.status) !== "paid") return { row: older.row, status: older.row.payment_status, changed: false }
+    if (isPaidStatus(older.row.payment_status)) {
+      // Both an earlier and the current intent were paid: the customer was charged twice. Log it for a refund.
+      console.error(`[payment] DOUBLE PAYMENT: application ${older.row.id} already paid via ${older.row.payment_id ?? "?"}; earlier intent ${intent.id} was also paid. Refund one.`)
+      return { row: older.row, status: older.row.payment_status, changed: false }
+    }
+    if (depth > 0) return { row: older.row, status: older.row.payment_status, changed: false }
+    // Re-point the application at the intent that was actually paid (only if nobody changed the link meanwhile),
+    // then apply its status normally (once: depth guard).
+    let relink = supabase.from("visa_applications").update({ payment_id: intent.id }).eq("id", older.row.id)
+    relink = older.row.payment_id == null ? relink.is("payment_id", null) : relink.eq("payment_id", older.row.payment_id)
+    const { data: relinked, error: relinkError } = await relink.select("id")
     if (relinkError) return { row: older.row, status: older.row.payment_status, changed: false, error: relinkError.code }
+    if (!relinked?.length) return { row: older.row, status: older.row.payment_status, changed: false }
     console.info(`[payment] ${older.row.id} relinked to paid earlier intent ${intent.id} (was ${older.row.payment_id ?? "null"})`)
-    return applyIntentStatus(supabase, intent)
+    return applyIntentStatus(supabase, intent, depth + 1)
   }
   const next = mapIntentStatus(intent.status)
   if (isPaidStatus(row.payment_status) || row.payment_status === next) return { row, status: row.payment_status, changed: false }

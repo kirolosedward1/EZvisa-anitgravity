@@ -218,19 +218,20 @@ export async function POST(request: Request) {
     // "Pay" again after editing answers: the client sends the application it created earlier (id + tracking token
     // as proof). That unpaid row is updated in place, so the stored answers and the server price (spouse = 2
     // travellers) match what the customer sees, instead of paying the stale row.
-    let replaceTarget: { id: string; tracking_token: string | null; additional_notes: string | null } | null = null
+    let replaceTarget: { id: string; tracking_token: string | null; additional_notes: string | null; updated_at: string | null } | null = null
     const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (typeof formData.replaceApplicationId === "string" && UUID.test(formData.replaceApplicationId)
       && typeof formData.replaceTrackingToken === "string" && UUID.test(formData.replaceTrackingToken)) {
       const { data: old } = await supabase
         .from("visa_applications")
-        .select("id, tracking_token, additional_notes, payment_status, application_status")
+        .select("*") // "*": user_id may not exist on every database
         .eq("id", formData.replaceApplicationId)
         .eq("tracking_token", formData.replaceTrackingToken)
         .maybeSingle()
-      if (old && !["paid", "completed"].includes(String(old.payment_status ?? "")) && ["draft", "submitted"].includes(String(old.application_status ?? ""))) {
-        replaceTarget = old
-      }
+      const open = old && !["paid", "completed"].includes(String(old.payment_status ?? "")) && ["draft", "submitted"].includes(String(old.application_status ?? ""))
+      // A row created by a signed-in account can only be replaced by that same account.
+      const ownerOk = !old?.user_id || (session && String(old.user_id).toLowerCase() === session.id)
+      if (open && ownerOk) replaceTarget = old
     }
 
     // Reuse a row only for the signed-in user. Prefer user_id when that column
@@ -343,7 +344,7 @@ export async function POST(request: Request) {
       payment_status: "pending",
       application_status: "submitted",
       additional_notes: JSON.stringify({
-        ...previousNotes(replaceTarget?.additional_notes),
+        // (replace: the earlier notes are merged again from a fresh read just before the update, see below)
         maritalStatus: formData.maritalStatus,
         employmentStatus: formData.employmentStatus,
         jobTitle: sanitizedData.jobTitle,
@@ -359,25 +360,46 @@ export async function POST(request: Request) {
 
     if (replaceTarget) {
       delete applicationRow.payment_status
-      applicationRow.updated_at = new Date().toISOString()
-      const { data: rows, error: updateError } = await supabase
-        .from("visa_applications")
-        .update(applicationRow)
-        .eq("id", replaceTarget.id)
-        .eq("tracking_token", replaceTarget.tracking_token)
-        .not("payment_status", "in", "(paid,completed)")
-        .select("id, tracking_token")
-      if (updateError || !rows?.[0]) {
-        console.error("[submit] update of existing application failed:", updateError?.code ?? "no row")
-        return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
+      delete applicationRow.user_id // ownership never changes on replace
+      const fresh = JSON.parse(applicationRow.additional_notes as string) as Record<string, unknown>
+      let current = replaceTarget
+      // Compare-and-set on updated_at so a payment intent linked meanwhile (create-payment adds paymentIntentIds to
+      // the notes) is never overwritten; the earlier notes are merged under the new answers.
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const merged: Record<string, unknown> = { ...previousNotes(current.additional_notes), ...fresh }
+        if (!flexibleNote) delete merged.flexibleDates
+        applicationRow.additional_notes = JSON.stringify(merged)
+        applicationRow.updated_at = new Date().toISOString()
+        let update = supabase
+          .from("visa_applications")
+          .update(applicationRow)
+          .eq("id", current.id)
+          .eq("tracking_token", current.tracking_token)
+          .not("payment_status", "in", "(paid,completed)")
+        update = current.updated_at == null ? update.is("updated_at", null) : update.eq("updated_at", current.updated_at)
+        const { data: rows, error: updateError } = await update.select("id, tracking_token")
+        if (updateError) {
+          console.error("[submit] update of existing application failed:", updateError.code)
+          return NextResponse.json({ success: false, message: "Failed to save application" }, { status: 500 })
+        }
+        if (rows?.[0]) {
+          return NextResponse.json({
+            success: true,
+            message: "Application updated",
+            applicationId: rows[0].id,
+            trackingToken: rows[0].tracking_token ?? undefined,
+            created: false,
+          })
+        }
+        const { data: again } = await supabase
+          .from("visa_applications")
+          .select("id, tracking_token, additional_notes, updated_at, payment_status")
+          .eq("id", current.id)
+          .maybeSingle()
+        if (!again || ["paid", "completed"].includes(String(again.payment_status ?? ""))) break
+        current = again
       }
-      return NextResponse.json({
-        success: true,
-        message: "Application updated",
-        applicationId: rows[0].id,
-        trackingToken: rows[0].tracking_token ?? undefined,
-        created: false,
-      })
+      return NextResponse.json({ success: false, message: "Failed to save application. Please try again." }, { status: 409 })
     }
 
     let { data, error } = await supabase.from("visa_applications").insert([applicationRow]).select()

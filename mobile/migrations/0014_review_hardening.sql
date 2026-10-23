@@ -15,6 +15,11 @@
 --    under their own email.
 -- 6) Emails are stored lower-case so the app's exact-match queries and realtime filters see staff-entered rows.
 -- 7) avatars bucket: private, each user only their own folder (app: lib/avatar.ts, avatars/<uid>/avatar.<ext>).
+--
+-- Before running: (a) list existing storage policies (select policyname, cmd, qual from pg_policies where
+-- tablename = 'objects') and drop any other policy that makes 'avatars' readable; (b) the one-time lower-case
+-- backfill in section 6 may bump updated_at if an updated_at trigger exists, which shows phones with an open draft a
+-- one-off "newer copy" prompt: run it off-hours.
 
 -- 1) email_logs -------------------------------------------------------------------------------------------------
 alter table if exists public.email_logs enable row level security;

@@ -8,16 +8,21 @@ const SESSION_PATHS = ["/dashboard", "/account", "/continue", "/trip", "/receipt
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  const needsSession = (path: string) => SESSION_PATHS.some((p) => path === p || path.startsWith(`${p}/`))
+
   /** /ar and /ar/* render the same pages. Locale is the URL, not a cookie. */
   if (pathname === "/ar" || pathname.startsWith("/ar/")) {
     const url = request.nextUrl.clone()
     url.pathname = pathname.replace(/^\/ar/, "") || "/"
-    const requestHeaders = new Headers(request.headers)
-    requestHeaders.set("x-ez-locale", "ar")
-    return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+    const rewrite = (req: NextRequest) => {
+      const requestHeaders = new Headers(req.headers)
+      requestHeaders.set("x-ez-locale", "ar")
+      return NextResponse.rewrite(url, { request: { headers: requestHeaders } })
+    }
+    return needsSession(url.pathname) ? updateSession(request, rewrite) : rewrite(request)
   }
 
-  if (SESSION_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+  if (needsSession(pathname)) {
     return updateSession(request)
   }
   return NextResponse.next()

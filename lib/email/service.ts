@@ -99,6 +99,8 @@ export class EmailService {
           subject: finalSubject,
           html: html,
         }),
+        // Called from payment paths (webhook, check-payment polling): a slow provider must not hold them up.
+        signal: AbortSignal.timeout(8000),
       });
 
       const result = await response.json();

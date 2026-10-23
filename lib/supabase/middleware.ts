@@ -7,23 +7,27 @@ import { NextResponse, type NextRequest } from "next/server"
  * token expired. Only refreshes: each page decides itself what to show when there is no user (the demo cookie
  * login has no Supabase user, so redirecting here would break it).
  */
-export async function updateSession(request: NextRequest, response: NextResponse = NextResponse.next({ request })) {
+export async function updateSession(
+  request: NextRequest,
+  /** Builds the response (a plain next() or the /ar rewrite). Called after the refresh so the page renders with the
+   *  refreshed cookies (the request headers are read at that point). */
+  makeResponse: (request: NextRequest) => NextResponse = (req) => NextResponse.next({ request: req }),
+) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !key) return response
-  // Nothing to refresh for visitors who never signed in.
-  if (!request.cookies.getAll().some((c) => c.name.startsWith("sb-"))) return response
+  // Nothing to refresh without config or for visitors who never signed in.
+  if (!url || !key || !request.cookies.getAll().some((c) => c.name.startsWith("sb-"))) return makeResponse(request)
 
-  let supabaseResponse = response
+  let refreshed: { name: string; value: string; options: Record<string, unknown> }[] = []
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll() {
         return request.cookies.getAll()
       },
       setAll(cookiesToSet) {
+        // For this render (request) and for the browser (response, set below).
         cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-        supabaseResponse = NextResponse.next({ request })
-        cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
+        refreshed = cookiesToSet as typeof refreshed
       },
     },
   })
@@ -33,5 +37,7 @@ export async function updateSession(request: NextRequest, response: NextResponse
   } catch {
     // Network trouble: serve the page; it handles a missing user.
   }
-  return supabaseResponse
+  const response = makeResponse(request)
+  refreshed.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+  return response
 }
