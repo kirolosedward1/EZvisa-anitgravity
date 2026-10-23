@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { isPaid } from "@/lib/application-status"
 import { getDemoApplicationByToken } from "@/lib/demo-data"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import { SupportApplication } from "@/components/support-application"
 
 export const metadata = { title: "Receipt", robots: { index: false, follow: false } }
 
@@ -28,6 +29,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
     <>
       <SiteHeader />
       <main id="main-content" className="bg-background px-4 py-16">
+        <SupportApplication id={app.id ?? id} country={app.destination_country} step="receipt" />
         <ReceiptView app={app} />
       </main>
       <Footer />

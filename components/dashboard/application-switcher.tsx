@@ -18,7 +18,7 @@ export function ApplicationSwitcher({
 
   return (
     <nav aria-label="Your applications" className="-mx-4 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
-      <ul className="flex w-max gap-2 rounded-2xl border border-border/60 bg-card p-1.5 shadow-sm">
+      <ul className="flex w-max gap-2">
         {apps.map((app) => {
           const isActive = app.id === activeId
           const status = getStatusLabel(app)
@@ -28,8 +28,8 @@ export function ApplicationSwitcher({
                 href={hrefFor(app)}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-4 py-2.5 text-left transition-colors",
-                  isActive ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground hover:bg-secondary",
+                  "flex items-center gap-3 rounded-xl border bg-card px-4 py-2.5 text-left text-foreground transition-colors",
+                  isActive ? "border-primary/40 shadow-xs ring-2 ring-primary/15" : "border-border/70 hover:bg-secondary",
                 )}
               >
                 <CountryFlag iso={SCHENGEN_META[app.destination_country]?.iso} title={app.destination_country} />
@@ -38,7 +38,7 @@ export function ApplicationSwitcher({
                   <span
                     className={cn(
                       "whitespace-nowrap text-xs",
-                      isActive ? "text-primary-foreground/80" : "text-muted-foreground",
+                      "text-muted-foreground",
                     )}
                   >
                     {app.full_name} · {status.label}

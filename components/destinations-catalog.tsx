@@ -8,12 +8,77 @@ import { destinationNameAr } from "@/lib/destination-names-ar"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
-import { ReadyLine } from "@/components/ready-line"
 import { LangText } from "@/components/lang-text"
 import { CountryFlag } from "@/components/country-flag"
 import { SCHENGEN_META } from "@/lib/countries"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
 type TabType = "all" | "schengen" | "non-schengen"
+
+/** Photo card: the whole card opens the destination page; "Apply" goes straight to the wizard. */
+function DestinationCard({ country }: { country: Destination }) {
+  const name = country.name
+  const nameAr = destinationNameAr(country.slug) || name
+  const specs = [
+    { label: "Type", ar: "النوع", value: country.region === "Schengen" ? "Schengen" : country.visaType, valueAr: country.region === "Schengen" ? "شنغن" : country.visaType },
+    { label: "Ready in", ar: "جاهز خلال", value: "1–2 days", valueAr: "١–٢ يوم" },
+    { label: "Fee", ar: "الرسوم", value: `${PRICE_AED} AED`, valueAr: `${PRICE_AED} درهم` },
+  ]
+  return (
+    <div className="photo-card group relative aspect-[3/4] overflow-hidden rounded-[1.75rem] bg-foreground shadow-md ring-1 ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/15 focus-within:ring-2 focus-within:ring-ring">
+      <Image
+        src={country.image}
+        alt=""
+        fill
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+      />
+      {/* Photo stays bright at the top; text sits on a deep gradient at the bottom. */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1F] via-[#0A0F1F]/55 via-45% to-transparent" />
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0A0F1F]/35 to-transparent" />
+
+      <Link href={`/destinations/${country.slug}`} className="absolute inset-0 z-10 rounded-[1.75rem] focus-visible:outline-none" aria-label={`${name} visa: requirements and how to apply`} />
+
+      <span className="pointer-events-none absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-full bg-[#0A0F1F]/30 text-primary-foreground ring-1 ring-primary-foreground/30 transition-colors duration-300 group-hover:bg-primary-foreground group-hover:text-foreground">
+        <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+      </span>
+
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-4 p-5 text-center text-primary-foreground">
+        <CountryFlag iso={SCHENGEN_META[name]?.iso} title={name} className="size-7 ring-2 ring-primary-foreground/80 shadow-md" />
+        <h3>
+          <LangText en={name} ar={nameAr} />
+        </h3>
+
+        <dl className="grid w-full grid-cols-3 border-y border-primary-foreground/15 py-3">
+          {specs.map((spec) => (
+            <div key={spec.label} className="flex flex-col items-center gap-1">
+              <dt className="text-[10px] font-medium uppercase tracking-[0.12em] text-primary-foreground/55">
+                <LangText en={spec.label} ar={spec.ar} />
+              </dt>
+              <dd className="text-xs font-semibold tabular-nums">
+                <LangText en={spec.value} ar={spec.valueAr} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+
+        {/* Desktop: the button opens on hover (or keyboard focus). Touch screens have no hover, so it always shows there. */}
+        <div className="grid w-full transition-[grid-template-rows,opacity,margin] duration-300 ease-out lg:-mt-4 lg:grid-rows-[0fr] lg:opacity-0 lg:group-hover:mt-0 lg:group-hover:grid-rows-[1fr] lg:group-hover:opacity-100 lg:group-focus-within:mt-0 lg:group-focus-within:grid-rows-[1fr] lg:group-focus-within:opacity-100">
+          <div className="min-h-0 overflow-hidden">
+            <Link
+              href={`/apply?to=${encodeURIComponent(name)}`}
+              className="pointer-events-auto relative z-30 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary-foreground text-sm font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+              aria-label={`Apply for a ${name} visa`}
+            >
+              <LangText en={`Apply for ${name}`} ar={`قدّم على تأشيرة ${nameAr}`} />
+              <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function DestinationsCatalog() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -98,61 +163,10 @@ export function DestinationsCatalog() {
             {filteredDestinations.length > 0 ? (
               <motion.div
                 initial={false}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+                className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
               >
                 {filteredDestinations.map((country) => (
-                  <motion.div
-                    key={country.id}
-                    initial={false}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 ring-1 ring-border/50 hover:ring-primary/50 transition-all duration-300 bg-muted"
-                  >
-                    {/* Country Background Image & Link to landing page */}
-                    <Link href={`/destinations/${country.slug}`} className="absolute inset-0 z-0 block cursor-pointer">
-                      <Image
-                        src={country.image}
-                        alt={`${country.name} visa checklist documents`}
-                        fill
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                      />
-                      {/* Vignette Overlay */}
-                      <div className="absolute inset-0 z-10 transition-opacity duration-300 bg-[#0A0F1F]/70" />
-                    </Link>
-
-                    {/* Top Right Circular Arrow Icon (links to landing page) */}
-                    <div className="absolute top-4 right-4 z-20">
-                      <Link
-                        href={`/destinations/${country.slug}`}
-                        className="h-10 w-10 border border-white/30 rounded-full hover:bg-white text-white hover:text-black flex items-center justify-center transition-all duration-300"
-                        aria-label={`Visa destination details for ${country.name}`}
-                      >
-                        <ArrowRight className="h-5 w-5" />
-                      </Link>
-                    </div>
-
-                    {/* Bottom Info Details */}
-                    <div className="absolute bottom-5 left-5 right-5 z-20 text-white flex flex-col pointer-events-none transition-transform duration-300 group-hover:-translate-y-1">
-                      <span className="text-[10px] font-semibold text-accent uppercase tracking-wider mb-0.5 flex items-center gap-1.5">
-                        <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
-                        <span>{country.visaType}</span>
-                      </span>
-                      <h3 className="text-lg font-semibold tracking-tight mb-1">
-                        <LangText en={country.name} ar={destinationNameAr(country.slug) || country.name} />
-                      </h3>
-                      <p className="text-[11px] text-white/60"><ReadyLine /></p>
-                    </div>
-
-                    {/* Quick Apply Action Button (Floating) */}
-                    <div className="absolute bottom-5 right-5 z-30 pointer-events-auto opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
-                      <Link
-                        href={`/apply?to=${encodeURIComponent(country.name)}`}
-                        className="px-3.5 py-2 bg-primary text-primary-foreground hover:bg-primary/95 text-[11px] font-semibold rounded-full shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95"
-                      >
-                        <span>Apply Now</span>
-                      </Link>
-                    </div>
-                  </motion.div>
+                  <DestinationCard key={country.id} country={country} />
                 ))}
               </motion.div>
             ) : activeTab === "non-schengen" ? (

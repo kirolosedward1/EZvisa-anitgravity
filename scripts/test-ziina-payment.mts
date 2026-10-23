@@ -32,7 +32,7 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   if (u.hostname === "api-v2.ziina.com") {
     if (method === "POST") {
       const b = JSON.parse(init.body); const id = `pi_${++created}`
-      intents[id] = { id, status: "requires_payment_instrument", amount: b.amount, currency_code: b.currency_code, redirect_url: `https://pay.ziina.com/${id}`, success_url: b.success_url }
+      intents[id] = { id, status: "requires_payment_instrument", amount: b.amount, currency_code: b.currency_code, redirect_url: `https://pay.ziina.com/${id}`, success_url: b.success_url, cancel_url: b.cancel_url, failure_url: b.failure_url, _test: b.test }
       return json(intents[id])
     }
     const id = decodeURIComponent(u.pathname.split("/").pop()!)
@@ -125,5 +125,17 @@ console.log("ok  legacy check-payment?id= returns only {id,status}")
   const j: any = await r.json()
   assert.equal(r.status, 200); assert.equal(rows[0].payment_status, "paid")
   console.log("ok  reconcile cron: 401 without/with wrong secret; with secret a completed payment is stored as paid", JSON.stringify(j)) }
+
+// 10. Test mode: a live checkout created before the switch is never reopened; the new one is created with test: true
+//     and its return URLs carry zmode=test. Switching back to live does not reopen the test checkout either.
+{ delete process.env.ZIINA_TEST_MODE
+  reset(); await pay(); assert.equal(intents.pi_1._test, false)
+  process.env.ZIINA_TEST_MODE = "true"
+  const t: any = await (await pay()).json()
+  assert.equal(created, 2); assert.equal(t.id, "pi_2"); assert.equal(intents.pi_2._test, true); assert.ok(String(intents.pi_2.success_url).includes("zmode=test"))
+  const again: any = await (await pay()).json(); assert.equal(again.id, "pi_2"); assert.equal(again.reused, true)
+  delete process.env.ZIINA_TEST_MODE
+  const live: any = await (await pay()).json(); assert.equal(live.id, "pi_3"); assert.equal(intents.pi_3._test, false); assert.ok(!String(intents.pi_3.success_url).includes("zmode"))
+  console.log("ok  test mode: live checkout not reopened (new test intent, zmode=test), test checkout reused in test mode, not after switching back") }
 
 console.log("ALL PASSED")

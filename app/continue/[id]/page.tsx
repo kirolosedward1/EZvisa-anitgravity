@@ -2,9 +2,10 @@ import { redirect } from "next/navigation"
 import { SiteHeader } from "@/components/site-header"
 import { ContinueForm } from "@/app/continue/[id]/continue-form"
 import { createServerClient } from "@/lib/supabase/server"
-import { docsMissingCount, isPaid, missingDetailSteps } from "@/lib/application-status"
+import { docsMissingCount, getStatusLabel, isPaid, missingDetailSteps } from "@/lib/application-status"
 import { getDemoApplicationByToken } from "@/lib/demo-data"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import { SupportApplication } from "@/components/support-application"
 import type { FormData } from "@/lib/form-types"
 
 export const metadata = { title: "Continue application", robots: { index: false, follow: false } }
@@ -57,6 +58,7 @@ export default async function ContinuePage({ params }: { params: Promise<{ id: s
     <div className="min-h-[100dvh] bg-[#FFFFFF]">
       <SiteHeader />
       <main id="main-content">
+        <SupportApplication id={app.id ?? id} country={app.destination_country} status={getStatusLabel(app).label} step="continue" />
         <ContinueForm
           applicationId={id}
           steps={steps}

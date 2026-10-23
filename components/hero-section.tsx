@@ -179,8 +179,8 @@ export function HeroSection() {
             {/* Subheading */}
             <motion.p variants={itemVariants} className="hero-copy mt-5 max-w-2xl text-white/90">
               <LangText
-                en="We prepare your complete visa file: forms, cover letter, itinerary and reservations."
-                ar="نجهّز ملف التأشيرة كاملًا: النماذج وخطاب التغطية وخط السير والحجوزات."
+                en="Tell us about your trip. Our visa experts prepare your forms, cover letter, itinerary and bookings, and check every page before you apply."
+                ar="أخبرنا عن رحلتك. يجهّز خبراؤنا النماذج وخطاب التغطية وخط السير والحجوزات، ويراجعون كل صفحة قبل تقديم طلبك."
               />
             </motion.p>
 
@@ -189,15 +189,6 @@ export function HeroSection() {
               <div className="bg-[#FFFFFF] border border-[#E3E7EF] rounded-[2rem] p-6 md:p-8 shadow-[0_8px_24px_rgba(10,15,31,0.08)]">
               <div className="flex flex-col gap-4">
                 
-                {/* Visual Widget Header */}
-                <div className="flex items-center justify-between mb-2 border-b border-border/50 pb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"><LangText en="Start Visa Application" ar="ابدأ طلب التأشيرة" /></span>
-                  </div>
-                  <span className="text-[10px] font-semibold text-[#0436DC] bg-[#0436DC]/10 px-2.5 py-1 rounded-md uppercase tracking-wider"><LangText en="Schengen Area" ar="منطقة شنغن" /></span>
-                </div>
-
                 {/* Selectors Row */}
                 <div className="flex flex-col md:flex-row items-stretch gap-4">
                   
@@ -374,12 +365,6 @@ export function HeroSection() {
                           </div>
                         </div>
                         
-                        <div className="flex flex-row md:flex-col gap-3 md:gap-1.5 w-full md:w-auto text-xs font-semibold text-muted-foreground/90 flex-shrink-0 border-t md:border-t-0 pt-3 md:pt-0">
-                          <div className="flex items-center gap-1.5 bg-background px-2.5 py-1.5 rounded-lg border shadow-xs">
-                            <Clock className="h-3.5 w-3.5 text-primary" />
-                            <ReadyLine />
-                          </div>
-                        </div>
                       </div>
                     </motion.div>
                   )}

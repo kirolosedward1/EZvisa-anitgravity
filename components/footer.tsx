@@ -12,6 +12,8 @@ import { PaymentMarks } from "@/components/payment-marks"
 import { openCookieSettings } from "@/components/cookie-consent"
 import { CompanyFooterBlock } from "@/components/legal/company-details"
 import { COMPANY, COMPANY_DETAILS_READY } from "@/lib/legal/company"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
+import { supportMessage, useSupportCase } from "@/lib/support-context"
 
 const socialLinks = [
   {
@@ -117,6 +119,8 @@ const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip
 
 function AccountFooter({ className }: { className?: string }) {
   const year = BUILD_YEAR
+  // On an application page the message names the case, its status and the page (lib/support-context.ts).
+  const supportCase = useSupportCase()
   const links = [
     { href: "/contact", en: "Help", ar: "المساعدة" },
     { href: "/privacy-policy", en: "Privacy", ar: "الخصوصية" },
@@ -134,7 +138,7 @@ function AccountFooter({ className }: { className?: string }) {
         </p>
         <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           <a
-            href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
+            href={getWhatsAppUrl(supportCase ? supportMessage(supportCase) : "Hi EZvisa! I have a question about my visa application.")}
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-[#1A7F37] hover:underline"

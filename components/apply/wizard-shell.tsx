@@ -88,12 +88,12 @@ function SummaryRows({ formData }: { formData: FormData }) {
         <span>
           <LangText en="Total" ar="المجموع" />
         </span>
-        <span dir="ltr">AED {price}</span>
+        <span dir="ltr">{price} AED</span>
       </div>
       {applicants === 1 ? (
         <p className="mt-3 text-[14px] text-[#3A4150]">
-          <span className="rtl:hidden">AED {spousePrice} with a spouse</span>
-          <span className="hidden rtl:inline">مع الزوج أو الزوجة AED {spousePrice}</span>
+          <span className="rtl:hidden">{spousePrice} AED with a spouse</span>
+          <span className="hidden rtl:inline">مع الزوج أو الزوجة {spousePrice} AED</span>
         </p>
       ) : null}
     </div>
@@ -137,7 +137,7 @@ export function WizardShell({
 
   return (
     <div className="bg-[#FFFFFF] text-[#0A0F1F]">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-28 md:pt-32">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-24 md:pt-28">
         <h1 className="sr-only">
           <LangText en="Visa application" ar="طلب التأشيرة" />
         </h1>
@@ -160,13 +160,13 @@ export function WizardShell({
               </span>
             </span>
             <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-[#0A0F1F]" dir="ltr">
-              AED {line.price}
+              {line.price} AED
               <ChevronDown className={cn("size-4 text-[#5B6475]", summaryOpen && "rotate-180")} aria-hidden />
             </span>
           </button>
           {summaryOpen ? <SummaryRows formData={formData} /> : null}
         </div>
-        <div className="flex gap-6 overflow-x-auto border-b border-[#E3E7EF]">
+        <div className="flex gap-6 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_#E3E7EF] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {STAGES.map((item) => {
             const current = item.id === stage
             return (
@@ -174,7 +174,7 @@ export function WizardShell({
                 key={item.id}
                 aria-current={current ? "step" : undefined}
                 className={cn(
-                  "-mb-px whitespace-nowrap border-b-2 pb-2 text-[13px] font-medium",
+                  "whitespace-nowrap border-b-2 pb-2 text-[13px] font-medium",
                   current ? "border-[#0436DC] text-[#0A0F1F]" : "border-transparent text-[#5B6475]",
                 )}
               >

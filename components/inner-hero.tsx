@@ -24,7 +24,8 @@ export function InnerHero({
   title,
   description,
   backgroundImage,
-  randomizeBackground = false,
+  // Every inner page gets a destination photo (fixed per page, so it doesn't flash between renders).
+  randomizeBackground = true,
   children,
   className = "",
 }: InnerHeroProps) {
