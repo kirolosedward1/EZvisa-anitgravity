@@ -3,7 +3,16 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { createServerClient } from "@/lib/supabase/server"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { sanitizeInput, sanitizeEmail, sanitizePhone } from "@/lib/sanitize"
-import { datesInOrder, INVALID_DATE_MESSAGE, parseCalendarDate, RETURN_AFTER_DEPARTURE } from "@/lib/dates"
+import {
+  datesInOrder,
+  formatTravelMonth,
+  INVALID_DATE_MESSAGE,
+  parseCalendarDate,
+  RETURN_AFTER_DEPARTURE,
+  schengenEndDate,
+  schengenStayDays,
+  TRIP_LENGTHS,
+} from "@/lib/dates"
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
 
@@ -115,22 +124,49 @@ export async function POST(request: Request) {
       companyName: sanitizeInput(formData.companyName || "", 200),
     }
 
-    const startDate = formData.travelStartDate ? parseCalendarDate(formData.travelStartDate) : null
-    const endDate = formData.travelEndDate ? parseCalendarDate(formData.travelEndDate) : null
-    if (formData.travelStartDate && !startDate) {
-      return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
-    }
-    if (formData.travelEndDate && !endDate) {
-      return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
-    }
-    if (startDate && endDate && !datesInOrder(startDate.iso, endDate.iso)) {
-      return NextResponse.json({ success: false, message: RETURN_AFTER_DEPARTURE }, { status: 400 })
-    }
-    if (startDate && endDate) {
-      const duration = (Date.parse(endDate.iso) - Date.parse(startDate.iso)) / (1000 * 60 * 60 * 24)
-      if (duration > 90) {
-        return NextResponse.json({ success: false, message: "Stay duration cannot exceed 90 days" }, { status: 400 })
+    const flexible = formData.datesFlexible === "yes"
+    let flexibleNote = ""
+    let startDate = formData.travelStartDate ? parseCalendarDate(formData.travelStartDate) : null
+    let endDate = formData.travelEndDate ? parseCalendarDate(formData.travelEndDate) : null
+
+    if (flexible) {
+      const month = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(String(formData.travelMonth || "").trim())
+      const length = Number(formData.tripLength)
+      const allowed = TRIP_LENGTHS.some((item) => item.days === length)
+      if (!month || !allowed) {
+        return NextResponse.json(
+          { success: false, message: "Choose a travel month and trip length." },
+          { status: 400 },
+        )
       }
+      const entry = parseCalendarDate(`${month[1]}-${month[2]}-01`)
+      const exit = entry ? parseCalendarDate(schengenEndDate(entry.iso, length)) : null
+      if (!entry || !exit) {
+        return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
+      }
+      startDate = entry
+      endDate = exit
+      flexibleNote = `Flexible dates: travelling around ${formatTravelMonth(month[0])}`
+    } else {
+      if (formData.travelStartDate && !startDate) {
+        return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
+      }
+      if (formData.travelEndDate && !endDate) {
+        return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
+      }
+      if (!startDate || !endDate) {
+        return NextResponse.json(
+          { success: false, message: "Please select a departure date and a return date." },
+          { status: 400 },
+        )
+      }
+      if (!datesInOrder(startDate.iso, endDate.iso)) {
+        return NextResponse.json({ success: false, message: RETURN_AFTER_DEPARTURE }, { status: 400 })
+      }
+    }
+
+    if (startDate && endDate && schengenStayDays(startDate.iso, endDate.iso) > 90) {
+      return NextResponse.json({ success: false, message: "Stay duration cannot exceed 90 days" }, { status: 400 })
     }
 
     // Support multiple env var naming conventions
@@ -258,10 +294,7 @@ export async function POST(request: Request) {
       exit_date: endDate?.iso || null,
       travel_purpose: sanitizedData.purposeOfTrip,
       passport_number: formData.passportNumber || null,
-      duration_days:
-        startDate && endDate
-          ? Math.ceil((Date.parse(endDate.iso) - Date.parse(startDate.iso)) / (1000 * 60 * 60 * 24))
-          : null,
+      duration_days: startDate && endDate ? schengenStayDays(startDate.iso, endDate.iso) : null,
       has_passport: false,
       has_photos: false,
       has_bank_statements: false,
@@ -275,6 +308,7 @@ export async function POST(request: Request) {
         companyName: sanitizedData.companyName,
         monthlySalary: formData.monthlySalary,
         spouseAccompanying: formData.spouseAccompanying,
+        ...(flexibleNote ? { flexibleDates: flexibleNote } : {}),
       }),
     }
     if (session && !userIdColumnMissing) applicationRow.user_id = session.id

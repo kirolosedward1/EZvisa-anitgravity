@@ -9,6 +9,7 @@ import { ContinueApplicationNotification } from "@/components/continue-applicati
 import { NavigationProgressBar } from "@/components/navigation-progress"
 import { PageTransition } from "@/components/page-transition"
 import { LocaleDirection } from "@/components/locale-direction"
+import { CrispVisibility } from "@/components/crisp-visibility"
 import Script from "next/script"
 import "./globals.css"
 
@@ -164,6 +165,7 @@ export default async function RootLayout({
           />
         </noscript>
         <LocaleDirection />
+        <CrispVisibility />
         <NavigationProgressBar />
         <ScrollRestoration />
         {/* overflow-x-clip (not hidden): hidden would turn <main> into a scroll container and stop position: sticky from working on every page */}

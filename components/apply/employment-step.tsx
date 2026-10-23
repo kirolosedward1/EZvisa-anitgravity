@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useState, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { Info, Loader2 } from "lucide-react"
+import { WizardBar } from "@/components/apply/wizard-bar"
+import { Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
@@ -207,31 +207,14 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
         </div>
       )}
 
-      <div className="md:flex md:justify-between md:gap-4 fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 z-20 flex gap-3">
-        <Button
-          type="button"
-          onClick={onBack}
-          variant="outline"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base border border-border bg-background/40 hover:bg-background/80 text-foreground hover:text-foreground transition-all duration-300 active:scale-95 px-8"
-        >
-          Back
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Continue to Trip Details"
-          )}
-        </Button>
-      </div>
+      <WizardBar
+        onBack={onBack}
+        loading={isLoading}
+        continueLabel="Save and upload documents"
+        continueLabelAr="احفظ وارفع المستندات"
+        loadingLabel="Processing..."
+        loadingLabelAr="جارٍ المعالجة..."
+      />
     </form>
   )
 }

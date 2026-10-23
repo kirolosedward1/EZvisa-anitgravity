@@ -78,7 +78,7 @@ export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 text-[#0A0F1F]">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mb-4 text-[#0A0F1F]">
               Payment <span className="text-[#0436DC]">Successful!</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-6">

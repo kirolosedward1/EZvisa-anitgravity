@@ -107,7 +107,7 @@ export function ThankYouClient() {
         <SiteHeader />
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">No Application Data Found</h1>
+            <h1 className="text-2xl font-semibold mb-2">No Application Data Found</h1>
             <p className="text-muted-foreground mb-6">
               We couldn't find your application details. Please contact support.
             </p>

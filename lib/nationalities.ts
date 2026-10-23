@@ -139,6 +139,25 @@ export function toCitizenshipIso(value?: string | null): string {
   return citizenshipByIso(value)?.iso ?? ""
 }
 
+/** Flag art for a country name. Includes GCC states, which are not visa nationalities. */
+const FLAG_NAME_ISO: Record<string, string> = {
+  "united arab emirates": "AE",
+  "saudi arabia": "SA",
+  bahrain: "BH",
+  kuwait: "KW",
+  oman: "OM",
+  qatar: "QA",
+}
+
+export function flagIso(value?: string | null): string {
+  const iso = toCitizenshipIso(value)
+  if (iso) return iso
+  if (!value) return ""
+  const raw = value.trim()
+  if (/^[A-Za-z]{2}$/.test(raw)) return raw.toUpperCase()
+  return FLAG_NAME_ISO[raw.toLowerCase()] ?? ""
+}
+
 export function citizenshipName(value?: string | null): string {
   return citizenshipByIso(value)?.name ?? ""
 }

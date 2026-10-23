@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
 import { Check, ChevronsUpDown } from "lucide-react"
+import { CountryFlag } from "@/components/country-flag"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -10,20 +10,22 @@ import {
   CITIZENSHIP_OPTIONS,
   citizenshipName,
   citizenshipSearchValue,
-  flagSrc,
   toCitizenshipIso,
 } from "@/lib/nationalities"
+import { LangText } from "@/components/lang-text"
 import { cn } from "@/lib/utils"
 
 export function CitizenshipPicker({
   value,
   onChange,
   placeholder = "Select nationality",
+  placeholderAr,
   className,
 }: {
   value?: string
   onChange: (iso: string) => void
   placeholder?: string
+  placeholderAr?: string
   className?: string
 }) {
   const [open, setOpen] = useState(false)
@@ -42,13 +44,13 @@ export function CitizenshipPicker({
         >
           {iso ? (
             <span className="flex min-w-0 items-center gap-2">
-              <span className="relative size-5 shrink-0 overflow-hidden rounded-full border border-border">
-                <Image src={flagSrc(iso)} alt="" fill sizes="20px" className="object-cover" />
-              </span>
+              <CountryFlag iso={iso} title={name} />
               <span className="truncate text-foreground">{name}</span>
             </span>
           ) : (
-            <span className="font-normal text-muted-foreground">{placeholder}</span>
+            <span className="font-normal text-[#5B6475]">
+              <LangText en={placeholder} ar={placeholderAr || placeholder} />
+            </span>
           )}
           <ChevronsUpDown className="ms-2 size-4 shrink-0 opacity-50" />
         </Button>
@@ -69,9 +71,7 @@ export function CitizenshipPicker({
                   }}
                 >
                   <Check className={cn("me-2 size-4", iso === country.iso ? "opacity-100" : "opacity-0")} />
-                  <span className="relative me-2 size-5 shrink-0 overflow-hidden rounded-full border border-border">
-                    <Image src={flagSrc(country.iso)} alt="" fill sizes="20px" className="object-cover" />
-                  </span>
+                  <span className="me-2"><CountryFlag iso={country.iso} title={country.name} /></span>
                   <span className="flex-1">{country.name}</span>
                   <span className="ltr-isolate text-xs text-muted-foreground">{country.iso}</span>
                 </CommandItem>

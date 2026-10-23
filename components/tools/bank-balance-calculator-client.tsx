@@ -36,7 +36,7 @@ export function BankBalanceCalculatorClient() {
             <Wallet className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">Official Consular Subsistence Guidelines</h2>
+            <h2 className="text-base font-semibold text-foreground">Official Consular Subsistence Guidelines</h2>
             <p className="text-xs text-muted-foreground">
               Schengen consulates in Dubai & Abu Dhabi require verifiable proof of financial stability covering daily living costs.
             </p>
@@ -51,7 +51,7 @@ export function BankBalanceCalculatorClient() {
         {/* Left Column: Form Controls */}
         <div className="lg:col-span-7 space-y-6">
           <div className="bg-card border border-border/80 rounded-2xl p-6 shadow-sm space-y-5">
-            <h3 className="font-bold text-base text-foreground border-b border-border/40 pb-3">
+            <h3 className="font-semibold text-base text-foreground border-b border-border/40 pb-3">
               Trip Financial Parameters
             </h3>
 
@@ -84,7 +84,7 @@ export function BankBalanceCalculatorClient() {
                 <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Stay Duration (Days)
                 </label>
-                <span className="text-sm font-bold text-foreground">{days} Days</span>
+                <span className="text-sm font-semibold text-foreground">{days} Days</span>
               </div>
               <input
                 type="range"
@@ -113,7 +113,7 @@ export function BankBalanceCalculatorClient() {
                     key={num}
                     type="button"
                     onClick={() => setTravelers(num)}
-                    className={`flex-1 py-2 rounded-xl border text-xs font-bold transition-all ${
+                    className={`flex-1 py-2 rounded-xl border text-xs font-semibold transition-all ${
                       travelers === num
                         ? "bg-primary text-primary-foreground border-primary"
                         : "bg-muted/20 border-border/60 text-foreground hover:bg-muted/40"
@@ -144,7 +144,7 @@ export function BankBalanceCalculatorClient() {
 
           {/* Consular Warning Note */}
           <div className="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-5 space-y-2">
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-sm">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-semibold text-sm">
               <ShieldAlert className="w-4 h-4 shrink-0" />
               <span>Critical UAE Bank Statement Rule</span>
             </div>
@@ -158,7 +158,7 @@ export function BankBalanceCalculatorClient() {
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-card border border-border/80 rounded-2xl p-6 shadow-md space-y-6">
             <div className="border-b border-border/40 pb-3 flex justify-between items-center">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
+              <h3 className="font-semibold text-xs uppercase tracking-wider text-muted-foreground">
                 Required Closing Balance
               </h3>
               <span className="text-xs font-semibold text-primary">{funds.country} Consulate</span>
@@ -169,8 +169,8 @@ export function BankBalanceCalculatorClient() {
               <span className="text-xs text-muted-foreground uppercase font-semibold">
                 Minimum Statutory Balance
               </span>
-              <div className="text-4xl font-black tracking-tight text-foreground">
-                {funds.totalAed.toLocaleString()} <span className="text-xl font-bold text-muted-foreground">AED</span>
+              <div className="text-4xl font-semibold tracking-tight text-foreground">
+                {funds.totalAed.toLocaleString()} <span className="text-xl font-semibold text-muted-foreground">AED</span>
               </div>
               <div className="text-xs text-muted-foreground">
                 Approx. {funds.totalForeign.toLocaleString()} {funds.currency} ({funds.dailyRate} {funds.currency}/day)
@@ -181,7 +181,7 @@ export function BankBalanceCalculatorClient() {
             <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-1">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground">Recommended Safety Buffer (+30%)</span>
-                <span className="font-bold text-primary">{funds.recommendedBufferAed.toLocaleString()} AED</span>
+                <span className="font-semibold text-primary">{funds.recommendedBufferAed.toLocaleString()} AED</span>
               </div>
               <p className="text-[11px] text-muted-foreground">
                 Visa officers favor applicants whose closing balance comfortably exceeds the bare statutory minimum.
@@ -190,7 +190,7 @@ export function BankBalanceCalculatorClient() {
 
             {/* Document Requirements Checklist */}
             <div className="space-y-2.5 text-xs text-muted-foreground border-t border-border/40 pt-4">
-              <span className="font-bold uppercase text-[10px] tracking-wider text-foreground block">
+              <span className="font-semibold uppercase text-[10px] tracking-wider text-foreground block">
                 What UAE Consulates Require:
               </span>
               <div className="flex items-start gap-2">
@@ -210,7 +210,7 @@ export function BankBalanceCalculatorClient() {
             {/* Action Button */}
             <Button
               asChild
-              className="w-full h-12 text-base font-bold text-white shadow-lg shadow-blue-500/20 bg-[#0436DC]"
+              className="w-full h-12 text-base font-semibold text-white shadow-lg shadow-blue-500/20 bg-[#0436DC]"
             >
               <Link href={`/apply?to=${encodeURIComponent(funds.country)}`} className="flex items-center justify-center gap-2">
                 <span>Start {funds.country} Application File</span>
@@ -234,21 +234,21 @@ export function BankBalanceCalculatorClient() {
 
       {/* FAQ Accordion */}
       <div className="border-t border-border/60 pt-10 space-y-6">
-        <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+        <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <HelpCircle className="w-5 h-5 text-primary" />
           Bank Statement & Financial FAQs
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           <div className="bg-card border border-border/60 rounded-2xl p-6 space-y-2">
-            <h4 className="font-bold text-foreground">Can I use my credit card limit instead of bank balance?</h4>
+            <h4 className="font-semibold text-foreground">Can I use my credit card limit instead of bank balance?</h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
               No. Schengen embassies require liquid checking or savings accounts. Credit card limits may be submitted as supplementary evidence of financial capability, but they never replace the 3-6 months current account statement.
             </p>
           </div>
 
           <div className="bg-card border border-border/60 rounded-2xl p-6 space-y-2">
-            <h4 className="font-bold text-foreground">What if my salary is paid in cash?</h4>
+            <h4 className="font-semibold text-foreground">What if my salary is paid in cash?</h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
               If your salary is paid in cash without corresponding monthly bank deposits, approval chances drop significantly. Consulates require an auditable trail connecting your employment contract to regular bank balance accumulation.
             </p>

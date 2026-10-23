@@ -9,7 +9,8 @@ import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 import { WhatYouGetSection } from "@/components/what-you-get-section"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, flagSrc, toCitizenshipIso } from "@/lib/nationalities"
+import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { CountryFlag } from "@/components/country-flag"
 
 const steps = [
   {
@@ -198,14 +199,7 @@ export function HowItWorksContent() {
                     >
                       {selectedNationality ? (
                         <div className="flex items-center gap-3">
-                          <span className="relative w-6 h-6 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                            <Image
-                              src={flagSrc(toCitizenshipIso(selectedNationality))}
-                              alt=""
-                              fill
-                              className="object-cover"
-                            />
-                          </span>
+                          <CountryFlag iso={toCitizenshipIso(selectedNationality)} title={citizenshipName(selectedNationality)} />
                           <span className="text-base font-semibold text-foreground">{citizenshipName(selectedNationality) || selectedNationality}</span>
                         </div>
                       ) : (
@@ -243,14 +237,7 @@ export function HowItWorksContent() {
                               className="cursor-pointer py-3"
                             >
                               <div className="flex items-center gap-3 w-full">
-                                <span className="relative w-5.5 h-5.5 rounded-full overflow-hidden inline-block flex-shrink-0 shadow-xs">
-                                  <Image
-                                    src={flagSrc(country.iso)}
-                                    alt=""
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </span>
+                                <CountryFlag iso={country.iso} title={country.name} />
                                 <span className="flex-1">{country.name}</span>
                                 {country.iso === selectedNationality && <Check className="h-4 w-4 text-primary" />}
                               </div>

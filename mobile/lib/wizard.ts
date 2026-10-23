@@ -120,7 +120,11 @@ export function passportCoversTrip(f: { passportExpiry: string; travelEndDate: s
   const need = new Date(base.getFullYear(), base.getMonth() + 3, base.getDate());
   return new Date(f.passportExpiry + "T00:00:00").getTime() >= need.getTime();
 }
-export const tripDays = (f: WizardForm) => (f.travelStartDate && f.travelEndDate ? Math.ceil((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) : 0);
+/** Inclusive Schengen stay: both the arrival day and the departure day count. */
+export const tripDays = (f: WizardForm) => {
+  if (!f.travelStartDate || !f.travelEndDate) return 0;
+  return Math.round((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) + 1;
+};
 
 export type Errors = Partial<Record<keyof WizardForm, string>>;
 export function validatePersonal(f: WizardForm): Errors {

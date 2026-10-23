@@ -186,7 +186,7 @@ export function WhatYouGetSection() {
                 <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary border border-primary/10 flex items-center justify-center">
                   <IconComponent className="h-4.5 w-4.5" strokeWidth={2.5} />
                 </div>
-                <h3 className="text-lg font-bold text-primary tracking-tight">
+                <h3 className="text-lg font-semibold text-primary tracking-tight">
                   {currentDocument.title}
                 </h3>
               </div>

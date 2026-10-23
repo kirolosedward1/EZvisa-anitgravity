@@ -20,7 +20,7 @@ export async function RelatedPosts({
   return (
     <section className="py-16 bg-muted/30 border-t">
       <div className="container mx-auto px-4" style={{ maxWidth: "85%" }}>
-        <h2 className="text-3xl font-bold mb-8">Related Articles</h2>
+        <h2 className="text-3xl font-semibold mb-8">Related Articles</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {relatedPosts.map((post) => (
             <Link
@@ -40,7 +40,7 @@ export async function RelatedPosts({
                 <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium mb-2">
                   {post.category}
                 </span>
-                <h3 className="font-bold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
+                <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
                   {post.title}
                 </h3>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">

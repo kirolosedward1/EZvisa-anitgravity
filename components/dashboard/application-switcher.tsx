@@ -1,6 +1,7 @@
-import Image from "next/image"
 import Link from "next/link"
-import { getFlagSrc, getStatusLabel } from "@/lib/application-status"
+import { CountryFlag } from "@/components/country-flag"
+import { SCHENGEN_META } from "@/lib/countries"
+import { getStatusLabel } from "@/lib/application-status"
 import { cn } from "@/lib/utils"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
@@ -31,9 +32,7 @@ export function ApplicationSwitcher({
                   isActive ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground hover:bg-secondary",
                 )}
               >
-                <span className="relative size-7 shrink-0 overflow-hidden rounded-full border border-border/60">
-                  <Image src={getFlagSrc(app.destination_country)} alt="" fill sizes="28px" className="object-cover" />
-                </span>
+                <CountryFlag iso={SCHENGEN_META[app.destination_country]?.iso} title={app.destination_country} />
                 <span className="flex flex-col">
                   <span className="whitespace-nowrap text-sm font-semibold">{app.destination_country}</span>
                   <span

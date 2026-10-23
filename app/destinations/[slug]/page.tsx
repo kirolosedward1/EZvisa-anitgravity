@@ -207,7 +207,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto justify-center">
             <Link
               href={`/apply?to=${encodeURIComponent(destination.name)}`}
-              className="w-full sm:w-auto px-8 py-4 bg-primary text-white text-base font-bold rounded-2xl hover:bg-primary/95 transition-all shadow-lg shadow-primary/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-4 bg-primary text-white text-base font-semibold rounded-2xl hover:bg-primary/95 transition-all shadow-lg shadow-primary/20 hover:-translate-y-0.5 flex items-center justify-center gap-2"
             >
               Start Application Wizard
               <ArrowRight className="h-5 w-5" />
@@ -220,7 +220,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#5B6475]">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white/90">
             <Star className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
             <span>Over 5,000+ Schengen visas processed successfully.</span>
           </div>
@@ -231,10 +231,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       <section className="py-24 bg-background">
         <div className="container mx-auto px-6 max-w-6xl">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
+            <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
               Visa Information
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mt-4">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-4">
               {destination.name} Visa Fast Facts
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
@@ -252,10 +252,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                   <fact.icon className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-[11px] font-bold text-[#5B6475] uppercase tracking-wider">
+                  <h3 className="text-[11px] font-semibold text-[#5B6475] uppercase tracking-wider">
                     {fact.label}
                   </h3>
-                  <div className="text-base sm:text-lg font-bold text-foreground mt-0.5">
+                  <div className="text-base sm:text-lg font-semibold text-foreground mt-0.5">
                     {fact.value}
                   </div>
                   <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
@@ -292,10 +292,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
 
         <div className="container mx-auto px-6 max-w-6xl relative z-10">
           <div className="text-center max-w-2xl mx-auto mb-20">
-            <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
+            <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
               The Process
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mt-4">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-4">
               How to Apply for {destination.name} Visa
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
@@ -312,10 +312,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                 <div className="h-16 w-16 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center text-primary mb-6 shadow-sm hover:scale-105 transition-transform duration-300">
                   <step.icon className="h-7 w-7" />
                 </div>
-                <div className="text-[10px] font-bold text-primary tracking-widest uppercase mb-1">
+                <div className="text-[10px] font-semibold text-primary tracking-widest uppercase mb-1">
                   Step {step.step}
                 </div>
-                <h3 className="text-base font-bold text-foreground">
+                <h3 className="text-base font-semibold text-foreground">
                   {step.title}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-2 leading-relaxed max-w-xs mx-auto">
@@ -341,10 +341,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       <section className="py-24 bg-background">
         <div className="container mx-auto px-6 max-w-4xl">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
+            <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
               Compare Options
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mt-4 flex items-center justify-center gap-2 flex-wrap">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-4 flex items-center justify-center gap-2 flex-wrap">
               <span>DIY vs.</span>
               <span className="relative inline-block w-36 h-11 align-middle">
                 <Image
@@ -364,10 +364,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           <div className="overflow-x-auto -mx-6 px-6 md:mx-0 md:px-0">
             <div className="border border-border rounded-3xl overflow-hidden shadow-xs bg-card min-w-[600px] md:min-w-full">
               {/* Table Header */}
-              <div className="grid grid-cols-3 bg-muted/40 border-b border-border py-4 px-6 font-bold text-xs uppercase tracking-wider text-muted-foreground items-center">
+              <div className="grid grid-cols-3 bg-muted/40 border-b border-border py-4 px-6 font-semibold text-xs uppercase tracking-wider text-muted-foreground items-center">
               <div>Feature</div>
               <div>Applying on your own</div>
-              <div className="flex items-center gap-1 text-primary font-bold">
+              <div className="flex items-center gap-1 text-primary font-semibold">
                 <span>THE</span>
                 <span className="relative inline-block w-20 h-6 align-middle">
                   <Image
@@ -406,10 +406,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       <section className="py-24 bg-muted/10 border-t border-border/30">
         <div className="container mx-auto px-6 max-w-3xl">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
+            <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
               FAQ
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mt-4">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-4">
               Frequently Asked Questions
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
@@ -424,7 +424,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                 value={`faq-${idx}`} 
                 className="border border-border bg-card rounded-2xl px-6 py-1 shadow-xs transition-shadow hover:shadow-sm"
               >
-                <AccordionTrigger className="text-sm sm:text-base font-bold text-foreground hover:no-underline py-4">
+                <AccordionTrigger className="text-sm sm:text-base font-semibold text-foreground hover:no-underline py-4">
                   {faq.question}
                 </AccordionTrigger>
                 <AccordionContent className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1 pb-4">
@@ -445,7 +445,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-white/5 rounded-full pointer-events-none" />
         
         <div className="relative container mx-auto px-6 max-w-4xl z-10">
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
+          <h2 className="text-3xl sm:text-4xl font-semibold tracking-tight">
             Ready to secure your {destination.name} Visa?
           </h2>
           <p className="mt-4 text-blue-100/90 text-sm sm:text-base max-w-xl mx-auto">
@@ -455,7 +455,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href={`/apply?to=${encodeURIComponent(destination.name)}`}
-              className="w-full sm:w-auto px-8 py-3.5 bg-white text-primary text-sm font-bold rounded-xl hover:bg-blue-50 transition-all shadow-md flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-8 py-3.5 bg-white text-primary text-sm font-semibold rounded-xl hover:bg-blue-50 transition-all shadow-md flex items-center justify-center gap-2"
             >
               Start Application Wizard
               <ArrowRight className="h-4.5 w-4.5" />

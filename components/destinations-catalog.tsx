@@ -10,17 +10,16 @@ import Link from "next/link"
 import Image from "next/image"
 import { ReadyLine } from "@/components/ready-line"
 import { LangText } from "@/components/lang-text"
+import { CountryFlag } from "@/components/country-flag"
+import { SCHENGEN_META } from "@/lib/countries"
 
 type TabType = "all" | "schengen" | "non-schengen"
 
 export function DestinationsCatalog() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<TabType>("all")
-  const [mounted, setMounted] = useState(false)
 
-  // Scroll to top on mount
   useEffect(() => {
-    setMounted(true)
     window.scrollTo({ top: 0, behavior: "instant" })
   }, [])
 
@@ -40,11 +39,6 @@ export function DestinationsCatalog() {
     
     return matchesSearch
   })
-
-  // Prevent hydration discrepancies
-  if (!mounted) {
-    return null
-  }
 
   return (
     <div className="w-full">
@@ -100,18 +94,17 @@ export function DestinationsCatalog() {
       {/* Main Grid View */}
       <section className="pb-24">
         <div className="container mx-auto px-6 max-w-6xl">
-          <AnimatePresence mode="popLayout">
+          <AnimatePresence>
             {filteredDestinations.length > 0 ? (
               <motion.div
+                initial={false}
                 className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
               >
-                {filteredDestinations.map((country, idx) => (
+                {filteredDestinations.map((country) => (
                   <motion.div
                     key={country.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
+                    initial={false}
                     animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3, delay: Math.min(idx * 0.03, 0.3) }}
                     className="relative aspect-[3/4] rounded-3xl overflow-hidden group shadow-md hover:shadow-xl hover:shadow-primary/20 hover:-translate-y-1 ring-1 ring-border/50 hover:ring-primary/50 transition-all duration-300 bg-muted"
                   >
                     {/* Country Background Image & Link to landing page */}
@@ -140,18 +133,11 @@ export function DestinationsCatalog() {
 
                     {/* Bottom Info Details */}
                     <div className="absolute bottom-5 left-5 right-5 z-20 text-white flex flex-col pointer-events-none transition-transform duration-300 group-hover:-translate-y-1">
-                      <span className="text-[10px] font-bold text-accent uppercase tracking-wider mb-0.5 flex items-center gap-1.5">
-                        <span className="relative w-3.5 h-3.5 rounded-full overflow-hidden inline-block flex-shrink-0">
-                          <Image
-                            src={`/flags/${country.slug}.png`}
-                            alt=""
-                            fill
-                            className="object-cover"
-                          />
-                        </span>
+                      <span className="text-[10px] font-semibold text-accent uppercase tracking-wider mb-0.5 flex items-center gap-1.5">
+                        <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
                         <span>{country.visaType}</span>
                       </span>
-                      <h3 className="text-lg font-bold tracking-tight mb-1">
+                      <h3 className="text-lg font-semibold tracking-tight mb-1">
                         <LangText en={country.name} ar={destinationNameAr(country.slug) || country.name} />
                       </h3>
                       <p className="text-[11px] text-white/60"><ReadyLine /></p>
@@ -161,7 +147,7 @@ export function DestinationsCatalog() {
                     <div className="absolute bottom-5 right-5 z-30 pointer-events-auto opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300">
                       <Link
                         href={`/apply?to=${encodeURIComponent(country.name)}`}
-                        className="px-3.5 py-2 bg-primary text-primary-foreground hover:bg-primary/95 text-[11px] font-bold rounded-full shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95"
+                        className="px-3.5 py-2 bg-primary text-primary-foreground hover:bg-primary/95 text-[11px] font-semibold rounded-full shadow-lg flex items-center gap-1.5 transition-all transform hover:scale-105 active:scale-95"
                       >
                         <Sparkles className="w-3.5 h-3.5 text-accent" />
                         <span>Apply Now</span>
@@ -174,7 +160,7 @@ export function DestinationsCatalog() {
               // Glassmorphic Coming Soon Block
               <motion.div
                 key="coming-soon"
-                initial={{ opacity: 0, y: 15 }}
+                initial={false}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
                 className="max-w-2xl mx-auto text-center py-16 px-6 border border-border/40 rounded-3xl"
@@ -182,7 +168,7 @@ export function DestinationsCatalog() {
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
                   <Compass className="w-8 h-8 animate-pulse" />
                 </div>
-                <h3 className="text-2xl font-bold text-foreground mb-3">
+                <h3 className="text-2xl font-semibold text-foreground mb-3">
                   <LangText en="Non-Schengen Visa Support" ar="دعم تأشيرات خارج شنغن" />
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto mb-8">
@@ -202,7 +188,7 @@ export function DestinationsCatalog() {
               // Empty State
               <motion.div
                 key="empty-state"
-                initial={{ opacity: 0 }}
+                initial={false}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 className="text-center py-20"

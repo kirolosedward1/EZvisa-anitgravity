@@ -66,11 +66,11 @@ export function ServicesSection() {
       <div className="container mx-auto px-4 sm:px-6 md:px-12 relative z-10 max-w-7xl">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-wider uppercase mb-4">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold tracking-wider uppercase mb-4">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             What's included
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight tracking-tight text-foreground text-balance">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-foreground text-balance">
             Everything you need for a <br className="hidden sm:block" />
             <span className="text-primary">successful visa application.</span>
           </h2>
@@ -101,7 +101,7 @@ export function ServicesSection() {
                   <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
                     <Icon className="h-5.5 w-5.5" strokeWidth={2} />
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">
                     {service.title}
                   </h3>
                 </motion.button>
@@ -149,7 +149,7 @@ export function ServicesSection() {
                   <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary border border-primary/15 flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-white group-hover:border-primary transition-all duration-300 shadow-xs">
                     <Icon className="h-5.5 w-5.5" strokeWidth={2} />
                   </div>
-                  <h3 className="text-base sm:text-lg font-bold text-foreground tracking-tight group-hover:text-primary transition-colors">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground tracking-tight group-hover:text-primary transition-colors">
                     {service.title}
                   </h3>
                 </motion.button>
@@ -207,7 +207,7 @@ export function ServicesSection() {
                       return <SelectedIcon className="h-5 w-5" strokeWidth={2} />
                     })()}
                   </div>
-                  <h3 className="text-2xl sm:text-3xl font-bold mb-3 tracking-tight text-foreground">
+                  <h3 className="text-2xl sm:text-3xl font-semibold mb-3 tracking-tight text-foreground">
                     {services[selectedService].title}
                   </h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
@@ -220,7 +220,7 @@ export function ServicesSection() {
                   <Link
                     href="/apply"
                     onClick={() => setSelectedService(null)}
-                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-primary hover:bg-primary/95 text-white text-xs font-bold transition-all shadow-md hover:shadow-xl hover:shadow-primary/20"
+                    className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-primary hover:bg-primary/95 text-white text-xs font-semibold transition-all shadow-md hover:shadow-xl hover:shadow-primary/20"
                   >
                     Start Application
                   </Link>

@@ -1,11 +1,13 @@
 "use client"
 
 import Image from "next/image"
-import Link from "next/link"
 import { useState } from "react"
-import { Youtube, Instagram, Facebook, ChevronDown, ArrowUpRight } from "lucide-react"
+import { ChevronDown, ArrowUpRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { LangText } from "@/components/lang-text"
+import { LocaleLink } from "@/components/locale-link"
+import { PaymentMarks } from "@/components/payment-marks"
 
 const socialLinks = [
   {
@@ -55,37 +57,41 @@ const socialLinks = [
 const footerSections = [
   {
     title: "Company",
+    titleAr: "الشركة",
     links: [
-      { href: "/about", label: "About" },
-      { href: "/how-it-works", label: "How it works" },
-      { href: "/contact", label: "Contact" },
+      { href: "/about", label: "About", labelAr: "من نحن" },
+      { href: "/how-it-works", label: "How it works", labelAr: "كيف يعمل" },
+      { href: "/contact", label: "Contact", labelAr: "اتصل بنا" },
     ],
   },
   {
     title: "Services",
+    titleAr: "الخدمات",
     links: [
-      { href: "/apply", label: "Apply now" },
-      { href: "/destinations", label: "Visa destinations" },
-      { href: "/documents", label: "Required documents" },
-      { href: "/pricing", label: "Pricing" },
-      { href: "/app", label: "Mobile app" },
+      { href: "/apply", label: "Apply now", labelAr: "قدّم الآن" },
+      { href: "/destinations", label: "Visa destinations", labelAr: "وجهات التأشيرة" },
+      { href: "/documents", label: "Required documents", labelAr: "المستندات المطلوبة" },
+      { href: "/pricing", label: "Pricing", labelAr: "الأسعار" },
+      { href: "/app", label: "Mobile app", labelAr: "تطبيق الجوال" },
     ],
   },
   {
     title: "Resources",
+    titleAr: "المصادر",
     links: [
-      { href: "/news", label: "Journal" },
-      { href: "/videos", label: "Videos" },
-      { href: "/#faq", label: "FAQ" },
-      { href: "/refund-policy", label: "Refund policy" },
+      { href: "/news", label: "Journal", labelAr: "المجلة" },
+      { href: "/videos", label: "Videos", labelAr: "الفيديوهات" },
+      { href: "/#faq", label: "FAQ", labelAr: "الأسئلة الشائعة" },
+      { href: "/refund-policy", label: "Refund policy", labelAr: "سياسة الاسترداد" },
     ],
   },
   {
     title: "Legal",
+    titleAr: "الشؤون القانونية",
     links: [
-      { href: "/privacy-policy", label: "Privacy policy" },
-      { href: "/terms-of-service", label: "Terms of service" },
-      { href: "#cookie-settings", label: "Cookie settings", isCookieButton: true },
+      { href: "/privacy-policy", label: "Privacy policy", labelAr: "سياسة الخصوصية" },
+      { href: "/terms-of-service", label: "Terms of service", labelAr: "شروط الخدمة" },
+      { href: "#cookie-settings", label: "Cookie settings", labelAr: "إعدادات ملفات تعريف الارتباط", isCookieButton: true },
     ],
   },
 ]
@@ -141,7 +147,7 @@ export function Footer({
 
               {/* Brand block */}
               <div>
-                <Link href="/" className="inline-block mb-8">
+                <LocaleLink href="/" className="inline-block mb-8">
                   <Image
                     src="/images/logo-main.png"
                     alt="EZvisa"
@@ -149,28 +155,30 @@ export function Footer({
                     height={48}
                     className="h-9 w-auto"
                   />
-                </Link>
+                </LocaleLink>
 
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-semibold leading-tight tracking-tight text-balance mb-5 text-foreground">
-                  Your Schengen visa, made simple.
+                <h2 className="text-balance mb-5">
+                  <LangText en="Your Schengen visa, made simple." ar="تأشيرة شنغن، ببساطة." />
                 </h2>
 
-                <p className="text-muted-foreground text-base leading-relaxed max-w-md">
-                  Schengen visa specialists trusted by 5,000+ travelers from across the UAE.
+                <p className="text-[#3A4150] leading-relaxed max-w-md">
+                  <LangText
+                    en="Schengen visa specialists trusted by 5,000+ travelers from across the UAE."
+                    ar="متخصصون في تأشيرات شنغن، ويثق بنا أكثر من ٥٬٠٠٠ مسافر في الإمارات."
+                  />
                 </p>
 
-                {/* Newsletter / contact prompt */}
-                <div className="mt-8 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                  <span>Questions?</span>
-                  <Link
+                <div className="mt-8 flex flex-wrap items-center gap-2 text-sm text-[#3A4150]">
+                  <span><LangText en="Questions?" ar="لديك سؤال؟" /></span>
+                  <a
                     href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[#25D366] hover:text-[#128C7E] hover:underline transition-colors font-medium"
+                    className="inline-flex items-center gap-1 text-[#1A7F37] hover:underline transition-colors font-medium"
                   >
-                    Chat with us on WhatsApp
+                    <LangText en="Chat with us on WhatsApp" ar="تحدث معنا على واتساب" />
                     <ArrowUpRight className="h-3.5 w-3.5" />
-                  </Link>
+                  </a>
                 </div>
               </div>
 
@@ -184,7 +192,7 @@ export function Footer({
                       aria-expanded={openSection === section.title}
                       aria-controls={`footer-section-${index}`}
                     >
-                      <span className="text-sm font-semibold text-foreground">{section.title}</span>
+                      <span className="text-sm font-semibold text-foreground"><LangText en={section.title} ar={section.titleAr} /></span>
                       <ChevronDown
                         className={`h-4 w-4 text-[#5B6475] transition-transform duration-200 ${
                           openSection === section.title ? "rotate-180" : ""
@@ -208,12 +216,12 @@ export function Footer({
                                 }}
                                 className="text-muted-foreground hover:text-foreground transition-colors text-sm"
                               >
-                                {link.label}
+                                <LangText en={link.label} ar={link.labelAr} />
                               </button>
                             ) : (
-                              <Link href={link.href} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
-                                {link.label}
-                              </Link>
+                              <LocaleLink href={link.href} className="text-[#3A4150] hover:text-foreground transition-colors text-sm">
+                                <LangText en={link.label} ar={link.labelAr} />
+                              </LocaleLink>
                             )}
                           </li>
                         ))}
@@ -227,7 +235,7 @@ export function Footer({
               <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {footerSections.map((section) => (
                   <div key={section.title}>
-                    <h3 className="text-sm font-semibold text-foreground mb-4">{section.title}</h3>
+                    <h3 className="text-sm font-semibold text-foreground mb-4"><LangText en={section.title} ar={section.titleAr} /></h3>
                     <ul className="space-y-1">
                       {section.links.map((link) => (
                         <li key={link.href}>
@@ -239,15 +247,15 @@ export function Footer({
                               }}
                               className="block py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                             >
-                              {link.label}
+                              <LangText en={link.label} ar={link.labelAr} />
                             </button>
                           ) : (
-                            <Link
+                            <LocaleLink
                               href={link.href}
-                              className="block py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                              className="block py-1.5 text-sm text-[#3A4150] hover:text-foreground transition-colors"
                             >
-                              {link.label}
-                            </Link>
+                              <LangText en={link.label} ar={link.labelAr} />
+                            </LocaleLink>
                           )}
                         </li>
                       ))}
@@ -259,8 +267,19 @@ export function Footer({
 
             {/* Disclaimer */}
             <div className="border-t border-border/80 pt-6 mb-8 text-center">
-              <p className="text-xs text-muted-foreground/60 leading-relaxed max-w-4xl mx-auto">
-                <span className="text-foreground/80 font-medium">Disclaimer:</span> EZvisa is not a travel agency. We provide document preparation and guidance services only. We do not guarantee visa approval — final decisions rest solely with the respective embassy or consulate. All travel arrangements and visa outcomes are subject to official government policies.
+              <p className="text-xs leading-relaxed max-w-4xl mx-auto text-[#3A4150]/70">
+                <LangText
+                  en={
+                    <>
+                      <span className="font-medium text-[#0A0F1F]/80">Disclaimer:</span> EZvisa is not a travel agency. We provide document preparation and guidance services only. We do not guarantee visa approval — final decisions rest solely with the respective embassy or consulate. All travel arrangements and visa outcomes are subject to official government policies.
+                    </>
+                  }
+                  ar={
+                    <>
+                      <span className="font-medium text-[#0A0F1F]/80">إخلاء مسؤولية:</span> إيزي فيزا ليست وكالة سفر. نقدّم خدمات تجهيز المستندات والإرشاد فقط. لا نضمن الموافقة على التأشيرة — القرار النهائي يعود حصريًا إلى السفارة أو القنصلية المختصة. تخضع ترتيبات السفر ونتائج التأشيرة للسياسات الرسمية.
+                    </>
+                  }
+                />
               </p>
             </div>
           </>
@@ -270,13 +289,7 @@ export function Footer({
         <div className={simplified ? "" : "border-t border-border/80 pt-6"}>
           <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-5">
 
-            <Image
-              src="/images/payment-methods.jpg"
-              alt="Accepted Payment Methods"
-              width={300}
-              height={60}
-              className="h-8 w-auto rounded-xs opacity-75 dark:opacity-85 mix-blend-multiply dark:mix-blend-normal"
-            />
+            <PaymentMarks />
 
             <div className="flex justify-center items-center gap-3">
               {socialLinks.map((social) => {
@@ -296,8 +309,11 @@ export function Footer({
               })}
             </div>
 
-            <p className="text-xs text-muted-foreground text-center md:text-right">
-              &copy; <span suppressHydrationWarning>{currentYear}</span> EZvisa · ezvisa.net
+            <p className="text-xs text-[#3A4150] text-center md:text-end">
+              <LangText
+                en={<>&copy; <span suppressHydrationWarning>{currentYear}</span> EZvisa · ezvisa.net</>}
+                ar={<>&copy; <span suppressHydrationWarning>{currentYear}</span> إيزي فيزا · ezvisa.net</>}
+              />
             </p>
           </div>
         </div>

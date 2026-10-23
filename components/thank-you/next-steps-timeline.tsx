@@ -66,7 +66,7 @@ export function NextStepsTimeline() {
   return (
     <Card className="shadow-lg">
       <CardHeader className="border-b">
-        <CardTitle className="text-xl font-bold">What Happens Next</CardTitle>
+        <CardTitle className="text-xl font-semibold">What Happens Next</CardTitle>
         <p className="text-sm text-muted-foreground mt-1">
           Your visa application journey - step by step
         </p>
@@ -117,7 +117,7 @@ export function NextStepsTimeline() {
               </p>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-primary">5-7 Days</p>
+              <p className="text-lg font-semibold text-primary">5-7 Days</p>
               <p className="text-xs text-muted-foreground">Business days</p>
             </div>
           </div>

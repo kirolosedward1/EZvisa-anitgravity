@@ -14,7 +14,7 @@ export default function NewsNotFound() {
             <Newspaper className="w-10 h-10 text-primary" />
           </div>
 
-          <h1 className="text-2xl font-bold text-foreground mb-3">Article Not Found</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-3">Article Not Found</h1>
 
           <p className="text-muted-foreground mb-8">
             The news article you are looking for does not exist or has been removed. Browse our latest articles for more

@@ -57,7 +57,7 @@ export function DossierViewerClient({
             <div className="h-4 w-px bg-border hidden sm:block" />
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-bold text-foreground">Consular Dossier Pack</h1>
+                <h1 className="text-sm font-semibold text-foreground">Consular Dossier Pack</h1>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-500/20">
                   Ready to Submit
                 </span>

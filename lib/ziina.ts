@@ -4,7 +4,7 @@
  * never from a client parameter or an unverified webhook body.
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
-import { CURRENCIES } from "@/lib/currency"
+import { priceForTravellers } from "@/lib/currency"
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -27,8 +27,8 @@ export type ZiinaIntent = {
 export function priceForApplication(notesRaw: unknown): { amount: number; currency: "AED" } {
   let notes: any = {}
   try { notes = typeof notesRaw === "string" ? JSON.parse(notesRaw) : notesRaw ?? {} } catch { notes = {} }
-  const spouse = (notes?.spouseAccompanying ?? notes?.wizard?.spouseAccompanying) === "yes"
-  return { amount: CURRENCIES.AED.basePrice * (spouse ? 2 : 1), currency: "AED" }
+  const spouse = (notes?.spouseAccompanying ?? notes?.wizard?.spouseAccompanying) === "yes" ? "yes" : "no"
+  return { amount: priceForTravellers(spouse), currency: "AED" }
 }
 
 export const isPaidStatus = (s: unknown) => ["paid", "completed"].includes(String(s ?? "").toLowerCase())

@@ -162,7 +162,7 @@ export function ComparisonSection() {
 
             <div className="mt-8 pt-6 border-t border-primary/10 text-center">
               <span className="text-xs text-muted-foreground block mb-1">Fixed Flat Fee</span>
-              <span className="text-2xl font-bold text-primary">{getPrice()}</span>
+              <span className="text-2xl font-semibold text-primary">{getPrice()}</span>
             </div>
           </motion.div>
         </div>
