@@ -37,11 +37,15 @@ export function Group({ children, footer, inset = S.gutter + ICON.lg + S.sm, sty
   );
 }
 
+/** Text whose first word is Latin ("EZvisa", "VFS Global", an address) would align left inside an Arabic layout:
+ *  hugging its content keeps it on the reading side. */
+export const START = { alignSelf: "flex-start" } as const;
+
 /** One row: SF Symbol in the accent colour, label, optional subtitle, optional value (end-aligned, wrapping).
  *  VoiceOver reads it as one element ("Stay, up to 90 days in any 180 days"). A row without onPress has no chevron. */
-export function InfoRow({ icon, title, subtitle, value, onPress, a11yHint, testID }: { icon?: IconName; title: string; subtitle?: string; value?: string; onPress?: () => void; a11yHint?: string; testID?: string }) {
+export function InfoRow({ icon, title, subtitle, value, stacked, onPress, a11yHint, testID }: { icon?: IconName; title: string; subtitle?: string; value?: string; /** value under the label (sentences); short values sit at the end */ stacked?: boolean; onPress?: () => void; a11yHint?: string; testID?: string }) {
   const c = useColors(); const large = useLargeText(); const { rtl } = useT();
-  const stack = large || (value?.length ?? 0) > 28; // a long value reads better under its label than squeezed beside it
+  const stack = stacked || large;
   const label = [title, subtitle, value].filter(Boolean).join(", ");
   return (
     <PressScale onPress={onPress} disabled={!onPress} scaleTo={onPress ? PRESS.scaleLarge : 1}
@@ -50,10 +54,10 @@ export function InfoRow({ icon, title, subtitle, value, onPress, a11yHint, testI
       {!!icon && <View style={{ width: ICON.lg, alignItems: "center", paddingTop: stack ? S.xxs / 2 : 0 }}><Icon name={icon} size={ICON.md} color={c.accent} weight="medium" /></View>}
       <View style={{ flex: 1, flexDirection: stack ? "column" : "row", alignItems: stack ? "stretch" : "center", gap: stack ? S.xxs / 2 : S.sm }}>
         <View style={{ flexShrink: 1, flexGrow: stack ? 0 : 1 }}>
-          <Text variant="body">{title}</Text>
-          {!!subtitle && <Text variant="subhead" tone="secondary">{subtitle}</Text>}
+          <Text variant="body" style={START}>{title}</Text>
+          {!!subtitle && <Text variant="subhead" tone="secondary" style={START}>{subtitle}</Text>}
         </View>
-        {!!value && (stack ? <Text variant="subhead" tone="secondary">{value}</Text>
+        {!!value && (stack ? <Text variant="subhead" tone="secondary" style={START}>{value}</Text>
           : <View style={{ flexShrink: 1, maxWidth: "62%", alignItems: "flex-end" }}><Text variant="body" tone="secondary">{value}</Text></View>)}
       </View>
       {!!onPress && <Icon name={rtl ? "chevron.left" : "chevron.right"} size={ICON.sm} color={c.tertiaryLabel} weight="semibold" style={{ alignSelf: "center" }} />}

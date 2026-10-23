@@ -32,11 +32,12 @@ export function PhotoHeader({ photo, height, scrollY }: { photo: number; height:
   );
 }
 
-/** Blurred material (iOS) or the opaque chrome colour (Android, where blur over a moving photo is costly). */
+/** Blurred material on iOS; elsewhere the opaque chrome colour (Android blur over a moving photo is costly, and the
+ *  web preview's backdrop blur lets text show through under the title). */
 function Material({ intensity, round }: { intensity: number; round?: boolean }) {
   const c = useColors(); const dark = useIsDark();
   const st = [StyleSheet.absoluteFill, round && { borderRadius: R.round, overflow: "hidden" as const }];
-  if (Platform.OS === "android") return <View style={[st, { backgroundColor: c.chrome }]} />;
+  if (Platform.OS !== "ios") return <View style={[st, { backgroundColor: c.chrome }]} />;
   return <BlurView intensity={intensity} tint={dark ? "systemChromeMaterialDark" : "systemChromeMaterialLight"} style={st} />;
 }
 

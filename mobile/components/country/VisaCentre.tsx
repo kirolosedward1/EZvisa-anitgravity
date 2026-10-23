@@ -6,15 +6,15 @@ import { mapsUrl } from "../../lib/visaCentres";
 import { useT } from "../../lib/i18n";
 import { S, HIT, ICON, useColors } from "../../lib/theme";
 import { Icon, PressScale, Text } from "../ui";
-import { Group, GroupHeader } from "./Row";
+import { Group, GroupHeader, START } from "./Row";
 
 function Address({ city, address }: { city: string; address: string }) {
   const { t } = useT(); const c = useColors();
   return (
     <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm, gap: S.xxs }}>
       <View accessible accessibilityLabel={`${city}, ${address}`}>
-        <Text variant="headline">{city}</Text>
-        <Text variant="subhead" tone="secondary">{address}</Text>
+        <Text variant="headline" style={START}>{city}</Text>
+        <Text variant="subhead" tone="secondary" style={START}>{address}</Text>
       </View>
       <PressScale onPress={() => { Linking.openURL(mapsUrl(address)).catch(() => {}); }} accessibilityRole="link" accessibilityLabel={`${t("Open in Maps")}, ${city}`}
         style={{ minHeight: HIT, flexDirection: "row", alignItems: "center", gap: S.xs, alignSelf: "flex-start" }}>
@@ -30,7 +30,7 @@ export function VisaCentre({ centre }: { centre: Centre }) {
   return (
     <View testID="country-centre">
       <GroupHeader title={t("Visa centre")} />
-      <Text variant="body" style={{ marginHorizontal: S.gutter, marginBottom: S.xs }}>{centre.provider}</Text>
+      <Text variant="body" style={[START, { marginHorizontal: S.gutter, marginBottom: S.xs }]}>{centre.provider}</Text>
       <Group inset={S.md} footer={t("EZvisa tells you when and where your appointment is.")}>
         <Address city={t("Dubai")} address={centre.dubaiAddress} />
         <Address city={t("Abu Dhabi")} address={centre.abuDhabiAddress} />

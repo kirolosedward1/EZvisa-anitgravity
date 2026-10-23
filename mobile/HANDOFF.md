@@ -196,6 +196,14 @@ This lives in `mobile/` of the website repo `kirolosedward1/EZvisa-anitgravity`,
   - `bash scripts/push-server/run-sql.sh`: 0006 + 0013 on a throwaway local Postgres, 21 checks.
   - Device test steps: QA-CHECKLIST §11.
 
+## 2l. Country screen v2 (2026-10-23)
+- `components/CountryDetail.tsx` (both routes: Countries → `/country/[slug]`, Home → `/destination/[slug]`) composes `components/country/*`: Hero (34% photo, stretchy pull, collapsing blurred bar with flag + name, 44pt Back/Share), GlanceList, YourApplicationCard, Requirements, FundsSection, VisaCentre, Questions, CountryFooter.
+- Data: `lib/countryInfo.ts` (`countryInfo(slug)`, `countryApp()` = none / draft / active for the footer and card, `footerKind()`). Copies of website data, each checked against the website file by `scripts/country-check.ts`: `lib/visaCentres.ts` (APPOINTMENT_CENTERS, without timing tips) and `lib/funds.ts` (SCHENGEN_FUNDS_RULES + calculateRequiredFunds).
+- **Proof of funds is hidden** (`FUNDS_CONFIRMED = false` in `lib/funds.ts`): the website numbers have no source in comments or git history. Flip it once they are confirmed. The web preview can show it with `window.__PREVIEW_FUNDS__`.
+- Hidden for missing data: visa centre for Bulgaria, Estonia, Iceland, Latvia, Liechtenstein, Luxembourg, Malta, Romania, Slovakia, Slovenia (not in the website mapping); funds for every country except the 8 in the website file; tips for UAE residence visa (none in the repo) and bank statement (website "6 months" contradicts the checklist's "3-6 months").
+- Removed: "24–48h processing" (audit S2-2 / M16), "C · Schengen", the hard-coded DOCS (Travel insurance, NOC for everyone). No price on this screen.
+- Checks: `bun scripts/run-check.ts scripts/country-check.ts` (287), `node scripts/country-shots.mjs <dir>` (234 web UI checks + screenshots), `node scripts/country-sheets.mjs <dir>`. Screenshots and sheets: `docs/screenshots/country-v2/`.
+
 ## 3. Status on 2026-10-19 (verified against the live DB, `scripts/e2e-live.mjs`)
 Working: sign-up and confirm, sign-in, draft create, autosave, resume from DB, submit, list by email.
 Not working, because of server config outside the app:
