@@ -6,8 +6,12 @@ import { motion } from "framer-motion"
 import Image from "next/image"
 import { ReadyLine } from "@/components/ready-line"
 import { APPLICATION_READY } from "@/lib/copy"
+import { useSiteLocale } from "@/components/locale-provider"
+import { formatAedLabel } from "@/lib/currency"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
 export function ComparisonSection() {
+  const locale = useSiteLocale()
   const [currentCurrency, setCurrentCurrency] = useState<{ code: string; symbol: string; rate: number }>({
     code: "AED",
     symbol: "AED",
@@ -30,11 +34,11 @@ export function ComparisonSection() {
   }, [])
 
   const getPrice = () => {
-    const basePrice = 249
+    const basePrice = PRICE_AED
     if (currentCurrency.code === "USD") {
       return `$${Math.round(basePrice * currentCurrency.rate)}`
     }
-    return `${basePrice} AED`
+    return formatAedLabel(basePrice, locale)
   }
 
   const getOtherPrice = () => {
@@ -42,7 +46,7 @@ export function ComparisonSection() {
     if (currentCurrency.code === "USD") {
       return `$${Math.round(basePrice * currentCurrency.rate)}+`
     }
-    return `${basePrice}+ AED`
+    return formatAedLabel(basePrice, locale, true)
   }
 
   const features = [

@@ -1,6 +1,9 @@
-import { message, type MessageKey } from "@/messages"
+"use client"
 
-/** Both languages stay in the HTML. Direction decides which one is visible. */
+import { message, type MessageKey } from "@/messages"
+import { useSiteLocale } from "@/components/locale-provider"
+
+/** One language in the HTML. /ar does not ship the English string. */
 export function Msg({
   id,
   values,
@@ -10,10 +13,6 @@ export function Msg({
   values?: Record<string, string | number>
   valuesAr?: Record<string, string | number>
 }) {
-  return (
-    <>
-      <span className="rtl:hidden">{message("en", id, values)}</span>
-      <span className="hidden rtl:inline">{message("ar", id, valuesAr ?? values)}</span>
-    </>
-  )
+  const locale = useSiteLocale()
+  return <>{message(locale, id, locale === "ar" ? (valuesAr ?? values) : values)}</>
 }

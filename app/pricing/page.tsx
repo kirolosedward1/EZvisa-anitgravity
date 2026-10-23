@@ -1,5 +1,8 @@
 import type { Metadata } from "next"
+import { headers } from "next/headers"
 import { LocaleLink } from "@/components/locale-link"
+import { formatAedLabel, type DisplayLocale } from "@/lib/currency"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { Msg } from "@/components/msg"
 import type { MessageKey } from "@/messages"
 import { Button } from "@/components/ui/button"
@@ -33,7 +36,8 @@ export const metadata: Metadata = {
   },
 }
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const locale: DisplayLocale = (await headers()).get("x-ez-locale") === "ar" ? "ar" : "en"
   return (
     <>
       <ScrollToTop />
@@ -55,7 +59,7 @@ export default function PricingPage() {
               <Msg id="pricing.popular" />
             </div>
             <div className="flex items-baseline justify-center gap-4 mt-2">
-              <span className="text-5xl lg:text-6xl font-semibold text-foreground">249 AED</span>
+              <span className="text-5xl lg:text-6xl font-semibold text-foreground">{formatAedLabel(PRICE_AED, locale)}</span>
             </div>
           </div>
         </InnerHero>

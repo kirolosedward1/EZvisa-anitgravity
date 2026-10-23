@@ -5,6 +5,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { FileText, ArrowRight, Check, CreditCard, FileCheck, Download } from "lucide-react"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
+import { useSiteLocale } from "@/components/locale-provider"
 import { WhatYouGetSection } from "@/components/what-you-get-section"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -24,6 +25,7 @@ const steps: { icon: typeof FileText; title: MessageKey; description: MessageKey
 ]
 
 export function HowItWorksContent() {
+  const locale = useSiteLocale()
   const [currency, setCurrency] = useState<Currency>("AED")
   const searchCountry = useMessage("apply.searchCountry")
   const [selectedNationality, setSelectedNationality] = useState<string>("")
@@ -251,7 +253,7 @@ export function HowItWorksContent() {
               <div className="pt-6 border-t border-border/60">
                 <div className="text-center mb-6">
                   <div className="text-3xl font-semibold text-primary mb-1">
-                    {formatPrice(PRICES.visaApplication, currency)}
+                    {formatPrice(PRICES.visaApplication, currency, locale)}
                   </div>
                   <div className="text-xs text-muted-foreground"><Msg id="hiw.assistance" /></div>
                 </div>

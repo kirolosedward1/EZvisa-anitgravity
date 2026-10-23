@@ -22,12 +22,34 @@ export const PRICES = {
   visaApplication: PRICE_AED, // Base price in AED (shared with the app: lib/shared/wizard-contract.ts)
 }
 
-export function formatPrice(amountAED: number, currency: Currency): string {
+export type DisplayLocale = "en" | "ar"
+
+/**
+ * The one price label for marketing blocks.
+ * English keeps the code after the amount (`249 AED`, `1000+ AED`).
+ * Arabic uses درهم and puts the plus on the left of the digits (`249 درهم`, `+1000 درهم`),
+ * which is the order the bidi algorithm keeps when the number is an LTR run.
+ */
+export function formatAedLabel(amount: number, locale: DisplayLocale, plus = false): string {
+  const digits = String(amount)
+  if (locale === "ar") return plus ? `+${digits} درهم` : `${digits} درهم`
+  return plus ? `${digits}+ AED` : `${digits} AED`
+}
+
+/** Rewrite AED amounts inside a sentence. `1000+ AED` becomes `+1000 درهم`. */
+export function localizePriceText(text: string, locale: DisplayLocale): string {
+  if (locale !== "ar") return text
+  return text
+    .replace(/(\d[\d,]*)\+\s*AED/g, (_, digits: string) => `+${digits.replace(/,/g, "")} درهم`)
+    .replace(/(\d[\d,]*)\s*AED/g, (_, digits: string) => `${digits} درهم`)
+}
+
+export function formatPrice(amountAED: number, currency: Currency, locale: DisplayLocale = "en"): string {
   if (currency === "USD") {
     const usdAmount = Math.round(amountAED * AED_TO_USD_RATE)
-    return `${usdAmount} USD`
+    return locale === "ar" ? `${usdAmount} دولار` : `${usdAmount} USD`
   }
-  return `${amountAED} AED`
+  return formatAedLabel(amountAED, locale)
 }
 
 export function getPrice(amountAED: number, currency: Currency): number {

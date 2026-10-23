@@ -9,6 +9,7 @@ import { ContinueApplicationNotification } from "@/components/continue-applicati
 import { NavigationProgressBar } from "@/components/navigation-progress"
 import { PageTransition } from "@/components/page-transition"
 import { LocaleDirection } from "@/components/locale-direction"
+import { LocaleProvider } from "@/components/locale-provider"
 import { CrispVisibility } from "@/components/crisp-visibility"
 import Script from "next/script"
 import "./globals.css"
@@ -192,6 +193,7 @@ export default async function RootLayout({
             style={{ display: 'none', visibility: 'hidden' }}
           />
         </noscript>
+        <LocaleProvider locale={arabic ? "ar" : "en"}>
         <LocaleDirection />
         <CrispVisibility />
         <NavigationProgressBar />
@@ -203,6 +205,7 @@ export default async function RootLayout({
         <ContinueApplicationNotification />
         <CookieConsent />
         <Analytics />
+        </LocaleProvider>
         <Script id="crisp-chat" strategy="lazyOnload">
           {`
             window.$crisp=[];
