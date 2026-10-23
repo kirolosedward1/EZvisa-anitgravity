@@ -428,6 +428,11 @@ export const en = {
   "apply.startFresh": "Start Fresh",
   "apply.restore": "Restore Details",
   "apply.paymentIncomplete": "Your previous payment was not completed. Please try again.",
+  "apply.errDuplicate": "An application with these details was just submitted. Please wait a few minutes before starting another one.",
+  "apply.errSave": "Failed to save application. Please try again.",
+  "apply.errPayLink": "Failed to generate payment link. Please try again.",
+  "apply.errTimeout": "Ziina didn't open within 20 seconds. Check your connection and retry.",
+  "apply.errUnexpected": "An unexpected error occurred. Please try again.",
 
   "hiw.heroDescription": "Get your European visa prepared in 4 simple steps. Fast, easy, and hassle-free.",
   "hiw.step1Title": "Submit Your Application",

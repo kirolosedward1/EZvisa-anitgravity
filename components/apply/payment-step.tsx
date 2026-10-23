@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, type ReactNode } from "react"
 import { LangText } from "@/components/lang-text"
 import { Msg } from "@/components/msg"
+import type { MessageKey } from "@/messages"
 import { LocaleLink } from "@/components/locale-link"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { WizardQuestion } from "@/components/apply/wizard-choices"
@@ -15,6 +16,20 @@ import { citizenshipName, citizenshipNameAr } from "@/lib/nationalities"
 import { trackEvent } from "@/lib/analytics"
 import type { FormData } from "@/lib/form-types"
 import { CHECKOUT_STORAGE_KEY } from "@/lib/wizard-storage"
+
+const KNOWN_ERRORS: Record<string, MessageKey> = {
+  "Your previous payment was not completed. Please try again.": "apply.paymentIncomplete",
+  "An application with these details was just submitted. Please wait a few minutes before starting another one.": "apply.errDuplicate",
+  "Failed to save application. Please try again.": "apply.errSave",
+  "Failed to generate payment link. Please try again.": "apply.errPayLink",
+  "Ziina didn't open within 20 seconds. Check your connection and retry.": "apply.errTimeout",
+  "An unexpected error occurred. Please try again.": "apply.errUnexpected",
+}
+
+function KnownError({ text }: { text: string }) {
+  const id = KNOWN_ERRORS[text]
+  return id ? <Msg id={id} /> : text
+}
 
 interface PaymentStepProps {
   formData: FormData
@@ -301,7 +316,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
 
       {shownError && !isProcessing ? (
         <div className="mt-5 rounded-[10px] border border-[#B83200]/30 bg-[#FFFFFF] p-4" role="alert">
-          <p className="text-[13px] leading-5 text-[#B83200]">{shownError}</p>
+          <p className="text-[13px] leading-5 text-[#B83200]"><KnownError text={shownError} /></p>
           <div className="mt-3 flex flex-wrap gap-3">
             <button
               type="button"
