@@ -188,11 +188,12 @@ export function validateTrip(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.purposeOfTrip) e.purposeOfTrip = "Please select the purpose of your trip";
   if (!f.travelStartDate) e.travelStartDate = "Please select a departure date";
-  else if (realDate(f.travelStartDate) && Date.parse(f.travelStartDate) < earliestDeparture().getTime() - day / 2) e.travelStartDate = "Departure must be at least 15 days from today";
+  // Compare calendar dates as strings: Date.parse("YYYY-MM-DD") is UTC midnight, which shifted the rule by a day west of UTC.
+  else if (realDate(f.travelStartDate) && f.travelStartDate < iso(earliestDeparture())) e.travelStartDate = "Departure must be at least 15 days from today";
   if (f.travelStartDate && !realDate(f.travelStartDate)) e.travelStartDate = "Please enter a valid date";
   if (!f.travelEndDate) e.travelEndDate = "Please select a return date";
   else if (!realDate(f.travelEndDate)) e.travelEndDate = "Please enter a valid date";
-  else if (!f.travelStartDate && Date.parse(f.travelEndDate) < earliestDeparture().getTime() + day / 2) e.travelEndDate = "Return date must be at least 16 days from today";
+  else if (!f.travelStartDate && f.travelEndDate <= iso(earliestDeparture())) e.travelEndDate = "Return date must be at least 16 days from today";
   else if (f.travelStartDate && tripDays(f) <= 0) e.travelEndDate = "Return date must be after departure date";
   else if (tripDays(f) > 90) e.travelEndDate = "Schengen visits are limited to 90 days";
   else if (f.passportExpiry && !passportCoversTrip(f)) e.travelEndDate = "Passport must be valid at least 3 months after your return date";
@@ -211,10 +212,13 @@ export const validateStep = (s: WizardStep, f: WizardForm): Errors =>
 /** First visible step that is still incomplete, or null when everything is valid. */
 export const firstIncomplete = (f: WizardForm): WizardStep | null => visibleSteps(f).find((s) => s !== "payment" && Object.keys(validateStep(s, f)).length > 0) ?? null;
 
+/** decodeURIComponent that never throws (expo-router params are already decoded; a lone "%" used to crash). */
+export function safeDecode(s: string): string { try { return decodeURIComponent(s); } catch { return s; } }
+
 /** Accept a country by exact name, case-insensitive name or slug (e.g. "egypt", "czech-republic"). */
 export function matchCountry(raw: string | undefined, list: string[]): string | null {
   if (!raw) return null;
-  const t = decodeURIComponent(raw).trim().toLowerCase().replace(/[-_+]+/g, " ");
+  const t = safeDecode(raw).trim().toLowerCase().replace(/[-_+]+/g, " ");
   if (!t) return null;
   const alias: Record<string, string> = { russia: "Russian Federation", uae: "United Arab Emirates", czechia: "Czech Republic", ksa: "Saudi Arabia" };
   const hit = list.find((n) => n.toLowerCase() === t) ?? (alias[t] && list.includes(alias[t]) ? alias[t] : undefined);

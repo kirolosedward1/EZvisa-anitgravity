@@ -53,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [recovery, setRecovery] = useState(false);
   const [epoch, setEpoch] = useState(0);
   const had = useRef(false); // a session existed in this run
+  const lastUid = useRef<string | null>(null); // account whose data this phone holds
   const starting = useRef(true); // a SIGNED_OUT before getSession() resolves means the stored session could not be restored
   const leaving = useRef(false); // the user pressed Sign out (no "session ended" message)
   const lastCheck = useRef(0); const checking = useRef(false);
@@ -89,9 +90,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       starting.current = false;
       if (!on) return;
       setSession(data.session); had.current = !!data.session; setLoading(false);
+      if (data.session) lastUid.current = data.session.user.id;
       if (data.session) check(true);
     }).catch(() => { starting.current = false; if (on) setLoading(false); });
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      // Another account signed in without a sign-out first (e.g. an email link for account B opened while A was
+      // signed in): Supabase emits SIGNED_IN, never SIGNED_OUT, so wipe A's data on this phone here.
+      if (s && lastUid.current && s.user.id !== lastUid.current) {
+        setTimeout(() => { void clearUserData().then(() => setEpoch((n) => n + 1)); }, 0);
+      }
+      if (s) lastUid.current = s.user.id;
+      else if (event === "SIGNED_OUT") lastUid.current = null;
       setSession(s);
       if (s) { had.current = true; setGuest(false); }
       if (event === "PASSWORD_RECOVERY") setRecovery(true);

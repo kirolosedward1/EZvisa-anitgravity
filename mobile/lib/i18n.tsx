@@ -38,7 +38,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         // at most once per 15 s so a platform that ignores forceRTL can never loop.
         applyDir(l);
         const last = Number(await AsyncStorage.getItem(KEY + ".dirfix").catch(() => null)) || 0;
-        if (Date.now() - last > 15000) { await AsyncStorage.setItem(KEY + ".dirfix", String(Date.now())).catch(() => {}); await reload(); return; }
+        if (Date.now() - last > 15000) { await AsyncStorage.setItem(KEY + ".dirfix", String(Date.now())).catch(() => {}); await reload(); setReady(true); return; } // if the reload didn't restart the app, don't keep the splash up forever
       }
       setReady(true);
     }).catch(() => setReady(true));

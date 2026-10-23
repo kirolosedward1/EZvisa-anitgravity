@@ -17,6 +17,7 @@ export const USER_KEYS = [
   "ezvisa.crash.v1",                                 // last crash report (lib/crash.ts)
   "ezvisa.prefill.v1",                               // per-draft "profile question answered" flags (lib/profile.ts)
   "ezvisa.avatar.v1",                                // profile photo (lib/avatar.ts)
+  "ezvisa.payments.v1",                              // open checkouts (lib/payments.ts): must not resume for the next account
 ];
 const USER_PREFIXES = ["ezvisa.itinerary.v1."];      // trip plans per application (lib/itinerary.ts)
 
