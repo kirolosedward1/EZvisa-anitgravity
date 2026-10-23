@@ -1,4 +1,7 @@
 // One question per screen, built ONLY from the website wizard (lib/wizard.ts mirrors web lib/wizard-steps.ts +
+import { parsePhoneNumberFromString } from "libphonenumber-js/min";
+/** "+971500000000" -> "+971 50 000 0000" (shown as typed when it can't be parsed). */
+const phoneDisplay = (v: string) => { try { return parsePhoneNumberFromString(v)?.formatInternational() ?? v; } catch { return v; } };
 // components/apply/*): the same fields, labels, options, order and validation. Each question owns one or more form keys;
 // its errors are exactly validateStep(step) filtered to those keys, so the rules can never drift from the web.
 import { WORLD } from "./world";
@@ -198,7 +201,7 @@ export function displayValue(q: Question, f: WizardForm, t: (s: string) => strin
     case "yesno": return v === "yes" ? t("Yes") : v === "no" ? t("No") : "";
     case "date": return v ? fmtDate(v) : "";
     case "dates": return f.travelStartDate ? `${fmtDate(f.travelStartDate)}${f.travelEndDate ? ` – ${fmtDate(f.travelEndDate)}` : ""}${f.datesFlexible === "yes" ? ` · ${t("Flexible")}` : ""}` : "";
-    case "contact": return [accountEmail ? "" : f.email.trim(), f.phone].filter(Boolean).join(" · ");
+    case "contact": return [accountEmail ? "" : f.email.trim(), phoneDisplay(f.phone)].filter(Boolean).join(" · ");
     case "pair": return (q.fields ?? []).map((x) => String(f[x.key] ?? "").trim()).filter(Boolean).join(q.id === "jobCompany" ? " · " : " ");
     case "countries": return f.additionalCountries.map((a) => `${t(a.country)} (${fmtDate(a.arrivalDate)} – ${fmtDate(a.departureDate)})`).join("\n");
     case "country": return v ? t(v) : "";

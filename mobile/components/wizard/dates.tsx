@@ -14,6 +14,7 @@ const DAY = 86400000;
 const parse = (s?: string) => (s ? (([y, m, d]) => new Date(y, m - 1, d))(s.split("-").map(Number)) : undefined);
 const addDays = (s: string, n: number) => { const d = parse(s)!; return iso(new Date(d.getFullYear(), d.getMonth(), d.getDate() + n)); };
 export const stayDays = (a?: string, b?: string) => (a && b ? Math.round((parse(b)!.getTime() - parse(a)!.getTime()) / DAY) + 1 : 0);
+// Schengen counting: entry and exit days both count, so "1 week" = entry + 6 = 7 days (chip, summary and stored dates agree).
 const DURS = [[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const;
 
 export function useDateFmt() {
@@ -47,7 +48,7 @@ export function DatesAnswer({ f, patch }: { f: WizardForm; patch: (p: Partial<Wi
   const flexible = f.datesFlexible === "yes";
   React.useEffect(() => { if (!f.datesFlexible) patch({ datesFlexible: "no" }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const seg = (on: boolean, label: string, v: "no" | "yes") => (
-    <Pressable key={v} onPress={() => { select(); patch({ datesFlexible: v }); }} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={label}
+    <Pressable key={v} onPress={() => { select(); patch({ datesFlexible: v }); }} accessibilityRole="tab" accessibilityState={{ selected: on }} aria-selected={on} accessibilityLabel={label}
       style={{ flex: 1, minHeight: 36, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: on ? "#FFFFFF" : "transparent", ...(on ? { shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null) }}>
       <Text variant="subhead" weight="600" color={on ? BLUE : INK}>{label}</Text>
     </Pressable>
@@ -64,7 +65,7 @@ export function DatesAnswer({ f, patch }: { f: WizardForm; patch: (p: Partial<Wi
 
 function Chip({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={label}
+    <Pressable onPress={onPress} accessibilityRole="radio" accessibilityState={{ checked: on, selected: on }} aria-checked={on} aria-selected={on} accessibilityLabel={label}
       style={({ pressed }) => ({ minHeight: 36, paddingHorizontal: S.md, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? BLUE : "#FFFFFF", borderWidth: on ? 0 : 1, borderColor: BORDER, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
       <Text variant="subhead" weight="600" numberOfLines={1} color={on ? "#FFFFFF" : INK}>{label}</Text>
     </Pressable>
@@ -76,7 +77,7 @@ function Fixed({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>) =>
   const [w, setW] = useState(0); const cell = w ? Math.floor(w / 7) : 44;
   const min = iso(earliestDeparture()); const todayS = iso(new Date());
   const start = f.travelStartDate, end = f.travelEndDate;
-  const months = useMemo(() => { const n = new Date(); return Array.from({ length: 13 }, (_, i) => new Date(n.getFullYear(), n.getMonth() + i, 1)); }, []);
+  const months = useMemo(() => { const n = earliestDeparture(); return Array.from({ length: 13 }, (_, i) => new Date(n.getFullYear(), n.getMonth() + i, 1)); }, []);
   const weekdays = useMemo(() => Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i).toLocaleDateString(loc, { weekday: "narrow" })), [loc]); // Mon-first
   const tapDay = (d: string) => {
     if (d < min) return; select();
@@ -86,7 +87,7 @@ function Fixed({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>) =>
   return (
     <View style={{ gap: S.md }}>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.xs }} accessibilityRole="radiogroup" accessibilityLabel={t("Trip length")} testID="date-quickpicks">
-        {DURS.map(([n, l]) => { const v = start ? addDays(start, n) : ""; return <Chip key={n} on={!!start && end === v} label={t(l)} onPress={() => { if (!start) { select(); const s = min; patch({ travelStartDate: s, travelEndDate: addDays(s, n) }); return; } select(); patch({ travelEndDate: v }); }} />; })}
+        {DURS.map(([n, l]) => { const v = start ? addDays(start, n - 1) : ""; return <Chip key={n} on={!!start && end === v} label={t(l)} onPress={() => { if (!start) { select(); const s = min; patch({ travelStartDate: s, travelEndDate: addDays(s, n - 1) }); return; } select(); patch({ travelEndDate: v }); }} />; })}
       </View>
       <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: 380, borderRadius: R.tile, backgroundColor: "#FFFFFF", overflow: "hidden" }}>
         <ScrollView nestedScrollEnabled stickyHeaderIndices={[0]} showsVerticalScrollIndicator={false}>
@@ -105,7 +106,7 @@ function Fixed({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>) =>
                     const past = d < min; const isS = d === start, isE = d === end; const inR = !!start && !!end && d > start && d < end;
                     const edge = isS || isE; const band = (inR || (edge && !!start && !!end && start !== end));
                     return (
-                      <Pressable key={d} disabled={past} onPress={() => tapDay(d)} accessibilityRole="button" accessibilityState={{ disabled: past, selected: edge }}
+                      <Pressable key={d} disabled={past} onPress={() => tapDay(d)} accessibilityRole="button" accessibilityState={{ disabled: past, selected: edge }} aria-pressed={edge} aria-disabled={past}
                         accessibilityLabel={parse(d)!.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long" })}
                         style={{ width: cell, height: 44, alignItems: "center", justifyContent: "center" }}>
                         {band && <View style={{ position: "absolute", top: 4, bottom: 4, start: isS ? cell / 2 : 0, end: isE ? cell / 2 : 0, backgroundColor: FILL }} />}

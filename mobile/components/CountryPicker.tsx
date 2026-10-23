@@ -12,17 +12,22 @@ import { PHONE_COUNTRIES, nationalDigits, formatNational, placeholderFor, toE164
 import { select } from "../lib/haptics";
 import { useT } from "../lib/i18n";
 
+type W = { name: string; iso2: string; dial: number };
+/** Shared country search (phone picker, citizenship): name (EN/AR), ISO code or calling code. Exact ISO code (e.g. "IN")
+ *  ranks first, then exact calling code, then name prefix; otherwise the list's own order. */
+export function rankCountries<T extends W>(base: T[], query: string, tr: (s: string) => string): T[] {
+  const t = query.trim().toLowerCase().replace(/^\+/, ""); if (!t) return base;
+  const hits = base.filter((w) => w.name.toLowerCase().includes(t) || tr(w.name).includes(query.trim()) || (w.dial > 0 && String(w.dial).startsWith(t)) || (!!w.iso2 && w.iso2.toLowerCase().startsWith(t)));
+  const rank = (w: W) => (w.iso2.toLowerCase() === t ? 0 : w.dial > 0 && String(w.dial) === t ? 1 : w.name.toLowerCase().startsWith(t) || tr(w.name).startsWith(query.trim()) ? 2 : 3);
+  return hits.map((w, i) => [w, i] as const).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([w]) => w);
+}
 export function CountrySheet({ visible, title, onClose, onPick, selected, selectedName, showDial, names, searchPlaceholder = "Search country or code" }: { visible: boolean; title: string; onClose: () => void; onPick: (iso2: string, name: string) => void; selected?: string; selectedName?: string; showDial?: boolean; names?: string[]; searchPlaceholder?: string }) {
   const c = useColors(); const insets = useSafeAreaInsets(); const [q, setQ] = useState(""); const { t: tr } = useT();
   const list = useMemo(() => {
     const t = q.trim().toLowerCase().replace(/^\+/, "");
     const base = names ? names.map((n) => WORLD.find((w) => w.name === n) ?? { name: n, iso2: n, dial: 0 }) : showDial ? PHONE_COUNTRIES : WORLD;
     // Matches the name (English or Arabic), the ISO code (AE / ARE-style prefixes) or the calling code.
-    if (!t) return base;
-    const hits = base.filter((w) => w.name.toLowerCase().includes(t) || tr(w.name).includes(q.trim()) || String(w.dial).startsWith(t) || w.iso2.toLowerCase().startsWith(t));
-    // An exact ISO code (e.g. "IN") ranks first, then exact calling code, then name prefix.
-    const rank = (w: { name: string; iso2: string; dial: number }) => (w.iso2.toLowerCase() === t ? 0 : String(w.dial) === t ? 1 : w.name.toLowerCase().startsWith(t) ? 2 : 3);
-    return hits.map((w, i) => [w, i] as const).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([w]) => w);
+    return rankCountries(base, q, tr);
   }, [q, showDial, names, tr]);
   return (
     <Modal visible={visible} animationType="slide" presentationStyle={Platform.OS === "ios" ? "pageSheet" : undefined} onRequestClose={onClose} transparent={false}>

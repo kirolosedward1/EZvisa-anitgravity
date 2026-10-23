@@ -32,6 +32,8 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
         {onDiscard ? (
           // At rest the trash is invisible and untappable (swipe or long-press to discard); it shows only once swiped.
           <PressScale disabled={!swiping} onPress={() => askDiscard(onDiscard, t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Discard")} accessibilityElementsHidden={!swiping} importantForAccessibility={swiping ? "auto" : "no-hide-descendants"} testID="app-discard"
+            // Web: also out of the accessibility tree and tab order at rest.
+            aria-hidden={!swiping} tabIndex={swiping ? 0 : -1} focusable={swiping} accessible={swiping}
             pointerEvents={swiping ? "auto" : "none"} style={{ opacity: swiping ? 1 : 0, width: 36, height: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
             <Icon name="trash" size={16} color={c.red} />
           </PressScale>

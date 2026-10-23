@@ -1,3 +1,4 @@
+import { rankCountries } from "../../../components/CountryPicker";
 // Account details: Personal (name, email, phone, citizenship), Sign-in (methods, password) and Member since.
 // Edits open in bottom sheets and save through supabase.auth.updateUser (user_metadata; no table or auth-setting changes).
 import { useMemo, useState } from "react";
@@ -35,7 +36,7 @@ export default function AccountDetails() {
   const u = session?.user;
   const [pIso, setPIso] = useState("AE"); const [pE164, setPE164] = useState("");
   // Name, Arabic name or ISO code (e.g. "in", "IN").
-  const list = useMemo(() => { const s = q.trim().toLowerCase(); return SCHENGEN_VISA_REQUIRED.filter((n) => { const iso = WORLD.find((w) => w.name === n)?.iso2 ?? ""; return !s || n.toLowerCase().includes(s) || t(n).includes(q.trim()) || iso.toLowerCase() === s; }); }, [q, t]);
+  const list = useMemo(() => rankCountries(SCHENGEN_VISA_REQUIRED.map((n) => WORLD.find((w) => w.name === n) ?? { name: n, iso2: "", dial: 0 }), q, t).map((w) => w.name), [q, t]);
   if (!u) return <View style={{ flex: 1, backgroundColor: c.background, justifyContent: "center" }}>{header}<EmptyState icon="person.crop.circle" title={t("Sign in")} action={<Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />} /></View>;
   const meta = (u.user_metadata ?? {}) as Record<string, any>;
   const ids = ((u.identities ?? []) as { provider: string }[]).map((i) => i.provider);
@@ -86,7 +87,7 @@ export default function AccountDetails() {
             <Text variant="footnote" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text>
             <View style={{ borderRadius: R.card, overflow: "hidden", backgroundColor: c.surface }}>
               {list.map((n) => { const on = citizenshipName(meta.citizenship) === n; return (
-                <Pressable key={n} onPress={() => save(n)} accessibilityRole="button" accessibilityState={{ selected: on }} accessibilityLabel={t(n)} style={({ pressed }) => ({ minHeight: 52, paddingHorizontal: S.md, gap: S.sm, flexDirection: "row", alignItems: "center", backgroundColor: pressed ? c.fill : "transparent" })}>
+                <Pressable key={n} onPress={() => save(n)} accessibilityRole="radio" accessibilityState={{ selected: on, checked: on }} aria-selected={on} aria-checked={on} accessibilityLabel={on ? `${t(n)}, ${t("selected")}` : t(n)} style={({ pressed }) => ({ minHeight: 52, paddingHorizontal: S.md, gap: S.sm, flexDirection: "row", alignItems: "center", backgroundColor: pressed ? c.fill : "transparent" })}>
                   <Flag country={n} size={28} />
                   <Text variant="body" style={{ flex: 1 }}>{t(n)}</Text>{on && <Icon name="checkmark" size={16} color={c.accent} weight="bold" />}
                 </Pressable>

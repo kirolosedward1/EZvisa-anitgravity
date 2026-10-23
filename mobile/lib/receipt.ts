@@ -28,7 +28,7 @@ export async function receiptData(a: Application, name: string, mail: string, la
   const pay = a.payments?.find((p) => ["paid", "completed"].includes(p.status));
   const at = (pay as any)?.updated_at ?? pay?.created_at ?? a.updated_at ?? a.created_at;
   const rows: [string, string][] = [
-    [L("Receipt number"), a.reference], [L("Destination"), a.countries?.name ?? a.destination_country ?? ""],
+    [L("Receipt number"), a.reference], [L("Destination"), L(a.countries?.name ?? a.destination_country ?? "")],
     [L("Customer"), name], [L("Email"), mail], [L("Amount paid"), amt != null ? `${Number(amt).toFixed(2)} ${a.currency || "AED"}` : ""],
     [L("Payment method"), L("Paid via Ziina")], [L("Ziina payment ID"), a.payment_id ?? ""], [L("Date"), at ? new Date(at).toLocaleDateString(lang === "ar" ? "ar-AE" : "en-GB") : ""],
   ];
