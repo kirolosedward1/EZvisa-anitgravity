@@ -190,9 +190,6 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
                             Upload Documents
                           </Link>
                         </Button>
-                        <Button asChild size="sm" variant="outline" className="border-amber-500/30 text-amber-700 dark:text-amber-500 hover:bg-amber-500/10 hover:text-amber-800 dark:hover:text-amber-400">
-                          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">Send via WhatsApp</a>
-                        </Button>
                       </div>
                     </div>
                   </div>
