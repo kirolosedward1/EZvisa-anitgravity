@@ -90,5 +90,7 @@ export async function applyIntentStatus(
     .select()
     .maybeSingle()
   if (upError) return { row, status: row.payment_status, changed: false, error: upError.code }
+  // Audit trail (no personal data): every stored payment status change, whichever path made it.
+  console.info(`[payment] ${row.id} ${row.payment_status ?? "null"} -> ${next} (intent ${intent.id}, ziina ${intent.status})`)
   return { row: updated ?? row, status: next, changed: true }
 }

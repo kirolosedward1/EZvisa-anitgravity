@@ -64,10 +64,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Database update failed" }, { status: 500 })
     }
     if (!result.row) {
-      logger.warn("No application found for payment ID", { paymentId: intent.id }, { prefix: "WEBHOOK" })
+      logger.warn("No application found for payment ID", { paymentId: intent.id }, { prefix: "WEBHOOK", forceLog: true })
       return NextResponse.json({ success: true, message: "No linked application", paymentId: intent.id })
     }
-    logger.log("Payment status verified", { paymentId: intent.id, status: result.status, changed: result.changed }, { prefix: "WEBHOOK" })
+    logger.log("Payment status verified", { paymentId: intent.id, status: result.status, changed: result.changed }, { prefix: "WEBHOOK", forceLog: true })
 
     // Email once, on the transition only (Ziina retries and check-payment can apply the same status).
     if (result.changed && (result.status === "paid" || result.status === "failed") && result.row.email) {

@@ -17,7 +17,14 @@ const reset = (row: Record<string, any> = {}) => {
   rows.push({ id: APP, email: "t@example.com", full_name: "T U", payment_id: null, payment_status: "pending", payment_amount: null, application_status: "submitted", additional_notes: "{}", ...row })
 }
 
-const match = (u: URL) => (r: Record<string, any>) => [...u.searchParams].every(([k, v]) => k === "select" || !v.startsWith("eq.") || String(r[k]) === v.slice(3))
+// Minimal PostgREST filters: eq, gte, not.is.null, not.in.(...); other params (select, order, limit) are ignored.
+const match = (u: URL) => (r: Record<string, any>) => [...u.searchParams].every(([k, v]) => {
+  if (v.startsWith("eq.")) return String(r[k]) === v.slice(3)
+  if (v.startsWith("gte.")) return String(r[k] ?? "") >= v.slice(4)
+  if (v === "not.is.null") return r[k] != null
+  if (v.startsWith("not.in.(")) return !v.slice(8, -1).split(",").includes(String(r[k]))
+  return true
+})
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { "content-type": "application/json" } })
 globalThis.fetch = (async (input: any, init: any = {}) => {
   const u = new URL(typeof input === "string" ? input : input.url)
@@ -38,15 +45,18 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
     if (accept.includes("vnd.pgrst.object")) return hit.length ? json(hit[0]) : json({ code: "PGRST116", message: "0 rows" }, 406)
     return json(hit)
   }
-  throw new Error(`unexpected fetch ${u}`) // Upstash etc. -> rate limiter fails open
+  throw new Error(`unexpected fetch ${u}`)
 }) as typeof fetch
 
 const { POST: createPayment } = await import("../app/api/create-payment/route")
 const { GET: checkPayment } = await import("../app/api/check-payment/route")
 const { POST: webhook } = await import("../app/api/webhooks/ziina/route")
+// Each request gets its own client IP so the (in-memory) rate limiter doesn't interfere; it is tested on its own below.
+let ip = 0
+const nextIp = () => `10.0.${Math.floor(++ip / 250)}.${ip % 250}`
 const req = (url: string, body?: unknown, headers: Record<string, string> = {}) =>
-  new Request(url, body === undefined ? { headers } : { method: "POST", body: typeof body === "string" ? body : JSON.stringify(body), headers: { "content-type": "application/json", ...headers } }) as any
-const nreq = async (url: string) => { const { NextRequest } = await import("next/server"); return new NextRequest(url) }
+  new Request(url, body === undefined ? { headers: { "x-forwarded-for": nextIp(), ...headers } } : { method: "POST", body: typeof body === "string" ? body : JSON.stringify(body), headers: { "content-type": "application/json", "x-forwarded-for": nextIp(), ...headers } }) as any
+const nreq = async (url: string, headers: Record<string, string> = {}) => { const { NextRequest } = await import("next/server"); return new NextRequest(url, { headers: { "x-forwarded-for": nextIp(), ...headers } }) }
 const pay = () => createPayment(req("https://www.ezvisa.net/api/create-payment", { applicationId: APP, amount: 1, success_url: "https://www.ezvisa.net/app-return?r=success", cancel_url: "https://www.ezvisa.net/app-return?r=cancel" }))
 const status = async () => (await checkPayment(await nreq(`https://www.ezvisa.net/api/check-payment?applicationId=${APP}`))).json()
 
@@ -98,4 +108,22 @@ assert.equal(rows[0].payment_status, "paid"); console.log("ok  HMAC: missing/bad
 // 7. Legacy ?id= returns only id + status.
 assert.deepEqual(await (await checkPayment(await nreq("https://www.ezvisa.net/api/check-payment?id=pi_1"))).json(), { id: "pi_1", status: "completed" })
 console.log("ok  legacy check-payment?id= returns only {id,status}")
+// 8. Rate limiting works without Redis: the 6th create-payment from one IP in a minute is refused.
+{ reset(); const codes: number[] = []
+  for (let i = 0; i < 6; i++) codes.push((await createPayment(req("https://www.ezvisa.net/api/create-payment", { applicationId: APP }, { "x-forwarded-for": "203.0.113.7" }))).status)
+  assert.deepEqual(codes.slice(0, 5).every((c) => c !== 429), true); assert.equal(codes[5], 429)
+  console.log("ok  rate limit without Redis: 6th create-payment from one IP in a minute -> 429", codes.join(",")) }
+
+// 9. Reconcile cron: refuses without CRON_SECRET; with it, pending applications are synced from Ziina.
+{ const { GET: reconcile } = await import("../app/api/cron/reconcile-payments/route")
+  delete process.env.CRON_SECRET
+  assert.equal((await reconcile(req("https://www.ezvisa.net/api/cron/reconcile-payments"))).status, 401)
+  process.env.CRON_SECRET = "cron-test"
+  assert.equal((await reconcile(req("https://www.ezvisa.net/api/cron/reconcile-payments", undefined, { authorization: "Bearer wrong" }))).status, 401)
+  reset(); await pay(); intents.pi_1.status = "completed"; rows[0].updated_at = new Date().toISOString()
+  const r = await reconcile(req("https://www.ezvisa.net/api/cron/reconcile-payments", undefined, { authorization: "Bearer cron-test" }))
+  const j: any = await r.json()
+  assert.equal(r.status, 200); assert.equal(rows[0].payment_status, "paid")
+  console.log("ok  reconcile cron: 401 without/with wrong secret; with secret a completed payment is stored as paid", JSON.stringify(j)) }
+
 console.log("ALL PASSED")
