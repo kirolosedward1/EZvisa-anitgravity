@@ -7,7 +7,9 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { translate, type Lang } from "./i18n";
 
-export const MAX_BYTES = 5 * 1024 * 1024; // visa_documents bucket file_size_limit (5 MB, read from the live bucket)
+/** 4 MB: under both the visa_documents bucket limit (5 MB) and the website's 4.5 MB request limit (Vercel functions;
+ *  the multipart body adds a little). A 4.5-5 MB file used to pass here and then fail with HTTP 413. */
+export const MAX_BYTES = 4 * 1024 * 1024;
 /** Photos are compressed to this, well under MAX_BYTES and the website's 4.5 MB request limit (Vercel functions). */
 export const TARGET_BYTES = 2.5 * 1024 * 1024;
 export const MIN_SHORT_SIDE = 1000;        // px; below this, passport text is often unreadable
@@ -22,7 +24,7 @@ const tr = (lang: Lang): TFn => (s, v) => translate(lang, s, v);
 export function checkQuality(f: Picked, lang: Lang = "en"): { error?: string; warnings: string[] } {
   const t = tr(lang);
   const w: string[] = [];
-  if (f.size != null && f.size > MAX_BYTES) return { error: t("File is larger than 5 MB."), warnings: [] };
+  if (f.size != null && f.size > MAX_BYTES) return { error: t("File is larger than 4 MB."), warnings: [] };
   const img = (f.mimeType ?? "").startsWith("image/") || /\.(jpe?g|png|heic|webp)$/i.test(f.name);
   if (img && f.width && f.height && Math.min(f.width, f.height) < MIN_SHORT_SIDE) w.push(t("Low resolution ({w}×{h}). Text may be hard to read.", { w: f.width, h: f.height }));
   if (f.size != null && f.size < MIN_BYTES) w.push(t("Very small file ({k} KB). It may be blurry or cropped.", { k: Math.round(f.size / 1024) }));
@@ -64,7 +66,7 @@ export async function validateFile(f: Picked, lang: Lang): Promise<{ kind: Kind 
   const size = f.size ?? (await fileSize(f.uri));
   if (size === 0) return { error: t("This file is empty. Choose another one.") };
   if (kind === "pdf") {
-    if (size != null && size > MAX_BYTES) return { error: t("This PDF is {mb} MB. The limit is 5 MB. Scan the pages with the camera instead, or export a smaller copy.", { mb: (size / 1048576).toFixed(1) }) };
+    if (size != null && size > MAX_BYTES) return { error: t("This PDF is {mb} MB. The limit is 4 MB. Scan the pages with the camera instead, or export a smaller copy.", { mb: (size / 1048576).toFixed(1) }) };
     const b = await head(f.uri, 5);
     if (b && !isPdfHeader(b)) return { error: t("This file isn't a valid PDF. Choose another file.") };
   }

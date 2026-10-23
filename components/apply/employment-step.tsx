@@ -1,5 +1,7 @@
 "use client"
 
+import { todayIsoUae } from "@/lib/dates"
+
 import type React from "react"
 import { useState, useRef } from "react"
 import { WizardBar } from "@/components/apply/wizard-bar"
@@ -129,7 +131,7 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
             <CustomDatePicker
               id="employmentStartDate"
               placeholder="Select start date"
-              max={new Date().toISOString().split("T")[0]}
+              max={todayIsoUae()}
               value={formData.employmentStartDate || ""}
               onChange={(val) => handleFieldChange("employmentStartDate", val)}
               className={cn(getErrorClass(formData.employmentStartDate))}

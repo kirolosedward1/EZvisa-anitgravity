@@ -20,12 +20,12 @@ export const metadata: Metadata = {
     "Europe visa process",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/how-it-works",
+    canonical: "https://www.ezvisa.net/how-it-works",
   },
   openGraph: {
     title: "How It Works - 4-Step Visa Application Process",
     description: "We prepare your application in 1–2 days. The embassy's decision takes longer.",
-    url: "https://ezvisa.net/how-it-works",
+    url: "https://www.ezvisa.net/how-it-works",
     type: "website",
   },
 }

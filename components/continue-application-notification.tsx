@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { X, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
 
 export function ContinueApplicationNotification() {
   const [isVisible, setIsVisible] = useState(false)
@@ -14,14 +15,15 @@ export function ContinueApplicationNotification() {
 
   useEffect(() => {
     // Don't show on the wizard pages themselves
-    if (pathname?.startsWith("/apply")) {
+    const path = (pathname ?? "").replace(/^\/ar(?=\/|$)/, "") || "/"
+    if (path.startsWith("/apply") || path.startsWith("/payment-")) {
       return
     }
 
     // Check if user has incomplete application
     const checkIncompleteApplication = () => {
       try {
-        const wizardData = localStorage.getItem("visa-wizard-form")
+        const wizardData = localStorage.getItem(WIZARD_STORAGE_KEY)
         const dismissedUntil = localStorage.getItem("notification-dismissed-until")
         
         if (!wizardData) {
@@ -39,11 +41,8 @@ export function ContinueApplicationNotification() {
           }
         }
 
-        // Check if application has any data but no payment success
-        const hasData = data.firstName || data.nationality || data.destination
-        const paymentSuccess = localStorage.getItem("payment-success")
-        
-        return hasData && !paymentSuccess
+        // A paid application clears the draft (lib/wizard-storage), so any draft left here is unfinished.
+        return Boolean(data?.firstName || data?.nationality || data?.destination)
       } catch (error) {
         console.error("Error checking incomplete application:", error)
         return false
@@ -72,7 +71,7 @@ export function ContinueApplicationNotification() {
   }
 
   const handleContinue = () => {
-    router.push("/apply")
+    router.push(pathname?.startsWith("/ar") ? "/ar/apply" : "/apply")
   }
 
   if (!isVisible) {

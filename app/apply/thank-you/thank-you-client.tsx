@@ -10,6 +10,7 @@ import { NextStepsTimeline } from "@/components/thank-you/next-steps-timeline"
 import { ThankYouCTASection } from "@/components/thank-you/thank-you-cta-section"
 import { Loader2 } from "lucide-react"
 import { trackEvent } from "@/lib/analytics"
+import { clearWizardAfterPayment } from "@/lib/wizard-storage"
 
 interface ApplicationData {
   firstName: string
@@ -89,7 +90,7 @@ export function ThankYouClient() {
     // Clean up after successful payment
     setTimeout(() => {
       sessionStorage.removeItem("pendingApplication")
-      localStorage.removeItem("visa_wizard_data")
+      clearWizardAfterPayment()
     }, 2000)
   }, [searchParams])
 

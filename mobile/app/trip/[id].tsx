@@ -19,6 +19,7 @@ import { useT } from "../../lib/i18n";
 import { getApplication, type Application } from "../../lib/data";
 import { BUDGETS, WHO, INTERESTS, emptyPrefs, generatePlan, planAllowed, loadPlan, savePlan, planHtml, suggestedCities, newId, type Plan, type Prefs, type Interest, type Slot } from "../../lib/itinerary";
 import { select, success, tap, error as hError } from "../../lib/haptics";
+import { iso } from "../../lib/wizard";
 
 const QS = ["cities", "budget", "who", "interests"] as const;
 type QStep = (typeof QS)[number];
@@ -173,7 +174,7 @@ export default function TripPlan() {
           </View>
         ))}
         {editing && <View style={{ flexDirection: "row", gap: S.sm }}>
-          <View style={{ flex: 1 }}><Button title={t("Add day")} icon="plus" variant="secondary" size="M" onPress={() => update((p) => { const last = p.days[p.days.length - 1]; const date = last?.date ? new Date(new Date(last.date + "T12:00:00").getTime() + 864e5).toISOString().slice(0, 10) : null; return { ...p, days: [...p.days, { id: newId(), n: p.days.length + 1, date, city: last?.city ?? "", title: t("Free day"), items: [] }] }; })} /></View>
+          <View style={{ flex: 1 }}><Button title={t("Add day")} icon="plus" variant="secondary" size="M" onPress={() => update((p) => { const last = p.days[p.days.length - 1]; const next = last?.date ? new Date(last.date + "T12:00:00") : null; if (next) next.setDate(next.getDate() + 1); const date = next ? iso(next) : null; return { ...p, days: [...p.days, { id: newId(), n: p.days.length + 1, date, city: last?.city ?? "", title: t("Free day"), items: [] }] }; })} /></View>
           <View style={{ flex: 1 }}><Button title={t("Remove last day")} variant="secondary" size="M" disabled={plan.days.length <= 1} onPress={() => update((p) => ({ ...p, days: p.days.slice(0, -1) }))} /></View>
         </View>}
         {!!saveMsg && <Note tone={saveMsg === t("Saved to your account") ? "green" : "amber"}><View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>{saveMsg === t("Saved to your account") && <SavedCheck key={saveMsg + String(savedTick)} />}<Text variant="subhead" tone="secondary" testID="trip-save-msg" style={{ flex: 1 }}>{saveMsg}</Text></View></Note>}

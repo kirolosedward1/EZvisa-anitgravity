@@ -68,6 +68,7 @@ export function serviceClient(): SupabaseClient | null {
 export async function applyIntentStatus(
   supabase: SupabaseClient,
   intent: ZiinaIntent,
+  depth = 0,
 ): Promise<{ row: Record<string, any> | null; status: string | null; changed: boolean; error?: string }> {
   const { data: row, error } = await supabase
     .from("visa_applications")
@@ -75,7 +76,29 @@ export async function applyIntentStatus(
     .eq("payment_id", intent.id)
     .maybeSingle()
   if (error) return { row: null, status: null, changed: false, error: error.code }
-  if (!row) return { row: null, status: null, changed: false }
+  if (!row) {
+    // An older intent for the application (replaced by a newer one, e.g. a second tab or the app vs the website)
+    // was paid. create-payment records every intent id it issues in additional_notes.paymentIntentIds.
+    const older = await findByEarlierIntent(supabase, intent.id)
+    if (older.error) return { row: null, status: null, changed: false, error: older.error }
+    if (!older.row) return { row: null, status: null, changed: false }
+    if (mapIntentStatus(intent.status) !== "paid") return { row: older.row, status: older.row.payment_status, changed: false }
+    if (isPaidStatus(older.row.payment_status)) {
+      // Both an earlier and the current intent were paid: the customer was charged twice. Log it for a refund.
+      console.error(`[payment] DOUBLE PAYMENT: application ${older.row.id} already paid via ${older.row.payment_id ?? "?"}; earlier intent ${intent.id} was also paid. Refund one.`)
+      return { row: older.row, status: older.row.payment_status, changed: false }
+    }
+    if (depth > 0) return { row: older.row, status: older.row.payment_status, changed: false }
+    // Re-point the application at the intent that was actually paid (only if nobody changed the link meanwhile),
+    // then apply its status normally (once: depth guard).
+    let relink = supabase.from("visa_applications").update({ payment_id: intent.id }).eq("id", older.row.id)
+    relink = older.row.payment_id == null ? relink.is("payment_id", null) : relink.eq("payment_id", older.row.payment_id)
+    const { data: relinked, error: relinkError } = await relink.select("id")
+    if (relinkError) return { row: older.row, status: older.row.payment_status, changed: false, error: relinkError.code }
+    if (!relinked?.length) return { row: older.row, status: older.row.payment_status, changed: false }
+    console.info(`[payment] ${older.row.id} relinked to paid earlier intent ${intent.id} (was ${older.row.payment_id ?? "null"})`)
+    return applyIntentStatus(supabase, intent, depth + 1)
+  }
   const next = mapIntentStatus(intent.status)
   if (isPaidStatus(row.payment_status) || row.payment_status === next) return { row, status: row.payment_status, changed: false }
   const { data: updated, error: upError } = await supabase
@@ -92,5 +115,47 @@ export async function applyIntentStatus(
   if (upError) return { row, status: row.payment_status, changed: false, error: upError.code }
   // Audit trail (no personal data): every stored payment status change, whichever path made it.
   console.info(`[payment] ${row.id} ${row.payment_status ?? "null"} -> ${next} (intent ${intent.id}, ziina ${intent.status})`)
-  return { row: updated ?? row, status: next, changed: true }
+  const stored = updated ?? row
+  // Email on the transition, whichever path stored it (webhook, check-payment polling on /payment-success, or the
+  // reconcile cron). Previously only the webhook emailed, and it usually arrived after check-payment had already
+  // stored "paid", so the confirmation email was skipped. EmailService dedupes per (event, application).
+  if (next === "paid" || next === "failed") await sendPaymentEmail(stored, intent, next)
+  return { row: stored, status: next, changed: true }
+}
+
+async function sendPaymentEmail(application: Record<string, any>, intent: ZiinaIntent, status: "paid" | "failed") {
+  if (!application.email) return
+  try {
+    const { EmailService } = await import("@/lib/email/service")
+    await EmailService.sendEvent({
+      event: status === "paid" ? "payment.completed" : "payment.failed",
+      entityId: application.id,
+      recipient: application.email,
+      language: application.preferred_language === "ar" ? "ar" : "en",
+      data: {
+        id: application.id,
+        trackingToken: application.tracking_token,
+        firstName: application.full_name?.split(" ")[0] || "Customer",
+        destination: application.destination_country || "",
+        paymentAmount: typeof intent.amount === "number" ? intent.amount / 100 : 0,
+        currency: intent.currency_code || "AED",
+      },
+    })
+  } catch (e) {
+    console.error("[payment] could not send payment email", application.id, e instanceof Error ? e.message : e)
+  }
+}
+
+async function findByEarlierIntent(supabase: SupabaseClient, intentId: string): Promise<{ row: Record<string, any> | null; error?: string }> {
+  if (!/^[A-Za-z0-9_-]{6,128}$/.test(intentId)) return { row: null }
+  const { data, error } = await supabase
+    .from("visa_applications")
+    .select("*")
+    .like("additional_notes", `%${intentId}%`)
+    .limit(5)
+  if (error) return { row: null, error: error.code }
+  const match = (data ?? []).find((r) => {
+    try { const n = JSON.parse(r.additional_notes ?? "{}"); return Array.isArray(n?.paymentIntentIds) && n.paymentIntentIds.includes(intentId) } catch { return false }
+  })
+  return { row: match ?? null }
 }

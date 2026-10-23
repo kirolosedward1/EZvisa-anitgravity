@@ -11,6 +11,7 @@ import { PaymentWaitBang, PaymentWaitRing } from "@/components/payment/payment-m
 import { useArabic } from "@/components/ready-line"
 import { useEffect, useState, Suspense } from "react"
 import { getPaymentConfirmationWhatsAppUrl, getWhatsAppUrl } from "@/lib/whatsapp"
+import { clearWizardAfterPayment } from "@/lib/wizard-storage"
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const POLL_MS = 2000
@@ -51,8 +52,8 @@ function PaymentSuccessContent() {
     const finish = (next: PaymentOutcome) => {
       if (cancelled) return
       if (next === "paid") {
-        sessionStorage.removeItem("pendingApplication")
-        localStorage.removeItem("visa-wizard-form")
+        // Paid: the next /apply visit must start a new application, not offer (and re-pay) this one.
+        clearWizardAfterPayment()
       }
       setOutcome(next)
     }

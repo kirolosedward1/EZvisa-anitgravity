@@ -4,7 +4,7 @@ import { headers } from "next/headers"
 export async function generateMetadata(): Promise<Metadata> {
   const arabic = (await headers()).get("x-ez-locale") === "ar"
   return {
-    title: arabic ? "تأكيد الدفع" : "Payment Success | EZvisa",
+    title: arabic ? "تأكيد الدفع" : "Payment Success",
     robots: { index: false, follow: false },
   }
 }

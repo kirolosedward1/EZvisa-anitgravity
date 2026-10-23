@@ -119,7 +119,8 @@ export async function POST(request: NextRequest) {
     if (appError || !appData || (userEmail && String(appData.email ?? "").toLowerCase() !== userEmail)) {
       return NextResponse.json({ error: "Application not found or unauthorized" }, { status: 403 })
     }
-    if (userEmail && !isPaid(appData)) {
+    // Same rule for tracking-link uploads as for signed-in users: documents only after payment.
+    if (!isPaid(appData)) {
       return NextResponse.json({ error: "Documents can be uploaded after payment" }, { status: 403 })
     }
     if (appData.application_status && !UPLOAD_STATUSES.includes(appData.application_status)) {

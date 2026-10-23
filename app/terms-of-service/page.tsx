@@ -5,6 +5,7 @@ import { InnerHero } from "@/components/inner-hero"
 export const metadata = {
   title: "Terms of Service",
   description: "Terms of Service for EZvisa - Read our terms and conditions for using our visa assistance services.",
+  alternates: { canonical: "https://www.ezvisa.net/terms-of-service" },
 }
 
 export default function TermsOfServicePage() {

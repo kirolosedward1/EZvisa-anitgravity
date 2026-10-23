@@ -115,11 +115,14 @@ export async function startPayment(appId: string): Promise<PayOutcome> {
 
 /** After a relaunch: an application whose checkout this device opened and Ziina now reports as paid or processing,
  *  so its result can be shown again. Null when there is nothing to show or the network is down. */
-export async function paymentToResume(isPaidInDb: (appId: string) => Promise<boolean | null>): Promise<string | null> {
+/** `isPaidInDb` returns "missing" when the signed-in account can't see the application (another account's checkout):
+ *  that checkout is forgotten instead of opening its result screen. */
+export async function paymentToResume(isPaidInDb: (appId: string) => Promise<boolean | null | "missing">): Promise<string | null> {
   for (const p of (await knownPayments()).sort((a, b) => b.at - a.at)) {
     const s = await intentStatus(p.paymentId).catch(() => null);
     if ((s === "completed" || s === "pending" || s === "requires_user_action") && p.shown !== s) {
-      if ((await isPaidInDb(p.appId).catch(() => null)) === true) { await forgetPayment(p.appId); continue; }
+      const inDb = await isPaidInDb(p.appId).catch(() => null);
+      if (inDb === true || inDb === "missing") { await forgetPayment(p.appId); continue; }
       await update((m) => { if (m[p.appId]) m[p.appId].shown = s; }); // once per status, not on every launch
       return p.appId;
     }

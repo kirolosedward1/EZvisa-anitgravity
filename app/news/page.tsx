@@ -21,12 +21,12 @@ export const metadata: Metadata = {
     "travel blog",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/news",
+    canonical: "https://www.ezvisa.net/news",
   },
   openGraph: {
     title: "Schengen Visa News, Guides & Travel Tips",
     description: "Expert advice and latest updates on European visa applications.",
-    url: "https://ezvisa.net/news",
+    url: "https://www.ezvisa.net/news",
     type: "website",
   },
 }

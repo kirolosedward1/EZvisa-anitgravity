@@ -24,28 +24,14 @@ export function ContactForm() {
     setIsError(false)
 
     try {
-      const html = `
-        <h2 style="color: #2563eb;">New Contact Form Submission</h2>
-        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-          <tr style="background: #f8fafc;"><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold; width: 120px;">Name</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${name}</td></tr>
-          <tr><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold;">Email</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${email}</td></tr>
-          <tr style="background: #f8fafc;"><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold;">Subject</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${subject}</td></tr>
-          <tr><td style="padding: 12px; border: 1px solid #e2e8f0; font-weight: bold;">Message</td><td style="padding: 12px; border: 1px solid #e2e8f0;">${message.replace(/\n/g, '<br>')}</td></tr>
-        </table>
-      `;
-
+      // The server builds and escapes the email and always sends it to the EZvisa inbox.
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: "ezvisa.net@gmail.com", // Send to admin
-          subject: `EZvisa Contact: ${subject}`,
-          html: html,
-          type: "admin_notification"
-        })
+        body: JSON.stringify({ name, email, subject, message }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.message || "Failed to send message. Please try again.");

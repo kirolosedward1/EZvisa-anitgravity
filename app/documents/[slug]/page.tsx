@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
-  const title = `Required Documents for ${countryData.name} Tourist Visa | EZvisa`
+  const title = `Required Documents for ${countryData.name} Tourist Visa`
   const description = `Complete checklist of documents needed for ${countryData.name} Schengen tourist visa application. Prepare your ${countryData.name} visa file correctly.`
 
   return {

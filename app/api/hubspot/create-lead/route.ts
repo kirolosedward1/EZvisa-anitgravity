@@ -29,6 +29,11 @@ async function createHubSpotLead(formData: any, clientIp: string) {
   // Support both env variable names for backward compatibility
   const hubspotAccessToken = process.env.HUBSPOT_ACCESS_TOKEN || process.env.HUBSPOT_API_KEY
 
+  if (!sanitizedEmail) {
+    console.warn("[hubspot] lead skipped: no valid email")
+    return
+  }
+
   if (!hubspotAccessToken) {
     console.error("[v0] HubSpot access token not configured (HUBSPOT_ACCESS_TOKEN or HUBSPOT_API_KEY)")
     return
@@ -38,12 +43,12 @@ async function createHubSpotLead(formData: any, clientIp: string) {
 
   // Prepare contact properties - only standard HubSpot fields
   const properties = {
-    email: formData.email,
-    firstname: formData.firstName,
-    lastname: formData.lastName,
-    phone: formData.phone || "",
-    jobtitle: formData.jobTitle || "",
-    company: formData.companyName || "",
+    email: sanitizedEmail,
+    firstname: sanitizedFirstName,
+    lastname: sanitizedLastName,
+    phone: sanitizedPhone,
+    jobtitle: sanitizeInput(formData.jobTitle || "", 100),
+    company: sanitizeInput(formData.companyName || "", 150),
     hs_lead_status: "NEW",
     lifecyclestage: "lead",
   }

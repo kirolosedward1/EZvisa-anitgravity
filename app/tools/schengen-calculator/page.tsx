@@ -4,7 +4,7 @@ import { Footer } from "@/components/footer"
 import { SchengenCalculatorClient } from "@/components/tools/schengen-calculator-client"
 
 export const metadata: Metadata = {
-  title: "Schengen 90/180-Day Calculator | EZvisa UAE",
+  title: "Schengen 90/180-Day Calculator",
   description: "Free interactive Schengen 90/180 day rule calculator for UAE residents. Check your remaining allowable days, avoid overstay penalties, and plan your European trip.",
   alternates: {
     canonical: "https://www.ezvisa.net/tools/schengen-calculator",

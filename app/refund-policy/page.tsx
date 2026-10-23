@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Refund Policy - EZvisa Terms and Conditions",
   description:
     "Understanding EZvisa's refund policy for visa application services. Clear terms and conditions for service fees.",
+  alternates: { canonical: "https://www.ezvisa.net/refund-policy" },
 }
 
 export default function RefundPolicyPage() {

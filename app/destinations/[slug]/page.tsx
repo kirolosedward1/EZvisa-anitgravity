@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     }
   }
 
-  const title = `Apply for ${destination.name} Schengen Visa from UAE | EZvisa`
+  const title = `Apply for ${destination.name} Schengen Visa from UAE`
   const description = `Get your ${destination.name} visa file prepared from Dubai and Abu Dhabi. We prepare your application in 1–2 days. The embassy's decision takes longer.`
 
   return {

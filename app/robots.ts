@@ -6,12 +6,13 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin/', '/_next/', '/private/'],
+        // /_next/ is not blocked: crawlers need the JS and CSS to render pages.
+        disallow: ['/api/', '/admin/', '/private/', '/payment-success', '/payment-failed', '/track/', '/dashboard', '/account'],
       },
       {
         userAgent: 'Googlebot',
         allow: '/',
-        disallow: ['/api/', '/admin/'],
+        disallow: ['/api/', '/admin/', '/payment-success', '/payment-failed', '/track/', '/dashboard', '/account'],
       },
       {
         userAgent: 'Googlebot-Image',

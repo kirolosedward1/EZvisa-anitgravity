@@ -18,12 +18,12 @@ export const metadata: Metadata = {
     "travel visa company",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/about",
+    canonical: "https://www.ezvisa.net/about",
   },
   openGraph: {
     title: "About EZvisa - Expert Schengen Visa Service",
     description: "Your trusted partner for European visa applications with 98% approval rate.",
-    url: "https://ezvisa.net/about",
+    url: "https://www.ezvisa.net/about",
     type: "website",
   },
 }

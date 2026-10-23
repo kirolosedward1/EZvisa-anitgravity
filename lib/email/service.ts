@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Templates } from "./templates";
+import { escapeHtml } from "@/lib/sanitize";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || "EZvisa";
@@ -62,7 +63,13 @@ export class EmailService {
     if (!templateFn) {
       throw new Error(`Template for event ${event} not found`);
     }
-    const { subject, html } = templateFn(data, language);
+    // Values such as firstName and destination come from customer input and are interpolated into HTML.
+    const safeData = Object.fromEntries(
+      Object.entries(data ?? {}).map(([k, v]) => [k, typeof v === "string" ? escapeHtml(v.replace(/[\r\n]+/g, " ")) : v]),
+    );
+    const { subject: rawSubject, html } = templateFn(safeData as any, language);
+    // The subject is plain text: undo the entity escaping there (no HTML is rendered in a subject line).
+    const subject = rawSubject.replace(/&(amp|lt|gt|quot|#39|#x27|#x2F|#x60|#x3D);/g, (m) => ({ "&amp;": "&", "&lt;": "<", "&gt;": ">", "&quot;": '"', "&#39;": "'", "&#x27;": "'", "&#x2F;": "/", "&#x60;": "`", "&#x3D;": "=" } as Record<string, string>)[m] ?? m);
 
     // 3. Handle Sandbox mode
     let finalRecipient = recipient;
@@ -92,6 +99,8 @@ export class EmailService {
           subject: finalSubject,
           html: html,
         }),
+        // Called from payment paths (webhook, check-payment polling): a slow provider must not hold them up.
+        signal: AbortSignal.timeout(8000),
       });
 
       const result = await response.json();

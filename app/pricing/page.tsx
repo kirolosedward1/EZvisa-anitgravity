@@ -20,12 +20,12 @@ export const metadata: Metadata = {
     "visa application charges",
   ],
   alternates: {
-    canonical: "https://ezvisa.net/pricing",
+    canonical: "https://www.ezvisa.net/pricing",
   },
   openGraph: {
     title: "Schengen Visa Pricing - 249 AED All-Inclusive",
     description: "Transparent pricing for Schengen visa applications. All-inclusive service from 249 AED.",
-    url: "https://ezvisa.net/pricing",
+    url: "https://www.ezvisa.net/pricing",
     type: "website",
   },
 }
