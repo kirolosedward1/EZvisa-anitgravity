@@ -22,7 +22,7 @@ export default function ReceiptScreen() {
   const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null); const [busy, setBusy] = useState(false);
   useEffect(() => { let live = true; withTimeout(getApplication(id!), 12000).then((x) => { if (live) setA(x); }).catch((e) => { if (live) setErr(e?.message ?? String(e)); }); return () => { live = false; }; }, [id]);
   const name = (session?.user.user_metadata?.full_name as string | undefined) ?? a?.full_name ?? ""; const mail = session?.user.email ?? a?.email ?? "";
-  const pdf = async () => { if (!a) return; setBusy(true); try { await shareReceipt(a, name, mail); } finally { setBusy(false); } };
+  const pdf = async () => { if (!a) return; setBusy(true); try { await shareReceipt(a, name, mail, lang); } finally { setBusy(false); } };
   const back = () => (router.canGoBack() ? router.back() : router.replace("/account"));
   const flip = rtl || I18nManager.isRTL;
   const info = a ? receiptInfo(a, lang) : null;

@@ -178,12 +178,16 @@ export function validateEmployment(f: WizardForm): Errors {
   }
   return e;
 }
+/** A real calendar date in YYYY-MM-DD (rejects e.g. 2026-02-31, which Date.parse would roll over). */
+export const realDate = (s: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); if (!m) return false; const d = new Date(+m[1], +m[2] - 1, +m[3]); return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]; };
 export function validateTrip(f: WizardForm): Errors {
   const e: Errors = {};
   if (!f.purposeOfTrip) e.purposeOfTrip = "Please select the purpose of your trip";
   if (!f.travelStartDate) e.travelStartDate = "Please select a departure date";
-  else if (Date.parse(f.travelStartDate) < earliestDeparture().getTime() - day / 2) e.travelStartDate = "Departure must be at least 15 days from today";
+  else if (realDate(f.travelStartDate) && Date.parse(f.travelStartDate) < earliestDeparture().getTime() - day / 2) e.travelStartDate = "Departure must be at least 15 days from today";
+  if (f.travelStartDate && !realDate(f.travelStartDate)) e.travelStartDate = "Please enter a valid date";
   if (!f.travelEndDate) e.travelEndDate = "Please select a return date";
+  else if (!realDate(f.travelEndDate)) e.travelEndDate = "Please enter a valid date";
   else if (!f.travelStartDate && Date.parse(f.travelEndDate) < earliestDeparture().getTime() + day / 2) e.travelEndDate = "Return date must be at least 16 days from today";
   else if (f.travelStartDate && tripDays(f) <= 0) e.travelEndDate = "Return date must be after departure date";
   else if (tripDays(f) > 90) e.travelEndDate = "Schengen visits are limited to 90 days";

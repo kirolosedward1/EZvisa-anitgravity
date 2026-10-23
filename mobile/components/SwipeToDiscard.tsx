@@ -52,8 +52,10 @@ export function SwipeToDiscard({ onDiscard, radius = 0, enabled = true, testID, 
   return (
     <View onLayout={onLayout} style={{ borderRadius: radius, overflow: "hidden" }} testID={testID}>
       {/* Behind the row: red, with the Discard button at the trailing edge. */}
-      <Animated.View pointerEvents={open ? "auto" : "none"} style={[StyleSheet.absoluteFill, { backgroundColor: c.red, flexDirection: "row", justifyContent: "flex-end", borderRadius: radius }, under]}>
+      <Animated.View pointerEvents={open ? "auto" : "none"} importantForAccessibility={open ? "auto" : "no-hide-descendants"} accessibilityElementsHidden={!open} aria-hidden={!open} style={[StyleSheet.absoluteFill, { backgroundColor: c.red, flexDirection: "row", justifyContent: "flex-end", borderRadius: radius }, under]}>
         <Pressable onPress={discard} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="swipe-discard"
+          // At rest the button is hidden: not focusable by screen readers or the keyboard (the row's own actions offer Discard).
+          disabled={!open && !dragging} focusable={open} accessible={open} tabIndex={open ? 0 : -1} importantForAccessibility={open ? "auto" : "no-hide-descendants"} accessibilityElementsHidden={!open} aria-hidden={!open}
           style={{ width: REVEAL, alignItems: "center", justifyContent: "center", gap: S.xxs }}>
           <Icon name="trash" size={18} color={c.onAccent} />
           <Text variant="caption" weight="600" color={c.onAccent}>{t("Discard")}</Text>

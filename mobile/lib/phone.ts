@@ -14,8 +14,23 @@ const dialOf = (iso: string) => WORLD.find((w) => w.iso2 === iso)?.dial ?? 971;
 /** National digits only: drops the calling code if typed and a leading trunk 0 (e.g. "0563035666" -> "563035666"). */
 export function nationalDigits(iso: string, raw: string): string {
   let d = raw.replace(/\D/g, ""); const dial = String(dialOf(iso));
-  if (raw.trim().startsWith("+") || d.startsWith("00" + dial)) d = d.replace(new RegExp(`^(00)?${dial}`), "");
+  if (raw.trim().startsWith("+") || d.startsWith("00" + dial) || (iso === "AE" && /^9715\d{8}$/.test(d))) d = d.replace(new RegExp(`^(00)?${dial}`), "");
   return d.replace(/^0+/, "");
+}
+/** Country implied by a pasted/typed number: "+44 7700…" or "0044…" -> GB; "971 5…" without + -> AE. null = keep the current one. */
+export function detectCountry(raw: string, current: string): string | null {
+  const s = raw.trim(); const d = s.replace(/\D/g, "");
+  if (s.startsWith("+") || d.startsWith("00")) {
+    const n = d.replace(/^00/, ""); if (n.length < 2) return null;
+    const MAIN: Record<string, string> = { "44": "GB", "1": "US", "7": "RU", "61": "AU", "39": "IT", "47": "NO", "212": "MA", "590": "GP", "262": "RE", "358": "FI" };
+    try { const p = parsePhoneNumberFromString("+" + n); if (p?.countryCallingCode === "44") return "GB"; if (p?.country && p.isValid()) return p.country; if (p?.countryCallingCode && MAIN[p.countryCallingCode]) return MAIN[p.countryCallingCode]; } catch {}
+    // Longest calling-code prefix (shared codes like +1/+7 keep the current country when it matches).
+    const cur = dialOf(current); if (n.startsWith(String(cur))) return null;
+    const hit = [...PHONE_COUNTRIES].sort((a, b) => String(b.dial).length - String(a.dial).length).find((w) => n.startsWith(String(w.dial)));
+    return hit ? hit.iso2 : null;
+  }
+  if (/^9715\d{8}$/.test(d)) return "AE";
+  return null;
 }
 /** As-you-type national formatting: "563035666" -> "56 303 5666". */
 export function formatNational(iso: string, digits: string) {

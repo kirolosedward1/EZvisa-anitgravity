@@ -8,7 +8,7 @@ import { Field } from "./AuthForm";
 import { CircleButton } from "./flow";
 import { useColors, S, R, T, curve } from "../lib/theme";
 import { WORLD } from "../lib/world";
-import { PHONE_COUNTRIES, nationalDigits, formatNational, placeholderFor, toE164 } from "../lib/phone";
+import { PHONE_COUNTRIES, nationalDigits, formatNational, placeholderFor, toE164, detectCountry } from "../lib/phone";
 import { select } from "../lib/haptics";
 import { useT } from "../lib/i18n";
 
@@ -18,7 +18,11 @@ export function CountrySheet({ visible, title, onClose, onPick, selected, select
     const t = q.trim().toLowerCase().replace(/^\+/, "");
     const base = names ? names.map((n) => WORLD.find((w) => w.name === n) ?? { name: n, iso2: n, dial: 0 }) : showDial ? PHONE_COUNTRIES : WORLD;
     // Matches the name (English or Arabic), the ISO code (AE / ARE-style prefixes) or the calling code.
-    return t ? base.filter((w) => w.name.toLowerCase().includes(t) || tr(w.name).includes(q.trim()) || String(w.dial).startsWith(t) || w.iso2.toLowerCase().startsWith(t)) : base;
+    if (!t) return base;
+    const hits = base.filter((w) => w.name.toLowerCase().includes(t) || tr(w.name).includes(q.trim()) || String(w.dial).startsWith(t) || w.iso2.toLowerCase().startsWith(t));
+    // An exact ISO code (e.g. "IN") ranks first, then exact calling code, then name prefix.
+    const rank = (w: { name: string; iso2: string; dial: number }) => (w.iso2.toLowerCase() === t ? 0 : String(w.dial) === t ? 1 : w.name.toLowerCase().startsWith(t) ? 2 : 3);
+    return hits.map((w, i) => [w, i] as const).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([w]) => w);
   }, [q, showDial, names, tr]);
   return (
     <Modal visible={visible} animationType="slide" presentationStyle={Platform.OS === "ios" ? "pageSheet" : undefined} onRequestClose={onClose} transparent={false}>
@@ -36,7 +40,7 @@ export function CountrySheet({ visible, title, onClose, onPick, selected, select
           renderItem={({ item: w }) => {
             const on = selectedName ? w.name === selectedName : w.iso2 === selected;
             return (
-              <PressScale onPress={() => { select(); onPick(w.iso2, w.name); setQ(""); }} accessibilityRole="button" accessibilityState={{ selected: on }} aria-selected={on} accessibilityLabel={showDial ? `${w.name}, plus ${w.dial}` : w.name}
+              <PressScale onPress={() => { select(); onPick(w.iso2, w.name); setQ(""); }} accessibilityRole="radio" accessibilityState={{ selected: on, checked: on }} aria-selected={on} aria-checked={on} accessibilityLabel={`${showDial ? `${tr(w.name)}, plus ${w.dial}` : tr(w.name)}${on ? `, ${tr("selected")}` : ""}`}
                 style={({ pressed }) => [{ minHeight: 52, flexDirection: "row", alignItems: "center", gap: S.sm, paddingVertical: S.xs, opacity: pressed ? 0.6 : 1 }]}>
                 <Flag country={w.name} size={28} />
                 <Text variant="body" style={{ flex: 1 }}>{tr(w.name)}</Text>
@@ -55,18 +59,18 @@ export function CountrySheet({ visible, title, onClose, onPick, selected, select
 export function PhoneField({ country, local, onChange, error, autoFocus }: { country: string; local: string; onChange: (iso2: string, local: string, full: string) => void; error?: boolean; autoFocus?: boolean }) {
   const c = useColors(); const [open, setOpen] = useState(false); const { t } = useT();
   const w = WORLD.find((x) => x.iso2 === country) ?? WORLD.find((x) => x.iso2 === "AE")!;
-  const emit = (iso: string, raw: string) => { const d = nationalDigits(iso, raw); onChange(iso, formatNational(iso, d), toE164(iso, d) ?? ""); };
+  const emit = (iso0: string, raw: string) => { const iso = detectCountry(raw, iso0) ?? iso0; const d = nationalDigits(iso, raw); onChange(iso, formatNational(iso, d), toE164(iso, d) ?? ""); };
   return (
     <View style={{ flexDirection: "row", alignItems: "stretch", backgroundColor: c.card, borderRadius: R.input, minHeight: 56, overflow: "hidden", borderWidth: 1, borderColor: error ? c.red : c.separator, direction: "ltr" } as any}>
       <PressScale onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${t("Country code")} ${t(w.name)}, +${w.dial}`} testID="phone-country"
-        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.md, minWidth: 44, opacity: pressed ? 0.6 : 1, borderEndWidth: 1, borderEndColor: c.separator })}>
+        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.sm, minWidth: 44, flexShrink: 0, opacity: pressed ? 0.6 : 1, borderEndWidth: 1, borderEndColor: c.separator })}>
         <Flag country={w.name} size={22} />
         <Text variant="body" tabular>+{w.dial}</Text>
         <Icon name="chevron.down" size={11} color={c.secondaryLabel} weight="semibold" />
       </PressScale>
       <TextInput value={local} onChangeText={(v) => emit(w.iso2, v)} autoFocus={autoFocus} testID="phone-input"
         placeholder={placeholderFor(w.iso2)} placeholderTextColor={c.secondaryLabel} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" accessibilityLabel={t("Phone number")}
-        style={[T.body, { flex: 1, color: c.label, paddingHorizontal: S.md, minHeight: 56, textAlign: "left" }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+        style={[T.body, { flex: 1, minWidth: 0, flexShrink: 1, color: c.label, paddingHorizontal: S.md, minHeight: 56, textAlign: "left" }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
       <CountrySheet visible={open} title={t("Country code")} showDial selected={w.iso2} onClose={() => setOpen(false)} onPick={(iso) => { setOpen(false); emit(iso, local); }} />
     </View>
   );
