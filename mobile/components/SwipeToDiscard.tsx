@@ -44,18 +44,21 @@ export function SwipeToDiscard({ onDiscard, radius = 0, enabled = true, testID, 
     onPanResponderTerminate: () => { live.current.drag(false); live.current.snap(0); },
   })).current;
   const row = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  // The red layer only exists while the row is actually moved: at rest nothing can peek out behind the card
+  // (a press-scale, a translucent card or a sub-pixel gap used to show the Discard button half open).
+  const under = useAnimatedStyle(() => ({ opacity: Math.abs(x.value) > 0.5 ? 1 : 0 }));
   const onLayout = (e: LayoutChangeEvent) => { width.current = e.nativeEvent.layout.width; };
   if (!enabled) return <>{children}</>;
   return (
     <View onLayout={onLayout} style={{ borderRadius: radius, overflow: "hidden" }} testID={testID}>
       {/* Behind the row: red, with the Discard button at the trailing edge. */}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: c.red, flexDirection: "row", justifyContent: "flex-end", borderRadius: radius }]}>
+      <Animated.View pointerEvents={open ? "auto" : "none"} style={[StyleSheet.absoluteFill, { backgroundColor: c.red, flexDirection: "row", justifyContent: "flex-end", borderRadius: radius }, under]}>
         <Pressable onPress={discard} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="swipe-discard"
           style={{ width: REVEAL, alignItems: "center", justifyContent: "center", gap: S.xxs }}>
           <Icon name="trash" size={18} color={c.onAccent} />
           <Text variant="caption" weight="600" color={c.onAccent}>{t("Discard")}</Text>
         </Pressable>
-      </View>
+      </Animated.View>
       <Animated.View {...pan.panHandlers} style={row}>
         <SwipeActive.Provider value={open || dragging}>{children}</SwipeActive.Provider>
         {/* While the button shows, a tap on the row closes it instead of opening the application. */}

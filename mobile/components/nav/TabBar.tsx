@@ -57,7 +57,7 @@ function NewAppButton() {
   );
 }
 
-const LENS = { damping: 18, stiffness: 220 };      // droplet travel: quick with a soft settle
+const LENS = { damping: 18, stiffness: 220, overshootClamping: true };      // droplet travel: quick with a soft settle
 const SETTLE = { damping: 12, stiffness: 320, mass: 0.6 };    // stretch / squash recovery
 
 /** One tab: the icon only (the label is read by VoiceOver), crossfading outline/filled and grey/tint, with a spring scale. */
@@ -117,16 +117,23 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const slots = useRef<{ x: number; w: number }[]>([]);
   const x = useSharedValue(0); const w = useSharedValue(0); const sx = useSharedValue(1); const sy = useSharedValue(1); const shown = useSharedValue(0);
   const progress = [useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0), useSharedValue(0)];
+  // Row width (the tab-row container the lens lives in). The lens x is always clamped inside it: [PAD, rowW - DOT - PAD].
+  const rowW = useRef(0);
+  const clampX = (v: number) => (rowW.current > 0 ? Math.min(Math.max(v, PAD), rowW.current - DOT - PAD) : v);
   const moveTo = (i: number, animate = true) => {
-    const s = slots.current[i]; if (!s) return;
-    if (!animate || reduce || !shown.value) { x.value = reduce && shown.value ? withTiming(s.x, { duration: DUR.fast }) : s.x; w.value = s.w; shown.value = 1; return; }
-    const far = Math.abs(s.x - x.value) > 4;
-    x.value = withSpring(s.x, LENS); w.value = DOT;
-    void far; // fixed 44x44 circle: only translateX animates (no squash, no width change)
+    const s = slots.current[i];
+    // Nothing is shown until this tab's slot and the row are measured (no stray circle at x = 0 on first render / remount).
+    if (!s || !(s.w > 0) || rowW.current <= 0) { shown.value = 0; return; }
+    const tx = clampX(s.x);
+    // First placement (mount, remount, after a re-measure) jumps; only a real tab change animates translateX.
+    if (!animate || reduce || !shown.value) { x.value = reduce && shown.value ? withTiming(tx, { duration: DUR.fast }) : tx; w.value = DOT; shown.value = 1; return; }
+    x.value = withSpring(tx, LENS); w.value = DOT; // fixed 44x44 circle: only translateX animates
   };
+  const onRow = (e: LayoutChangeEvent) => { const nw = e.nativeEvent.layout.width; if (Math.abs(nw - rowW.current) > 0.5) { rowW.current = nw; moveTo(state.index, false); } };
   useEffect(() => { moveTo(state.index); }, [state.index, reduce]);
   // The selected highlight is a circle (DOT x DOT) centred on the tab's icon.
-  const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; slots.current[i] = { x: lx + (width - DOT) / 2, w: DOT }; if (i === state.index) moveTo(i, false); };
+  const onSlot = (i: number) => (e: LayoutChangeEvent) => { const { x: lx, width } = e.nativeEvent.layout; const prev = slots.current[i]; slots.current[i] = { x: lx + (width - DOT) / 2, w: width > 0 ? DOT : 0 };
+    if (i === state.index && (!prev || Math.abs(prev.x - slots.current[i].x) > 0.5 || !shown.value)) moveTo(i, false); };
   // Always a true circle at rest (DOT x DOT); the squash/stretch only plays while it travels.
   const lens = useAnimatedStyle(() => ({ opacity: shown.value, transform: [{ translateX: x.value }] }));
 
@@ -149,7 +156,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const pan = useRef(PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
     onPanResponderGrant: () => { startX.current = x.value; },
-    onPanResponderMove: (_, g) => { const max = Math.max(...slots.current.filter(Boolean).map((s) => s.x)); x.value = Math.min(Math.max(startX.current + g.dx, 0), max); },
+    onPanResponderMove: (_, g) => { const max = Math.max(...slots.current.filter(Boolean).map((s) => s.x)); x.value = clampX(Math.min(Math.max(startX.current + g.dx, PAD), max)); },
     onPanResponderRelease: () => { live.current.go(live.current.nearest(x.value + w.value / 2)); },
     onPanResponderTerminate: () => { live.current.moveTo(live.current.idx); },
   })).current;
@@ -160,10 +167,10 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         <Material radius={H / 2} />
         {/* specular rim: a 1pt light edge just inside the outer hairline */}
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: H / 2, borderWidth: 1, borderColor: c.chromeRim }]} />
-        <View {...pan.panHandlers} style={{ height: H, flexDirection: "row", alignItems: "center", paddingHorizontal: PAD }} accessibilityRole="tablist">
+        <View {...pan.panHandlers} onLayout={onRow} style={{ height: H, flexDirection: "row", alignItems: "center", paddingHorizontal: PAD, borderRadius: H / 2, overflow: "hidden" }} accessibilityRole="tablist">
           {/* Physical `left` on purpose: the lens is positioned by translateX from measured layout x, which is always
               measured from the left edge, so it lines up in LTR and RTL alike. */}
-          <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 0, top: (H - DOT) / 2, width: DOT, height: DOT, borderRadius: DOT / 2, overflow: "hidden",
+          <Animated.View pointerEvents="none" testID="tab-lens" style={[{ position: "absolute", left: 0, top: (H - DOT) / 2, width: DOT, height: DOT, borderRadius: DOT / 2, overflow: "hidden",
             backgroundColor: c.lens, borderWidth: 1, borderColor: c.lensRim },
             dark ? null : { shadowColor: c.shadow, shadowOpacity: 0.08, shadowRadius: PAD, shadowOffset: { width: 0, height: 2 } }, lens]}>
             {glass && <GlassView glassEffectStyle="clear" style={[StyleSheet.absoluteFill, { borderRadius: DOT / 2 }]} />}

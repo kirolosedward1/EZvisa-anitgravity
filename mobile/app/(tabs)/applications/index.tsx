@@ -2,11 +2,12 @@ import { useState } from "react";
 import { ScrollView, View, RefreshControl } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
+import { SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
 import { buildTimeline, doneCount } from "../../../lib/timeline";
 import { useT } from "../../../lib/i18n";
 import { useColors, useIsDark, S, R, curve, card, ICON } from "../../../lib/theme";
 import { STATUS_LABEL, type Application } from "../../../lib/data";
+import { nextAction } from "../../../lib/nextStep";
 import { useApps, ACTIVE } from "../../../lib/useApps";
 import { tap } from "../../../lib/haptics";
 import { askDiscard, isAbandoned } from "../../../lib/discard";
@@ -23,7 +24,7 @@ const range = (a?: string | null, b?: string | null) => (!a ? "" : !b || b.slice
 function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
   const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const steps = buildTimeline(a); const swiping = useContext(SwipeActive);
   return (
-    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift={!swiping} disabled={swiping} scaleTo={swiping ? 1 : undefined}
+    <PressScale onPress={() => { tap(); router.push((nextAction(a)?.href ?? `/applications/${a.id}`) as any); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift={!swiping} disabled={swiping} scaleTo={swiping ? 1 : undefined}
       style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={44} />
@@ -37,7 +38,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
       </View>
       <View style={{ gap: S.xs }}>
         <ProgressSegments count={steps.length} index={doneCount(steps)} fraction={0} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t(STATUS_LABEL[a.status] ?? a.status)} />
-        <StatusPill v={a.status} a={a} />
+        <StatusPills a={a} />
       </View>
     </PressScale>
   );

@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { nextAction } from "../../lib/nextStep";
 import { stage } from "../../lib/stage";
 import React, { memo, useEffect } from "react";
 import { View, Pressable, Image, StyleProp, ViewStyle } from "react-native";
@@ -45,6 +47,27 @@ export function StatusPill({ v, a }: { v: string; a?: { status: string; payment_
   const { t } = useT();
   const c = useColors(); const st = a ? stage(a) : null; const col = st ? st.color ?? (c as any)[st.tone] ?? c.grey : STATUS_TONE(c, v); v = st ? st.key : v;
   return <View style={[{ backgroundColor: col + "1F", borderRadius: R.chip, paddingHorizontal: S.xs, paddingVertical: S.xxs, alignSelf: "flex-start" }, curve]}><Text variant="caption" weight="600" color={col}>{t(st ? st.label : STATUS_LABEL[v] ?? v)}</Text></View>;
+}
+
+/** Status pill plus, for a paid application with something left to do, the specific action (lib/nextStep), 8pt after it.
+ *  Falls back to "Action required" when the full label doesn't fit on the row (e.g. 375 pt wide). */
+export function StatusPills({ a }: { a: Application }) {
+  const { t } = useT(); const act = nextAction(a as any);
+  const [rowW, setRowW] = useState(0); const [needW, setNeedW] = useState(0);
+  const short = !!act && rowW > 0 && needW > rowW;
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }} onLayout={(e) => setRowW(e.nativeEvent.layout.width)} testID="status-pills">
+      {/* Invisible measure of the full-length pair, so the choice doesn't flicker. */}
+      {act && <View pointerEvents="none" style={{ position: "absolute", opacity: 0, flexDirection: "row", gap: 8 }} onLayout={(e) => setNeedW(e.nativeEvent.layout.width)}>
+        <StatusPill v={a.status} a={a} /><ActionPill label={t(act.label)} />
+      </View>}
+      <StatusPill v={a.status} a={a} />
+      {act && <ActionPill label={t(short ? act.short : act.label)} />}
+    </View>
+  );
+}
+export function ActionPill({ label }: { label: string }) {
+  return <View style={[{ backgroundColor: "#FFF1E6", borderRadius: R.chip, paddingHorizontal: S.xs, paddingVertical: S.xxs, alignSelf: "flex-start" }, curve]} testID="action-pill"><Text variant="caption" weight="600" color="#B83200" numberOfLines={1}>{label}</Text></View>;
 }
 
 // Customer-facing journey, from the live columns only: application_status (website/admin: submitted -> reviewing -> ready |
