@@ -61,8 +61,8 @@ export default function Countries() {
     return [...m.entries()];
   }, [rtl, tr]);
   const { width } = useWindowDimensions(); const cardW = Math.floor((width - S.gutter * 2 - S.sm) / 2);
-  const [grid, setGrid] = useState(false);
-  useEffect(() => { AsyncStorage.getItem(VIEW_KEY).then((v) => setGrid(v === "grid")).catch(() => {}); }, []);
+  const [grid, setGrid] = useState(true); // the photo grid is the default; "list" is remembered when chosen
+  useEffect(() => { AsyncStorage.getItem(VIEW_KEY).then((v) => setGrid(v !== "list")).catch(() => {}); }, []);
   const setView = (g: boolean) => { select(); setGrid(g); AsyncStorage.setItem(VIEW_KEY, g ? "grid" : "list").catch(() => {}); };
   const scroll = useRef<ScrollView>(null); const ys = useRef<Record<string, number>>({}); const allY = useRef(0); const wrapY = useRef(0);
   return (
