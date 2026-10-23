@@ -1,30 +1,27 @@
 import type { Metadata } from "next"
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
-import { HowItWorksContent } from "@/components/how-it-works-content"
-import { Mail, RefreshCw, CheckCircle2 } from "lucide-react"
-import { WhatYouGetSection } from "@/components/what-you-get-section" // Import WhatYouGetSection
 import { InnerHero } from "@/components/inner-hero"
-import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
+import { HowItWorksSimple } from "@/components/how-it-works-simple"
+import { AfterPaymentTimeline } from "@/components/after-payment-timeline"
+import { ServicesSection } from "@/components/services-section"
+import { ContactSection } from "@/components/contact-section"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
 export const metadata: Metadata = {
-  title: "How It Works - 4-Step Schengen Visa Application Process",
+  title: "How It Works: From Your First Answer to Your Visa Appointment",
   description:
-    "Learn how EZvisa prepares your Schengen visa file. Simple 4-step process. We prepare your application in 1–2 days. The embassy's decision takes longer.",
-  keywords: [
-    "visa application process",
-    "how to apply visa",
-    "Schengen visa steps",
-    "visa application guide",
-    "Europe visa process",
-  ],
+    "How EZvisa prepares your Schengen visa file: answer a few questions, pay 249 AED, upload your documents, and get your application form, cover letter, itinerary and reservations in 1–2 days.",
+  keywords: ["visa application process", "how to apply Schengen visa UAE", "Schengen visa steps", "Schengen visa appointment Dubai"],
   alternates: {
     canonical: "https://www.ezvisa.net/how-it-works",
   },
   openGraph: {
-    title: "How It Works - 4-Step Visa Application Process",
-    description: "We prepare your application in 1–2 days. The embassy's decision takes longer.",
+    title: "How EZvisa Works",
+    description: "Answer a few questions, pay, upload your documents. Your file is ready in 1–2 days.",
     url: "https://www.ezvisa.net/how-it-works",
     type: "website",
   },
@@ -35,87 +32,33 @@ export default function HowItWorksPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-[#F7F8FA]">
+      <div className="min-h-screen bg-background">
         <InnerHero
-          badge="Process"
-          title={
-            <>
-              How It <span className="text-[#0436DC]">Works</span>
-            </>
-          }
-          description="Get your European visa prepared in 4 simple steps. Fast, easy, and hassle-free."
-          gradientType="sunset"
-        />
-
-        <HowItWorksContent />
-
-        {/* What Happens Next */}
-        <section className="photo-hero relative py-24 md:py-32 border-t border-border/80 overflow-hidden">
-          {/* Background Image with Frosted Overlay */}
-          <div className="absolute inset-0 pointer-events-none z-0">
-            <img 
-              src="/images/eiffel-tower-view.jpg" 
-              alt="Eiffel Tower Background" 
-              className="w-full h-full object-cover object-center" 
-            />
-            {/* White overlay to ensure text readability */}
-            <PhotoHeroOverlay />
+          badge="How it works"
+          title="You answer the questions. We prepare the file."
+          description={`Starting takes about five minutes and ${PRICE_AED} AED. A visa specialist then prepares everything the visa centre asks for, and you take it to your appointment.`}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/apply"
+              className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Start your application
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
+            </Link>
+            <Link
+              href="/pricing"
+              className="inline-flex h-12 items-center rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+            >
+              See what it costs
+            </Link>
           </div>
-          
-          <div className="container mx-auto px-6 max-w-6xl relative z-10">
-            {/* Header */}
-            <div className="text-center max-w-2xl mx-auto mb-16 md:mb-20">
-              <div className="type-eyebrow mb-5 inline-flex items-center gap-2 rounded-full border border-[#E3E7EF] bg-[#F7F8FA] px-3 py-1.5 text-[#0436DC]">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                Post-submission
-              </div>
-              <h2 className="hero-copy text-balance text-white">
-                What happens<br/>after submission?
-              </h2>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Step 1 */}
-              <div className="bg-card border border-border/80 rounded-3xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
-                <div>
-                  <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
-                    <Mail className="w-5 h-5" strokeWidth={2} />
-                  </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Instant Confirmation</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Receive immediate email confirmation with your application reference number and payment receipt.
-                  </p>
-                </div>
-              </div>
+        </InnerHero>
 
-              {/* Step 2 */}
-              <div className="bg-card border border-border/80 rounded-3xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
-                <div>
-                  <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
-                    <RefreshCw className="w-5 h-5" strokeWidth={2} />
-                  </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Real-time Tracking</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Monitor your application progress 24/7 with live status updates through your dashboard.
-                  </p>
-                </div>
-              </div>
-
-              {/* Step 3 */}
-              <div className="bg-card border border-border/80 rounded-3xl p-8 shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 flex flex-col justify-between text-left">
-                <div>
-                  <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
-                    <CheckCircle2 className="w-5 h-5" strokeWidth={2} />
-                  </div>
-                  <h3 className="font-semibold text-lg text-foreground mb-3">Ready to Travel</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Get instant notification when your complete visa package is approved and ready.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        <HowItWorksSimple standalone />
+        <AfterPaymentTimeline />
+        <ServicesSection />
+        <ContactSection />
       </div>
       <Footer />
     </>

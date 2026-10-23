@@ -1,16 +1,16 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Search, Rocket } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { CountryCard } from "@/components/country-card"
-import { COUNTRY_DATA } from "@/lib/countries"
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { ArrowRight, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { COUNTRY_DATA, SCHENGEN_META } from "@/lib/countries"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
-import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
+import { CountryFlag } from "@/components/country-flag"
+import { DocumentSplit } from "@/components/documents/document-split"
+import { ContactSection } from "@/components/contact-section"
 
 export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -19,103 +19,79 @@ export default function DocumentsPage() {
     window.scrollTo({ top: 0, behavior: "instant" })
   }, [])
 
-  const filteredCountries = COUNTRY_DATA.filter((country) =>
-    country.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+  const query = searchQuery.trim().toLowerCase()
+  const filteredCountries = COUNTRY_DATA.filter((country) => country.name.toLowerCase().includes(query))
 
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-background">
         <InnerHero
           badge="Documents"
-          title={
-            <>
-              Schengen Visa Document <span className="text-[#0436DC]">Requirements</span>
-            </>
-          }
-          description="Find complete document requirements for your destination country. We help you prepare everything you need for a successful application."
-          randomizeBackground={true}
+          title="The documents for your Schengen visa, by country."
+          description="Every Schengen country asks UAE residents for the same core file. Pick your destination for its visa centre, fees and the details that differ."
         >
-          {/* Search Bar */}
-          <div className="relative max-w-md mx-auto">
+          <label htmlFor="country-search" className="sr-only">
+            Search for a country
+          </label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
-              type="text"
-              placeholder="Search for a country..."
+              id="country-search"
+              type="search"
+              placeholder="Search for a country"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-11 h-13 text-base bg-white text-[#0A0F1F] placeholder:text-[#5B6475] border border-[#E3E7EF] rounded-2xl shadow-[0_8px_24px_rgba(10,15,31,0.08)]"
+              className="h-12 rounded-full border-border bg-background ps-11 text-base"
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-[#5B6475] pointer-events-none z-10" />
           </div>
         </InnerHero>
 
-        {/* Countries Grid */}
-        <section className="py-12 lg:py-16">
-          <div className="container mx-auto px-4 max-w-7xl">
+        {/* Countries */}
+        <section className="pb-20 md:pb-24" aria-label="Countries">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6">
             {filteredCountries.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
-                {filteredCountries.map((country, index) => (
-                  <CountryCard key={country.name} country={country} index={index} />
+              <ul className="grid grid-cols-1 overflow-hidden rounded-3xl border border-border/70 bg-card sm:grid-cols-2 lg:grid-cols-3">
+                {filteredCountries.map((country) => (
+                  <li key={country.name} className="-mb-px -me-px border-b border-e border-border/70">
+                    <Link
+                      href={`/documents/required-documents-to-apply-for-a-tourist-visa-in-${country.slug}`}
+                      className="group flex items-center gap-3 px-5 py-4 transition-colors hover:bg-secondary/60"
+                    >
+                      <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
+                      <span className="flex-1 font-medium text-foreground">{country.name}</span>
+                      <ArrowRight
+                        className="size-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary rtl:rotate-180"
+                        aria-hidden="true"
+                      />
+                    </Link>
+                  </li>
                 ))}
-              </div>
+              </ul>
             ) : (
-              <div className="text-center py-12">
-                <p className="text-lg text-muted-foreground">No countries found matching your search.</p>
-              </div>
+              <p className="rounded-3xl border border-border/70 px-6 py-12 text-center text-muted-foreground">
+                No Schengen country matches &ldquo;{searchQuery}&rdquo;.
+              </p>
             )}
           </div>
         </section>
 
-        {/* Additional Info / CTA */}
-        <section className="py-16 md:py-20 bg-background overflow-hidden relative">
-          {/* Subtle background blur */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full pointer-events-none" />
-          
-          <div className="container mx-auto px-4 max-w-6xl relative z-10">
-            <div className="photo-hero relative w-full rounded-[2rem] md:rounded-[2.5rem] border border-border/60 shadow-2xl p-8 md:p-12 overflow-hidden flex flex-col items-center text-center min-h-[320px] justify-center bg-slate-900">
-              
-              {/* Background Image of scenic country */}
-              <div className="absolute inset-0 z-0 select-none pointer-events-none">
-                <Image
-                  src="/images/countries/italy.jpg"
-                  alt="Scenic Italy"
-                  fill
-                  className="object-cover opacity-85 contrast-[1.05]"
-                  sizes="(max-width: 1200px) 100vw, 1152px"
-                  priority
-                />
-                <PhotoHeroOverlay />
-              </div>
-
-              {/* Dot grid decoration */}
-              <div
-                className="absolute inset-0 opacity-[0.1] pointer-events-none z-10 hidden md:block"
-                style={{
-                  backgroundImage: "none",
-                  backgroundSize: "24px 24px",
-                  maskImage: "none",
-                  WebkitMaskImage: "none",
-                }}
-              />
-              
-              <div className="relative z-20 max-w-2xl mx-auto flex flex-col items-center">
-                <h2 className="hero-copy mb-4 text-balance text-white">
-                  Need Help With Your Application?
-                </h2>
-                <p className="text-white/85 text-base md:text-lg mb-8 leading-relaxed max-w-xl font-medium">
-                  Our experts will review your documents and ensure everything is perfect before submission.
-                </p>
-                <Link href="/apply">
-                  <button className="px-8 py-3.5 bg-white text-primary hover:bg-slate-50 transition-all duration-300 font-semibold inline-flex items-center gap-2.5 shadow-xl hover:-translate-y-0.5 cursor-pointer rounded-xl">
-                    <Rocket className="h-5 w-5 text-primary" />
-                    Start Your Application
-                  </button>
-                </Link>
-              </div>
+        {/* The core file */}
+        <section className="border-t border-border/70 bg-secondary/40 py-20 md:py-28">
+          <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
+            <div className="flex max-w-2xl flex-col items-start gap-4">
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Every country</span>
+              <h2 className="text-balance text-foreground">Half the file is yours. The other half is ours.</h2>
+              <p className="text-base leading-relaxed text-muted-foreground">
+                You bring the documents only you can get. We prepare the ones that have to be written or booked for your trip, and
+                check that all of them agree.
+              </p>
             </div>
+            <DocumentSplit />
           </div>
         </section>
+
+        <ContactSection />
       </div>
       <Footer />
     </>

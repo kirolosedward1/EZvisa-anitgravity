@@ -153,9 +153,10 @@ Usage rules:
 | `comparison-section.tsx` | DIY vs EZvisa comparison |
 | `contact-section.tsx` | Homepage CTA section |
 | `faq-section.tsx` | Accordion FAQ |
-| `what-you-get-section.tsx` | Deliverables list |
+| `inner-hero.tsx` | Heading for every inner page: copy left, destination photo card right (`variant="plain"` for legal pages, which use the `.legal-copy` text styles) |
+| `after-payment-timeline.tsx` | What happens after payment, and when (How it works + destination pages) |
 | `top-destinations-carousel.tsx` | Animated destination/flag carousel (Embla) |
-| `country-card.tsx`, `country-document-selector.tsx`, `document-requirements-page.tsx` | Documents flow |
+| `document-requirements-page.tsx`, `documents/document-split.tsx`, `documents/country-facts.tsx` | Documents flow: per-country page, "you provide / we prepare" split, facts strip (visa centre, fee, timing) |
 | `start-application-box.tsx`, `fixed-cta-button.tsx`, `continue-application-notification.tsx` | Conversion helpers |
 | `cookie-consent.tsx`, `scroll-restoration.tsx`, `scroll-to-top.tsx`, `theme-provider.tsx` | App-wide utilities |
 | `country-flag.tsx` | **The only flag component**: round flag from `public/flags/<slug>.png` (by ISO or country name). Never render rectangular flags. |

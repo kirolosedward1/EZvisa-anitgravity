@@ -129,7 +129,8 @@ function TravelVisual() {
 
 const VISUALS = [PlansVisual, PayVisual, FileVisual, TravelVisual]
 
-export function HowItWorksSimple() {
+/** `standalone`: on the How it works page itself, so the section drops its pill and its link to that page. */
+export function HowItWorksSimple({ standalone = false }: { standalone?: boolean }) {
   const [active, setActive] = useState(0)
   const items = useRef<(HTMLLIElement | null)[]>([])
   const reduced = useReducedMotion()
@@ -158,15 +159,15 @@ export function HowItWorksSimple() {
       <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-20">
         <div className="flex flex-col gap-8 lg:sticky lg:top-28 lg:self-start">
           <div className="flex flex-col items-start gap-5">
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">How it works</span>
+            {!standalone && <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">How it works</span>}
             <h2 className="text-balance text-foreground">From your first answer to your embassy appointment.</h2>
-            <Link
+            {!standalone && <Link
               href="/how-it-works"
               className="group inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
             >
               See full process
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-            </Link>
+            </Link>}
           </div>
 
           {/* Desktop: the illustration for the step in view */}
