@@ -184,8 +184,8 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
       <WizardBar
         onBack={onBack}
         loading={isLoading}
-        continueLabel="Continue"
-        continueLabelAr="متابعة"
+        continueLabel="Continue to Review & Pay"
+        continueLabelAr="تابع إلى المراجعة والدفع"
         loadingLabel="Processing..."
         loadingLabelAr="جارٍ المعالجة..."
       />

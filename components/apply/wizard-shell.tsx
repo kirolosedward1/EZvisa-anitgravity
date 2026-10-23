@@ -14,17 +14,15 @@ import type { FormData } from "@/lib/form-types"
 const STAGES = [
   { id: "trip", en: "01 Trip", ar: "01 الرحلة" },
   { id: "traveller", en: "02 Traveller", ar: "02 المسافر" },
-  { id: "documents", en: "03 Documents", ar: "03 المستندات" },
-  { id: "review", en: "04 Review", ar: "04 المراجعة" },
+  { id: "review", en: "03 Review & pay", ar: "03 المراجعة والدفع" },
 ] as const
 
 export type WizardStage = (typeof STAGES)[number]["id"]
 
-/** Progress labels stay in the approved order. The walk order of the wizard is unchanged. */
+/** 1 trip, 2 traveller, 3 spouse (still the traveller stage), 4 review and pay. */
 export function stageForStep(step: number): WizardStage {
-  if (step === 4) return "trip"
-  if (step === 5) return "review"
-  if (step === 3) return "documents"
+  if (step <= 1) return "trip"
+  if (step >= 4) return "review"
   return "traveller"
 }
 

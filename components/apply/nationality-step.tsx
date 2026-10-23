@@ -20,6 +20,7 @@ interface NationalityStepProps {
   formData: FormData
   updateFormData: (data: FormDataUpdate) => void
   onNext: () => void
+  onBack: () => void
   isLoading?: boolean
 }
 
@@ -66,7 +67,7 @@ const toggleActiveStyles =
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
-export function NationalityStep({ formData, updateFormData, onNext, isLoading }: NationalityStepProps) {
+export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading }: NationalityStepProps) {
   const [destinationOpen, setDestinationOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
@@ -582,10 +583,18 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
       </div>
 
       <WizardBar
-        showBack={false}
+        onBack={onBack}
         loading={isLoading}
-        continueLabel="Continue to Employment"
-        continueLabelAr="تابع إلى العمل"
+        continueLabel={
+          formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
+            ? "Continue"
+            : "Continue to Review & Pay"
+        }
+        continueLabelAr={
+          formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
+            ? "تابع"
+            : "تابع إلى المراجعة والدفع"
+        }
         loadingLabel="Processing..."
         loadingLabelAr="جارٍ المعالجة..."
       />

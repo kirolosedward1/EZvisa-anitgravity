@@ -43,14 +43,14 @@ interface WizardFormData {
   industry: string
   yearsOfExperience: string
   averageMonthlyIncome: string
-  // Step 2: Employment
+  // Filled after payment on /continue. Still sent with the application payload.
   employmentDetails: string
-  // Step 2/3: Spouse Information (if married and accompanying)
+  // Spouse, when married and accompanying
   spouseFirstName: string
   spouseLastName: string
   spouseHasValidPassport: "yes" | "no" | undefined
   spouseOccupation: string
-  // Step 3: Trip Details & Travel Intent
+  // Trip
   destination: string
   purposeOfTrip: string
   isFirstSchengenVisa: string
@@ -178,6 +178,14 @@ const defaultFormData: WizardFormData = {
   spousePhoto: null,
 }
 
+function localizeApplyPath(path: string) {
+  if (typeof window === "undefined") return path
+  const pathName = window.location.pathname
+  const onArabic = pathName === "/ar" || pathName.startsWith("/ar/")
+  if (!onArabic || path.startsWith("/ar")) return path
+  return `/ar${path}`
+}
+
 function ApplyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -242,7 +250,7 @@ function ApplyPageContent() {
     setCurrentStep(1)
     setTripScreen(0)
     router.replace(
-      `/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`,
+      localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`),
       { scroll: false }
     )
     
@@ -278,11 +286,9 @@ function ApplyPageContent() {
   const handleNext = useCallback(() => {
     trackEvent("application_step_completed", { step: currentStep, destination: formData.destination })
     const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-    const tentative = currentStep + 1
-    // Employment is asked after payment on /continue/[id]. Skip spouse when they are not travelling.
-    const nextStep =
-      tentative === 3 || (tentative === 2 && !shouldShowSpouse) ? 4 : Math.min(tentative, 5)
-    if (currentStep < 4 && nextStep === 4) setTripScreen(0)
+    // 1 trip, 2 traveller, 3 spouse only when they are travelling, 4 review and pay.
+    let nextStep = Math.min(currentStep + 1, 4)
+    if (currentStep === 2 && !shouldShowSpouse) nextStep = 4
     setDirection(1)
     setCurrentStep(nextStep)
     scrollToWizardTop()
@@ -291,15 +297,10 @@ function ApplyPageContent() {
   const handleBack = useCallback(() => {
     setDirection(-1)
     setCurrentStep((prevStep) => {
-      const previousStep = prevStep - 1
       const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-      
-      // Skip spouse step (step 2) when going back if not needed
-      if (previousStep === 3 || (previousStep === 2 && !shouldShowSpouse)) {
-        return shouldShowSpouse ? 2 : 1
-      }
-      
-      return Math.max(previousStep, 1)
+      if (prevStep === 4) return shouldShowSpouse ? 3 : 2
+      if (prevStep <= 1) return 1
+      return prevStep - 1
     })
     scrollToWizardTop()
   }, [formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
@@ -369,14 +370,13 @@ function ApplyPageContent() {
       }
 
       if (stepSlug && isValidStep(stepSlug)) {
-        const stepNumber = stepSlug === "employment" ? 4 : getStepNumber(stepSlug)
-        setCurrentStep(stepNumber)
+        setCurrentStep(getStepNumber(stepSlug))
       } else if (stepSlug) {
-        // Invalid step, redirect to personal step
+        // Dropped slugs (employment, documents) and anything else start on Trip.
         const slug = getStepSlug(1)
         if (isMounted.current) {
           router.replace(
-            `/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`,
+            localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`),
           )
         }
       } else {
@@ -384,7 +384,7 @@ function ApplyPageContent() {
         const slug = getStepSlug(1)
         if (isMounted.current) {
           router.replace(
-            `/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`,
+            localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${fromCountry}` : ""}${toCountry ? `&to=${toCountry}` : ""}`),
           )
         }
       }
@@ -435,7 +435,7 @@ function ApplyPageContent() {
       if (fromCountry) params.set("from", fromCountry)
       if (toCountry) params.set("to", toCountry)
 
-      router.replace(`/apply?${params.toString()}`, { scroll: false })
+      router.replace(localizeApplyPath(`/apply?${params.toString()}`), { scroll: false })
 
       setTimeout(() => {
         isUpdatingUrl.current = false
@@ -448,7 +448,7 @@ function ApplyPageContent() {
 
     const stepSlug = searchParams.get("step")
     if (stepSlug && isValidStep(stepSlug)) {
-      const stepNumber = stepSlug === "employment" ? 4 : getStepNumber(stepSlug)
+      const stepNumber = getStepNumber(stepSlug)
       if (stepNumber !== currentStep && !isUpdatingUrl.current) {
         setCurrentStep(stepNumber)
       }
@@ -469,6 +469,7 @@ function ApplyPageContent() {
             formData={formData}
             updateFormData={updateFormData}
             onNext={handleNext}
+            onBack={handleBack}
             isLoading={isTransitioning}
           />
         )
@@ -482,7 +483,6 @@ function ApplyPageContent() {
             isLoading={isTransitioning}
           />
         )
-      case "employment":
       case "trip-details":
         return (
           <TripDetailsStep
@@ -496,7 +496,6 @@ function ApplyPageContent() {
           />
         )
       case "payment":
-      case "documents":
         return <PaymentStep formData={formData} onBack={handleBack} isLoading={isTransitioning} paymentError={paymentError} />
       default:
         return null

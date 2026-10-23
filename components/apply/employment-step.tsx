@@ -210,8 +210,8 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
       <WizardBar
         onBack={onBack}
         loading={isLoading}
-        continueLabel="Continue to Trip Details"
-        continueLabelAr="تابع إلى تفاصيل الرحلة"
+        continueLabel="Save and upload documents"
+        continueLabelAr="احفظ وارفع المستندات"
         loadingLabel="Processing..."
         loadingLabelAr="جارٍ المعالجة..."
       />

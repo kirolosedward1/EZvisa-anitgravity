@@ -629,10 +629,11 @@ export function TripDetailsStep({
       </AnimatePresence>
 
       <WizardBar
-        onBack={handleBack}
+        onBack={screen > 0 ? handleBack : undefined}
+        showBack={screen > 0}
         loading={isLoading}
-        continueLabel={screen === LAST_SCREEN ? "Continue to Review & Pay" : "Continue"}
-        continueLabelAr={screen === LAST_SCREEN ? "تابع إلى المراجعة والدفع" : "تابع"}
+        continueLabel="Continue"
+        continueLabelAr="تابع"
         loadingLabel="Processing..."
         loadingLabelAr="جارٍ المعالجة..."
       />
