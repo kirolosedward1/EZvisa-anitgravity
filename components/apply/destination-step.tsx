@@ -6,6 +6,8 @@ import { Check, ChevronsUpDown } from "lucide-react"
 import { CitizenshipPicker } from "@/components/citizenship-picker"
 import { CountryFlag } from "@/components/country-flag"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { FieldError, WizardQuestion, wizardLabelClass } from "@/components/apply/wizard-choices"
 import { Button } from "@/components/ui/button"
@@ -35,6 +37,7 @@ export function DestinationStep({ formData, updateFormData, onNext, isLoading }:
   const [showErrors, setShowErrors] = useState(false)
   const [destinationOpen, setDestinationOpen] = useState(false)
   const [touchKeyboard, setTouchKeyboard] = useState(false)
+  const countrySearch = useMessage("apply.searchCountry")
 
   useEffect(() => {
     setTouchKeyboard(window.matchMedia("(pointer: coarse)").matches)
@@ -118,14 +121,16 @@ export function DestinationStep({ formData, updateFormData, onNext, isLoading }:
           </PopoverTrigger>
           <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
             <Command>
-              <CommandInput placeholder="Search country..." autoFocus={!touchKeyboard} />
+              <CommandInput placeholder={countrySearch} autoFocus={!touchKeyboard} />
               <CommandList>
-                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandEmpty>
+                  <Msg id="apply.noCountry" />
+                </CommandEmpty>
                 <CommandGroup>
                   {SCHENGEN_COUNTRIES.map((country) => (
                     <CommandItem
                       key={country}
-                      value={country}
+                      value={`${country} ${SCHENGEN_META[country]?.ar ?? ""} ${SCHENGEN_META[country]?.iso ?? ""}`}
                       onSelect={() => {
                         set({ destination: country })
                         setDestinationOpen(false)
