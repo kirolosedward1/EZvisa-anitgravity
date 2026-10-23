@@ -223,7 +223,7 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
           ) : null}
           {fixedLong ? (
             <FieldError>
-              <LangText en="A tourist stay can be 90 days at most." ar="الإقامة السياحية لا تتجاوز ٩٠ يومًا." />
+              <LangText en="A tourist stay can be 90 days at most." ar="الإقامة السياحية لا تتجاوز 90 يومًا." />
             </FieldError>
           ) : null}
         </div>

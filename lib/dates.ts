@@ -101,7 +101,7 @@ export function formatTravelMonth(value?: string | null): string {
   return `${MONTHS_LONG[month - 1]} ${match[1]}`
 }
 
-/** Page-language date. Arabic uses ar-EG digits, for example ١١ نوفمبر. */
+/** Page-language date. Arabic keeps Western digits, for example 11 نوفمبر. */
 export function formatPageDate(value: string, arabic: boolean, withYear = false) {
   const parsed = parseCalendarDate(value)
   if (!parsed) return value
@@ -111,8 +111,8 @@ export function formatPageDate(value: string, arabic: boolean, withYear = false)
     day: "numeric",
     month: arabic ? "long" : "short",
     timeZone: "UTC",
+    numberingSystem: "latn",
     ...(withYear ? { year: "numeric" as const } : {}),
-    ...(arabic ? { numberingSystem: "arab" as const } : {}),
   }).format(date)
 }
 

@@ -193,7 +193,7 @@ export function ContinueForm({
               title="Do you have a valid passport?"
               titleAr="هل لديك جواز سفر ساري المفعول؟"
               helper="It should be valid for at least 3 months after you return."
-              helperAr="يجب أن يكون صالحًا لمدة ٣ أشهر على الأقل بعد عودتك."
+              helperAr="يجب أن يكون صالحًا لمدة 3 أشهر على الأقل بعد عودتك."
             />
             <ChoiceList label="Valid passport">
               <ChoiceRow
