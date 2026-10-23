@@ -268,10 +268,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
   const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
   const passport = formData.passportNumber?.trim()
   const withSpouse = applicantCount(formData.spouseAccompanying, formData.travelingWith) > 1
-  const spouseEn = withSpouse ? message("en", "review.withSpouse") : ""
-  const spouseAr = withSpouse ? message("ar", "review.withSpouse") : ""
-  const travellerEn = [travellerName, passport, spouseEn].filter(Boolean)
-  const travellerAr = [travellerName, passport, spouseAr].filter(Boolean)
+  const travellerLine = [travellerName, passport].filter(Boolean).join(" · ")
 
   return (
     <div>
@@ -293,11 +290,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
       </ReviewRow>
 
       <ReviewRow label="Traveller" labelAr="المسافر" onEdit={onEditTraveller}>
-        {travellerEn.length ? (
-          <LangText en={travellerEn.join(" · ")} ar={travellerAr.join(" · ")} />
-        ) : (
-          <Msg id="summary.yourTrip" />
-        )}
+        {travellerLine ? travellerLine : <Msg id="summary.yourTrip" />}
       </ReviewRow>
 
       <ReviewRow

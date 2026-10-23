@@ -67,9 +67,11 @@ export function applicationNotes(input: NotesInput) {
   return notes
 }
 
-/** The submit body. File fields stay as they are; the count and spouse flag are explicit. */
+/** The submit body. File fields stay as they are; the count and spouse flag are explicit.
+ *  travelingWith "spouse" always sends spouseAccompanying "yes", which is what main prices from.
+ */
 export function submitBody<T extends NotesInput>(formData: T) {
-  const spouse = withSpouse(formData)
+  const spouse = formData.travelingWith === "spouse" || withSpouse(formData)
   return {
     ...formData,
     maritalStatus: spouse ? "married" : formData.maritalStatus,
