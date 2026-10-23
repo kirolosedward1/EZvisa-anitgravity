@@ -283,13 +283,15 @@ h3 {
 }
 
 /* Panel headings (account page sections): a section label, not a page heading. */
-h2.panel-title {
+h2.panel-title,
+h3.panel-title {
   font-size: 16px;
   line-height: 1.4;
   letter-spacing: -0.005em;
 }
 
-h2.panel-title.panel-title-lg {
+h2.panel-title.panel-title-lg,
+h3.panel-title.panel-title-lg {
   font-size: 20px;
   line-height: 1.3;
 }
