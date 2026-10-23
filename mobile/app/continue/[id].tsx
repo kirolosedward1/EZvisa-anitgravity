@@ -5,13 +5,12 @@
 import { useEffect, useRef, useState } from "react";
 import { View, Platform, AccessibilityInfo, I18nManager } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useReducedMotion, useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
-import Animated from "react-native-reanimated";
+import { useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text, Skeleton, InlineError, EmptyState } from "../../components/ui";
-import { CircleButton } from "../../components/flow";
+import { Text, Skeleton, InlineError, EmptyState, type IconName } from "../../components/ui";
+import { CircleButton, StepIndicator, type FlowStep } from "../../components/flow";
 import { QuestionView } from "../../components/wizard/QuestionView";
-import { useColors, S, R, SPRING } from "../../lib/theme";
+import { useColors, S, R } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { slideIn } from "../../lib/motion";
 import { getApplication, saveAfterPayment, continueForm, isWebsiteRow } from "../../lib/data";
@@ -21,12 +20,8 @@ import { success, error as hError, tap, select } from "../../lib/haptics";
 
 const AUTO_MS = 260;
 
-function Bar({ fill }: { fill: number }) {
-  const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
-  useEffect(() => { w.value = reduce ? fill : withSpring(fill, SPRING.enter); }, [fill, reduce]);
-  const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
-  return <View style={{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
-}
+/** Short label + icon per after-payment step; Documents (upload) always comes last. */
+const STEP_UI: Record<string, [string, IconName]> = { "trip-details": ["Trip", "airplane"], passport: ["Passport", "person.text.rectangle"], spouse: ["Spouse", "person.2.fill"], employment: ["Work", "briefcase.fill"] };
 
 export default function ContinueApplication() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -64,6 +59,10 @@ export default function ContinueApplication() {
   const q: Question | null = qid ? Q_BY_ID[qid] ?? null : null;
   const list = f ? continueQuestions(f, website) : [];
   const idx = q ? list.findIndex((x) => x.id === q.id) : -1;
+  // Steps of this row's questions (website rows: passport + employment), then Documents.
+  const stepKeys = [...new Set(list.map((x) => x.step as string))];
+  const flowSteps: FlowStep[] = [...stepKeys.map((k) => ({ key: k, label: t(STEP_UI[k]?.[0] ?? k), icon: STEP_UI[k]?.[1] ?? ("circle" as IconName) })), { key: "docs", label: t("Documents"), icon: "doc.on.doc.fill" as IconName }];
+  const inStep = q ? list.filter((x) => x.step === q.step) : [];
   const patch = (x: Partial<WizardForm>) => setF((y) => (y ? { ...y, ...x } : y));
   const goTo = (next: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setQid(next); setShowErr(false); setAllMode(false); setErr(null); };
   const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`, { withAnchor: true }); };
@@ -116,13 +115,8 @@ export default function ContinueApplication() {
         <CircleButton icon="xmark" label={t("Close")} onPress={close} />
       </View>
       {q && list.length > 0 && (
-        <View accessible accessibilityRole="progressbar" accessibilityLabel={t("{step}, {i} of {n}", { step: t(STEP_TITLES[q.step].title), i: idx + 1, n: list.length })} style={{ gap: S.xs }}>
-          <Bar fill={(idx + 1) / list.length} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <Text variant="caption" weight="600" tone="secondary">{t(STEP_TITLES[q.step].title)}</Text>
-            <Text variant="caption" tone="secondary" tabular>{t("{i} of {n}", { i: idx + 1, n: list.length })}</Text>
-          </View>
-        </View>
+        <StepIndicator steps={flowSteps} current={stepKeys.indexOf(q.step)} fraction={inStep.length ? inStep.indexOf(q) / inStep.length : 0}
+          a11yLabel={t("{step}, {i} of {n}", { step: t(STEP_TITLES[q.step].title), i: idx + 1, n: list.length })} />
       )}
     </View>
   );

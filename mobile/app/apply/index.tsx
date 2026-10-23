@@ -8,16 +8,16 @@ import { PressScale } from "../../components/ui";
 import { useEffect, useRef, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { ScrollView, View, KeyboardAvoidingView, Platform, AccessibilityInfo, findNodeHandle, Pressable, Modal, TextInput, I18nManager } from "react-native";
-import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, useSharedValue, useAnimatedStyle, withTiming, withSpring, Easing } from "react-native-reanimated";
+import Animated, { useAnimatedKeyboard, FadeIn, FadeOut, useReducedMotion, withTiming, Easing } from "react-native-reanimated";
 import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { Button, Text, Icon, SuccessCheck, InlineError } from "../../components/ui";
-import { CircleButton } from "../../components/flow";
+import { CircleButton, StepIndicator, type FlowStep } from "../../components/flow";
 import { Note } from "../../components/wizard/fields";
 import { useFmtDate } from "../../components/wizard/answers";
-import { useColors, S, R, curve, SPRING } from "../../lib/theme";
+import { useColors, S, R, curve } from "../../lib/theme";
 import { fromSlug } from "../../lib/countries";
 import { useForm } from "../../lib/form";
 import { useAuth } from "../../lib/auth";
@@ -49,25 +49,14 @@ const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f,
 const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
-/** Progress grouped by the website's steps: one animated segment per step. */
+/** Where you are: Details (the questions before payment) -> Review -> Payment. The line after Details fills as you answer. */
 function Progress({ f, page }: { f: WizardForm; page: string }) {
-  const c = useColors(); const { t } = useT();
+  const { t } = useT();
   const p = progressOf(f, page); const cur = p.segs[p.stepIndex];
-  return (
-    <View accessible accessibilityRole="progressbar" accessibilityLabel={t("{step}, step {i} of {n}", { step: t(STEP_TITLES[p.curStep].title), i: p.stepIndex + 1, n: p.steps.length })} style={{ gap: S.xs }}>
-      <View style={{ flexDirection: "row", gap: S.xxs }}>{p.segs.map((s) => <Seg key={s.step} fill={s.fill} />)}</View>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <Text variant="caption" weight="600" tone="secondary">{t(STEP_TITLES[p.curStep].title)}</Text>
-        {p.curStep !== "payment" && cur && <Text variant="caption" tone="secondary" tabular>{t("{i} of {n}", { i: cur.index, n: cur.count })}</Text>}
-      </View>
-    </View>
-  );
-}
-function Seg({ fill }: { fill: number }) {
-  const c = useColors(); const reduce = useReducedMotion(); const w = useSharedValue(fill);
-  useEffect(() => { w.value = reduce ? fill : withSpring(fill, SPRING.enter); }, [fill, reduce]);
-  const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` as any }));
-  return <View style={{ flex: 1, height: S.xxs, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: S.xxs, borderRadius: R.xs, backgroundColor: c.accent }, a]} /></View>;
+  const review = p.curStep === "payment";
+  const steps: FlowStep[] = [{ key: "details", label: t("Details"), icon: "person.text.rectangle" }, { key: "review", label: t("Review"), icon: "doc.text" }, { key: "pay", label: t("Payment"), icon: "creditcard" }];
+  const label = t("{step}, step {i} of {n}", { step: t(STEP_TITLES[p.curStep].title), i: p.stepIndex + 1, n: p.steps.length }) + (!review && cur ? ", " + t("{i} of {n}", { i: cur.index, n: cur.count }) : "");
+  return <StepIndicator steps={steps} current={review ? 1 : 0} fraction={review ? 0 : cur?.fill ?? 0} a11yLabel={label} />;
 }
 
 export default function Apply() {

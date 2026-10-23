@@ -87,7 +87,7 @@ export function ListGroup({ header, footer, action, onAction, children, inset = 
 /** Neutral icon tile (restrained palette): neutral fill, label-coloured symbol. Only destructive red and brand WhatsApp keep their colour. */
 export function IconTile({ name, color, size = 32 }: { name: IconName; color: string; size?: number }) {
   const c = useColors(); const keep = color === c.red || color === c.whatsapp;
-  return <View style={[{ width: size, height: size, borderRadius: R.sm, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={ICON.md} color={keep ? color : c.label} weight="medium" /></View>;
+  return <View style={[{ width: size, height: size, borderRadius: R.sm, backgroundColor: c.fillSubtle, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={ICON.md - 1} color={keep ? color : c.label} weight="regular" /></View>;
 }
 
 export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPress, onLongPress, chevron = !!onPress, trailing, destructive, tint, bold, a11yLabel, a11yHint, minHeight = 44 }: { title: string; subtitle?: string; leading?: React.ReactNode; icon?: IconName; iconColor?: string; value?: string; onPress?: () => void; onLongPress?: () => void; chevron?: boolean; trailing?: React.ReactNode; destructive?: boolean; tint?: boolean; bold?: boolean; a11yLabel?: string; a11yHint?: string; minHeight?: number }) {
@@ -137,13 +137,13 @@ export function FormRow({ label, error, ...p }: TextInputProps & { label: string
 export function SegmentedControl({ options, value, onChange, label }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void; label: string }) {
   const c = useColors(); const dark = useIsDark();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[{ flexDirection: "row", backgroundColor: c.fill, borderRadius: R.md, padding: S.xxs }, curve]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[{ flexDirection: "row", backgroundColor: c.fill, borderRadius: R.round, padding: 3 }, curve]}>
       {options.map((o) => {
         const on = o.value === value;
         return (
           <PressScale key={o.value} onPress={() => { select(); onChange(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={o.label}
-            style={[{ flex: 1, minHeight: HIT, borderRadius: R.sm, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xxs }, on && { backgroundColor: dark ? "#636366" : "#fff", ...elevation(1, false) }]}>
-            <Text variant="footnote" weight={on ? "600" : "500"} numberOfLines={2} center>{o.label}</Text>
+            style={[{ flex: 1, minHeight: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xs }, on && { backgroundColor: dark ? "#636366" : c.surface, ...elevation(1, false) }]}>
+            <Text variant="footnote" weight={on ? "600" : "500"} color={on ? c.label : c.textSecondary} numberOfLines={2} center>{o.label}</Text>
           </PressScale>
         );
       })}
@@ -160,8 +160,8 @@ export function ChipGroup({ options, value, onChange, label }: { options: { valu
         const on = o.value === value;
         return (
           <PressScale key={o.value} onPress={() => { select(); onChange(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={o.label}
-            style={[{ minHeight: HIT, paddingHorizontal: S.md, borderRadius: R.round, justifyContent: "center", backgroundColor: on ? c.accentFill : c.fill }]}>
-            <Text variant="subhead" weight="500" color={on ? "#fff" : c.label}>{o.label}</Text>
+            style={[{ minHeight: 36, paddingHorizontal: S.md, borderRadius: R.round, justifyContent: "center", backgroundColor: on ? c.accentSoft : c.surface, borderWidth: on ? 1.5 : 1, borderColor: on ? c.accent : c.border }]}>
+            <Text variant="subhead" weight={on ? "600" : "500"} color={on ? c.accent : c.label}>{o.label}</Text>
           </PressScale>
         );
       })}
