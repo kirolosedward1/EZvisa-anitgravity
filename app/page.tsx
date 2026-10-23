@@ -18,9 +18,9 @@ import type { Metadata } from "next"
 
 export const metadata: Metadata = {
   // absolute: the root template would otherwise append a second "| EZvisa".
-  title: { absolute: "Schengen Visa Application Service UAE | 98% Approval Rate | EZvisa" },
+  title: { absolute: "Schengen Visa Application Service for UAE Residents | EZvisa" },
   description:
-    "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 29 European countries. Expert help with documents, itinerary planning, cover letters & more. 98% approval rate. Starting from 249 AED. Apply today!",
+    "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
   keywords: [
     "Schengen visa UAE",
     "Schengen visa Dubai",
@@ -42,8 +42,8 @@ export const metadata: Metadata = {
     canonical: "https://www.ezvisa.net/",
   },
   openGraph: {
-    title: "Schengen Visa Application UAE | 98% Approval | EZvisa",
-    description: "Get your Schengen visa approved fast with EZvisa UAE. AI-powered assistance for 29 European countries. 98% approval rate. From 249 AED.",
+    title: "Schengen Visa Application Service for UAE Residents | EZvisa",
+    description: "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED.",
     url: "https://www.ezvisa.net/",
     type: "website",
     images: [
@@ -73,7 +73,7 @@ export default function Home() {
           height: 200,
         },
         description:
-          "Professional Schengen visa application service with 98% approval rate. AI-powered assistance for 29 European countries.",
+          "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
         address: {
           "@type": "PostalAddress",
           addressCountry: "AE",

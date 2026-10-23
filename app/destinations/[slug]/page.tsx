@@ -3,7 +3,6 @@ import { PreparationLine } from "@/components/ready-line"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
-import { TestimonialsSection } from "@/components/testimonials-section"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { InnerHero } from "@/components/inner-hero"
@@ -16,7 +15,6 @@ import {
   Check,
   X,
   ArrowRight,
-  Star,
   FileText,
   UserCheck,
   TicketCheck,
@@ -118,13 +116,13 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       icon: Tag,
       label: "EZvisa Price",
       value: destination.price,
-      description: "Flat fee for full application form, itineraries, hotel/flight reservations & support."
+      description: "Application form, cover letter, itinerary, and flight and hotel reservations, prepared by a visa specialist."
     },
     {
       icon: ShieldCheck,
-      label: "Refund Guarantee",
-      value: "100% Money-Back",
-      description: "Full refund of service fee in case of visa rejection. Real confidence."
+      label: "Embassy fees",
+      value: "Paid separately",
+      description: "Visa and visa centre fees are paid at your appointment. Travel insurance is optional through us."
     }
   ]
 
@@ -160,8 +158,8 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
     { metric: "Travel Itinerary Draft", diy: "Manual planning & layout matching", ez: "Expert-tailored day-by-day schedule" },
     { metric: "Flight & Hotel Reservations", diy: "Expensive refundable bookings required", ez: "Included (verifiable reservations)" },
     { metric: "Personal Cover Letter", diy: "Must write complex letter from scratch", ez: "Professional cover letter drafted for you" },
-    { metric: "Dossier Verification", diy: "High risk of rejection due to form errors", ez: "Double-checked by active visa specialists" },
-    { metric: "Price transparency", diy: "High agent commission (1,000+ AED)", ez: `Fixed transparent price (${destination.price})` }
+    { metric: "Document check", diy: "You check everything yourself", ez: "Checked by a visa specialist before you submit" },
+    { metric: "Price", diy: "Your time", ez: `One flat fee (${destination.price})` }
   ]
 
   const faqs = [
@@ -182,8 +180,8 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       answer: "Embassies allow applications to be submitted up to 6 months before your departure date. We highly recommend starting your application with EZvisa at least 4 to 6 weeks in advance to secure prime biometrics appointment slots and avoid seasonal processing delays."
     },
     {
-      question: "What is your 100% money-back guarantee?",
-      answer: `If your ${destination.name} visa application is rejected by the embassy, EZvisa will refund 100% of our service fee (${destination.price}). Please note that third-party embassy/VFS fees are non-refundable. We offer this because our expert review process ensures a near-perfect success rate.`
+      question: "When is the service fee refunded?",
+      answer: `You get the full fee back if you cancel before we start reviewing your documents, if we can't deliver because of an error on our side, or if you paid twice. A refusal by the ${destination.name} embassy isn't refunded, because the decision is theirs. Embassy and VFS fees are never refundable through us.`
     }
   ]
 
@@ -220,10 +218,9 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-white/90">
-            <Star className="w-4.5 h-4.5 fill-amber-400 text-amber-400" />
-            <span>Over 5,000+ Schengen visas processed successfully.</span>
-          </div>
+          <p className="text-center text-xs font-medium text-white/90">
+            <PreparationLine />
+          </p>
         </div>
       </InnerHero>
 
@@ -357,7 +354,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
               <span>Application</span>
             </h2>
             <p className="text-muted-foreground mt-3 text-sm sm:text-base">
-              Why thousands of travelers use EZvisa instead of dealing with complex paperwork alone.
+              What you do yourself, and what a visa specialist prepares for you.
             </p>
           </div>
 
@@ -436,9 +433,6 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         </div>
       </section>
 
-      {/* 6. Reviews Section */}
-      <TestimonialsSection />
-
       {/* 7. Bottom Final CTA Banner */}
       <section className="py-20 bg-primary text-primary-foreground text-center relative overflow-hidden">
         {/* Soft Decorative Background Circles */}
@@ -449,7 +443,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             Ready to secure your {destination.name} Visa?
           </h2>
           <p className="mt-4 text-blue-100/90 text-sm sm:text-base max-w-xl mx-auto">
-            <PreparationLine /> Secure and backed by our money-back guarantee.
+            <PreparationLine />
           </p>
           
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">

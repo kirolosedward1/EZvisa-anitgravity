@@ -82,7 +82,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
       case "rejected":
         return {
           title: "Let's talk about your application",
-          body: "You're covered by our money-back guarantee. Message us and a specialist will go through your options.",
+          body: "Message us and a visa specialist will go through the refusal letter with you and explain your options, including reapplying.",
           actions: (
             <Button asChild className="rounded-full px-5">
               <a href={getCaseTrackingWhatsAppUrl(app.id || token, app.destination_country)} target="_blank" rel="noopener noreferrer">

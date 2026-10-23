@@ -8,10 +8,10 @@ import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
 export function ContactSection() {
   const benefits = [
-    "Quick document verification",
-    "Expert guidance included",
-    "98% approval rate",
-    "Money-back guarantee",
+    "Application form filled in",
+    "Cover letter and itinerary",
+    "Flight and hotel reservations",
+    "Ready in 1–2 days",
   ]
 
   return (
@@ -33,7 +33,7 @@ export function ContactSection() {
             <div className="flex flex-col gap-4">
               <h2 className="text-balance text-foreground">Start your Schengen visa application today.</h2>
               <p className="max-w-md text-base leading-relaxed text-muted-foreground md:text-lg">
-                Join thousands of travelers who trusted us with their Schengen visa applications.
+                Starting takes about five minutes. Pay 249 AED, add the rest of your details when you're ready, and a visa specialist prepares your file.
               </p>
             </div>
 

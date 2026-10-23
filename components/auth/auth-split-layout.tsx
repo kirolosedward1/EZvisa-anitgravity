@@ -49,7 +49,7 @@ export function AuthSplitLayout({ children }: { children: ReactNode }) {
             </ul>
             <p className="flex items-center gap-2 text-sm text-muted-foreground">
               <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
-              98% approval rate · 5,000+ visas · Money-back guarantee
+              249 AED per application · Ready in 1–2 days · Same account as the app
             </p>
           </div>
         </div>

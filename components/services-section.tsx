@@ -11,50 +11,51 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { cn } from "@/lib/utils"
 
-type Service = { icon: LucideIcon; title: string; summary: string; description: string; image: string }
+type Service = { icon: LucideIcon; title: string; summary: string; description: string; image: string; extra?: boolean }
 
 const services: Service[] = [
   {
     icon: FileText,
     title: "Application form",
-    summary: "Filled to the embassy's exact rules.",
-    description: "Error-free visa application forms filled accurately to match official embassy and consulate guidelines.",
+    summary: "Filled in for your nationality and consulate.",
+    description: "We complete the official Schengen application form with your details, worded the way the consulate expects, ready for you to sign at your appointment.",
     image: "/images/documents/application-form.png",
   },
   {
     icon: Plane,
     title: "Flight reservation",
-    summary: "Verifiable, no full ticket needed.",
-    description: "Verifiable flight reservations to satisfy embassy travel itinerary requirements without buying full tickets beforehand.",
+    summary: "A verifiable booking, no ticket to buy yet.",
+    description: "A reservation with a checkable booking reference for your exact dates, so you don't pay for flights before the visa is issued.",
     image: "/images/documents/flight-reservation.png",
   },
   {
     icon: Hotel,
     title: "Hotel reservation",
-    summary: "Confirmed for every night of your stay.",
-    description: "Confirmed hotel reservations covering your entire stay, matched directly to your daily travel itinerary.",
+    summary: "Every night of your stay, on your route.",
+    description: "Confirmed reservations for each night in the Schengen area, in the cities on your itinerary, valid for your visa application.",
     image: "/images/documents/hotel-booking.png",
   },
   {
     icon: Map,
     title: "Travel itinerary",
-    summary: "Day by day, matched to your bookings.",
-    description: "Custom day-by-day travel plan detailing your destination entry points, hotel stays, and planned activities.",
+    summary: "Day by day, matching your bookings.",
+    description: "A day-by-day plan that lines up with your flight and hotel dates, so the consulate sees one consistent trip.",
     image: "/images/documents/itinerary.png",
   },
   {
     icon: Mail,
     title: "Cover letter",
-    summary: "Your purpose, funds and ties, clearly put.",
-    description: "Expertly drafted cover letter detailing your travel purpose, financial backing, and strong ties to your home country.",
+    summary: "Why you're travelling and why you'll return.",
+    description: "A letter to the consulate that explains your trip, how it's paid for and your ties to the UAE, ready for you to sign.",
     image: "/images/documents/cover-letter.png",
   },
   {
     icon: ShieldCheck,
     title: "Travel insurance",
-    summary: "€30,000 Schengen-compliant cover.",
-    description: "Compliant Schengen medical travel insurance covering €30,000 for your entire stay in Europe.",
+    summary: "Optional extra. Buy it with us or bring your own.",
+    description: "Every Schengen visa needs travel medical insurance with at least €30,000 of cover for your whole stay. It isn't part of the service fee: add a compliant policy through us as an extra, or bring your own.",
     image: "/images/documents/travel-insurance.jpeg",
+    extra: true,
   },
 ]
 
@@ -94,7 +95,7 @@ function SamplePreview({ service, onExpand }: { service: Service; onExpand: () =
       <div className="pointer-events-none absolute inset-x-4 bottom-4 flex items-center justify-between gap-3">
         <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm ring-1 ring-border/70">
           <BadgeCheck className="size-3.5 text-primary" aria-hidden="true" />
-          Real sample<span className="hidden sm:inline"> · {service.title}</span>
+          {service.extra ? "Sample policy" : "Real sample"}<span className="hidden sm:inline"> · {service.title}</span>
         </span>
         <button
           type="button"
@@ -136,7 +137,7 @@ export function ServicesSection() {
             Every document your embassy file needs
           </h2>
           <p className="text-base leading-relaxed text-muted-foreground text-pretty">
-            Six documents, prepared and checked by our visa experts. Pick one to see a real sample.
+            Five documents we prepare for every application, plus travel insurance if you need it. Pick one to see a real sample.
           </p>
         </div>
 
@@ -179,7 +180,10 @@ export function ServicesSection() {
                     <Icon className="size-4 lg:size-5" aria-hidden="true" />
                   </span>
                   <span className="flex min-w-0 flex-col">
-                    <span className={cn("whitespace-nowrap text-sm font-semibold lg:text-base", selected ? "text-foreground" : "text-foreground/80")}>{service.title}</span>
+                    <span className={cn("flex items-center gap-2 whitespace-nowrap text-sm font-semibold lg:text-base", selected ? "text-foreground" : "text-foreground/80")}>
+                      {service.title}
+                      {service.extra ? <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">Extra</span> : null}
+                    </span>
                     <span className="hidden text-sm text-muted-foreground lg:block">{service.summary}</span>
                   </span>
                 </button>
@@ -196,8 +200,8 @@ export function ServicesSection() {
         <div className="mt-10 flex flex-col items-center justify-between gap-5 border-t border-border pt-8 sm:flex-row">
           <div className="flex items-center gap-4 text-center sm:text-left">
             <div className="flex flex-col gap-0.5">
-              <p className="text-base font-semibold text-foreground">All six for {PRICE_AED} AED, one flat fee</p>
-              <p className="text-sm text-muted-foreground">Money back if your visa is refused.</p>
+              <p className="text-base font-semibold text-foreground">All five for {PRICE_AED} AED, one flat fee</p>
+              <p className="text-sm text-muted-foreground">Travel insurance and embassy fees are separate.</p>
             </div>
           </div>
           <Link
@@ -225,7 +229,7 @@ export function ServicesSection() {
                 <DialogDescription className="text-base leading-relaxed text-muted-foreground">{current.description}</DialogDescription>
               </div>
               <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-sm text-muted-foreground">Included in every application</span>
+                <span className="text-sm text-muted-foreground">{current.extra ? "Optional extra, or bring your own" : "Included in every application"}</span>
                 <Link
                   href="/apply"
                   onClick={() => setExpanded(false)}

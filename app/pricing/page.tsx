@@ -141,22 +141,23 @@ export default function PricingPage() {
               </Button>
             </Link>
             <p className="text-muted-foreground">
-              Join 5,000+ satisfied customers who got their visa approved
+              Pay 249 AED once. Embassy and visa centre fees are paid at your appointment.
             </p>
           </div>
 
-          {/* Money Back Guarantee */}
+          {/* Refunds: exactly what the refund policy covers */}
           <div className="mt-20 max-w-5xl mx-auto">
-            <div className="border-2 border-emerald-200 rounded-3xl p-10 lg:p-12 bg-emerald-50 dark:bg-emerald-950/30">
+            <div className="rounded-3xl border border-border bg-card p-8 lg:p-10">
               <div className="flex flex-col md:flex-row items-center gap-8 text-center md:text-left">
-                <div className="w-24 h-24 rounded-2xl bg-white shadow-lg flex items-center justify-center flex-shrink-0">
-                  <Shield className="w-12 h-12 text-green-600" />
+                <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <Shield className="size-6" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl lg:text-3xl font-semibold mb-3 text-[#0A0F1F]">100% Money-Back Guarantee</h3>
-                  <p className="text-base text-gray-700 leading-relaxed">
-                    If we cannot process your application due to our error, we'll provide a full refund. Your
-                    satisfaction and trust are our top priorities.{" "}
+                  <h3 className="mb-3 text-foreground">When the fee is refunded</h3>
+                  <p className="text-base leading-relaxed text-muted-foreground">
+                    You get the full 249 AED back if you cancel before we start reviewing your documents, if we
+                    can&apos;t deliver because of an error on our side, or if you paid twice. A visa refusal isn&apos;t
+                    refunded: the decision is the embassy&apos;s.{" "}
                     <Link
                       href="/refund-policy"
                       className="text-primary font-semibold hover:underline inline-flex items-center"

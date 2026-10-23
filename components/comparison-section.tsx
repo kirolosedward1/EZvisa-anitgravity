@@ -39,23 +39,15 @@ export function ComparisonSection() {
     return `${basePrice} AED`
   }
 
-  const getOtherPrice = () => {
-    const basePrice = 1000
-    if (currentCurrency.code === "USD") {
-      return `$${Math.round(basePrice * currentCurrency.rate)}+`
-    }
-    return `${basePrice}+ AED`
-  }
-
+  // Doing it yourself vs with EZvisa: only facts about the service, no claims about other companies.
   const features = [
-    { name: "Simple, guided forms", others: false },
-    { name: "24/7 expert document review", others: false },
-    { name: "Smart error detection", others: false },
-    { name: "Complete file validation", others: false },
-    { name: "Tailored cover letter & itinerary", others: false },
-    { name: "Flight & hotel bookings included", others: true },
+    { name: "Application form filled in for you", others: false },
+    { name: "Cover letter written for your trip", others: false },
+    { name: "Day-by-day itinerary that matches your bookings", others: false },
+    { name: "Flight and hotel reservations, no tickets to buy", others: false },
+    { name: "Every document checked before you submit", others: false },
+    { name: "A visa specialist to answer questions on WhatsApp", others: false },
     { name: "Ready in 1–2 days", others: false },
-    { name: "No hidden agency markups", others: false },
   ]
 
   return (
@@ -63,9 +55,9 @@ export function ComparisonSection() {
       <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
         <div className="flex flex-col items-start gap-5">
           <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Why EZvisa</span>
-          <h2 className="text-balance text-foreground">Real service. Real difference.</h2>
+          <h2 className="text-balance text-foreground">On your own, or with a visa specialist.</h2>
           <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
-            See how EZvisa removes the stress, high markups, and long waiting periods of traditional travel agencies.
+            You can apply for a Schengen visa yourself. This is what changes when a specialist prepares the file with you.
           </p>
           <Link
             href="/apply"
@@ -87,21 +79,19 @@ export function ComparisonSection() {
           <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 end-0 w-24 bg-primary/[0.05] sm:w-40" />
 
           <table className="relative w-full border-collapse text-left">
-            <caption className="sr-only">Other agencies compared with EZvisa</caption>
+            <caption className="sr-only">Applying on your own compared with applying through EZvisa</caption>
             <thead>
               <tr className="border-b border-border/70">
                 <th scope="col" className="px-5 py-5 sm:px-7">
                   <span className="sr-only">Feature</span>
                 </th>
                 <th scope="col" className="w-24 px-2 py-5 text-center align-bottom sm:w-40">
-                  <span className="block text-sm font-semibold text-muted-foreground">Other Agencies</span>
-                  <span className="mt-0.5 hidden text-xs font-normal text-muted-foreground sm:block">Slow, manual, and expensive</span>
+                  <span className="block text-sm font-semibold text-muted-foreground">On your own</span>
                 </th>
                 <th scope="col" className="w-24 px-2 py-5 text-center align-bottom sm:w-40">
                   <span className="relative mx-auto block h-5 w-20">
-                    <Image src="/images/logo-main.png" alt="EZvisa Way" fill sizes="80px" className="object-contain" />
+                    <Image src="/images/logo-main.png" alt="With EZvisa" fill sizes="80px" className="object-contain" />
                   </span>
-                  <span className="mt-1 hidden text-xs font-medium text-primary sm:block">100% automated &amp; expert checked</span>
                 </th>
               </tr>
             </thead>
@@ -131,11 +121,10 @@ export function ComparisonSection() {
                   <span className="hidden sm:inline">What you pay</span>
                 </th>
                 <td className="px-2 py-5 text-center">
-                  <span className="block text-[10px] text-muted-foreground sm:text-xs">Estimated Average Cost</span>
-                  <span className="text-sm font-medium text-muted-foreground line-through">{getOtherPrice()}</span>
+                  <span className="text-xs text-muted-foreground sm:text-sm">Your time</span>
                 </td>
                 <td className="px-2 py-5 text-center">
-                  <span className="block text-[10px] text-muted-foreground sm:text-xs">Fixed Flat Fee</span>
+                  <span className="block text-[10px] text-muted-foreground sm:text-xs">One flat fee</span>
                   <span className="text-lg font-semibold tabular-nums text-foreground sm:text-xl">{getPrice()}</span>
                 </td>
               </tr>

@@ -7,9 +7,9 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 
 export const metadata: Metadata = {
-  title: "About EZvisa - Expert Schengen Visa Service | 98% Approval Rate",
+  title: "About EZvisa | Schengen Visa Specialists for UAE Residents",
   description:
-    "Learn about EZvisa, your trusted Schengen visa application partner in UAE. AI-powered visa assistance with 98% success rate. Fast, reliable service for 29 European countries since 2020.",
+    "EZvisa prepares Schengen visa applications for people living in the UAE: the application form, cover letter, itinerary and reservations, checked by a visa specialist.",
   keywords: [
     "about EZvisa",
     "visa application company",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "About EZvisa - Expert Schengen Visa Service",
-    description: "Your trusted partner for European visa applications with 98% approval rate.",
+    description: "Schengen visa applications prepared by specialists for UAE residents.",
     url: "https://www.ezvisa.net/about",
     type: "website",
   },
@@ -147,9 +147,8 @@ export default function AboutPage() {
                 struggling with confusing requirements, rejected applications, and endless paperwork.
               </p>
               <p className="text-muted-foreground leading-relaxed mt-4">
-                Today, we're proud to serve thousands of satisfied customers, helping them explore Europe with
-                confidence. Our success is measured by the smiles of travelers who've achieved their goals with our
-                help.
+                Every application is prepared by a person who checks that your form, cover letter, itinerary and
+                reservations tell the same story, because that consistency is what a consulate looks for.
               </p>
             </div>
 
@@ -157,20 +156,20 @@ export default function AboutPage() {
             <div className="bg-card border border-border/80 shadow-xl rounded-3xl p-8 shadow-primary/[0.02]">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div>
-                  <div className="text-3xl font-semibold text-primary mb-1">5,000+</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Visas Processed</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">249 AED</div>
+                  <div className="text-sm font-semibold text-muted-foreground">One flat fee</div>
                 </div>
                 <div>
                   <div className="text-3xl font-semibold text-primary mb-1">29</div>
                   <div className="text-sm font-semibold text-muted-foreground">Countries Covered</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-semibold text-primary mb-1">98%</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Success Rate</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">1–2 days</div>
+                  <div className="text-sm font-semibold text-muted-foreground">To prepare your file</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-semibold text-primary mb-1">24/7</div>
-                  <div className="text-sm font-semibold text-muted-foreground">Support Available</div>
+                  <div className="text-3xl font-semibold text-primary mb-1">5</div>
+                  <div className="text-sm font-semibold text-muted-foreground">Documents prepared for you</div>
                 </div>
               </div>
             </div>
