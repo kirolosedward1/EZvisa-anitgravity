@@ -17,10 +17,10 @@ export function PopularDestinations() {
         {/* Header Row */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
-            <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
+            <span className="text-xs font-semibold text-primary uppercase tracking-widest bg-primary/5 px-3 py-1 rounded-md">
               Top Travel Spots
             </span>
-            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground mt-3">
+            <h2 className="text-3xl md:text-4xl font-semibold tracking-tight text-foreground mt-3">
               Popular Destinations
             </h2>
           </div>
@@ -70,7 +70,7 @@ export function PopularDestinations() {
 
                 {/* Bottom Card Content */}
                 <div className="absolute bottom-6 left-5 right-5 z-20 text-white flex flex-col transition-transform duration-300 group-hover:-translate-y-1">
-                  <span className="text-xs font-bold text-accent/90 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-accent/90 uppercase tracking-wider mb-1 flex items-center gap-1.5">
                     <span className="relative w-4 h-4 rounded-full overflow-hidden inline-block flex-shrink-0">
                       <Image
                         src={`/flags/${country.slug}.png`}
@@ -81,7 +81,7 @@ export function PopularDestinations() {
                     </span>
                     <span>{country.visaType}</span>
                   </span>
-                  <h3 className="text-xl font-bold tracking-tight mb-1">
+                  <h3 className="text-xl font-semibold tracking-tight mb-1">
                     {country.name}
                   </h3>
                   <ReadyLine className="text-xs text-white/60" />

@@ -6,6 +6,7 @@ import { HowItWorksContent } from "@/components/how-it-works-content"
 import { Mail, RefreshCw, CheckCircle2 } from "lucide-react"
 import { WhatYouGetSection } from "@/components/what-you-get-section" // Import WhatYouGetSection
 import { InnerHero } from "@/components/inner-hero"
+import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 
 export const metadata: Metadata = {
   title: "How It Works - 4-Step Schengen Visa Application Process | EZvisa",
@@ -49,7 +50,7 @@ export default function HowItWorksPage() {
         <HowItWorksContent />
 
         {/* What Happens Next */}
-        <section className="relative py-24 md:py-32 border-t border-border/80 overflow-hidden">
+        <section className="photo-hero relative py-24 md:py-32 border-t border-border/80 overflow-hidden">
           {/* Background Image with Frosted Overlay */}
           <div className="absolute inset-0 pointer-events-none z-0">
             <img 
@@ -58,17 +59,17 @@ export default function HowItWorksPage() {
               className="w-full h-full object-cover object-center" 
             />
             {/* White overlay to ensure text readability */}
-            <div className="absolute inset-0 bg-[#FFFFFF]/90" />
+            <PhotoHeroOverlay />
           </div>
           
           <div className="container mx-auto px-6 max-w-6xl relative z-10">
             {/* Header */}
             <div className="text-center max-w-2xl mx-auto mb-16 md:mb-20">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold tracking-widest uppercase mb-5">
+              <div className="type-eyebrow mb-5 inline-flex items-center gap-2 rounded-full border border-[#E3E7EF] bg-[#F7F8FA] px-3 py-1.5 text-[#0436DC]">
                 <span className="w-1.5 h-1.5 rounded-full bg-primary" />
                 Post-submission
               </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight tracking-tight text-foreground text-balance">
+              <h2 className="hero-copy text-balance text-white">
                 What happens<br/>after submission?
               </h2>
             </div>
@@ -80,7 +81,7 @@ export default function HowItWorksPage() {
                   <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <Mail className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-bold text-lg text-foreground mb-3">Instant Confirmation</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-3">Instant Confirmation</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Receive immediate email confirmation with your application reference number and payment receipt.
                   </p>
@@ -93,7 +94,7 @@ export default function HowItWorksPage() {
                   <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <RefreshCw className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-bold text-lg text-foreground mb-3">Real-time Tracking</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-3">Real-time Tracking</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Monitor your application progress 24/7 with live status updates through your dashboard.
                   </p>
@@ -106,7 +107,7 @@ export default function HowItWorksPage() {
                   <div className="w-12 h-12 rounded-full bg-primary/5 text-primary border border-primary/10 flex items-center justify-center mb-6">
                     <CheckCircle2 className="w-5 h-5" strokeWidth={2} />
                   </div>
-                  <h3 className="font-bold text-lg text-foreground mb-3">Ready to Travel</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-3">Ready to Travel</h3>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Get instant notification when your complete visa package is approved and ready.
                   </p>

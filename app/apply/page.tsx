@@ -63,6 +63,8 @@ interface WizardFormData {
   travelStartDate: string
   travelEndDate: string
   datesFlexible: string
+  travelMonth: string
+  tripLength: string
   // Step 4: Accommodation, Budget & Documents
   hotelCategory: string
   roomType: string
@@ -141,6 +143,8 @@ const defaultFormData: WizardFormData = {
   travelStartDate: "",
   travelEndDate: "",
   datesFlexible: "",
+  travelMonth: "",
+  tripLength: "",
   hotelCategory: "",
   roomType: "",
   preferredLocation: "",
@@ -637,11 +641,11 @@ function ApplyPageContent() {
                   className="flex items-center justify-between p-4 rounded-md bg-white dark:bg-slate-900 border border-border/80 shadow-sm cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:dark:bg-slate-950"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-sm flex items-center justify-center font-bold bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20 shrink-0">
+                    <div className="w-10 h-10 rounded-sm flex items-center justify-center font-semibold bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20 shrink-0">
                       {currentVisualStep}
                     </div>
                     <div>
-                      <p className="font-bold text-sm tracking-tight text-foreground">{steps.find((s) => s.number === currentStep)?.title}</p>
+                      <p className="font-semibold text-sm tracking-tight text-foreground">{steps.find((s) => s.number === currentStep)?.title}</p>
                       <p className="text-xs text-muted-foreground">
                         {steps.find((s) => s.number === currentStep)?.description}
                       </p>
@@ -665,14 +669,14 @@ function ApplyPageContent() {
                           onClick={() => handleStepClick(step.number)}
                           className={`flex items-start gap-4 p-3 rounded-md transition-all ${
                             currentStep === step.number
-                                ? "bg-slate-50 dark:bg-slate-950 text-foreground font-bold"
+                                ? "bg-slate-50 dark:bg-slate-950 text-foreground font-semibold"
                                 : currentStep > step.number
                                   ? "cursor-pointer hover:bg-slate-50 hover:dark:bg-slate-950"
                                   : "cursor-not-allowed opacity-50"
                           }`}
                         >
                           <div
-                            className={`w-8 h-8 rounded-sm flex items-center justify-center font-bold text-xs shrink-0 ${
+                            className={`w-8 h-8 rounded-sm flex items-center justify-center font-semibold text-xs shrink-0 ${
                               currentStep === step.number
                                 ? "bg-primary text-primary-foreground"
                                 : currentStep > step.number
@@ -711,7 +715,7 @@ function ApplyPageContent() {
                     }`}
                   >
                     <div
-                      className={`w-9 h-9 rounded-sm flex items-center justify-center font-bold text-sm shrink-0 transition-all ${
+                      className={`w-9 h-9 rounded-sm flex items-center justify-center font-semibold text-sm shrink-0 transition-all ${
                         currentStep === step.number
                           ? "bg-primary text-primary-foreground shadow-sm ring-2 ring-primary/20"
                           : currentStep > step.number
@@ -722,7 +726,7 @@ function ApplyPageContent() {
                       {currentStep > step.number ? <CheckCircle2 className="w-5 h-5" /> : index + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm tracking-tight">{step.title}</p>
+                      <p className="font-semibold text-sm tracking-tight">{step.title}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{step.description}</p>
                     </div>
                   </motion.div>

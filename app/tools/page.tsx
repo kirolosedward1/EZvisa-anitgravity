@@ -103,11 +103,11 @@ export default function ToolsIndexPage() {
           
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
               <Sparkles className="w-3.5 h-3.5" />
               <span>UAE Traveler Intelligence Suite</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl font-extrabold text-foreground tracking-tight">
+            <h1 className="text-3xl sm:text-5xl font-semibold text-foreground tracking-tight">
               Free Schengen Visa Tools &amp; Calculators
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed">
@@ -131,12 +131,12 @@ export default function ToolsIndexPage() {
                       <div className="w-12 h-12 rounded-2xl bg-background border border-border/80 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
                         <Icon className="w-6 h-6 text-primary" />
                       </div>
-                      <span className={"text-[11px] font-bold px-2.5 py-1 rounded-full border " + tool.badgeColor}>
+                      <span className={"text-[11px] font-semibold px-2.5 py-1 rounded-full border " + tool.badgeColor}>
                         {tool.badge}
                       </span>
                     </div>
 
-                    <h2 className="text-xl font-bold text-foreground mb-3 group-hover:text-primary transition-colors">
+                    <h2 className="text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
                       {tool.title}
                     </h2>
 
@@ -172,12 +172,12 @@ export default function ToolsIndexPage() {
             <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full pointer-events-none" />
             
             <div className="relative z-10 max-w-2xl">
-              <div className="inline-flex items-center gap-2 text-primary-foreground/80 text-xs font-bold uppercase tracking-wider mb-4">
+              <div className="inline-flex items-center gap-2 text-primary-foreground/80 text-xs font-semibold uppercase tracking-wider mb-4">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
                 <span>Consulate-Ready Document Preparation</span>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-4">
+              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-4">
                 Done calculating? Let our experts assemble your complete visa file.
               </h2>
 

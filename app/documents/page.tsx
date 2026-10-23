@@ -11,6 +11,7 @@ import Image from "next/image"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
+import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 
 export default function DocumentsPage() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -73,7 +74,7 @@ export default function DocumentsPage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full pointer-events-none" />
           
           <div className="container mx-auto px-4 max-w-6xl relative z-10">
-            <div className="relative w-full rounded-[2rem] md:rounded-[2.5rem] border border-border/60 shadow-2xl p-8 md:p-12 overflow-hidden flex flex-col items-center text-center min-h-[320px] justify-center bg-slate-900">
+            <div className="photo-hero relative w-full rounded-[2rem] md:rounded-[2.5rem] border border-border/60 shadow-2xl p-8 md:p-12 overflow-hidden flex flex-col items-center text-center min-h-[320px] justify-center bg-slate-900">
               
               {/* Background Image of scenic country */}
               <div className="absolute inset-0 z-0 select-none pointer-events-none">
@@ -85,7 +86,7 @@ export default function DocumentsPage() {
                   sizes="(max-width: 1200px) 100vw, 1152px"
                   priority
                 />
-                <div className="absolute inset-0 bg-slate-950/65" />
+                <PhotoHeroOverlay />
               </div>
 
               {/* Dot grid decoration */}
@@ -100,14 +101,14 @@ export default function DocumentsPage() {
               />
               
               <div className="relative z-20 max-w-2xl mx-auto flex flex-col items-center">
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">
+                <h2 className="hero-copy mb-4 text-balance text-white">
                   Need Help With Your Application?
                 </h2>
                 <p className="text-white/85 text-base md:text-lg mb-8 leading-relaxed max-w-xl font-medium">
                   Our experts will review your documents and ensure everything is perfect before submission.
                 </p>
                 <Link href="/apply">
-                  <button className="px-8 py-3.5 bg-white text-primary hover:bg-slate-50 transition-all duration-300 font-bold inline-flex items-center gap-2.5 shadow-xl hover:-translate-y-0.5 cursor-pointer rounded-xl">
+                  <button className="px-8 py-3.5 bg-white text-primary hover:bg-slate-50 transition-all duration-300 font-semibold inline-flex items-center gap-2.5 shadow-xl hover:-translate-y-0.5 cursor-pointer rounded-xl">
                     <Rocket className="h-5 w-5 text-primary" />
                     Start Your Application
                   </button>

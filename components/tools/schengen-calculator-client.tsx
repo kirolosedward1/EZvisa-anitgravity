@@ -63,7 +63,7 @@ export function SchengenCalculatorClient() {
             <Clock className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-foreground">Official 90/180-Day Schengen Rule</h2>
+            <h2 className="text-base font-semibold text-foreground">Official 90/180-Day Schengen Rule</h2>
             <p className="text-xs text-muted-foreground">
               Non-EU short-stay visitors may spend up to 90 days in any rolling 180-day window across the 29 Schengen member states.
             </p>
@@ -82,7 +82,7 @@ export function SchengenCalculatorClient() {
             <div className="flex items-center justify-between border-b border-border/40 pb-3">
               <div className="flex items-center gap-2">
                 <Plane className="w-5 h-5 text-blue-600" />
-                <h3 className="font-bold text-base text-foreground">Planned Trip to Europe</h3>
+                <h3 className="font-semibold text-base text-foreground">Planned Trip to Europe</h3>
               </div>
               <span className="text-xs text-muted-foreground font-medium">Evaluation Target</span>
             </div>
@@ -118,7 +118,7 @@ export function SchengenCalculatorClient() {
             <div className="flex items-center justify-between border-b border-border/40 pb-3">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-foreground/70" />
-                <h3 className="font-bold text-base text-foreground">Past Schengen Stays (Last 180 Days)</h3>
+                <h3 className="font-semibold text-base text-foreground">Past Schengen Stays (Last 180 Days)</h3>
               </div>
               <Button
                 type="button"
@@ -138,7 +138,7 @@ export function SchengenCalculatorClient() {
             <div className="space-y-3">
               {pastTrips.map((trip, idx) => (
                 <div key={trip.id} className="flex flex-col sm:flex-row items-center gap-2 p-3 bg-muted/20 border border-border/40 rounded-xl">
-                  <span className="text-xs font-bold text-muted-foreground w-6 text-center">#{idx + 1}</span>
+                  <span className="text-xs font-semibold text-muted-foreground w-6 text-center">#{idx + 1}</span>
                   <div className="flex-1 grid grid-cols-2 gap-2 w-full">
                     <div>
                       <span className="text-[10px] uppercase text-muted-foreground block mb-0.5">Entry</span>
@@ -178,7 +178,7 @@ export function SchengenCalculatorClient() {
         {/* Right Column: Calculation Result Box */}
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-card border border-border/80 rounded-2xl p-6 shadow-md space-y-6">
-            <h3 className="font-bold text-base text-foreground uppercase tracking-wider text-xs border-b border-border/40 pb-3">
+            <h3 className="font-semibold text-base text-foreground uppercase tracking-wider text-xs border-b border-border/40 pb-3">
               Compliance Assessment
             </h3>
 
@@ -187,7 +187,7 @@ export function SchengenCalculatorClient() {
               <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-600 dark:text-rose-400">
                 <AlertCircle className="w-6 h-6 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm">Overstay Alert</h4>
+                  <h4 className="font-semibold text-sm">Overstay Alert</h4>
                   <p className="text-xs mt-1 leading-relaxed">
                     This itinerary exceeds the 90-day limit by <strong>{result.overstayDays} day(s)</strong> within the 180-day window. Consulates will reject this duration without an extension or long-stay visa.
                   </p>
@@ -197,7 +197,7 @@ export function SchengenCalculatorClient() {
               <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-600 dark:text-amber-400">
                 <AlertTriangle className="w-6 h-6 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm">Caution: Approaching Limit</h4>
+                  <h4 className="font-semibold text-sm">Caution: Approaching Limit</h4>
                   <p className="text-xs mt-1 leading-relaxed">
                     You have only <strong>{result.remainingDays} days</strong> remaining. Make sure your flight dates leave a safety buffer in case of travel delays.
                   </p>
@@ -207,7 +207,7 @@ export function SchengenCalculatorClient() {
               <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3 text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="w-6 h-6 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm">Itinerary Compliant</h4>
+                  <h4 className="font-semibold text-sm">Itinerary Compliant</h4>
                   <p className="text-xs mt-1 leading-relaxed">
                     Your planned trip is fully authorized under the 90/180 Schengen rule. You have ample allowable days.
                   </p>
@@ -221,7 +221,7 @@ export function SchengenCalculatorClient() {
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                   Days in Window
                 </span>
-                <span className="text-3xl font-black text-foreground">
+                <span className="text-3xl font-semibold text-foreground">
                   {result.totalDaysInWindow}
                   <span className="text-xs font-normal text-muted-foreground"> / 90</span>
                 </span>
@@ -231,7 +231,7 @@ export function SchengenCalculatorClient() {
                 <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
                   Days Remaining
                 </span>
-                <span className={`text-3xl font-black ${result.isOverstay ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400"}`}>
+                <span className={`text-3xl font-semibold ${result.isOverstay ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400"}`}>
                   {result.remainingDays}
                 </span>
               </div>
@@ -242,7 +242,7 @@ export function SchengenCalculatorClient() {
               <Button
                 asChild
                 disabled={result.isOverstay}
-                className="w-full h-12 text-base font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/20"
+                className="w-full h-12 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/20"
               >
                 <Link href={applyUrl} className="flex items-center justify-center gap-2">
                   <span>Prepare Visa File for These Dates</span>
@@ -272,21 +272,21 @@ export function SchengenCalculatorClient() {
 
       {/* FAQ Section */}
       <div className="border-t border-border/60 pt-10 space-y-6">
-        <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+        <h3 className="text-xl font-semibold text-foreground flex items-center gap-2">
           <HelpCircle className="w-5 h-5 text-primary" />
           Frequently Asked Questions About the 90/180 Rule
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           <div className="bg-card border border-border/60 rounded-2xl p-6 space-y-2">
-            <h4 className="font-bold text-foreground">Does the 180-day window reset when my visa expires?</h4>
+            <h4 className="font-semibold text-foreground">Does the 180-day window reset when my visa expires?</h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
               No. The 180-day period is a rolling calendar window, not linked to individual visa validity dates. Even if you receive a new visa, any days spent in the Schengen area within the preceding 180 days count toward your 90-day limit.
             </p>
           </div>
 
           <div className="bg-card border border-border/60 rounded-2xl p-6 space-y-2">
-            <h4 className="font-bold text-foreground">Can I leave for 1 day and re-enter?</h4>
+            <h4 className="font-semibold text-foreground">Can I leave for 1 day and re-enter?</h4>
             <p className="text-xs text-muted-foreground leading-relaxed">
               A brief exit does not reset the 90-day counter. You can only stay for the number of days that ensures you have not spent more than 90 days in the 180-day period looking backward from each day of your stay.
             </p>

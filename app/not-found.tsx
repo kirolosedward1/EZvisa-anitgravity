@@ -14,7 +14,7 @@ export default function NotFound() {
             <FileQuestion className="w-10 h-10 text-primary" />
           </div>
 
-          <h1 className="text-6xl font-bold text-primary mb-4">404</h1>
+          <h1 className="text-6xl font-semibold text-primary mb-4">404</h1>
 
           <h2 className="text-2xl font-semibold text-foreground mb-3">Page Not Found</h2>
 

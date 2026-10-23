@@ -1,13 +1,14 @@
 "use client"
 
 import type React from "react"
-import { Button } from "@/components/ui/button"
-import { Plus, X, AlertCircle, Loader2, Info, Calendar } from "lucide-react"
+import { Plus, X } from "lucide-react"
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
-import { datesInOrder, isValidCalendarDate, INVALID_DATE_MESSAGE } from "@/lib/dates"
+import { datesInOrder, isValidCalendarDate, schengenStayDays } from "@/lib/dates"
+import { TravelDatesField } from "@/components/apply/travel-dates-field"
+import { WizardBar } from "@/components/apply/wizard-bar"
 
 interface TripDetailsStepProps {
   formData: FormData
@@ -105,13 +106,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
 
   const additionalCountries = formData.additionalCountries || []
 
-  // Calculate duration in days
-  const tripDuration = formData.travelStartDate && formData.travelEndDate
-    ? Math.ceil(
-        (new Date(formData.travelEndDate).getTime() - new Date(formData.travelStartDate).getTime()) /
-          (1000 * 60 * 60 * 24),
-      )
-    : 0
+  const tripDuration = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
 
   const handleFieldChange = (field: keyof FormData, value: any) => {
     updateFormData({ [field]: value })
@@ -181,17 +176,23 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
     onNext()
   }
 
-  const isDatesValid =
-    isValidCalendarDate(formData.travelStartDate) &&
-    isValidCalendarDate(formData.travelEndDate) &&
-    datesInOrder(formData.travelStartDate, formData.travelEndDate) &&
-    tripDuration > 0 &&
-    tripDuration <= 90
+  const flexibleDates = formData.datesFlexible === "yes"
+  const isDatesValid = flexibleDates
+    ? !!formData.travelMonth &&
+      !!formData.tripLength &&
+      isValidCalendarDate(formData.travelStartDate) &&
+      isValidCalendarDate(formData.travelEndDate) &&
+      tripDuration > 1 &&
+      tripDuration <= 90
+    : formData.datesFlexible === "no" &&
+      isValidCalendarDate(formData.travelStartDate) &&
+      isValidCalendarDate(formData.travelEndDate) &&
+      datesInOrder(formData.travelStartDate, formData.travelEndDate) &&
+      tripDuration > 1 &&
+      tripDuration <= 90
 
   const isFormValid =
     formData.purposeOfTrip &&
-    formData.travelStartDate &&
-    formData.travelEndDate &&
     isDatesValid &&
     formData.datesFlexible &&
     formData.isFirstSchengenVisa &&
@@ -203,28 +204,11 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
     formData.hotelCategory
 
   const getErrorClass = (fieldValue: FieldValue) => {
-    return showErrors && !fieldValue ? "border-destructive bg-destructive/5 focus:ring-destructive/10" : ""
+    return showErrors && !fieldValue ? "border-[#B83200]" : ""
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 pb-44 md:pb-0">
-      {showErrors && !isFormValid && (
-        <div className="flex items-start gap-3 p-4 bg-destructive/5 border border-destructive/20 rounded-xl text-foreground text-sm">
-          <Info className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-          <div className="flex-1">
-            {!isDatesValid && formData.travelStartDate && formData.travelEndDate ? (
-              <span>
-                {isValidCalendarDate(formData.travelStartDate) && isValidCalendarDate(formData.travelEndDate)
-                  ? "Return date must be after departure date."
-                  : INVALID_DATE_MESSAGE}
-              </span>
-            ) : (
-              <span>Please fill in all required travel details before continuing.</span>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Purpose of Trip */}
       <div>
         <label htmlFor="purposeOfTrip" className={labelStyles}>
@@ -245,71 +229,12 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
         </select>
       </div>
 
-      {/* Travel Dates */}
-      <div className="grid gap-6 md:grid-cols-2 p-6 bg-muted/20 rounded-2xl border border-border/60">
-        <div>
-          <label htmlFor="travelStartDate" className={labelStyles}>
-            Intended Departure Date *
-          </label>
-          <CustomDatePicker
-            id="travelStartDate"
-            placeholder="Select departure date"
-            min={new Date(new Date().setDate(new Date().getDate() + 15)).toISOString().split("T")[0]}
-            value={formData.travelStartDate || ""}
-            onChange={(val) => handleFieldChange("travelStartDate", val)}
-            className={cn(getErrorClass(formData.travelStartDate))}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="travelEndDate" className={labelStyles}>
-            Intended Return Date *
-          </label>
-          <CustomDatePicker
-            id="travelEndDate"
-            placeholder="Select return date"
-            min={formData.travelStartDate || new Date().toISOString().split("T")[0]}
-            value={formData.travelEndDate || ""}
-            onChange={(val) => handleFieldChange("travelEndDate", val)}
-            className={cn(getErrorClass(formData.travelEndDate))}
-          />
-        </div>
-
-        {tripDuration > 0 && (
-          <div className="md:col-span-2 text-sm text-muted-foreground flex items-center gap-2.5 bg-blue-500/5 p-3.5 rounded-xl border border-blue-500/20">
-            <Info className="w-4.5 h-4.5 text-blue-500 shrink-0" />
-            <span>
-              Total Stay Duration: <strong>{tripDuration} days</strong>.
-              {tripDuration > 90 && (
-                <span className="text-destructive block mt-1 font-medium">
-                  ⚠️ Error: Schengen tourist visas permit a maximum stay of 90 days.
-                </span>
-              )}
-            </span>
-          </div>
-        )}
-
-        {/* Date Flexibility */}
-        <div className="md:col-span-2">
-          <label className={labelStyles}>Are your travel dates flexible? *</label>
-          <div className="flex gap-3 mt-1">
-            <button
-              type="button"
-              className={cn("flex-1", formData.datesFlexible === "yes" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => handleFieldChange("datesFlexible", "yes")}
-            >
-              Yes
-            </button>
-            <button
-              type="button"
-              className={cn("flex-1", formData.datesFlexible === "no" ? toggleActiveStyles : toggleInactiveStyles)}
-              onClick={() => handleFieldChange("datesFlexible", "no")}
-            >
-              No
-            </button>
-          </div>
-        </div>
-      </div>
+      <TravelDatesField
+        formData={formData}
+        updateFormData={updateFormData}
+        showErrors={showErrors}
+        onClearErrors={() => setShowErrors(false)}
+      />
 
       {/* Companions and Accommodation Preferences */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -558,12 +483,7 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
                 </div>
               </div>
 
-              {dateError && (
-                <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/5 p-3 rounded-xl border border-destructive/20">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
-                  <span>{dateError}</span>
-                </div>
-              )}
+              {dateError && <p className="text-[12px] leading-4 text-[#B83200]">{dateError}</p>}
 
               <button
                 type="button"
@@ -633,31 +553,14 @@ export function TripDetailsStep({ formData, updateFormData, onNext, onBack, isLo
       </div>
 
       {/* Action Buttons */}
-      <div className="md:flex md:justify-between md:pt-4 fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 z-20 flex justify-between gap-3">
-        <Button
-          type="button"
-          onClick={onBack}
-          variant="outline"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base border border-border bg-background/40 hover:bg-background/80 text-foreground hover:text-foreground transition-all duration-300 active:scale-95 px-8"
-        >
-          Back
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Continue to Review & Payment"
-          )}
-        </Button>
-      </div>
+      <WizardBar
+        onBack={onBack}
+        loading={isLoading}
+        continueLabel="Continue to Review & Pay"
+        continueLabelAr="تابع إلى المراجعة والدفع"
+        loadingLabel="Processing..."
+        loadingLabelAr="جارٍ المعالجة..."
+      />
     </form>
   )
 }

@@ -75,10 +75,10 @@ export function TopDestinationsCarousel() {
                 />
               </div>
               <div className="min-w-0 flex-1 flex flex-col justify-center">
-                <span className="text-sm sm:text-base font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                <span className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                   {destination.name}
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded-md mt-1 w-max">
+                <span className="text-[9px] sm:text-[10px] font-semibold text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded-md mt-1 w-max">
                   Schengen Visa
                 </span>
               </div>
@@ -104,10 +104,10 @@ export function TopDestinationsCarousel() {
                 />
               </div>
               <div className="min-w-0 flex-1 flex flex-col justify-center">
-                <span className="text-sm sm:text-base font-bold text-foreground truncate group-hover:text-primary transition-colors">
+                <span className="text-sm sm:text-base font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                   {destination.name}
                 </span>
-                <span className="text-[9px] sm:text-[10px] font-bold text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded-md mt-1 w-max">
+                <span className="text-[9px] sm:text-[10px] font-semibold text-primary/80 bg-primary/5 px-1.5 py-0.5 rounded-md mt-1 w-max">
                   Schengen Visa
                 </span>
               </div>

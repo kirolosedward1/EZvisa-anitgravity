@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-import { Button } from "@/components/ui/button"
-import { Upload, FileText, X, Info, Loader2, AlertCircle, CheckCircle2 } from "lucide-react"
+import { WizardBar } from "@/components/apply/wizard-bar"
+import { Upload, FileText, X, Info, AlertCircle, CheckCircle2 } from "lucide-react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
 import { trackEvent } from "@/lib/analytics"
@@ -248,32 +248,16 @@ export function DocumentsStep({ formData, updateFormData, onNext, onBack, isLoad
         </div>
       )}
 
-      <div className="md:flex md:justify-between fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 z-20 flex justify-between gap-3">
-        <Button
-          type="button"
-          onClick={onBack}
-          variant="outline"
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base border border-border bg-background/40 hover:bg-background/80 text-foreground hover:text-foreground transition-all duration-300 active:scale-95 px-8"
-        >
-          Back
-        </Button>
-        <Button
-          type="button"
-          onClick={handleContinue}
-          disabled={isLoading}
-          className="flex-1 md:flex-none h-14 rounded-xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Continue to Review"
-          )}
-        </Button>
-      </div>
+      <WizardBar
+        onBack={onBack}
+        loading={isLoading}
+        continueType="button"
+        onContinue={handleContinue}
+        continueLabel="Continue to Review"
+        continueLabelAr="تابع إلى المراجعة"
+        loadingLabel="Processing..."
+        loadingLabelAr="جارٍ المعالجة..."
+      />
     </div>
   )
 }

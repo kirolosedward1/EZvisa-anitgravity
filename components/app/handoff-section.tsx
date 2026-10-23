@@ -118,7 +118,7 @@ export function HandoffSection() {
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-xs font-medium text-muted-foreground">Germany · Draft</span>
-              <h4 className="text-lg font-bold leading-tight tracking-tight">Pick up where you left off</h4>
+              <h4 className="text-lg font-semibold leading-tight tracking-tight">Pick up where you left off</h4>
             </div>
             <div ref={toRef} className="relative h-28 w-full rounded-2xl bg-muted">
               <ApplicationCard className={cn(!landed && "invisible")} />

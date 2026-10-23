@@ -1,19 +1,13 @@
-import { Loader2 } from "lucide-react"
-
 export default function Loading() {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-background/80 transition-opacity">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative flex items-center justify-center">
-          {/* Outer glow ring */}
-          <div className="absolute inset-0 rounded-full bg-primary/20 animate-pulse" />
-          
-          {/* Spinner */}
-          <Loader2 className="h-10 w-10 text-primary animate-spin relative z-10" />
-        </div>
-        
-        {/* Loading text */}
-        <p className="text-sm font-semibold text-primary/80 animate-pulse">Loading...</p>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-28" aria-hidden>
+      <div className="skeleton-shimmer h-8 w-40 rounded-full" />
+      <div className="skeleton-shimmer h-12 w-full max-w-xl rounded-2xl" />
+      <div className="skeleton-shimmer h-5 w-full max-w-lg rounded-xl" />
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="skeleton-shimmer h-40 rounded-3xl" />
+        <div className="skeleton-shimmer h-40 rounded-3xl" />
+        <div className="skeleton-shimmer hidden h-40 rounded-3xl lg:block" />
       </div>
     </div>
   )

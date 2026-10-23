@@ -128,7 +128,7 @@ export function ContactSection() {
                   <div>
                     <span className="text-xs tracking-wider uppercase text-[#5B6475] block">Starting at</span>
                     <div className="flex items-baseline gap-1 mt-1">
-                      <span className="text-3xl font-bold text-[#0A0F1F]">249</span>
+                      <span className="text-3xl font-semibold text-[#0A0F1F]">249</span>
                       <span className="text-xs font-semibold text-[#5B6475]">AED</span>
                     </div>
                   </div>

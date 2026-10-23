@@ -47,7 +47,7 @@ export default function PaymentFailedPage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+          <h1 className="text-4xl md:text-5xl font-semibold text-foreground mb-4">
             <LangText en="Payment Failed" ar="فشلت عملية الدفع" />
           </h1>
           

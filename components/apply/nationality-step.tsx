@@ -4,6 +4,7 @@ import { DEFAULT_RESIDENCE, UAE_EMIRATES } from "@/lib/residence"
 import type React from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
+import { WizardBar } from "@/components/apply/wizard-bar"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Check, ChevronsUpDown, Info, Loader2, Globe, User } from "lucide-react"
@@ -595,22 +596,14 @@ export function NationalityStep({ formData, updateFormData, onNext, isLoading }:
         )}
       </div>
 
-      <div className="md:flex md:justify-end fixed md:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-background/95 border-t border-border/80 md:border-t-0 md:bg-transparent md:p-0 z-20">
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full md:w-auto h-14 rounded-xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none px-8"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            "Continue to Employment"
-          )}
-        </Button>
-      </div>
+      <WizardBar
+        showBack={false}
+        loading={isLoading}
+        continueLabel="Continue to Employment"
+        continueLabelAr="تابع إلى العمل"
+        loadingLabel="Processing..."
+        loadingLabelAr="جارٍ المعالجة..."
+      />
     </form>
   )
 }

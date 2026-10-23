@@ -1,9 +1,12 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React from "react"
 import { motion } from "framer-motion"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { destinations } from "@/lib/destinations"
+import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
+import { stableIndex } from "@/lib/stable-index"
 
 interface InnerHeroProps {
   badge?: React.ReactNode
@@ -25,28 +28,11 @@ export function InnerHero({
   children,
   className = "",
 }: InnerHeroProps) {
-  const [heroBgImage, setHeroBgImage] = useState<string | undefined>(backgroundImage)
-  const [heroBgCountryName, setHeroBgCountryName] = useState<string | undefined>(undefined)
-
-  useEffect(() => {
-    if (randomizeBackground) {
-      const randomIndex = Math.floor(Math.random() * destinations.length)
-      const randomDest = destinations[randomIndex]
-      if (randomDest && randomDest.image) {
-        setHeroBgImage(randomDest.image)
-        setHeroBgCountryName(randomDest.name)
-      }
-    } else {
-      setHeroBgImage(backgroundImage)
-      // Look up country name by image path
-      const matchingDest = destinations.find(d => d.image === backgroundImage)
-      if (matchingDest) {
-        setHeroBgCountryName(matchingDest.name)
-      } else {
-        setHeroBgCountryName(undefined)
-      }
-    }
-  }, [backgroundImage, randomizeBackground])
+  const pathname = usePathname()
+  const picked = randomizeBackground ? destinations[stableIndex(pathname || "inner", destinations.length)] : undefined
+  const named = destinations.find((destination) => destination.image === backgroundImage)
+  const heroBgImage = backgroundImage || picked?.image
+  const heroBgCountryName = named?.name || picked?.name
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -95,7 +81,7 @@ export function InnerHero({
       </div>
 
       <div className="container mx-auto max-w-6xl">
-        <div className="relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-[#E3E7EF] shadow-2xl px-6 py-24 md:py-28 flex flex-col items-center text-center bg-[#FFFFFF]">
+        <div className={`relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-[#E3E7EF] shadow-2xl px-6 py-24 md:py-28 flex flex-col items-center text-center bg-[#FFFFFF] ${heroBgImage ? "photo-hero" : ""}`}>
           {heroBgImage ? (
             <>
               <div className="absolute inset-0 w-full h-full pointer-events-none">
@@ -109,14 +95,14 @@ export function InnerHero({
                   className="object-cover object-center"
                 />
               </div>
-              <div className="absolute inset-0 bg-[#FFFFFF]/90 pointer-events-none" />
+              <PhotoHeroOverlay />
             </>
           ) : null}
 
           {/* Content Container */}
           <motion.div
             variants={containerVariants}
-            initial="hidden"
+            initial={false}
             animate="visible"
             className="relative z-10 flex flex-col items-center max-w-3xl mx-auto w-full"
           >
@@ -133,7 +119,7 @@ export function InnerHero({
             {/* Title */}
             <motion.h1
               variants={itemVariants}
-              className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight leading-[1.15] text-balance text-[#0A0F1F]"
+              className={`text-balance ${heroBgImage ? "hero-copy text-white" : "text-[#0A0F1F]"}`}
             >
               {title}
             </motion.h1>
@@ -142,7 +128,7 @@ export function InnerHero({
             {description && (
               <motion.p
                 variants={itemVariants}
-                className="mt-4 text-base sm:text-lg leading-relaxed max-w-2xl font-medium text-[#5B6475]"
+                className={`mt-4 max-w-2xl ${heroBgImage ? "hero-copy text-white/90" : "text-[#3A4150]"}`}
               >
                 {description}
               </motion.p>
@@ -156,7 +142,7 @@ export function InnerHero({
             )}
           </motion.div>
           {heroBgCountryName && (
-            <div className="absolute bottom-4 right-6 md:bottom-5 md:right-8 text-[9px] md:text-[10px] text-[#0A0F1F]/40 tracking-widest font-semibold uppercase z-20 pointer-events-none select-none">
+            <div className={`absolute bottom-4 end-6 md:bottom-5 md:end-8 text-[9px] md:text-[10px] tracking-widest font-semibold uppercase z-20 pointer-events-none select-none ${heroBgImage ? "text-white/70" : "text-[#0A0F1F]/40"}`}>
               {heroBgCountryName}
             </div>
           )}

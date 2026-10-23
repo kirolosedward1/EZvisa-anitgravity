@@ -151,7 +151,7 @@ function PaymentSuccessContent() {
             )}
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+          <h1 className="text-3xl md:text-4xl font-semibold text-foreground mb-3">
             {outcome === "checking" && <LangText en="Confirming your payment" ar="جارٍ التحقق من الدفع…" />}
             {outcome === "paid" && <LangText en="Payment Confirmed" ar="تم تأكيد الدفع" />}
             {outcome === "failed" && <LangText en="Payment didn't go through" ar="لم تتم عملية الدفع" />}
@@ -220,11 +220,11 @@ function PaymentSuccessContent() {
           {outcome === "paid" && (
           <div className="mb-8 bg-amber-500/10 border-2 border-amber-500/30 rounded-3xl p-6 md:p-8 text-left shadow-md relative overflow-hidden">
             <div className="flex items-center gap-3 mb-3">
-              <span className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
+              <span className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center font-semibold text-sm shrink-0">
                 <LangText en="2" ar="٢" />
               </span>
               <div>
-                <h2 className="text-base md:text-lg font-bold text-foreground">
+                <h2 className="text-base md:text-lg font-semibold text-foreground">
                   <LangText en="Step 2: Upload Your Supporting Documents" ar="الخطوة ٢: ارفع المستندات الداعمة" />
                 </h2>
                 <p className="text-xs text-muted-foreground">
@@ -261,7 +261,7 @@ function PaymentSuccessContent() {
           <div className="mb-8 bg-card border border-border/80 shadow-sm rounded-3xl p-6 text-left">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
-                <h3 className="text-sm font-bold text-foreground"><LangText en="Track Your Case & Download Later" ar="تتبع طلبك وحمّل الملف لاحقًا" /></h3>
+                <h3 className="text-sm font-semibold text-foreground"><LangText en="Track Your Case & Download Later" ar="تتبع طلبك وحمّل الملف لاحقًا" /></h3>
                 <p className="text-xs text-muted-foreground mt-0.5 max-w-sm">
                   <LangText en="Access your customer portal anytime to track case milestones, upload additional files, and download your finalized dossier." ar="ادخل إلى حسابك في أي وقت لتتبع مراحل الطلب ورفع ملفات إضافية وتنزيل الملف النهائي." />
                 </p>
@@ -281,7 +281,7 @@ function PaymentSuccessContent() {
           {outcome === "paid" && (
           <div className="mb-8 bg-card border border-border/80 shadow-sm rounded-3xl p-6 md:p-8 max-w-md mx-auto text-left relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full pointer-events-none" />
-            <h2 className="text-xs font-bold text-primary uppercase tracking-wider mb-6">
+            <h2 className="text-xs font-semibold text-primary uppercase tracking-wider mb-6">
               <LangText en="What Happens Next" ar="ماذا يحدث بعد ذلك" />
             </h2>
             <div className="space-y-4 relative z-10">

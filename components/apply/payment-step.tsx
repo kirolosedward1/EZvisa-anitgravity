@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation"
 import { trackEvent } from "@/lib/analytics"
 import { Button } from "@/components/ui/button"
+import { WizardBar } from "@/components/apply/wizard-bar"
+import { schengenStayDays } from "@/lib/dates"
 import { Card, CardContent } from "@/components/ui/card"
 import { Check, AlertCircle, Lock, ShieldCheck, FileText, ClipboardList, Loader2 } from "lucide-react"
 import Image from "next/image"
@@ -229,12 +231,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
     formData.photo
   )
 
-  const tripDuration = formData.travelStartDate && formData.travelEndDate
-    ? Math.ceil(
-        (new Date(formData.travelEndDate).getTime() - new Date(formData.travelStartDate).getTime()) /
-          (1000 * 60 * 60 * 24),
-      )
-    : 0
+  const tripDuration = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
 
   const formatEnumValue = (val: string) => {
     if (!val) return "N/A"
@@ -267,7 +264,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           <div className="bg-muted/10 border border-border/60 rounded-3xl p-6 space-y-5">
             <div className="flex items-center gap-2 border-b border-border/30 pb-3">
               <ClipboardList className="w-5 h-5 text-blue-500" />
-              <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">Visa Dossier Summary</h4>
+              <h4 className="font-semibold text-sm text-foreground uppercase tracking-wider">Visa Dossier Summary</h4>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
@@ -355,7 +352,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
                 <FileText className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="font-bold text-sm text-foreground">Post-Payment Document Upload</h4>
+                <h4 className="font-semibold text-sm text-foreground">Post-Payment Document Upload</h4>
                 <p className="text-xs text-muted-foreground">Upload your files after checkout in your customer dashboard or via WhatsApp</p>
               </div>
             </div>
@@ -466,7 +463,7 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
                 
                 <div className="flex justify-between items-baseline pt-2">
                   <span className="text-base font-semibold text-foreground">Total Fee</span>
-                  <span className="text-3xl font-extrabold tracking-tight text-primary">
+                  <span className="text-3xl font-semibold tracking-tight text-primary">
                     {paymentAmount} {currency.code}
                   </span>
                 </div>
@@ -487,35 +484,16 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
           </div>
 
           {/* Action buttons */}
-          <div className="fixed lg:static bottom-0 inset-x-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] lg:p-0 bg-background/95 border-t border-t-border/80 lg:border-t-0 lg:bg-transparent z-20 flex lg:flex-col gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onBack}
-              disabled={isProcessing}
-              className="flex-1 lg:w-full h-14 rounded-2xl font-semibold text-base border border-border bg-background/40 hover:bg-background/80 text-foreground hover:text-foreground transition-all duration-300 active:scale-98"
-            >
-              Back
-            </Button>
-            <Button
-              type="button"
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="flex-1 lg:w-full h-14 rounded-2xl font-semibold text-base bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg shadow-blue-500/10 hover:shadow-xl hover:shadow-blue-500/20 active:scale-98 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none flex items-center justify-center gap-2"
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Opening Ziina…
-                </>
-              ) : (
-                <>
-                  <Lock className="w-4 h-4" />
-                  Proceed to Payment
-                </>
-              )}
-            </Button>
-          </div>
+          <WizardBar
+            onBack={onBack}
+            loading={isProcessing}
+            continueType="button"
+            onContinue={handlePayment}
+            continueLabel="Proceed to Payment"
+            continueLabelAr="تابع إلى الدفع"
+            loadingLabel="Opening Ziina…"
+            loadingLabelAr="جارٍ فتح زينة…"
+          />
         </div>
       </div>
     </div>
