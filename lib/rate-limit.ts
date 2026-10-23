@@ -5,11 +5,27 @@
 
 import { Redis } from "@upstash/redis"
 
-// Initialize Redis client
-const redis = new Redis({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-})
+// Initialize Redis client (only when configured; otherwise the in-memory limiter below is used)
+const redis = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN
+  ? new Redis({ url: process.env.KV_REST_API_URL, token: process.env.KV_REST_API_TOKEN })
+  : null
+
+// Per-instance fallback when Redis is missing or unreachable, so payment routes are never left unlimited.
+const memory = new Map<string, { count: number; resetAt: number }>()
+function checkMemory(key: string, config: RateLimitConfig): RateLimitResult {
+  const now = Date.now()
+  let entry = memory.get(key)
+  if (!entry || entry.resetAt <= now) {
+    entry = { count: 0, resetAt: now + config.windowSeconds * 1000 }
+    memory.set(key, entry)
+    if (memory.size > 5000) for (const [k, v] of memory) if (v.resetAt <= now) memory.delete(k)
+  }
+  entry.count++
+  const resetIn = Math.max(1, Math.ceil((entry.resetAt - now) / 1000))
+  return entry.count > config.limit
+    ? { success: false, remaining: 0, resetIn }
+    : { success: true, remaining: config.limit - entry.count, resetIn }
+}
 
 export interface RateLimitConfig {
   /** Maximum number of requests allowed in the window */
@@ -34,7 +50,8 @@ export async function checkRateLimit(
   config: RateLimitConfig
 ): Promise<RateLimitResult> {
   const key = `rate_limit:${identifier}`
-  
+  if (!redis) return checkMemory(key, config)
+
   try {
     // Use Redis INCR with expiration for atomic rate limiting
     const currentCount = await redis.incr(key)
@@ -63,13 +80,9 @@ export async function checkRateLimit(
       resetIn,
     }
   } catch (error) {
-    // If Redis fails, allow the request (fail open) but log the error
-    console.error("[v0] Rate limit Redis error:", error)
-    return {
-      success: true,
-      remaining: config.limit,
-      resetIn: config.windowSeconds,
-    }
+    // If Redis fails, fall back to the per-instance limiter instead of allowing everything
+    console.error("[rate-limit] Redis unavailable, using in-memory limiter:", error instanceof Error ? error.message : error)
+    return checkMemory(key, config)
   }
 }
 

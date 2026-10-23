@@ -3,34 +3,60 @@
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Check, Loader2, Mail, FileText, Clock, Headphones, ArrowRight, Upload } from "lucide-react"
+import { Check, Loader2, Mail, FileText, Clock, Headphones, ArrowRight, Upload, RefreshCw } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
-import { useEffect, useState, Suspense } from "react"
+import { useCallback, useEffect, useRef, useState, Suspense } from "react"
 import { getPaymentConfirmationWhatsAppUrl } from "@/lib/whatsapp"
 
 function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const [token, setToken] = useState<string>("")
   const [destination, setDestination] = useState<string>("")
-  const [isLoading, setIsLoading] = useState(true)
+  const [appId, setAppId] = useState<string>("")
+  // The return URL only brings the customer back; "paid" comes from the server (check-payment verifies with Ziina).
+  const [verified, setVerified] = useState<"checking" | "paid" | "pending">("checking")
+  const isLoading = verified === "checking"
+  const run = useRef(0)
 
   useEffect(() => {
     const urlToken = searchParams.get("token") || sessionStorage.getItem("lastCompletedToken") || ""
     const urlAppId = searchParams.get("appId") || sessionStorage.getItem("lastCompletedAppId") || ""
     const urlDest = searchParams.get("dest") || sessionStorage.getItem("lastCompletedDest") || ""
-    
+
     setToken(urlToken || urlAppId)
+    setAppId(/^[0-9a-f-]{36}$/i.test(urlAppId) ? urlAppId : "")
     setDestination(urlDest)
-
-    const cleanUpStorage = () => {
-      sessionStorage.removeItem("pendingApplication")
-      localStorage.removeItem("visa-wizard-form")
-      setIsLoading(false)
-    }
-
-    cleanUpStorage()
   }, [searchParams])
+
+  const verify = useCallback(async () => {
+    const me = ++run.current
+    setVerified("checking")
+    if (!appId) { setVerified("pending"); return }
+    const until = Date.now() + 60_000
+    while (run.current === me) {
+      try {
+        const res = await fetch(`/api/check-payment?applicationId=${encodeURIComponent(appId)}`, { cache: "no-store" })
+        const data = await res.json().catch(() => ({}))
+        if (res.ok && ["paid", "completed"].includes(String(data.payment_status))) {
+          if (run.current !== me) return
+          sessionStorage.removeItem("pendingApplication")
+          localStorage.removeItem("visa-wizard-form")
+          setVerified("paid")
+          return
+        }
+      } catch {
+        // network error: keep trying until the deadline
+      }
+      if (Date.now() > until) { if (run.current === me) setVerified("pending"); return }
+      await new Promise((r) => setTimeout(r, 3000))
+    }
+  }, [appId])
+
+  useEffect(() => {
+    if (token || appId) verify()
+    return () => { run.current++ }
+  }, [token, appId, verify])
 
   const steps = [
     { icon: Mail, text: "Confirmation email sent to your inbox" },
@@ -50,6 +76,10 @@ function PaymentSuccessContent() {
               <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
                 <Loader2 className="w-12 h-12 text-primary animate-spin" />
               </div>
+            ) : verified === "pending" ? (
+              <div className="w-24 h-24 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                <Clock className="w-12 h-12 text-primary" />
+              </div>
             ) : (
               <div className="w-24 h-24 mx-auto rounded-full bg-emerald-500 flex items-center justify-center animate-in zoom-in duration-300">
                 <Check className="w-12 h-12 text-white stroke-[3]" />
@@ -59,12 +89,30 @@ function PaymentSuccessContent() {
 
           {/* Title */}
           <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
-            Payment Confirmed
+            {verified === "paid" ? "Payment Confirmed" : verified === "checking" ? "Confirming your payment…" : "Payment not confirmed yet"}
           </h1>
-          
+
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Your Schengen visa application package has been received and is now assigned to our document preparation desk.
+            {verified === "paid"
+              ? "Your Schengen visa application package has been received and is now assigned to our document preparation desk."
+              : verified === "checking"
+                ? "This takes a few seconds."
+                : "If you paid, it can take a minute to show. We'll email you as soon as it's confirmed."}
           </p>
+
+          {verified === "pending" && (
+            <div className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button size="lg" className="w-full sm:w-auto h-12 px-6 rounded-xl" onClick={verify}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Check again
+              </Button>
+              <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6 rounded-xl">
+                <a href={getPaymentConfirmationWhatsAppUrl(token || "EZVISA", destination)} target="_blank" rel="noopener noreferrer">
+                  Ask us on WhatsApp
+                </a>
+              </Button>
+            </div>
+          )}
 
           {/* Case Reference Badge */}
           {token && (
@@ -74,6 +122,7 @@ function PaymentSuccessContent() {
             </div>
           )}
 
+          {verified === "paid" && (<>
           {/* Action Required: Upload Documents (Step 2 of 2) */}
           <div className="mb-8 bg-amber-500/10 border-2 border-amber-500/30 rounded-3xl p-6 md:p-8 text-left shadow-md relative overflow-hidden">
             <div className="flex items-center gap-3 mb-3">
@@ -151,6 +200,8 @@ function PaymentSuccessContent() {
               ))}
             </div>
           </div>
+
+          </>)}
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
