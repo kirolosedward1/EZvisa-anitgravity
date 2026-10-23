@@ -305,8 +305,10 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         <span>
           <LangText en="Total" ar="المجموع" />
         </span>
-        <span className="rtl:hidden" dir="ltr">{paymentAmount} AED</span>
-        <span className="hidden rtl:inline">{paymentAmount} درهم</span>
+        <span className="rtl:hidden">{paymentAmount} AED</span>
+        <span className="hidden rtl:inline">
+          <span dir="ltr">{paymentAmount} درهم</span>
+        </span>
       </div>
 
       <p className="mt-5 text-[13px] leading-relaxed text-[#5B6475]">

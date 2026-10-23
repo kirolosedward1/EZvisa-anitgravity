@@ -84,9 +84,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     if (!header) return
     const apply = () => {
       // Marketing header: the fixed padding is transparent, so measure the visible pill.
-      // Wizard header: the plain bar is the header itself, so the summary sits flush under it.
-      const edge = (bar ?? header).getBoundingClientRect().bottom
-      document.documentElement.style.setProperty("--site-header-height", `${Math.round(edge)}px`)
+      // Wizard header: the plain bar is the header itself. Its border-box bottom is the flush line.
+      const box = (bar ?? header).getBoundingClientRect()
+      document.documentElement.style.setProperty("--site-header-height", `${Math.round(box.bottom)}px`)
     }
     apply()
     const observer = new ResizeObserver(apply)

@@ -115,10 +115,10 @@ function SummaryRows({ formData }: { formData: FormData }) {
 function AedAmount({ amount }: { amount: number }) {
   return (
     <>
-      <span className="rtl:hidden" dir="ltr">
-        {amount} AED
+      <span className="rtl:hidden">{amount} AED</span>
+      <span className="hidden rtl:inline">
+        <span dir="ltr">{amount} درهم</span>
       </span>
-      <span className="hidden rtl:inline">{amount} درهم</span>
     </>
   )
 }
@@ -160,14 +160,14 @@ export function WizardShell({
 
   return (
     <div className="bg-[#FFFFFF] text-[#0A0F1F]">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height,72px)] lg:pt-[calc(var(--site-header-height,80px)+48px)]">
+      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height)] lg:pt-[calc(var(--site-header-height)+48px)]">
         <h1 className="sr-only">
           <LangText en="Visa application" ar="طلب التأشيرة" />
         </h1>
         <div className="lg:grid lg:grid-cols-[minmax(0,560px)_340px] lg:items-start lg:justify-start lg:gap-x-10">
         <div
           className="sticky z-40 -mx-4 mb-3 border-b border-[#E3E7EF] bg-[#FFFFFF] px-4 lg:hidden"
-          style={{ top: "var(--site-header-height, 80px)" }}
+          style={{ top: "var(--site-header-height)" }}
         >
           <button
             type="button"
@@ -226,7 +226,7 @@ export function WizardShell({
           </AnimatePresence>
         </div>
 
-        <aside className="sticky top-[calc(var(--site-header-height,80px)+48px)] hidden w-[340px] shrink-0 border-s border-[#E3E7EF] ps-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block">
+        <aside className="sticky top-[calc(var(--site-header-height)+48px)] hidden w-[340px] shrink-0 border-s border-[#E3E7EF] ps-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block">
           <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.06em] text-[#5B6475]">
             <LangText en="Your application" ar="طلبك" />
           </p>
