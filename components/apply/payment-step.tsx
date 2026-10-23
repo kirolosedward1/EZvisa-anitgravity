@@ -76,16 +76,20 @@ export function PaymentStep({ formData, onBack, isLoading, paymentError }: Payme
 
       const submitData = await submitResponse.json()
 
-      // HubSpot must not delay the redirect to Ziina.
-      void fetch("/api/hubspot/create-lead", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      }).catch((hubspotError) => {
+      // Queue the HubSpot lead once, here, before Ziina. The route acks
+      // immediately and finishes the lead with waitUntil, so this await is
+      // only the ack — not the HubSpot API — and the redirect cannot cancel it.
+      try {
+        await fetch("/api/hubspot/create-lead", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        })
+      } catch (hubspotError) {
         console.error("HubSpot lead creation failed:", hubspotError)
-      })
+      }
 
       const successUrl = new URL("/payment-success", window.location.origin)
       if (submitData.trackingToken) successUrl.searchParams.set("token", submitData.trackingToken)
