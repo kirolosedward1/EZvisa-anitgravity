@@ -39,7 +39,7 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const next = safeNext(searchParams.get("next"))
-  const notice = noticeFromQuery(searchParams.get("error"), searchParams.get("type"))
+  const notice = noticeFromQuery(searchParams.get("error"), searchParams.get("type"), searchParams.get("error_code"))
 
   const [mode, setMode] = useState<Mode>(searchParams.get("type") === "magiclink" ? "link" : "password")
   const [email, setEmail] = useState(searchParams.get("email") ?? "")

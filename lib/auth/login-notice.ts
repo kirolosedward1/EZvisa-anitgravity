@@ -11,10 +11,19 @@ export type LoginNotice =
   | { tone: "error"; code: AuthIssue }
   | { tone: "info"; code: "email-confirmed" }
 
-/** Notice for a login URL. Never returns the raw query string. */
-export function noticeFromQuery(error: string | null | undefined, type: string | null | undefined): LoginNotice | null {
-  if (!error) return null
+/**
+ * Notice for a login URL. Never returns the raw query string.
+ * `errorCode` is Supabase's `error_code` when the page receives it (often with `error=access_denied`).
+ */
+export function noticeFromQuery(
+  error: string | null | undefined,
+  type: string | null | undefined,
+  errorCode?: string | null,
+): LoginNotice | null {
   if (type === "signup" && error === "other-device") return { tone: "info", code: "email-confirmed" }
+  // Stale email links arrive as ?error=otp_expired, or as error=access_denied&error_code=otp_expired.
+  if (error === "otp_expired" || errorCode === "otp_expired") return { tone: "error", code: "link-expired" }
+  if (!error) return null
   if (isAuthIssue(error)) return { tone: "error", code: error }
   return { tone: "error", code: "unknown" }
 }
@@ -24,7 +33,8 @@ export function issueFromClientMessage(message: string): AuthIssue {
   if (isAuthIssue(message)) return message
   const known = (Object.keys(AUTH_MESSAGE) as AuthIssue[]).find((key) => AUTH_MESSAGE[key] === message)
   if (known) return known
-  if (/isn't set up yet|isn't allowed to receive/i.test(message)) return "disabled"
+  // Google (and the other providers) report a switched-off option by code, not by an English sentence.
+  if (classifyAuthError({ code: message, error_code: message }) === "disabled") return "disabled"
   return classifyAuthError({ message })
 }
 

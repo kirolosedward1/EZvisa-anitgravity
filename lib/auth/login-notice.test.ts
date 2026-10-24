@@ -38,7 +38,18 @@ test("a login URL shows the mapped message, and never the raw error text", () =>
   assert.equal(loginErrorText("ar", "unknown").includes(raw), false)
   assert.equal(loginErrorText("ar", "unknown"), "حدث خطأ. أعد المحاولة.")
 
-  assert.deepEqual(noticeFromQuery("otp_expired", "recovery"), { tone: "error", code: "unknown" })
+  assert.deepEqual(noticeFromQuery("otp_expired", "recovery"), { tone: "error", code: "link-expired" })
+  assert.equal(loginErrorText("en", "link-expired"), AUTH_MESSAGE["link-expired"])
+  assert.equal(loginErrorText("ar", "link-expired"), translations.ar.auth.errors["link-expired"])
+  assert.equal(loginErrorText("en", noticeFromQuery("otp_expired", "magiclink")!.code as "link-expired").includes("otp_expired"), false)
+  assert.equal(loginErrorText("ar", "link-expired").includes("otp_expired"), false)
+
+  assert.deepEqual(noticeFromQuery("access_denied", "magiclink", "otp_expired"), { tone: "error", code: "link-expired" })
+  assert.deepEqual(noticeFromQuery("access_denied", null, "otp_expired"), { tone: "error", code: "link-expired" })
+  assert.deepEqual(noticeFromQuery(null, "recovery", "otp_expired"), { tone: "error", code: "link-expired" })
+  assert.equal(loginErrorText("en", "link-expired").includes("access_denied"), false)
+  assert.deepEqual(noticeFromQuery("access_denied", "recovery"), { tone: "error", code: "unknown" })
+  assert.equal(loginErrorText("en", "unknown").includes("access_denied"), false)
   assert.deepEqual(noticeFromQuery("other-device", "magiclink"), { tone: "error", code: "other-device" })
   assert.deepEqual(noticeFromQuery("other-device", "signup"), { tone: "info", code: "email-confirmed" })
   assert.equal(loginInfoText("en", "email-confirmed"), "Email confirmed. Sign in with your email and password.")
@@ -51,8 +62,13 @@ test("a login URL shows the mapped message, and never the raw error text", () =>
 test("a client message that is not an error code is not shown as-is", () => {
   assert.equal(issueFromClientMessage("wrong-credentials"), "wrong-credentials")
   assert.equal(issueFromClientMessage(AUTH_MESSAGE.offline), "offline")
-  assert.equal(issueFromClientMessage("Google sign-in isn't set up yet. Please use email for now."), "disabled")
-  assert.equal(issueFromClientMessage("This site isn't allowed to receive Google sign-ins yet. Please use email for now."), "disabled")
+  for (const code of ["provider_disabled", "email_provider_disabled", "signup_disabled", "otp_disabled"]) {
+    assert.equal(issueFromClientMessage(code), "disabled", code)
+    assert.equal(loginErrorText("en", "disabled"), AUTH_MESSAGE.disabled)
+    assert.equal(loginErrorText("ar", "disabled").includes(code), false)
+  }
+  assert.equal(issueFromClientMessage("Google sign-in isn't set up yet. Please use email for now."), "unknown")
+  assert.equal(issueFromClientMessage("This site isn't allowed to receive Google sign-ins yet. Please use email for now."), "unknown")
   const raw = "<script>alert(1)</script> invalid login credentials"
   assert.equal(issueFromClientMessage(raw), "wrong-credentials")
   assert.equal(loginErrorText("ar", issueFromClientMessage(raw)).includes("<script>"), false)
