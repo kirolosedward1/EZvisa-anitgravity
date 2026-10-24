@@ -209,7 +209,7 @@ function LoginForm() {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">{t("Password", "كلمة المرور")}</Label>
                 <Link
-                  href={cleanEmail ? `/forgot-password?email=${encodeURIComponent(cleanEmail)}` : "/forgot-password"}
+                  href={`${arabic ? "/ar" : ""}/forgot-password${cleanEmail ? `?email=${encodeURIComponent(cleanEmail)}` : ""}`}
                   className="text-xs font-semibold text-primary hover:underline"
                 >
                   {t("Forgot password?", "نسيت كلمة المرور؟")}
@@ -279,7 +279,7 @@ function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground text-balance">
         {t("New to EZvisa?", "جديد على إيزي فيزا؟")}{" "}
-        <Link href={`/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-primary hover:underline">
+        <Link href={`${arabic ? "/ar" : ""}/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-primary hover:underline">
           {t("Create an account", "أنشئ حسابًا")}
         </Link>
         {t(" or ", " أو ")}
