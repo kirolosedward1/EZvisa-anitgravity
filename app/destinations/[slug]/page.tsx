@@ -99,6 +99,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       question: "What does EZvisa cost, and when is it refunded?",
       answer: `${PRICE_AED} AED per application, paid when you start. You get it back if you cancel before we start reviewing your documents, if we can't deliver because of an error on our side, or if you paid twice. A refusal by the ${name} embassy isn't refunded, and embassy and visa centre fees are paid to them, not us.`,
     },
+    {
+      question: "Is VAT added at checkout?",
+      answer: "No. EZvisa is not VAT-registered; prices shown are final. The visa decision is always made by the embassy, so no one can guarantee approval.",
+    },
   ]
 
   return (

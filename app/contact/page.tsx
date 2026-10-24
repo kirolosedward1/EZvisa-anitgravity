@@ -3,6 +3,7 @@ import Link from "next/link"
 import { ArrowUpRight, Mail, Phone } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
+import { CompanyLegalNotice } from "@/components/legal/company-details"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 import { ContactForm } from "@/components/contact-form"
@@ -120,6 +121,7 @@ export default function ContactPage() {
           </div>
         </section>
       </div>
+      <CompanyLegalNotice />
       <Footer />
     </>
   )

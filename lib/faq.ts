@@ -33,7 +33,7 @@ export const FAQ_EN: FaqItem[] = [
   {
     question: "What documents will I need?",
     answer:
-      "Passport, Emirates ID and UAE visa, a 35×45 mm photo, bank statements, and a salary certificate or NOC if you're employed. You also need travel insurance: bring your own policy or add one through us as an extra.",
+      "Passport, Emirates ID and UAE visa, a 35945 mm photo, bank statements, and a salary certificate or NOC if you're employed. You also need travel insurance: bring your own policy or add one through us as an extra.",
   },
   {
     question: "Can I pay first and finish later?",
@@ -75,11 +75,11 @@ export const FAQ_AR: FaqItem[] = [
   {
     question: "ما المستندات التي سأحتاجها؟",
     answer:
-      "جواز السفر، والهوية الإماراتية وتأشيرة الإمارات، وصورة 35×45 مم، وكشوف الحساب البنكي، وشهادة راتب أو عدم ممانعة إذا كنت موظفًا. تحتاج أيضًا إلى تأمين سفر: أحضر وثيقتك أو أضفها عبرنا مقابل رسوم إضافية.",
+      "جواز السفر، والهوية الإماراتية وتأشيرة الإمارات، وصورة 35945 مم، وكشوف الحساب البنكي، وشهادة راتب أو عدم ممانعة إذا كنت موظفًا. تحتاج أيضًا إلى تأمين سفر: أحضر وثيقتك أو أضفها عبرنا مقابل رسوم إضافية.",
   },
   {
     question: "هل يمكنني الدفع أولًا والإكمال لاحقًا؟",
-    answer: "نعم. بعد الدفع، افتح «متابعة الطلب» لإضافة بقية بياناتك، ثم ارفع مستنداتك.",
+    answer: "نعم. بعد الدفع، افتح 9متابعة الطلب9 لإضافة بقية بياناتك، ثم ارفع مستنداتك.",
   },
   {
     question: "كم يستغرق تجهيز الطلب؟",

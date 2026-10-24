@@ -318,6 +318,10 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         <LangText
           en="Secure payment through Ziina. EZvisa prepares and submits your application; the visa decision is made by the embassy."
           ar="دفع آمن عبر زينة. تجهّز EZvisa طلبك وتقدّمه، وقرار التأشيرة يصدر من السفارة."
+        />{" "}
+        <LangText
+          en="EZvisa is not VAT-registered; prices shown are final."
+          ar="إيزي فيزا غير مسجّلة لضريبة القيمة المضافة؛ الأسعار المعروضة نهائية."
         />
       </p>
 
