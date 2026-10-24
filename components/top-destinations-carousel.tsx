@@ -70,7 +70,7 @@ export function TopDestinationsCarousel() {
   }
 
   return (
-    <div className="w-full overflow-hidden relative">
+    <div dir="ltr" className="w-full overflow-hidden relative">
       {/* Side gradient fade overlays for smooth mask without GPU performance overhead */}
       <div className="pointer-events-none absolute inset-y-0 left-0 w-12 sm:w-20 z-10" />
       <div className="pointer-events-none absolute inset-y-0 right-0 w-12 sm:w-20 z-10" />
