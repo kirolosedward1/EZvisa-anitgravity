@@ -1,10 +1,6 @@
 import React from "react"
 import type { Metadata } from "next"
 
-// Enable static generation for all document pages
-export const dynamic = "force-static"
-export const revalidate = 86400 // Revalidate once per day
-
 export const metadata: Metadata = {
   title: "Schengen Visa Document Requirements by Country",
   description:

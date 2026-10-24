@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence, MotionConfig } from "framer-motion"
+import { canonicalPath } from "@/lib/route-path"
 
 interface PageTransitionProps {
   children: React.ReactNode
@@ -20,7 +21,7 @@ export function PageTransition({ children }: PageTransitionProps) {
     <MotionConfig reducedMotion="never">
       <AnimatePresence mode="wait">
         <motion.div
-          key={pathname}
+          key={canonicalPath(pathname)}
           initial={canAnimate ? { opacity: 0, y: 10 } : false}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}

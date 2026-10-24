@@ -170,7 +170,7 @@ export function HeroSection() {
               className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl text-xs font-semibold text-primary-foreground cursor-default"
             >
               <span className="tracking-wide uppercase text-[10px] font-semibold text-primary-foreground">
-                <LangText en="For UAE residents 9 All 29 Schengen countries" ar="للمقيمين في الإمارات 9 جميع دول شنغن الـ٢٩" />
+                <LangText en="For UAE residents · All 29 Schengen countries" ar="للمقيمين في الإمارات · جميع دول شنغن الـ29" />
               </span>
             </motion.div>
 
@@ -365,7 +365,7 @@ export function HeroSection() {
                             <p className="text-xs md:text-sm text-primary-foreground/80 mt-0.5 leading-relaxed">
                               <LangText
                                 en="We fill in your application form and prepare your cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days."
-                                ar="نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال ١–٢ يوم."
+                                ar="نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال 1–2 يوم."
                               />
                             </p>
                           </div>
@@ -391,7 +391,7 @@ export function HeroSection() {
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
                 <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
-                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en={`${PRICE_AED} AED, one flat fee`} ar={`${PRICE_AED} درهمًا، رسوم ثابتة`} /></span>
+                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en={`${PRICE_AED} AED, one flat fee`} ar={`${PRICE_AED} درهم، رسوم ثابتة`} /></span>
               </div>
             </motion.div>
           </motion.div>

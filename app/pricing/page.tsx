@@ -1,5 +1,6 @@
 import { LangText } from "@/components/lang-text"
 import type { Metadata } from "next"
+import type { ReactNode } from "react"
 import Link from "next/link"
 import { ArrowRight, Check, Minus } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
@@ -7,55 +8,90 @@ import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 import { ContactSection } from "@/components/contact-section"
+import { formatAedLabel } from "@/lib/currency"
+import { ltr } from "@/lib/bidi"
+import { requestLocale } from "@/lib/request-locale"
 import { PRICE_AED, priceAed } from "@/lib/shared/wizard-contract"
 
-export const metadata: Metadata = {
-  title: "Pricing: 249 AED per Schengen Visa Application",
-  description:
-    "EZvisa charges 249 AED per application (498 AED with your spouse) for the application form, cover letter, itinerary, and flight and hotel reservations. Embassy fees and travel insurance are separate.",
-  keywords: ["Schengen visa cost UAE", "Schengen visa fee Dubai", "visa application service price", "Europe visa cost UAE"],
-  alternates: {
-    canonical: "https://www.ezvisa.net/pricing",
-  },
-  openGraph: {
-    title: "EZvisa Pricing: 249 AED per Application",
-    description: "One fee for everything we prepare. Embassy fees and travel insurance are paid separately.",
-    url: "https://www.ezvisa.net/pricing",
-    type: "website",
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const arabic = (await requestLocale()) === "ar"
+  const price = formatAedLabel(PRICE_AED, arabic ? "ar" : "en")
+  const spouse = formatAedLabel(priceAed("yes"), arabic ? "ar" : "en")
+  if (arabic) {
+    return {
+      title: `الأسعار: ${price} لكل طلب تأشيرة شنغن`,
+      description: `تتقاضى ${ltr("EZvisa")} ${price} عن كل طلب (${spouse} مع الزوج أو الزوجة) مقابل نموذج الطلب وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. رسوم السفارة وتأمين السفر منفصلة.`,
+      alternates: { canonical: "https://www.ezvisa.net/ar/pricing" },
+      openGraph: {
+        title: `أسعار ${ltr("EZvisa")}: ${price} لكل طلب`,
+        description: "رسم واحد لكل ما نجهّزه. رسوم السفارة وتأمين السفر تُدفع منفصلة.",
+        url: "https://www.ezvisa.net/ar/pricing",
+        type: "website",
+      },
+    }
+  }
+  return {
+    title: "Pricing: 249 AED per Schengen Visa Application",
+    description:
+      "EZvisa charges 249 AED per application (498 AED with your spouse) for the application form, cover letter, itinerary, and flight and hotel reservations. Embassy fees and travel insurance are separate.",
+    keywords: ["Schengen visa cost UAE", "Schengen visa fee Dubai", "visa application service price", "Europe visa cost UAE"],
+    alternates: { canonical: "https://www.ezvisa.net/pricing" },
+    openGraph: {
+      title: "EZvisa Pricing: 249 AED per Application",
+      description: "One fee for everything we prepare. Embassy fees and travel insurance are paid separately.",
+      url: "https://www.ezvisa.net/pricing",
+      type: "website",
+    },
+  }
 }
 
 const INCLUDED = [
-  "Schengen application form, filled in and checked",
-  "Cover letter written for your trip",
-  "Day-by-day itinerary that matches your bookings",
-  "Flight reservation for the visa, no ticket to buy",
-  "Hotel reservation for every night of the trip",
-  "Every document you upload checked by a visa specialist",
-  "Answers on WhatsApp and email until your appointment",
+  { en: "Schengen application form, filled in and checked", ar: "نموذج طلب شنغن، معبّأ ومراجع" },
+  { en: "Cover letter written for your trip", ar: "خطاب تغطية مكتوب لرحلتك" },
+  { en: "Day-by-day itinerary that matches your bookings", ar: "برنامج يومي يطابق حجوزاتك" },
+  { en: "Flight reservation for the visa, no ticket to buy", ar: "حجز طيران للتأشيرة، من دون شراء تذكرة" },
+  { en: "Hotel reservation for every night of the trip", ar: "حجز فندق لكل ليلة من الرحلة" },
+  { en: "Every document you upload checked by a visa specialist", ar: "كل مستند ترفعه يراجعه مختص تأشيرات" },
+  { en: "Answers on WhatsApp and email until your appointment", ar: `إجابات عبر ${ltr("WhatsApp")} والبريد حتى موعدك` },
 ]
 
 const SEPARATE = [
   {
-    title: "Embassy visa fee",
-    body: "€90 for adults and €45 for children aged 6 to 12, paid in dirhams at the visa centre on the day.",
+    title: { en: "Embassy visa fee", ar: "رسوم تأشيرة السفارة" },
+    body: {
+      en: "€90 for adults and €45 for children aged 6 to 12, paid in dirhams at the visa centre on the day.",
+      ar: `${ltr("€90")} للبالغين و${ltr("€45")} للأطفال من 6 إلى 12 عامًا، تُدفع بالدرهم في مركز التأشيرات يوم الموعد.`,
+    },
   },
   {
-    title: "Visa centre service charge",
-    body: "Set by VFS Global, BLS or TLScontact, depending on the country. Also paid at your appointment.",
+    title: { en: "Visa centre service charge", ar: "رسوم خدمة مركز التأشيرات" },
+    body: {
+      en: "Set by VFS Global, BLS or TLScontact, depending on the country. Also paid at your appointment.",
+      ar: `تحددها ${ltr("VFS Global")} أو ${ltr("BLS")} أو ${ltr("TLScontact")} حسب الدولة. وتُدفع أيضًا في موعدك.`,
+    },
   },
   {
-    title: "Travel insurance",
-    body: "Every embassy asks for medical cover of at least €30,000. Add a policy through us as an extra, or bring your own.",
+    title: { en: "Travel insurance", ar: "تأمين السفر" },
+    body: {
+      en: "Every embassy asks for medical cover of at least €30,000. Add a policy through us as an extra, or bring your own.",
+      ar: `كل سفارة تطلب تغطية طبية لا تقل عن ${ltr("€30,000")}. أضف وثيقة عبرنا كإضافة، أو أحضر وثيقتك.`,
+    },
   },
   {
-    title: "Translation, attestation and courier",
-    body: "Only if a document needs it. We tell you when that's the case.",
+    title: { en: "Translation, attestation and courier", ar: "الترجمة والتصديق والتوصيل" },
+    body: {
+      en: "Only if a document needs it. We tell you when that's the case.",
+      ar: "فقط إذا احتاج مستند إلى ذلك. نخبرك عندما يكون الأمر كذلك.",
+    },
   },
 ]
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const arabic = (await requestLocale()) === "ar"
+  const pick = (en: ReactNode, ar: ReactNode) => (arabic ? ar : en)
   const withSpouse = priceAed("yes")
+  const price = formatAedLabel(PRICE_AED, arabic ? "ar" : "en")
+  const spouse = formatAedLabel(withSpouse, arabic ? "ar" : "en")
 
   return (
     <>
@@ -63,9 +99,12 @@ export default function PricingPage() {
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-background">
         <InnerHero
-          badge="Pricing"
-          title={`${PRICE_AED} AED for your whole visa file.`}
-          description={`One fee, paid when you start. Travelling with your spouse? We prepare both applications together for ${withSpouse} AED.`}
+          badge={pick("Pricing", "الأسعار")}
+          title={pick(`${price} for your whole visa file.`, `${price} مقابل ملف التأشيرة كاملًا.`)}
+          description={pick(
+            `One fee, paid when you start. Travelling with your spouse? We prepare both applications together for ${spouse}.`,
+            `رسم واحد يُدفع عند البدء. تسافر مع الزوج أو الزوجة؟ نجهّز الطلبين معًا مقابل ${spouse}.`,
+          )}
         />
 
         <section className="pb-20 md:pb-28">
@@ -73,21 +112,23 @@ export default function PricingPage() {
             {/* What the fee covers */}
             <div className="flex flex-col gap-8 rounded-3xl border border-border/70 bg-card p-6 sm:p-10">
               <div className="flex flex-col gap-2">
-                <h2 className="panel-title text-muted-foreground">EZvisa service fee</h2>
+                <h2 className="panel-title text-muted-foreground">{pick("EZvisa service fee", <>رسوم خدمة <bdi dir="ltr">EZvisa</bdi></>)}</h2>
                 <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <span className="text-5xl font-semibold tracking-tight tabular-nums text-foreground">{PRICE_AED} AED</span>
-                  <span className="text-sm text-muted-foreground">per application</span>
+                  <span dir="ltr" className="text-5xl font-semibold tracking-tight tabular-nums text-foreground">
+                    {price}
+                  </span>
+                  <span className="text-sm text-muted-foreground">{pick("per application", "لكل طلب")}</span>
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {withSpouse} AED for you and your spouse when you travel together.
+                  {pick(`${spouse} for you and your spouse when you travel together.`, `${spouse} لك ولزوجك أو زوجتك عند السفر معًا.`)}
                 </p>
               </div>
 
               <ul className="flex flex-col gap-3.5 border-t border-border/70 pt-8">
                 {INCLUDED.map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-base text-foreground">
+                  <li key={item.en} className="flex items-start gap-3 text-base text-foreground">
                     <Check className="mt-1 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
-                    {item}
+                    {pick(item.en, item.ar)}
                   </li>
                 ))}
               </ul>
@@ -97,26 +138,26 @@ export default function PricingPage() {
                   href="/apply"
                   className="group inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                 >
-                  Start your application
+                  {pick("Start your application", "ابدأ طلبك")}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
                 </Link>
-                <p className="text-sm text-muted-foreground">Ready in 1–2 days after your documents are in.</p>
+                <p className="text-sm text-muted-foreground">{pick("Ready in 1–2 days after your documents are in.", <>جاهز خلال {ltr("1–2")} يوم بعد وصول مستنداتك.</>)}</p>
               </div>
             </div>
 
             {/* What is paid elsewhere */}
             <div className="flex flex-col gap-6 rounded-3xl bg-secondary/60 p-6 sm:p-10">
               <div className="flex flex-col gap-2">
-                <h2 className="panel-title text-foreground">Paid separately</h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">These go to the embassy, the visa centre or the insurer, not to us.</p>
+                <h2 className="panel-title text-foreground">{pick("Paid separately", "يُدفع بشكل منفصل")}</h2>
+                <p className="text-sm leading-relaxed text-muted-foreground">{pick("These go to the embassy, the visa centre or the insurer, not to us.", "هذه تذهب إلى السفارة أو مركز التأشيرات أو شركة التأمين، لا إلينا.")}</p>
               </div>
               <ul className="flex flex-col">
                 {SEPARATE.map((item) => (
-                  <li key={item.title} className="flex items-start gap-3 border-t border-border/70 py-4 first:border-0 first:pt-0">
+                  <li key={item.title.en} className="flex items-start gap-3 border-t border-border/70 py-4 first:border-0 first:pt-0">
                     <Minus className="mt-1 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />
                     <div className="flex flex-col gap-1">
-                      <span className="text-sm font-medium text-foreground">{item.title}</span>
-                      <span className="text-sm leading-relaxed text-muted-foreground">{item.body}</span>
+                      <span className="text-sm font-medium text-foreground">{pick(item.title.en, item.title.ar)}</span>
+                      <span className="text-sm leading-relaxed text-muted-foreground">{pick(item.body.en, item.body.ar)}</span>
                     </div>
                   </li>
                 ))}

@@ -125,7 +125,7 @@ function PaymentSuccessContent() {
       icon: ClipboardList,
       en: "Continue your application",
       ar: "أكمل طلبك",
-      body: { en: "Trip plan, passport and employment details. About 5 minutes.", ar: "خطة الرحلة والجواز وبيانات العمل. حوالي ٥ دقائق." },
+      body: { en: "Trip plan, passport and employment details. About 5 minutes.", ar: "خطة الرحلة والجواز وبيانات العمل. حوالي 5 دقائق." },
     },
     {
       icon: Upload,
@@ -137,7 +137,7 @@ function PaymentSuccessContent() {
       icon: FileText,
       en: "We prepare your visa file",
       ar: "نجهّز ملف التأشيرة",
-      body: { en: "A specialist reviews it within 24 hours: cover letter, itinerary and bookings.", ar: "يراجعه مختص خلال ٢٤ ساعة: خطاب التغطية وخط السير والحجوزات." },
+      body: { en: "A specialist reviews it within 24 hours: cover letter, itinerary and bookings.", ar: "يراجعه مختص خلال 24 ساعة: خطاب التغطية وخط السير والحجوزات." },
     },
   ]
 

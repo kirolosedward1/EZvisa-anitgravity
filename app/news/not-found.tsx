@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { Newspaper, Home, ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 
@@ -14,26 +15,27 @@ export default function NewsNotFound() {
             <Newspaper className="w-10 h-10 text-primary" />
           </div>
 
-          <h1 className="text-2xl font-semibold text-foreground mb-3">Article Not Found</h1>
+          <h1 className="text-2xl font-semibold text-foreground mb-3">
+            <Msg id="news.notFoundTitle" />
+          </h1>
 
           <p className="text-muted-foreground mb-8">
-            The news article you are looking for does not exist or has been removed. Browse our latest articles for more
-            visa-related news and tips.
+            <Msg id="news.notFoundBody" />
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild className="gap-2">
-              <Link href="/news">
-                <ArrowLeft className="w-4 h-4" />
-                Back to News
-              </Link>
+              <LocaleLink href="/news">
+                <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+                <Msg id="news.backToNews" />
+              </LocaleLink>
             </Button>
 
             <Button variant="outline" asChild className="gap-2 bg-transparent">
-              <Link href="/">
+              <LocaleLink href="/">
                 <Home className="w-4 h-4" />
-                Go Home
-              </Link>
+                <Msg id="news.goHome" />
+              </LocaleLink>
             </Button>
           </div>
         </div>

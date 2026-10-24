@@ -9,8 +9,11 @@ import { APPLICATION_READY } from "@/lib/copy"
 import { LangText } from "@/components/lang-text"
 import { LocaleLink } from "@/components/locale-link"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
+import { useSiteLocale } from "@/components/locale-provider"
+import { formatAedLabel } from "@/lib/currency"
 
 export function ComparisonSection() {
+  const locale = useSiteLocale()
   const [currentCurrency, setCurrentCurrency] = useState<{ code: string; symbol: string; rate: number }>({
     code: "AED",
     symbol: "AED",
@@ -37,28 +40,35 @@ export function ComparisonSection() {
     if (currentCurrency.code === "USD") {
       return `$${Math.round(basePrice * currentCurrency.rate)}`
     }
-    return `${basePrice} AED`
+    return formatAedLabel(basePrice, locale)
   }
 
   // Doing it yourself vs with EZvisa: only facts about the service, no claims about other companies.
   const features = [
-    { name: "Application form filled in for you", ar: "تعبئة نموذج الطلب نيابةً عنك", others: false },
+    { name: "Application form filled in for you", ar: "نعبّئ نموذج الطلب نيابة عنك", others: false },
     { name: "Cover letter written for your trip", ar: "خطاب تغطية مكتوب لرحلتك", others: false },
-    { name: "Day-by-day itinerary that matches your bookings", ar: "خط سير يومي يتطابق مع حجوزاتك", others: false },
-    { name: "Flight and hotel reservations, no tickets to buy", ar: "حجوزات طيران وفنادق دون شراء تذاكر", others: false },
+    { name: "Day-by-day itinerary that matches your bookings", ar: "برنامج يومي يطابق حجوزاتك", others: false },
+    { name: "Flight and hotel reservations, no tickets to buy", ar: "حجوزات طيران وفندق من دون شراء تذاكر", others: false },
     { name: "Every document checked before you submit", ar: "مراجعة كل مستند قبل التقديم", others: false },
-    { name: "A visa specialist to answer questions on WhatsApp", ar: "مختص تأشيرات يجيب عن أسئلتك عبر واتساب", others: false },
-    { name: "Ready in 1–2 days", ar: "جاهز خلال 1–2 يوم", others: false },
+    { name: "A visa specialist to answer questions on WhatsApp", ar: "مختص تأشيرات يجيب عن أسئلتك على واتساب", others: false },
+    { name: APPLICATION_READY, ar: "", others: false },
   ]
 
   return (
     <section className="bg-secondary/50 py-20 md:py-28">
       <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
         <div className="flex flex-col items-start gap-5">
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><LangText en="Why EZvisa" ar="لماذا إيزي فيزا" /></span>
-          <h2 className="text-balance text-foreground"><LangText en="On your own, or with a visa specialist." ar="بمفردك، أو مع مختص تأشيرات." /></h2>
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            <LangText en="Why EZvisa" ar="لماذا إيزي فيزا" />
+          </span>
+          <h2 className="text-balance text-foreground">
+            <LangText en="On your own, or with a visa specialist." ar="بمفردك، أو مع مختص تأشيرات." />
+          </h2>
           <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
-            <LangText en="You can apply for a Schengen visa yourself. This is what changes when a specialist prepares the file with you." ar="يمكنك التقدم بطلب تأشيرة شنغن بنفسك. هذا ما يتغير عندما يجهّز مختص الملف معك." />
+            <LangText
+              en="You can apply for a Schengen visa yourself. This is what changes when a specialist prepares the file with you."
+              ar="يمكنك التقدّم لتأشيرة شنغن بنفسك. هذا ما يتغيّر عندما يجهّز مختص الملف معك."
+            />
           </p>
           <LocaleLink
             href="/apply"
@@ -91,7 +101,7 @@ export function ComparisonSection() {
                 </th>
                 <th scope="col" className="w-24 px-2 py-5 text-center align-bottom sm:w-40">
                   <span className="relative mx-auto block h-5 w-20">
-                    <Image src="/images/logo-main.png" alt="With EZvisa" fill sizes="80px" className="object-contain" />
+                    <Image src="/images/logo-main.png" alt={locale === "ar" ? "مع إيزي فيزا" : "With EZvisa"} fill sizes="80px" className="object-contain" />
                   </span>
                 </th>
               </tr>
@@ -125,8 +135,8 @@ export function ComparisonSection() {
                   <span className="text-xs text-muted-foreground sm:text-sm"><LangText en="Your time" ar="وقتك" /></span>
                 </td>
                 <td className="px-2 py-5 text-center">
-                  <span className="block text-[10px] text-muted-foreground sm:text-xs"><LangText en="One flat fee" ar="رسوم ثابتة واحدة" /></span>
-                  <span className="text-lg font-semibold tabular-nums text-foreground sm:text-xl">{getPrice()}</span>
+                  <span className="block text-[10px] text-muted-foreground sm:text-xs"><LangText en="One flat fee" ar="رسم واحد ثابت" /></span>
+                  <span dir="ltr" className="text-lg font-semibold tabular-nums text-foreground sm:text-xl">{getPrice()}</span>
                 </td>
               </tr>
             </tfoot>
