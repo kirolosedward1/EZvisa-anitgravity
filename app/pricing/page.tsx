@@ -149,7 +149,7 @@ export default async function PricingPage() {
             <div className="flex flex-col gap-6 rounded-3xl bg-secondary/60 p-6 sm:p-10">
               <div className="flex flex-col gap-2">
                 <h2 className="panel-title text-foreground">{pick("Paid separately", "يُدفع بشكل منفصل")}</h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">{pick("These go to the embassy, the visa centre or the insurer, not to us.", "هذه تذهب إلى السفارة أو مركز التأشيرات أو شركة التأمين، لا إلينا.")}</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">{pick("These go to the embassy, the visa centre or the insurer, not to us. EZvisa is not VAT-registered; prices shown are final.", "هذه تذهب إلى السفارة أو مركز التأشيرات أو شركة التأمين، لا إلينا. إيزي فيزا غير مسجّلة لضريبة القيمة المضافة؛ الأسعار المعروضة نهائية.")}</p>
               </div>
               <ul className="flex flex-col">
                 {SEPARATE.map((item) => (

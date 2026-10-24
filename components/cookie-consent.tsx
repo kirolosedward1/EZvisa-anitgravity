@@ -61,21 +61,29 @@ function addScript(id: string, src: string) {
   document.head.appendChild(s)
 }
 
-function applyPrefs(p: Prefs) {
-  const w = window as W
+/** Google Consent Mode v2 update for the chosen categories (also sent before a reload, so running tags stop first). */
+function pushConsent(p: Prefs) {
   gtag("consent", "update", {
     analytics_storage: p.analytics ? "granted" : "denied",
     ad_storage: p.marketing ? "granted" : "denied",
     ad_user_data: p.marketing ? "granted" : "denied",
     ad_personalization: p.marketing ? "granted" : "denied",
   })
-  if (p.analytics || p.marketing) {
-    if (!document.getElementById("ez-gtag")) {
-      gtag("js", new Date())
-      gtag("config", GA_ID)
-      w.dataLayer!.push({ "gtm.start": Date.now(), event: "gtm.js" })
-    }
+}
+
+function applyPrefs(p: Prefs) {
+  const w = window as W
+  pushConsent(p)
+  // GA only with analytics consent (a denied analytics_storage still allows cookieless pings, so the script itself is gated).
+  if (p.analytics && !document.getElementById("ez-gtag")) {
+    gtag("js", new Date())
+    gtag("config", GA_ID)
     addScript("ez-gtag", `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`)
+  }
+  // GTM (ad tags) with analytics or marketing consent.
+  if ((p.analytics || p.marketing) && !document.getElementById("ez-gtm")) {
+    w.dataLayer = w.dataLayer || []
+    w.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" })
     addScript("ez-gtm", `https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`)
   }
   if (p.functional && !document.getElementById("ez-crisp")) {
@@ -119,8 +127,10 @@ export function CookieConsent() {
     setManage(false)
     // Scripts that already loaded cannot be unloaded: reload so a withdrawn consent takes effect.
     const withdrawn = previous && ((previous.analytics && !p.analytics) || (previous.marketing && !p.marketing) || (previous.functional && !p.functional))
-    if (withdrawn) window.location.reload()
-    else {
+    if (withdrawn) {
+      pushConsent(p) // the tags already running see the withdrawal before the page unloads
+      window.location.reload()
+    } else {
       setAnalyticsOn(p.analytics)
       applyPrefs(p)
     }
