@@ -11,6 +11,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Icon, Text, type IconName } from "../../components/ui";
 import { PaymentMark } from "../../components/payment/PaymentMark";
+import { Globi, type GlobiPose, type GlobiMood } from "../../components/mascot/Globi";
 import { PaymentStallActions, devPaymentPreview, paymentPhrase, paymentWaitPhase, usePaymentWaitClock, PAYMENT_SLOW_MS, PAYMENT_STALL_MS } from "../../components/payment/PaymentWait";
 import { useColors, S } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
@@ -166,6 +167,11 @@ export default function PaymentResult() {
     offline: { icon: "wifi.slash", color: c.secondaryLabel, title: t("You're offline"), body: t("We'll check your payment when you're back online.") },
   };
   const v = V[state];
+  // Globi reacts to the outcome (the mark below still carries the state for VoiceOver and the animation).
+  const GLOBI: Record<State, [GlobiPose, GlobiMood]> = {
+    checking: ["think", "think"], paid: ["celebrate", "excited"], confirming: ["celebrate", "happy"], pending: ["phone", "calm"],
+    failed: ["heart", "calm"], cancelled: ["idle", "calm"], offline: ["sleep", "sleepy"],
+  };
   // The 20s stall stays up through the verifier's "not confirmed yet" state. Quiet polling still promotes that to paid,
   // and the same mark morphs into the check — the screen does not swap to a different result view underneath the user.
   const phase = state === "checking" ? paymentWaitPhase(elapsed) : null;
@@ -179,7 +185,8 @@ export default function PaymentResult() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: Platform.OS === "ios" ? S.lg : insets.top + S.lg }} testID="payment-result">
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.md, padding: S.xl }}>
-        {mark ? <PaymentMark mode={mark} paused={stalled} label={title} /> : v.icon ? <Icon name={v.icon} size={56} color={v.color} /> : null}
+        <Globi pose={GLOBI[state][0]} mood={GLOBI[state][1]} size={132} animate={!stalled} />
+        {mark ? <PaymentMark mode={mark} paused={stalled} label={title} /> : v.icon ? <Icon name={v.icon} size={40} color={v.color} /> : null}
         <View accessibilityLiveRegion="polite" style={{ alignItems: "center", gap: S.md }}>
           <Text variant="title1" center accessibilityRole="header" testID="payment-state">{title}</Text>
           <Text variant="body" tone="secondary" center>{body}</Text>

@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COUNTRY_LIST, POPULAR, toSlug } from "../../../lib/countries";
+import { Globi } from "../../../components/mascot/Globi";
 import { EmptyState, Flag, Icon, ListGroup, ListRow, PressScale, Text, useTabInset } from "../../../components/ui";
 import { Field } from "../../../components/AuthForm";
 import { useColors, S, R, ICON, curve } from "../../../lib/theme";
@@ -86,7 +87,7 @@ export default function Countries() {
         <Field placeholder={tr("Search")} value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={ICON.md} color={c.textSecondary} />} />
         <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.gutter, paddingEnd: !t && !rtl && !grid ? S.xs : 0, marginTop: S.xl }}>
           {t ? (
-            !results.length ? <EmptyState icon="magnifyingglass" title={tr("No results")} />
+            !results.length ? <EmptyState icon="magnifyingglass" mascot={<Globi pose="magnify" mood="think" size={120} />} title={tr("No results")} />
               : grid ? <Grid names={results} w={cardW} /> : <ListGroup inset={INSET}>{results.map((n) => <Row key={n} name={n} />)}</ListGroup>
           ) : grid ? (<>
             <Text variant="title3" accessibilityRole="header" style={{ marginHorizontal: S.gutter, marginBottom: S.sm }}>{tr("Popular")}</Text>
