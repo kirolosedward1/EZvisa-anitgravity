@@ -8,7 +8,15 @@ import type { VisaApplication } from "@/lib/types/visa-application"
 import { SupportApplication } from "@/components/support-application"
 import type { FormData } from "@/lib/form-types"
 
-export const metadata = { title: "Continue application", robots: { index: false, follow: false } }
+import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
+
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    { title: "Continue application", robots: { index: false, follow: false } },
+    { title: "أكمل الطلب", path: "/ar/continue" },
+  )
+}
 
 /** Answers already saved on the row (wizard notes from the website or the app, then the columns), to pre-fill. */
 function savedAnswers(app: VisaApplication): Partial<FormData> {

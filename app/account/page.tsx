@@ -7,7 +7,15 @@ import { listApplicationsFor, trackPath } from "@/lib/applications"
 import { getStatusLabel, isPaid } from "@/lib/application-status"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 
-export const metadata = { title: "Account", robots: { index: false, follow: false } }
+import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
+
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    { title: "Account", robots: { index: false, follow: false } },
+    { title: "الحساب", path: "/ar/account" },
+  )
+}
 
 const str = (v: unknown) => (typeof v === "string" ? v.trim() : "")
 

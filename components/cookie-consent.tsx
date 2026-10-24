@@ -208,7 +208,7 @@ function Banner({ manage, setManage, prefs, setPrefs, save }: {
       <div className="mx-auto max-h-[70vh] w-full max-w-6xl overflow-y-auto px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <p id="cookie-banner-title" className="text-[13px] leading-snug text-[#5B6475]">
           {t("We use cookies for chat and analytics. ", "نستخدم ملفات تعريف الارتباط للدردشة والتحليلات. ")}
-          <a href={policyHref} className="text-[#0436DC] underline">{t("Cookie policy", "سياسة ملفات تعريف الارتباط")}</a>
+          <a href={policyHref} className="text-[#0436DC] underline">{t("Cookie policy", "سياسة الكوكيز")}</a>
         </p>
 
         {manage && (

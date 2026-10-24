@@ -10,7 +10,15 @@ import { getDemoApplicationByToken } from "@/lib/demo-data"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import { SupportApplication } from "@/components/support-application"
 
-export const metadata = { title: "Receipt", robots: { index: false, follow: false } }
+import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
+
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    { title: "Receipt", robots: { index: false, follow: false } },
+    { title: "الإيصال", path: "/ar/receipt" },
+  )
+}
 
 export default async function ReceiptPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

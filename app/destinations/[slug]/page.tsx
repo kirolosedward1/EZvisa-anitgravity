@@ -10,56 +10,69 @@ import { AfterPaymentTimeline } from "@/components/after-payment-timeline"
 import { ContactSection } from "@/components/contact-section"
 import { getProviderForDestination } from "@/lib/visa-rules"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
+import { countryNameAr } from "@/lib/countries"
+import { formatAedLabel } from "@/lib/currency"
+import { ltr } from "@/lib/bidi"
+import { requestLocale } from "@/lib/request-locale"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import type { Metadata } from "next"
 
-// Generate static parameters for all Schengen destinations
 export async function generateStaticParams() {
   return destinations.map((dest) => ({
     slug: dest.slug,
   }))
 }
 
-// Generate dynamic metadata for SEO optimization
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const destination = destinations.find((d) => d.slug === slug)
-  
+
   if (!destination) {
     return {
       title: "Visa Destination",
     }
   }
 
-  const title = `Apply for ${destination.name} Schengen Visa from UAE`
-  const description = `Get your ${destination.name} visa file prepared from Dubai and Abu Dhabi. We prepare your application in 1–2 days. The embassy's decision takes longer.`
+  const arabic = (await requestLocale()) === "ar"
+  const nameAr = countryNameAr(destination.name)
+  const title = arabic
+    ? `قدّم لطلب تأشيرة شنغن إلى ${nameAr} من الإمارات`
+    : `Apply for ${destination.name} Schengen Visa from UAE`
+  const description = arabic
+    ? `نجهّز ملف تأشيرة ${nameAr} من دبي وأبوظبي خلال ${ltr("1–2")} يوم. قرار السفارة يستغرق وقتًا أطول.`
+    : `Get your ${destination.name} visa file prepared from Dubai and Abu Dhabi. We prepare your application in 1–2 days. The embassy's decision takes longer.`
+  const path = arabic ? `/ar/destinations/${slug}` : `/destinations/${slug}`
 
   return {
     title,
     description,
-    keywords: [
-      `apply ${destination.name} visa UAE`,
-      `${destination.name} Schengen visa Dubai`,
-      `${destination.name} visa requirements Dubai`,
-      `Schengen visa documents ${destination.name}`,
-      `VFS ${destination.name} appointment Dubai`,
-      `EZvisa ${destination.name}`,
-    ],
+    keywords: arabic
+      ? undefined
+      : [
+          `apply ${destination.name} visa UAE`,
+          `${destination.name} Schengen visa Dubai`,
+          `${destination.name} visa requirements Dubai`,
+          `Schengen visa documents ${destination.name}`,
+          `VFS ${destination.name} appointment Dubai`,
+          `EZvisa ${destination.name}`,
+        ],
     alternates: {
-      canonical: `https://www.ezvisa.net/destinations/${slug}`,
+      canonical: `https://www.ezvisa.net${path}`,
     },
     openGraph: {
       title,
       description,
-      url: `https://www.ezvisa.net/destinations/${slug}`,
+      url: `https://www.ezvisa.net${path}`,
       type: "website",
+      locale: arabic ? "ar" : "en_US",
       images: [
         {
           url: destination.image,
           width: 1200,
           height: 630,
-          alt: `${destination.name} Schengen Visa UAE`,
+          alt: arabic ? `تأشيرة شنغن إلى ${nameAr} من الإمارات` : `${destination.name} Schengen Visa UAE`,
         },
       ],
     },
@@ -74,36 +87,68 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
     notFound()
   }
 
+  const arabic = (await requestLocale()) === "ar"
   const name = destination.name
+  const nameAr = countryNameAr(name)
   const centre = getProviderForDestination(slug).replace(/ Center$/, "")
+  const centreAr = ltr(centre)
+  const price = formatAedLabel(PRICE_AED, arabic ? "ar" : "en")
   const applyHref = `/apply?to=${encodeURIComponent(name)}`
+  const place = arabic ? nameAr : name
 
-  const faqs = [
-    {
-      question: `Do I need a visa for ${name} if I live in the UAE?`,
-      answer: `It depends on your passport, not your residence. Holders of Indian, Pakistani, Egyptian, Jordanian, Filipino and many other passports need a Schengen visa for ${name}, even with a UAE residence visa or Golden Visa. UAE citizens don't need one for stays of up to 90 days.`,
-    },
-    {
-      question: `Where do I apply for a ${name} visa in the UAE?`,
-      answer: `${name} visa applications are handled by ${centre}, with centres in Dubai and Abu Dhabi. You book the appointment on their website, then hand in your file, pay the embassy fee and give your fingerprints there.`,
-    },
-    {
-      question: `Can I visit other countries on a ${name} visa?`,
-      answer: `Yes. A Schengen visa from ${name} lets you travel across all 29 Schengen countries. ${name} has to be your main destination (where you spend the most nights), or your first entry if the nights are split evenly.`,
-    },
-    {
-      question: `When should I apply for my ${name} visa?`,
-      answer: "You can apply up to 6 months before you travel and no later than 15 days before. Appointments get scarce before summer and the winter holidays, so start 6 to 8 weeks ahead if you can.",
-    },
-    {
-      question: "What does EZvisa cost, and when is it refunded?",
-      answer: `${PRICE_AED} AED per application, paid when you start. You get it back if you cancel before we start reviewing your documents, if we can't deliver because of an error on our side, or if you paid twice. A refusal by the ${name} embassy isn't refunded, and embassy and visa centre fees are paid to them, not us.`,
-    },
-    {
-      question: "Is VAT added at checkout?",
-      answer: "No. EZvisa is not VAT-registered; prices shown are final. The visa decision is always made by the embassy, so no one can guarantee approval.",
-    },
-  ]
+  const faqs = arabic
+    ? [
+        {
+          question: `هل أحتاج إلى تأشيرة لـ${place} إذا كنت أعيش في الإمارات؟`,
+          answer: `الأمر يعتمد على جوازك لا على إقامتك. يحتاج حاملو الجوازات الهندية والباكستانية والمصرية والأردنية والفلبينية وكثير من الجوازات الأخرى إلى تأشيرة شنغن لـ${place}، حتى مع إقامة إماراتية أو إقامة ذهبية. مواطنو الإمارات لا يحتاجون إليها للإقامة حتى 90 يومًا.`,
+        },
+        {
+          question: `أين أقدّم لطلب تأشيرة ${place} في الإمارات؟`,
+          answer: `تتولى ${centreAr} طلبات تأشيرة ${place}، ولها مراكز في دبي وأبوظبي. تحجز الموعد على موقعهم، ثم تسلّم ملفك وتدفع رسوم السفارة وتقدّم بصماتك هناك.`,
+        },
+        {
+          question: `هل أستطيع زيارة دول أخرى بتأشيرة ${place}؟`,
+          answer: `نعم. تأشيرة شنغن من ${place} تتيح السفر إلى 29 دولة شنغن كلها. يجب أن تكون ${place} وجهتك الرئيسية (حيث تقضي أكثر الليالي)، أو أول دخول إذا تساوت الليالي.`,
+        },
+        {
+          question: `متى أقدّم لطلب تأشيرة ${place}؟`,
+          answer: "يمكنك التقديم قبل السفر بمدة تصل إلى 6 أشهر، ولا يقل عن 15 يومًا. تقل المواعيد قبل الصيف وعطل الشتاء، فابدأ قبل 6 إلى 8 أسابيع إن استطعت.",
+        },
+        {
+          question: "كم تتقاضى إيزي فيزا، ومتى يُسترد الرسم؟",
+          answer: `${price} عن كل طلب، تُدفع عند البدء. يُعاد الرسم إذا ألغيت قبل أن نبدأ مراجعة مستنداتك، أو إذا تعذّر التسليم بسبب خطأ من جانبنا، أو إذا دُفع المبلغ مرتين. رفض سفارة ${place} لا يُسترد، ورسوم السفارة ومركز التأشيرات تُدفع لهم لا لنا.`,
+        },
+        {
+          question: "هل تُضاف ضريبة القيمة المضافة عند الدفع؟",
+          answer: "لا. إيزي فيزا غير مسجّلة لضريبة القيمة المضافة؛ الأسعار المعروضة نهائية. قرار التأشيرة للسفارة دائمًا، ولا يستطيع أحد ضمان القبول.",
+        },
+      ]
+    : [
+        {
+          question: `Do I need a visa for ${name} if I live in the UAE?`,
+          answer: `It depends on your passport, not your residence. Holders of Indian, Pakistani, Egyptian, Jordanian, Filipino and many other passports need a Schengen visa for ${name}, even with a UAE residence visa or Golden Visa. UAE citizens don't need one for stays of up to 90 days.`,
+        },
+        {
+          question: `Where do I apply for a ${name} visa in the UAE?`,
+          answer: `${name} visa applications are handled by ${centre}, with centres in Dubai and Abu Dhabi. You book the appointment on their website, then hand in your file, pay the embassy fee and give your fingerprints there.`,
+        },
+        {
+          question: `Can I visit other countries on a ${name} visa?`,
+          answer: `Yes. A Schengen visa from ${name} lets you travel across all 29 Schengen countries. ${name} has to be your main destination (where you spend the most nights), or your first entry if the nights are split evenly.`,
+        },
+        {
+          question: `When should I apply for my ${name} visa?`,
+          answer: "You can apply up to 6 months before you travel and no later than 15 days before. Appointments get scarce before summer and the winter holidays, so start 6 to 8 weeks ahead if you can.",
+        },
+        {
+          question: "What does EZvisa cost, and when is it refunded?",
+          answer: `${PRICE_AED} AED per application, paid when you start. You get it back if you cancel before we start reviewing your documents, if we can't deliver because of an error on our side, or if you paid twice. A refusal by the ${name} embassy isn't refunded, and embassy and visa centre fees are paid to them, not us.`,
+        },
+        {
+          question: "Is VAT added at checkout?",
+          answer: "No. EZvisa is not VAT-registered; prices shown are final. The visa decision is always made by the embassy, so no one can guarantee approval.",
+        },
+      ]
 
   return (
     <>
@@ -111,9 +156,18 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-background">
         <InnerHero
-          badge={`${name} · Schengen visa`}
-          title={`Your ${name} visa file, prepared from the UAE.`}
-          description={`We fill in your ${name} application form, write your cover letter, plan your itinerary and arrange your flight and hotel reservations. Ready in 1–2 days for ${PRICE_AED} AED.`}
+          badge={arabic ? `${place} · تأشيرة شنغن` : `${name} · Schengen visa`}
+          title={arabic ? `ملف تأشيرة ${place}، نجهّزه من الإمارات.` : `Your ${name} visa file, prepared from the UAE.`}
+          description={
+            arabic ? (
+              <>
+                نعبّئ نموذج طلب {place}، ونكتب خطاب التغطية، ونضع برنامج الرحلة، ونرتّب حجوزات الطيران والفندق. جاهز خلال{" "}
+                <bdi dir="ltr">1–2</bdi> يوم مقابل <bdi dir="ltr">{price}</bdi>.
+              </>
+            ) : (
+              `We fill in your ${name} application form, write your cover letter, plan your itinerary and arrange your flight and hotel reservations. Ready in 1–2 days for ${PRICE_AED} AED.`
+            )
+          }
           backgroundImage={destination.image}
         >
           <div className="flex flex-wrap items-center gap-3">
@@ -121,14 +175,14 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
               href={applyHref}
               className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
-              Apply for {name}
+              {arabic ? `قدّم على تأشيرة ${place}` : `Apply for ${name}`}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
             </Link>
             <Link
               href={destination.documentPath}
               className="inline-flex h-12 items-center rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
             >
-              See the documents
+              {arabic ? "المستندات" : "See the documents"}
             </Link>
           </div>
         </InnerHero>
@@ -138,10 +192,11 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <section className="py-20 md:py-24">
           <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
             <div className="flex max-w-2xl flex-col gap-4">
-              <h2 className="text-balance text-foreground">What goes into your {name} file</h2>
+              <h2 className="text-balance text-foreground">{arabic ? `ماذا يتضمن ملف ${place}` : `What goes into your ${name} file`}</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
-                The {name} embassy reads your documents together. We prepare the parts that have to be written or booked for your trip, and
-                check that they match the ones you bring.
+                {arabic
+                  ? `سفارة ${place} تقرأ مستنداتك معًا. نجهّز الأجزاء التي يجب كتابتها أو حجزها لرحلتك، ونتأكد من أنها تطابق ما تحضره.`
+                  : `The ${name} embassy reads your documents together. We prepare the parts that have to be written or booked for your trip, and check that they match the ones you bring.`}
               </p>
             </div>
             <DocumentSplit country={name} />
@@ -153,8 +208,10 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <section className="py-20 md:py-28">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Questions</span>
-              <h2 className="text-balance text-foreground">Applying for {name} from the UAE</h2>
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                {arabic ? "أسئلة" : "Questions"}
+              </span>
+              <h2 className="text-balance text-foreground">{arabic ? `التقديم على تأشيرة ${place} من الإمارات` : `Applying for ${name} from the UAE`}</h2>
             </div>
             <Accordion type="single" collapsible className="w-full border-t border-border/70">
               {faqs.map((faq, idx) => (

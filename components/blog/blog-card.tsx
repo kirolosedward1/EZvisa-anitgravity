@@ -6,9 +6,11 @@ import { Calendar, Clock } from "lucide-react"
 import { motion } from "framer-motion"
 import { LocaleLink } from "@/components/locale-link"
 import { Msg } from "@/components/msg"
-import { NewsCategory, NewsDate, NewsExcerpt, NewsReadTime, NewsTag, NewsTitle } from "@/components/blog/news-copy"
+import { useSiteLocale } from "@/components/locale-provider"
+import { NewsCategory, NewsDate, NewsExcerpt, NewsReadTime, NewsTag, NewsTitle, newsTitleText } from "@/components/blog/news-copy"
 
 export function BlogCard({ post }: { post: BlogPost }) {
+  const alt = newsTitleText(useSiteLocale(), post.slug, post.title)
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -26,7 +28,7 @@ export function BlogCard({ post }: { post: BlogPost }) {
           <div className="relative w-full h-48 flex-shrink-0 overflow-hidden bg-muted">
             <Image
               src={post.featuredImage || "/placeholder.svg"}
-              alt={post.title}
+              alt={alt}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
