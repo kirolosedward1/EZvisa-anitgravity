@@ -21,6 +21,7 @@ import { UUID_RE } from "@/lib/applications"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
 import { applicantCount } from "@/lib/currency"
 import { toWesternDigits, normalizePassport } from "@/lib/digits"
+import { hasInvalidPhone } from "@/lib/phone"
 
 // Arabic/Persian digits typed on the client become Western before validation and saving (Western input unchanged).
 const DIGIT_FIELDS = ["phone", "dateOfBirth", "travelStartDate", "travelEndDate", "travelMonth", "tripLength", "employmentStartDate"]
@@ -160,6 +161,9 @@ export async function POST(request: Request) {
         { success: false, message: "Please complete the traveller details (name, email and phone)." },
         { status: 400 },
       )
+    }
+    if (hasInvalidPhone(sanitizedData.phone)) {
+      return NextResponse.json({ success: false, message: "Enter a valid phone number." }, { status: 400 })
     }
 
     const flexible = formData.datesFlexible === "yes"
