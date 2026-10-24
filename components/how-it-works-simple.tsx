@@ -152,29 +152,28 @@ export function HowItWorksSimple({ standalone = false }: { standalone?: boolean 
   // Fills the line beside the step numbers as the list scrolls past the middle of the screen.
   const listRef = useRef<HTMLOListElement>(null)
   const { scrollYProgress } = useScroll({ target: listRef, offset: ["start center", "end center"] })
-  const fill = useSpring(scrollYProgress, { stiffness: 140, damping: 28, mass: 0.4 })
+  const fill = useSpring(scrollYProgress, { stiffness: 60, damping: 24, mass: 0.6 })
 
   return (
     <section id="how-it-works" className="bg-background py-20 md:py-28">
-      <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-20">
-        <div className="flex flex-col gap-8 lg:sticky lg:top-28 lg:self-start">
-          <div className="flex flex-col items-start gap-5">
-            {!standalone && <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">How it works</span>}
-            <h2 className="text-balance text-foreground">From your first answer to your embassy appointment.</h2>
-            {!standalone && <Link
-              href="/how-it-works"
-              className="group inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
-            >
-              See full process
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-            </Link>}
-          </div>
-
-          {/* Desktop: the illustration for the step in view */}
-          <div
-            aria-hidden="true"
-            className="relative hidden aspect-square max-h-[calc(100vh-19rem)] min-h-[26rem] items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-secondary lg:flex"
+      <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:gap-6">
+        <div className="flex flex-col items-start gap-5">
+          {!standalone && <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">How it works</span>}
+          <h2 className="max-w-2xl text-balance text-foreground">From your first answer to your embassy appointment.</h2>
+          {!standalone && <Link
+            href="/how-it-works"
+            className="group inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
           >
+            See full process
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
+          </Link>}
+        </div>
+
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-20">
+        {/* Desktop: the illustration for the step in view. Its column is as tall as the list, so it stays pinned
+            in the middle of the screen through all four steps. */}
+        <div aria-hidden="true" className="hidden lg:block">
+          <div className="sticky top-[calc(50vh-15rem)] flex aspect-square max-h-[30rem] w-full items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-secondary">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_45%,color-mix(in_oklch,var(--primary)_12%,transparent),transparent)]" />
             {VISUALS.map((Visual, index) => {
               const offset = index - active
@@ -184,11 +183,11 @@ export function HowItWorksSimple({ standalone = false }: { standalone?: boolean 
                   initial={false}
                   animate={{
                     opacity: offset === 0 ? 1 : 0,
-                    y: reduced || offset === 0 ? 0 : offset > 0 ? 24 : -24,
-                    scale: reduced || offset === 0 ? 1 : 0.96,
+                    y: reduced || offset === 0 ? 0 : offset > 0 ? 32 : -32,
+                    scale: reduced || offset === 0 ? 1 : 0.97,
                   }}
-                  // The old picture leaves fast, the new one arrives a beat later: no blank panel, no double image.
-                  transition={offset === 0 ? { duration: 0.45, delay: 0.12, ease: [0.22, 1, 0.36, 1] } : { duration: 0.18, ease: "easeIn" }}
+                  // The old picture fades out first, the new one settles in after it: unhurried, never two at once.
+                  transition={offset === 0 ? { duration: 0.8, delay: 0.25, ease: [0.22, 1, 0.36, 1] } : { duration: 0.4, ease: [0.4, 0, 1, 1] }}
                   className="absolute inset-0 flex items-center justify-center"
                   style={{ pointerEvents: "none", zIndex: offset === 0 ? 1 : 0 }}
                 >
@@ -198,7 +197,7 @@ export function HowItWorksSimple({ standalone = false }: { standalone?: boolean 
             })}
             <div className="absolute left-5 top-5 z-10 flex gap-1.5">
               {steps.map((step, index) => (
-                <span key={step.number} className={cn("h-1 rounded-full transition-all duration-300", index === active ? "w-6 bg-primary" : "w-2 bg-border")} />
+                <span key={step.number} className={cn("h-1 rounded-full transition-all duration-700 ease-out", index === active ? "w-6 bg-primary" : "w-2 bg-border")} />
               ))}
             </div>
           </div>
@@ -206,10 +205,11 @@ export function HowItWorksSimple({ standalone = false }: { standalone?: boolean 
 
         <ol ref={listRef} className="relative flex flex-col">
           {/* Track and fill, centred on the 40px number circles */}
-          <span aria-hidden="true" className="absolute bottom-12 left-5 top-12 w-px -translate-x-1/2 bg-border" />
+          <span aria-hidden="true" className="absolute bottom-[30vh] left-5 top-[30vh] hidden w-px -translate-x-1/2 bg-border lg:block" />
+          <span aria-hidden="true" className="absolute bottom-12 left-5 top-12 w-px -translate-x-1/2 bg-border lg:hidden" />
           <motion.span
             aria-hidden="true"
-            className="absolute bottom-12 left-5 top-12 w-px origin-top -translate-x-1/2 bg-primary"
+            className="absolute bottom-12 left-5 top-12 w-px origin-top -translate-x-1/2 bg-primary lg:bottom-[30vh] lg:top-[30vh]"
             style={{ scaleY: reduced ? scrollYProgress : fill }}
           />
           {steps.map((step, index) => {
@@ -221,11 +221,11 @@ export function HowItWorksSimple({ standalone = false }: { standalone?: boolean 
                   items.current[index] = el
                 }}
                 data-index={index}
-                className="relative grid grid-cols-[auto_minmax(0,1fr)] gap-5 py-8 sm:gap-8 lg:min-h-[13rem] lg:py-10"
+                className="relative grid grid-cols-[auto_minmax(0,1fr)] gap-5 py-8 sm:gap-8 lg:min-h-[60vh] lg:content-center lg:py-0"
               >
                 <span
                   className={cn(
-                    "relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-[background-color,border-color,color,box-shadow] duration-500",
+                    "relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-[background-color,border-color,color,box-shadow] duration-700",
                     isActive
                       ? "border-primary bg-primary text-primary-foreground shadow-[0_0_0_6px_color-mix(in_oklch,var(--primary)_14%,transparent)]"
                       : index < active
@@ -236,13 +236,14 @@ export function HowItWorksSimple({ standalone = false }: { standalone?: boolean 
                   {step.number}
                 </span>
                 <div className="flex flex-col gap-2 pt-1.5">
-                  <h3 className={cn("text-foreground transition-opacity duration-500", isActive ? "opacity-100" : "opacity-60 lg:opacity-45")}>{step.title}</h3>
+                  <h3 className={cn("text-foreground transition-opacity duration-700", isActive ? "opacity-100" : "opacity-60 lg:opacity-45")}>{step.title}</h3>
                   <p className="max-w-lg text-base leading-relaxed text-muted-foreground">{step.description}</p>
                 </div>
               </li>
             )
           })}
         </ol>
+        </div>
       </div>
     </section>
   )

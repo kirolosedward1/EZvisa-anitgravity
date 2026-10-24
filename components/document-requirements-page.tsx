@@ -78,6 +78,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
           description={`What the ${country} visa centre asks for, what you bring yourself, and what we prepare for you.`}
           backgroundImage={destination?.image || `/images/countries/${slug}.jpg`}
         >
+          <div className="flex justify-center">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" className="h-12 w-full justify-between rounded-full border-border bg-background px-4 font-normal sm:w-72">
@@ -111,6 +112,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
               </Command>
             </PopoverContent>
           </Popover>
+          </div>
         </InnerHero>
 
         <CountryFacts slug={slug} />

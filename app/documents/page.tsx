@@ -34,7 +34,7 @@ export default function DocumentsPage() {
           <label htmlFor="country-search" className="sr-only">
             Search for a country
           </label>
-          <div className="relative">
+          <div className="relative mx-auto max-w-md">
             <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               id="country-search"

@@ -112,7 +112,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           description={`We fill in your ${name} application form, write your cover letter, plan your itinerary and arrange your flight and hotel reservations. Ready in 1–2 days for ${PRICE_AED} AED.`}
           backgroundImage={destination.image}
         >
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               href={applyHref}
               className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
@@ -122,7 +122,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             </Link>
             <Link
               href={destination.documentPath}
-              className="inline-flex h-12 items-center rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+              className="inline-flex h-12 items-center rounded-full bg-background px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
             >
               See the documents
             </Link>

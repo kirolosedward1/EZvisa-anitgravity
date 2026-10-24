@@ -1,8 +1,17 @@
-import { Check, FileText } from "lucide-react"
+import { BookUser, Briefcase, Camera, ClipboardList, Hotel, IdCard, Landmark, PenLine, Plane, Route, ShieldPlus, type LucideIcon } from "lucide-react"
 import { REQUIREMENTS } from "@/lib/shared/wizard-contract"
 
-const YOU_PROVIDE = [
+const PROVIDE_ICON: Record<string, LucideIcon> = {
+  passportCopy: BookUser,
+  residencyCopy: IdCard,
+  photo: Camera,
+  bankStatement: Landmark,
+  nocCertificate: Briefcase,
+}
+
+const YOU_PROVIDE: { title: string; note: string | null; icon: LucideIcon }[] = [
   ...REQUIREMENTS.filter((r) => !r.provided_by_ezvisa).map((r) => ({
+    icon: PROVIDE_ICON[r.document_type] ?? ClipboardList,
     title: r.document_type === "nocCertificate" ? "Salary certificate or NOC" : r.title,
     note:
       r.document_type === "nocCertificate"
@@ -11,15 +20,15 @@ const YOU_PROVIDE = [
           ? "Valid for at least 3 months after you return"
           : r.description,
   })),
-  { title: "Travel insurance", note: "€30,000 medical cover. Buy it through us as an extra, or bring your own" },
+  { title: "Travel insurance", note: "€30,000 medical cover. Buy it through us as an extra, or bring your own", icon: ShieldPlus },
 ]
 
 const WE_PREPARE = [
-  { title: "Schengen application form", note: "Filled in from your answers and checked" },
-  { title: "Cover letter", note: "Written for your trip, signed by you" },
-  { title: "Day-by-day itinerary", note: "Matches your flight and hotel dates" },
-  { title: "Flight reservation", note: "For the visa, no ticket to buy" },
-  { title: "Hotel reservation", note: "Covers every night of the trip" },
+  { title: "Schengen application form", note: "Filled in from your answers and checked", icon: ClipboardList },
+  { title: "Cover letter", note: "Written for your trip, signed by you", icon: PenLine },
+  { title: "Day-by-day itinerary", note: "Matches your flight and hotel dates", icon: Route },
+  { title: "Flight reservation", note: "For the visa, no ticket to buy", icon: Plane },
+  { title: "Hotel reservation", note: "Covers every night of the trip", icon: Hotel },
 ]
 
 /** The core Schengen file for UAE residents: what the customer brings and what EZvisa prepares. */
@@ -33,8 +42,10 @@ export function DocumentSplit({ country }: { country?: string }) {
         </div>
         <ul className="flex flex-col">
           {YOU_PROVIDE.map((item) => (
-            <li key={item.title} className="flex items-start gap-3 border-t border-border/70 py-3.5 first:border-0 first:pt-0 last:pb-0">
-              <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <li key={item.title} className="flex items-center gap-3.5 border-t border-border/70 py-3.5 first:border-0 first:pt-0 last:pb-0">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
+                <item.icon className="size-4" aria-hidden="true" />
+              </span>
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">{item.title}</span>
                 {item.note && <span className="text-sm text-muted-foreground">{item.note}</span>}
@@ -53,8 +64,10 @@ export function DocumentSplit({ country }: { country?: string }) {
         </div>
         <ul className="flex flex-col">
           {WE_PREPARE.map((item) => (
-            <li key={item.title} className="flex items-start gap-3 border-t border-primary/10 py-3.5 first:border-0 first:pt-0 last:pb-0">
-              <Check className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
+            <li key={item.title} className="flex items-center gap-3.5 border-t border-primary/10 py-3.5 first:border-0 first:pt-0 last:pb-0">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <item.icon className="size-4" aria-hidden="true" />
+              </span>
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">{item.title}</span>
                 <span className="text-sm text-muted-foreground">{item.note}</span>

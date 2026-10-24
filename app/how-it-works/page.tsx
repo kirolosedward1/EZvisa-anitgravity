@@ -38,7 +38,7 @@ export default function HowItWorksPage() {
           title="You answer the questions. We prepare the file."
           description={`Starting takes about five minutes and ${PRICE_AED} AED. A visa specialist then prepares everything the visa centre asks for, and you take it to your appointment.`}
         >
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/apply"
               className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
@@ -48,7 +48,7 @@ export default function HowItWorksPage() {
             </Link>
             <Link
               href="/pricing"
-              className="inline-flex h-12 items-center rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+              className="inline-flex h-12 items-center rounded-full bg-background px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
             >
               See what it costs
             </Link>
