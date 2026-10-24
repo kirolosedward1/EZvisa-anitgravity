@@ -35,11 +35,25 @@ export function isValidCalendarDate(value?: string | null): boolean {
   return parseCalendarDate(value) !== null
 }
 
+/** Departure then return. The same calendar day is a 1-day stay, not an out-of-order range. */
 export function datesInOrder(start?: string | null, end?: string | null): boolean {
   const a = parseCalendarDate(start)
   const b = parseCalendarDate(end)
   if (!a || !b) return false
-  return b.iso > a.iso
+  return b.iso >= a.iso
+}
+
+/** Range chosen on the fixed-date calendar. A same-day tap is kept. A return before departure starts a new range. */
+export function fixedTripRange(from: string, to: string): { start: string; end: string } {
+  if (from && to && to < from) return { start: to, end: "" }
+  return { start: from, end: to }
+}
+
+/** A fixed trip the date picker can keep: 1 day (same day) through 90 inclusive days. */
+export function fixedDatesAccepted(start?: string | null, end?: string | null): boolean {
+  if (!isValidCalendarDate(start) || !isValidCalendarDate(end) || !datesInOrder(start, end)) return false
+  const stay = schengenStayDays(start, end)
+  return stay >= 1 && stay <= 90
 }
 
 const DAY_MS = 86_400_000
