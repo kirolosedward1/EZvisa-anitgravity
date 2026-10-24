@@ -14,9 +14,12 @@ const ME = { id: "uid-a", email: "a+ezvisa-app-test@example.com", user_metadata:
 const inDays = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
 const base = { application_status: "submitted", payment_status: "paid", created_at: "2026-10-01T08:00:00Z", updated_at: "2026-10-01T08:00:00Z", has_passport: false, has_photos: false, has_bank_statements: false, has_employment_proof: false };
 db.user = ME;
+// Trip answers asked after payment (the dates come from the row's columns).
+const TRIP = { datesFlexible: "no", travelingWith: "alone", hotelCategory: "3-star", fundingSource: "self", balanceRange: "10000-25000", isFirstSchengenVisa: "yes", previousRefusals: "no",
+  willVisitOtherCountries: "no", residenceVisaValid: "yes" } as const;
 
 (async () => {
-  // ---- 1. Website row: only passport number + employment are asked, and nothing else on the row changes ----
+  // ---- 1. Website row: the same after-payment steps as the app (trip, passport, employment); nothing else on the row changes ----
   const web: any = { ...base, id: "web-1", email: ME.email, full_name: "Omar Saleh", phone: "+971501112233", nationality: "Egypt", destination_country: "France",
     entry_date: "2026-12-01", exit_date: "2026-12-10", travel_purpose: "tourism", passport_number: null, date_of_birth: "1990-05-05",
     additional_notes: JSON.stringify({ maritalStatus: "single", spouseAccompanying: "no", uploads: [{ type: "photo", path: "x", name: "p.jpg", at: "2026-10-02" }] }) };
@@ -26,10 +29,10 @@ db.user = ME;
   ok(needsContinue(a), "website row, paid, no passport number or employment: Continue needed");
   let f = continueForm(a);
   const qs = continueQuestions(f, true);
-  ok(qs.length > 0 && qs.every((q) => q.step === "employment" || q.id === "hasValidPassport" || q.id === "passportNumber"), `website row asks only passport (valid? + number) + employment (${qs.map((q) => q.id).join(", ")})`);
+  ok(qs.length > 0 && qs.every((q) => ["trip", "passport", "employment"].includes(q.step)), `website row asks the trip, passport and employment steps (${qs.map((q) => q.id).join(", ")})`);
   ok(!!qs.find((q) => !!firstError(q, f)), "the screen has a question to start on (no redirect loop)");
-  ok(qs.some((q) => q.id === "passportNumber"), "passport number is asked although the website never stored the validity answer");
-  f = { ...f, hasValidPassport: "yes", passportNumber: "a1234567", employmentStatus: "student" };
+  ok(qs.some((q) => q.id === "passportNumberAfter"), "passport number is asked although the website never stored the validity answer");
+  f = { ...f, ...TRIP, hasValidPassport: "yes", passportNumber: "a1234567", employmentStatus: "student" };
   const r1 = await saveAfterPayment("web-1", f);
   ok(r1.synced, "saved");
   ok(web.full_name === "Omar Saleh" && web.phone === "+971501112233" && web.nationality === "Egypt" && web.destination_country === "France", "name, phone, nationality and destination are untouched");
@@ -54,13 +57,14 @@ db.user = ME;
   ok(!isWebsiteRow(a) && needsContinue(a), "app row, paid, after-payment answers missing: Continue needed");
   ok(continueQuestions(f, false)[0]?.id === "purposeOfTrip", "app row starts at the trip questions");
   ok(f.previousRefusals === "" && continueQuestions(f, false).some((q) => q.id === "previousRefusals" && !!firstError(q, f)), "app row: the stored previous_rejections=false is not taken as a No (refusal question still asked)");
-  ok(continueForm({ ...toApplication(web), previous_rejections: true, rejection_details: "France 2024" }).previousRefusals === "yes", "website row: the previous_rejections column is still read as the answer");
+  ok(continueForm({ ...toApplication({ ...web, additional_notes: "{}" }), previous_rejections: true, rejection_details: "France 2024" }).previousRefusals === "yes", "website row: the previous_rejections column is still read as the answer");
   f = { ...f, purposeOfTrip: "tourism", travelStartDate: inDays(30), travelEndDate: inDays(40), datesFlexible: "no", travelingWith: "alone", hotelCategory: "3-star", fundingSource: "self",
     balanceRange: "10000-25000", isFirstSchengenVisa: "yes", previousRefusals: "no", residenceVisaValid: "yes", dateOfBirth: "1992-02-02", hasValidPassport: "yes", passportNumber: "N7654321",
     passportExpiry: inDays(2000), employmentStatus: "employed", jobTitle: "Engineer", companyName: "ACME", employmentStartDate: "2020-01-01", monthlySalary: "10000-15000" };
   ok(!continueQuestions(f, false).some((q) => !!firstError(q, f)), "all after-payment answers valid");
   await saveAfterPayment("app-1", f);
-  ok(app.entry_date === inDays(30) && app.exit_date === inDays(40) && app.duration_days === 10 && app.travel_purpose === "tourism", "trip columns written");
+  // The day count is inclusive: arrival and departure both count, so a 10-night trip is 11 days.
+  ok(app.entry_date === inDays(30) && app.exit_date === inDays(40) && app.duration_days === 11 && app.travel_purpose === "tourism", "trip columns written");
   ok(app.date_of_birth === "1992-02-02" && app.passport_number === "N7654321" && app.previous_schengen_visa === false && app.previous_rejections === false, "passport and history columns written");
   const n2 = JSON.parse(app.additional_notes);
   ok(n2.source === "mobile-app" && n2.submittedAt === "2026-10-01T09:00:00Z" && n2.wizard.firstName === "Aisha" && n2.wizard.destination === "Italy", "pre-payment answers and app keys kept");
@@ -95,8 +99,9 @@ db.user = ME;
   db.rows = [nop];
   let fn = continueForm(toApplication(nop));
   const nq = continueQuestions(fn, true);
-  ok(nq[0]?.id === "hasValidPassport", `website row without a number is asked "Do you have a valid passport?" first (${nq.map((q) => q.id).join(", ")})`);
-  fn = { ...fn, hasValidPassport: "no" };
+  const ni = nq.map((q) => q.id);
+  ok(ni.includes("hasValidPassport") && ni.indexOf("hasValidPassport") < ni.indexOf("passportNumberAfter"), `website row without a number is asked "Do you have a valid passport?" before the number (${ni.join(", ")})`);
+  fn = { ...fn, ...TRIP, hasValidPassport: "no" };
   ok(!continueQuestions(fn, true).some((q) => !!firstError(q, fn)), "answering No: no passport number demanded");
   await saveAfterPayment("web-nop", fn);
   ok(!needsContinue(toApplication(nop)) && nop.full_name === "Omar Saleh", "saved: Continue done, website data untouched");

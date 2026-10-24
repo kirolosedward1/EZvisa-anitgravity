@@ -31,12 +31,12 @@ db.rows = [
   ok(p.phoneCountry === "EG" && p.phoneLocal === "100 123 4567", "phone split into country + local");
   ok(p.email === A.email, "email is the account email");
 
-  // ---- expired passport: still prefilled, validation flags it ----
+  // ---- expired passport: still prefilled, not validated ----
   const { form, filled } = applyProfile({ ...emptyForm, destination: "France", nationality: "" }, p);
   ok(form.passportExpiry === "2025-01-31" && filled.includes("passportExpiry") && form.hasValidPassport === "yes", "expired passport expiry is prefilled");
   ok(form.passportNumber === "" && !filled.includes("passportNumber" as any), "passport number is not prefilled (asked after payment)");
-  // Passport validity is asked after payment now (validatePassport, Continue application).
-  ok(/expired/i.test(validatePassport(form).passportExpiry ?? ""), `validation flags the expired passport ("${validatePassport(form).passportExpiry}")`);
+  // As on the website, the expiry date is not asked or validated; the team checks the passport itself.
+  ok(validatePassport(form).passportExpiry === undefined, "passport expiry is not a validation rule (website contract)");
   ok(validatePassport({ ...form, passportExpiry: inYears(5) }).passportExpiry === undefined, "a valid future expiry passes");
 
   // ---- never over answers already in a draft ----

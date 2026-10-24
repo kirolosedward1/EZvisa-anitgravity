@@ -2,8 +2,8 @@
 // Run: node --import ./scripts/ts-hooks.mjs scripts/wizard-rules.test.ts   (from mobile/, Node 22.18+)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { emptyForm, cleanForm, validatePersonal, NATIONALITY_OPTIONS, SCHENGEN_VISA_REQUIRED, SCHENGEN, UAE_EMIRATES, RESIDENCE_COUNTRIES, type WizardForm } from "../lib/wizard";
-import { QUESTIONS, Q_BY_ID, activeQuestions, reviewQuestions, employmentQuestions, answer, progressOf, normalizePage } from "../lib/questions";
+import { emptyForm, coerceResidence, validatePersonal, validatePassport, validateStep, UAE_NATIONALITIES, OTHER_NATIONALITY, SCHENGEN_VISA_REQUIRED, SCHENGEN, UAE_EMIRATES, RESIDENCE_COUNTRIES, type WizardForm } from "../lib/wizard";
+import { QUESTIONS, Q_BY_ID, activeQuestions, progressOf, normalizePage } from "../lib/questions";
 import { searchCountries } from "../lib/search";
 import { WORLD } from "../lib/world";
 import { AR } from "../lib/ar";
@@ -12,50 +12,59 @@ const form = (x: Partial<WizardForm> = {}): WizardForm => ({ ...emptyForm, ...x 
 const ids = (f: WizardForm) => activeQuestions(f).map((q) => q.id);
 const EMPLOYED = form({ employmentStatus: "employed", hasNOC: "yes" });
 
-test("personal questions follow the website order; valid passport comes before passport number", () => {
-  const f = form({ hasValidPassport: "yes", maritalStatus: "married" });
-  assert.deepEqual(reviewQuestions(f).filter((q) => q.step === "personal").map((q) => q.id), [
-    "destination", "nationality", "countryOfResidence", "cityOfResidence", "hasEmiratesId", "firstName", "lastName", "email", "phone",
-    "dateOfBirth", "hasValidPassport", "passportNumber", "maritalStatus", "spouseAccompanying",
+const postIds = (f: WizardForm) => activeQuestions(f, "post").map((q) => q.id);
+
+test("before payment: the website's destination and traveller steps, in its order", () => {
+  assert.deepEqual(ids(form()), [
+    "destination", "nationality", "name", "passportNumber", "contact", "travellingWith", "dateOfBirth", "cityOfResidence",
   ]);
-  assert.ok(ids(f).indexOf("hasValidPassport") < ids(f).indexOf("passportNumber"));
+  // After payment, passport validity comes before the number (only asked when the number is still missing).
+  const post = postIds(form({ hasValidPassport: "yes" }));
+  assert.ok(post.indexOf("hasValidPassport") < post.indexOf("passportNumberAfter"));
+  assert.ok(!post.includes("passportExpiry") && !post.includes("dateOfBirth"));
 });
 
-test("trip questions follow the website order", () => {
+test("trip questions follow the website order, ending with the residence visa", () => {
   const f = form({ previousRefusals: "yes", willVisitOtherCountries: "yes" });
-  assert.deepEqual(activeQuestions(f).filter((q) => q.step === "trip-details").map((q) => q.id), [
-    "purposeOfTrip", "travelStartDate", "travelEndDate", "datesFlexible", "travelingWith", "hotelCategory", "fundingSource", "balanceRange",
-    "isFirstSchengenVisa", "previousRefusals", "refusalDetails", "willVisitOtherCountries", "additionalCountries", "itinerary",
+  assert.deepEqual(activeQuestions(f, "post").filter((q) => q.step === "trip").map((q) => q.id), [
+    "purposeOfTrip", "dates", "travelingWith", "hotelCategory", "fundingSource", "balanceRange",
+    "isFirstSchengenVisa", "previousRefusals", "refusalDetails", "willVisitOtherCountries", "additionalCountries", "residenceVisaValid",
   ]);
 });
 
-test("passport number only after 'yes'; 'no' clears it and blocks", () => {
-  assert.ok(!ids(form()).includes("passportNumber"));
-  assert.ok(!ids(form({ hasValidPassport: "no" })).includes("passportNumber"));
-  assert.ok(ids(form({ hasValidPassport: "yes" })).includes("passportNumber"));
-  assert.deepEqual(answer(Q_BY_ID.hasValidPassport, "no", form({ hasValidPassport: "yes", passportNumber: "A1" })), { hasValidPassport: "no", passportNumber: "" });
-  assert.ok(validatePersonal(form({ hasValidPassport: "no" })).hasValidPassport);
-  assert.equal(Q_BY_ID.passportExpiry, undefined, "passport expiry was removed (owner decision)");
+test("after payment, the passport number is hidden for 'no', which clears it", () => {
+  assert.ok(postIds(form()).includes("passportNumberAfter"), "unanswered validity still asks for the number");
+  assert.ok(!postIds(form({ hasValidPassport: "no" })).includes("passportNumberAfter"));
+  assert.ok(postIds(form({ hasValidPassport: "yes" })).includes("passportNumberAfter"));
+  assert.deepEqual(Q_BY_ID.hasValidPassport.onPick!("no", form({ hasValidPassport: "yes", passportNumber: "A1" })), { passportNumber: "" });
+  assert.equal(validatePassport(form({ hasValidPassport: "no" })).passportNumber, undefined);
+  assert.equal(validatePassport(form({ hasValidPassport: "yes" })).passportNumber, "Enter your passport number.");
+  // Before payment the number is required, as on the website's traveller step.
+  assert.equal(validatePersonal(form()).passportNumber, "Enter your passport number.");
 });
 
-test("nationality: single choice from the website list minus UAE, all visa-required", () => {
+test("nationality: UAE resident list, every named country visa-required, UAE itself excluded", () => {
   const q = Q_BY_ID.nationality;
-  assert.equal(q.kind, "choice");
-  assert.deepEqual(q.options!.map((o) => o.value), ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria", "Saudi Arabia", "Philippines", "Bangladesh"]);
-  assert.ok(!NATIONALITY_OPTIONS.includes("United Arab Emirates"));
-  for (const n of NATIONALITY_OPTIONS) assert.ok(SCHENGEN_VISA_REQUIRED.includes(n), `${n} must need a Schengen visa`);
-  assert.equal(validatePersonal(form({ nationality: "Nepal" })).nationality, "Please select your nationality");
-  assert.equal(validatePersonal(form({ nationality: "India" })).nationality, undefined);
-  assert.equal(cleanForm(form({ nationality: "United Arab Emirates" })).nationality, "");
+  assert.equal(q.kind, "country");
+  assert.deepEqual(q.names, UAE_NATIONALITIES);
+  assert.ok(!UAE_NATIONALITIES.includes("United Arab Emirates"));
+  for (const n of UAE_NATIONALITIES) {
+    if (n === OTHER_NATIONALITY) continue;
+    assert.ok(SCHENGEN_VISA_REQUIRED.includes(n), `${n} must need a Schengen visa`);
+  }
+  // The destination step validates it, with the website's message (visa-free passports are not offered there).
+  assert.equal(validateStep("destination", form()).nationality, "Choose your nationality.");
+  assert.equal(validateStep("destination", form({ nationality: "Nepal" })).nationality, undefined);
+  assert.equal(validateStep("destination", form({ nationality: "India" })).nationality, undefined);
+  assert.equal(validateStep("destination", form({ nationality: "United Arab Emirates" })).nationality, "Choose your nationality.");
 });
 
-test("residence is UAE only and fixed: shown in review, never a screen, not counted", () => {
+test("residence is UAE only and fixed: never a screen, not counted", () => {
   assert.deepEqual(RESIDENCE_COUNTRIES, ["United Arab Emirates"]);
-  assert.equal(Q_BY_ID.countryOfResidence.kind, "fixed");
+  assert.equal(Q_BY_ID.countryOfResidence, undefined);
   assert.ok(!ids(form()).includes("countryOfResidence"));
-  assert.ok(reviewQuestions(form()).some((q) => q.id === "countryOfResidence"));
-  assert.equal(cleanForm(form({ countryOfResidence: "Saudi Arabia", cityOfResidence: "dubai" })).countryOfResidence, "United Arab Emirates");
-  assert.equal(cleanForm(form({ cityOfResidence: "dubai" })).cityOfResidence, "Dubai");
+  assert.equal(coerceResidence(form({ countryOfResidence: "Saudi Arabia", cityOfResidence: "dubai" })).countryOfResidence, "United Arab Emirates");
+  assert.equal(coerceResidence(form({ cityOfResidence: "dubai" })).cityOfResidence, "Dubai");
   assert.equal(normalizePage("q:countryOfResidence", form()), "q:cityOfResidence");
 });
 
@@ -67,25 +76,26 @@ test("city = the 7 emirates, no flags", () => {
 });
 
 test("destination: the website's 29 Schengen countries in a searchable sheet", () => {
-  assert.equal(Q_BY_ID.destination.kind, "sheet");
+  assert.equal(Q_BY_ID.destination.kind, "country");
   assert.equal(SCHENGEN.length, 29);
   assert.deepEqual(Q_BY_ID.destination.names, SCHENGEN);
 });
 
+const employmentIds = (f: WizardForm) => activeQuestions(f, "post").filter((q) => q.step === "employment").map((q) => q.id);
+
 test("self-employed applicants never see NOC", () => {
   for (const s of ["business", "freelancer", "student", "unemployed", "retired", ""] as const) {
     const f = form({ employmentStatus: s });
-    assert.ok(!employmentQuestions(f).some((q) => q.id === "hasNOC"), `NOC shown for ${s || "no status"}`);
-    assert.ok(!ids(f).includes("hasNOC"));
+    assert.ok(!employmentIds(f).includes("hasNOC"), `NOC shown for ${s || "no status"}`);
+    assert.ok(!postIds(f).includes("hasNOC"));
   }
-  assert.ok(employmentQuestions(EMPLOYED).some((q) => q.id === "hasNOC"));
-  assert.deepEqual(employmentQuestions(form({ employmentStatus: "business" })).map((q) => q.id), ["employmentStatus", "companyName", "averageMonthlyIncome"]);
+  assert.ok(employmentIds(EMPLOYED).includes("hasNOC"));
+  assert.deepEqual(employmentIds(form({ employmentStatus: "business" })), ["employmentStatus", "companyName", "averageMonthlyIncome"]);
 });
 
 test("changing employment after NOC was answered removes the NOC answer", () => {
-  for (const s of ["business", "freelancer", "student"]) assert.equal(answer(Q_BY_ID.employmentStatus, s, EMPLOYED).hasNOC, "");
-  assert.equal(answer(Q_BY_ID.employmentStatus, "employed", EMPLOYED).hasNOC, undefined, "staying employed keeps it");
-  assert.equal(cleanForm(form({ employmentStatus: "freelancer", hasNOC: "yes" })).hasNOC, "");
+  for (const s of ["business", "freelancer", "student"]) assert.equal(Q_BY_ID.employmentStatus.onPick!(s, EMPLOYED).hasNOC, "");
+  assert.equal(Q_BY_ID.employmentStatus.onPick!("employed", EMPLOYED).hasNOC, undefined, "staying employed keeps it");
 });
 
 test("going back keeps answers: navigation never changes the form", () => {
@@ -95,27 +105,29 @@ test("going back keeps answers: navigation never changes the form", () => {
   assert.equal(JSON.stringify(f), before);
 });
 
-test("progress counts only the screens that apply", () => {
-  const single = form({ hasValidPassport: "no", maritalStatus: "single" });
-  const married = form({ hasValidPassport: "yes", maritalStatus: "married", spouseAccompanying: "yes" });
+test("progress: destination, traveller, then review & pay", () => {
+  const single = form({ spouseAccompanying: "no" });
+  const married = form({ maritalStatus: "married", spouseAccompanying: "yes" });
   const ps = progressOf(single, "q:destination"), pm = progressOf(married, "q:destination");
-  assert.deepEqual(ps.steps, ["personal", "trip-details", "payment"]);
-  assert.deepEqual(pm.steps, ["personal", "spouse", "trip-details", "payment"]);
-  // single: no passport number, no spouse question, no residence screen
-  assert.equal(ps.segs[0].count, activeQuestions(single).filter((q) => q.step === "personal").length);
-  assert.equal(ps.segs[0].count, 11);
-  assert.equal(pm.segs[0].count, 13);
-  assert.equal(pm.segs[1].count, 4);
+  // Before payment the bar is the website's three steps. Spouse and trip are Continue application.
+  assert.deepEqual(ps.steps, ["destination", "personal", "payment"]);
+  assert.deepEqual(pm.steps, ["destination", "personal", "payment"]);
+  assert.equal(ps.segs[0].count, 2);
+  assert.equal(ps.segs[1].count, activeQuestions(single).filter((q) => q.step === "personal").length);
+  assert.equal(ps.segs[1].count, 6);
+  assert.equal(pm.segs[1].count, 6, "the spouse travelling adds no screen before payment");
+  assert.equal(ps.segs[2].count, 1);
   assert.equal(ps.segs[0].fill, 0);
-  const last = progressOf(single, "q:maritalStatus");
-  assert.equal(last.segs[0].index, 11); assert.ok(last.segs[0].fill < 1);
-  assert.equal(progressOf(single, "q:purposeOfTrip").segs[0].fill, 1);
+  const last = progressOf(single, "q:cityOfResidence");
+  assert.equal(last.segs[1].index, 6); assert.ok(last.segs[1].fill < 1);
+  assert.equal(progressOf(single, "review").segs[0].fill, 1);
   assert.equal(progressOf(single, "review").segs.at(-1)!.fill, 1);
 });
 
 test("old pages map to live ones", () => {
-  assert.equal(normalizePage("q:passportExpiry", form({ hasValidPassport: "yes" })), "q:passportNumber");
   assert.equal(normalizePage("q:nationalityOther", form()), "q:nationality");
+  // Passport is after payment, so an old expiry page opens the first unanswered pre-payment question.
+  assert.equal(normalizePage("q:passportExpiry", form({ hasValidPassport: "yes" })), "q:destination");
 });
 
 test("country search: partial words, accents, short names, Arabic", () => {
@@ -135,7 +147,7 @@ test("country search: partial words, accents, short names, Arabic", () => {
 });
 
 test("every option has an Arabic label", () => {
-  const names = [...SCHENGEN, ...NATIONALITY_OPTIONS, ...UAE_EMIRATES, ...QUESTIONS.flatMap((q) => q.options?.map((o) => o.label) ?? []), ...QUESTIONS.map((q) => q.label)];
+  const names = [...SCHENGEN, ...UAE_NATIONALITIES, ...UAE_EMIRATES, ...QUESTIONS.flatMap((q) => q.options?.map((o) => o.label) ?? []), ...QUESTIONS.map((q) => q.label)];
   const missing = [...new Set(names)].filter((n) => !AR[n]);
   assert.deepEqual(missing, []);
 });
