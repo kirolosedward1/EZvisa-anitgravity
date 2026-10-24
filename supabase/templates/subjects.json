@@ -1,0 +1,22 @@
+{
+  "magiclink": {
+    "supabase_key": "magic_link",
+    "subject": "رابط تسجيل الدخول إلى EZvisa | Your EZvisa sign-in link"
+  },
+  "signup": {
+    "supabase_key": "confirmation",
+    "subject": "تأكيد حسابك في EZvisa | Confirm your EZvisa account"
+  },
+  "recovery": {
+    "supabase_key": "recovery",
+    "subject": "إعادة تعيين كلمة المرور في EZvisa | Reset your EZvisa password"
+  },
+  "email_change": {
+    "supabase_key": "email_change",
+    "subject": "تأكيد بريدك الإلكتروني الجديد في EZvisa | Confirm your new EZvisa email"
+  },
+  "invite": {
+    "supabase_key": "invite",
+    "subject": "دعوة للانضمام إلى EZvisa | You have been invited to EZvisa"
+  }
+}

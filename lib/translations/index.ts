@@ -37,6 +37,9 @@ export const translations = {
       applyNow: "Apply Now",
       trackApplication: "Track Application",
     },
+    auth: {
+      linkExpired: "This link has expired or was already used. Ask for a new one.",
+    },
     tools: {
       schengenTitle: "Schengen 90/180-Day Rule Calculator",
       schengenDesc: "Calculate your legal stay duration across the European Schengen area based on the official rolling 180-day rule.",
@@ -98,6 +101,9 @@ export const translations = {
       submit: "إرسال",
       applyNow: "قدم الآن",
       trackApplication: "تتبع الطلب",
+    },
+    auth: {
+      linkExpired: "انتهت صلاحية هذا الرابط أو سبق استخدامه. اطلب رابطًا جديدًا.",
     },
     tools: {
       schengenTitle: "حاسبة قاعدة 90/180 يوماً لشنغن",
