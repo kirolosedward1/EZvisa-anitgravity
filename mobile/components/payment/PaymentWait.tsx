@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { Button, PressScale, Text } from "../ui";
-import { curve, R, S } from "../../lib/theme";
+import { curve, R, S, useColors } from "../../lib/theme";
 import { tap } from "../../lib/haptics";
 import type { Lang } from "../../lib/i18n";
 
@@ -61,11 +61,10 @@ export function usePaymentWaitClock(active: boolean, resetKey: number, headStart
   return elapsed;
 }
 
-const BRAND = "#0436DC";
-const BORDER = "#E3E7EF";
 
 /** Shown once the check has run for 20s. Polling continues behind these. */
 export function PaymentStallActions({ retryLabel, leaveLabel, onRetry, onLeave }: { retryLabel: string; leaveLabel: string; onRetry: () => void; onLeave: () => void }) {
+  const c = useColors(); const BRAND = c.accent; const BORDER = c.border;
   return (
     <>
       <View testID="payment-retry"><Button title={retryLabel} onPress={onRetry} /></View>
@@ -74,7 +73,7 @@ export function PaymentStallActions({ retryLabel, leaveLabel, onRetry, onLeave }
         onPress={() => { tap(); onLeave(); }}
         accessibilityRole="button"
         accessibilityLabel={leaveLabel}
-        style={[{ minHeight: 48, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: BORDER }, curve]}
+        style={[{ minHeight: 48, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: c.surface, borderWidth: 1, borderColor: BORDER }, curve]}
       >
         <Text variant="headline" weight="600" color={BRAND} numberOfLines={2} center style={{ flexShrink: 1 }}>{leaveLabel}</Text>
       </PressScale>

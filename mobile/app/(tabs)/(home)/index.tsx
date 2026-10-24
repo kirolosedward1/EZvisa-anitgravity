@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../../components/Logo";
 import { Chevron, ActionPill, StatusPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
 import { AppointmentCard } from "../../../components/Appointment";
-import { useColors, S, R, curve, ICON } from "../../../lib/theme";
+import { useColors, useIsDark, card, S, R, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { PHOTOS, THUMBS } from "../../../lib/photos";
 import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
@@ -40,7 +40,7 @@ const draftStep = (d: LocalDraft) => { const q = d.page.startsWith("q:") ? Q_BY_
 /** Hero for a submitted (or finished) application, built only from its live row: destination, trip dates, status,
  *  progress, ONE next action from the real state, the 5-step timeline, and the appointment when staff entered one. */
 function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () => void }) {
-  const c = useColors(); const { t, lang } = useT();
+  const c = useColors(); const dark = useIsDark(); const { t, lang } = useT();
   const [paying, setPaying] = useState(false);
   const name = a.countries?.name ?? "";
   const items = buildChecklist(requirementsFor(employmentOf(a)), a.documents, a.status).customer;
@@ -84,7 +84,7 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
       <View style={{ marginTop: S.md }}>
         <Button title={t(n.cta ?? "View application")} variant={actionable ? "primary" : "secondary"} loading={paying} onPress={act} />
       </View>
-      <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, paddingVertical: S.xs }, curve]} testID="home-timeline">
+      <View style={[card(c, dark, 0), { marginTop: S.lg, paddingVertical: S.xs }]} testID="home-timeline">
         <Text variant="footnote" tone="secondary" weight="600" style={{ paddingHorizontal: S.md, paddingTop: S.sm }} accessibilityRole="header">{t("Status")}</Text>
         <Timeline a={a} />
       </View>
@@ -109,8 +109,9 @@ function DraftHero({ country, step, onContinue }: { country: string; step: strin
 }
 
 function HeroSkeleton() {
+  const { t } = useT();
   return (
-    <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }} accessible accessibilityLabel="Loading" testID="home-skeleton">
+    <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }} accessible accessibilityLabel={t("Loading")} testID="home-skeleton">
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}><View style={{ flex: 1, gap: S.xs }}><Skeleton w="70%" h={40} r={R.md} /><Skeleton w="50%" h={16} /></View><Skeleton w={64} h={64} r={R.round} /></View>
       <Skeleton h={S.xxs} r={R.xs} /><Skeleton w="80%" h={14} /><Skeleton h={56} r={R.round} />
       <View style={{ gap: S.lg, paddingTop: S.sm }}>{Array.from({ length: 5 }).map((_, i) => <View key={i} style={{ flexDirection: "row", gap: S.sm, alignItems: "center" }}><Skeleton w={16} h={16} r={R.round} /><Skeleton w={i % 2 ? "40%" : "55%"} h={14} /></View>)}</View>
@@ -191,7 +192,7 @@ function Story({ name }: { name: string }) {
           {photo ? <Image source={photo} style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.card }} contentFit="cover" cachePolicy="memory" recyclingKey={name} /> : <Flag country={name} size={inner} />}
         </View>
       </View>
-      <Text variant="caption" weight="500" numberOfLines={2} center style={{ width: RING + 8 }}>{t(name)}</Text>
+      <Text variant="caption" weight="500" numberOfLines={2} center maxFontSizeMultiplier={1.35} style={{ width: RING + 8 }}>{t(name)}</Text>
     </PressScale>
   );
 }
@@ -214,7 +215,7 @@ function useResumePayment() {
 }
 
 export default function Home() {
-  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
+  const c = useColors(); const dark = useIsDark(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
   const { session, apps, unread, refreshing, refresh, err, load } = useApps(true, true);
   const photo = useAvatar(session?.user.id);
   const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
@@ -244,15 +245,15 @@ export default function Home() {
       <Stack.Screen options={{ headerShown: false }} />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: S.lg, minHeight: 48 }}>
         <Logo height={22} />
-        <PressScale onPress={() => { tap(); router.push(session ? "/account/notifications" : { pathname: "/auth", params: { mode: "signin" } }); }} accessibilityRole="button" accessibilityLabel={session ? (unread ? `Notifications, ${unread} unread` : "Notifications") : "Sign in"} hitSlop={8}>
+        <PressScale onPress={() => { tap(); router.push(session ? "/account/notifications" : { pathname: "/auth", params: { mode: "signin" } }); }} accessibilityRole="button" accessibilityLabel={session ? (unread ? t("Notifications, {n} unread", { n: unread }) : t("Notifications")) : t("Sign in")} hitSlop={8}>
           {session ? (
-            <View><Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={36} uri={photo} />{unread > 0 && <View style={{ position: "absolute", top: -1, right: -1, width: 12, height: 12, borderRadius: R.xs, backgroundColor: c.red, borderWidth: 2, borderColor: c.bg }} />}</View>
+            <View><Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={36} uri={photo} />{unread > 0 && <View style={{ position: "absolute", top: -1, end: -1, width: 12, height: 12, borderRadius: R.xs, backgroundColor: c.red, borderWidth: 2, borderColor: c.bg }} />}</View>
           ) : <View style={{ width: 44, height: 44, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={16} color={c.label} /></View>}
         </PressScale>
       </View>
       <View style={{ marginTop: S.xl }} />
       {loading ? <HeroSkeleton /> : failed ? (
-        <View style={[{ marginHorizontal: S.lg, marginBottom: S.xxl, borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]} testID="home-error" accessibilityLiveRegion="polite">
+        <View style={[card(c, dark, 0), { marginHorizontal: S.lg, marginBottom: S.xxl, padding: S.md, gap: S.sm }]} testID="home-error" accessibilityLiveRegion="polite">
           <Text variant="headline">{t("Couldn't load your applications.")}</Text>
           <Text variant="subhead" tone="secondary">{t("Check your connection and try again.")}</Text>
           <Button title={t("Try again")} size="M" variant="secondary" onPress={() => { tap(); load(); }} />
@@ -267,8 +268,13 @@ export default function Home() {
       ) : (
         <View style={{ paddingHorizontal: S.lg, marginBottom: S.xl }} testID="home-headline">
           <Text variant="largeTitle" accessibilityRole="header">{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
+          {!session && (
+            <View style={{ marginTop: S.lg }} testID="home-start">
+              <Button title={t("Start application")} icon="airplane" onPress={() => router.push("/apply")} />
+            </View>
+          )}
           {session && apps?.length === 0 && (
-            <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]} testID="home-timeline-empty">
+            <View style={[card(c, dark, 0), { marginTop: S.lg, padding: S.md, gap: S.sm }]} testID="home-timeline-empty">
               <Text variant="headline">{t("No application yet")}</Text>
               <Text variant="subhead" tone="secondary">{t("Start an application to track it here.")}</Text>
               <Button title={t("Start application")} size="M" onPress={() => { tap(); router.push("/apply"); }} />

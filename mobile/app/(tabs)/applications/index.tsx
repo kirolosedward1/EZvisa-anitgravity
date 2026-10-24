@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Chevron, SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
 import { buildTimeline, doneCount } from "../../../lib/timeline";
 import { useT, ltr } from "../../../lib/i18n";
-import { useColors, useIsDark, S, R, curve, card, ICON } from "../../../lib/theme";
+import { useColors, useIsDark, S, R, HIT, curve, card, ICON } from "../../../lib/theme";
 import { STATUS_LABEL, type Application } from "../../../lib/data";
 import { nextAction } from "../../../lib/nextStep";
 import { useApps, ACTIVE } from "../../../lib/useApps";
@@ -24,17 +24,19 @@ const range = (a?: string | null, b?: string | null) => (!a ? "" : !b || b.slice
 function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
   const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const steps = buildTimeline(a); const swiping = useContext(SwipeActive);
   return (
-    <PressScale onPress={() => { tap(); router.push((nextAction(a)?.href ?? `/applications/${a.id}`) as any); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`} lift={!swiping} disabled={swiping} scaleTo={swiping ? 1 : undefined}
+    <PressScale onPress={() => { tap(); router.push((nextAction(a)?.href ?? `/applications/${a.id}`) as any); }} onLongPress={onDiscard ? () => askDiscard(onDiscard, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${t(STATUS_LABEL[a.status] ?? a.status)}`}
+      accessibilityActions={onDiscard ? [{ name: "discard", label: t("Discard") }] : undefined} onAccessibilityAction={(e) => { if (e.nativeEvent.actionName === "discard" && onDiscard) askDiscard(onDiscard, t); }} lift={!swiping} disabled={swiping} scaleTo={swiping ? 1 : undefined}
       style={[card(c, dark, 0), { padding: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={40} />
         <View style={{ flex: 1 }}><Text variant="title3" numberOfLines={1}>{t(name)}</Text><Text variant="footnote" tone="secondary" tabular>{[ltr(a.reference), ltr(range(a.entry_date, a.exit_date))].filter(Boolean).join(" · ")}</Text></View>
-        {onDiscard ? (
-          // At rest the trash is invisible and untappable (swipe or long-press to discard); it shows only once swiped.
+        {onDiscard && swiping ? (
+          // The trash shows once the row is swiped; at rest the row has its chevron, and discard is a swipe, a long
+          // press or the accessibility action above (HIG › Accessibility › "Offer alternatives to gestures").
           <PressScale disabled={!swiping} onPress={() => askDiscard(onDiscard, t)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t("Discard")} accessibilityElementsHidden={!swiping} importantForAccessibility={swiping ? "auto" : "no-hide-descendants"} testID="app-discard"
             // Web: also out of the accessibility tree and tab order at rest.
             aria-hidden={!swiping} tabIndex={swiping ? 0 : -1} focusable={swiping} accessible={swiping}
-            pointerEvents={swiping ? "auto" : "none"} style={{ opacity: swiping ? 1 : 0, width: 36, height: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
+            pointerEvents={swiping ? "auto" : "none"} style={{ width: HIT, height: HIT, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
             <Icon name="trash" size={16} color={c.red} />
           </PressScale>
         ) : <Chevron />}

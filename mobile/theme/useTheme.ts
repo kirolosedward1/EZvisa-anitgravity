@@ -27,3 +27,11 @@ export function useLargeText() {
   const sim = Platform.OS === "web" ? ((globalThis as any).__FONT_SCALE__ ?? 1) : fontScale;
   return sim >= LARGE_TEXT;
 }
+
+/** How much meaningful icons and their containers grow with the text size (HIG › Typography › "Increase the size of
+ *  meaningful interface icons as font size increases"). 1 at the default size, capped so icons never crowd the text. */
+export function useContentScale(cap = 1.5) {
+  const { fontScale } = useWindowDimensions();
+  const s = Platform.OS === "web" ? ((globalThis as any).__FONT_SCALE__ ?? 1) : fontScale;
+  return Math.max(1, Math.min(s, cap));
+}

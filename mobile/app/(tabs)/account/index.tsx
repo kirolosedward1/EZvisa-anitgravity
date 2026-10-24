@@ -15,7 +15,6 @@ import { DateAnswer } from "../../../components/wizard/answers";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ListGroup, ListRow, Flag, Avatar, Text, Button, Icon, IconTile, SegmentedControl, PressScale, useTabInset } from "../../../components/ui";
-import { useAppearance, type AppearancePref } from "../../../lib/appearance";
 import { useColors, S, R, ICON } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
 import { whatsapp, email as mailSupport } from "../../../lib/api";
@@ -35,7 +34,7 @@ export default function Account() {
   const c = useColors(); const pb = useTabInset(S.md as any) /* tab bar + safe area + 16 */; const insets = useSafeAreaInsets();
   const { session, unread, apps } = useApps(true); const { signOut: endSession } = useAuth();
   const photo = useAvatar(session?.user.id);
-  const { pref, setPref } = useAppearance(); const { t, lang, setLang } = useT(); const { saveBeforeSignOut } = useForm();
+  const { t, lang, setLang } = useT(); const { saveBeforeSignOut } = useForm();
   const [del, setDel] = useState(false); const [delStep, setDelStep] = useState<"ask" | "sure" | "failed">("ask"); const [delErr, setDelErr] = useState<string | null>(null); const [deleting, setDeleting] = useState(false);
   /** Calls the delete-account edge function with the user's own session; WhatsApp / email stay as the fallback. */
   const deleteNow = async () => {
@@ -81,7 +80,7 @@ export default function Account() {
       <View style={{ minHeight: 52, paddingHorizontal: S.md, paddingVertical: S.xs, flexDirection: "row", alignItems: "center", gap: S.sm }} testID="faceid">
         <IconTile name="faceid" color={c.green} />
         <Text variant="body" style={{ flex: 1 }}>{t("Unlock with {m}", { m: t(bio ?? "Face ID") })}</Text>
-        <Switch value={lock} disabled={!bio} onValueChange={toggleLock} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor="#fff" accessibilityLabel={t("Unlock with {m}", { m: t(bio ?? "Face ID") })} />
+        <Switch value={lock} disabled={!bio} onValueChange={toggleLock} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor={c.surface} accessibilityLabel={t("Unlock with {m}", { m: t(bio ?? "Face ID") })} />
       </View>
     {lock && (
         <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm, gap: S.xs }}>
@@ -96,7 +95,7 @@ export default function Account() {
     setRem(on);
     const r = await setRemindersEnabled(on, apps);
     setRem(r.on);
-    setRemNote(r.denied ? "Notifications are off for EZvisa. Turn them on in Settings." : null);
+    setRemNote(r.denied ? t("Notifications are off for EZvisa. Turn them on in Settings.") : null);
   };
   const planned = rem && apps ? planReminders(apps, new Date(), pp).length : 0;
   const reminders = (
@@ -104,7 +103,7 @@ export default function Account() {
       <View style={{ minHeight: 52, paddingHorizontal: S.md, paddingVertical: S.xs, flexDirection: "row", alignItems: "center", gap: S.sm }} testID="reminders">
         <IconTile name="alarm.fill" color={c.orange} />
         <Text variant="body" style={{ flex: 1 }}>{t("Trip and passport reminders")}</Text>
-        <Switch value={rem} disabled={!remindersSupported} onValueChange={toggleRem} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor="#fff" accessibilityLabel={t("Trip and passport reminders")} />
+        <Switch value={rem} disabled={!remindersSupported} onValueChange={toggleRem} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor={c.surface} accessibilityLabel={t("Trip and passport reminders")} />
       </View>
       {/* A row with the date; the wheel opens only when the row is tapped. */}
       <View testID="passport-expiry">
@@ -118,25 +117,17 @@ export default function Account() {
       {!!remNote && Platform.OS !== "web" && <ListRow title={t("Open Settings")} tint chevron={false} onPress={() => Linking.openSettings()} />}
     </ListGroup>
   );
-  const appearance = (
-    <ListGroup header={t("Appearance")}>
-      <View style={{ padding: S.sm }} testID="appearance">
-        <SegmentedControl label={t("Appearance")} value={pref} onChange={(v) => setPref(v as AppearancePref)}
-          options={[{ value: "system", label: t("System") }, { value: "light", label: t("Light") }, { value: "dark", label: t("Dark") }]} />
-      </View>
-    </ListGroup>
-  );
   const support = (
     <ListGroup header={t("Support")} inset={58}>
       <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp()} />
-      <ListRow icon="envelope.fill" iconColor={c.tint} title="Email" onPress={mailSupport} />
+      <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={mailSupport} />
     </ListGroup>
   );
   const privacy = (
     <ListGroup header={t("Privacy")} footer={t("Anonymous app usage and crash reports. Never your name, passport or email.")}>
       <View style={{ minHeight: 52, paddingHorizontal: S.md, paddingVertical: S.xs, flexDirection: "row", alignItems: "center", gap: S.sm }} testID="usage-sharing">
         <Text variant="body" style={{ flex: 1 }}>{t("Share usage data")}</Text>
-        <Switch value={usage} onValueChange={setUsage} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor="#fff" accessibilityLabel={t("Share usage data")} />
+        <Switch value={usage} onValueChange={setUsage} trackColor={{ true: c.accentFill, false: c.fill }} thumbColor={c.surface} accessibilityLabel={t("Share usage data")} />
       </View>
       <ListRow title={t("Version")} value={Constants.expoConfig?.version ?? ""} onLongPress={diagnostics} a11yHint={t("Long press for diagnostics")} />
     </ListGroup>
@@ -146,7 +137,7 @@ export default function Account() {
       <Stack.Screen options={{ headerShown: false }} />
       <Text variant="largeTitle" accessibilityRole="header" style={{ marginHorizontal: S.lg, marginBottom: S.xxl }}>{t("Account")}</Text>
       <View style={{ alignItems: "center", paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }}>
-        <View style={{ width: 88, height: 88, borderRadius: R.round, backgroundColor: c.fill, borderWidth: 1, borderColor: c.hairline, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={36} color={c.tertiaryLabel} /></View>
+        <View style={{ width: 88, height: 88, borderRadius: R.round, backgroundColor: c.accentMuted, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={36} color={c.accent} /></View>
         <Text variant="title2" center>{t("Sign in to track your visa")}</Text>
         <View style={{ alignSelf: "stretch", gap: S.xs, marginTop: S.sm }}>
           <Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />
@@ -196,6 +187,7 @@ export default function Account() {
           </View>
         </PressScale>
         <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
+        {!!u.email && <Text variant="subhead" tone="secondary" numberOfLines={1}>{u.email}</Text>}
       </View>
       {/* Name, email, sign-in method and member since live on their own page (account/details). */}
       <ListGroup inset={58}>
@@ -214,7 +206,7 @@ export default function Account() {
         </ListGroup>
       )}
       <ListGroup inset={58}>
-        <ListRow icon="bell.fill" iconColor={c.red} title={t("Notifications")} value={unread ? String(unread) : undefined} onPress={() => router.push("/account/notifications")} />
+        <ListRow icon="bell.fill" iconColor={c.tint} title={t("Notifications")} value={unread ? String(unread) : undefined} onPress={() => router.push("/account/notifications")} />
         <ListRow icon="doc.text.fill" iconColor={c.tint} title={t("Applications")} onPress={() => router.navigate("/applications")} />
       </ListGroup>
       {language}
@@ -227,7 +219,7 @@ export default function Account() {
         <ListRow title={t("Delete account")} destructive chevron={false} onPress={() => { setDelStep("ask"); setDelErr(null); setDel(true); }} />
       </ListGroup>
       <Modal visible={del} transparent animationType="fade" onRequestClose={() => setDel(false)}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
+        <View style={{ flex: 1, backgroundColor: c.overlay, justifyContent: "center", padding: S.lg }}>
           <View accessibilityViewIsModal style={{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.sm }} testID="delete-sheet">
             <Text variant="title3" accessibilityRole="header">{delStep === "sure" ? t("Are you sure?") : t("Delete your account?")}</Text>
             <Text variant="subhead" tone="secondary">{delStep === "sure" ? t("This permanently deletes your account, uploaded documents and personal details. It can't be undone.") : t("Your account, uploaded documents and personal details are removed. Payment records are kept as required by law.")}</Text>

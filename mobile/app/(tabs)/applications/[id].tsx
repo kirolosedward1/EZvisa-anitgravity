@@ -73,7 +73,7 @@ export default function ApplicationDetail() {
   };
   const addDocument = () => {
     if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions({ title: "Document type", options: [...DOC_TYPES.map((d) => d.label), "Cancel"], cancelButtonIndex: DOC_TYPES.length }, (i) => { if (i < DOC_TYPES.length) pickFile(DOC_TYPES[i].value); });
+      ActionSheetIOS.showActionSheetWithOptions({ title: t("Document type"), options: [...DOC_TYPES.map((d) => t(d.label)), t("Cancel")], cancelButtonIndex: DOC_TYPES.length }, (i) => { if (i < DOC_TYPES.length) pickFile(DOC_TYPES[i].value); });
     } else setPicking(!picking);
   };
   const open = async (path: string) => {
@@ -97,19 +97,21 @@ export default function ApplicationDetail() {
       if (e?.busy) return;
       if (e?.alreadyPaid) { router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } }); return; }
       hError();
-      if (e?.fallbackWhatsApp) Alert.alert("Payment", e.message, [{ text: "Cancel", style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${a.reference}.`) }]);
+      if (e?.fallbackWhatsApp) Alert.alert(t("Payment"), e.message, [{ text: t("Cancel"), style: "cancel" }, { text: "WhatsApp", onPress: () => whatsapp(`Hi EZvisa, I'd like to pay for application ${a.reference}.`) }]);
       else setUpErr(e?.message ?? String(e));
     }
   };
 
-  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title="Retry" variant="secondary" onPress={() => load()} />} /></View>;
+  if (err) return <View style={{ flex: 1, backgroundColor: c.bg, justifyContent: "center" }}><Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg }, headerRight: () => <SupportButton header context="an application" /> }} /><EmptyState icon="exclamationmark.triangle.fill" title={t("Couldn't load")} message={err} action={<Button title={t("Retry")} variant="secondary" onPress={() => load()} />} /></View>;
   if (!a) return (
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ padding: S.lg, gap: S.md }}>
       <Stack.Screen options={{ title: "", headerLargeTitle: false, headerTransparent: false, headerStyle: { backgroundColor: c.bg } }} />
       {/* Mirrors the real layout: hero, Status timeline (4 steps), Trip group */}
       <View accessible accessibilityLabel={t("Loading")} style={{ gap: S.md }} testID="detail-skeleton">
-        <Skeleton w={56} h={56} r={R.round} /><Skeleton w="55%" h={34} r={R.md} />
-        <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Skeleton w="35%" h={16} /><Skeleton w={84} h={22} r={R.sm} /></View>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}>
+          <View style={{ flex: 1, gap: S.xs }}><Skeleton w="55%" h={32} r={R.md} /><Skeleton w="60%" h={20} r={R.sm} /></View>
+          <Skeleton w={64} h={64} r={R.round} />
+        </View>
         <Skeleton w={90} h={20} style={{ marginTop: S.lg }} />
         <View style={{ borderRadius: R.card, padding: S.md, gap: S.lg, backgroundColor: c.card }}>{[0, 1, 2, 3].map((i) => <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}><Skeleton w={14} h={14} r={R.round} /><Skeleton w={`${60 - i * 8}%` as `${number}%`} h={16} /></View>)}</View>
         <Skeleton w={60} h={20} style={{ marginTop: S.lg }} />
@@ -134,13 +136,17 @@ export default function ApplicationDetail() {
           {isAbandoned(a) && <Pressable onPress={() => askDiscard(() => { discardApplication(a).then(() => (router.canGoBack() ? router.back() : router.replace("/applications"))).catch((e) => setUpErr(e?.message ?? String(e))); }, t)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="detail-discard" style={{ minWidth: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={20} color={c.red} /></Pressable>}
           <SupportButton header context={`application ${a.reference}`} />
         </View>) }} />
-      <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xxl, gap: S.xs }}>
-        <Flag country={name} size={56} />
-        <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text>
-          <StatusPill v={a.status} a={a} />
+      {/* Same header as the Home hero: title and status on the leading side, the flag on the trailing side. */}
+      <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xxl, flexDirection: "row", alignItems: "center", gap: S.md }}>
+        <View style={{ flex: 1, gap: S.xs }}>
+          <Text variant="largeTitle" accessibilityRole="header" numberOfLines={2}>{t(name)}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: S.xs }}>
+            <StatusPill v={a.status} a={a} />
+            <Text variant="callout" tone="tertiary">·</Text>
+            <Text variant="callout" tone="secondary" tabular>{ltr(a.reference)}</Text>
+          </View>
         </View>
+        <Flag country={name} size={64} />
       </View>
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
       {locked && <View onLayout={(e) => { payY.current = e.nativeEvent.layout.y; }} />}
@@ -169,7 +175,6 @@ export default function ApplicationDetail() {
         {paid && <ListRow title={t("Paid")} value={fmtD(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null)} />}
         {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
-        <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title={t("Ask about this application")} subtitle={a.reference} onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
         {a.status !== "cancelled" && (paid
           ? <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />
           : <ListRow icon="lock.fill" iconColor={c.grey} title={t("Trip plan")} subtitle={t("Your trip plan unlocks after payment")} onPress={toPayStep} />)}
@@ -206,9 +211,11 @@ export default function ApplicationDetail() {
         {picking && <View style={{ padding: S.md }}><ChipGroup label={t("Document type")} options={DOC_TYPES} value="" onChange={pickFile} /></View>}
       </ListGroup>}
       <InlineError text={upErr} />
-      <ListGroup inset={58}>
+      <ListGroup header={t("Payments")} inset={58}>
         {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} onPress={paid ? () => router.push(`/receipt/${a.id}`) : undefined} a11yHint={paid ? t("Payment receipt") : undefined} />)}
-        <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, question about application ${a.reference}.`)} />
+      </ListGroup>
+      <ListGroup header={t("Support")} footer={t("Your reference {r} is added to the message.", { r: a.reference })} inset={58}>
+        <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>
     </ScrollView>
@@ -273,6 +280,6 @@ function CheckRow({ i, busy, canUpload, onPress, flash = 0 }: { i: CheckItem; bu
   const title = t(i.req.title);
   return <View><ListRow icon={m.icon} iconColor={m.color} title={title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
     trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">{t("Upload")}</Text> : undefined}
-    a11yLabel={`${title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} /><Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, bottom: 0, left: 0, right: 0, backgroundColor: "rgba(4,54,220,0.10)" }, hlStyle]} /></View>;
+    a11yLabel={`${title}, ${label}`} a11yHint={isOpen(i) && canUpload ? t("Upload") : i.doc ? t("Open") : undefined} /><Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, bottom: 0, start: 0, end: 0, backgroundColor: c.accentMuted }, hlStyle]} /></View>;
 }
 

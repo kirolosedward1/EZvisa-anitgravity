@@ -33,14 +33,14 @@ export default function Notifications() {
           const first = index === 0, last = index === section.data.length - 1;
           return (
             <PressScale onPress={async () => { if (!n.read_at) { await markRead([n.id]).catch(() => {}); load(); } if (n.application_id) router.push(`/applications/${n.application_id}`, { withAnchor: true }); }}
-              accessibilityRole="button" accessibilityLabel={`${n.read_at ? "" : "Unread. "}${n.title}. ${n.body ?? ""}`}
+              accessibilityRole="button" accessibilityLabel={[!n.read_at && t("Unread"), n.title, n.body].filter(Boolean).join(". ")}
               style={{ marginHorizontal: S.gutter, backgroundColor: c.surface, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", gap: S.sm, minHeight: SIZE.rowTall,
                 borderTopStartRadius: first ? R.card : 0, borderTopEndRadius: first ? R.card : 0, borderBottomStartRadius: last ? R.card : 0, borderBottomEndRadius: last ? R.card : 0,
                 borderColor: c.border, borderStartWidth: 1, borderEndWidth: 1, borderTopWidth: first ? 1 : 0, borderBottomWidth: last ? 1 : StyleSheet.hairlineWidth, ...(last ? {} : { borderBottomColor: c.separator }) }}>
               <View style={{ width: SIZE.dot, paddingTop: S.xs }}>{!n.read_at && <View style={{ width: SIZE.dot, height: SIZE.dot, borderRadius: R.round, backgroundColor: c.accent }} />}</View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: "row", gap: S.xs }}>
-                  <Text variant="body" weight={n.read_at ? "400" : "600"} style={{ flex: 1 }} numberOfLines={1}>{n.title}</Text>
+                  <Text variant="body" weight={n.read_at ? "400" : "600"} style={{ flex: 1 }} numberOfLines={2}>{n.title}</Text>
                   <Text variant="footnote" tone="secondary" tabular>{time(n.created_at)}</Text>
                 </View>
                 {!!n.body && <Text variant="subhead" tone="secondary" numberOfLines={2}>{n.body}</Text>}

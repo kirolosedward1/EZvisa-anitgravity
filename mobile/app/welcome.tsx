@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, { FadeIn, FadeInDown, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -22,8 +22,10 @@ const ORBIT = [
 ] as const;
 
 export default function Welcome() {
-  const c = useColors(); const insets = useSafeAreaInsets(); const { width } = useWindowDimensions(); const reduce = useReducedMotion(); const { t } = useT();
-    const R1 = Math.min(width * 0.38, 168), R2 = R1 * 0.7, box = R1 * 2 + S.x5;
+  const c = useColors(); const insets = useSafeAreaInsets(); const { width, height } = useWindowDimensions(); const reduce = useReducedMotion(); const { t } = useT();
+  // The flag ring is sized from the space available, so a wide, short window (iPhone Duo's outer display, landscape
+  // iPad split) keeps the buttons on screen; the page scrolls when even that is not enough (large text).
+  const R1 = Math.max(64, Math.min(width * 0.38, 168, height * 0.2)), R2 = R1 * 0.7, box = R1 * 2 + S.x5;
   const { notice, clearNotice, continueAsGuest } = useAuth();
   // Signed-out landing (route protection sends every signed-out start here). Signing in closes it automatically.
   const auth = (mode: "signin" | "signup") => { clearNotice(); markWelcomed(); router.push({ pathname: "/auth", params: { mode } }); };
@@ -38,8 +40,8 @@ export default function Welcome() {
     try { if ((await signInWithGoogle()) === "ok") { markWelcomed(); success(); } } catch (e: any) { hError(); setGErr(e?.message ?? String(e)); } finally { setGBusy(false); }
   };
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, S.lg) }}>
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+    <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top, paddingBottom: Math.max(insets.bottom, S.lg) }} bounces={false}>
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", minHeight: box }}>
         <Animated.View entering={reduce ? undefined : FadeIn.duration(300)} style={{ width: box, height: box }}>
           {ORBIT.map(([n, deg], i) => {
             const r = i < 6 ? R1 : R2; const size = i < 6 ? 56 : 40; const a = (deg * Math.PI) / 180;
@@ -66,6 +68,6 @@ export default function Welcome() {
         {gErr ? <Text variant="footnote" tone="red" center accessibilityLiveRegion="polite" testID="google-error">{t(gErr)}</Text> : null}
         <TextLink title={t("Continue without an account")} onPress={guest} testID="continue-guest" />
       </Animated.View>
-    </View>
+    </ScrollView>
   );
 }

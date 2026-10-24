@@ -6,7 +6,7 @@ import { View, Pressable, Image, StyleProp, ViewStyle } from "react-native";
 import { SvgXml } from "react-native-svg";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming, useReducedMotion } from "react-native-reanimated";
 import { router } from "expo-router";
-import { useColors, S, R, curve, SPRING } from "../../lib/theme";
+import { useColors, useIsDark, useContentScale, card, S, R, T, curve, SPRING } from "../../lib/theme";
 import { FLAG_SVG } from "../../assets/flags";
 import { STATUS_LABEL, type Application } from "../../lib/data";
 import { buildTimeline, type Step } from "../../lib/timeline";
@@ -112,6 +112,8 @@ const fmtAppt = (s: string, lang?: string) => new Date(s).toLocaleString(lang ==
  *  the row has a real one; there is no placeholder or estimated date. */
 export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
   const c = useColors(); const { t, lang } = useT();
+  // The step dot grows with the text and stays centred on the first line of its label (body text, capped at 2x).
+  const k = useContentScale(1.6); const dot = Math.round(14 * k); const mark = Math.round(7 * k); const line = (T.body.lineHeight ?? 22) * useContentScale(2);
   const steps = buildTimeline(a);
   const tone = (st: Step["state"], key: Step["key"]) => (st === "done" || st === "current" ? c.tint : st === "attention" ? c.orange : st === "failed" ? (key === "decision" && a.status === "cancelled" ? c.secondaryLabel : c.red) : c.tertiaryLabel);
   return (
@@ -124,12 +126,12 @@ export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
         return (
           <View key={s.key} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 24 : 44 }} accessible testID={`step-${s.key}`}
             accessibilityLabel={[t(s.label), stateWord, s.note && t(s.note), when].filter(Boolean).join(", ")}>
-            <View style={{ alignItems: "center", width: 14 }}>
-              <View style={{ width: 14, height: 14, borderRadius: 7, marginTop: 4, backgroundColor: filled ? col : c.surface, borderWidth: 1.5, borderColor: col, alignItems: "center", justifyContent: "center" }}>
-                {s.state === "done" && <Icon name="checkmark" size={7} color="#fff" weight="bold" />}
-                {s.state === "failed" && <Icon name="xmark" size={7} color="#fff" weight="bold" />}
-                {s.state === "attention" && <Icon name="exclamationmark" size={7} color="#fff" weight="bold" />}
-                {s.state === "current" && <View style={{ width: 5, height: 5, borderRadius: 3, backgroundColor: col }} />}
+            <View style={{ alignItems: "center", width: dot }}>
+              <View style={{ width: dot, height: dot, borderRadius: dot / 2, marginTop: Math.max(0, (line - dot) / 2), backgroundColor: filled ? col : c.surface, borderWidth: 1.5, borderColor: col, alignItems: "center", justifyContent: "center" }}>
+                {s.state === "done" && <Icon name="checkmark" size={mark} color={c.onAccent} weight="bold" />}
+                {s.state === "failed" && <Icon name="xmark" size={mark} color={c.onAccent} weight="bold" />}
+                {s.state === "attention" && <Icon name="exclamationmark" size={mark} color={c.onAccent} weight="bold" />}
+                {s.state === "current" && <View style={{ width: Math.round(5 * k), height: Math.round(5 * k), borderRadius: R.round, backgroundColor: col }} />}
               </View>
               {!last && <View style={{ flex: 1, width: 1.5, marginVertical: 3, backgroundColor: s.state === "done" ? c.tint : c.border }} />}
             </View>
@@ -148,10 +150,11 @@ export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
 }
 
 export function SuccessCheck({ size = 88 }: { size?: number }) {
+  const { t } = useT();
   const c = useColors(); const reduce = useReducedMotion(); const s = useSharedValue(reduce ? 1 : 0.4); const o = useSharedValue(reduce ? 1 : 0);
   useEffect(() => { hSuccess(); if (!reduce) { s.value = withSpring(1, SPRING.pop); o.value = withTiming(1, { duration: 180 }); } }, []);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }], opacity: o.value }));
-  return <Animated.View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.green, alignItems: "center", justifyContent: "center" }, a]} accessibilityLabel="Success"><Icon name="checkmark" size={size * 0.45} color="#fff" weight="bold" /></Animated.View>;
+  return <Animated.View style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: c.green, alignItems: "center", justifyContent: "center" }, a]} accessibilityLabel={t("Done")}><Icon name="checkmark" size={size * 0.45} color={c.onSuccess} weight="bold" /></Animated.View>;
 }
 
 /** Small check that pops in (spring) next to a "saved" message. Haptic is fired by the caller. Reduce Motion: no pop. */
@@ -160,7 +163,7 @@ export function SavedCheck({ tone = "green" }: { tone?: "green" | "accent" }) {
   useEffect(() => { if (!reduce) s.value = withSpring(1, SPRING.pop); }, []);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }], opacity: Math.min(1, s.value * 1.4) }));
   const col = tone === "green" ? c.green : c.accent;
-  return <Animated.View testID="saved-check" style={[{ width: 22, height: 22, borderRadius: R.round, backgroundColor: col, alignItems: "center", justifyContent: "center" }, a]} accessibilityElementsHidden><Icon name="checkmark" size={12} color="#fff" weight="bold" /></Animated.View>;
+  return <Animated.View testID="saved-check" style={[{ width: 22, height: 22, borderRadius: R.round, backgroundColor: col, alignItems: "center", justifyContent: "center" }, a]} accessibilityElementsHidden><Icon name="checkmark" size={12} color={c.onSuccess} weight="bold" /></Animated.View>;
 }
 
 const fmtShort = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
@@ -193,10 +196,10 @@ export function CountryRow({ name, onPress }: { name: string; onPress: () => voi
 }
 
 export function StatusHeroCard({ a }: { a: Application }) {
-  const c = useColors(); const { t } = useT(); const name = a.countries?.name ?? ""; const status = t(stage(a).label);
+  const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? ""; const status = t(stage(a).label);
   return (
     <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${status}`}
-      style={[{ backgroundColor: c.card, borderRadius: R.card, padding: S.md, marginHorizontal: S.md, gap: S.md }, curve]}>
+      style={[card(c, dark, 0), { padding: S.md, marginHorizontal: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={40} />
         <View style={{ flex: 1 }}><Text variant="headline">{t(name)}</Text><Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text></View>
