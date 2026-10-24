@@ -6,7 +6,8 @@ import { ChevronDown } from "lucide-react"
 import { LangText } from "@/components/lang-text"
 import { Msg } from "@/components/msg"
 import { CountryFlag } from "@/components/country-flag"
-import { applicantCount, priceForTravellers } from "@/lib/currency"
+import { useSiteLocale } from "@/components/locale-provider"
+import { applicantCount, formatAedLabel, priceForTravellers } from "@/lib/currency"
 import { SCHENGEN_META } from "@/lib/countries"
 import { citizenshipName, citizenshipNameAr } from "@/lib/nationalities"
 import { message } from "@/messages"
@@ -113,14 +114,10 @@ function SummaryRows({ formData }: { formData: FormData }) {
 }
 
 function AedAmount({ amount }: { amount: number }) {
-  return (
-    <>
-      <span className="rtl:hidden">{amount} AED</span>
-      <span className="hidden rtl:inline">
-        <span dir="ltr">{amount} درهم</span>
-      </span>
-    </>
-  )
+  const locale = useSiteLocale()
+  const label = formatAedLabel(amount, locale)
+  if (locale === "ar") return <span dir="ltr">{label}</span>
+  return <>{label}</>
 }
 
 function summaryLine(formData: FormData) {

@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef, type ReactNode } from "react"
 import { LangText } from "@/components/lang-text"
+import { useSiteLocale } from "@/components/locale-provider"
 import { Msg } from "@/components/msg"
 import type { MessageKey } from "@/messages"
 import { LocaleLink } from "@/components/locale-link"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { WizardQuestion } from "@/components/apply/wizard-choices"
 import { getReference } from "@/lib/application-status"
-import { CURRENCIES, applicantCount, priceForTravellers } from "@/lib/currency"
+import { CURRENCIES, applicantCount, formatAedLabel, priceForTravellers } from "@/lib/currency"
 import { message } from "@/messages"
 import { submitBody } from "@/lib/application-notes"
 import { SCHENGEN_META } from "@/lib/countries"
@@ -98,6 +99,7 @@ function HandoffRing() {
 }
 
 export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, paymentError }: PaymentStepProps) {
+  const locale = useSiteLocale()
   const [isProcessing, setIsProcessing] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [applicationId, setApplicationId] = useState<string | null>(null)
@@ -305,10 +307,11 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         <span>
           <LangText en="Total" ar="المجموع" />
         </span>
-        <span className="rtl:hidden">{paymentAmount} AED</span>
-        <span className="hidden rtl:inline">
-          <span dir="ltr">{paymentAmount} درهم</span>
-        </span>
+        {locale === "ar" ? (
+          <span dir="ltr">{formatAedLabel(paymentAmount, locale)}</span>
+        ) : (
+          formatAedLabel(paymentAmount, locale)
+        )}
       </div>
 
       <p className="mt-5 text-[13px] leading-relaxed text-[#5B6475]">
