@@ -6,6 +6,7 @@ import {
   appAuthCallback,
   confirmDestination,
   confirmFailureTarget,
+  confirmNextFromQuery,
   isEmailOtpType,
   type ConfirmOtpType,
 } from "@/lib/auth/confirm-next"
@@ -17,6 +18,8 @@ export const dynamic = "force-dynamic"
  * supabase.co verify URL. verifyOtp consumes the hash once and sets the session cookie, then we continue
  * to a same-origin `next` (an absolute https://www.ezvisa.net or https://ezvisa.net URL is reduced to its
  * path), or to /reset-password for a recovery link. A failed check with an /ar next goes to /ar/login.
+ * If `next` was not percent-encoded and `&` inside it became extra query keys, that value is discarded
+ * and the redirect is the locale default (`/dashboard` or `/ar/dashboard`).
  *
  * When `next` is the app callback (ezvisa://auth/callback), this does not call verifyOtp. It forwards the
  * still-unused hash to Supabase's verify endpoint with that redirect, so the app receives its PKCE code the
@@ -26,8 +29,9 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const tokenHash = url.searchParams.get("token_hash") ?? ""
   const type = url.searchParams.get("type") ?? ""
-  const rawNext = url.searchParams.get("next")
-  const arabic = requestIsArabic(request)
+  const queryNext = confirmNextFromQuery(url.searchParams)
+  const rawNext = queryNext.rawNext
+  const arabic = requestIsArabic(request) || queryNext.splitArabic
   const base = publicOrigin(request)
 
   const fail = () => NextResponse.redirect(new URL(confirmFailureTarget(rawNext, type, arabic), base))

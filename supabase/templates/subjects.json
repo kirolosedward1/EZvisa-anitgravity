@@ -1,0 +1,22 @@
+{
+  "magiclink": {
+    "supabase_key": "magic_link",
+    "subject": "Your EZvisa sign-in link"
+  },
+  "signup": {
+    "supabase_key": "confirmation",
+    "subject": "Confirm your EZvisa account"
+  },
+  "recovery": {
+    "supabase_key": "recovery",
+    "subject": "Reset your EZvisa password"
+  },
+  "email_change": {
+    "supabase_key": "email_change",
+    "subject": "Confirm your new EZvisa email"
+  },
+  "invite": {
+    "supabase_key": "invite",
+    "subject": "You have been invited to EZvisa"
+  }
+}

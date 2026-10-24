@@ -8,6 +8,7 @@ import {
   confirmDestination,
   confirmFailureTarget,
   confirmLoginPath,
+  confirmNextFromQuery,
   safeConfirmNext,
 } from "./confirm-next.ts"
 import { safeNext } from "./redirect.ts"
@@ -168,6 +169,60 @@ test("the existing callback helper is unchanged and still rejects the app scheme
   assert.equal(safeNext("//evil.com"), "/dashboard")
   assert.equal(safeNext("https://evil.com"), "/dashboard")
   assert.equal(safeNext("/apply"), "/apply")
+})
+
+test("an unencoded next split on & is discarded and falls back to the locale default", () => {
+  const split = new URLSearchParams(
+    "token_hash=abc&type=magiclink&next=https://www.ezvisa.net/dashboard?a=1&b=2",
+  )
+  const read = confirmNextFromQuery(split)
+  assert.equal(read.rawNext, null)
+  assert.equal(read.splitArabic, false)
+  assert.equal(confirmDestination("magiclink", read.rawNext, read.splitArabic), "/dashboard")
+  assert.equal(split.get("next"), "https://www.ezvisa.net/dashboard?a=1")
+
+  const arabic = new URLSearchParams(
+    "token_hash=abc&type=magiclink&next=https://www.ezvisa.net/ar/apply?a=1&b=2",
+  )
+  const ar = confirmNextFromQuery(arabic)
+  assert.equal(ar.rawNext, null)
+  assert.equal(ar.splitArabic, true)
+  assert.equal(confirmDestination("magiclink", ar.rawNext, ar.splitArabic), ARABIC_ACCOUNT_LANDING)
+  assert.equal(confirmDestination("recovery", ar.rawNext, ar.splitArabic), "/ar/reset-password")
+  assert.equal(confirmFailureTarget(ar.rawNext, "magiclink", ar.splitArabic), "/ar/login?error=link-expired&type=magiclink")
+
+  const encoded = new URL(
+    "https://www.ezvisa.net/auth/confirm?token_hash=abc&type=magiclink&next=" +
+      encodeURIComponent("https://www.ezvisa.net/dashboard?a=1&b=2"),
+  )
+  const kept = confirmNextFromQuery(encoded.searchParams)
+  assert.equal(kept.rawNext, "https://www.ezvisa.net/dashboard?a=1&b=2")
+  assert.equal(kept.splitArabic, false)
+  assert.equal(confirmDestination("magiclink", kept.rawNext, kept.splitArabic), "/dashboard?a=1&b=2")
+
+  const lookalike = new URLSearchParams(
+    "token_hash=abc&type=magiclink&next=https://www.ezvisa.net.evil.com/dashboard?a=1&b=2",
+  )
+  const evil = confirmNextFromQuery(lookalike)
+  assert.equal(evil.rawNext, null)
+  assert.equal(confirmDestination("magiclink", evil.rawNext, evil.splitArabic), "/dashboard")
+
+  const app = new URLSearchParams(
+    "token_hash=abc&type=magiclink&next=ezvisa://auth/callback?type=magiclink&b=2",
+  )
+  const handedOff = confirmNextFromQuery(app)
+  assert.equal(handedOff.rawNext, null)
+  assert.equal(confirmDestination("magiclink", handedOff.rawNext, handedOff.splitArabic), "/dashboard")
+
+  const repeated = new URL(
+    "https://www.ezvisa.net/auth/confirm?token_hash=abc&type=magiclink&next=" +
+      encodeURIComponent("https://www.ezvisa.net/ar/dashboard") +
+      "&next=https://evil.com",
+  )
+  const dup = confirmNextFromQuery(repeated.searchParams)
+  assert.equal(dup.rawNext, null)
+  assert.equal(dup.splitArabic, true)
+  assert.equal(confirmDestination("magiclink", dup.rawNext, dup.splitArabic), ARABIC_ACCOUNT_LANDING)
 })
 
 test("a failed verification with an Arabic next goes to the Arabic sign-in page", () => {

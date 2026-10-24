@@ -164,6 +164,51 @@ export function confirmFailureTarget(
   return `${path}?${params.toString()}`
 }
 
+/** Keys this route writes. Any other key, or a repeated key, means an unencoded `next` was split on `&`. */
+const CONFIRM_QUERY_KEYS = new Set(["token_hash", "type", "next"])
+
+export type ConfirmQueryNext = {
+  /** Null when `next` was absent or discarded because the query string was split. */
+  rawNext: string | null
+  /** The discarded value still pointed at an /ar path on this site, so the fallback stays Arabic. */
+  splitArabic: boolean
+}
+
+/**
+ * Read `next` from the confirm URL. Go's html/template percent-encodes `{{ .RedirectTo }}` in a query
+ * href, so `a=1&b=2` stays inside one parameter. If that value arrives already decoded, the extra `&`
+ * pieces become sibling parameters and the first `next` is only a prefix. That prefix is not used.
+ */
+export function confirmNextFromQuery(searchParams: URLSearchParams): ConfirmQueryNext {
+  const nextValues = searchParams.getAll("next")
+  const split =
+    nextValues.length > 1 ||
+    searchParams.getAll("token_hash").length > 1 ||
+    searchParams.getAll("type").length > 1 ||
+    [...new Set(searchParams.keys())].some((key) => !CONFIRM_QUERY_KEYS.has(key))
+  if (!split) return { rawNext: nextValues[0] ?? null, splitArabic: false }
+  return { rawNext: null, splitArabic: truncatedNextIsArabic(nextValues[0]) }
+}
+
+/** Locale hint only. Never a destination: the value is the part of `next` before the first extra `&`. */
+function truncatedNextIsArabic(raw: string | undefined): boolean {
+  if (!raw) return false
+  const safe = webConfirmNext(raw)
+  if (safe) return isArabicPath(safe)
+  if (/[\u0000-\u001f\u007f\s\\]/.test(raw)) return false
+  let url: URL
+  try {
+    url = new URL(raw)
+  } catch {
+    return false
+  }
+  if (url.protocol !== "https:" || url.username || url.password || url.port) return false
+  if (url.hostname !== "www.ezvisa.net" && url.hostname !== "ezvisa.net") return false
+  if (!SITE_ORIGINS.has(url.origin)) return false
+  const path = url.pathname.length > 1 ? url.pathname.replace(/\/+$/, "") : url.pathname
+  return path === "/ar" || path.startsWith("/ar/")
+}
+
 /** Pages a signed-in customer can land on (the /ar prefix is added by the locale rewrite, not a separate route). */
 const PAGES = new Set([
   "/",
