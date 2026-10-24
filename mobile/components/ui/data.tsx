@@ -113,7 +113,7 @@ const fmtAppt = (s: string, lang?: string) => new Date(s).toLocaleString(lang ==
 export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
   const c = useColors(); const { t, lang } = useT();
   const steps = buildTimeline(a);
-  const tone = (st: Step["state"], key: Step["key"]) => (st === "done" || st === "current" ? c.tint : st === "attention" ? c.orange : st === "failed" ? (key === "decision" && a.status === "cancelled" ? c.secondaryLabel : c.red) : c.tertiaryLabel);
+  const tone = (st: Step["state"], key: Step["key"]) => (st === "done" || st === "current" ? c.tint : st === "attention" ? c.orange : st === "failed" ? (key === "file" && a.status === "cancelled" ? c.secondaryLabel : c.red) : c.tertiaryLabel);
   return (
     <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} testID="timeline">
       {steps.map((s, i) => {
