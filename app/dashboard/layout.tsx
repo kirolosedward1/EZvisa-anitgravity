@@ -1,11 +1,17 @@
 import { Metadata } from 'next'
+import { withArabicMeta } from '@/lib/page-meta'
 
-export const metadata: Metadata = {
-  title: "My account",
-  robots: {
-    index: false,
-    follow: false,
-  },
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "My account",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    },
+    { title: "حسابي", path: "/ar/dashboard" },
+  )
 }
 
 export default function DashboardLayout({

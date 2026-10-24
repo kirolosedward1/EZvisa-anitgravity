@@ -20,6 +20,7 @@ import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
 import { translations } from "@/lib/translations"
 import { LangText } from "@/components/lang-text"
 import { cn } from "@/lib/utils"
+import { useSiteLocale } from "@/components/locale-provider"
 
 type Mode = "password" | "link"
 
@@ -41,6 +42,8 @@ function IconInput({ icon: Icon, className, ...props }: React.ComponentProps<typ
 }
 
 function LoginForm() {
+  const arabic = useSiteLocale() === "ar"
+  const t = (en: string, ar: string) => (arabic ? ar : en)
   const router = useRouter()
   const searchParams = useSearchParams()
   const next = safeNext(searchParams.get("next"))
@@ -51,7 +54,7 @@ function LoginForm() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(notice?.tone === "error" ? notice.text : "")
-  const [info, setInfo] = useState(notice?.tone === "info" ? notice.text : "")
+  const [info, setInfo] = useState(notice?.tone === "info" ? t("Email confirmed. Sign in with your email and password.", "تم تأكيد البريد. سجّل الدخول ببريدك وكلمة المرور.") : "")
   const [issue, setIssue] = useState<AuthIssue | null>(null)
   const [linkSent, setLinkSent] = useState(false)
   const [busy, setBusy] = useState<"" | "password" | "link" | "resend">("")
@@ -82,7 +85,7 @@ function LoginForm() {
   const signIn = (e: React.FormEvent) => {
     e.preventDefault()
     if (!EMAIL_RE.test(cleanEmail)) return setError(AUTH_MESSAGE["invalid-email"])
-    if (!password) return setError("Enter your password.")
+    if (!password) return setError(t("Enter your password.", "أدخل كلمة المرور."))
     run("password", async () => {
       const { error } = await createBrowserClient().auth.signInWithPassword({ email: cleanEmail, password })
       if (error) throw error
@@ -112,7 +115,7 @@ function LoginForm() {
         options: { emailRedirectTo: authCallbackUrl({ type: "signup", next }) },
       })
       if (error) throw error
-      setInfo("Confirmation email sent again. Check your inbox.")
+      setInfo(t("Confirmation email sent again. Check your inbox.", "أُعيد إرسال رسالة التأكيد. راجع صندوق الوارد."))
       cooldown.start()
     })
 
@@ -126,22 +129,22 @@ function LoginForm() {
   return (
     <div className="flex flex-col gap-7">
       <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight text-foreground">Welcome back</h1>
+        <h1 className="text-3xl font-semibold leading-tight tracking-tight text-foreground">{t("Welcome back", "مرحبًا بعودتك")}</h1>
         <p className="text-sm leading-relaxed text-muted-foreground">
-          Sign in to track your application, upload documents and download your visa file.
+          {t("Sign in to track your application, upload documents and download your visa file.", "سجّل الدخول لمتابعة طلبك ورفع المستندات وتنزيل ملف التأشيرة.")}
         </p>
       </div>
 
       <div className="flex flex-col gap-5">
-        <GoogleSignInButton next={next} onError={(m) => { setError(m); setInfo("") }} />
+        <GoogleSignInButton next={next} label={t("Continue with Google", "المتابعة عبر Google")} onError={(m) => { setError(m); setInfo("") }} />
 
         <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
-          or sign in with email
+          {t("or sign in with email", "أو سجّل الدخول بالبريد")}
           <span className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="grid grid-cols-2 rounded-xl bg-secondary p-1 text-sm font-medium" role="tablist" aria-label="Sign-in method">
+        <div className="grid grid-cols-2 rounded-xl bg-secondary p-1 text-sm font-medium" role="tablist" aria-label={t("Sign-in method", "طريقة تسجيل الدخول")}>
           {(["password", "link"] as Mode[]).map((m) => (
             <button
               key={m}
@@ -154,7 +157,7 @@ function LoginForm() {
                 mode === m ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {m === "password" ? "Password" : "Email link"}
+              {m === "password" ? t("Password", "كلمة المرور") : t("Email link", "رابط بالبريد")}
             </button>
           ))}
         </div>
@@ -174,7 +177,7 @@ function LoginForm() {
                   onClick={resendConfirmation}
                   disabled={busy === "resend" || cooldown.left > 0}
                 >
-                  {cooldown.left > 0 ? `Send the confirmation link again (${cooldown.left}s)` : "Send the confirmation link again"}
+                  {cooldown.left > 0 ? t(`Send the confirmation link again (${cooldown.left}s)`, `أعد إرسال رابط التأكيد (${cooldown.left} ث)`) : t("Send the confirmation link again", "أعد إرسال رابط التأكيد")}
                 </button>
               )}
             </AlertDescription>
@@ -189,7 +192,7 @@ function LoginForm() {
         {mode === "password" ? (
           <form onSubmit={signIn} className="flex flex-col gap-4" noValidate>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("Email", "البريد الإلكتروني")}</Label>
               <IconInput
                 icon={Mail}
                 id="email"
@@ -204,12 +207,12 @@ function LoginForm() {
             </div>
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("Password", "كلمة المرور")}</Label>
                 <Link
                   href={cleanEmail ? `/forgot-password?email=${encodeURIComponent(cleanEmail)}` : "/forgot-password"}
                   className="text-xs font-semibold text-primary hover:underline"
                 >
-                  Forgot password?
+                  {t("Forgot password?", "نسيت كلمة المرور؟")}
                 </Link>
               </div>
               <div className="relative">
@@ -227,7 +230,7 @@ function LoginForm() {
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   className="absolute end-1.5 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t("Hide password", "إخفاء كلمة المرور") : t("Show password", "إظهار كلمة المرور")}
                   aria-pressed={showPassword}
                 >
                   {showPassword ? <EyeOff className="size-4" aria-hidden="true" /> : <Eye className="size-4" aria-hidden="true" />}
@@ -235,13 +238,13 @@ function LoginForm() {
               </div>
             </div>
             <Button type="submit" className="mt-1 h-12 w-full rounded-xl text-sm font-semibold" disabled={!!busy}>
-              {busy === "password" ? (<><Loader2 className="size-4 animate-spin" aria-hidden="true" />Signing in…</>) : "Sign in"}
+              {busy === "password" ? (<><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("Signing in…", "جارٍ تسجيل الدخول…")}</>) : t("Sign in", "تسجيل الدخول")}
             </Button>
           </form>
         ) : linkSent ? (
           <EmailSent
             email={cleanEmail}
-            note="Open it in this browser to sign in. The link works once and expires after a while."
+            note={t("Open it in this browser to sign in. The link works once and expires after a while.", "افتحه في هذا المتصفح لتسجيل الدخول. يعمل الرابط مرة واحدة وتنتهي صلاحيته بعد وقت.")}
             onResend={() => sendLink("resend")}
             resending={busy === "resend"}
             left={cooldown.left}
@@ -250,7 +253,7 @@ function LoginForm() {
         ) : (
           <form onSubmit={(e) => { e.preventDefault(); sendLink("link") }} className="flex flex-col gap-4" noValidate>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="link-email">Email</Label>
+              <Label htmlFor="link-email">{t("Email", "البريد الإلكتروني")}</Label>
               <IconInput
                 icon={Mail}
                 id="link-email"
@@ -264,24 +267,24 @@ function LoginForm() {
                 required
               />
               <p id="link-hint" className="text-xs leading-relaxed text-muted-foreground">
-                Use the email from your application. We&apos;ll send a one-time sign-in link, no password needed.
+                {t("Use the email from your application. We'll send a one-time sign-in link, no password needed.", "استخدم البريد الذي قدّمت به الطلب. سنرسل رابط دخول لمرة واحدة، من دون كلمة مرور.")}
               </p>
             </div>
             <Button type="submit" className="mt-1 h-12 w-full rounded-xl text-sm font-semibold" disabled={!!busy}>
-              {busy === "link" ? (<><Loader2 className="size-4 animate-spin" aria-hidden="true" />Sending link…</>) : "Email me a sign-in link"}
+              {busy === "link" ? (<><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("Sending link…", "جارٍ إرسال الرابط…")}</>) : t("Email me a sign-in link", "أرسل لي رابط الدخول")}
             </Button>
           </form>
         )}
       </div>
 
       <p className="text-center text-sm text-muted-foreground text-balance">
-        New to EZvisa?{" "}
+        {t("New to EZvisa?", "جديد على إيزي فيزا؟")}{" "}
         <Link href={`/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-primary hover:underline">
-          Create an account
+          {t("Create an account", "أنشئ حسابًا")}
         </Link>
-        {" or "}
+        {t(" or ", " أو ")}
         <Link href="/apply" className="font-semibold text-primary hover:underline">
-          start an application
+          {t("start an application", "ابدأ طلبًا")}
         </Link>
       </p>
 
@@ -289,7 +292,7 @@ function LoginForm() {
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
           <span className="flex items-center gap-2">
             <PlayCircle className="size-4 text-primary" aria-hidden="true" />
-            Explore with a demo account
+            {t("Explore with a demo account", "جرّب بحساب تجريبي")}
           </span>
           <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
         </summary>

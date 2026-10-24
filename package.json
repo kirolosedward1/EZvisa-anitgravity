@@ -8,6 +8,7 @@
     "lint": "tsc --noEmit",
     "start": "next start",
     "sync:check": "node scripts/check-app-sync.mts",
+    "check:ar": "node scripts/check-ar-copy.mts",
     "test": "node --experimental-strip-types --test lib/auth/confirm-next.test.ts lib/auth/email-templates.test.ts",
     "test:payments": "npx tsx scripts/test-ziina-payment.mts"
   },

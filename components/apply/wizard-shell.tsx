@@ -116,7 +116,8 @@ function SummaryRows({ formData }: { formData: FormData }) {
 function AedAmount({ amount }: { amount: number }) {
   const locale = useSiteLocale()
   const label = formatAedLabel(amount, locale)
-  if (locale === "ar") return <span dir="ltr">{label}</span>
+  // Isolate the whole label so RTL layout keeps «249 درهم» in that order.
+  if (locale === "ar") return <bdi dir="ltr">{label}</bdi>
   return <>{label}</>
 }
 

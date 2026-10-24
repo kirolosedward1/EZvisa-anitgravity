@@ -4,6 +4,7 @@ import { useRef, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { RotateCcw } from "lucide-react"
 
+import { useSiteLocale } from "@/components/locale-provider"
 import { cn } from "@/lib/utils"
 import type { StatusStep } from "./content"
 import { type RevealPhase, useRevealPhase } from "./reveal"
@@ -42,6 +43,7 @@ const text = {
  * scrolls into view; the server renders it complete, so it reads fine without JavaScript.
  */
 export function StatusTimeline({ steps, caption, className }: StatusTimelineProps) {
+  const arabic = useSiteLocale() === "ar"
   const ref = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
   const mounted = useMounted()
@@ -61,7 +63,7 @@ export function StatusTimeline({ steps, caption, className }: StatusTimelineProp
   return (
     <div ref={ref} className={cn("rounded-3xl bg-muted p-6 sm:p-8", className)}>
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-foreground">Status</span>
+        <span className="text-sm font-semibold text-foreground">{arabic ? "الحالة" : "Status"}</span>
         {showReplay && (
           <button
             type="button"
@@ -69,7 +71,7 @@ export function StatusTimeline({ steps, caption, className }: StatusTimelineProp
             className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-background hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
-            Replay
+            {arabic ? "إعادة" : "Replay"}
           </button>
         )}
       </div>
@@ -79,7 +81,7 @@ export function StatusTimeline({ steps, caption, className }: StatusTimelineProp
         animate={phase === "hidden" ? "hidden" : "shown"}
         variants={list}
         className="mt-4 flex flex-col"
-        aria-label="Example status timeline"
+        aria-label={arabic ? "مثال لخط الحالة" : "Example status timeline"}
       >
         {steps.map((step, index) => {
           const last = index === steps.length - 1

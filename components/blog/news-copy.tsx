@@ -1,6 +1,6 @@
 import { LangText } from "@/components/lang-text"
 import { Msg } from "@/components/msg"
-import type { MessageKey } from "@/messages"
+import { message, type MessageKey } from "@/messages"
 
 const CATEGORY: Record<string, MessageKey> = {
   All: "news.cat.all",
@@ -40,6 +40,7 @@ const TAG: Record<string, MessageKey> = {
   "approval rates": "news.tag.approval",
   UAE: "news.tag.uae",
   "fast processing": "news.tag.fast",
+  "schengen processing times": "news.tag.processing",
   NOC: "news.tag.noc",
   "required documents": "news.tag.requiredDocs",
   "employer letter": "news.tag.employer",
@@ -78,6 +79,16 @@ export function NewsTitle({ slug, fallback }: { slug: string; fallback: string }
 export function NewsExcerpt({ slug, fallback }: { slug: string; fallback: string }) {
   const id = POST[slug]?.excerpt
   return id ? <Msg id={id} /> : fallback
+}
+
+export function newsTitleText(locale: "en" | "ar", slug: string, fallback: string) {
+  const id = POST[slug]?.title
+  return locale === "ar" && id ? message("ar", id) : fallback
+}
+
+export function newsExcerptText(locale: "en" | "ar", slug: string, fallback: string) {
+  const id = POST[slug]?.excerpt
+  return locale === "ar" && id ? message("ar", id) : fallback
 }
 
 export function NewsTag({ tag }: { tag: string }) {

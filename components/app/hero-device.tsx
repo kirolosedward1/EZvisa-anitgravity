@@ -4,6 +4,7 @@ import { useRef } from "react"
 import { motion, useInView, useReducedMotion } from "framer-motion"
 import { Pause, Play } from "lucide-react"
 
+import { useSiteLocale } from "@/components/locale-provider"
 import { cn } from "@/lib/utils"
 import type { Screen } from "./content"
 import { IphoneFrame } from "./iphone-frame"
@@ -22,6 +23,7 @@ interface HeroDeviceProps {
 
 /** The hero iPhone: auto-cycling screens with dots and a pause control, pointer tilt on desktop. */
 export function HeroDevice({ screens, frameClassName, sizes, className }: HeroDeviceProps) {
+  const arabic = useSiteLocale() === "ar"
   const reduce = useReducedMotion()
   const mounted = useMounted()
   const ref = useRef<HTMLDivElement>(null)
@@ -37,7 +39,7 @@ export function HeroDevice({ screens, frameClassName, sizes, className }: HeroDe
       ref={ref}
       role="group"
       aria-roledescription="carousel"
-      aria-label="EZvisa app screens"
+      aria-label={arabic ? "شاشات تطبيق إيزي فيزا" : "EZvisa app screens"}
       className={cn("flex flex-col items-center gap-6", className)}
       onPointerEnter={() => cycle.setHovered(true)}
       onPointerLeave={() => cycle.setHovered(false)}
@@ -55,14 +57,14 @@ export function HeroDevice({ screens, frameClassName, sizes, className }: HeroDe
       </motion.div>
 
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2" role="group" aria-label="Choose a screen">
+        <div className="flex items-center gap-2" role="group" aria-label={arabic ? "اختر شاشة" : "Choose a screen"}>
           {screens.map((screen, index) => {
             const on = index === cycle.index
             return (
               <button
                 key={screen.id}
                 type="button"
-                aria-label={`Show screen ${index + 1} of ${count}: ${screen.label}`}
+                aria-label={arabic ? `اعرض الشاشة ${index + 1} من ${count}: ${screen.label}` : `Show screen ${index + 1} of ${count}: ${screen.label}`}
                 aria-current={on ? "true" : undefined}
                 onClick={() => cycle.select(index)}
                 className={cn(
@@ -76,7 +78,15 @@ export function HeroDevice({ screens, frameClassName, sizes, className }: HeroDe
         {showPause && (
           <button
             type="button"
-            aria-label={cycle.paused ? "Resume screen rotation" : "Pause screen rotation"}
+            aria-label={
+              arabic
+                ? cycle.paused
+                  ? "استئناف تدوير الشاشات"
+                  : "إيقاف تدوير الشاشات"
+                : cycle.paused
+                  ? "Resume screen rotation"
+                  : "Pause screen rotation"
+            }
             aria-pressed={cycle.paused}
             onClick={cycle.togglePause}
             className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
