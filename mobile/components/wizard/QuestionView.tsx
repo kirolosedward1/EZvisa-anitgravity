@@ -10,6 +10,8 @@ import { Checkbox, Note } from "./fields";
 import { DatesAnswer, DatesSummary } from "./dates";
 import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries } from "./answers";
 import { TravellerRows } from "./travellers";
+import { MascotHeader } from "../mascot/MascotHeader";
+import { promptFor } from "../mascot/prompts";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { select, tap } from "../../lib/haptics";
@@ -56,13 +58,16 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
   const days = q.id === "travelEndDate" ? tripDays(f) : 0;
   const label = q.kind === "contact" && account ? "Phone Number" : q.label;
 
+  // Globi asks the question in his own words; the formal label stays as the caption and the accessible header.
+  const mascot = !(allMode && q.allNames) && !!promptFor(q.id).say;
   const title = (
     <View style={{ gap: S.xs }}>
+      {mascot && <View style={{ marginBottom: S.xxs }}><MascotHeader questionId={q.id} f={f} /></View>}
       {(!q.required || chips) && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
         {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
         {chips}
       </View>}
-      <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(label)}</Text>
+      <Text ref={titleRef} variant={mascot ? "subhead" : "title1"} tone={mascot ? "secondary" : "label"} weight={mascot ? "600" : undefined} accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(label)}</Text>
       {belowTitle}
       {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
