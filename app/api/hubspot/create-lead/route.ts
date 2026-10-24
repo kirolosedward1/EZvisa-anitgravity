@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { waitUntil } from "@vercel/functions"
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit"
-import { sanitizeInput, sanitizeEmail, sanitizePhone } from "@/lib/sanitize"
+import { sanitizeInput, sanitizeEmail } from "@/lib/sanitize"
+import { toWesternDigits } from "@/lib/digits"
+import { leadPhoneForSend, uaeMobileE164 } from "@/lib/phone"
 
 const HUBSPOT_TIMEOUT_MS = 10_000
 
@@ -24,7 +26,9 @@ async function createHubSpotLead(formData: any, clientIp: string) {
   const sanitizedEmail = sanitizeEmail(formData.email || "")
   const sanitizedFirstName = sanitizeInput(formData.firstName || "", 100)
   const sanitizedLastName = sanitizeInput(formData.lastName || "", 100)
-  const sanitizedPhone = sanitizePhone(formData.phone || "")
+  const westernPhone = toWesternDigits(String(formData.phone || ""))
+  if (westernPhone.trim() && !uaeMobileE164(westernPhone)) return
+  const sanitizedPhone = uaeMobileE164(westernPhone) ?? ""
 
   // Support both env variable names for backward compatibility
   const hubspotAccessToken = process.env.HUBSPOT_ACCESS_TOKEN || process.env.HUBSPOT_API_KEY
@@ -216,8 +220,15 @@ Applied: ${new Date().toLocaleString()}`
 
 export async function POST(request: Request) {
   try {
-    const clientIp = getClientIp(request)
     const formData = await request.json()
+    const decision = leadPhoneForSend(formData && typeof formData === "object" ? (formData as { phone?: unknown }).phone : undefined)
+    if ("error" in decision) {
+      return NextResponse.json({ success: false, message: decision.error }, { status: 400 })
+    }
+    // A blank phone is left as sent. A valid one is the +971 E.164 form the job stores.
+    if (decision.phone && formData && typeof formData === "object") (formData as { phone?: string }).phone = decision.phone
+
+    const clientIp = getClientIp(request)
 
     // Return as soon as the work is queued. waitUntil keeps the invocation
     // alive after this response so the Ziina redirect cannot drop the lead.

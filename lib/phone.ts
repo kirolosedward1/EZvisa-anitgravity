@@ -1,85 +1,43 @@
-import { getCountries, getCountryCallingCode, Metadata, type CountryCode } from "libphonenumber-js"
 import { toWesternDigits } from "./digits"
 
-/** Used when the number has no dial code we can match. */
-const FALLBACK_MIN = 7
-const FALLBACK_MAX = 12
-
-type CallingCode = { code: string; countries: CountryCode[] }
-
-let callingCodes: CallingCode[] | null = null
-const lengthByCountry = new Map<CountryCode, { min: number; max: number }>()
-
-function codes(): CallingCode[] {
-  if (callingCodes) return callingCodes
-  const grouped = new Map<string, CountryCode[]>()
-  for (const country of getCountries()) {
-    const code = getCountryCallingCode(country)
-    const list = grouped.get(code)
-    if (list) list.push(country)
-    else grouped.set(code, [country])
-  }
-  callingCodes = [...grouped.entries()]
-    .map(([code, countries]) => ({ code, countries }))
-    .sort((a, b) => b.code.length - a.code.length)
-  return callingCodes
-}
-
-/** National-number length bounds from libphonenumber (shortest and longest possible length). */
-function lengthsFor(country: CountryCode): { min: number; max: number } {
-  const cached = lengthByCountry.get(country)
-  if (cached) return cached
-  const metadata = new Metadata()
-  metadata.selectNumberingPlan(country)
-  const lengths = metadata.numberingPlan?.possibleLengths() ?? []
-  const range = lengths.length
-    ? { min: Math.min(...lengths), max: Math.max(...lengths) }
-    : { min: FALLBACK_MIN, max: FALLBACK_MAX }
-  lengthByCountry.set(country, range)
-  return range
-}
-
 /**
- * Local digits after Eastern/Persian digits are normalised and an international dial code is removed.
- * A leading trunk 0 is dropped once ("050…" → "50…").
+ * What the phone field keeps on each keystroke. Eastern and Persian digits become
+ * Western, other non-digits are dropped, and "+" is kept only when it is the first
+ * character. Dial codes and trunk zeros stay so a repeated 971 is still there to reject.
  */
-export function localPhoneDigits(input: string): { national: string; countries?: CountryCode[] } {
-  const western = toWesternDigits(input).trim()
-  let digits = western.replace(/\D/g, "")
-  if (!digits) return { national: "" }
-
-  const international = western.startsWith("+") || digits.startsWith("00")
-  if (digits.startsWith("00")) digits = digits.slice(2)
-  if (!digits) return { national: "" }
-
-  if (international) {
-    const match = codes().find((entry) => digits.startsWith(entry.code) && digits.length > entry.code.length)
-    if (match) {
-      let national = digits.slice(match.code.length)
-      if (national.startsWith("0")) national = national.slice(1)
-      return { national, countries: match.countries }
-    }
+export function phoneTypingValue(input: string): string {
+  const western = toWesternDigits(input)
+  let plus = false
+  let digits = ""
+  for (const char of western) {
+    if (char >= "0" && char <= "9") digits += char
+    else if (char === "+" && !plus && digits.length === 0) plus = true
   }
-
-  if (digits.startsWith("0")) digits = digits.slice(1)
-  return { national: digits }
-}
-
-function bounds(countries: CountryCode[] | undefined): { min: number; max: number } {
-  if (!countries?.length) return { min: FALLBACK_MIN, max: FALLBACK_MAX }
-  let min = Infinity
-  let max = 0
-  for (const country of countries) {
-    const range = lengthsFor(country)
-    if (range.min < min) min = range.min
-    if (range.max > max) max = range.max
-  }
-  if (min === Infinity) return { min: FALLBACK_MIN, max: FALLBACK_MAX }
-  return { min, max }
+  return plus ? `+${digits}` : digits
 }
 
 /**
- * A phone that was sent and fails the local-number check.
+ * Digits after one UAE prefix (+971, 00971, or 971) and any leading zeros.
+ * The prefix is removed once: 971971… stays 971… and then fails the mobile pattern.
+ * Callers must not strip first. A second pass would turn 971971501234567 into a valid mobile.
+ */
+export function uaeLocalDigits(input: string): string {
+  let digits = toWesternDigits(input).replace(/\D/g, "")
+  if (digits.startsWith("00971")) digits = digits.slice(5)
+  else if (digits.startsWith("971")) digits = digits.slice(3)
+  return digits.replace(/^0+/, "")
+}
+
+/** +971 and nine digits starting with 5, or null. All-one-digit numbers are rejected. */
+export function uaeMobileE164(input: string): string | null {
+  const local = uaeLocalDigits(input)
+  if (!/^5\d{8}$/.test(local)) return null
+  if (/^(\d)\1+$/.test(local)) return null
+  return `+971${local}`
+}
+
+/**
+ * A phone that was sent and fails the UAE mobile check.
  * Missing or blank is not a rejection: continue saves omit the phone.
  */
 export function hasInvalidPhone(phone: unknown): boolean {
@@ -88,18 +46,18 @@ export function hasInvalidPhone(phone: unknown): boolean {
   return value.length > 0 && !isValidPhone(value)
 }
 
-/** True when the local number is a plausible length for its country and not a single repeated digit. */
+/** True for a UAE mobile: local part is exactly 5 followed by 8 digits, not one repeated digit. */
 export function isValidPhone(phone: string): boolean {
-  const { national, countries } = localPhoneDigits(phone)
-  if (!national) return false
-  if (/^(\d)\1+$/.test(national)) return false
-  const { min, max } = bounds(countries)
-  if (national.length < min || national.length > max) return false
-  if (
-    national.length >= 8 &&
-    national.split("").every((digit, index, all) => index === 0 || Number(digit) === Number(all[index - 1]) + 1)
-  ) {
-    return false
-  }
-  return true
+  return uaeMobileE164(phone) !== null
+}
+
+/**
+ * Phone to send on a lead. Blank stays blank (""). A non-blank number that is not a
+ * UAE mobile is null so the route can return 400 before queueing. A valid number is +971XXXXXXXXX.
+ */
+export function leadPhoneForSend(phone: unknown): { phone: string } | { error: "Enter a valid phone number." } {
+  if (typeof phone !== "string" || !phone.trim()) return { phone: "" }
+  const canonical = uaeMobileE164(phone)
+  if (!canonical) return { error: "Enter a valid phone number." }
+  return { phone: canonical }
 }

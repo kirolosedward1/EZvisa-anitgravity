@@ -17,6 +17,8 @@ import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { AUTH_MESSAGE, classifyAuthError, EMAIL_RE, isAuthIssue, type AuthIssue } from "@/lib/auth/errors"
 import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
+import { translations } from "@/lib/translations"
+import { LangText } from "@/components/lang-text"
 import { cn } from "@/lib/utils"
 import { useSiteLocale } from "@/components/locale-provider"
 
@@ -163,7 +165,11 @@ function LoginForm() {
         {error && (
           <Alert variant="destructive" className="rounded-xl">
             <AlertDescription>
-              {error}
+              {error === AUTH_MESSAGE["link-expired"] ? (
+                <LangText en={AUTH_MESSAGE["link-expired"]} ar={translations.ar.auth.linkExpired} />
+              ) : (
+                error
+              )}
               {issue === "unconfirmed" && (
                 <button
                   type="button"
