@@ -1,5 +1,5 @@
 import { getAllPosts } from "@/lib/blog"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { Calendar, Clock } from "lucide-react"
 import { LocaleLink } from "@/components/locale-link"
 import { Msg } from "@/components/msg"

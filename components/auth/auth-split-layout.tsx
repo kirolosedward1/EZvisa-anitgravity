@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { ArrowLeft, FileCheck2, ShieldCheck, Smartphone, Upload } from "lucide-react"
 
 import { IphoneFrame } from "@/components/app/iphone-frame"

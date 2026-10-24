@@ -17,6 +17,8 @@ import {
   Share2,
   CheckCircle2
 } from "lucide-react"
+import { LangText } from "@/components/lang-text"
+import { translations } from "@/lib/translations"
 
 interface ThankYouCTASectionProps {
   orderId?: string
@@ -112,7 +114,9 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
                 rel="noopener noreferrer"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span className="flex-1 text-left">WhatsApp Support</span>
+                <span className="flex-1 text-start">
+                  <LangText en={translations.en.support.whatsApp} ar={translations.ar.support.whatsApp} />
+                </span>
                 <ExternalLink className="w-3 h-3 opacity-70" />
               </a>
             </Button>

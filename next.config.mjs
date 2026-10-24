@@ -24,6 +24,10 @@ const csp = [
 const nextConfig = {
   // Footer copyright year: fixed per build so server and client never render different text (hydration #418).
   env: { NEXT_PUBLIC_BUILD_YEAR: String(new Date().getUTCFullYear()) },
+  // Root generateMetadata() reads headers(), so Next streams a hidden metadata
+  // Suspense hole on every page (including ones with no images). Inline it for
+  // every user agent; the hole was hydrating as a different tree on the client.
+  htmlLimitedBots: /.*/,
   compress: true,
   typescript: {
     ignoreBuildErrors: true,

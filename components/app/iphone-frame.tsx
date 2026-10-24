@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import Image from "next/image"
+import { Image } from "@/components/image"
 
 import { cn } from "@/lib/utils"
 import styles from "./iphone-frame.module.css"

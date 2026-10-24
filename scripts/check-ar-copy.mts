@@ -57,6 +57,8 @@ function routes() {
     "/ar/terms-of-service",
     "/ar/disclaimer",
     "/ar/login",
+    "/ar/forgot-password",
+    "/ar/signup",
     ...docs,
     ...dest,
     ...news,

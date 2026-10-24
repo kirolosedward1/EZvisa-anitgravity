@@ -5,8 +5,8 @@ import { useLocalizedHref } from "@/components/locale-link"
 import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { classifyAuthError } from "@/lib/auth/errors"
-import { createBrowserClient } from "@/lib/supabase/client"
 import { translations } from "@/lib/translations"
+import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -47,7 +47,9 @@ export default function ResetPasswordPage() {
     <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
         <div className="text-center">
-          <h2 className="text-3xl font-semibold tracking-tight">Set new password</h2>
+          <h2 className="text-3xl font-semibold tracking-tight">
+            <LangText en={translations.en.authForm.newPasswordTitle} ar={translations.ar.authForm.newPasswordTitle} />
+          </h2>
           <p className="text-muted-foreground mt-2">
             <LangText en={translations.en.auth.newPasswordLead} ar={translations.ar.auth.newPasswordLead} />
           </p>

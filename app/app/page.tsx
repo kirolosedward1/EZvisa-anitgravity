@@ -18,6 +18,7 @@ import { StatusTimeline } from "@/components/app/status-timeline"
 import { StoreBadges } from "@/components/app/store-badges"
 import { Walkthrough } from "@/components/app/walkthrough"
 import { requestLocale } from "@/lib/request-locale"
+import { translations } from "@/lib/translations"
 import { generateBreadcrumbSchema, generateFAQSchema, generateStructuredData } from "@/lib/seo"
 import { getWhatsAppUrl } from "@/lib/whatsapp"
 import { cn } from "@/lib/utils"
@@ -210,7 +211,7 @@ export default async function AppPage() {
                     className="inline-flex w-fit items-center gap-2 font-medium text-primary hover:underline"
                   >
                     <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                    {arabic ? "راسلنا على واتساب" : "Message us on WhatsApp"}
+                    <LangText en={translations.en.support.message} ar={translations.ar.support.message} />
                   </a>
                 </Reveal>
               </div>

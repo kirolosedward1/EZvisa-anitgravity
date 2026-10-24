@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { format, parseISO } from "date-fns"
 import { CalendarClock, CalendarDays, UserRound } from "lucide-react"
 import { DashboardCard } from "@/components/dashboard/dashboard-card"
