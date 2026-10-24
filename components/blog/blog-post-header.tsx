@@ -1,9 +1,11 @@
-import Image from "next/image"
+import { Image } from "@/components/image"
 import type { BlogPost } from "@/lib/blog"
 import { Calendar, Clock } from "lucide-react"
-import { NewsCategory, NewsDate, NewsReadTime, NewsTitle } from "@/components/blog/news-copy"
+import { NewsCategory, NewsDate, NewsReadTime, NewsTitle, newsTitleText } from "@/components/blog/news-copy"
+import { requestLocale } from "@/lib/request-locale"
 
-export function BlogPostHeader({ post }: { post: BlogPost }) {
+export async function BlogPostHeader({ post }: { post: BlogPost }) {
+  const alt = newsTitleText(await requestLocale(), post.slug, post.title)
   return (
     <header className="mb-12">
       {/* Category Badge */}
@@ -31,7 +33,7 @@ export function BlogPostHeader({ post }: { post: BlogPost }) {
       </div>
 
       <div className="relative w-full max-w-3xl mx-auto aspect-[21/9] rounded-2xl overflow-hidden bg-muted">
-        <Image src={post.featuredImage || "/placeholder.svg"} alt={post.title} fill className="object-cover" priority />
+        <Image src={post.featuredImage || "/placeholder.svg"} alt={alt} fill className="object-cover" priority />
       </div>
     </header>
   )

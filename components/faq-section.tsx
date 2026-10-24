@@ -3,8 +3,10 @@
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { DigitRanges } from "@/components/digit-ranges"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
 import { Msg } from "@/components/msg"
+import { Image } from "@/components/image"
 import { useSiteLocale } from "@/components/locale-provider"
 
 export function FAQSection() {
@@ -67,7 +69,7 @@ export function FAQSection() {
                       className="overflow-hidden"
                     >
                       <div className="pb-4 md:pb-6 pe-8 md:pe-12 text-start">
-                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.answer}</p>
+                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed"><DigitRanges text={faq.answer} /></p>
                       </div>
                     </motion.div>
                   )}
@@ -86,16 +88,16 @@ export function FAQSection() {
               className="lg:sticky lg:top-24"
             >
               <div className="relative aspect-[3/4] w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow-xl ring-1 ring-border/50">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                  src="https://videos.pexels.com/video-files/27497252/12153786_1440_2560_30fps.mp4"
-                >
-                  <Msg id="faq.videoFallback" />
-                </video>
+                {/* A remote autoplay <video> crashes WebKit while parsing the home
+                    document (Playwright WebKit and the same engine at 390 and 1440),
+                    so this column is a still. */}
+                <Image
+                  src="/images/woman-travel.png"
+                  alt={arabic ? "مسافرة" : "Traveller"}
+                  fill
+                  sizes="320px"
+                  className="object-cover"
+                />
               </div>
             </motion.div>
           </div>

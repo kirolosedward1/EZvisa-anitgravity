@@ -1,9 +1,12 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
+import { redirectLocalized, requestLocale } from "@/lib/request-locale";
+import { signOutAction } from "@/lib/route-path";
+import { LocaleLink } from "@/components/locale-link";
 import { cookies } from "next/headers";
 import { LogOut, Plus, Search } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
+import { LangText } from "@/components/lang-text";
 import { SiteHeader } from "@/components/site-header";
+import { translations } from "@/lib/translations";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { isDemoEmail, getDemoApplicationsByEmail, DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
@@ -20,9 +23,9 @@ import { getStatusLabel } from "@/lib/application-status";
 // Demo shortcuts are for previews and local testing, not real customers
 const SHOW_DEMO_ACCESS = process.env.VERCEL_ENV !== "production";
 
-function SignOutButton({ label }: { label: string }) {
+function SignOutButton({ label, action }: { label: string; action: string }) {
   return (
-    <form action="/api/auth/signout" method="POST">
+    <form action={action} method="POST">
       <Button type="submit" variant="ghost" className="rounded-full text-muted-foreground hover:text-foreground">
         <LogOut />
         {label}
@@ -32,6 +35,8 @@ function SignOutButton({ label }: { label: string }) {
 }
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ id?: string; demo?: string; pay?: string }> }) {
+  const arabic = (await requestLocale()) === "ar";
+  const signOut = signOutAction(arabic);
   const cookieStore = await cookies();
   const resolvedSearchParams = await searchParams;
   const demoCookie = cookieStore.get("ez_demo_session");
@@ -76,7 +81,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   }
 
   if (!user || !user.email) {
-    redirect("/login?next=/dashboard");
+    redirectLocalized("/login?next=/dashboard", arabic);
   }
 
   const isDemo = isDemoEmail(user.email);
@@ -121,20 +126,24 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <Search className="size-6" aria-hidden="true" />
               </span>
               <div className="flex flex-col gap-2">
-                <h2 className="text-xl font-semibold tracking-tight text-foreground">No applications yet</h2>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                  <LangText en={translations.en.dashboardEmpty.title} ar={translations.ar.dashboardEmpty.title} />
+                </h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  We couldn&apos;t find any visa applications for <strong className="text-foreground">{user.email}</strong>.
-                  If you applied with a different email, sign in with that one instead.
+                  <LangText en={translations.en.dashboardEmpty.before} ar={translations.ar.dashboardEmpty.before} />{" "}
+                  <strong className="ltr-isolate text-foreground">{user.email}</strong>
+                  {". "}
+                  <LangText en={translations.en.dashboardEmpty.after} ar={translations.ar.dashboardEmpty.after} />
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
                 <Button asChild className="rounded-full px-5">
-                  <Link href="/apply">
+                  <LocaleLink href="/apply">
                     <Plus />
                     Start an application
-                  </Link>
+                  </LocaleLink>
                 </Button>
-                <SignOutButton label="Sign out" />
+                <SignOutButton label="Sign out" action={signOut} />
               </div>
               {SHOW_DEMO_ACCESS && (
                 <div className="w-full border-t border-border/60 pt-6 text-left">
@@ -160,14 +169,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         {mainApp?.id ? <SupportApplication id={mainApp.id} country={mainApp.destination_country} status={getStatusLabel(mainApp).label} step="overview" /> : null}
         <DashboardHeader
           badge="My account"
-          title={firstName ? `Welcome back, ${firstName}` : "Your visa applications"}
-          description={<>Signed in as <span className="ltr-isolate">{user.email}</span></>}
+          title={firstName ? (
+            <>
+              <LangText en={translations.en.dashboardHome.welcomeBack} ar={translations.ar.dashboardHome.welcomeBack} />{" "}
+              <span className="ltr-isolate">{firstName}</span>
+            </>
+          ) : "Your visa applications"}
+          description={<>
+            <LangText en={translations.en.dashboardHome.signedInAs} ar={translations.ar.dashboardHome.signedInAs} />{" "}
+            <span className="ltr-isolate">{user.email}</span>
+          </>}
           actions={
             <Button asChild className="rounded-full px-5">
-              <Link href="/apply">
+              <LocaleLink href="/apply">
                 <Plus />
                 New application
-              </Link>
+              </LocaleLink>
             </Button>
           }
         />

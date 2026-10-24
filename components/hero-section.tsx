@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, ShieldCheck, Clock, BookOpen, Plane, ChevronDown, Tag } from "lucide-react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import Link from "next/link"
-import Image from "next/image"
+import { LocaleLink } from "@/components/locale-link"
+import { Image } from "@/components/image"
 import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { LangText } from "@/components/lang-text"
-import { SCHENGEN_META } from "@/lib/countries"
-import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { SCHENGEN_META, countryNameAr } from "@/lib/countries"
+import { CITIZENSHIP_OPTIONS, citizenshipLabelAr, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
 import { HOMEPAGE_NATIONALITIES, SCHENGEN } from "@/lib/shared/wizard-contract"
 import { CountryFlag } from "@/components/country-flag"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
@@ -87,7 +87,9 @@ export function HeroSection() {
     if (toCountry) localStorage.setItem("hero-to-country", toCountry)
   }, [toCountry])
 
-  const fromLabel = citizenshipName(fromCountry) || fromCountry
+  const fromEn = citizenshipName(fromCountry) || fromCountry
+  const fromAr = citizenshipLabelAr(fromCountry) || fromEn
+  const fromLabel = arabic ? fromAr : fromEn
 
   const handleGetStarted = () => {
     const params = new URLSearchParams()
@@ -149,7 +151,15 @@ export function HeroSection() {
           {/* Background Image */}
           <Image
             src={heroBgImage || "/images/berlin-hero-bg.jpg"}
-            alt={heroBgCountryName ? `${heroBgCountryName} background` : "Berlin sunset background"}
+            alt={
+              heroBgCountryName
+                ? arabic
+                  ? `خلفية ${countryNameAr(heroBgCountryName)}`
+                  : `${heroBgCountryName} background`
+                : arabic
+                  ? "خلفية غروب برلين"
+                  : "Berlin sunset background"
+            }
             fill
             priority
             sizes="(max-width: 768px) 100vw, 1200px"
@@ -242,7 +252,7 @@ export function HeroSection() {
                                 >
                                   <div className="flex items-center gap-3">
                                     <CountryFlag iso={country.iso} title={country.name} />
-                                    <span className="font-medium">{country.name}</span>
+                                    <span className="font-medium">{arabic ? citizenshipLabelAr(country.iso) : country.name}</span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -273,7 +283,7 @@ export function HeroSection() {
                             {toCountry ? (
                               <div className="flex items-center gap-2">
                                 <CountryFlag iso={SCHENGEN_META[toCountry]?.iso} title={toCountry} />
-                                <span className="text-base font-semibold truncate text-foreground">{toCountry}</span>
+                                <span className="text-base font-semibold truncate text-foreground">{arabic ? countryNameAr(toCountry) : toCountry}</span>
                               </div>
                             ) : (
                               <span className="text-sm font-medium text-muted-foreground"><LangText en="Pick a destination" ar="اختر الوجهة" /></span>
@@ -296,13 +306,13 @@ export function HeroSection() {
                               {schengenCountries.map((country) => (
                                 <CommandItem
                                   key={country}
-                                  value={country}
+                                  value={`${country} ${countryNameAr(country)}`}
                                   onSelect={() => { setToCountry(country); setToOpen(false) }}
                                   className="cursor-pointer py-3 px-4 text-base rounded-xl hover:bg-primary/10 transition-colors my-1"
                                 >
                                   <div className="flex items-center gap-3">
                                     <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
-                                    <span className="font-medium">{country}</span>
+                                    <span className="font-medium">{arabic ? countryNameAr(country) : country}</span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -325,9 +335,9 @@ export function HeroSection() {
                         disabled={!fromCountry || !toCountry}
                         asChild
                       >
-                        <Link href={handleGetStarted()}>
+                        <LocaleLink href={handleGetStarted()}>
                           <LangText en="Get started" ar="ابدأ" /> <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
+                        </LocaleLink>
                       </Button>
                     </motion.div>
                   </div>
@@ -353,14 +363,14 @@ export function HeroSection() {
                           <div>
                             <div className="font-semibold text-primary-foreground text-sm md:text-base">
                               <LangText
-                                en={`Schengen visa required for ${fromLabel} citizens visiting ${toCountry}`}
-                                ar={`تأشيرة شنغن مطلوبة لمواطني ${fromLabel} عند زيارة ${toCountry}`}
+                                en={`Schengen visa required for ${fromEn} citizens visiting ${toCountry}`}
+                                ar={`تأشيرة شنغن مطلوبة لمواطني ${fromAr} عند زيارة ${countryNameAr(toCountry)}`}
                               />
                             </div>
                             <p className="text-xs md:text-sm text-primary-foreground/80 mt-0.5 leading-relaxed">
                               <LangText
                                 en="We fill in your application form and prepare your cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days."
-                                ar="نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال 1–2 يوم."
+                                ar={<>نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم.</>}
                               />
                             </p>
                           </div>
@@ -394,7 +404,7 @@ export function HeroSection() {
           </div> {/* Content Wrapper close */}
           {heroBgCountryName && (
             <div className="absolute bottom-4 right-6 md:bottom-5 md:right-8 text-[9px] md:text-[10px] text-[#0A0F1F]/40 tracking-widest font-semibold uppercase z-20 pointer-events-none select-none">
-              {heroBgCountryName}
+              {arabic ? countryNameAr(heroBgCountryName) : heroBgCountryName}
             </div>
           )}
         </motion.div>

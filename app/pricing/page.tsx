@@ -1,7 +1,7 @@
 import { LangText } from "@/components/lang-text"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight, Check, Minus } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -134,14 +134,14 @@ export default async function PricingPage() {
               </ul>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-                <Link
+                <LocaleLink
                   href="/apply"
                   className="group inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   {pick("Start your application", "ابدأ طلبك")}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-                </Link>
-                <p className="text-sm text-muted-foreground">{pick("Ready in 1–2 days after your documents are in.", <>جاهز خلال {ltr("1–2")} يوم بعد وصول مستنداتك.</>)}</p>
+                </LocaleLink>
+                <p className="text-sm text-muted-foreground">{pick("Ready in 1–2 days after your documents are in.", <>جاهز خلال <bdi dir="ltr">1–2</bdi> يوم بعد وصول مستنداتك.</>)}</p>
               </div>
             </div>
 
@@ -170,40 +170,40 @@ export default async function PricingPage() {
         <section className="border-t border-border/70 py-20 md:py-24">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Refunds</span>
-              <h2 className="text-balance text-foreground">When you get the fee back.</h2>
-              <Link href="/refund-policy" className="text-sm font-medium text-primary hover:underline">
-                Read the full refund policy
-              </Link>
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{pick("Refunds", "الاسترداد")}</span>
+              <h2 className="text-balance text-foreground">{pick("When you get the fee back.", "متى يُعاد الرسم.")}</h2>
+              <LocaleLink href="/refund-policy" className="text-sm font-medium text-primary hover:underline">
+                {pick("Read the full refund policy", "اقرأ سياسة الاسترداد كاملة")}
+              </LocaleLink>
             </div>
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
               <div className="flex flex-col gap-4">
-                <h3 className="panel-title text-foreground">Full refund</h3>
+                <h3 className="panel-title text-foreground">{pick("Full refund", "استرداد كامل")}</h3>
                 <ul className="flex flex-col gap-3 text-sm leading-relaxed text-muted-foreground">
                   <li className="flex items-start gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
-                    You cancel before we start reviewing your documents.
+                    {pick("You cancel before we start reviewing your documents.", "تلغي قبل أن نبدأ مراجعة مستنداتك.")}
                   </li>
                   <li className="flex items-start gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
-                    We can&apos;t deliver your file because of an error on our side.
+                    {pick("We can't deliver your file because of an error on our side.", "نعجز عن تسليم ملفك بسبب خطأ من جانبنا.")}
                   </li>
                   <li className="flex items-start gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
-                    You were charged twice for the same application.
+                    {pick("You were charged twice for the same application.", "دُفعت الرسوم مرتين عن الطلب نفسه.")}
                   </li>
                 </ul>
               </div>
               <div className="flex flex-col gap-4">
-                <h3 className="panel-title text-foreground">No refund</h3>
+                <h3 className="panel-title text-foreground">{pick("No refund", "لا استرداد")}</h3>
                 <ul className="flex flex-col gap-3 text-sm leading-relaxed text-muted-foreground">
                   <li className="flex items-start gap-3">
                     <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />
-                    The embassy refuses the visa. The decision is theirs, and our work on the file is done.
+                    {pick("The embassy refuses the visa. The decision is theirs, and our work on the file is done.", "ترفض السفارة التأشيرة. القرار لها، وعملنا على الملف قد اكتمل.")}
                   </li>
                   <li className="flex items-start gap-3">
                     <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />
-                    You change your mind after we&apos;ve reviewed your documents.
+                    {pick("You change your mind after we've reviewed your documents.", "تغيّر رأيك بعد أن نراجع مستنداتك.")}
                   </li>
                 </ul>
               </div>

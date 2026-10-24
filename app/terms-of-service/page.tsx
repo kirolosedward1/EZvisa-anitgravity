@@ -1,3 +1,5 @@
+import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
 import { LangText } from "@/components/lang-text"
 import { LocaleLink } from "@/components/locale-link"
 import { WHATSAPP_DISPLAY } from "@/lib/contact"
@@ -5,10 +7,19 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
 
-export const metadata = {
-  title: "Terms of Service",
-  description: "Terms of Service for EZvisa - Read our terms and conditions for using our visa assistance services.",
-  alternates: { canonical: "https://www.ezvisa.net/terms-of-service" },
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "Terms of Service",
+      description: "Terms of Service for EZvisa - Read our terms and conditions for using our visa assistance services.",
+      alternates: { canonical: "https://www.ezvisa.net/terms-of-service" },
+    },
+    {
+      title: "شروط الخدمة",
+      description: "شروط استخدام خدمات إيزي فيزا لتجهيز طلب التأشيرة.",
+      path: "/ar/terms-of-service",
+    },
+  )
 }
 
 export default function TermsOfServicePage() {

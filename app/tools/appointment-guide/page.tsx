@@ -2,28 +2,42 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { AppointmentGuideClient } from "@/components/tools/appointment-guide-client"
+import { withArabicMeta } from "@/lib/page-meta"
+import { requestLocale } from "@/lib/request-locale"
 
-export const metadata: Metadata = {
-  title: "UAE Schengen Visa Appointment Centers & Booking Guide",
-  description: "Complete guide to Schengen visa appointments in Dubai & Abu Dhabi. Centers for VFS Global, TLScontact, and BLS International. Slot timing tips and biometrics rules.",
-  alternates: {
-    canonical: "https://www.ezvisa.net/tools/appointment-guide",
-  },
-  openGraph: {
-    title: "UAE Schengen Visa Appointment Centers Guide | EZvisa",
-    description: "Locations, slot release patterns, and rules for VFS Global, TLScontact, and BLS International in Dubai & Abu Dhabi.",
-    url: "https://www.ezvisa.net/tools/appointment-guide",
-    type: "website",
-  },
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "UAE Schengen Visa Appointment Centers & Booking Guide",
+      description: "Complete guide to Schengen visa appointments in Dubai & Abu Dhabi. Centers for VFS Global, TLScontact, and BLS International. Slot timing tips and biometrics rules.",
+      alternates: {
+        canonical: "https://www.ezvisa.net/tools/appointment-guide",
+      },
+      openGraph: {
+        title: "UAE Schengen Visa Appointment Centers Guide | EZvisa",
+        description: "Locations, slot release patterns, and rules for VFS Global, TLScontact, and BLS International in Dubai & Abu Dhabi.",
+        url: "https://www.ezvisa.net/tools/appointment-guide",
+        type: "website",
+      },
+    },
+    {
+      title: "مراكز مواعيد تأشيرة شنغن في الإمارات",
+      description: "عناوين VFS Global وTLScontact وBLS International في دبي وأبوظبي، مع نمط فتح المواعيد وقاعدة البصمة لـ59 شهرًا.",
+      path: "/ar/tools/appointment-guide",
+    },
+  )
 }
 
-export default function AppointmentGuidePage() {
+export default async function AppointmentGuidePage() {
+  const arabic = (await requestLocale()) === "ar"
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Guide",
-    name: "UAE Schengen Visa Appointment & Centers Guide",
-    url: "https://www.ezvisa.net/tools/appointment-guide",
-    description: "Operational guide to Schengen visa application centers and booking protocols in the United Arab Emirates.",
+    name: arabic ? "دليل مراكز مواعيد تأشيرة شنغن في الإمارات" : "UAE Schengen Visa Appointment & Centers Guide",
+    url: arabic ? "https://www.ezvisa.net/ar/tools/appointment-guide" : "https://www.ezvisa.net/tools/appointment-guide",
+    description: arabic
+      ? "دليل مراكز تقديم تأشيرة شنغن وحجز المواعيد في الإمارات."
+      : "Operational guide to Schengen visa application centers and booking protocols in the United Arab Emirates.",
     publisher: {
       "@type": "Organization",
       name: "EZvisa",
@@ -40,13 +54,15 @@ export default function AppointmentGuidePage() {
         <div className="container max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-2 block">
-              UAE Appointment Intelligence
+              {arabic ? "مواعيد التأشيرة في الإمارات" : "UAE Appointment Intelligence"}
             </span>
             <h1 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight">
-              Schengen Visa Appointment Centers Guide
+              {arabic ? "دليل مراكز مواعيد تأشيرة شنغن" : "Schengen Visa Appointment Centers Guide"}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">
-              Navigate appointment booking across VFS Global, TLScontact, and BLS International in Dubai and Abu Dhabi. Understand slot release patterns, biometrics rules, and center protocols.
+              {arabic
+                ? "عناوين الحجز لدى VFS Global وTLScontact وBLS International في دبي وأبوظبي، مع نمط فتح المواعيد وقواعد البصمة."
+                : "Navigate appointment booking across VFS Global, TLScontact, and BLS International in Dubai and Abu Dhabi. Understand slot release patterns, biometrics rules, and center protocols."}
             </p>
           </div>
 

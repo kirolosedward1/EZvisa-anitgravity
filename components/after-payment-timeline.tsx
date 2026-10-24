@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import { headers } from "next/headers"
 import { ltr } from "@/lib/bidi"
 import { formatAedLabel } from "@/lib/currency"
@@ -5,7 +6,6 @@ import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
 const priceEn = formatAedLabel(PRICE_AED, "en")
 const priceAr = formatAedLabel(PRICE_AED, "ar")
-const days = ltr("1–2")
 
 // What actually happens from payment to the embassy's decision, in the order the customer meets it.
 const STEPS = [
@@ -34,7 +34,7 @@ const STEPS = [
     },
   },
   {
-    when: { en: "Within 1–2 days", ar: `خلال ${days} يوم` },
+    when: { en: "Within 1–2 days", ar: <>خلال <bdi dir="ltr">1–2</bdi> يوم</> },
     title: { en: "Your file is ready", ar: "ملفك جاهز" },
     body: {
       en: "A visa specialist checks your documents and prepares the application form, cover letter, itinerary, and flight and hotel reservations. You download them from your account.",
@@ -61,7 +61,7 @@ const STEPS = [
 
 export async function AfterPaymentTimeline() {
   const arabic = (await headers()).get("x-ez-locale") === "ar"
-  const pick = (copy: { en: string; ar: string }) => (arabic ? copy.ar : copy.en)
+  const pick = (copy: { en: ReactNode; ar: ReactNode }) => (arabic ? copy.ar : copy.en)
   return (
     <section className="bg-secondary/50 py-20 md:py-28">
       <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">

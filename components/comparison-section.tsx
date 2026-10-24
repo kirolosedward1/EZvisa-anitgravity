@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowRight, Check, Minus } from "lucide-react"
 import { motion } from "framer-motion"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { ReadyLine } from "@/components/ready-line"
 import { APPLICATION_READY } from "@/lib/copy"
 import { LangText } from "@/components/lang-text"
@@ -90,11 +90,13 @@ export function ComparisonSection() {
           <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 end-0 w-24 bg-primary/[0.05] sm:w-40" />
 
           <table className="relative w-full border-collapse text-left">
-            <caption className="sr-only">Applying on your own compared with applying through EZvisa</caption>
+            <caption className="sr-only">
+              <LangText en="Applying on your own compared with applying through EZvisa" ar="مقارنة التقديم بنفسك مع التقديم عبر إيزي فيزا" />
+            </caption>
             <thead>
               <tr className="border-b border-border/70">
                 <th scope="col" className="px-5 py-5 sm:px-7">
-                  <span className="sr-only">Feature</span>
+                  <span className="sr-only"><LangText en="Feature" ar="البند" /></span>
                 </th>
                 <th scope="col" className="w-24 px-2 py-5 text-center align-bottom sm:w-40">
                   <span className="block text-sm font-semibold text-muted-foreground"><LangText en="On your own" ar="بمفردك" /></span>
@@ -114,13 +116,13 @@ export function ComparisonSection() {
                   </th>
                   <td className="px-2 py-4 text-center">
                     {feature.others ? (
-                      <Check className="mx-auto size-4 text-muted-foreground" strokeWidth={2.5} aria-label="Yes" />
+                      <Check className="mx-auto size-4 text-muted-foreground" strokeWidth={2.5} aria-label={locale === "ar" ? "نعم" : "Yes"} />
                     ) : (
-                      <Minus className="mx-auto size-4 text-muted-foreground/40" strokeWidth={2.5} aria-label="No" />
+                      <Minus className="mx-auto size-4 text-muted-foreground/40" strokeWidth={2.5} aria-label={locale === "ar" ? "لا" : "No"} />
                     )}
                   </td>
                   <td className="px-2 py-4 text-center">
-                    <Check className="mx-auto size-5 text-primary" strokeWidth={2.5} aria-label="Yes" />
+                    <Check className="mx-auto size-5 text-primary" strokeWidth={2.5} aria-label={locale === "ar" ? "نعم" : "Yes"} />
                   </td>
                 </tr>
               ))}

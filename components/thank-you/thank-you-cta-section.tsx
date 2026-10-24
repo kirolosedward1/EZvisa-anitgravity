@@ -2,6 +2,11 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { LocaleLink } from "@/components/locale-link"
+import { useSiteLocale } from "@/components/locale-provider"
+import { ltr } from "@/lib/bidi"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
+import { customerText } from "@/lib/translations/customer"
 import { 
   Download, 
   FileText, 
@@ -12,6 +17,8 @@ import {
   Share2,
   CheckCircle2
 } from "lucide-react"
+import { LangText } from "@/components/lang-text"
+import { translations } from "@/lib/translations"
 
 interface ThankYouCTASectionProps {
   orderId?: string
@@ -19,7 +26,12 @@ interface ThankYouCTASectionProps {
 }
 
 export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectionProps) {
-  const whatsappMessage = `Hi! I just completed my visa application payment. Reference: ${orderId || transactionId || "N/A"}. Can you help me with the next steps?`
+  const locale = useSiteLocale()
+  const arabic = locale === "ar"
+  const reference = orderId || transactionId || (arabic ? "غير متوفر" : "N/A")
+  const whatsappMessage = arabic
+    ? `مرحبًا، أكملت دفع طلب التأشيرة. المرجع: ${ltr(reference)}. هل تساعدونني في الخطوات التالية؟`
+    : `Hi! I just completed my visa application payment. Reference: ${reference}. Can you help me with the next steps?`
 
   const handleDownloadReceipt = () => {
     // TODO: Implement receipt download functionality
@@ -30,8 +42,8 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "EZvisa - Visa Application Service",
-          text: "I just applied for my Schengen visa with EZvisa!",
+          title: customerText(locale, "thanks.shareTitle"),
+          text: customerText(locale, "thanks.shareText"),
           url: "https://www.ezvisa.net",
         })
       } catch (err) {
@@ -45,7 +57,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
       {/* Quick Actions */}
       <Card className="shadow-lg">
         <CardContent className="pt-6">
-          <h3 className="font-semibold text-lg mb-4">Quick Actions</h3>
+          <h3 className="font-semibold text-lg mb-4">{customerText(locale, "thanks.actions")}</h3>
           <div className="grid sm:grid-cols-2 gap-3">
             <Button
               variant="outline"
@@ -53,9 +65,9 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               onClick={handleDownloadReceipt}
             >
               <Download className="w-4 h-4" />
-              <div className="text-left flex-1">
-                <div className="font-medium">Download Receipt</div>
-                <div className="text-xs text-muted-foreground">Payment confirmation</div>
+              <div className="text-start flex-1">
+                <div className="font-medium">{customerText(locale, "thanks.receipt")}</div>
+                <div className="text-xs text-muted-foreground">{customerText(locale, "thanks.receiptHint")}</div>
               </div>
             </Button>
 
@@ -64,13 +76,13 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               className="justify-start gap-2 h-auto py-3 bg-transparent"
               asChild
             >
-              <a href="/documents" target="_blank">
+              <LocaleLink href="/documents" target="_blank">
                 <FileText className="w-4 h-4" />
-                <div className="text-left flex-1">
-                  <div className="font-medium">Document Checklist</div>
-                  <div className="text-xs text-muted-foreground">What you'll need</div>
+                <div className="text-start flex-1">
+                  <div className="font-medium">{customerText(locale, "thanks.checklist")}</div>
+                  <div className="text-xs text-muted-foreground">{customerText(locale, "thanks.checklistHint")}</div>
                 </div>
-              </a>
+              </LocaleLink>
             </Button>
           </div>
         </CardContent>
@@ -84,9 +96,9 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               <MessageCircle className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">Need Help?</h3>
+              <h3 className="font-semibold text-lg">{customerText(locale, "thanks.help")}</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
-                WhatsApp support, 9am–6pm UAE time
+                {customerText(locale, "thanks.hours")}
               </p>
             </div>
           </div>
@@ -97,12 +109,14 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               asChild
             >
               <a
-                href={`https://wa.me/971547109533?text=${encodeURIComponent(whatsappMessage)}`}
+                href={getWhatsAppUrl(whatsappMessage, arabic)}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span className="flex-1 text-left">WhatsApp Support</span>
+                <span className="flex-1 text-start">
+                  <LangText en={translations.en.support.whatsApp} ar={translations.ar.support.whatsApp} />
+                </span>
                 <ExternalLink className="w-3 h-3 opacity-70" />
               </a>
             </Button>
@@ -136,9 +150,9 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
       <Card className="shadow-lg">
         <CardContent className="pt-6">
           <div className="text-center">
-            <h3 className="font-semibold mb-2">Love our service?</h3>
+            <h3 className="font-semibold mb-2">{customerText(locale, "thanks.love")}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Share EZvisa with friends and help them travel too!
+              {customerText(locale, "thanks.shareBody")}
             </p>
             <Button
               variant="outline"
@@ -146,7 +160,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               onClick={handleShare}
             >
               <Share2 className="w-4 h-4" />
-              Share with Friends
+              {customerText(locale, "thanks.share")}
             </Button>
           </div>
         </CardContent>

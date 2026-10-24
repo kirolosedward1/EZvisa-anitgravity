@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowUpRight, Mail, Phone } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -8,21 +8,32 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 import { ContactForm } from "@/components/contact-form"
 import { WHATSAPP_DISPLAY, telUrl, whatsAppUrl } from "@/lib/contact"
+import { requestLocale } from "@/lib/request-locale"
+import { withArabicMeta } from "@/lib/page-meta"
 
-export const metadata: Metadata = {
-  title: "Contact EZvisa | WhatsApp, Email and Phone",
-  description:
-    "Ask a visa specialist about your Schengen visa before you pay, or about an application you've started. WhatsApp +971 54 710 9533 or email info@ezvisa.net.",
-  keywords: ["contact EZvisa", "Schengen visa help Dubai", "visa support WhatsApp UAE"],
-  alternates: {
-    canonical: "https://www.ezvisa.net/contact",
-  },
-  openGraph: {
-    title: "Contact EZvisa",
-    description: "WhatsApp, email or phone. A visa specialist answers.",
-    url: "https://www.ezvisa.net/contact",
-    type: "website",
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "Contact EZvisa | WhatsApp, Email and Phone",
+      description:
+        "Ask a visa specialist about your Schengen visa before you pay, or about an application you've started. WhatsApp +971 54 710 9533 or email info@ezvisa.net.",
+      keywords: ["contact EZvisa", "Schengen visa help Dubai", "visa support WhatsApp UAE"],
+      alternates: {
+        canonical: "https://www.ezvisa.net/contact",
+      },
+      openGraph: {
+        title: "Contact EZvisa",
+        description: "WhatsApp, email or phone. A visa specialist answers.",
+        url: "https://www.ezvisa.net/contact",
+        type: "website",
+      },
+    },
+    {
+      title: "تواصل مع إيزي فيزا",
+      description: "اسأل مختص تأشيرات عن تأشيرة شنغن قبل الدفع، أو عن طلب بدأته. واتساب +971547109533 أو البريد info@ezvisa.net.",
+      path: "/ar/contact",
+    },
+  )
 }
 
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -36,47 +47,61 @@ function WhatsAppIcon({ className }: { className?: string }) {
 const CHANNELS = [
   {
     label: "WhatsApp",
+    labelAr: "واتساب",
     value: WHATSAPP_DISPLAY,
     note: "The quickest way to reach us. Send questions, photos of documents you're unsure about, or voice notes.",
+    noteAr: "أسرع طريقة للوصول إلينا. أرسل أسئلة، أو صور مستندات لست متأكدًا منها، أو رسائل صوتية.",
     href: whatsAppUrl(),
     external: true,
     icon: <WhatsAppIcon className="size-5" />,
   },
   {
     label: "Email",
+    labelAr: "البريد الإلكتروني",
     value: "info@ezvisa.net",
     note: "Best for longer questions and refund requests. Include your EZ- reference if you have one.",
+    noteAr: "الأنسب للأسئلة الطويلة وطلبات الاسترداد. أضف مرجع EZ- إن كان لديك.",
     href: "mailto:info@ezvisa.net",
     external: false,
     icon: <Mail className="size-5" aria-hidden="true" />,
   },
   {
     label: "Phone",
+    labelAr: "الهاتف",
     value: WHATSAPP_DISPLAY,
     note: "The same number. Calls 9 AM to 6 PM, UAE time.",
+    noteAr: "الرقم نفسه. المكالمات من 9 صباحًا إلى 6 مساءً بتوقيت الإمارات.",
     href: telUrl(),
     external: false,
     icon: <Phone className="size-5" aria-hidden="true" />,
   },
 ]
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const arabic = (await requestLocale()) === "ar"
+  const channels = CHANNELS.map((channel) =>
+    channel.label === "WhatsApp" ? { ...channel, href: whatsAppUrl(undefined, arabic) } : channel,
+  )
   return (
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-background">
         <InnerHero
-          badge="Contact"
-          title="Talk to a visa specialist."
-          description="Ask about your trip before you pay, or about an application you've already started. You'll get an answer from someone who prepares visa files, not a script."
+          badge={arabic ? "تواصل" : "Contact"}
+          title={arabic ? "تحدّث إلى مختص تأشيرات." : "Talk to a visa specialist."}
+          description={
+            arabic
+              ? "اسأل عن رحلتك قبل أن تدفع، أو عن طلب بدأته. يصلك الرد من شخص يجهّز ملفات التأشيرة، لا من نص جاهز."
+              : "Ask about your trip before you pay, or about an application you've already started. You'll get an answer from someone who prepares visa files, not a script."
+          }
         />
 
         <section className="pb-20 md:pb-28">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12">
             <div className="flex flex-col gap-8">
               <ul className="flex flex-col rounded-3xl border border-border/70 bg-card">
-                {CHANNELS.map((channel) => (
+                {channels.map((channel) => (
                   <li key={channel.label} className="border-b border-border/70 last:border-0">
                     <a
                       href={channel.href}
@@ -85,9 +110,9 @@ export default function ContactPage() {
                     >
                       <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">{channel.icon}</span>
                       <span className="flex min-w-0 flex-1 flex-col gap-1">
-                        <span className="text-sm text-muted-foreground">{channel.label}</span>
+                        <span className="text-sm text-muted-foreground">{arabic ? channel.labelAr : channel.label}</span>
                         <span className="ltr-isolate font-semibold text-foreground">{channel.value}</span>
-                        <span className="text-sm leading-relaxed text-muted-foreground">{channel.note}</span>
+                        <span className="text-sm leading-relaxed text-muted-foreground">{arabic ? channel.noteAr : channel.note}</span>
                       </span>
                       <ArrowUpRight className="mt-1 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary rtl:-scale-x-100" aria-hidden="true" />
                     </a>
@@ -96,22 +121,46 @@ export default function ContactPage() {
               </ul>
 
               <div className="flex flex-col gap-2 rounded-3xl bg-secondary/60 p-6">
-                <h2 className="panel-title text-foreground">Already applied?</h2>
+                <h2 className="panel-title text-foreground">{arabic ? "قدّمت طلبًا من قبل؟" : "Already applied?"}</h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Your application, its status and your documents are in your account and in the EZvisa app.{" "}
-                  <Link href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
-                    Sign in
-                  </Link>{" "}
-                  or open the link in your confirmation email.
+                  {arabic ? (
+                    <>
+                      طلبك وحالته ومستنداتك في حسابك وفي تطبيق إيزي فيزا.{" "}
+                      <LocaleLink href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
+                        سجّل الدخول
+                      </LocaleLink>{" "}
+                      أو افتح الرابط في رسالة التأكيد.
+                    </>
+                  ) : (
+                    <>
+                      Your application, its status and your documents are in your account and in the EZvisa app.{" "}
+                      <LocaleLink href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
+                        Sign in
+                      </LocaleLink>{" "}
+                      or open the link in your confirmation email.
+                    </>
+                  )}
                 </p>
               </div>
 
               <p className="text-sm text-muted-foreground">
-                Common questions are answered in the{" "}
-                <Link href="/#faq" className="font-medium text-primary hover:underline">
-                  FAQ
-                </Link>
-                .
+                {arabic ? (
+                  <>
+                    الأسئلة الشائعة مجابة في{" "}
+                    <LocaleLink href="/#faq" className="font-medium text-primary hover:underline">
+                      الأسئلة
+                    </LocaleLink>
+                    .
+                  </>
+                ) : (
+                  <>
+                    Common questions are answered in the{" "}
+                    <LocaleLink href="/#faq" className="font-medium text-primary hover:underline">
+                      FAQ
+                    </LocaleLink>
+                    .
+                  </>
+                )}
               </p>
             </div>
 

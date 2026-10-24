@@ -1,8 +1,10 @@
 import { Metadata } from "next"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
+import { requestLocale } from "@/lib/request-locale"
+import { withArabicMeta } from "@/lib/page-meta"
 import {
   Calendar,
   Wallet,
@@ -12,68 +14,88 @@ import {
   CheckCircle2,
 } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "Free Schengen Travel Tools & Calculators",
-  description: "Free interactive Schengen visa tools for UAE residents. Calculate the 90/180-day rolling rule, estimate required consular bank balance in AED, and locate VFS/TLS/BLS visa centers in Dubai & Abu Dhabi.",
-  alternates: {
-    canonical: "https://www.ezvisa.net/tools",
-  },
-  openGraph: {
-    title: "Free Schengen Travel Tools & Calculators | EZvisa UAE",
-    description: "Official European Commission 90/180-day stay calculator, embassy bank balance estimator, and UAE appointment booking guide.",
-    url: "https://www.ezvisa.net/tools",
-    type: "website",
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "Free Schengen Travel Tools & Calculators",
+      description: "Free interactive Schengen visa tools for UAE residents. Calculate the 90/180-day rolling rule, estimate required consular bank balance in AED, and locate VFS/TLS/BLS visa centers in Dubai & Abu Dhabi.",
+      alternates: {
+        canonical: "https://www.ezvisa.net/tools",
+      },
+      openGraph: {
+        title: "Free Schengen Travel Tools & Calculators | EZvisa UAE",
+        description: "Official European Commission 90/180-day stay calculator, embassy bank balance estimator, and UAE appointment booking guide.",
+        url: "https://www.ezvisa.net/tools",
+        type: "website",
+      },
+    },
+    {
+      title: "أدوات وحاسبات مجانية لتأشيرة شنغن",
+      description: "أدوات مجانية للمقيمين في الإمارات: حاسبة قاعدة 90/180 يومًا، وتقدير الرصيد البنكي بالدرهم، ودليل مواعيد VFS وTLS وBLS في دبي وأبوظبي.",
+      path: "/ar/tools",
+    },
+  )
 }
 
-export default function ToolsIndexPage() {
+export default async function ToolsIndexPage() {
+  const arabic = (await requestLocale()) === "ar"
+  const t = (en: string, ar: string) => (arabic ? ar : en)
   const tools = [
     {
       id: "schengen-calculator",
-      title: "Schengen 90/180-Day Rule Calculator",
-      badge: "European Commission Rule",
+      title: t("Schengen 90/180-Day Rule Calculator", "حاسبة قاعدة 90/180 يومًا في شنغن"),
+      badge: t("European Commission Rule", "قاعدة المفوضية الأوروبية"),
       icon: Calendar,
-      description: "Track previous trips, calculate remaining allowable days, and avoid unintentional overstay penalties across all 29 Schengen states.",
+      description: t(
+        "Track previous trips, calculate remaining allowable days, and avoid unintentional overstay penalties across all 29 Schengen states.",
+        "تتبّع الرحلات السابقة واحسب الأيام المتبقية ضمن دول شنغن الـ29، حتى لا تتجاوز مدة الإقامة المسموحة.",
+      ),
       href: "/tools/schengen-calculator",
-      cta: "Calculate Stay Days",
+      cta: t("Calculate Stay Days", "احسب أيام الإقامة"),
       color: "",
       badgeColor: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200",
       features: [
-        "Official rolling 180-day calculation algorithm",
-        "Add unlimited past and future trip dates",
-        "Direct export into visa application file",
+        t("Official rolling 180-day calculation algorithm", "حساب قاعدة 180 يومًا المتحركة"),
+        t("Add unlimited past and future trip dates", "أضف تواريخ الرحلات السابقة والقادمة"),
+        t("Direct export into visa application file", "اعرف الأيام المستخدمة والأيام المتبقية"),
       ]
     },
     {
       id: "bank-balance-calculator",
-      title: "Consulate Bank Balance Calculator",
-      badge: "Official Solvency Thresholds",
+      title: t("Consulate Bank Balance Calculator", "حاسبة الرصيد البنكي للقنصلية"),
+      badge: t("Official Solvency Thresholds", "حدود الملاءة المالية"),
       icon: Wallet,
-      description: "Determine the exact closing balance required in your UAE bank statement for Spain, France, Italy, Germany, and Switzerland.",
+      description: t(
+        "Determine the exact closing balance required in your UAE bank statement for Spain, France, Italy, Germany, and Switzerland.",
+        "احسب الرصيد الختامي المطلوب في كشف حسابك الإماراتي لإسبانيا وفرنسا وإيطاليا وألمانيا وسويسرا.",
+      ),
       href: "/tools/bank-balance-calculator",
-      cta: "Check Required Funds",
+      cta: t("Check Required Funds", "احسب المبلغ المطلوب"),
       color: "",
       badgeColor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200",
       features: [
-        "Real-time AED conversions from EUR / CHF",
-        "Multi-traveler & trip duration multipliers",
-        "Guidance on salary credits and NOC alignment",
+        t("Real-time AED conversions from EUR / CHF", "تحويل من اليورو والفرنك إلى الدرهم"),
+        t("Multi-traveler & trip duration multipliers", "حساب لعدة مسافرين ولمدة الرحلة"),
+        t("Guidance on salary credits and NOC alignment", "إرشاد عن إيداعات الراتب ومطابقة شهادة عدم الممانعة"),
       ]
     },
     {
       id: "appointment-guide",
-      title: "UAE Schengen Appointment & Biometrics Hub",
-      badge: "VFS, TLS & BLS Directory",
+      title: t("UAE Schengen Appointment & Biometrics Hub", "دليل مواعيد شنغن والبصمة في الإمارات"),
+      badge: t("VFS, TLS & BLS Directory", "دليل VFS وTLS وBLS"),
       icon: MapPin,
-      description: "Navigate visa application centers across Dubai (Wafi Mall, Sheikh Zayed Rd, Al Barsha) and Abu Dhabi with center procedures and biometrics rules.",
+      description: t(
+        "Navigate visa application centers across Dubai (Wafi Mall, Sheikh Zayed Rd, Al Barsha) and Abu Dhabi with center procedures and biometrics rules.",
+        "مراكز تقديم التأشيرة في دبي (وافي مول، شارع الشيخ زايد، البرشاء) وأبوظبي، مع إجراءات المركز وقواعد البصمة.",
+      ),
       href: "/tools/appointment-guide",
-      cta: "Explore Visa Centers",
+      cta: t("Explore Visa Centers", "استعرض مراكز التأشيرات"),
       color: "",
       badgeColor: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200",
       features: [
-        "Country-to-center jurisdiction mapping",
-        "59-month biometrics (VIS) exemption rules",
-        "Center counter security and document guidelines",
+        t("Country-to-center jurisdiction mapping", "أي مركز يخدم كل دولة"),
+        t("59-month biometrics (VIS) exemption rules", "قاعدة إعفاء البصمة لـ59 شهرًا"),
+        t("Center counter security and document guidelines", "إرشادات الدخول والمستندات في المركز"),
       ]
     }
   ]
@@ -81,9 +103,12 @@ export default function ToolsIndexPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "EZvisa Free Schengen Travel Tools",
-    url: "https://www.ezvisa.net/tools",
-    description: "Free interactive utility tools for Schengen visa applicants in the United Arab Emirates.",
+    name: t("EZvisa Free Schengen Travel Tools", "أدوات إيزي فيزا المجانية لتأشيرة شنغن"),
+    url: arabic ? "https://www.ezvisa.net/ar/tools" : "https://www.ezvisa.net/tools",
+    description: t(
+      "Free interactive utility tools for Schengen visa applicants in the United Arab Emirates.",
+      "أدوات مجانية لمتقدّمي تأشيرة شنغن في الإمارات.",
+    ),
     hasPart: tools.map(t => ({
       "@type": "WebApplication",
       name: t.title,
@@ -103,13 +128,16 @@ export default function ToolsIndexPage() {
           {/* Header */}
           <div className="text-center max-w-3xl mx-auto mb-16">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
-              <span>UAE Traveler Intelligence Suite</span>
+              <span>{t("UAE Traveler Intelligence Suite", "أدوات للمقيمين في الإمارات")}</span>
             </div>
             <h1 className="text-3xl sm:text-5xl font-semibold text-foreground tracking-tight">
-              Free Schengen Visa Tools &amp; Calculators
+              {t("Free Schengen Visa Tools & Calculators", "أدوات وحاسبات مجانية لتأشيرة شنغن")}
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed">
-              Plan your European itinerary with total confidence. Built specifically for UAE residents, Golden Visa holders, and frequent travelers to help you meet consular requirements.
+              {t(
+                "Plan your European itinerary with total confidence. Built specifically for UAE residents, Golden Visa holders, and frequent travelers to help you meet consular requirements.",
+                "أدوات للمقيمين في الإمارات وحاملي الإقامة الذهبية والمسافرين المتكررين، لحساب أيام الإقامة والرصيد ومركز التقديم.",
+              )}
             </p>
           </div>
 
@@ -154,10 +182,10 @@ export default function ToolsIndexPage() {
 
                   <div className="relative z-10 pt-2">
                     <Button asChild className="w-full rounded-full shadow-sm text-sm font-semibold">
-                      <Link href={tool.href} className="flex items-center justify-center gap-2">
+                      <LocaleLink href={tool.href} className="flex items-center justify-center gap-2">
                         {tool.cta}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </Link>
+                      </LocaleLink>
                     </Button>
                   </div>
                 </div>
@@ -172,28 +200,32 @@ export default function ToolsIndexPage() {
             <div className="relative z-10 max-w-2xl">
               <div className="inline-flex items-center gap-2 text-primary-foreground/80 text-xs font-semibold uppercase tracking-wider mb-4">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Consulate-Ready Document Preparation</span>
+                <span>{t("Consulate-Ready Document Preparation", "تجهيز ملف التأشيرة")}</span>
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-4">
-                Done calculating? Let our experts assemble your complete visa file.
+                {t("Done calculating? Let our experts assemble your complete visa file.", "انتهيت من الحساب؟ يجهّز المختصون ملف التأشيرة.")}
               </h2>
 
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
-                From embassy application forms and verifiable flight &amp; hotel reservations to customized cover letters and travel insurance, get your complete Schengen dossier ready in 24&ndash;48 hours.
+                {arabic ? (
+                  <>نموذج الطلب وحجوزات الطيران والفندق وخطاب التغطية وبرنامج الرحلة. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم. تأمين السفر إضافة اختيارية.</>
+                ) : (
+                  "From embassy application forms and verifiable flight & hotel reservations to customized cover letters and travel insurance, get your complete Schengen dossier ready in 24–48 hours."
+                )}
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <Button asChild size="lg" className="w-full sm:w-auto h-12 px-8 rounded-full bg-primary hover:bg-primary/90 text-white font-semibold">
-                  <Link href="/apply">
-                    Start Your Application &bull; From 249 AED
-                  </Link>
+                  <LocaleLink href="/apply">
+                    {t("Start Your Application • From 249 AED", "ابدأ طلبك · 249 درهم")}
+                  </LocaleLink>
                 </Button>
 
                 <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6 rounded-full border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-white font-medium">
-                  <Link href="/how-it-works">
-                    How It Works
-                  </Link>
+                  <LocaleLink href="/how-it-works">
+                    {t("How It Works", "كيف تعمل")}
+                  </LocaleLink>
                 </Button>
               </div>
             </div>

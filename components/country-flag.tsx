@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { Image } from "@/components/image"
 import type { SVGProps } from "react"
 import * as SquareFlags from "country-flag-icons/react/1x1"
 import { cn } from "@/lib/utils"

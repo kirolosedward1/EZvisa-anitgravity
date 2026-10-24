@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
+import { useEffect, useRef, useState, type ReactNode } from "react"
+import { Image } from "@/components/image"
+import { LocaleLink } from "@/components/locale-link"
 import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion"
 import { ArrowRight, Check, ChevronDown, Lock, Plane } from "lucide-react"
 import { CountryFlag } from "@/components/country-flag"
@@ -14,9 +14,8 @@ import { ltr } from "@/lib/bidi"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { cn } from "@/lib/utils"
 
-function stepsFor(locale: DisplayLocale) {
+function stepsFor(locale: DisplayLocale): { number: string; title: string; description: ReactNode }[] {
   const price = formatAedLabel(PRICE_AED, locale)
-  const days = ltr("1–2")
   if (locale === "ar") {
     return [
       {
@@ -32,7 +31,11 @@ function stepsFor(locale: DisplayLocale) {
       {
         number: "3",
         title: "نجهّز ملفك",
-        description: `يملأ مختص التأشيرات نموذج الطلب ويعدّ خطاب التغطية وبرنامج الرحلة يومًا بيوم وحجوزات الطيران والفندق خلال ${days} يوم.`,
+        description: (
+          <>
+            يملأ مختص التأشيرات نموذج الطلب ويعدّ خطاب التغطية وبرنامج الرحلة يومًا بيوم وحجوزات الطيران والفندق خلال <bdi dir="ltr">1–2</bdi> يوم.
+          </>
+        ),
       },
       {
         number: "4",
@@ -204,13 +207,13 @@ export function HowItWorksSimple({ standalone = false }: { standalone?: boolean 
           <div className="flex flex-col items-start gap-5">
             {!standalone && <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><LangText en="How it works" ar="كيف تعمل" /></span>}
             <h2 className="text-balance text-foreground"><LangText en="From your first answer to your embassy appointment." ar="من أول إجابة حتى موعد السفارة." /></h2>
-            {!standalone && <Link
+            {!standalone && <LocaleLink
               href="/how-it-works"
               className="group inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
             >
               <LangText en="See full process" ar="اعرض الخطوات كاملة" />
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-            </Link>}
+            </LocaleLink>}
           </div>
 
           {/* Desktop: the illustration for the step in view */}

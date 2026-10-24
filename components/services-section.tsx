@@ -1,8 +1,8 @@
 "use client"
 
 import { useRef, useState } from "react"
-import Image from "next/image"
-import Link from "next/link"
+import { Image } from "@/components/image"
+import { LocaleLink } from "@/components/locale-link"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
 import { ArrowRight, BadgeCheck, Expand, FileText, Hotel, Mail, Map, Plane, ShieldCheck } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
@@ -226,13 +226,13 @@ export function ServicesSection() {
               </p>
             </div>
           </div>
-          <Link
+          <LocaleLink
             href="/apply"
             className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
             <LangText en="Start your application" ar="ابدأ طلبك" />
             <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-          </Link>
+          </LocaleLink>
         </div>
       </div>
 
@@ -252,14 +252,14 @@ export function ServicesSection() {
               </div>
               <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-muted-foreground">{current.extra ? <LangText en="Optional extra, or bring your own" ar="إضافة اختيارية، أو أحضر وثيقتك" /> : <LangText en="Included in every application" ar="مشمول في كل طلب" />}</span>
-                <Link
+                <LocaleLink
                   href="/apply"
                   onClick={() => setExpanded(false)}
                   className="inline-flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   <LangText en="Start your application" ar="ابدأ طلبك" />
                   <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-                </Link>
+                </LocaleLink>
               </div>
             </div>
           </div>

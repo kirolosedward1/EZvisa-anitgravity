@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { authCallbackUrl } from "@/lib/auth/redirect"
 import { socialMessage } from "@/lib/auth/providers"
-import { authMessage, isNetworkError } from "@/lib/auth/errors"
+import { authMessage, classifyAuthError, isNetworkError } from "@/lib/auth/errors"
 
 /** The official multicolour Google "G" mark. */
 export function GoogleLogo({ className }: { className?: string }) {
@@ -48,6 +48,10 @@ export function GoogleSignInButton({
     setLoading(false)
   }
 
+  /** The page maps a disabled provider from its Supabase code. Other failures stay the short English line. */
+  const reported = (raw: string, code?: string | null) =>
+    onError && code && classifyAuthError({ code }) === "disabled" ? code : socialMessage("google", raw)
+
   const signIn = async () => {
     setLoading(true)
     setError("")
@@ -57,10 +61,11 @@ export function GoogleSignInButton({
         provider: "google",
         options: { redirectTo: authCallbackUrl({ next }), queryParams: { prompt: "select_account" } },
       })
-      if (authError) fail(socialMessage("google", authError.message))
+      if (authError) fail(reported(authError.message, authError.code))
       // On success the browser is leaving for Google: keep the spinner.
     } catch (e) {
-      fail(isNetworkError(e) ? authMessage(e) : socialMessage("google", e instanceof Error ? e.message : String(e)))
+      const code = e && typeof e === "object" && "code" in e ? String((e as { code?: unknown }).code ?? "") : ""
+      fail(isNetworkError(e) ? authMessage(e) : reported(e instanceof Error ? e.message : String(e), code))
     }
   }
 

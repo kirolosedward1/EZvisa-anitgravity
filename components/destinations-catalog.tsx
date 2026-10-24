@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input"
 import { destinations, Destination } from "@/lib/destinations"
 import { destinationNameAr } from "@/lib/destination-names-ar"
 import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
-import Image from "next/image"
+import { LocaleLink } from "@/components/locale-link"
+import { Image } from "@/components/image"
 import { LangText } from "@/components/lang-text"
+import { useSiteLocale } from "@/components/locale-provider"
 import { CountryFlag } from "@/components/country-flag"
 import { SCHENGEN_META } from "@/lib/countries"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
@@ -18,6 +19,7 @@ type TabType = "all" | "schengen" | "non-schengen"
 /** Photo card: the whole card opens the destination page; "Apply" goes straight to the wizard. */
 /** `compact` (narrow five-across rows) drops the Type column so Ready in and Fee keep their room. */
 export function DestinationCard({ country, compact = false }: { country: Destination; compact?: boolean }) {
+  const arabic = useSiteLocale() === "ar"
   const name = country.name
   const nameAr = destinationNameAr(country.slug) || name
   const allSpecs = [
@@ -39,14 +41,14 @@ export function DestinationCard({ country, compact = false }: { country: Destina
       <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1F] via-[#0A0F1F]/55 via-45% to-transparent" />
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0A0F1F]/35 to-transparent" />
 
-      <Link href={`/destinations/${country.slug}`} className="absolute inset-0 z-10 rounded-[1.75rem] focus-visible:outline-none" aria-label={`${name} visa: requirements and how to apply`} />
+      <LocaleLink href={`/destinations/${country.slug}`} className="absolute inset-0 z-10 rounded-[1.75rem] focus-visible:outline-none" aria-label={arabic ? `متطلبات تأشيرة ${nameAr} وكيفية التقديم` : `${name} visa: requirements and how to apply`} />
 
       <span className="pointer-events-none absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-full bg-[#0A0F1F]/30 text-primary-foreground ring-1 ring-primary-foreground/30 transition-colors duration-300 group-hover:bg-primary-foreground group-hover:text-foreground">
         <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
       </span>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-4 p-5 text-center text-primary-foreground">
-        <CountryFlag iso={SCHENGEN_META[name]?.iso} title={name} className="size-7 ring-2 ring-primary-foreground/80 shadow-md" />
+        <CountryFlag iso={SCHENGEN_META[name]?.iso} title={arabic ? nameAr : name} className="size-7 ring-2 ring-primary-foreground/80 shadow-md" />
         <h3>
           <LangText en={name} ar={nameAr} />
         </h3>
@@ -58,7 +60,13 @@ export function DestinationCard({ country, compact = false }: { country: Destina
                 <LangText en={spec.label} ar={spec.ar} />
               </dt>
               <dd className="text-xs font-semibold tabular-nums">
-                <LangText en={spec.value} ar={spec.valueAr} />
+                {arabic && spec.label === "Ready in" ? (
+                  <>
+                    <bdi dir="ltr">1–2</bdi> يوم
+                  </>
+                ) : (
+                  <LangText en={spec.value} ar={spec.valueAr} />
+                )}
               </dd>
             </div>
           ))}
@@ -67,14 +75,14 @@ export function DestinationCard({ country, compact = false }: { country: Destina
         {/* Desktop: the button opens on hover (or keyboard focus). Touch screens have no hover, so it always shows there. */}
         <div className="grid w-full transition-[grid-template-rows,opacity,margin] duration-300 ease-out lg:-mt-4 lg:grid-rows-[0fr] lg:opacity-0 lg:group-hover:mt-0 lg:group-hover:grid-rows-[1fr] lg:group-hover:opacity-100 lg:group-focus-within:mt-0 lg:group-focus-within:grid-rows-[1fr] lg:group-focus-within:opacity-100">
           <div className="min-h-0 overflow-hidden">
-            <Link
+            <LocaleLink
               href={`/apply?to=${encodeURIComponent(name)}`}
               className="pointer-events-auto relative z-30 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary-foreground text-sm font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-              aria-label={`Apply for a ${name} visa`}
+              aria-label={arabic ? `قدّم على تأشيرة ${nameAr}` : `Apply for a ${name} visa`}
             >
               <LangText en={`Apply for ${name}`} ar={`قدّم على تأشيرة ${nameAr}`} />
               <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-            </Link>
+            </LocaleLink>
           </div>
         </div>
       </div>
@@ -83,6 +91,7 @@ export function DestinationCard({ country, compact = false }: { country: Destina
 }
 
 export function DestinationsCatalog() {
+  const arabic = useSiteLocale() === "ar"
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<TabType>("all")
 
@@ -115,13 +124,13 @@ export function DestinationsCatalog() {
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             {/* Real-time Search */}
             <div className="relative w-full md:max-w-sm">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search country..."
+                placeholder={arabic ? "ابحث عن دولة" : "Search country..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-11 pr-4 h-11 text-sm bg-muted/40 hover:bg-muted/60 focus:bg-background border-border/80 rounded-full transition-all focus:ring-2 focus:ring-primary/20"
+                className="ps-11 pe-4 h-11 text-sm bg-muted/40 hover:bg-muted/60 focus:bg-background border-border/80 rounded-full transition-all focus:ring-2 focus:ring-primary/20"
               />
             </div>
 
@@ -129,9 +138,9 @@ export function DestinationsCatalog() {
             <div className="flex items-center bg-muted/60 p-1.5 rounded-full border border-border/20 w-full md:w-auto overflow-x-auto select-none no-scrollbar">
               {(
                 [
-                  { id: "all", label: "All Destinations" },
-                  { id: "schengen", label: "Schengen Zone" },
-                  { id: "non-schengen", label: "Non-Schengen" },
+                  { id: "all", en: "All Destinations", ar: "كل الوجهات" },
+                  { id: "schengen", en: "Schengen Zone", ar: "منطقة شنغن" },
+                  { id: "non-schengen", en: "Non-Schengen", ar: "خارج شنغن" },
                 ] as const
               ).map((tab) => (
                 <button
@@ -150,7 +159,7 @@ export function DestinationsCatalog() {
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
-                  <span className="relative z-10">{tab.label}</span>
+                  <span className="relative z-10"><LangText en={tab.en} ar={tab.ar} /></span>
                 </button>
               ))}
             </div>
@@ -187,16 +196,18 @@ export function DestinationsCatalog() {
                   <LangText en="Non-Schengen Visa Support" ar="دعم تأشيرات خارج شنغن" />
                 </h3>
                 <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto mb-8">
-                  We're currently expanding our platform to support visa applications for the United States, 
-                  United Kingdom, Canada, Australia, and more. 
+                  <LangText
+                    en="We're currently expanding our platform to support visa applications for the United States, United Kingdom, Canada, Australia, and more."
+                    ar="نوسّع المنصة حاليًا لدعم طلبات التأشيرة إلى الولايات المتحدة والمملكة المتحدة وكندا وأستراليا وغيرها."
+                  />
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href="/apply" className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-full hover:bg-primary/90 transition-colors text-xs">
-                    Start Schengen Application
-                  </Link>
-                  <Link href="/contact" className="px-6 py-2.5 bg-muted-foreground/10 hover:bg-muted-foreground/15 text-foreground font-semibold rounded-full transition-colors text-xs border border-border/20">
-                    Get Notified / Support
-                  </Link>
+                  <LocaleLink href="/apply" className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-full hover:bg-primary/90 transition-colors text-xs">
+                    <LangText en="Start Schengen Application" ar="ابدأ طلب شنغن" />
+                  </LocaleLink>
+                  <LocaleLink href="/contact" className="px-6 py-2.5 bg-muted-foreground/10 hover:bg-muted-foreground/15 text-foreground font-semibold rounded-full transition-colors text-xs border border-border/20">
+                    <LangText en="Get Notified / Support" ar="أبلغني أو تواصل معنا" />
+                  </LocaleLink>
                 </div>
               </motion.div>
             ) : (
@@ -209,12 +220,14 @@ export function DestinationsCatalog() {
                 className="text-center py-20"
               >
                 <HelpCircle className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">No destinations found matching "{searchQuery}"</p>
+                <p className="text-lg font-medium text-muted-foreground">
+                  <LangText en={`No destinations found matching "${searchQuery}"`} ar={`لا توجد وجهة تطابق «${searchQuery}»`} />
+                </p>
                 <button
                   onClick={() => setSearchQuery("")}
                   className="mt-3 text-sm font-semibold text-primary hover:underline cursor-pointer"
                 >
-                  Clear Search Filter
+                  <LangText en="Clear Search Filter" ar="امسح البحث" />
                 </button>
               </motion.div>
             )}

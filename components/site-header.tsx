@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import { Image } from "@/components/image"
 import Link from "next/link"
 import { LocaleLink } from "@/components/locale-link"
 import { Button } from "@/components/ui/button"
@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 import { HOMEPAGE_NATIONALITIES } from "@/lib/shared/wizard-contract"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
+import { useSiteLocale } from "@/components/locale-provider"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
 
 const nationalities = HOMEPAGE_NATIONALITIES
 
@@ -76,6 +78,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const [pageUrl, setPageUrl] = useState<string | null>(null)
   // Application pages register their case so WhatsApp opens with its reference, status and page.
   const supportCase = useSupportCase()
+  const arabic = useSiteLocale() === "ar"
 
   useEffect(() => {
     const el = headerRef.current
@@ -106,7 +109,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     return `Hi! I have a question about visa services. I'm currently viewing: ${baseUrl}`
   }
 
-  const whatsappLink = `https://wa.me/971547109533?text=${encodeURIComponent(getWhatsAppMessage())}`
+  const whatsappLink = getWhatsAppUrl(getWhatsAppMessage(), arabic)
 
   useEffect(() => {
     if (isMenuOpen) {

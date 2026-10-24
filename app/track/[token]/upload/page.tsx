@@ -3,7 +3,7 @@
 // Upload desk reached from a tracking link. Same document types, checklist rule (NOC only for employees) and
 // server route as the signed-in desk and the EZvisa app (POST /api/upload-document).
 import { useState, useEffect, useCallback } from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
@@ -77,10 +77,10 @@ export default function UploadDocumentsPage() {
       <main className="min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
           <div className="flex items-center justify-between gap-4">
-            <Link href={`/track/${token}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <LocaleLink href={`/track/${token}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
               <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
               Back to your application
-            </Link>
+            </LocaleLink>
             {reference ? <span className="ltr-isolate text-xs tabular-nums text-muted-foreground">{reference}</span> : null}
           </div>
 
@@ -103,7 +103,7 @@ export default function UploadDocumentsPage() {
                 <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                   <p className="text-sm text-foreground">Everything is in. A visa specialist will check your documents and prepare your file.</p>
                   <Button asChild variant="outline" className="shrink-0 rounded-full hover:bg-secondary hover:text-foreground">
-                    <Link href={`/track/${token}`}>Back to your application</Link>
+                    <LocaleLink href={`/track/${token}`}>Back to your application</LocaleLink>
                   </Button>
                 </div>
               ) : null}
