@@ -7,8 +7,8 @@ function hidesChat(path: string | null | undefined) {
   if (!path) return false
   const bare = path.split("?")[0].replace(/\/+$/, "") || "/"
   if (/\/apply(?:\/|$)|\/continue(?:\/|$)|\/payment-|\/checkout(?:\/|$)/.test(bare)) return true
-  // Auth pages: the bubble covers the email label at 320px, including /ar, reset-password, and forgot-password.
-  return /^(?:\/ar)?\/(?:login|signup|reset-password|forgot-password)$/.test(bare)
+  // Auth pages: the bubble covers the email label at 320px, including /ar and reset-password.
+  return /^(?:\/ar)?\/(?:login|signup|reset-password)$/.test(bare)
 }
 
 /** Hide the Crisp bubble on the wizard, checkout, and auth pages so it cannot cover the form. */
