@@ -14,6 +14,9 @@ import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { fetchAccountNationality, readRememberedNationality, rememberNationality } from "@/lib/remembered-nationality"
+import { TRAVELLER_NONE, applyTravellerToWebForm, isFreshTravellerForm, markTravellerUsed, useTravellers } from "@/lib/travellers-client"
+import { defaultTraveller, type Traveller } from "@/lib/shared/wizard-contract"
+import { citizenshipName } from "@/lib/nationalities"
 
 import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
 const AUTO_SAVE_DELAY = 300
@@ -30,6 +33,8 @@ interface WizardFormData {
   whatsappOptIn?: boolean
   dateOfBirth: string
   passportNumber: string
+  /** Saved traveller the traveller step was filled from ("none" = the customer chose "Someone else"). */
+  travellerId?: string
   maritalStatus: "single" | "married" | "divorced" | "widowed" | ""
   employmentStatus: "employed" | "business" | "freelancer" | "student" | "unemployed" | "retired" | ""
   spouseNationality?: string
@@ -114,6 +119,7 @@ const defaultFormData: WizardFormData = {
   whatsappOptIn: true,
   dateOfBirth: "",
   passportNumber: "",
+  travellerId: "",
   maritalStatus: "",
   employmentStatus: "",
   jobTitle: "",
@@ -423,8 +429,40 @@ function ApplyPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Auto-fill logged-in user profile if available
+  // Saved travellers of the signed-in customer (lib/travellers.ts): the "Who is travelling?" drop-down.
+  const { travellers, email: accountEmail, loaded: travellersLoaded } = useTravellers()
+  const [travellerNotice, setTravellerNotice] = useState<{ nationality: string } | null>(null)
+
+  /** Fill the traveller step from a saved traveller (null = "Someone else"). Every field stays editable. */
+  const pickTraveller = useCallback((t: Traveller | null) => {
+    if (!t) {
+      setTravellerNotice(null)
+      setFormData((prev) => ({ ...prev, travellerId: TRAVELLER_NONE }))
+      return
+    }
+    const next = applyTravellerToWebForm(formData, t)
+    setTravellerNotice(formData.nationality && next.nationality !== formData.nationality ? { nationality: citizenshipName(next.nationality) || next.nationality } : null)
+    setFormData(next)
+    markTravellerUsed(t.id)
+    trackEvent("traveller_picked", { source: "saved", count: travellers.length })
+  }, [formData, travellers.length])
+
+  // Signed in, nothing typed yet: preselect a saved traveller (the one marked "You", else the most recently used).
+  // A resumed draft that already has a name, or a form where "Someone else" was chosen, is never touched.
   useEffect(() => {
+    if (!isInitialized || showResumeModal || !travellers.length) return
+    setFormData((prev) => {
+      if (!isFreshTravellerForm(prev) || prev.travellerId === TRAVELLER_NONE || (prev.travellerId && travellers.some((t) => t.id === prev.travellerId))) return prev
+      const t = defaultTraveller(travellers)
+      return t ? applyTravellerToWebForm(prev, t) : prev
+    })
+  }, [isInitialized, showResumeModal, travellers])
+
+  // No saved travellers: fill name, email and phone from the account's profile, as before.
+  useEffect(() => {
+    if (!travellersLoaded || !accountEmail) return
+    setFormData((prev) => (prev.email ? prev : { ...prev, email: accountEmail }))
+    if (travellers.length) return
     const loadAuthenticatedUser = async () => {
       try {
         const supabase = createBrowserClient()
@@ -438,12 +476,12 @@ function ApplyPageContent() {
             phone: prev.phone || (user.user_metadata?.phone || ""),
           }))
         }
-      } catch (err) {
+      } catch {
         // Non-blocking
       }
     }
     loadAuthenticatedUser()
-  }, [])
+  }, [travellersLoaded, accountEmail, travellers.length])
 
   useEffect(() => {
     if (!isInitialized || isUpdatingUrl.current || !isMounted.current) return
@@ -497,6 +535,9 @@ function ApplyPageContent() {
             onNext={handleNext}
             onBack={handleBack}
             isLoading={isTransitioning}
+            travellers={travellers}
+            onPickTraveller={pickTraveller}
+            travellerNotice={travellerNotice}
           />
         )
       case "destination":

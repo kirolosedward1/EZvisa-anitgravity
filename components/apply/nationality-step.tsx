@@ -12,11 +12,16 @@ import {
   wizardFieldClass,
   wizardLabelClass,
 } from "@/components/apply/wizard-choices"
+import { TravellerSelect } from "@/components/apply/traveller-select"
 import { priceForTravellers } from "@/lib/currency"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
+import { TRAVELLER_NONE } from "@/lib/travellers-client"
+import type { Traveller } from "@/lib/shared/wizard-contract"
 import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
+import { UserRound } from "lucide-react"
 import { normalizePassport, toWesternDigits } from "@/lib/digits"
+import { isValidPhone } from "@/lib/phone"
 
 interface NationalityStepProps {
   formData: FormData
@@ -24,6 +29,12 @@ interface NationalityStepProps {
   onNext: () => void
   onBack: () => void
   isLoading?: boolean
+  /** Signed-in customer's saved travellers (lib/travellers.ts). Empty or absent: the drop-down is not shown. */
+  travellers?: Traveller[]
+  /** A saved traveller was picked (null = "Someone else"). The page fills the form (lib/travellers-client.ts). */
+  onPickTraveller?: (traveller: Traveller | null) => void
+  /** Shown when the picked traveller's nationality replaced the one chosen on the destination step. */
+  travellerNotice?: { nationality: string; nationalityAr?: string } | null
 }
 
 const fieldClass = cn(wizardFieldClass, "h-[52px]")
@@ -37,19 +48,6 @@ function isValidEmail(email: string) {
   if (!localPart || !domain.includes(".")) return false
   const invalidDomains = ["gmial.com", "yahooo.com", "hotmial.com", "gmai.com"]
   return !invalidDomains.includes(domain.toLowerCase())
-}
-
-function isValidPhone(phone: string) {
-  const digitsOnly = toWesternDigits(phone).replace(/[^\d]/g, "")
-  if (digitsOnly.length < 7 || digitsOnly.length > 15) return false
-  if (/^(\d)\1+$/.test(digitsOnly)) return false
-  if (digitsOnly.length >= 8) {
-    const sequential = digitsOnly
-      .split("")
-      .every((digit, index, arr) => index === 0 || Number.parseInt(digit) === Number.parseInt(arr[index - 1]) + 1)
-    if (sequential) return false
-  }
-  return true
 }
 
 /** The visible prefix is always +971. Digits are stored as "+971 5xxxxxxx". */
@@ -78,7 +76,7 @@ function localIso(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
 }
 
-export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading }: NationalityStepProps) {
+export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading, travellers = [], onPickTraveller, travellerNotice }: NationalityStepProps) {
   const [showErrors, setShowErrors] = useState(false)
   const [maxDob, setMaxDob] = useState("")
   const seeded = useRef(false)
@@ -146,6 +144,37 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
         helper="Enter details exactly as they appear in your passport."
         helperAr="أدخل البيانات كما تظهر في جواز سفرك."
       />
+
+      {travellers.length ? (
+        <div className="mb-7">
+          <TravellerSelect
+            travellers={travellers}
+            value={formData.travellerId ?? ""}
+            onChange={(t) => {
+              onPickTraveller?.(t)
+              setShowErrors(false)
+            }}
+            helper={{
+              en: "Pick a saved traveller to fill in the details below. You can still edit them.",
+              ar: "اختر مسافرًا محفوظًا لتعبئة البيانات أدناه. يمكنك تعديلها لاحقًا.",
+            }}
+          />
+          {formData.travellerId && formData.travellerId !== TRAVELLER_NONE ? (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[12px] font-medium text-primary" role="status">
+              <UserRound className="size-3.5" aria-hidden />
+              <LangText en="Filled from your saved travellers" ar="تمت التعبئة من المسافرين المحفوظين" />
+            </p>
+          ) : null}
+          {travellerNotice ? (
+            <p className="mt-3 rounded-[10px] bg-secondary px-3 py-2 text-[13px] leading-5 text-[#3A4150]" role="status">
+              <LangText
+                en={`Nationality updated to ${travellerNotice.nationality} from the saved traveller.`}
+                ar={`تم تحديث الجنسية إلى ${travellerNotice.nationalityAr || travellerNotice.nationality} من المسافر المحفوظ.`}
+              />
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-3">
         <div data-invalid={invalid("firstName")} className="min-w-0">

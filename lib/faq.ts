@@ -28,12 +28,12 @@ export const FAQ_EN: FaqItem[] = [
   },
   {
     question: "How much does it cost?",
-    answer: "249 AED, or 498 AED with an accompanying spouse. Embassy fees are separate and paid at your appointment.",
+    answer: "249 AED, or 498 AED with an accompanying spouse. Travel insurance is optional through us, and embassy and visa centre fees are paid separately at your appointment.",
   },
   {
     question: "What documents will I need?",
     answer:
-      "Passport, Emirates ID and UAE visa, a 35×45 mm photo, bank statements, a salary certificate or NOC if you're employed, and travel insurance.",
+      "Passport, Emirates ID and UAE visa, a 35945 mm photo, bank statements, and a salary certificate or NOC if you're employed. You also need travel insurance: bring your own policy or add one through us as an extra.",
   },
   {
     question: "Can I pay first and finish later?",
@@ -70,16 +70,16 @@ export const FAQ_AR: FaqItem[] = [
   },
   {
     question: "كم التكلفة؟",
-    answer: "249 درهمًا، أو 498 درهمًا مع الزوج/الزوجة المرافق. رسوم السفارة منفصلة وتُدفع في موعدك.",
+    answer: "249 درهمًا، أو 498 درهمًا مع الزوج/الزوجة المرافق. تأمين السفر اختياري عبرنا، ورسوم السفارة ومركز التأشيرات تُدفع منفصلة في موعدك.",
   },
   {
     question: "ما المستندات التي سأحتاجها؟",
     answer:
-      "جواز السفر، والهوية الإماراتية وتأشيرة الإمارات، وصورة 35×45 مم، وكشوف الحساب البنكي، وشهادة راتب أو عدم ممانعة إذا كنت موظفًا، وتأمين السفر.",
+      "جواز السفر، والهوية الإماراتية وتأشيرة الإمارات، وصورة 35945 مم، وكشوف الحساب البنكي، وشهادة راتب أو عدم ممانعة إذا كنت موظفًا. تحتاج أيضًا إلى تأمين سفر: أحضر وثيقتك أو أضفها عبرنا مقابل رسوم إضافية.",
   },
   {
     question: "هل يمكنني الدفع أولًا والإكمال لاحقًا؟",
-    answer: "نعم. بعد الدفع، افتح «متابعة الطلب» لإضافة بقية بياناتك، ثم ارفع مستنداتك.",
+    answer: "نعم. بعد الدفع، افتح 9متابعة الطلب9 لإضافة بقية بياناتك، ثم ارفع مستنداتك.",
   },
   {
     question: "كم يستغرق تجهيز الطلب؟",

@@ -1,5 +1,6 @@
 import { LangText } from "@/components/lang-text"
 import { LocaleLink } from "@/components/locale-link"
+import { WHATSAPP_DISPLAY } from "@/lib/contact"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
@@ -12,17 +13,17 @@ export const metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <main className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <SiteHeader forceBackground={true} />
       <InnerHero
         badge={<LangText en="Legal" ar="قانوني" />}
         title={<LangText en="Terms of Service" ar="شروط الخدمة" />}
         description={<LangText en="Last updated: January 7, 2026" ar="آخر تحديث: 7 يناير 2026" />}
-        gradientType="default"
+        variant="plain"
       />
-      <div className="container mx-auto px-6 py-12 max-w-4xl">
+      <div className="container mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:py-16">
 
-        <div className="prose prose-gray max-w-none space-y-8">
+        <div className="legal-copy">
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-4"><LangText en="1. Agreement to Terms" ar="1. الموافقة على الشروط" /></h2>
             <p className="text-muted-foreground leading-relaxed">
@@ -134,15 +135,15 @@ export default function TermsOfServicePage() {
             <p className="text-muted-foreground leading-relaxed">
               <LangText en="For questions about these Terms of Service, please contact us at:" ar="للاستفسارات حول شروط الخدمة هذه، يرجى التواصل معنا عبر:" />
             </p>
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 rounded-2xl bg-secondary/60 p-5">
               <p className="text-foreground font-medium"><LangText en="EZvisa" ar="إيزي فيزا" /></p>
               <p className="text-muted-foreground"><LangText en="Email:" ar="البريد الإلكتروني:" /> <span dir="ltr">info@ezvisa.net</span></p>
-              <p className="text-muted-foreground"><LangText en="WhatsApp:" ar="واتساب:" /> <span dir="ltr">+971 54 710 9533</span></p>
+              <p className="text-muted-foreground"><LangText en="WhatsApp:" ar="واتساب:" /> <span dir="ltr">{WHATSAPP_DISPLAY}</span></p>
             </div>
           </section>
         </div>
       </div>
       <Footer />
-    </main>
+    </div>
   )
 }

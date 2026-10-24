@@ -29,6 +29,8 @@ export type Notes = {
   lastEditedOn?: string;
   /** ISO time the app submitted the case (recorded at submit; drafts are created earlier, so created_at is not it). */
   submittedAt?: string;
+  /** public.travellers rows the main applicant / the spouse were filled from (lib/travellers.ts), if any. */
+  travellerId?: string; spouseTravellerId?: string;
 };
 export type Application = VisaRow & {
   status: AppStatus; reference: string; country_id: string | null;

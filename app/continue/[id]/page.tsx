@@ -29,6 +29,9 @@ function savedAnswers(app: VisaApplication): Partial<FormData> {
     destination: app.destination_country || wizard.destination || "",
     spouseAccompanying: notes.spouseAccompanying === "yes" || wizard.spouseAccompanying === "yes" ? "yes" : "no",
     employmentStatus: (wizard.employmentStatus || notes.employmentStatus || "") as FormData["employmentStatus"],
+    // Saved travellers the wizard / spouse step were filled from (the spouse drop-down leaves the main applicant out).
+    travellerId: typeof notes.travellerId === "string" ? notes.travellerId : "",
+    spouseTravellerId: typeof notes.spouseTravellerId === "string" ? notes.spouseTravellerId : "",
   }
 }
 

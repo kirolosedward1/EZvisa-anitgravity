@@ -5,7 +5,7 @@ import { PayNowButton } from "@/components/dashboard/pay-now-button"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { detailsMissing, getDocumentProgress, isPaid, type Stage } from "@/lib/application-status"
 import { PREPARATION_TIME } from "@/lib/copy"
-import { getCaseTrackingWhatsAppUrl, getDocumentHelpWhatsAppUrl } from "@/lib/whatsapp"
+import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
 export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stage }) {
@@ -30,22 +30,14 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
       case "documents":
         return {
           title: `Upload ${missing.length} remaining document${missing.length === 1 ? "" : "s"}`,
-          body: `Still needed: ${missing.map((doc) => doc.label.toLowerCase()).join(", ")}. Upload them here or send them on WhatsApp.`,
+          body: `Still needed: ${missing.map((doc) => doc.label.toLowerCase()).join(", ")}. Upload them on the website or in the EZvisa app.`,
           actions: (
-            <>
-              <Button asChild className="rounded-full px-5">
-                <Link href={`/track/${token}/upload?type=${missing[0]?.uploadType ?? ""}`}>
-                  <Upload />
-                  Upload documents
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="rounded-full px-5">
-                <a href={getDocumentHelpWhatsAppUrl(app.id || token)} target="_blank" rel="noopener noreferrer">
-                  <WhatsAppIcon className="size-4" />
-                  Send on WhatsApp
-                </a>
-              </Button>
-            </>
+            <Button asChild className="rounded-full px-5">
+              <Link href={`/track/${token}/upload?type=${missing[0]?.uploadType ?? ""}`}>
+                <Upload />
+                Upload documents
+              </Link>
+            </Button>
           ),
         }
       case "review":
@@ -90,7 +82,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
       case "rejected":
         return {
           title: "Let's talk about your application",
-          body: "This application needs attention from our team. Message us and a specialist will walk you through your options.",
+          body: "Message us and a visa specialist will go through the refusal letter with you and explain your options, including reapplying.",
           actions: (
             <Button asChild className="rounded-full px-5">
               <a href={getCaseTrackingWhatsAppUrl(app.id || token, app.destination_country)} target="_blank" rel="noopener noreferrer">

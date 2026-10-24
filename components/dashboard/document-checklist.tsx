@@ -2,11 +2,22 @@ import Link from "next/link"
 import { Check, Upload } from "lucide-react"
 import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashboard-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
-import { getDocumentProgress, REQUIRED_DOCUMENTS } from "@/lib/application-status"
+import { getDocumentProgress, getStage, isPaid, REQUIRED_DOCUMENTS } from "@/lib/application-status"
+import { DOC_FLAG, REQUIREMENTS, parseNotes, requiredFlags } from "@/lib/shared/wizard-contract"
+import { DocumentUploadPanel } from "@/components/dashboard/document-upload-panel"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
 export function DocumentChecklist({ app }: { app: VisaApplication }) {
   const token = app.tracking_token ?? ""
+  // While documents are still being collected, each row uploads directly (same rows as the upload desk and the app).
+  const stage = getStage(app)
+  if (token && isPaid(app) && (stage === "documents" || stage === "review")) {
+    const notes = parseNotes(app.additional_notes)
+    const needed = requiredFlags(notes.wizard?.employmentStatus ?? notes.employmentStatus)
+    const rows = REQUIREMENTS.filter((r) => !r.provided_by_ezvisa && needed.includes(DOC_FLAG[r.document_type]))
+    const status = Object.fromEntries(needed.map((flag) => [flag, !!app[flag]]))
+    return <DocumentUploadPanel token={token} rows={rows} status={status} />
+  }
   const { received, total } = getDocumentProgress(app)
   const percent = Math.round((received / total) * 100)
 

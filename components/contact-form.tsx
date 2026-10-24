@@ -47,18 +47,7 @@ export function ContactForm() {
   }
 
   return (
-    <div className="relative overflow-hidden">
-      {/* Low-opacity dot grid pattern decoration */}
-      <div
-        className="absolute inset-0 opacity-[0.12] pointer-events-none"
-        style={{
-          backgroundImage: "none",
-          backgroundSize: "24px 24px",
-          maskImage: "none",
-          WebkitMaskImage: "none",
-        }}
-      />
-
+    <div className="relative">
       <AnimatePresence mode="wait">
         {!isSuccess ? (
           <motion.div
@@ -68,9 +57,9 @@ export function ContactForm() {
             exit={{ opacity: 0 }}
             className="relative z-10"
           >
-            <h2 className="text-2xl font-semibold mb-2 text-primary">Send us a message</h2>
-            <p className="text-sm text-muted-foreground mb-8 font-medium">
-              Fill out the form below and one of our visa coordinators will get in touch with you shortly.
+            <h2 className="panel-title panel-title-lg mb-1.5 text-foreground">Send us a message</h2>
+            <p className="mb-8 text-sm text-muted-foreground">
+              We reply by email. For anything about an application you&apos;ve started, include your EZ- reference.
             </p>
 
             {isError && (
@@ -85,9 +74,9 @@ export function ContactForm() {
                 <div className="flex flex-col gap-1">
                   <Label
                     htmlFor="name"
-                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
+                    className="text-sm font-medium text-foreground"
                   >
-                    Full Name
+                    Full name
                   </Label>
                   <Input
                     id="name"
@@ -98,15 +87,15 @@ export function ContactForm() {
                     disabled={isSubmitting}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
+                    className="h-12 rounded-xl border border-border bg-background px-4 text-base text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
                   />
                 </div>
                 <div className="flex flex-col gap-1">
                   <Label
                     htmlFor="email"
-                    className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
+                    className="text-sm font-medium text-foreground"
                   >
-                    Email Address
+                    Email
                   </Label>
                   <Input
                     id="email"
@@ -117,7 +106,7 @@ export function ContactForm() {
                     disabled={isSubmitting}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
+                    className="h-12 rounded-xl border border-border bg-background px-4 text-base text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
                   />
                 </div>
               </div>
@@ -125,7 +114,7 @@ export function ContactForm() {
               <div className="flex flex-col gap-1">
                 <Label
                   htmlFor="subject"
-                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
+                  className="text-sm font-medium text-foreground"
                 >
                   Subject
                 </Label>
@@ -137,16 +126,16 @@ export function ContactForm() {
                   disabled={isSubmitting}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="h-14 rounded-xl border border-border/80 bg-background/50 px-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
+                  className="h-12 rounded-xl border border-border bg-background px-4 text-base text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
                 <Label
                   htmlFor="message"
-                  className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/80 mb-2 block"
+                  className="text-sm font-medium text-foreground"
                 >
-                  Your Message
+                  Message
                 </Label>
                 <Textarea
                   id="message"
@@ -156,7 +145,7 @@ export function ContactForm() {
                   rows={5}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="rounded-xl border border-border/80 bg-background/50 p-4 text-base font-medium text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
+                  className="rounded-xl border border-border bg-background p-4 text-base text-foreground transition-all duration-300 placeholder:text-muted-foreground/60 hover:border-primary/50 hover:bg-background focus:border-primary/80 focus:bg-background focus:ring-4 focus:ring-primary/20 focus:outline-none shadow-xs"
                 />
               </div>
 
@@ -164,7 +153,7 @@ export function ContactForm() {
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="w-full md:w-auto px-8 h-12 rounded-xl font-semibold bg-primary hover:bg-primary/95 text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-primary/35 hover:-translate-y-0.5 transition-all cursor-pointer inline-flex items-center justify-center gap-2"
+                className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-8 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:w-auto"
               >
                 {isSubmitting ? (
                   <>
@@ -174,7 +163,7 @@ export function ContactForm() {
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Send Message
+                    Send message
                   </>
                 )}
               </Button>
@@ -188,12 +177,12 @@ export function ContactForm() {
             exit={{ opacity: 0, scale: 0.95 }}
             className="relative z-10 flex flex-col items-center justify-center py-12 text-center"
           >
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-6">
-              <CheckCircle2 className="w-10 h-10" />
+            <div className="mb-6 flex size-14 items-center justify-center rounded-full bg-success/10 text-success">
+              <CheckCircle2 className="size-7" aria-hidden="true" />
             </div>
-            <h3 className="text-2xl font-semibold text-foreground mb-3">Message Sent!</h3>
-            <p className="text-sm text-muted-foreground max-w-md mb-8 leading-relaxed font-medium">
-              Thank you for reaching out, <span className="text-foreground font-semibold">{name}</span>. One of our visa coordinators will review your query and get back to you at <span className="text-foreground font-semibold">{email}</span> within 2 hours.
+            <h3 className="panel-title panel-title-lg mb-2 text-foreground">Message sent</h3>
+            <p className="mb-8 max-w-md text-sm leading-relaxed text-muted-foreground">
+              Thanks, <span className="font-medium text-foreground">{name}</span>. A visa specialist will reply to <span className="font-medium text-foreground">{email}</span>. If it&apos;s urgent, message us on WhatsApp.
             </p>
             <Button
               onClick={() => {
@@ -204,7 +193,7 @@ export function ContactForm() {
                 setMessage("")
               }}
               variant="outline"
-              className="rounded-xl border-border hover:bg-muted font-semibold text-sm h-12 px-6"
+              className="h-12 rounded-full px-6 text-sm font-semibold"
             >
               Send another message
             </Button>

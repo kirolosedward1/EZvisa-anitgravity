@@ -12,9 +12,12 @@ import {
   TRIP_LENGTHS,
 } from "@/lib/dates"
 import { isPaid } from "@/lib/application-status"
+import { UUID_RE } from "@/lib/applications"
+import { rememberTravellersFromApplication } from "@/lib/travellers"
 import { sanitizeInput } from "@/lib/sanitize"
 import { canonicalSchengenCountry } from "@/lib/countries"
 import { toWesternDigits, normalizePassport } from "@/lib/digits"
+import { hasInvalidPhone } from "@/lib/phone"
 
 // Arabic/Persian digits typed on the client become Western before validation and saving (Western input unchanged).
 const DIGIT_FIELDS = ["phone", "dateOfBirth", "travelStartDate", "travelEndDate", "travelMonth", "tripLength", "employmentStartDate"]
@@ -55,6 +58,9 @@ const bad = (error: string) => NextResponse.json({ error }, { status: 400 })
 
 export async function POST(request: Request) {
   const body = normalizeDigits(await request.json().catch(() => ({})))
+  if (hasInvalidPhone(body.phone)) {
+    return NextResponse.json({ success: false, message: "Enter a valid phone number." }, { status: 400 })
+  }
   const id = typeof body.id === "string" ? body.id : ""
   if (!id) return NextResponse.json({ error: "Missing application" }, { status: 400 })
   // Demo sandbox rows live in code (lib/demo-data): nothing to save, and no Supabase session.
@@ -158,6 +164,10 @@ export async function POST(request: Request) {
   }
   wizard.lastEditedOn = "website"
   notes.wizard = wizard
+  // The saved traveller the spouse was picked from ("Who is travelling?" on the spouse step), if any.
+  const spouseTravellerId = typeof body.spouseTravellerId === "string" && UUID_RE.test(body.spouseTravellerId) ? body.spouseTravellerId : ""
+  if (spouseTravellerId) notes.spouseTravellerId = spouseTravellerId
+  else if (body.spouseTravellerId === null) delete notes.spouseTravellerId
 
   const patch: Record<string, string | number> = { additional_notes: JSON.stringify(notes) }
   if (passportNumber) patch.passport_number = passportNumber
@@ -177,5 +187,7 @@ export async function POST(request: Request) {
   if (!saved?.length) {
     return NextResponse.json({ error: "This application can no longer be edited here. Please contact support." }, { status: 409 })
   }
+  // The case is paid: an updated passport number or a newly named spouse goes to the account's saved travellers.
+  await rememberTravellersFromApplication({ ...app, email, passport_number: passportNumber || app.passport_number, additional_notes: JSON.stringify(notes) })
   return NextResponse.json({ ok: true })
 }

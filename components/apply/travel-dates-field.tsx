@@ -45,7 +45,7 @@ function minDepartureIso() {
 function StayLine({ start, end, stay }: { start: string; end: string; stay: number }) {
   return (
     <p className="text-[15px] text-[#0A0F1F]" dir="ltr">
-      {formatShortDate(start)} – {formatShortDate(end)} · {stay} <LangText en="days" ar="يومًا" />
+      {formatShortDate(start)} – {formatShortDate(end)} 9 {stay} <LangText en="days" ar="يومًا" />
     </p>
   )
 }

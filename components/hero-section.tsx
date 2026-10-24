@@ -11,6 +11,7 @@ import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { LangText } from "@/components/lang-text"
 import { SCHENGEN_META } from "@/lib/countries"
 import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
@@ -163,16 +164,21 @@ export function HeroSection() {
 
           {/* Content Wrapper */}
           <div className="relative z-10 w-full flex flex-col items-center">
-            {/* Plain intro line (replaced the removed rating badge) */}
-            <motion.p variants={itemVariants} className="mb-5 text-sm text-white/90">
-              <LangText en="Schengen visa application preparation from the UAE" ar="تجهيز طلبات تأشيرة شنغن من الإمارات" />
-            </motion.p>
+            {/* Trust badge */}
+            <motion.div 
+              variants={itemVariants} 
+              className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl text-xs font-semibold text-primary-foreground cursor-default"
+            >
+              <span className="tracking-wide uppercase text-[10px] font-semibold text-primary-foreground">
+                <LangText en="For UAE residents 9 All 29 Schengen countries" ar="للمقيمين في الإمارات 9 جميع دول شنغن الـ٢٩" />
+              </span>
+            </motion.div>
 
             {/* Headline */}
             <motion.h1 variants={itemVariants} className="hero-copy max-w-4xl text-balance text-white">
               <LangText
-                en={<>Get your Schengen visa application ready, the <span className="text-[#0436DC]">easy</span> way.</>}
-                ar={<>جهّز طلب تأشيرة شنغن، <span className="text-[#0436DC]">بسهولة.</span></>}
+                en={<>Your Schengen visa file, prepared <span className="text-[#0436DC]">for you.</span></>}
+                ar={<>ملف تأشيرة شنغن، نجهّزه <span className="text-[#0436DC]">لك.</span></>}
               />
             </motion.h1>
 
@@ -358,8 +364,8 @@ export function HeroSection() {
                             </div>
                             <p className="text-xs md:text-sm text-primary-foreground/80 mt-0.5 leading-relaxed">
                               <LangText
-                                en="Let's prepare your full visa dossier. We check everything (cover letter, reservations and itinerary) before you submit."
-                                ar="لنجهّز ملف التأشيرة كاملًا. نراجع كل شيء (خطاب التغطية والحجوزات وخط السير) قبل التقديم."
+                                en="We fill in your application form and prepare your cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days."
+                                ar="نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال ١–٢ يوم."
                               />
                             </p>
                           </div>
@@ -377,7 +383,7 @@ export function HeroSection() {
             <motion.div variants={itemVariants} className="mt-6 w-full max-w-3xl flex flex-wrap justify-center gap-2 sm:gap-4 lg:gap-6 font-medium text-primary-foreground mx-auto">
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
                 <ShieldCheck className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
-                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="Full refund before we start" ar="استرداد كامل قبل بدء التجهيز" /></span>
+                <span className="text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="Checked by a visa specialist" ar="يراجعه مختص تأشيرات" /></span>
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
@@ -385,7 +391,7 @@ export function HeroSection() {
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
                 <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
-                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en="All-Inclusive File" ar="ملف شامل" /></span>
+                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en={`${PRICE_AED} AED, one flat fee`} ar={`${PRICE_AED} درهمًا، رسوم ثابتة`} /></span>
               </div>
             </motion.div>
           </motion.div>

@@ -22,11 +22,11 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.ezvisa.net"),
   title: {
-    default: "EZvisa - Schengen Visa Application Service UAE",
+    default: "EZvisa | Schengen Visa Application Service for UAE Residents",
     template: "%s | EZvisa",
   },
   description:
-    "Get your Schengen visa application ready, the easy way. EZvisa prepares your complete visa file for 29 European countries: forms, cover letter, itinerary and reservations. Starting from 249 AED.",
+    "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
   keywords: [
     "Schengen visa",
     "tourist visa Europe",
@@ -53,9 +53,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "EZvisa - Get Your Schengen Visa Application Ready",
+    title: "EZvisa | Schengen Visa Application Service for UAE Residents",
     description:
-      "Schengen visa application preparation for 29 European countries: forms, cover letter, itinerary and reservations. From 249 AED.",
+      "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
     url: "https://www.ezvisa.net/",
     siteName: "EZvisa",
     locale: "en_US",
@@ -71,9 +71,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "EZvisa - Get Your Schengen Visa Application Ready",
+    title: "EZvisa | Schengen Visa Application Service for UAE Residents",
     description:
-      "We prepare your complete Schengen visa file for 29 European countries. From 249 AED.",
+      "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED.",
     images: ["https://www.ezvisa.net/images/logo-main.png"],
     creator: "@ezvisa",
   },
