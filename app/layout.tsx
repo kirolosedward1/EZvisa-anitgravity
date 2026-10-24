@@ -10,6 +10,9 @@ import { NavigationProgressBar } from "@/components/navigation-progress"
 import { PageTransition } from "@/components/page-transition"
 import { LocaleDirection } from "@/components/locale-direction"
 import { LocaleProvider } from "@/components/locale-provider"
+import { formatAedLabel } from "@/lib/currency"
+import { ltr } from "@/lib/bidi"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { CrispVisibility } from "@/components/crisp-visibility"
 import Script from "next/script"
 import "./globals.css"
@@ -30,14 +33,22 @@ const plexArabic = IBM_Plex_Sans_Arabic({
   preload: false,
 })
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const arabic = (await headers()).get("x-ez-locale") === "ar"
+  const price = formatAedLabel(PRICE_AED, arabic ? "ar" : "en")
+  const description = arabic
+    ? `طلبات تأشيرة شنغن يجهّزها مختصون للمقيمين في الإمارات: نموذج الطلب وخطاب التغطية وبرنامج يومي وحجوزات الطيران والفندق. جاهز خلال ${ltr("1–2")} يوم مقابل ${price}.`
+    : "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED."
+  const twitterDescription = arabic
+    ? `ملف تأشيرة شنغن يجهّزه مختصون خلال ${ltr("1–2")} يوم: النموذج وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. ${price}.`
+    : "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED."
+  return {
   metadataBase: new URL("https://www.ezvisa.net"),
   title: {
-    default: "EZvisa | Schengen Visa Application Service for UAE Residents",
+    default: arabic ? "EZvisa | خدمة طلب تأشيرة شنغن للمقيمين في الإمارات" : "EZvisa | Schengen Visa Application Service for UAE Residents",
     template: "%s | EZvisa",
   },
-  description:
-    "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
+  description,
   keywords: [
     "Schengen visa",
     "tourist visa Europe",
@@ -64,12 +75,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "EZvisa | Schengen Visa Application Service for UAE Residents",
-    description:
-      "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
+    title: arabic ? "EZvisa | خدمة طلب تأشيرة شنغن للمقيمين في الإمارات" : "EZvisa | Schengen Visa Application Service for UAE Residents",
+    description,
     url: "https://www.ezvisa.net/",
     siteName: "EZvisa",
-    locale: "en_US",
+    locale: arabic ? "ar" : "en_US",
     type: "website",
     images: [
       {
@@ -82,9 +92,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "EZvisa | Schengen Visa Application Service for UAE Residents",
-    description:
-      "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED.",
+    title: arabic ? "EZvisa | خدمة طلب تأشيرة شنغن للمقيمين في الإمارات" : "EZvisa | Schengen Visa Application Service for UAE Residents",
+    description: twitterDescription,
     images: ["https://www.ezvisa.net/images/logo-main.png"],
     creator: "@ezvisa",
   },
@@ -104,6 +113,7 @@ export const metadata: Metadata = {
   // engines those pages duplicate the homepage. Each indexable page sets its own (the homepage in app/page.tsx).
   // (The placeholder site-verification codes were removed: they published meaningless meta tags.)
   generator: 'v0.app'
+  }
 }
 
 export const viewport: Viewport = {
