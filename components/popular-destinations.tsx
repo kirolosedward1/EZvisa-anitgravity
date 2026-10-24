@@ -4,6 +4,7 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import { destinations } from "@/lib/destinations"
 import { DestinationCard } from "@/components/destinations-catalog"
+import { LangText } from "@/components/lang-text"
 
 /** The five most requested countries, with the same photo card as /destinations. */
 export function PopularDestinations() {
@@ -14,14 +15,14 @@ export function PopularDestinations() {
       <div className="container mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div className="flex flex-col items-start gap-3">
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Top Travel Spots</span>
-            <h2 className="text-foreground">Popular Destinations</h2>
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><LangText en="Top Travel Spots" ar="أبرز الوجهات" /></span>
+            <h2 className="text-foreground"><LangText en="Popular Destinations" ar="وجهات شائعة" /></h2>
           </div>
           <Link
             href="/destinations"
             className="group inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary md:self-auto"
           >
-            View All Destinations
+            <LangText en="View All Destinations" ar="عرض كل الوجهات" />
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
           </Link>
         </div>

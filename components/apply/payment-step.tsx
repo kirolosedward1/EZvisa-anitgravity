@@ -2,16 +2,35 @@
 
 import { useState, useEffect, useRef, type ReactNode } from "react"
 import { LangText } from "@/components/lang-text"
+import { useSiteLocale } from "@/components/locale-provider"
+import { Msg } from "@/components/msg"
+import type { MessageKey } from "@/messages"
 import { LocaleLink } from "@/components/locale-link"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { WizardQuestion } from "@/components/apply/wizard-choices"
 import { getReference } from "@/lib/application-status"
-import { CURRENCIES, priceForTravellers } from "@/lib/currency"
+import { CURRENCIES, applicantCount, formatAedLabel, priceForTravellers } from "@/lib/currency"
+import { message } from "@/messages"
+import { submitBody } from "@/lib/application-notes"
 import { SCHENGEN_META } from "@/lib/countries"
-import { citizenshipName } from "@/lib/nationalities"
+import { citizenshipName, citizenshipNameAr } from "@/lib/nationalities"
 import { trackEvent } from "@/lib/analytics"
 import type { FormData } from "@/lib/form-types"
 import { CHECKOUT_STORAGE_KEY } from "@/lib/wizard-storage"
+
+const KNOWN_ERRORS: Record<string, MessageKey> = {
+  "Your previous payment was not completed. Please try again.": "apply.paymentIncomplete",
+  "An application with these details was just submitted. Please wait a few minutes before starting another one.": "apply.errDuplicate",
+  "Failed to save application. Please try again.": "apply.errSave",
+  "Failed to generate payment link. Please try again.": "apply.errPayLink",
+  "Ziina didn't open within 20 seconds. Check your connection and retry.": "apply.errTimeout",
+  "An unexpected error occurred. Please try again.": "apply.errUnexpected",
+}
+
+function KnownError({ text }: { text: string }) {
+  const id = KNOWN_ERRORS[text]
+  return id ? <Msg id={id} /> : text
+}
 
 interface PaymentStepProps {
   formData: FormData
@@ -80,6 +99,7 @@ function HandoffRing() {
 }
 
 export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, paymentError }: PaymentStepProps) {
+  const locale = useSiteLocale()
   const [isProcessing, setIsProcessing] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [applicationId, setApplicationId] = useState<string | null>(null)
@@ -96,7 +116,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
     }
   }, [])
 
-  const paymentAmount = priceForTravellers(formData.spouseAccompanying)
+  const paymentAmount = priceForTravellers(formData.spouseAccompanying, formData.travelingWith)
   const reference = getReference(trackingToken)
   const laterHref = applicationId ? `/dashboard?id=${applicationId}&pay=1#pay` : "/dashboard"
   const shownError = submitError || paymentError
@@ -133,8 +153,8 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
           },
           body: JSON.stringify(
             stale && remembered?.trackingToken
-              ? { ...formData, replaceApplicationId: remembered.applicationId, replaceTrackingToken: remembered.trackingToken }
-              : formData,
+              ? { ...submitBody(formData), replaceApplicationId: remembered.applicationId, replaceTrackingToken: remembered.trackingToken }
+              : submitBody(formData),
           ),
           signal: controller.signal,
         })
@@ -170,7 +190,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify(formData),
+              body: JSON.stringify(submitBody(formData)),
             })
           } catch (hubspotError) {
             console.error("HubSpot lead creation failed:", hubspotError)
@@ -245,9 +265,12 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
 
   const country = formData.destination?.trim() || ""
   const countryAr = (country && SCHENGEN_META[country]?.ar) || country
-  const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
   const nationality = citizenshipName(formData.nationality)
-  const travellerBits = [travellerName, formData.passportNumber?.trim(), formData.spouseAccompanying === "yes" ? "with spouse" : ""].filter(Boolean)
+  const nationalityAr = citizenshipNameAr(formData.nationality) || nationality
+  const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
+  const passport = formData.passportNumber?.trim()
+  const withSpouse = applicantCount(formData.spouseAccompanying, formData.travelingWith) > 1
+  const travellerLine = [travellerName, passport].filter(Boolean).join(" · ")
 
   return (
     <div>
@@ -259,19 +282,36 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
       />
 
       <ReviewRow label="Destination" labelAr="الوجهة" onEdit={onEditTrip}>
-        {country ? <LangText en={country} ar={countryAr} /> : "—"}
-        {nationality ? ` · ${nationality} passport` : ""}
+        {country ? <LangText en={country} ar={countryAr} /> : <Msg id="summary.yourTrip" />}
+        {nationality ? (
+          <>
+            {" · "}
+            <Msg id="review.nationalityPassport" values={{ name: nationality }} valuesAr={{ name: nationalityAr }} />
+          </>
+        ) : null}
       </ReviewRow>
 
       <ReviewRow label="Traveller" labelAr="المسافر" onEdit={onEditTraveller}>
-        {travellerBits.length ? travellerBits.join(" · ") : "—"}
+        {travellerLine ? travellerLine : <Msg id="summary.yourTrip" />}
+      </ReviewRow>
+
+      <ReviewRow
+        label={message("en", "review.travellers")}
+        labelAr={message("ar", "review.travellers")}
+        onEdit={onEditTraveller}
+      >
+        <Msg id={withSpouse ? "review.travellersWithSpouse" : "review.travellersSolo"} />
       </ReviewRow>
 
       <div className="flex items-center justify-between border-t border-[#E3E7EF] py-[18px] text-[16px] font-semibold text-[#0A0F1F]">
         <span>
           <LangText en="Total" ar="المجموع" />
         </span>
-        <span dir="ltr">{paymentAmount} AED</span>
+        {locale === "ar" ? (
+          <span dir="ltr">{formatAedLabel(paymentAmount, locale)}</span>
+        ) : (
+          formatAedLabel(paymentAmount, locale)
+        )}
       </div>
 
       <p className="mt-5 text-[13px] leading-relaxed text-[#5B6475]">
@@ -283,7 +323,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
 
       {shownError && !isProcessing ? (
         <div className="mt-5 rounded-[10px] border border-[#B83200]/30 bg-[#FFFFFF] p-4" role="alert">
-          <p className="text-[13px] leading-5 text-[#B83200]">{shownError}</p>
+          <p className="text-[13px] leading-5 text-[#B83200]"><KnownError text={shownError} /></p>
           <div className="mt-3 flex flex-wrap gap-3">
             <button
               type="button"

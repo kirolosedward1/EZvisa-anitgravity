@@ -13,6 +13,7 @@ import { WizardBar } from "@/components/apply/wizard-bar"
 import { ChoiceList, ChoiceRow, FieldError, WizardQuestion, wizardFieldClass, wizardLabelClass } from "@/components/apply/wizard-choices"
 import { TravellerSelect } from "@/components/apply/traveller-select"
 import { LangText } from "@/components/lang-text"
+import { useMessage } from "@/components/use-message"
 import { normalizePassport } from "@/lib/digits"
 import { cn } from "@/lib/utils"
 import type { DetailStep } from "@/lib/application-status"
@@ -83,6 +84,7 @@ export function ContinueForm({
   initial: Partial<FormData>
 }) {
   const router = useRouter()
+  const passportPlaceholder = useMessage("apply.passportPlaceholderN")
   const [index, setIndex] = useState(0)
   const [tripScreen, setTripScreen] = useState(0)
   const [form, setForm] = useState<Partial<FormData>>({ ...EMPTY, ...initial })
@@ -221,7 +223,7 @@ export function ContinueForm({
               title="Do you have a valid passport?"
               titleAr="هل لديك جواز سفر ساري المفعول؟"
               helper="It should be valid for at least 3 months after you return."
-              helperAr="يجب أن يكون صالحًا لمدة ٣ أشهر على الأقل بعد عودتك."
+              helperAr="يجب أن يكون صالحًا لمدة 3 أشهر على الأقل بعد عودتك."
             />
             <ChoiceList label="Valid passport">
               <ChoiceRow
@@ -251,7 +253,7 @@ export function ContinueForm({
                   value={form.passportNumber || ""}
                   onChange={(event) => { update({ passportNumber: normalizePassport(event.target.value) }); setPassportErrors(false) }}
                   inputMode="text"
-                  placeholder="e.g. N1234567"
+                  placeholder={passportPlaceholder}
                   autoCapitalize="characters"
                   autoCorrect="off"
                   spellCheck={false}

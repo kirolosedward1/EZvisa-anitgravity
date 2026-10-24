@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Check, MessageCircle, Smartphone } from "lucide-react"
 
 import { SiteHeader } from "@/components/site-header"
+import { LangText } from "@/components/lang-text"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { AppFaq } from "@/components/app/app-faq"
@@ -106,7 +107,7 @@ export default function AppPage() {
                       hero.delay1,
                     )}
                   >
-                    Your Schengen visa application, on your phone.
+                    <LangText en="Your Schengen visa application, on your phone." ar="طلب تأشيرة شنغن، على هاتفك." />
                   </h1>
                   <p className={cn("max-w-md text-lg leading-relaxed text-muted-foreground", hero.enter, hero.delay2)}>
                     Start an application, pay {PRICE_LABEL} when it&apos;s ready, add your documents and follow its
@@ -138,7 +139,7 @@ export default function AppPage() {
                 <SectionHeading
                   id="app-walkthrough-heading"
                   chip="How the app works"
-                  title="Apply, pay, upload, track."
+                  title={<LangText en="Apply, pay, upload, track." ar="قدّم، ادفع، ارفع، وتابع." />}
                   lede="One question per screen, in the order our experts need the answers, saved as you go."
                 />
               </Reveal>
@@ -154,7 +155,7 @@ export default function AppPage() {
                   <SectionHeading
                     id="app-status-heading"
                     chip="Status tracking"
-                    title="The same status our team sees."
+                    title={<LangText en="The same status our team sees." ar="نفس الحالة التي يراها فريقنا." />}
                     lede="Your application moves through fixed stages. Each one is stamped with the time it happened, and appointment details appear as soon as our staff enter them."
                   />
                 </Reveal>
@@ -191,7 +192,7 @@ export default function AppPage() {
                 <SectionHeading
                   id="app-handoff-heading"
                   chip="Website and app"
-                  title="Start on ezvisa.net. Finish on your phone."
+                  title={<LangText en="Start on ezvisa.net. Finish on your phone." ar="ابدأ على ezvisa.net. وأكمل على هاتفك." />}
                   lede="The website and the app share one account and one backend. An application you start in a browser is waiting in the app at the same question, and the other way round."
                   align="center"
                 />
@@ -209,7 +210,7 @@ export default function AppPage() {
                   <SectionHeading
                     id="app-details-heading"
                     chip="Also in the app"
-                    title="Things you'd only notice if they were missing."
+                    title={<LangText en="Things you'd only notice if they were missing." ar="تفاصيل لن تلاحظها إلا إذا غابت." />}
                   />
                 </Reveal>
               </div>
@@ -225,7 +226,7 @@ export default function AppPage() {
           <section className="border-t border-border bg-secondary py-20 md:py-28" aria-labelledby="app-faq-heading">
             <div className="container mx-auto flex max-w-3xl flex-col gap-10 px-4 sm:px-6">
               <Reveal>
-                <SectionHeading id="app-faq-heading" title="Common questions" align="center" />
+                <SectionHeading id="app-faq-heading" title={<LangText en="Common questions" ar="أسئلة شائعة" />} align="center" />
               </Reveal>
               <Reveal delay={0.05}>
                 <AppFaq faqs={FAQS} />

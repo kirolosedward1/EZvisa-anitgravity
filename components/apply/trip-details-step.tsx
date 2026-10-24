@@ -7,7 +7,7 @@ import { BriefcaseBusiness, CircleEllipsis, GraduationCap, Plus, Stethoscope, Tr
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
-import { datesInOrder, formatDisplayDate, isValidCalendarDate, schengenStayDays } from "@/lib/dates"
+import { datesInOrder, formatDisplayDate, formatPageDate, isValidCalendarDate, schengenStayDays } from "@/lib/dates"
 import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import { TravelDatesField } from "@/components/apply/travel-dates-field"
 import { WizardBar } from "@/components/apply/wizard-bar"
@@ -50,9 +50,9 @@ const companions = [
 ]
 
 const hotels = [
-  { value: "3-star", en: "3-star hotel", ar: "فندق ٣ نجوم", desc: "A mid-range hotel.", descAr: "فندق متوسط." },
-  { value: "4-star", en: "4-star hotel", ar: "فندق ٤ نجوم", desc: "A premium hotel.", descAr: "فندق مميز." },
-  { value: "5-star", en: "5-star hotel", ar: "فندق ٥ نجوم", desc: "A luxury hotel.", descAr: "فندق فاخر." },
+  { value: "3-star", en: "3-star hotel", ar: "فندق 3 نجوم", desc: "A mid-range hotel.", descAr: "فندق متوسط." },
+  { value: "4-star", en: "4-star hotel", ar: "فندق 4 نجوم", desc: "A premium hotel.", descAr: "فندق مميز." },
+  { value: "5-star", en: "5-star hotel", ar: "فندق 5 نجوم", desc: "A luxury hotel.", descAr: "فندق فاخر." },
   { value: "sponsor", en: "Staying with a host", ar: "الإقامة عند مضيف", desc: "A sponsor's home.", descAr: "منزل الكفيل." },
 ]
 
@@ -63,10 +63,10 @@ const funding = [
 ]
 
 const balances = [
-  { value: "under-10000", en: "Under 10,000 AED", ar: "أقل من ١٠٬٠٠٠ درهم", desc: "Closing balance under 10,000.", descAr: "الرصيد الختامي أقل من ١٠٬٠٠٠." },
-  { value: "10000-25000", en: "10,000 to 25,000 AED", ar: "من ١٠٬٠٠٠ إلى ٢٥٬٠٠٠ درهم", desc: "A mid closing balance.", descAr: "رصيد ختامي متوسط." },
-  { value: "25000-50000", en: "25,000 to 50,000 AED", ar: "من ٢٥٬٠٠٠ إلى ٥٠٬٠٠٠ درهم", desc: "A stronger closing balance.", descAr: "رصيد ختامي أعلى." },
-  { value: "50000-plus", en: "50,000 AED or more", ar: "٥٠٬٠٠٠ درهم أو أكثر", desc: "A high closing balance.", descAr: "رصيد ختامي مرتفع." },
+  { value: "under-10000", en: "Under 10,000 AED", ar: "أقل من 10,000 درهم", desc: "Closing balance under 10,000.", descAr: "الرصيد الختامي أقل من 10,000." },
+  { value: "10000-25000", en: "10,000 to 25,000 AED", ar: "من 10,000 إلى 25,000 درهم", desc: "A mid closing balance.", descAr: "رصيد ختامي متوسط." },
+  { value: "25000-50000", en: "25,000 to 50,000 AED", ar: "من 25,000 إلى 50,000 درهم", desc: "A stronger closing balance.", descAr: "رصيد ختامي أعلى." },
+  { value: "50000-plus", en: "50,000 AED or more", ar: "50,000 درهم أو أكثر", desc: "A high closing balance.", descAr: "رصيد ختامي مرتفع." },
 ]
 
 const LAST_SCREEN = 9
@@ -275,7 +275,18 @@ export function TripDetailsStep({
                     description={item.desc}
                     descriptionAr={item.descAr}
                     selected={formData.travelingWith === item.value}
-                    onSelect={() => select({ travelingWith: item.value })}
+                    onSelect={() =>
+                      select(
+                        item.value === "spouse"
+                          ? { travelingWith: "spouse", maritalStatus: "married", spouseAccompanying: "yes" }
+                          : {
+                              travelingWith: item.value,
+                              ...(formData.travelingWith === "spouse"
+                                ? { spouseAccompanying: "no", maritalStatus: "single" }
+                                : {}),
+                            },
+                      )
+                    }
                   />
                 ))}
               </ChoiceList>
@@ -582,7 +593,12 @@ export function TripDetailsStep({
                               <LangText en={visit.country} ar={SCHENGEN_META[visit.country]?.ar || visit.country} />
                             </p>
                             <p className="text-[13px] text-[#5B6475]" dir="ltr">
-                              {formatDisplayDate(visit.arrivalDate)} – {formatDisplayDate(visit.departureDate)}
+                              <span className="rtl:hidden">
+                                {formatDisplayDate(visit.arrivalDate)} – {formatDisplayDate(visit.departureDate)}
+                              </span>
+                              <span className="hidden rtl:inline">
+                                {formatPageDate(visit.arrivalDate, true)} – {formatPageDate(visit.departureDate, true)}
+                              </span>
                             </p>
                           </div>
                           <button

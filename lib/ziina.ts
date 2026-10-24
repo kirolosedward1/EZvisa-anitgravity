@@ -5,6 +5,7 @@
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { priceForTravellers } from "@/lib/currency"
+import { pricedApplicants } from "@/lib/application-notes"
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -23,12 +24,12 @@ export type ZiinaIntent = {
   [key: string]: unknown
 }
 
-/** Server price: base AED price (lib/currency, 249) per traveller; x2 when the spouse travels too (same rule as payment-step). */
+/** Server price from the applicant count stored on the application. A spouse makes it 2, so AED 498. */
 export function priceForApplication(notesRaw: unknown): { amount: number; currency: "AED" } {
   let notes: any = {}
   try { notes = typeof notesRaw === "string" ? JSON.parse(notesRaw) : notesRaw ?? {} } catch { notes = {} }
-  const spouse = (notes?.spouseAccompanying ?? notes?.wizard?.spouseAccompanying) === "yes" ? "yes" : "no"
-  return { amount: priceForTravellers(spouse), currency: "AED" }
+  const count = pricedApplicants(notes)
+  return { amount: priceForTravellers(count === 2 ? "yes" : "no"), currency: "AED" }
 }
 
 export const isPaidStatus = (s: unknown) => ["paid", "completed"].includes(String(s ?? "").toLowerCase())

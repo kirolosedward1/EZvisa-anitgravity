@@ -5,6 +5,8 @@ import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { MapPin } from "lucide-react"
 import { destinations } from "@/lib/destinations"
+import { SCHENGEN_META } from "@/lib/countries"
+import { LangText } from "@/components/lang-text"
 import { stableIndex } from "@/lib/stable-index"
 import { cn } from "@/lib/utils"
 
@@ -73,7 +75,7 @@ export function InnerHero({
             {place && (
               <figcaption className="absolute bottom-4 start-4 inline-flex items-center gap-1.5 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
                 <MapPin className="size-3.5 text-primary" aria-hidden="true" />
-                {place}
+                <LangText en={<bdi dir="ltr">{place}</bdi>} ar={SCHENGEN_META[place]?.ar ?? <bdi dir="ltr">{place}</bdi>} />
               </figcaption>
             )}
           </figure>

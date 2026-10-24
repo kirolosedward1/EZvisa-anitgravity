@@ -7,6 +7,7 @@ import { ChoiceList, ChoiceRow, FieldError } from "@/components/apply/wizard-cho
 import { cn } from "@/lib/utils"
 import {
   TRIP_LENGTHS,
+  formatPageDate,
   formatShortDate,
   schengenEndDate,
   schengenStayDays,
@@ -45,7 +46,14 @@ function minDepartureIso() {
 function StayLine({ start, end, stay }: { start: string; end: string; stay: number }) {
   return (
     <p className="text-[15px] text-[#0A0F1F]" dir="ltr">
-      {formatShortDate(start)} – {formatShortDate(end)} · {stay} <LangText en="days" ar="يومًا" />
+      <span className="rtl:hidden">
+        {formatShortDate(start)} – {formatShortDate(end)}
+      </span>
+      <span className="hidden rtl:inline">
+        {formatPageDate(start, true)} – {formatPageDate(end, true)}
+      </span>
+      {" · "}
+      {stay} <LangText en="days" ar="يومًا" />
     </p>
   )
 }
@@ -223,7 +231,7 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
           ) : null}
           {fixedLong ? (
             <FieldError>
-              <LangText en="A tourist stay can be 90 days at most." ar="الإقامة السياحية لا تتجاوز ٩٠ يومًا." />
+              <LangText en="A tourist stay can be 90 days at most." ar="الإقامة السياحية لا تتجاوز 90 يومًا." />
             </FieldError>
           ) : null}
         </div>

@@ -69,6 +69,11 @@ export const SCHENGEN_META: Record<string, { iso: string; ar: string }> = {
   Switzerland: { iso: "CH", ar: "سويسرا" },
 }
 
+/** Arabic country name. Safe to call from Server Components. */
+export function countryNameAr(name: string) {
+  return SCHENGEN_META[name]?.ar ?? name
+}
+
 export function countryToSlug(country: string): string {
   return countrySlug(country)
 }

@@ -22,7 +22,7 @@ export function DestinationCard({ country, compact = false }: { country: Destina
   const nameAr = destinationNameAr(country.slug) || name
   const allSpecs = [
     { label: "Type", ar: "النوع", value: country.region === "Schengen" ? "Schengen" : country.visaType, valueAr: country.region === "Schengen" ? "شنغن" : country.visaType },
-    { label: "Ready in", ar: "جاهز خلال", value: "1–2 days", valueAr: "١–٢ يوم" },
+    { label: "Ready in", ar: "جاهز خلال", value: "1–2 days", valueAr: "\u20661–2\u2069 يوم" },
     { label: "Fee", ar: "الرسوم", value: `${PRICE_AED} AED`, valueAr: `${PRICE_AED} درهم` },
   ]
   const specs = compact ? allSpecs.slice(1) : allSpecs
