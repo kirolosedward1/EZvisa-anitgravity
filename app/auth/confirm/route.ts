@@ -5,9 +5,8 @@ import { publicOrigin } from "@/lib/auth/redirect"
 import {
   appAuthCallback,
   confirmDestination,
-  confirmLoginPath,
+  confirmFailureTarget,
   isEmailOtpType,
-  relativeConfirmNext,
   type ConfirmOtpType,
 } from "@/lib/auth/confirm-next"
 
@@ -16,7 +15,8 @@ export const dynamic = "force-dynamic"
 /**
  * Email links land here (https://www.ezvisa.net/auth/confirm?token_hash=&type=&next=) instead of the
  * supabase.co verify URL. verifyOtp consumes the hash once and sets the session cookie, then we continue
- * to a same-origin `next`, or to /reset-password for a recovery link.
+ * to a same-origin `next` (an absolute https://www.ezvisa.net or https://ezvisa.net URL is reduced to its
+ * path), or to /reset-password for a recovery link. A failed check with an /ar next goes to /ar/login.
  *
  * When `next` is the app callback (ezvisa://auth/callback), this does not call verifyOtp. It forwards the
  * still-unused hash to Supabase's verify endpoint with that redirect, so the app receives its PKCE code the
@@ -30,14 +30,7 @@ export async function GET(request: Request) {
   const arabic = requestIsArabic(request)
   const base = publicOrigin(request)
 
-  const fail = () => {
-    const to = new URL(confirmLoginPath(rawNext, arabic), base)
-    to.searchParams.set("error", "link-expired")
-    if (isEmailOtpType(type)) to.searchParams.set("type", type)
-    const relative = relativeConfirmNext(rawNext)
-    if (relative && relative !== "/dashboard") to.searchParams.set("next", relative)
-    return NextResponse.redirect(to)
-  }
+  const fail = () => NextResponse.redirect(new URL(confirmFailureTarget(rawNext, type, arabic), base))
 
   if (!isEmailOtpType(type) || !isTokenHash(tokenHash)) return fail()
 

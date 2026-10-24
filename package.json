@@ -8,6 +8,7 @@
     "lint": "tsc --noEmit",
     "start": "next start",
     "sync:check": "node scripts/check-app-sync.mts",
+    "test": "node --experimental-strip-types --test lib/auth/confirm-next.test.ts",
     "test:payments": "npx tsx scripts/test-ziina-payment.mts"
   },
   "dependencies": {

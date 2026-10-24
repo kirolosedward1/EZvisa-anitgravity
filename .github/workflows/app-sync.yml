@@ -1,6 +1,6 @@
 # Keeps the website (main) and the EZvisa app (mobile/ on the mobile-app branch) on one contract.
 # Fails when lib/shared/wizard-contract.ts and mobile/lib/* disagree (lists, options, steps, validation, statuses,
-# document types, price, deep-link scheme), and typechecks the website. See docs/APP_WEB_SYNC.md.
+# document types, price, deep-link scheme), typechecks the website, and runs `pnpm test`. See docs/APP_WEB_SYNC.md.
 name: Website ↔ App sync
 
 on:
@@ -46,3 +46,20 @@ jobs:
         run: |
           pnpm install --frozen-lockfile
           pnpm lint
+
+  unit-tests:
+    if: ${{ !startsWith(github.ref, 'refs/heads/mobile-app') && github.base_ref != 'mobile-app' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Run unit tests
+        run: pnpm test

@@ -3,8 +3,10 @@ import { test } from "node:test"
 import { AUTH_MESSAGE } from "./errors.ts"
 import {
   APP_AUTH_CALLBACK,
+  ARABIC_ACCOUNT_LANDING,
   CONFIRM_NEXT_FALLBACK,
   confirmDestination,
+  confirmFailureTarget,
   confirmLoginPath,
   safeConfirmNext,
 } from "./confirm-next.ts"
@@ -19,7 +21,8 @@ test("relative next paths are kept", () => {
   assert.equal(safeConfirmNext(""), fallback)
   assert.equal(safeConfirmNext("/dashboard"), "/dashboard")
   assert.equal(safeConfirmNext("/"), "/")
-  assert.equal(safeConfirmNext("/ar"), "/ar")
+  assert.equal(safeConfirmNext("/ar"), ARABIC_ACCOUNT_LANDING)
+  assert.equal(safeConfirmNext("/ar/"), ARABIC_ACCOUNT_LANDING)
   assert.equal(safeConfirmNext("/ar/dashboard"), "/ar/dashboard")
   assert.equal(safeConfirmNext("/reset-password"), "/reset-password")
   assert.equal(safeConfirmNext("/account?tab=profile"), "/account?tab=profile")
@@ -32,8 +35,8 @@ test("open redirects and encoded copies fall back", () => {
     "///evil.com",
     "https://evil.com",
     "http://evil.com",
-    "https://www.ezvisa.net/dashboard",
     "http://www.ezvisa.net/dashboard",
+    "http://ezvisa.net/dashboard",
     "/\\evil.com",
     "/\\\\evil.com",
     "\\/evil.com",
@@ -77,6 +80,57 @@ test("open redirects and encoded copies fall back", () => {
   }
 })
 
+test("absolute next is accepted only for the two exact site origins", () => {
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/ar/dashboard"), "/ar/dashboard")
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/dashboard"), "/dashboard")
+  assert.equal(safeConfirmNext("https://ezvisa.net/dashboard"), "/dashboard")
+  assert.equal(safeConfirmNext("https://ezvisa.net/apply?step=2"), "/apply?step=2")
+  assert.equal(safeConfirmNext("https://WWW.EZVISA.NET/account"), "/account")
+  assert.equal(safeConfirmNext("https://www.ezvisa.net:443/dashboard"), "/dashboard")
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/dashboard#section"), "/dashboard#section")
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/ar/dashboard/"), "/ar/dashboard")
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/destinations/france"), "/destinations/france")
+  assert.equal(safeConfirmNext("https://ezvisa.net/ar/"), ARABIC_ACCOUNT_LANDING)
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/ar"), ARABIC_ACCOUNT_LANDING)
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/ar/"), ARABIC_ACCOUNT_LANDING)
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/ar/not-a-page"), ARABIC_ACCOUNT_LANDING)
+  assert.equal(safeConfirmNext("/ar/nope"), ARABIC_ACCOUNT_LANDING)
+  assert.equal(safeConfirmNext("https://www.ezvisa.net/ar/continue/abc"), "/ar/continue/abc")
+
+  const rejected = [
+    "https://www.ezvisa.net.evil.com/dashboard",
+    "https://www.ezvisa.net.evil.com",
+    "https://ezvisa.net.evil.com/ar/dashboard",
+    "https://www.ezvisa.net%2eevil.com/dashboard",
+    "https://notezvisa.net/dashboard",
+    "https://www.ezvisa.net./dashboard",
+    "https://user@www.ezvisa.net/dashboard",
+    "https://user:pass@ezvisa.net/dashboard",
+    "https://www.ezvisa.net:444/dashboard",
+    "https://ezvisa.net:8443/ar/dashboard",
+    "http://www.ezvisa.net/ar/dashboard",
+    "https://evil.com/https://www.ezvisa.net/dashboard",
+    "https://www.ezvisa.net/dashboard?next=https://evil.com",
+    "https://www.ezvisa.net/dashboard#https://evil.com",
+    "https://www.ezvisa.net/%2Fevil.com",
+    "https://www.ezvisa.net/\\evil.com",
+  ]
+  for (const value of rejected) assert.equal(safeConfirmNext(value), fallback, value)
+
+  assert.equal(confirmDestination("magiclink", "https://www.ezvisa.net/ar/dashboard"), "/ar/dashboard")
+  assert.equal(confirmDestination("magiclink", "https://www.ezvisa.net/ar/"), ARABIC_ACCOUNT_LANDING)
+  assert.equal(confirmDestination("signup", "https://ezvisa.net/apply"), "/apply")
+  assert.equal(confirmDestination("recovery", "https://www.ezvisa.net/ar/dashboard"), "/ar/reset-password")
+  assert.equal(confirmDestination("recovery", "https://ezvisa.net/reset-password"), "/reset-password")
+  assert.equal(confirmLoginPath("https://www.ezvisa.net/ar/dashboard"), "/ar/login")
+  assert.equal(confirmLoginPath("https://ezvisa.net/ar/"), "/ar/login")
+  assert.equal(confirmLoginPath("https://www.ezvisa.net.evil.com/ar/dashboard"), "/login")
+  assert.equal(
+    confirmDestination("magiclink", "ezvisa://auth/callback?type=magiclink"),
+    `${APP_AUTH_CALLBACK}?type=magiclink`,
+  )
+})
+
 test("the app callback is allowed and canonicalised", () => {
   assert.equal(safeConfirmNext("ezvisa://auth/callback"), APP_AUTH_CALLBACK)
   assert.equal(safeConfirmNext("EZVISA://auth/callback"), APP_AUTH_CALLBACK)
@@ -114,6 +168,31 @@ test("the existing callback helper is unchanged and still rejects the app scheme
   assert.equal(safeNext("//evil.com"), "/dashboard")
   assert.equal(safeNext("https://evil.com"), "/dashboard")
   assert.equal(safeNext("/apply"), "/apply")
+})
+
+test("a failed verification with an Arabic next goes to the Arabic sign-in page", () => {
+  assert.equal(
+    confirmFailureTarget("/ar/dashboard", "magiclink"),
+    "/ar/login?error=link-expired&type=magiclink&next=%2Far%2Fdashboard",
+  )
+  assert.equal(
+    confirmFailureTarget("https://www.ezvisa.net/ar/apply", "signup"),
+    "/ar/login?error=link-expired&type=signup&next=%2Far%2Fapply",
+  )
+  assert.equal(
+    confirmFailureTarget("https://ezvisa.net/ar/", "recovery"),
+    "/ar/login?error=link-expired&type=recovery&next=%2Far%2Fdashboard",
+  )
+  assert.equal(
+    confirmFailureTarget("https://www.ezvisa.net/ar/not-a-page", "invite"),
+    "/ar/login?error=link-expired&type=invite&next=%2Far%2Fdashboard",
+  )
+  assert.equal(confirmFailureTarget("/dashboard", "magiclink"), "/login?error=link-expired&type=magiclink")
+  assert.equal(confirmFailureTarget("https://www.ezvisa.net/dashboard", "email"), "/login?error=link-expired&type=email")
+  assert.equal(confirmFailureTarget("https://evil.com", "magiclink"), "/login?error=link-expired&type=magiclink")
+  assert.equal(confirmFailureTarget("https://www.ezvisa.net.evil.com/ar/dashboard", "signup"), "/login?error=link-expired&type=signup")
+  assert.equal(confirmFailureTarget("//evil.com", "nope"), "/login?error=link-expired")
+  assert.equal(confirmFailureTarget(null, "magiclink", true), "/ar/login?error=link-expired&type=magiclink")
 })
 
 test("the expired-link copy matches the auth message and has an Arabic translation", () => {
