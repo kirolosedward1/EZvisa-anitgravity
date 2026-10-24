@@ -46,8 +46,7 @@ export default function Applications() {
           </View>
           <Heading>Start your Schengen visa</Heading>
           <Body muted>
-            Answer a few questions in about 10 minutes. Our experts prepare a tailored application file — 249 AED, with a
-            money-back guarantee if your visa is refused.
+            Answer a few questions in about 10 minutes. Our experts prepare a tailored application file for 249 AED.
           </Body>
           <Button title="Start application" icon="plus" onPress={startNew} loading={creating} />
         </Card>

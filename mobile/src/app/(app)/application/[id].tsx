@@ -263,7 +263,7 @@ export default function ApplicationDetail() {
           <Heading>Complete payment to start</Heading>
           <Body muted>Our experts begin preparing your tailored file as soon as payment is confirmed.</Body>
           <Button title={`Pay ${app.amountAED} AED`} icon="lock.fill" onPress={pay} loading={paying} disabled={online === false} />
-          <Caption>Secure checkout by Ziina. Money-back guarantee if your visa is refused.</Caption>
+          <Caption>Secure checkout by Ziina.</Caption>
         </Card>
       ) : null}
 

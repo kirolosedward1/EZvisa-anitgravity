@@ -183,7 +183,7 @@ export function ReviewStep({ data, errors, set, onEdit }: StepProps & { onEdit: 
           <Body>{data.spouseAccompanying === "yes" ? "Service fee (2 applicants)" : "Service fee"}</Body>
           <Text style={{ fontSize: 26, fontWeight: "700", color: c.primary }}>{price} AED</Text>
         </View>
-        <Caption>Embassy fees are paid separately at your appointment. Money-back guarantee if your visa is refused.</Caption>
+        <Caption>Embassy fees are paid separately at your appointment.</Caption>
       </Card>
       <Pressable
         accessibilityRole="checkbox"
