@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react"
 import { usePathname } from "next/navigation"
 import { Analytics } from "@vercel/analytics/next"
+import { suppressesChat } from "@/lib/chat-routes"
+import { concealCrisp, presentCrisp } from "@/components/crisp-visibility"
 
 /**
  * Cookie consent (legal audit H1).
@@ -86,20 +88,22 @@ function applyPrefs(p: Prefs) {
     w.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" })
     addScript("ez-gtm", `https://www.googletagmanager.com/gtm.js?id=${GTM_ID}`)
   }
-  if (p.functional && !document.getElementById("ez-crisp")) {
-    w.$crisp = w.$crisp || []
-    w.CRISP_WEBSITE_ID = CRISP_ID
-    if (document.documentElement.classList.contains("hide-crisp")) w.$crisp.push(["do", "chat:hide"])
-    addScript("ez-crisp", "https://client.crisp.chat/l.js")
-  }
+  if (p.functional) presentCrisp(CRISP_ID)
+  else if (suppressesChat(window.location.pathname)) concealCrisp()
 }
 
 export function CookieConsent() {
+  const pathname = usePathname()
   const [open, setOpen] = useState(false)
   const [manage, setManage] = useState(false)
   const [prefs, setPrefs] = useState<Prefs>(DENIED)
   // Vercel Analytics is held until analytics consent (same stored choice as GA). Starts false on server and client.
   const [analyticsOn, setAnalyticsOn] = useState(false)
+
+  // After a client-side navigation, keep Crisp unloaded on auth pages and bring it back elsewhere.
+  useEffect(() => {
+    if (readPrefs()?.functional) presentCrisp(CRISP_ID)
+  }, [pathname])
 
   useEffect(() => {
     const stored = readPrefs()
@@ -181,6 +185,7 @@ function Banner({ manage, setManage, prefs, setPrefs, save }: {
     const w = window as W
     w.$crisp?.push(["do", "chat:hide"])
     return () => {
+      if (suppressesChat(window.location.pathname)) return
       if (!document.documentElement.classList.contains("hide-crisp")) w.$crisp?.push(["do", "chat:show"])
     }
   }, [])

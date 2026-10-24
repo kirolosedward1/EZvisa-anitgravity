@@ -431,6 +431,7 @@ html[lang="ar"] body {
   }
 }
 
+/* Crisp's launcher only. The Vercel preview toolbar is a separate control and is left alone. */
 html.hide-crisp .crisp-client,
 html.hide-crisp #crisp-chatbox {
   display: none !important;
