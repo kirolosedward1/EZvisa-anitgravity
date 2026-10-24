@@ -20,6 +20,8 @@ There is one accent: EZvisa brand blue `#0436DC` (the logo, `PRODUCT.md`, and th
 | `border` / `separator` | Hairlines, list separators | | |
 | `accent` | Accent text, icons, progress | 8.2:1 | 8.7:1 |
 | `accentFill` + `onAccent` | Primary button, selected tile | 8.2:1 | 5.1:1 |
+| `accentMuted` | Selected date range, highlighted row, soft accent banner | `#E8EEFF` | accent 22% |
+| `textDisabled` | Unavailable, non-interactive content (past calendar days) | `#C4C9D4` | `#48484A` |
 | `success` / `warning` / `danger` | Status (always paired with text or an icon) | 5.1 / 6.0 / 5.4:1 | 8.4 / 8.3 / 6.0:1 |
 | `onSuccess` | Icons on a `success` fill | white | black |
 | `overlay` | Modal backdrop | | |
@@ -31,7 +33,7 @@ All ratios are WCAG 2.1, measured against `background`; they stay at 4.5:1 or ab
 ## Spacing, radius, size (`theme/tokens.ts`)
 
 - **Spacing `S`:** an 8pt grid of `xs 8 · md 16 · xl 24 · xxl 32 · x3 40 · x4 48 · x5 64 · x6 80`, plus the half-steps `xxs 4` and `sm 12` for fine detail only.
-  - `S.gutter` (16) is the screen edge margin.
+  - `S.gutter` (20) is the screen edge margin.
   - `S.lg` is deprecated. It was 20, which is off the grid, and now equals `gutter`.
 - **Radius `R`:**
   - Scale: `xs 4 · sm 8 · md 12 · lg 16 · xl 20 · xxl 24 · sheet 32 · round`.
@@ -49,11 +51,15 @@ All ratios are WCAG 2.1, measured against `background`; they stay at 4.5:1 or ab
 
 ## Type (`theme/typography.ts`)
 
-The scale follows Apple's text styles: `display` 40, `largeTitle` 34, `title1` 28, `title2` 22, `title3` 20, `headline`/`body` 17, `callout` 16, `subhead` 15, `footnote` 13, `caption` 12, `caption2` 11.
+The scale is Apple's iOS text styles at the default size (HIG › Typography › Specifications): `display`/`largeTitle` 34, `title1` 28, `title2` 22, `title3` 20, `headline`/`body` 17, `callout` 16, `subhead` 15, `footnote` 13, `caption` 12, `caption2` 11. Nothing is smaller than 11 pt. `overline` is the inset-grouped section header (13 pt, capitals). On iOS the system font sets its own tracking, so native text has no manual letter spacing; the web preview keeps SF's values.
 
-Dynamic Type is always on. `TYPE_SCALE` caps each role: body text grows to 2×, display text to 1.3×, and tab labels stay fixed, as on iOS. Inputs cap at `INPUT_SCALE` (1.6×).
+Dynamic Type is always on. `TYPE_SCALE` caps each role: reading text grows to 2× (the HIG's 200%), titles to 1.75–2×, so a title always stays larger than the body text next to it. Fixed-size labels pass their own `maxFontSizeMultiplier`: tab labels (1×, as on iOS), avatar initials (1×), the A–Z index (1.2×), Home's country stories (1.35×). Inputs cap at `INPUT_SCALE` (1.6×).
 
-`useLargeText()` is true from 1.35× upward. Use it to stack side-by-side layouts (for example, the country fact tiles).
+At large sizes (`useLargeText()`, 1.35× and up):
+- `ListRow` puts its value under the title, and nothing is cut to one line.
+- Photo grids (Countries, Home "Explore countries") drop to one column.
+- Toolbar buttons beside a large title (Applications "+", the Countries view toggle) move above it.
+- `useContentScale()` grows meaningful icons with the text, capped at 1.5×: chevrons, `IconTile`, the status timeline dots.
 
 ## Theme hook (`theme/useTheme.ts`)
 
@@ -70,6 +76,7 @@ Dynamic Type is always on. `TYPE_SCALE` caps each role: body text grows to 2×, 
 | `Card` | A static surface, or pressable with `onPress`/`onLongPress`. Supports `disabled`, `level` and `padded`. |
 | `Input` | Optional label, help and error text (the error replaces the help text and is announced). Focus shows an accent outline, an error shows a danger outline, and `editable={false}` dims it. Supports leading and trailing slots. |
 | `ListGroup` + `ListRow` | iOS inset-grouped list. A row can have an icon tile, flag, subtitle, value, chevron (mirrors in RTL), trailing slot, `destructive` or `disabled`. Separators use `marginStart` and the `LIST_INSET.text` / `.icon` / `.flag` insets. |
+| `TabBar` (`components/nav`) | Floating Liquid Glass capsule. Four tabs, each an icon over its label. Tabs only navigate: starting an application is the Applications toolbar "+" and the Home buttons. The bar stays visible on every screen inside a tab; only the keyboard and modal screens hide it. Pin a footer above it with `useTabBarTop()`. |
 | `Sheet` | Bottom sheet with a backdrop, grabber, title and close button. It slides up on a spring (fades under Reduce Motion) and closes on a drag down, a backdrop tap, the close button or Android back. |
 | `Screen` | Canvas background, safe areas (`edges`), gutter, a `tabBar` bottom inset, and optional scroll, refresh and keyboard avoidance. |
 | `Skeleton`, `SkeletonRows` | Shimmer placeholders (static under Reduce Motion). Arrange them to match the real layout. Use these rather than spinners for content. |

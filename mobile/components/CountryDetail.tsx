@@ -11,7 +11,7 @@ import { useApps } from "../lib/useApps";
 import { useForm } from "../lib/form";
 import { useT } from "../lib/i18n";
 import { useColors, S, R, HERO, curve } from "../lib/theme";
-import { Button, EmptyState } from "./ui";
+import { Button, EmptyState, useTabBarTop } from "./ui";
 import { PhotoHeader, TitleBlock, TopBar, topBarHeight } from "./country/Hero";
 import { GlanceList } from "./country/GlanceList";
 import { YourApplicationCard } from "./country/YourApplicationCard";
@@ -23,7 +23,7 @@ import { CountryFooter } from "./country/CountryFooter";
 
 export default function CountryDetail() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
-  const c = useColors(); const insets = useSafeAreaInsets(); const { height } = useWindowDimensions(); const { t, lang } = useT();
+  const c = useColors(); const insets = useSafeAreaInsets(); const { height } = useWindowDimensions(); const { t, lang } = useT(); const barTop = useTabBarTop();
   const segs = useSegments() as string[];
   const info = countryInfo(slug ?? "");
   const { session, apps, err } = useApps();
@@ -71,7 +71,7 @@ export default function CountryDetail() {
     <View style={{ flex: 1, backgroundColor: c.background }} testID="country-screen">
       <Stack.Screen options={{ headerShown: false }} />
       <Animated.ScrollView ref={scroller} onScroll={onScroll} scrollEventThrottle={16} showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: footerH + S.xl }} testID="country-scroll">
+        contentContainerStyle={{ paddingBottom: footerH + barTop + S.xl }} testID="country-scroll">
         <PhotoHeader photo={info.photo} height={heroH} scrollY={scrollY} />
         <View style={[{ marginTop: -HERO.overlap, borderTopStartRadius: R.sheet, borderTopEndRadius: R.sheet, backgroundColor: c.background, paddingTop: S.xl, gap: S.xxl }, curve]}>
           <TitleBlock name={info.name} title={title} capital={capital} />

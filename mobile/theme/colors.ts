@@ -17,6 +17,8 @@ export type Palette = {
   /** Accent for filled controls (selected tile, the tab bar plane). Pair with `onAccent`. */ accentFill: string;
   /** Primary buttons: brand blue (same as the tab plane), `onPrimary` text, `primaryPressed` while pressed. */ primaryFill: string; primaryPressed: string; onPrimary: string;
   /** Selected-row tint. */ accentSoft: string;
+  /** Stronger accent tint: a selected date range, a highlighted row, a soft accent banner. Text on it uses `text`/`accent`. */ accentMuted: string;
+  /** Unavailable content that is not interactive (past days in a calendar). Exempt from text contrast minimums. */ textDisabled: string;
   /** Text / icons on `accentFill` and `danger`. */ onAccent: string;
   success: string; warning: string; danger: string;
   /** Icons on a `success` fill. */ onSuccess: string;
@@ -46,6 +48,8 @@ export const light: Palette = {
   accentFill: "#0436DC",      // onAccent 8.2:1
   primaryFill: "#0436DC", primaryPressed: "#0330C2", onPrimary: "#FFFFFF", // brand blue, white text 8.2:1
   accentSoft: "rgba(4,54,220,0.06)",
+  accentMuted: "#E8EEFF",
+  textDisabled: "#C4C9D4",
   onAccent: "#FFFFFF",
   success: "#1A7F37",         // 5.1:1 bg · 4.7:1 surface
   warning: "#B83200",         // 6.0:1
@@ -77,6 +81,8 @@ export const dark: Palette = {
   accentFill: "#3D5AFE",      // onAccent 5.1:1
   primaryFill: "#0436DC", primaryPressed: "#0330C2", onPrimary: "#FFFFFF",
   accentSoft: "rgba(140,162,255,0.14)",
+  accentMuted: "rgba(140,162,255,0.22)",
+  textDisabled: "#48484A",
   onAccent: "#FFFFFF",
   success: "#30D158",         // 8.4:1 surface
   warning: "#FF9F0A",         // 8.3:1 surface

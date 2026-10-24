@@ -13,7 +13,7 @@ const TONE: Record<Tone, keyof Colors> = {
 export function Text({ variant = "body", tone = "label", color, weight, center, tabular, style, ...p }: TextProps & { variant?: TextVariant; tone?: Tone; color?: string; weight?: "400" | "500" | "600" | "700"; center?: boolean; tabular?: boolean; ref?: Ref<TextInstance> }) {
   const c = useColors();
   // Web preview only: `window.__FONT_SCALE__` simulates iOS Dynamic Type (same per-role cap) so large text can be tested.
-  const sim = Platform.OS === "web" ? Math.min((globalThis as any).__FONT_SCALE__ ?? 1, TYPE_SCALE[variant]) : 1;
+  const sim = Platform.OS === "web" ? Math.min((globalThis as any).__FONT_SCALE__ ?? 1, p.maxFontSizeMultiplier ?? TYPE_SCALE[variant]) : 1;
   const big = sim !== 1 ? { fontSize: T[variant].fontSize! * sim, lineHeight: T[variant].lineHeight! * sim } : null;
   return <RNText allowFontScaling maxFontSizeMultiplier={TYPE_SCALE[variant]} {...p} style={[T[variant], big, { color: color ?? c[TONE[tone]] }, weight && { fontWeight: weight }, center && { textAlign: "center" }, tabular && { fontVariant: ["tabular-nums"] }, style]} />;
 }

@@ -4,7 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, wit
 import { SymbolView, SFSymbol } from "expo-symbols";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors, useIsDark, T, S, R, HIT, ICON, curve, elevation, card, SPRING, PRESS, DUR, TAB_BAR_HEIGHT, type Level } from "../../lib/theme";
+import { useColors, useIsDark, useContentScale, useLargeText, T, S, R, HIT, ICON, curve, elevation, card, SPRING, PRESS, DUR, TAB_BAR_HEIGHT, type Level } from "../../lib/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { useShake } from "../../lib/motion";
@@ -21,12 +21,16 @@ export function Icon({ name, size = 17, color, weight, style }: { name: IconName
 
 /** Forward chevron (row disclosure): mirrored in Arabic so it points to the reading direction's end. */
 export function Chevron({ size = ICON.sm, color, weight = "semibold" }: { size?: number; color?: string; weight?: "regular" | "medium" | "semibold" | "bold" }) {
-  const c = useColors(); const { rtl } = useT();
-  return <Icon name="chevron.right" size={size} color={color ?? c.tertiaryLabel} weight={weight} style={(rtl || I18nManager.isRTL) ? { transform: [{ scaleX: -1 }] } : undefined} />;
+  const c = useColors(); const { rtl } = useT(); const k = useContentScale();
+  return <Icon name="chevron.right" size={Math.round(size * k)} color={color ?? c.tertiaryLabel} weight={weight} style={(rtl || I18nManager.isRTL) ? { transform: [{ scaleX: -1 }] } : undefined} />;
 }
 
 /** Bottom padding so content clears the floating tab bar. */
 export function useTabInset(extra = S.xl) { const i = useSafeAreaInsets(); return Math.max(i.bottom, 12) + TAB_BAR_HEIGHT + extra; }
+/** Distance from the screen bottom to the top edge of the floating tab bar (same formula as components/nav/TabBar),
+ *  for controls pinned above it, such as a screen's sticky footer. */
+export const tabBarBottom = (insetBottom: number) => (insetBottom > 0 ? Math.max(insetBottom - S.xs, S.xs) : S.md);
+export function useTabBarTop() { const i = useSafeAreaInsets(); return tabBarBottom(i.bottom) + TAB_BAR_HEIGHT; }
 
 const APressable = Animated.createAnimatedComponent(Pressable);
 /** The one pressed state: spring scale to 0.97 + dim (and an optional 1pt lift for cards). Reduce Motion: dim only. */
@@ -84,7 +88,7 @@ export function ListGroup({ header, footer, action, onAction, children, inset = 
       {!!header && <SectionHeader title={header} action={action} onAction={onAction} />}
       <Surface level={0} style={{ marginHorizontal: S.md, overflow: "hidden" }}>
         {items.map((ch, i) => (
-          <View key={i}>{ch}{i < items.length - 1 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginLeft: inset }} />}</View>
+          <View key={i}>{ch}{i < items.length - 1 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginStart: inset }} />}</View>
         ))}
       </Surface>
       {!!footer && <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.lg, marginTop: S.xs }}>{footer}</Text>}
@@ -94,21 +98,26 @@ export function ListGroup({ header, footer, action, onAction, children, inset = 
 
 /** Neutral icon tile (restrained palette): neutral fill, label-coloured symbol. Only destructive red and brand WhatsApp keep their colour. */
 export function IconTile({ name, color, size = 32 }: { name: IconName; color: string; size?: number }) {
-  const c = useColors(); const keep = color === c.red || color === c.whatsapp;
-  return <View style={[{ width: size, height: size, borderRadius: R.sm, backgroundColor: c.fillSubtle, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={ICON.md - 1} color={keep ? color : c.label} weight="regular" /></View>;
+  const c = useColors(); const keep = color === c.red || color === c.whatsapp; const k = useContentScale();
+  const box = Math.round(size * k);
+  return <View style={[{ width: box, height: box, borderRadius: R.sm * k, backgroundColor: c.fillSubtle, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={Math.round((ICON.md - 1) * k)} color={keep ? color : c.label} weight="regular" /></View>;
 }
 
 export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPress, onLongPress, chevron = !!onPress, trailing, destructive, tint, bold, a11yLabel, a11yHint, minHeight = 44 }: { title: string; subtitle?: string; leading?: React.ReactNode; icon?: IconName; iconColor?: string; value?: string; onPress?: () => void; onLongPress?: () => void; chevron?: boolean; trailing?: React.ReactNode; destructive?: boolean; tint?: boolean; bold?: boolean; a11yLabel?: string; a11yHint?: string; minHeight?: number }) {
-  const c = useColors();
+  const c = useColors(); const large = useLargeText();
+  // Large text (HIG › Typography › "Consider adjusting your layout at large font sizes"): the value moves under the
+  // title and nothing is cut to one line. At the default size titles may wrap to two lines rather than truncate.
+  const valueText = !!value && <Text variant="body" tone="secondary" numberOfLines={large ? undefined : 1} ellipsizeMode="middle" style={large ? undefined : { flexShrink: 1, maxWidth: "60%", textAlign: "right" }} tabular>{value}</Text>;
   return (
     <PressScale onPress={onPress ? () => { tap(); onPress(); } : undefined} onLongPress={onLongPress ? () => { tap(); onLongPress(); } : undefined} disabled={!onPress && !onLongPress} scaleTo={onPress ? PRESS.scale : 1} accessibilityRole={onPress ? "button" : "text"} accessibilityLabel={a11yLabel ?? [title, subtitle, value].filter(Boolean).join(", ")} accessibilityHint={a11yHint}
       style={{ minHeight: subtitle ? Math.max(minHeight, 64) : Math.max(minHeight, 52), paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm }}>
       {leading ?? (icon ? <IconTile name={icon} color={iconColor ?? c.tint} /> : null)}
       <View style={{ flex: 1, minWidth: 80 }}>
-        <Text variant={bold ? "headline" : "body"} color={destructive ? c.red : tint ? c.tint : undefined} numberOfLines={1}>{title}</Text>
-        {!!subtitle && <Text variant="subhead" tone="secondary" numberOfLines={2}>{subtitle}</Text>}
+        <Text variant={bold ? "headline" : "body"} color={destructive ? c.red : tint ? c.tint : undefined} numberOfLines={large ? undefined : 2}>{title}</Text>
+        {!!subtitle && <Text variant="subhead" tone="secondary" numberOfLines={large ? undefined : 2}>{subtitle}</Text>}
+        {large && valueText}
       </View>
-      {!!value && <Text variant="body" tone="secondary" numberOfLines={1} ellipsizeMode="middle" style={{ flexShrink: 1, maxWidth: "60%", textAlign: "right" }} tabular>{value}</Text>}
+      {!large && valueText}
       {trailing}
       {chevron && <Chevron />}
     </PressScale>
@@ -150,7 +159,7 @@ export function SegmentedControl({ options, value, onChange, label }: { options:
         const on = o.value === value;
         return (
           <PressScale key={o.value} onPress={() => { select(); onChange(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={o.label}
-            style={[{ flex: 1, minHeight: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xs }, on && { backgroundColor: dark ? "#636366" : c.surface, ...elevation(1, false) }]}>
+            style={[{ flex: 1, minHeight: 36, borderRadius: R.round, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xs }, on && { backgroundColor: dark ? c.controlSelected : c.surface, ...elevation(1, false) }]}>
             <Text variant="footnote" weight={on ? "600" : "500"} color={on ? c.label : c.textSecondary} numberOfLines={2} center>{o.label}</Text>
           </PressScale>
         );
@@ -190,9 +199,10 @@ export function Skeleton({ w = "100%", h = 16, r = R.sm, style }: { w?: number |
   );
 }
 export function SkeletonRows({ n = 3, leading = 40 }: { n?: number; leading?: number }) {
+  const { t } = useT();
   return (
     <Surface level={0} style={{ marginHorizontal: S.md, marginBottom: S.xxl }}>
-      <View accessible accessibilityLabel="Loading">
+      <View accessible accessibilityLabel={t("Loading")}>
         {Array.from({ length: n }).map((_, i) => (
           <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: S.sm, padding: S.md }}>
             <Skeleton w={leading} h={leading} r={leading / 2} />
@@ -227,10 +237,10 @@ export function Shake({ on, children, style }: { on: unknown; children: React.Re
   return <Animated.View style={[style, a]}>{children}</Animated.View>;
 }
 
-export function HeaderIconButton({ icon, onPress, label, dot }: { icon: IconName; onPress: () => void; label: string; dot?: boolean }) {
+export function HeaderIconButton({ icon, onPress, label, dot, testID }: { icon: IconName; onPress: () => void; label: string; dot?: boolean; testID?: string }) {
   const c = useColors();
   return (
-    <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} style={{ width: HIT, height: HIT, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
+    <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} testID={testID} style={{ width: HIT, height: HIT, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }}>
       <Icon name={icon} size={ICON.md} color={c.label} weight="medium" />
       {dot && <View style={{ position: "absolute", top: S.xs, end: S.xs, width: 8, height: 8, borderRadius: R.round, backgroundColor: c.red, borderWidth: 1.5, borderColor: c.bg }} />}
     </PressScale>
@@ -246,9 +256,9 @@ export function StickyCTA({ children, bottom }: { children: React.ReactNode; bot
 /** Segmented progress; the current segment fills with a spring (instant with Reduce Motion). `fraction` = progress inside the current segment.
  *  current=false: no step is in progress (a finished case), so the segment at `index` stays empty. */
 export function ProgressSegments({ count, index, label, fraction = 1, current = true }: { count: number; index: number; label?: string; fraction?: number; current?: boolean }) {
-  const c = useColors();
+  const { t } = useT();
   return (
-    <View accessible accessibilityRole="progressbar" accessibilityLabel={label ?? `Step ${index + 1} of ${count}`} style={{ flexDirection: "row", gap: S.xxs }}>
+    <View accessible accessibilityRole="progressbar" accessibilityLabel={label ?? t("Step {i} of {n}", { i: index + 1, n: count })} style={{ flexDirection: "row", gap: S.xxs }}>
       {Array.from({ length: count }).map((_, i) => <Seg key={i} v={i < index ? 1 : i === index && current ? Math.max(0.08, fraction) : 0} />)}
     </View>
   );
@@ -279,5 +289,5 @@ export function Avatar({ name, size = 56, uri }: { name: string; size?: number; 
   const ini = name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("") || "?";
   const box = { width: size, height: size, borderRadius: size / 2, backgroundColor: c.fill, borderWidth: 1, borderColor: c.hairline, alignItems: "center" as const, justifyContent: "center" as const, overflow: "hidden" as const };
   if (uri) return <View style={box} accessibilityElementsHidden><Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" accessibilityIgnoresInvertColors /></View>;
-  return <View style={box} accessibilityElementsHidden><Text variant={size > 48 ? "title3" : "headline"}>{ini}</Text></View>;
+  return <View style={box} accessibilityElementsHidden><Text variant={size > 48 ? "title3" : "headline"} maxFontSizeMultiplier={1}>{ini}</Text></View>;
 }

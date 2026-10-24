@@ -6,7 +6,7 @@ import Animated, { FadeIn, FadeInDown, LinearTransition, useAnimatedStyle, useRe
 import { router } from "expo-router";
 import { Text, Icon, Button, SectionHeader } from "../ui";
 import { Card } from "../../app/(tabs)/(countries)/countries";
-import { useColors, S, R, curve } from "../../lib/theme";
+import { useColors, useLargeText, S, R, curve } from "../../lib/theme";
 import { SPRING } from "../../theme/tokens";
 import { COUNTRY_LIST } from "../../lib/countries";
 import { FAQ } from "../../lib/faq";
@@ -18,13 +18,14 @@ export const EXPLORE = ["Belgium", "Denmark", "Sweden", "Norway", "Hungary", "Ma
 
 export function Explore() {
   const { t } = useT(); const { width } = useWindowDimensions(); const reduce = useReducedMotion();
-  const w = Math.floor((Math.min(width, 600) - S.lg * 2 - S.sm) / 2);
+  const large = useLargeText(); // one column at accessibility sizes, like the Countries grid
+  const w = large ? Math.min(width, 600) - S.lg * 2 : Math.floor((Math.min(width, 600) - S.lg * 2 - S.sm) / 2);
   return (
     <View style={{ marginTop: S.xl }} testID="home-explore">
       <SectionHeader title={t("Explore countries")} />
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.sm, paddingHorizontal: S.lg }}>
         {EXPLORE.map((n, i) => (
-          <Animated.View key={n} entering={reduce ? undefined : FadeInDown.delay(60 * i).springify().damping(20)}><Card name={n} w={w} ratio={1.05} /></Animated.View>
+          <Animated.View key={n} entering={reduce ? undefined : FadeInDown.delay(60 * i).springify().damping(20)}><Card name={n} w={w} ratio={large ? 0.6 : 1.05} /></Animated.View>
         ))}
       </View>
       <View style={{ paddingHorizontal: S.lg, marginTop: S.md }}>

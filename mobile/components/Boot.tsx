@@ -9,6 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS, useReducedMotion } from "react-native-reanimated";
 import { useColors, useIsDark } from "../lib/theme";
 import { markReady } from "../lib/perf";
+import { useT } from "../lib/i18n";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 try { SplashScreen.setOptions({ fade: true, duration: 150 }); } catch { /* not supported on this platform */ }
@@ -18,7 +19,7 @@ const MIN_SPLASH_MS = 600;
 const LOGO_W = 150;
 
 export function BootOverlay({ ready }: { ready: boolean }) {
-  const c = useColors(); const dark = useIsDark(); const reduce = useReducedMotion();
+  const c = useColors(); const dark = useIsDark(); const reduce = useReducedMotion(); const { t } = useT();
   const [gone, setGone] = useState(false);
   const mountedAt = useRef(0);
   useEffect(() => { mountedAt.current = Date.now(); }, []);
@@ -40,7 +41,7 @@ export function BootOverlay({ ready }: { ready: boolean }) {
   if (gone) return null;
   return (
     <Animated.View pointerEvents={ready ? "none" : "auto"} style={[StyleSheet.absoluteFill, { backgroundColor: c.bg, alignItems: "center", justifyContent: "center", zIndex: 1000 }, a]}
-      accessible accessibilityLabel="EZvisa, loading" accessibilityRole="progressbar" testID="boot-overlay">
+      accessible accessibilityLabel={`EZvisa, ${t("Loading")}`} accessibilityRole="progressbar" testID="boot-overlay">
       {/* Very light: the page colour at the top, the card grey at the bottom. */}
       <LinearGradient colors={[c.bg, c.card]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={StyleSheet.absoluteFill} />
       <Animated.View style={m}>

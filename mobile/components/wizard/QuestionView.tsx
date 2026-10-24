@@ -125,7 +125,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
               {([[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const).map(([n, l]) => {
                 const [y, m, d] = f.travelStartDate.split("-").map(Number); const v = isoLocal(new Date(y, m - 1, d + n - 1)); const on = f.travelEndDate === v;
                 return <PressScale key={n} onPress={() => { select(); patch({ travelEndDate: v }); }} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t(l)}
-                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? "#0436DC" : c.card, borderWidth: on ? 0 : 1, borderColor: "#E3E7EF" }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? "#FFFFFF" : c.label}>{t(l)}</Text></PressScale>;
+                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? c.accentFill : c.card, borderWidth: on ? 0 : 1, borderColor: c.border }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? c.onAccent : c.label}>{t(l)}</Text></PressScale>;
               })}
             </View>
           )}
