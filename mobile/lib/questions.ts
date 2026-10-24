@@ -62,14 +62,16 @@ export const QUESTIONS: Question[] = [
   // ======== BEFORE PAYMENT: the website's steps and fields, in its order ========
   // ---- Step 1, Destination (website components/apply/destination-step.tsx) ----
   { id: "destination", step: "destination", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "country", names: SCHENGEN, searchPlaceholder: "Search country..." },
+  // Signed in with saved travellers (lib/travellers.ts): the website's "Who is travelling?" drop-down, asked right after the
+  // destination. Picking one fills every answer it carries (nationality, name, passport number and expiry, date of birth,
+  // phone, emirate) and the wizard jumps to the first question still open, so a returning customer is not asked for
+  // their nationality or passport again. Owns no form key: never an error, never on Review.
+  { id: "traveller", step: "destination", keys: [], label: "Who is travelling?", required: true, kind: "traveller", hint: "Pick a saved traveller to fill in the details. You can still edit them.",
+    applies: () => !!accountEmail && getTravellers().length > 0 },
   { id: "nationality", step: "destination", keys: ["nationality"], label: "Nationality", required: true, kind: "country", names: UAE_NATIONALITIES, searchPlaceholder: "Search nationality...",
     allNames: SCHENGEN_VISA_REQUIRED },
-  // ---- Step 2, Who is travelling? (website components/apply/nationality-step.tsx) ----
+  // ---- Step 2 (website components/apply/nationality-step.tsx) ----
   // Country of residence is always the UAE (RESIDENCE_COUNTRIES), set in emptyForm, so it has no screen.
-  // Signed in with saved travellers (lib/travellers.ts): the website's "Who is travelling?" drop-down. Picking one fills
-  // the answers it carries (the wizard then jumps to the first unanswered question). Owns no form key: never an error, never on Review.
-  { id: "traveller", step: "personal", keys: [], label: "Who is travelling?", required: true, kind: "traveller", hint: "Pick a saved traveller to fill in the details. You can still edit them.",
-    applies: () => !!accountEmail && getTravellers().length > 0 },
   { id: "name", step: "personal", keys: ["firstName", "lastName"], label: "Your Name", required: true, kind: "pair", hint: "As on your passport.",
     fields: [{ key: "firstName", label: "First Name", placeholder: "Enter first name", contentType: "givenName", autoComplete: "given-name" },
       { key: "lastName", label: "Last Name", placeholder: "Enter last name", contentType: "familyName", autoComplete: "family-name" }] },
