@@ -56,14 +56,14 @@ People prepare each file. The app collects only what those people need, in the o
 
 - Logos, app icons and splash screens: `assets/logo.png`, `assets/logo-dark.png`, `assets/icon.png`, `assets/splash-icon*.png`.
 - Destination photos: `assets/countries/`. Flags: `assets/flags/`. Hero image: `assets/hero.jpg`.
-- Allowed claim: the money-back guarantee if the visa is denied. The app must not show approval rates, visa counts or testimonials. The website's 98% / 5,000+ figures stay on the website.
+- No money-back guarantee in the app. The app must not show approval rates, visa counts or testimonials. The website's 98% / 5,000+ figures stay on the website.
 
 ## Product Principles
 
 1. Ask only what the experts need, and only when they need it. Anything not needed to pay waits until after payment.
 2. Show real state only: real statuses, real timestamps, real appointment data. Nothing is faked or estimated as fact.
 3. Keep progress safe. Answers autosave and resume at the exact question on any device, and uploads survive going offline.
-4. Treat money plainly. The server sets the price, the guarantee is stated where it matters, and payment problems lead to a human on WhatsApp.
+4. Treat money plainly. The server sets the price, and payment problems lead to a human on WhatsApp.
 5. Feel native and quiet: one task per screen, motion that responds to touch, and no persuasion.
 
 ## Accessibility & Inclusion

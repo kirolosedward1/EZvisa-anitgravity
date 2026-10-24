@@ -586,11 +586,11 @@ export const AR: Record<string, string> = {
   "Google sign-in didn't complete. Please try again.": "لم يكتمل تسجيل الدخول عبر Google. يرجى المحاولة مرة أخرى.",
   "Edit photo": "تعديل الصورة", "Add photo": "إضافة صورة", "Remove photo": "إزالة الصورة", "Remove photo?": "إزالة الصورة؟", "Profile photo": "صورة الملف الشخصي",
   // ---- country screen (country v2) ----
-"Schengen visa for {c}": "تأشيرة شنغن إلى {c}", "Money back if the visa is refused": "استرداد المبلغ إذا رُفضت التأشيرة",
+"Schengen visa for {c}": "تأشيرة شنغن إلى {c}",
   "Continue your {c} application": "أكمل طلبك إلى {c}", "View your application": "عرض طلبك", "Schengen short-stay visa": "تأشيرة شنغن للإقامة القصيرة",
   "At a glance": "نظرة سريعة", "Stay": "مدة الإقامة", "Up to 90 days in any 180 days": "حتى 90 يومًا خلال أي 180 يومًا", "When to apply": "متى تقدّم",
   "Between 6 months and 15 days before you travel": "بين 6 أشهر و15 يومًا قبل سفرك", "Visa centre": "مركز التأشيرات", "{p}, Dubai and Abu Dhabi": "\u200F{p}، دبي وأبوظبي",
-  "Shows the addresses": "يعرض العناوين", "We prepare your file. Money back if the visa is refused.": "نحن نُعدّ ملفك. نردّ المبلغ إذا رُفضت التأشيرة.",
+  "Shows the addresses": "يعرض العناوين", "We prepare your file.": "نحن نُعدّ ملفك.",
 "You provide": "تقدّمه أنت", "We prepare": "نُعدّه نحن", "Shows a tip": "يعرض نصيحة",
   "You can start without all of these. Missing documents can be added after payment.": "يمكنك البدء دون كل هذه المستندات. يمكن إضافة الناقص منها بعد الدفع.",
   "Clear colour copy": "نسخة ملونة واضحة", "White background": "خلفية بيضاء", "Last 3-6 months, stamped": "آخر 3-6 أشهر، مختومة", "If you are employed": "إذا كنت موظفًا",
