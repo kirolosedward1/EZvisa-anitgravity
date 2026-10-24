@@ -4,7 +4,9 @@ import Image from "next/image"
 import { format, parseISO } from "date-fns"
 import { Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { LangText } from "@/components/lang-text"
 import { downloadReceiptPdf } from "@/lib/receipt-pdf"
+import { translations } from "@/lib/translations"
 import { getReference } from "@/lib/application-status"
 import { PRICE_AED, referenceOf } from "@/lib/shared/wizard-contract"
 import type { VisaApplication } from "@/lib/types/visa-application"
@@ -61,7 +63,7 @@ export function ReceiptView({ app }: { app: VisaApplication }) {
 
       {amount === null ? (
         <p className="px-6 py-6 text-sm leading-relaxed text-muted-foreground sm:px-8">
-          This payment has no amount on file, so we can&apos;t issue a receipt here. Message us on WhatsApp and we&apos;ll send one.
+          <LangText en={translations.en.receipt.missingAmount} ar={translations.ar.receipt.missingAmount} />
         </p>
       ) : (
         <div className="flex flex-col gap-3 px-6 py-6 text-sm sm:px-8">

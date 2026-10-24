@@ -1,5 +1,6 @@
 "use client"
-import { useState } from "react"
+import { Suspense, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { LocaleLink } from "@/components/locale-link"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -7,28 +8,39 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { useSiteLocale } from "@/components/locale-provider"
+import { EMAIL_RE } from "@/lib/auth/errors"
 import { authCallbackUrl } from "@/lib/auth/redirect"
+import { translations } from "@/lib/translations"
+import { authFormErrorText } from "@/lib/translations/auth-form"
 
-export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
+function ForgotPasswordForm() {
+  const locale = useSiteLocale()
+  const copy = translations[locale].authForm
+  const searchParams = useSearchParams()
+  const [email, setEmail] = useState(searchParams.get("email") ?? "")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
   const supabase = createBrowserClient()
 
-
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
+    const clean = email.trim()
+    if (!EMAIL_RE.test(clean)) {
+      setError(copy.errors["invalid-email"])
+      return
+    }
     setIsLoading(true)
     setError("")
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+
+    const { error } = await supabase.auth.resetPasswordForEmail(clean, {
       redirectTo: authCallbackUrl({ type: "recovery" }),
     })
 
     if (error) {
-      setError(error.message)
+      setError(authFormErrorText(locale, error))
       setIsLoading(false)
     } else {
       setSuccess(true)
@@ -40,21 +52,21 @@ export default function ForgotPasswordPage() {
     <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
         <div className="text-center">
-          <h2 className="text-3xl font-semibold tracking-tight">Reset password</h2>
-          <p className="text-muted-foreground mt-2">Enter your email to receive a reset link</p>
+          <h1 className="text-3xl font-semibold tracking-tight">{copy.resetTitle}</h1>
+          <p className="text-muted-foreground mt-2">{copy.resetSubtitle}</p>
         </div>
 
         {success ? (
           <div className="space-y-4">
             <Alert className="bg-emerald-50 text-emerald-900 border-emerald-200">
-              <AlertDescription>We've sent a password reset link to your email.</AlertDescription>
+              <AlertDescription>{copy.resetSent}</AlertDescription>
             </Alert>
             <Button variant="outline" className="w-full" asChild>
-              <LocaleLink href="/login">Back to login</LocaleLink>
+              <LocaleLink href="/login">{copy.backToLogin}</LocaleLink>
             </Button>
           </div>
         ) : (
-          <form onSubmit={handleReset} className="space-y-6">
+          <form onSubmit={handleReset} className="space-y-6" noValidate>
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -62,23 +74,34 @@ export default function ForgotPasswordPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">{copy.emailLabel}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                dir="ltr"
+                autoComplete="email"
+                inputMode="email"
+                placeholder={copy.emailPlaceholder}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setError("") }}
                 required
               />
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Sending...</> : "Send reset link"}
+              {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />{copy.sending}</> : copy.sendReset}
             </Button>
           </form>
         )}
       </div>
     </div>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-[100dvh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" /></div>}>
+      <ForgotPasswordForm />
+    </Suspense>
   )
 }
