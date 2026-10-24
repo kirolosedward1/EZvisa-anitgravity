@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { COUNTRY_DATA, SCHENGEN_META } from "@/lib/countries"
@@ -64,7 +64,7 @@ export default function DocumentsPage() {
               <ul className="grid grid-cols-1 overflow-hidden rounded-3xl border border-border/70 bg-card sm:grid-cols-2 lg:grid-cols-3">
                 {filteredCountries.map((country) => (
                   <li key={country.name} className="-mb-px -me-px border-b border-e border-border/70">
-                    <Link
+                    <LocaleLink
                       href={`/documents/required-documents-to-apply-for-a-tourist-visa-in-${country.slug}`}
                       className="group flex items-center gap-3 px-5 py-4 transition-colors hover:bg-secondary/60"
                     >
@@ -74,7 +74,7 @@ export default function DocumentsPage() {
                         className="size-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary rtl:rotate-180"
                         aria-hidden="true"
                       />
-                    </Link>
+                    </LocaleLink>
                   </li>
                 ))}
               </ul>

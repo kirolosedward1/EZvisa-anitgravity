@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 
 import type { Detail } from "./content"
 
@@ -19,9 +19,9 @@ export function DetailsList({ items }: { items: Detail[] }) {
                 {item.href && item.linkLabel && (
                   <>
                     {" "}
-                    <Link href={item.href} className="font-medium text-primary hover:underline">
+                    <LocaleLink href={item.href} className="font-medium text-primary hover:underline">
                       {item.linkLabel}
-                    </Link>
+                    </LocaleLink>
                   </>
                 )}
               </p>

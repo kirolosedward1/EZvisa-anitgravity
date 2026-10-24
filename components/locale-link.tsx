@@ -1,35 +1,28 @@
 "use client"
 
-import { forwardRef, useLayoutEffect, useState, type ComponentProps } from "react"
+import { forwardRef, type ComponentProps } from "react"
 import Link from "next/link"
-
-function localize(href: string, arabic: boolean) {
-  if (!arabic) return href
-  if (!href.startsWith("/") || href.startsWith("//") || href === "/ar" || href.startsWith("/ar/") || href.startsWith("/ar#") || href.startsWith("/ar?")) {
-    return href
-  }
-  if (href === "/") return "/ar"
-  return `/ar${href}`
-}
+import { useSiteLocale } from "@/components/locale-provider"
+import { localizePath } from "@/lib/route-path"
 
 /** Prefix an internal path with /ar when the address bar is Arabic. */
 export function localizeHref(href: string) {
   if (typeof window === "undefined") return href
   const path = window.location.pathname
-  return localize(href, path === "/ar" || path.startsWith("/ar/"))
+  return localizePath(href, path === "/ar" || path.startsWith("/ar/"))
 }
 
-/** Internal links stay on /ar after the first paint. The server href is unchanged so hydration matches. */
+/** Locale comes from the request, so the server href and the hydrated href match. */
+export function useLocalizedHref() {
+  const arabic = useSiteLocale() === "ar"
+  return (href: string) => localizePath(href, arabic)
+}
+
+/** Internal links stay on /ar. English pages keep the path that was written. */
 export const LocaleLink = forwardRef<HTMLAnchorElement, ComponentProps<typeof Link>>(function LocaleLink(
   { href, ...props },
   ref,
 ) {
-  const [arabic, setArabic] = useState(false)
-
-  useLayoutEffect(() => {
-    const path = window.location.pathname
-    setArabic(path === "/ar" || path.startsWith("/ar/"))
-  }, [])
-
-  return <Link ref={ref} href={typeof href === "string" ? localize(href, arabic) : href} {...props} />
+  const localize = useLocalizedHref()
+  return <Link ref={ref} href={typeof href === "string" ? localize(href) : href} {...props} />
 })

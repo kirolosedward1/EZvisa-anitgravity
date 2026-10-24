@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { format, parseISO } from "date-fns"
 import { ChevronRight, ExternalLink, Printer, Receipt, Upload } from "lucide-react"
 import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashboard-card"
@@ -79,14 +79,14 @@ export function CaseSummary({
         <ul className="flex flex-col border-t border-border/60 p-2">
           {links.map(({ href, label, icon: Icon }) => (
             <li key={href}>
-              <Link
+              <LocaleLink
                 href={href}
                 className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
               >
                 <Icon className="size-4 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true" />
                 <span className="flex-1">{label}</span>
                 <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-              </Link>
+              </LocaleLink>
             </li>
           ))}
         </ul>

@@ -10,6 +10,8 @@ import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
 import { Msg } from "@/components/msg"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useSiteLocale } from "@/components/locale-provider"
+import { localizePath } from "@/lib/route-path"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -185,17 +187,11 @@ const defaultFormData: WizardFormData = {
   spousePhoto: null,
 }
 
-function localizeApplyPath(path: string) {
-  if (typeof window === "undefined") return path
-  const pathName = window.location.pathname
-  const onArabic = pathName === "/ar" || pathName.startsWith("/ar/")
-  if (!onArabic || path.startsWith("/ar")) return path
-  return `/ar${path}`
-}
-
 function ApplyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const arabic = useSiteLocale() === "ar"
+  const localizeApplyPath = (path: string) => localizePath(path, arabic)
 
   const [formData, setFormData] = useState<WizardFormData>(defaultFormData)
   const [isInitialized, setIsInitialized] = useState(false)

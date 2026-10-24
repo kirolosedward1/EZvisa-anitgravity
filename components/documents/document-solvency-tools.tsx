@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { Coins, Calendar, MapPin, CheckCircle2, ArrowRight, ShieldCheck, Layers, ChevronDown, ChevronUp, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { calculateRequiredFunds } from "@/lib/bank-requirements"
@@ -90,10 +90,10 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
             </p>
 
             <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-white font-semibold text-xs rounded-xl shadow-xs">
-              <Link href={`/tools/bank-balance-calculator?country=${encodeURIComponent(country)}`}>
+              <LocaleLink href={`/tools/bank-balance-calculator?country=${encodeURIComponent(country)}`}>
                 Calculate Your Exact Trip Balance
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-              </Link>
+              </LocaleLink>
             </Button>
           </div>
         </div>
@@ -114,10 +114,10 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
             </p>
           </div>
           <Button asChild variant="outline" size="sm" className="w-full text-xs font-medium justify-between">
-            <Link href="/tools/schengen-calculator">
+            <LocaleLink href="/tools/schengen-calculator">
               <span>Check 90/180-Day Days</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            </LocaleLink>
           </Button>
         </div>
 
@@ -134,10 +134,10 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
             </p>
           </div>
           <Button asChild variant="outline" size="sm" className="w-full text-xs font-medium justify-between">
-            <Link href={`/tools/appointment-guide?country=${encodeURIComponent(country)}`}>
+            <LocaleLink href={`/tools/appointment-guide?country=${encodeURIComponent(country)}`}>
               <span>View Booking Guide &amp; Centers</span>
               <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
+            </LocaleLink>
           </Button>
         </div>
       </div>
