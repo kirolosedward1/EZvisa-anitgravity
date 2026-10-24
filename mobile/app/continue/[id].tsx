@@ -15,14 +15,14 @@ import { useColors, S, R } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { slideIn } from "../../lib/motion";
 import { getApplication, saveAfterPayment, continueForm, isWebsiteRow, withTimeout } from "../../lib/data";
-import { STEP_TITLES, OTHER_NATIONALITY, emptyForm, type WizardForm } from "../../lib/wizard";
+import { DETAIL_STEP_TITLES, OTHER_NATIONALITY, emptyForm, type DetailStep, type WizardForm } from "../../lib/wizard";
 import { continueQuestions, continueError, Q_BY_ID, type Question } from "../../lib/questions";
 import { success, error as hError, tap, select } from "../../lib/haptics";
 
 const AUTO_MS = 260;
 
 /** Short label + icon per after-payment step; Documents (upload) always comes last. */
-const STEP_UI: Record<string, [string, IconName]> = { "trip-details": ["Trip", "airplane"], passport: ["Passport", "person.text.rectangle"], spouse: ["Spouse", "person.2.fill"], employment: ["Work", "briefcase.fill"] };
+const STEP_UI: Record<string, [string, IconName]> = { trip: ["Trip", "airplane"], passport: ["Passport", "person.text.rectangle"], spouse: ["Spouse", "person.2.fill"], employment: ["Work", "briefcase.fill"] };
 
 export default function ContinueApplication() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -121,7 +121,7 @@ export default function ContinueApplication() {
       </View>
       {q && list.length > 0 && (
         <StepIndicator steps={flowSteps} current={stepKeys.indexOf(q.step)} fraction={inStep.length ? inStep.indexOf(q) / inStep.length : 0}
-          a11yLabel={t("{step}, {i} of {n}", { step: t(STEP_TITLES[q.step].title), i: idx + 1, n: list.length })} />
+          a11yLabel={t("{step}, {i} of {n}", { step: t(DETAIL_STEP_TITLES[q.step as DetailStep]?.title ?? q.step), i: idx + 1, n: list.length })} />
       )}
     </View>
   );

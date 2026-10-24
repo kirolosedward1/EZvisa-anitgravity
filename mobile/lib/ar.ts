@@ -672,4 +672,15 @@ export const AR: Record<string, string> = {
   "Cooking class for a local dish": "درس طبخ لطبق محلي",
   "Botanical garden visit in {city}": "زيارة حديقة نباتية في {city}",
   "Your trip plan unlocks after payment": "تُفتح خطة رحلتك بعد الدفع",
+  // Unified wizard (website flow, contract 2026-10-24): labels and the website's own Arabic for its messages.
+  "Who is travelling?": "من المسافر؟", "Someone else": "شخص آخر", "Travelling with": "المسافرون", "With my spouse": "مع الزوج أو الزوجة",
+  "Emirate you live in": "الإمارة التي تقيم فيها", "Traveller details": "بيانات المسافر", "Nationality & destination": "الجنسية والوجهة",
+  "As printed on your passport's photo page.": "كما هو مطبوع في صفحة البيانات بجواز سفرك.",
+  "Pick a saved traveller to fill in the details below. You can still edit them.": "اختر مسافرًا محفوظًا لتعبئة البيانات أدناه. يمكنك تعديلها لاحقًا.",
+  "With your spouse: two applicants. Spouse details are asked after payment.": "مع الزوج أو الزوجة: متقدمان. بيانات الزوج أو الزوجة بعد الدفع.",
+  "Choose your nationality.": "اختر الجنسية.", "Choose a destination.": "اختر الوجهة.", "Enter your first name.": "أدخل الاسم الأول.",
+  "Enter your last name.": "أدخل اسم العائلة.", "Enter your passport number.": "أدخل رقم جواز السفر.", "Enter your phone number.": "أدخل رقم الهاتف.",
+  "Enter a valid phone number.": "أدخل رقم هاتف صحيحًا.", "Enter your email.": "أدخل البريد الإلكتروني.", "Enter your date of birth.": "أدخل تاريخ الميلاد.",
+  "The main applicant must be 18 or older.": "يجب أن يكون مقدم الطلب الرئيسي 18 عاماً أو أكثر.",
+  "Choose the emirate you live in.": "اختر الإمارة التي تقيم فيها.", "Choose yes or no.": "اختر نعم أو لا.", "Saved traveller": "مسافر محفوظ",
 };

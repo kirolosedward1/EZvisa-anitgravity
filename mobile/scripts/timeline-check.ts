@@ -103,7 +103,9 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 // N. The passport number is asked after payment too: employment done but no number (column or wizard) -> Continue application.
 { ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: { ...selfEmployed, hasValidPassport: "yes" } })).kind === "continue", "N paid, passport number missing: Continue application");
   ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: afterPay })).kind !== "continue", "N paid, every after-payment answer in the wizard notes: no Continue");
-  ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { wizard: selfEmployed })).kind !== "continue", "N paid, number only in the passport_number column (website row): no Continue");
+  { const { passportNumber: _n, ...noNumber } = afterPay;
+    ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { wizard: noNumber })).kind !== "continue", "N paid, number only in the passport_number column (website row): no Continue"); }
+  ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { wizard: selfEmployed })).kind === "continue", "N website row with trip details still missing: Continue application (the website's /continue asks them too)");
   ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { ...app, wizard: { ...selfEmployed, passportNumber: "N1234567" } })).kind === "continue", "N paid app row with trip and passport answers missing: Continue application");
   ok(next(row({ payment_status: "pending", passport_number: null }, { ...app, wizard: selfEmployed })).kind === "pay", "N unpaid, no number: still Pay, never Continue"); }
 
@@ -137,7 +139,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 // R. Staff rejected a document the customer uploaded on the website (known only from has_passport). The review was
 //    written after the upload, and writing it moved updated_at on: the rejection must still show.
 { const a = row({ application_status: "reviewing", payment_status: "paid", passport_number: "N1234567", has_passport: true, updated_at: "2026-10-22T10:00:00.412+00:00",
-    document_reviews: { passportCopy: { status: "rejected", reason: "Blurry", at: "2026-10-22T10:00:00.000Z" } } }, { employmentStatus: "student" });
+    document_reviews: { passportCopy: { status: "rejected", reason: "Blurry", at: "2026-10-22T10:00:00.000Z" } } }, { employmentStatus: "student", wizard: afterPay });
   ok(st(buildTimeline(a), "documents").state === "attention", "R website-flag document rejected by staff: Documents needs attention");
   ok(next(a).kind === "upload" && next(a).title.startsWith("Re-upload"), `R website-flag document rejected: next action Re-upload (got "${next(a).title}")`); }
 
@@ -154,7 +156,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 // U. A website row after the customer answered "Continue application" in the app: it stays a website row, so its real
 //    submit time (created_at) is kept and Continue is not asked a second time with the app's full question set.
 { const webNotes = { employmentStatus: "student" };
-  const saved = { ...keepOrigin(webNotes), lastEditedOn: "app", wizard: { employmentStatus: "student", hasValidPassport: "yes", passportNumber: "N1234567" } };
+  const saved = { ...keepOrigin(webNotes), lastEditedOn: "app", wizard: { ...afterPay, employmentStatus: "student", hasValidPassport: "yes", passportNumber: "N1234567" } };
   const a = row({ application_status: "reviewing", payment_status: "paid", passport_number: "N1234567" }, saved);
   ok(saved.source !== "mobile-app", "U keepOrigin: a website row is not relabelled as an app row");
   ok(st(buildTimeline(a), "submitted").at === base.created_at, "U website row after Continue: Submitted keeps its real time");

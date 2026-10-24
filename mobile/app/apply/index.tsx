@@ -28,7 +28,9 @@ import { SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp } from "../../lib/api";
 import { money, startPayment, usePaying, useQuote } from "../../lib/payments";
 import { submitApplication, guestSubmit, listRequirements, DraftConflictError, type Requirement } from "../../lib/data";
-import { PrefillOffer } from "../../components/wizard/extras";
+import { PrefillOffer, TravellerOffer } from "../../components/wizard/extras";
+import { listTravellers } from "../../lib/travellers";
+import { applyTraveller, travellerLabel, type Traveller } from "../../lib/wizard";
 import { QuestionView } from "../../components/wizard/QuestionView";
 import { SyncIndicator, DraftConflictSheet } from "../../components/wizard/sync";
 import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, markPrefilled, markAsked, shouldAsk, type ProfileChange } from "../../lib/profile";
@@ -48,7 +50,7 @@ const AUTO_MS = 260;
 const PREFILL_KEYS: (keyof WizardForm)[] = ["cityOfResidence", "hasEmiratesId", "maritalStatus",
   "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
 const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });
-const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
+const STEP_ORDER: WizardStep[] = ["destination", "personal", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
 /** Where you are: Details (the questions before payment) -> Review -> Payment. The line after Details fills as you answer. */
@@ -90,6 +92,8 @@ export default function Apply() {
   const net = useNetInfo(); const offline = net.isConnected === false;
   const [reqs, setReqs] = useState<Requirement[]>([]);
   const [prefill, setPrefill] = useState<{ values: Partial<WizardForm>; name: string } | null>(null); const prefillAsked = useRef<string | null>(null);
+  /** Saved travellers offered on the traveller step (website: the "Who is travelling?" drop-down). Null once answered. */
+  const [travellers, setTravellers] = useState<Traveller[] | null>(null);
   const [fromProfile, setFromProfile] = useState<{ key: string; values: Partial<WizardForm> } | null>(null); // answers filled from the profile in this draft
   const [profileAsk, setProfileAsk] = useState<{ uid: string; key: string; changes: ProfileChange[] } | null>(null);
   const [profileBusy, setProfileBusy] = useState(false); const [profileErr, setProfileErr] = useState<string | null>(null); const [profileSavedFor, setProfileSavedFor] = useState<string | null>(null);
@@ -116,6 +120,7 @@ export default function Apply() {
     prefillAsked.current = `${uid}:${activeKey}`; // once per account and draft ("Start Fresh" / a new application gets its own)
     if (draftId || !isFreshDraft(fRef.current)) return;
     const key = activeKey; let on = true; // `on` turns false when the account or the draft changes meanwhile
+    listTravellers().then((list) => { if (on && list.length && isFreshDraft(fRef.current)) setTravellers(list); }).catch(() => {});
     loadProfile(uid).then((r) => {
       if (!on || !r || !isFreshDraft(fRef.current) || (r.hasDraft && !hasAnswers(fRef.current))) return;
       const { form: nf, filled } = applyProfile(fRef.current, r.profile);
@@ -153,6 +158,14 @@ export default function Apply() {
     try { await saveProfile(profileAsk.uid, fRef.current, profileAsk.changes); success(); markAsked(profileAsk.key); setProfileAsk(null); setProfileSavedFor(profileAsk.key); }
     catch (e: any) { hError(); setProfileErr(t(e?.message ?? String(e))); }
     finally { setProfileBusy(false); }
+  };
+  const pickTraveller = (id: string | null) => {
+    tap();
+    const picked = id ? travellers?.find((x) => x.id === id) : null;
+    setTravellers(null); setPrefill(null);
+    if (!picked) return;
+    const nf = applyTraveller(fRef.current, picked);
+    setForm(nf); const u = firstUnanswered(nf); if (u) goTo(`q:${u.id}`, 1);
   };
   const usePrefill = () => {
     if (!prefill) return; tap();
@@ -199,8 +212,7 @@ export default function Apply() {
     if (!hydrated) return;
     if (lastSlug.current !== undefined && p.step === lastSlug.current) return;
     if (p.step === undefined) { if (lastSlug.current === undefined) lastSlug.current = stepOfPage(page); return; }
-    let s = parseStep(p.step);
-    if (s === "spouse" && !showSpouse(fRef.current)) s = "trip-details";
+    const s = parseStep(p.step);
     lastSlug.current = s; setDir(-1); setPage(pageForStep(s, fRef.current)); setShowErr(false); setEditing(null);
   }, [hydrated, p.step]);
   // Keep ?step= in sync with the current step, like the site.
@@ -348,7 +360,7 @@ export default function Apply() {
   // ---------------- Review ----------------
   if (page === REVIEW) {
     const qs = activeQuestions(f);
-    const groups = (["personal", "spouse", "employment", "trip-details"] as const).map((s) => ({ s, qs: qs.filter((x) => x.step === s) })).filter((g) => g.qs.length);
+    const groups = (["destination", "personal"] as const).map((s) => ({ s, qs: qs.filter((x) => x.step === s) })).filter((g) => g.qs.length);
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         {header}
@@ -438,7 +450,9 @@ export default function Apply() {
       header={header} entering={entering} pageKey={page} titleRef={titleRef} allMode={allMode} doneLabel={editing ? t("Save") : undefined}
       chips={prefilledHere ? <View testID="from-profile" style={{ flexDirection: "row", alignItems: "center", gap: S.xxs, paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}>
         <Icon name="person.crop.circle" size={12} color={c.tint} /><Text variant="caption" tone="secondary" weight="600">{t("From your profile")}</Text></View> : undefined}
-      belowTitle={!!prefill && !allMode ? <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} /> : undefined}>
+      belowTitle={travellers && q.step === "personal" && !allMode
+        ? <TravellerOffer travellers={travellers.map((x) => ({ id: x.id, label: travellerLabel(x) || t("Saved traveller") }))} onPick={pickTraveller} onSomeoneElse={() => pickTraveller(null)} />
+        : !!prefill && !travellers && !allMode ? <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} /> : undefined}>
       <DraftConflictSheet />
       <Modal visible={resumeAsk} transparent animationType="fade" onRequestClose={() => setResumeAsk(false)}>
         <View style={{ flex: 1, backgroundColor: c.overlay, justifyContent: "center", padding: S.gutter }}>
