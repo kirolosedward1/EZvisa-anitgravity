@@ -8,12 +8,14 @@ import { cn } from "@/lib/utils"
 import { WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
 import { Msg } from "@/components/msg"
 import { useMessage } from "@/components/use-message"
+import { useLocalizedHref } from "@/components/locale-link"
 
 export function ContinueApplicationNotification() {
   const [isVisible, setIsVisible] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const localize = useLocalizedHref()
   const dismissLabel = useMessage("continue.dismiss")
 
   useEffect(() => {
@@ -74,7 +76,7 @@ export function ContinueApplicationNotification() {
   }
 
   const handleContinue = () => {
-    router.push(pathname?.startsWith("/ar") ? "/ar/apply" : "/apply")
+    router.push(localize("/apply"))
   }
 
   if (!isVisible) {

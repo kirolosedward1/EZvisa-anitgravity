@@ -1,16 +1,18 @@
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight, Download, Printer, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PayNowButton } from "@/components/dashboard/pay-now-button"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { detailsMissing, getDocumentProgress, isPaid, type Stage } from "@/lib/application-status"
 import { PREPARATION_TIME } from "@/lib/copy"
+import { requestLocale } from "@/lib/request-locale"
 import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
-export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stage }) {
+export async function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stage }) {
   const token = app.tracking_token ?? ""
   const { missing } = getDocumentProgress(app)
+  const arabic = (await requestLocale()) === "ar"
 
   const content = (() => {
     switch (stage) {
@@ -33,10 +35,10 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
           body: `Still needed: ${missing.map((doc) => doc.label.toLowerCase()).join(", ")}. Upload them on the website or in the EZvisa app.`,
           actions: (
             <Button asChild className="rounded-full px-5">
-              <Link href={`/track/${token}/upload?type=${missing[0]?.uploadType ?? ""}`}>
+              <LocaleLink href={`/track/${token}/upload?type=${missing[0]?.uploadType ?? ""}`}>
                 <Upload />
                 Upload documents
-              </Link>
+              </LocaleLink>
             </Button>
           ),
         }
@@ -59,10 +61,10 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
           actions: (
             <>
               <Button asChild className="rounded-full px-5">
-                <Link href={`/track/${token}/dossier`}>
+                <LocaleLink href={`/track/${token}/dossier`}>
                   <Printer />
                   View &amp; print file
-                </Link>
+                </LocaleLink>
               </Button>
               <Button asChild variant="outline" className="rounded-full px-5">
                 <a href={`/api/download-document?token=${token}`}>
@@ -85,7 +87,7 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
           body: "Message us and a visa specialist will go through the refusal letter with you and explain your options, including reapplying.",
           actions: (
             <Button asChild className="rounded-full px-5">
-              <a href={getCaseTrackingWhatsAppUrl(app.id || token, app.destination_country)} target="_blank" rel="noopener noreferrer">
+              <a href={getCaseTrackingWhatsAppUrl(app.id || token, app.destination_country, arabic)} target="_blank" rel="noopener noreferrer">
                 <WhatsAppIcon className="size-4" />
                 Talk to a specialist
               </a>
@@ -103,10 +105,10 @@ export function NextStepCard({ app, stage }: { app: VisaApplication; stage: Stag
     content.body = "Payment received. Add your trip, passport and employment details, then upload your documents."
     content.actions = (
       <Button asChild className="rounded-full px-5">
-        <Link href={`/continue/${app.id}`}>
+        <LocaleLink href={`/continue/${app.id}`}>
           Continue application
           <ArrowRight className="rtl:rotate-180" />
-        </Link>
+        </LocaleLink>
       </Button>
     )
   }

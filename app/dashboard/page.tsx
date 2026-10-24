@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
+import { redirectLocalized, requestLocale } from "@/lib/request-locale";
+import { signOutAction } from "@/lib/route-path";
+import { LocaleLink } from "@/components/locale-link";
 import { cookies } from "next/headers";
 import { LogOut, Plus, Search } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
@@ -20,9 +21,9 @@ import { getStatusLabel } from "@/lib/application-status";
 // Demo shortcuts are for previews and local testing, not real customers
 const SHOW_DEMO_ACCESS = process.env.VERCEL_ENV !== "production";
 
-function SignOutButton({ label }: { label: string }) {
+function SignOutButton({ label, action }: { label: string; action: string }) {
   return (
-    <form action="/api/auth/signout" method="POST">
+    <form action={action} method="POST">
       <Button type="submit" variant="ghost" className="rounded-full text-muted-foreground hover:text-foreground">
         <LogOut />
         {label}
@@ -32,6 +33,8 @@ function SignOutButton({ label }: { label: string }) {
 }
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ id?: string; demo?: string; pay?: string }> }) {
+  const arabic = (await requestLocale()) === "ar";
+  const signOut = signOutAction(arabic);
   const cookieStore = await cookies();
   const resolvedSearchParams = await searchParams;
   const demoCookie = cookieStore.get("ez_demo_session");
@@ -76,7 +79,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   }
 
   if (!user || !user.email) {
-    redirect("/login?next=/dashboard");
+    redirectLocalized("/login?next=/dashboard", arabic);
   }
 
   const isDemo = isDemoEmail(user.email);
@@ -129,12 +132,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               </div>
               <div className="flex flex-wrap justify-center gap-3">
                 <Button asChild className="rounded-full px-5">
-                  <Link href="/apply">
+                  <LocaleLink href="/apply">
                     <Plus />
                     Start an application
-                  </Link>
+                  </LocaleLink>
                 </Button>
-                <SignOutButton label="Sign out" />
+                <SignOutButton label="Sign out" action={signOut} />
               </div>
               {SHOW_DEMO_ACCESS && (
                 <div className="w-full border-t border-border/60 pt-6 text-left">
@@ -164,10 +167,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           description={<>Signed in as <span className="ltr-isolate">{user.email}</span></>}
           actions={
             <Button asChild className="rounded-full px-5">
-              <Link href="/apply">
+              <LocaleLink href="/apply">
                 <Plus />
                 New application
-              </Link>
+              </LocaleLink>
             </Button>
           }
         />

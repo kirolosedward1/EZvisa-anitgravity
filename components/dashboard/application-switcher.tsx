@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { CountryFlag } from "@/components/country-flag"
 import { SCHENGEN_META } from "@/lib/countries"
 import { getStatusLabel } from "@/lib/application-status"
@@ -24,7 +24,7 @@ export function ApplicationSwitcher({
           const status = getStatusLabel(app)
           return (
             <li key={app.id}>
-              <Link
+              <LocaleLink
                 href={hrefFor(app)}
                 aria-current={isActive ? "page" : undefined}
                 className={cn(
@@ -44,7 +44,7 @@ export function ApplicationSwitcher({
                     {app.full_name} · {status.label}
                   </span>
                 </span>
-              </Link>
+              </LocaleLink>
             </li>
           )
         })}

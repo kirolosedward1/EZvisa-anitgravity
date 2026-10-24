@@ -5,6 +5,8 @@ import {
   APP_AUTH_CALLBACK,
   ARABIC_ACCOUNT_LANDING,
   CONFIRM_NEXT_FALLBACK,
+  callbackLanding,
+  callbackTargetWhenNoCredential,
   confirmDestination,
   confirmFailureTarget,
   confirmLoginPath,
@@ -248,6 +250,115 @@ test("a failed verification with an Arabic next goes to the Arabic sign-in page"
   assert.equal(confirmFailureTarget("https://www.ezvisa.net.evil.com/ar/dashboard", "signup"), "/login?error=link-expired&type=signup")
   assert.equal(confirmFailureTarget("//evil.com", "nope"), "/login?error=link-expired")
   assert.equal(confirmFailureTarget(null, "magiclink", true), "/ar/login?error=link-expired&type=magiclink")
+})
+
+test("email callback URLs unwrap to the inner page, and the app scheme stays", () => {
+  assert.equal(confirmDestination("magiclink", "/auth/callback?type=magiclink"), "/dashboard")
+  assert.equal(confirmDestination("magiclink", "/auth/callback?type=magiclink&next=/apply"), "/apply")
+  assert.equal(confirmDestination("signup", "/api/auth/callback?next=/dashboard"), "/dashboard")
+  assert.equal(confirmDestination("signup", "/api/auth/callback?next=/account?tab=profile"), "/account?tab=profile")
+  assert.equal(
+    confirmDestination("magiclink", "https://www.ezvisa.net/auth/callback?type=magiclink&next=%2Fapply"),
+    "/apply",
+  )
+  assert.equal(
+    confirmDestination("signup", "https://ezvisa.net/api/auth/callback?next=%2Fdashboard"),
+    "/dashboard",
+  )
+  assert.equal(
+    confirmDestination("magiclink", "/auth/callback?next=/api/auth/callback?next=/apply"),
+    "/apply",
+  )
+  assert.equal(
+    confirmDestination("magiclink", "/auth/callback?next=" + encodeURIComponent("/api/auth/callback?next=/apply")),
+    "/apply",
+  )
+  assert.equal(
+    confirmDestination("magiclink", "/auth/callback?redirect=/account"),
+    "/account",
+  )
+  assert.equal(
+    confirmDestination("magiclink", "ezvisa://auth/callback?type=magiclink"),
+    `${APP_AUTH_CALLBACK}?type=magiclink`,
+  )
+  assert.equal(confirmDestination("magiclink", "ezvisa://auth/callback"), APP_AUTH_CALLBACK)
+  assert.equal(
+    confirmDestination("magiclink", "/auth/callback?next=" + encodeURIComponent("ezvisa://auth/callback?type=magiclink")),
+    `${APP_AUTH_CALLBACK}?type=magiclink`,
+  )
+  assert.equal(confirmDestination("recovery", "/auth/callback?type=recovery"), "/reset-password")
+  assert.equal(confirmDestination("recovery", "https://www.ezvisa.net/auth/callback?type=recovery"), "/reset-password")
+})
+
+test("unwrapped callback targets reject open redirects", () => {
+  const rejected = [
+    "/auth/callback?next=https://evil.com",
+    "/auth/callback?next=//evil.com",
+    "/auth/callback?redirect=//evil.com",
+    "/api/auth/callback?next=https://evil.com/steal",
+    "/auth/callback?next=" + encodeURIComponent("https://www.ezvisa.net.evil.com/dashboard"),
+    "/auth/callback?next=" + encodeURIComponent("/api/auth/callback?next=https://evil.com"),
+    "https://evil.com/auth/callback?next=/dashboard",
+    "https://www.ezvisa.net.evil.com/auth/callback?next=/apply",
+    "https://user@www.ezvisa.net/auth/callback?next=/dashboard",
+  ]
+  for (const value of rejected) {
+    const landed = confirmDestination("magiclink", value)
+    assert.equal(landed, "/dashboard", value)
+    assert.equal(landed.includes("evil"), false, value)
+    assert.equal(callbackTargetWhenNoCredential(true, value, "magiclink").includes("evil"), false, value)
+  }
+  assert.equal(callbackTargetWhenNoCredential(true, "//evil.com", "magiclink"), "/dashboard")
+  assert.equal(callbackTargetWhenNoCredential(true, "https://evil.com", "signup"), "/dashboard")
+})
+
+test("a callback with a session continues, and without one shows the expired link", () => {
+  assert.equal(callbackTargetWhenNoCredential(true, "/apply", "magiclink"), "/apply")
+  assert.equal(callbackTargetWhenNoCredential(true, "/auth/callback?next=/apply", "magiclink"), "/apply")
+  assert.equal(callbackTargetWhenNoCredential(true, "/api/auth/callback?next=/account", "signup"), "/account")
+  assert.equal(
+    callbackTargetWhenNoCredential(false, "/apply", "magiclink"),
+    "/login?error=link-expired&type=magiclink&next=%2Fapply",
+  )
+  assert.equal(callbackTargetWhenNoCredential(false, null, "magiclink"), "/login?error=link-expired&type=magiclink")
+  assert.equal(callbackTargetWhenNoCredential(true, "/dashboard", "recovery"), "/reset-password")
+  assert.equal(callbackLanding("/apply", "magiclink"), "/apply")
+  assert.equal(callbackLanding("/auth/callback?next=https://evil.com", "magiclink"), "/dashboard")
+})
+
+test("arabic callback links stay on /ar, including errors and reset-password", () => {
+  assert.equal(confirmDestination("magiclink", "/auth/callback?type=magiclink&next=/ar/apply"), "/ar/apply")
+  assert.equal(confirmDestination("magiclink", "/auth/callback?locale=ar&next=/dashboard"), "/ar/dashboard")
+  assert.equal(confirmDestination("signup", "/api/auth/callback?next=/ar/dashboard"), "/ar/dashboard")
+  assert.equal(
+    confirmDestination("magiclink", "https://www.ezvisa.net/auth/callback?type=magiclink&locale=ar"),
+    "/ar/dashboard",
+  )
+  assert.equal(confirmDestination("recovery", "/auth/callback?type=recovery&locale=ar"), "/ar/reset-password")
+  assert.equal(confirmDestination("recovery", "/auth/callback?next=/ar/account", true), "/ar/reset-password")
+  assert.equal(
+    confirmFailureTarget("/auth/callback?next=/ar/apply", "magiclink"),
+    "/ar/login?error=link-expired&type=magiclink&next=%2Far%2Fapply",
+  )
+  assert.equal(
+    callbackTargetWhenNoCredential(true, "/apply", "magiclink", { locale: "ar" }),
+    "/ar/apply",
+  )
+  assert.equal(
+    callbackTargetWhenNoCredential(true, "/dashboard", "recovery", { requestArabic: true }),
+    "/ar/reset-password",
+  )
+  assert.equal(
+    callbackTargetWhenNoCredential(false, "/apply", "signup", { locale: "ar" }),
+    "/ar/login?error=link-expired&type=signup&next=%2Far%2Fapply",
+  )
+  assert.equal(
+    callbackTargetWhenNoCredential(false, "/ar/dashboard", "magiclink"),
+    "/ar/login?error=link-expired&type=magiclink&next=%2Far%2Fdashboard",
+  )
+  const english = callbackTargetWhenNoCredential(false, "/apply", "magiclink")
+  assert.equal(english.startsWith("/login?"), true)
+  assert.equal(english.includes("/ar/"), false)
 })
 
 test("the expired-link copy matches the auth message and has an Arabic translation", () => {

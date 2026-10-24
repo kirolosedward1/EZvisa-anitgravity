@@ -1,12 +1,13 @@
 "use client"
 import { useState } from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { authCallbackUrl } from "@/lib/auth/redirect"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -23,7 +24,7 @@ export default function ForgotPasswordPage() {
     setError("")
     
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      redirectTo: authCallbackUrl({ type: "recovery" }),
     })
 
     if (error) {
@@ -49,7 +50,7 @@ export default function ForgotPasswordPage() {
               <AlertDescription>We've sent a password reset link to your email.</AlertDescription>
             </Alert>
             <Button variant="outline" className="w-full" asChild>
-              <Link href="/login">Back to login</Link>
+              <LocaleLink href="/login">Back to login</LocaleLink>
             </Button>
           </div>
         ) : (

@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -63,19 +63,19 @@ export default async function HowItWorksPage() {
           }
         >
           <div className="flex flex-wrap items-center gap-3">
-            <Link
+            <LocaleLink
               href="/apply"
               className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               {arabic ? "ابدأ طلبك" : "Start your application"}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-            </Link>
-            <Link
+            </LocaleLink>
+            <LocaleLink
               href="/pricing"
               className="inline-flex h-12 items-center rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
             >
               {arabic ? "اطّلع على التكلفة" : "See what it costs"}
-            </Link>
+            </LocaleLink>
           </div>
         </InnerHero>
 

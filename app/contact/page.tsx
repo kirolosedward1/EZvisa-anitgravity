@@ -79,6 +79,9 @@ const CHANNELS = [
 
 export default async function ContactPage() {
   const arabic = (await requestLocale()) === "ar"
+  const channels = CHANNELS.map((channel) =>
+    channel.label === "WhatsApp" ? { ...channel, href: whatsAppUrl(undefined, arabic) } : channel,
+  )
   return (
     <>
       <ScrollToTop />
@@ -98,7 +101,7 @@ export default async function ContactPage() {
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12">
             <div className="flex flex-col gap-8">
               <ul className="flex flex-col rounded-3xl border border-border/70 bg-card">
-                {CHANNELS.map((channel) => (
+                {channels.map((channel) => (
                   <li key={channel.label} className="border-b border-border/70 last:border-0">
                     <a
                       href={channel.href}

@@ -13,6 +13,7 @@ import { openCookieSettings } from "@/components/cookie-consent"
 import { CompanyFooterBlock } from "@/components/legal/company-details"
 import { COMPANY, COMPANY_DETAILS_READY } from "@/lib/legal/company"
 import { getWhatsAppUrl } from "@/lib/whatsapp"
+import { useSiteLocale } from "@/components/locale-provider"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
 
 const socialLinks = [
@@ -119,6 +120,7 @@ const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip
 
 function AccountFooter({ className }: { className?: string }) {
   const year = BUILD_YEAR
+  const arabic = useSiteLocale() === "ar"
   // On an application page the message names the case, its status and the page (lib/support-context.ts).
   const supportCase = useSupportCase()
   const links = [
@@ -138,7 +140,7 @@ function AccountFooter({ className }: { className?: string }) {
         </p>
         <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           <a
-            href={getWhatsAppUrl(supportCase ? supportMessage(supportCase) : "Hi EZvisa! I have a question about my visa application.")}
+            href={getWhatsAppUrl(supportCase ? supportMessage(supportCase) : "Hi EZvisa! I have a question about my visa application.", arabic)}
             target="_blank"
             rel="noopener noreferrer"
             className="font-medium text-[#1A7F37] hover:underline"
@@ -165,6 +167,7 @@ export function Footer({
   const currentYear = BUILD_YEAR
   const [openSection, setOpenSection] = useState<string | null>(null)
   const pathname = usePathname()
+  const arabic = useSiteLocale() === "ar"
   const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
   if (ACCOUNT_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) return <AccountFooter className={className} />
 
@@ -223,7 +226,7 @@ export function Footer({
                 <div className="mt-8 flex flex-wrap items-center gap-2 text-sm text-[#3A4150]">
                   <span><LangText en="Questions?" ar="لديك سؤال؟" /></span>
                   <a
-                    href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
+                    href={getWhatsAppUrl("Hi EZvisa! I have a question about my visa application.", arabic)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-[#1A7F37] hover:underline transition-colors font-medium"
