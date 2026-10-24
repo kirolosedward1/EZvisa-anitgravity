@@ -263,8 +263,10 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
   `mobile/lib/wizard.ts`. Never add a private copy of a list or rule in a component or route: import it.
 - **`lib/auth/errors.ts`** mirrors `mobile/lib/authErrors.ts` (same sign-in messages). `lib/applications.ts`
   reads applications the way the app does (ownership = row email equals the signed-in email).
-- **Google sign-in** is always offered on `/login` and `/signup` (`components/auth/social-buttons.tsx`); it works
-  once the Google provider is enabled on the Supabase project (`docs/AUTH_SETUP.md`). Apple shows when enabled.
+- **Google sign-in** is always offered on `/login` and `/signup` (`components/auth/google-sign-in.tsx`); it works
+  once the Google provider is enabled on the Supabase project (`docs/AUTH_SETUP.md`). **Sign in with Apple**
+  (`components/auth/apple-sign-in.tsx`) is on the same pages, in English and `/ar`, and uses the same
+  `/auth/callback` round trip. It works once the Apple provider is enabled; until then the button explains that.
 - **`pnpm sync:check`** (`scripts/check-app-sync.mts`) compares the contract with the app's files and exits 1 on
   drift; `.github/workflows/app-sync.yml` runs it on every push/PR to `main` and `mobile-app`. Run it before
   committing a change to anything in the contract.

@@ -15,6 +15,7 @@ import { localizePath } from "@/lib/route-path"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { applePersonName } from "@/lib/auth/apple-profile"
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { fetchAccountNationality, readRememberedNationality, rememberNationality } from "@/lib/remembered-nationality"
 import { TRAVELLER_NONE, applyTravellerToWebForm, isFreshTravellerForm, markTravellerUsed, useTravellers } from "@/lib/travellers-client"
@@ -465,11 +466,12 @@ function ApplyPageContent() {
         const supabase = createBrowserClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (user && user.email) {
+          const person = applePersonName(user.user_metadata, user.email, user.identities)
           setFormData((prev) => ({
             ...prev,
             email: prev.email || user.email || "",
-            firstName: prev.firstName || (user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || ""),
-            lastName: prev.lastName || (user.user_metadata?.last_name || user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || ""),
+            firstName: prev.firstName || person?.first || "",
+            lastName: prev.lastName || person?.last || "",
             phone: prev.phone || (user.user_metadata?.phone || ""),
           }))
         }

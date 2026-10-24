@@ -12,11 +12,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
+import { AppleSignInButton } from "@/components/auth/apple-sign-in"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { classifyAuthError, EMAIL_RE, type AuthIssue } from "@/lib/auth/errors"
 import { issueFromClientMessage, loginErrorText, loginInfoText, noticeFromQuery, type LoginErrorCode } from "@/lib/auth/login-notice"
+import { socialSignInError } from "@/lib/translations/auth-form"
 import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
 import { cn } from "@/lib/utils"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -130,6 +132,20 @@ function LoginForm({
     setLinkSent(false)
   }
 
+  const onSocialError = (message: string) => {
+    const friendly = socialSignInError(arabic ? "ar" : "en", message)
+    if (friendly) {
+      setIssue("disabled")
+      setError(friendly)
+      setInfo("")
+      return
+    }
+    const k = issueFromClientMessage(message)
+    setIssue(k)
+    setError(sayError(k))
+    setInfo("")
+  }
+
   return (
     <div className="flex flex-col gap-7">
       <div className="flex flex-col gap-2">
@@ -140,7 +156,10 @@ function LoginForm({
       </div>
 
       <div className="flex flex-col gap-5">
-        <GoogleSignInButton next={next} label={t("Continue with Google", "المتابعة عبر Google")} onError={(m) => { const k = issueFromClientMessage(m); setIssue(k); setError(sayError(k)); setInfo("") }} />
+        <div className="flex flex-col gap-3">
+          <AppleSignInButton next={next} onError={onSocialError} />
+          <GoogleSignInButton next={next} label={t("Continue with Google", "المتابعة عبر Google")} onError={onSocialError} />
+        </div>
 
         <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
           <span className="h-px flex-1 bg-border" />

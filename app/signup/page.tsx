@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { AppleSignInButton } from "@/components/auth/apple-sign-in"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
@@ -136,11 +137,17 @@ function SignupForm() {
         </Button>
       </form>
 
-      <GoogleSignInButton
-        next={next}
-        label={copy.signUpGoogle}
-        onError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
-      />
+      <div className="flex flex-col gap-3">
+        <AppleSignInButton
+          next={next}
+          onError={(message) => setError(authFormErrorText(locale, message))}
+        />
+        <GoogleSignInButton
+          next={next}
+          label={copy.signUpGoogle}
+          onError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
+        />
+      </div>
 
       <div className="text-center text-sm text-muted-foreground">
         {copy.haveAccount}{" "}

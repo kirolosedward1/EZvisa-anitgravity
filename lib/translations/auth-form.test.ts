@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import { AUTH_MESSAGE, type AuthIssue } from "../auth/errors.ts"
-import { authFormErrorText } from "./auth-form.ts"
+import { authFormErrorText, socialSignInError } from "./auth-form.ts"
 import { translations } from "./index.ts"
 
 const CODES = Object.keys(AUTH_MESSAGE) as AuthIssue[]
@@ -56,9 +56,17 @@ test("an Arabic auth form never shows the raw provider error", () => {
   assert.equal(authFormErrorText("ar", { message: raw }).includes("Unable"), false)
   assert.equal(authFormErrorText("ar", { message: "User already registered" }), translations.ar.authForm.errors.exists)
   const googleOff = "Google sign-in isn't set up yet. Please use email for now."
+  const appleOff = "Apple sign-in isn't set up yet. Please use email for now."
   assert.equal(authFormErrorText("ar", googleOff), translations.ar.authForm.googleUnavailable)
   assert.equal(authFormErrorText("ar", googleOff).includes("isn't"), false)
+  assert.equal(authFormErrorText("ar", appleOff), translations.ar.authForm.appleUnavailable)
+  assert.equal(authFormErrorText("ar", appleOff).includes("Google"), false)
+  assert.equal(authFormErrorText("ar", appleOff).includes("isn't"), false)
   assert.equal(authFormErrorText("ar", "This site isn't allowed to receive Google sign-ins yet. Please use email for now."), translations.ar.authForm.googleRedirect)
+  assert.equal(authFormErrorText("ar", "This site isn't allowed to receive Apple sign-ins yet. Please use email for now."), translations.ar.authForm.appleRedirect)
+  assert.equal(socialSignInError("ar", appleOff), translations.ar.authForm.appleUnavailable)
+  assert.equal(socialSignInError("en", appleOff), appleOff)
   assert.equal(authFormErrorText("en", { message: raw }), raw)
   assert.equal(authFormErrorText("en", googleOff), googleOff)
+  assert.equal(authFormErrorText("en", appleOff), appleOff)
 })

@@ -3,7 +3,7 @@
 const SUPABASE = 'https://dravvaykssrbktztmrlj.supabase.co'
 const csp = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://client.crisp.chat https://settings.crisp.chat https://va.vercel-scripts.com https://vercel.live https://accounts.google.com https://apis.google.com",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://client.crisp.chat https://settings.crisp.chat https://va.vercel-scripts.com https://vercel.live https://accounts.google.com https://apis.google.com https://appleid.cdn-apple.com",
   "style-src 'self' 'unsafe-inline' https://client.crisp.chat https://fonts.googleapis.com https://accounts.google.com",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https://client.crisp.chat https://fonts.gstatic.com",

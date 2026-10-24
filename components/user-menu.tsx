@@ -35,12 +35,14 @@ import { createBrowserClient, supabasePublicEnv } from "@/lib/supabase/client"
 import { useAvatarUrl } from "@/lib/avatar"
 import { AvatarPhoto } from "@/components/avatar-photo"
 import { cn } from "@/lib/utils"
+import { isAppleRelayEmail, metadataFullName } from "@/lib/auth/apple-profile"
 
 function readDemoCookie(): boolean {
   return typeof document !== "undefined" && /(?:^|;\s*)ez_demo_active=1(?:;|$)/.test(document.cookie)
 }
 
 function initialsOf(viewer: NonNullable<Viewer>): string {
+  if (!viewer.name?.trim() && isAppleRelayEmail(viewer.email)) return "A"
   const source = viewer.name?.trim() || viewer.email
   const parts = source.split(/[\s@._-]+/).filter(Boolean)
   return ((parts[0]?.[0] ?? "") + (parts.length > 1 && viewer.name ? parts[1][0] : "")).toUpperCase() || "E"
@@ -77,13 +79,13 @@ export function useViewer(): { viewer: Viewer; ready: boolean } {
     supabase.auth.getSession().then(({ data }) => {
       if (!alive) return
       const user = data.session?.user
-      if (user?.email) setViewer({ email: user.email, name: user.user_metadata?.full_name, demo: false, user: { id: user.id, user_metadata: user.user_metadata } })
+      if (user?.email) setViewer({ email: user.email, name: metadataFullName(user.user_metadata, user.email) || undefined, demo: false, user: { id: user.id, user_metadata: user.user_metadata } })
       else setViewer(demo ? { email: "Demo account", demo: true } : null)
       setReady(true)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user
-      setViewer(user?.email ? { email: user.email, name: user.user_metadata?.full_name, demo: false, user: { id: user.id, user_metadata: user.user_metadata } } : readDemoCookie() ? { email: "Demo account", demo: true } : null)
+      setViewer(user?.email ? { email: user.email, name: metadataFullName(user.user_metadata, user.email) || undefined, demo: false, user: { id: user.id, user_metadata: user.user_metadata } } : readDemoCookie() ? { email: "Demo account", demo: true } : null)
     })
     return () => {
       alive = false
