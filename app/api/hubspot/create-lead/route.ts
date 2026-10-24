@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server"
 import { waitUntil } from "@vercel/functions"
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit"
-import { sanitizeInput, sanitizeEmail, sanitizePhone } from "@/lib/sanitize"
+import { sanitizeInput, sanitizeEmail } from "@/lib/sanitize"
+import { toWesternDigits } from "@/lib/digits"
+import { uaeMobileE164 } from "@/lib/phone"
 
 const HUBSPOT_TIMEOUT_MS = 10_000
 
@@ -24,7 +26,9 @@ async function createHubSpotLead(formData: any, clientIp: string) {
   const sanitizedEmail = sanitizeEmail(formData.email || "")
   const sanitizedFirstName = sanitizeInput(formData.firstName || "", 100)
   const sanitizedLastName = sanitizeInput(formData.lastName || "", 100)
-  const sanitizedPhone = sanitizePhone(formData.phone || "")
+  const westernPhone = toWesternDigits(String(formData.phone || ""))
+  if (westernPhone.trim() && !uaeMobileE164(westernPhone)) return
+  const sanitizedPhone = uaeMobileE164(westernPhone) ?? ""
 
   // Support both env variable names for backward compatibility
   const hubspotAccessToken = process.env.HUBSPOT_ACCESS_TOKEN || process.env.HUBSPOT_API_KEY
