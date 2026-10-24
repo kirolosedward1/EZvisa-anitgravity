@@ -8,29 +8,15 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { motion } from "framer-motion"
 import { CountryFlag } from "@/components/country-flag"
 import { CITIZENSHIP_OPTIONS, citizenshipLabel, citizenshipLabelAr, citizenshipSearchValue, flagIso } from "@/lib/nationalities"
+import { FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
 import { Msg } from "@/components/msg"
 import { useMessage } from "@/components/use-message"
 import { LangText } from "@/components/lang-text"
 import { LocaleLink } from "@/components/locale-link"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 
-const fromCountries = [
-  "Egypt",
-  "India",
-  "Jordan",
-  "Pakistan",
-  "Russian Federation",
-  "Syria",
-  "Turkey",
-  "United Arab Emirates",
-  "Saudi Arabia",
-  "Philippines",
-  "Bangladesh",
-  "Sri Lanka",
-  "Nigeria",
-  "Kenya",
-  "South Africa",
-]
+// Only nationalities that need a Schengen visa (UAE and Saudi passports were listed here but are visa-free).
+const fromCountries = FEATURED_NATIONALITIES
 
 export function StartApplicationBox() {
   const [selectedNationality, setSelectedNationality] = useState("")

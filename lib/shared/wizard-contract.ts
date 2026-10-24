@@ -18,7 +18,7 @@
  *  - Website components must import lists/rules from here, never keep their own copies.
  */
 
-export const CONTRACT_VERSION = "2026-10-24.1"
+export const CONTRACT_VERSION = "2026-10-24.2"
 
 // ---------------------------------------------------------------------------------------------------------
 // Business constants
@@ -29,7 +29,9 @@ export const PRICE_AED = 249
 /** When the spouse travels too, both applications are prepared: the fee doubles. */
 export const SPOUSE_MULTIPLIER = 2
 export const CURRENCY = "AED"
-export const priceAed = (spouseAccompanying?: string | null) => PRICE_AED * (spouseAccompanying === "yes" ? SPOUSE_MULTIPLIER : 1)
+/** Two applicants when the spouse travels (either answer says so): the same rule the server charges (lib/ziina). */
+export const priceAed = (spouseAccompanying?: string | null, travelingWith?: string | null) =>
+  PRICE_AED * (spouseAccompanying === "yes" || travelingWith === "spouse" ? SPOUSE_MULTIPLIER : 1)
 
 export const SITE_URL_OFFICIAL = "https://www.ezvisa.net"
 /** Deep-link scheme of the app; /app-return only redirects to these schemes (exp/exps = Expo Go). */
@@ -56,6 +58,8 @@ export const OTHER_NATIONALITY = "Other nationality"
 export const UAE_NATIONALITIES: string[] = ["India", "Pakistan", "Bangladesh", "Philippines", "Egypt", "Nepal", "Sri Lanka", "China", "Jordan", "Lebanon", "Syria", "Palestine", "Sudan", "Iran", "Iraq", "Yemen", "Afghanistan", "Morocco", "Tunisia", "Algeria", "Nigeria", "Kenya", "Ethiopia", "Uganda", "Ghana", "Cameroon", "South Africa", "Indonesia", "Vietnam", "Thailand", "Russian Federation", "Turkey", "Kazakhstan", "Uzbekistan", "Azerbaijan", OTHER_NATIONALITY]
 /** The nationalities shown as a short list (no "Other" entry), e.g. on the homepage selector. */
 export const FEATURED_NATIONALITIES: string[] = UAE_NATIONALITIES.filter((n) => n !== OTHER_NATIONALITY)
+/** The six quick picks of the homepage and header nationality selectors (all need a Schengen visa). */
+export const HOMEPAGE_NATIONALITIES: string[] = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
 
 /** Countries of residence offered in the wizard. UAE only for now; add names to re-enable others. */
 export const RESIDENCE_COUNTRIES: string[] = ["United Arab Emirates"]

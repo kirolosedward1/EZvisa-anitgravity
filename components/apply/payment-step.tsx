@@ -10,6 +10,7 @@ import { WizardBar } from "@/components/apply/wizard-bar"
 import { WizardQuestion } from "@/components/apply/wizard-choices"
 import { getReference } from "@/lib/application-status"
 import { CURRENCIES, applicantCount, formatAedLabel, priceForTravellers } from "@/lib/currency"
+import { priceAed } from "@/lib/shared/wizard-contract"
 import { message } from "@/messages"
 import { submitBody } from "@/lib/application-notes"
 import { SCHENGEN_META } from "@/lib/countries"
@@ -116,7 +117,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
     }
   }, [])
 
-  const paymentAmount = priceForTravellers(formData.spouseAccompanying, formData.travelingWith)
+  const paymentAmount = priceAed(formData.spouseAccompanying, formData.travelingWith)
   const reference = getReference(trackingToken)
   const laterHref = applicationId ? `/dashboard?id=${applicationId}&pay=1#pay` : "/dashboard"
   const shownError = submitError || paymentError

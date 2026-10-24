@@ -15,6 +15,7 @@ import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { LangText } from "@/components/lang-text"
 import { SCHENGEN_META } from "@/lib/countries"
 import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { HOMEPAGE_NATIONALITIES, SCHENGEN } from "@/lib/shared/wizard-contract"
 import { CountryFlag } from "@/components/country-flag"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 import { stableIndex } from "@/lib/stable-index"
@@ -32,15 +33,9 @@ const countryFlags: Record<string, string> = {
   "Russian Federation": "🇷🇺", Syria: "🇸🇾",
 }
 
-const schengenCountries = [
-  "Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark",
-  "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland",
-  "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta",
-  "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia",
-  "Slovenia", "Spain", "Sweden", "Switzerland",
-]
+const schengenCountries = SCHENGEN
 
-const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+const fromCountries = HOMEPAGE_NATIONALITIES
   .map((name) => CITIZENSHIP_OPTIONS.find((country) => country.name === name))
   .filter((country): country is NonNullable<typeof country> => Boolean(country))
 

@@ -15,9 +15,10 @@ import { CountryFlag } from "@/components/country-flag"
 import { UserMenu, useViewer } from "@/components/user-menu"
 import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
+import { HOMEPAGE_NATIONALITIES } from "@/lib/shared/wizard-contract"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
 
-const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+const nationalities = HOMEPAGE_NATIONALITIES
 
 function WhatsAppGlyph({ className }: { className?: string }) {
   return (
