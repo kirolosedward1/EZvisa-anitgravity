@@ -109,7 +109,7 @@ The site was redesigned to feel like a **real, trustworthy professional service*
 - Headings are **semibold sans (Poppins)** with tight tracking — **no italic editorial/serif display type**.
 - Section labels are compact **pill chips** (e.g. `inline-flex ... rounded-full bg-primary/10 text-primary text-xs font-medium`), not `— Eyebrow` dashes or `01 /` numbering.
 - Depth comes from subtle shadows, soft gradients, masked dot grids, and gentle radial glows — **never decorative blobs, heavy mesh, grain, or glassmorphism**.
-  - One exception, at the owner's request: the homepage hero's country selector card, its eligibility note, the rating pill and the three reassurance chips are frosted glass over the hero photo (`bg-primary-foreground/10 backdrop-blur-xl`, white text). The two pickers inside stay solid white. Don't spread glass to other sections.
+  - One exception, at the owner's request: the homepage hero's country selector card, its eligibility note and the three reassurance chips are frosted glass over the hero photo (`bg-primary-foreground/10 backdrop-blur-xl`, white text). The two pickers inside stay solid white. Don't spread glass to other sections.
 
 ### Color tokens (defined in `app/globals.css` `:root`, OKLCH)
 | Token | Purpose | Notes |
