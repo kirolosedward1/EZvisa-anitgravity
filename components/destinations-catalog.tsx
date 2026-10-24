@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { destinations, Destination } from "@/lib/destinations"
 import { destinationNameAr } from "@/lib/destination-names-ar"
 import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import Image from "next/image"
 import { LangText } from "@/components/lang-text"
 import { CountryFlag } from "@/components/country-flag"
@@ -39,7 +39,7 @@ export function DestinationCard({ country, compact = false }: { country: Destina
       <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1F] via-[#0A0F1F]/55 via-45% to-transparent" />
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0A0F1F]/35 to-transparent" />
 
-      <Link href={`/destinations/${country.slug}`} className="absolute inset-0 z-10 rounded-[1.75rem] focus-visible:outline-none" aria-label={`${name} visa: requirements and how to apply`} />
+      <LocaleLink href={`/destinations/${country.slug}`} className="absolute inset-0 z-10 rounded-[1.75rem] focus-visible:outline-none" aria-label={`${name} visa: requirements and how to apply`} />
 
       <span className="pointer-events-none absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-full bg-[#0A0F1F]/30 text-primary-foreground ring-1 ring-primary-foreground/30 transition-colors duration-300 group-hover:bg-primary-foreground group-hover:text-foreground">
         <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
@@ -67,14 +67,14 @@ export function DestinationCard({ country, compact = false }: { country: Destina
         {/* Desktop: the button opens on hover (or keyboard focus). Touch screens have no hover, so it always shows there. */}
         <div className="grid w-full transition-[grid-template-rows,opacity,margin] duration-300 ease-out lg:-mt-4 lg:grid-rows-[0fr] lg:opacity-0 lg:group-hover:mt-0 lg:group-hover:grid-rows-[1fr] lg:group-hover:opacity-100 lg:group-focus-within:mt-0 lg:group-focus-within:grid-rows-[1fr] lg:group-focus-within:opacity-100">
           <div className="min-h-0 overflow-hidden">
-            <Link
+            <LocaleLink
               href={`/apply?to=${encodeURIComponent(name)}`}
               className="pointer-events-auto relative z-30 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary-foreground text-sm font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
               aria-label={`Apply for a ${name} visa`}
             >
               <LangText en={`Apply for ${name}`} ar={`قدّم على تأشيرة ${nameAr}`} />
               <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-            </Link>
+            </LocaleLink>
           </div>
         </div>
       </div>
@@ -191,12 +191,12 @@ export function DestinationsCatalog() {
                   United Kingdom, Canada, Australia, and more. 
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Link href="/apply" className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-full hover:bg-primary/90 transition-colors text-xs">
+                  <LocaleLink href="/apply" className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-full hover:bg-primary/90 transition-colors text-xs">
                     Start Schengen Application
-                  </Link>
-                  <Link href="/contact" className="px-6 py-2.5 bg-muted-foreground/10 hover:bg-muted-foreground/15 text-foreground font-semibold rounded-full transition-colors text-xs border border-border/20">
+                  </LocaleLink>
+                  <LocaleLink href="/contact" className="px-6 py-2.5 bg-muted-foreground/10 hover:bg-muted-foreground/15 text-foreground font-semibold rounded-full transition-colors text-xs border border-border/20">
                     Get Notified / Support
-                  </Link>
+                  </LocaleLink>
                 </div>
               </motion.div>
             ) : (

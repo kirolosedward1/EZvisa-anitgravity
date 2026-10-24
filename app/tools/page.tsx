@@ -1,5 +1,5 @@
 import { Metadata } from "next"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -154,10 +154,10 @@ export default function ToolsIndexPage() {
 
                   <div className="relative z-10 pt-2">
                     <Button asChild className="w-full rounded-full shadow-sm text-sm font-semibold">
-                      <Link href={tool.href} className="flex items-center justify-center gap-2">
+                      <LocaleLink href={tool.href} className="flex items-center justify-center gap-2">
                         {tool.cta}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                      </Link>
+                      </LocaleLink>
                     </Button>
                   </div>
                 </div>
@@ -185,15 +185,15 @@ export default function ToolsIndexPage() {
 
               <div className="flex flex-col sm:flex-row items-center gap-4">
                 <Button asChild size="lg" className="w-full sm:w-auto h-12 px-8 rounded-full bg-primary hover:bg-primary/90 text-white font-semibold">
-                  <Link href="/apply">
+                  <LocaleLink href="/apply">
                     Start Your Application &bull; From 249 AED
-                  </Link>
+                  </LocaleLink>
                 </Button>
 
                 <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6 rounded-full border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-white font-medium">
-                  <Link href="/how-it-works">
+                  <LocaleLink href="/how-it-works">
                     How It Works
-                  </Link>
+                  </LocaleLink>
                 </Button>
               </div>
             </div>

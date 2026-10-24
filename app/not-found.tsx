@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { FileQuestion, Home, ArrowLeft } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 
@@ -25,17 +25,17 @@ export default function NotFound() {
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild className="gap-2">
-              <Link href="/">
+              <LocaleLink href="/">
                 <Home className="w-4 h-4" />
                 Go Home
-              </Link>
+              </LocaleLink>
             </Button>
 
             <Button variant="outline" asChild className="gap-2 bg-transparent">
-              <Link href="/documents">
+              <LocaleLink href="/documents">
                 <ArrowLeft className="w-4 h-4" />
                 View Documents
-              </Link>
+              </LocaleLink>
             </Button>
           </div>
         </div>

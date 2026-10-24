@@ -11,6 +11,7 @@ import { ThankYouCTASection } from "@/components/thank-you/thank-you-cta-section
 import { Loader2 } from "lucide-react"
 import { trackEvent } from "@/lib/analytics"
 import { clearWizardAfterPayment } from "@/lib/wizard-storage"
+import { LocaleLink } from "@/components/locale-link"
 
 interface ApplicationData {
   firstName: string
@@ -112,12 +113,12 @@ export function ThankYouClient() {
             <p className="text-muted-foreground mb-6">
               We couldn't find your application details. Please contact support.
             </p>
-            <a
+            <LocaleLink
               href="/apply"
               className="text-primary hover:underline font-medium"
             >
               Start New Application
-            </a>
+            </LocaleLink>
           </div>
         </div>
         <Footer simplified transparent limitWidth />

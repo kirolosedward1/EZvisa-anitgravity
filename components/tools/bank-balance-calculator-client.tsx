@@ -17,7 +17,7 @@ import {
   HelpCircle,
   Users
 } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 
 export function BankBalanceCalculatorClient() {
   const [selectedCountry, setSelectedCountry] = useState("france")
@@ -212,10 +212,10 @@ export function BankBalanceCalculatorClient() {
               asChild
               className="w-full h-12 text-base font-semibold text-white shadow-lg shadow-blue-500/20 bg-[#0436DC]"
             >
-              <Link href={`/apply?to=${encodeURIComponent(funds.country)}`} className="flex items-center justify-center gap-2">
+              <LocaleLink href={`/apply?to=${encodeURIComponent(funds.country)}`} className="flex items-center justify-center gap-2">
                 <span>Start {funds.country} Application File</span>
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </LocaleLink>
             </Button>
           </div>
 

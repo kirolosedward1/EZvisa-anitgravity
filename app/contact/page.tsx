@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowUpRight, Mail, Phone } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -8,6 +8,7 @@ import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 import { ContactForm } from "@/components/contact-form"
 import { WHATSAPP_DISPLAY, telUrl, whatsAppUrl } from "@/lib/contact"
+import { requestLocale } from "@/lib/request-locale"
 
 export const metadata: Metadata = {
   title: "Contact EZvisa | WhatsApp, Email and Phone",
@@ -60,7 +61,11 @@ const CHANNELS = [
   },
 ]
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const arabic = (await requestLocale()) === "ar"
+  const channels = CHANNELS.map((channel) =>
+    channel.label === "WhatsApp" ? { ...channel, href: whatsAppUrl(undefined, arabic) } : channel,
+  )
   return (
     <>
       <ScrollToTop />
@@ -76,7 +81,7 @@ export default function ContactPage() {
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12">
             <div className="flex flex-col gap-8">
               <ul className="flex flex-col rounded-3xl border border-border/70 bg-card">
-                {CHANNELS.map((channel) => (
+                {channels.map((channel) => (
                   <li key={channel.label} className="border-b border-border/70 last:border-0">
                     <a
                       href={channel.href}
@@ -99,18 +104,18 @@ export default function ContactPage() {
                 <h2 className="panel-title text-foreground">Already applied?</h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">
                   Your application, its status and your documents are in your account and in the EZvisa app.{" "}
-                  <Link href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
+                  <LocaleLink href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
                     Sign in
-                  </Link>{" "}
+                  </LocaleLink>{" "}
                   or open the link in your confirmation email.
                 </p>
               </div>
 
               <p className="text-sm text-muted-foreground">
                 Common questions are answered in the{" "}
-                <Link href="/#faq" className="font-medium text-primary hover:underline">
+                <LocaleLink href="/#faq" className="font-medium text-primary hover:underline">
                   FAQ
-                </Link>
+                </LocaleLink>
                 .
               </p>
             </div>

@@ -15,7 +15,7 @@ import {
   CalendarDays,
   ShieldAlert
 } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 
 interface CenterInfo {
   provider: "VFS Global" | "TLScontact" | "BLS International"
@@ -247,10 +247,10 @@ export function AppointmentGuideClient() {
                 asChild
                 className="w-full h-12 text-base font-semibold text-white shadow-lg shadow-blue-500/20 bg-[#0436DC]"
               >
-                <Link href="/apply" className="flex items-center justify-center gap-2">
+                <LocaleLink href="/apply" className="flex items-center justify-center gap-2">
                   <span>Prepare My Complete Visa Dossier</span>
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </LocaleLink>
               </Button>
               <p className="text-[11px] text-center text-muted-foreground">
                 EZvisa organizes your full file ready for submission at VFS, TLS, or BLS.

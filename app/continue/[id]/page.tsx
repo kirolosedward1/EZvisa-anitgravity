@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { redirectLocalized, requestLocale } from "@/lib/request-locale"
 import { SiteHeader } from "@/components/site-header"
 import { ContinueForm } from "@/app/continue/[id]/continue-form"
 import { createServerClient } from "@/lib/supabase/server"
@@ -36,6 +36,7 @@ function savedAnswers(app: VisaApplication): Partial<FormData> {
 }
 
 export default async function ContinuePage({ params }: { params: Promise<{ id: string }> }) {
+  const arabic = (await requestLocale()) === "ar"
   const { id } = await params
   const demo = id.startsWith("demo-") ? getDemoApplicationByToken(id) : null
   let app: VisaApplication | null = demo
@@ -43,18 +44,18 @@ export default async function ContinuePage({ params }: { params: Promise<{ id: s
   if (!demo) {
     const supabase = await createServerClient()
     const { data: auth } = await supabase.auth.getUser()
-    if (!auth.user?.email) redirect(`/login?next=/continue/${id}`)
+    if (!auth.user?.email) redirectLocalized(`/login?next=/continue/${id}`, arabic)
     const { data } = await supabase.from("visa_applications").select("*").eq("id", id).eq("email", auth.user.email).maybeSingle()
     app = data
   }
 
-  if (!app) redirect("/dashboard")
-  if (!isPaid(app)) redirect(`/dashboard?id=${id}&pay=1#pay`)
+  if (!app) redirectLocalized("/dashboard", arabic)
+  if (!isPaid(app)) redirectLocalized(`/dashboard?id=${id}&pay=1#pay`, arabic)
 
   const steps = missingDetailSteps(app)
   const token = app.tracking_token || ""
   if (steps.length === 0) {
-    redirect(docsMissingCount(app) > 0 && token ? `/track/${token}/upload` : `/dashboard?id=${id}`)
+    redirectLocalized(docsMissingCount(app) > 0 && token ? `/track/${token}/upload` : `/dashboard?id=${id}`, arabic)
   }
 
   return (

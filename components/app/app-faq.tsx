@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import type { Faq } from "./content"
@@ -18,9 +18,9 @@ export function AppFaq({ faqs }: { faqs: Faq[] }) {
             {faq.href && faq.linkLabel && (
               <>
                 {" "}
-                <Link href={faq.href} className="font-medium text-primary hover:underline">
+                <LocaleLink href={faq.href} className="font-medium text-primary hover:underline">
                   {faq.linkLabel}
-                </Link>
+                </LocaleLink>
               </>
             )}
           </AccordionContent>

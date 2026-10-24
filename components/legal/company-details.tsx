@@ -1,6 +1,7 @@
 import { LangText } from "@/components/lang-text"
 import { LegalMarkdown } from "@/components/legal/markdown"
 import { LEGAL_MD } from "@/lib/legal/content.generated"
+import { whatsAppUrl } from "@/lib/contact"
 import { COMPANY, COMPANY_DETAILS_READY } from "@/lib/legal/company"
 
 /** Legal notice / company details (legal audit H2), used on About and Contact. Values come from lib/legal/company.ts. */
@@ -32,7 +33,7 @@ export function CompanyFooterBlock() {
         </>}
         ar={<>
           <span className="block"><span className="font-medium text-[#0A0F1F]/80">إيزي فيزا</span> اسم تجاري لـ {c.COMPANY_LEGAL_NAME}، شركة خاصة مسجّلة في دولة الإمارات العربية المتحدة. رخصة تجارية رقم {c.TRADE_LICENCE_NO}، صادرة عن {c.ISSUING_AUTHORITY}. العنوان المسجّل: {c.REGISTERED_ADDRESS}</span>
-          <span className="block">البريد الإلكتروني: {c.EMAIL} · واتساب/هاتف: <a href={c.WHATSAPP_URL} dir="ltr" className="underline">{c.PHONE_DISPLAY}</a> · ساعات الدعم: {c.SUPPORT_HOURS_AR}</span>
+          <span className="block">البريد الإلكتروني: {c.EMAIL} · واتساب/هاتف: <a href={whatsAppUrl(undefined, true)} dir="ltr" className="underline">{c.PHONE_DISPLAY}</a> · ساعات الدعم: {c.SUPPORT_HOURS_AR}</span>
         </>}
       />
     </div>

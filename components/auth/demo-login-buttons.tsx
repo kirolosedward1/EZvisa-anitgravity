@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocalizedHref } from "@/components/locale-link";
 import { DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
 import { Loader2, CheckCircle2, AlertCircle, Files, ArrowRight } from "lucide-react";
 
@@ -13,6 +14,7 @@ interface DemoLoginButtonsProps {
 
 export function DemoLoginButtons({ next = "/dashboard", className = "", variant = "card" }: DemoLoginButtonsProps) {
   const router = useRouter();
+  const localize = useLocalizedHref();
   const [loadingScenario, setLoadingScenario] = useState<DemoScenario | null>(null);
 
   const handleDemoSelect = async (scenario: DemoScenario) => {
@@ -25,14 +27,14 @@ export function DemoLoginButtons({ next = "/dashboard", className = "", variant 
       });
       if (res.ok) {
         const data = await res.json();
-        router.push(data.redirect || next);
+        router.push(localize(data.redirect || next));
         router.refresh();
       } else {
         // Fallback to GET navigation
-        window.location.href = `/api/auth/demo-login?scenario=${scenario}&next=${encodeURIComponent(next)}`;
+        window.location.href = `/api/auth/demo-login?scenario=${scenario}&next=${encodeURIComponent(localize(next))}`;
       }
     } catch {
-      window.location.href = `/api/auth/demo-login?scenario=${scenario}&next=${encodeURIComponent(next)}`;
+      window.location.href = `/api/auth/demo-login?scenario=${scenario}&next=${encodeURIComponent(localize(next))}`;
     }
   };
 

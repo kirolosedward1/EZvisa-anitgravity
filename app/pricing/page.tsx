@@ -1,7 +1,7 @@
 import { LangText } from "@/components/lang-text"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight, Check, Minus } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -134,13 +134,13 @@ export default async function PricingPage() {
               </ul>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-                <Link
+                <LocaleLink
                   href="/apply"
                   className="group inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                 >
                   {pick("Start your application", "ابدأ طلبك")}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-                </Link>
+                </LocaleLink>
                 <p className="text-sm text-muted-foreground">{pick("Ready in 1–2 days after your documents are in.", <>جاهز خلال {ltr("1–2")} يوم بعد وصول مستنداتك.</>)}</p>
               </div>
             </div>
@@ -172,9 +172,9 @@ export default async function PricingPage() {
             <div className="flex flex-col items-start gap-4">
               <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Refunds</span>
               <h2 className="text-balance text-foreground">When you get the fee back.</h2>
-              <Link href="/refund-policy" className="text-sm font-medium text-primary hover:underline">
+              <LocaleLink href="/refund-policy" className="text-sm font-medium text-primary hover:underline">
                 Read the full refund policy
-              </Link>
+              </LocaleLink>
             </div>
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
               <div className="flex flex-col gap-4">

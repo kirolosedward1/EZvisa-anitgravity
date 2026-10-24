@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import Image from "next/image"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowLeft, FileCheck2, ShieldCheck, Smartphone, Upload } from "lucide-react"
 
 import { IphoneFrame } from "@/components/app/iphone-frame"
@@ -26,9 +26,9 @@ export function AuthSplitLayout({ children }: { children: ReactNode }) {
           className="pointer-events-none absolute inset-0 opacity-15 [background-image:radial-gradient(var(--primary)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(ellipse_at_30%_20%,black_10%,transparent_70%)]"
         />
         <div className="relative flex flex-col gap-10 px-12 pt-12 xl:px-16">
-          <Link href="/" className="inline-flex w-fit" aria-label="EZvisa home">
+          <LocaleLink href="/" className="inline-flex w-fit" aria-label="EZvisa home">
             <Image src="/images/logo-main.png" alt="EZvisa" width={140} height={44} className="h-9 w-auto" priority />
-          </Link>
+          </LocaleLink>
 
           <div className="flex max-w-md flex-col gap-6">
             <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
@@ -66,13 +66,13 @@ export function AuthSplitLayout({ children }: { children: ReactNode }) {
       {/* Form column */}
       <main id="main-content" className="flex min-h-[100dvh] flex-col px-4 py-6 sm:px-8">
         <div className="flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+          <LocaleLink href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
             <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
             Back to home
-          </Link>
-          <Link href="/" className="lg:hidden" aria-label="EZvisa home">
+          </LocaleLink>
+          <LocaleLink href="/" className="lg:hidden" aria-label="EZvisa home">
             <Image src="/images/logo-main.png" alt="EZvisa" width={110} height={34} className="h-7 w-auto" priority />
-          </Link>
+          </LocaleLink>
         </div>
         <div className="flex flex-1 items-center justify-center py-10">
           <div className="w-full max-w-sm">{children}</div>

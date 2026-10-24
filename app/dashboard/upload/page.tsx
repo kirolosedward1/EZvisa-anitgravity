@@ -3,7 +3,7 @@
 // Signed-in upload desk for a case without a tracking link (e.g. started in the app): sends the file to
 // POST /api/upload-document with the application id, the session token and a stable uploadId, exactly like the app.
 import { Suspense, useCallback, useEffect, useState } from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
@@ -85,10 +85,10 @@ function UploadDesk() {
       <main className="min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
           <div className="flex items-center justify-between gap-4">
-            <Link href={back} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <LocaleLink href={back} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
               <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
               Back to your application
-            </Link>
+            </LocaleLink>
             {app?.id ? <span className="ltr-isolate text-xs tabular-nums text-muted-foreground">{referenceOf(app.id)}</span> : null}
           </div>
 
@@ -111,7 +111,7 @@ function UploadDesk() {
                 <div className="flex flex-col gap-3 rounded-2xl border border-border/70 bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
                   <p className="text-sm text-foreground">Everything is in. A visa specialist will check your documents and prepare your file.</p>
                   <Button asChild variant="outline" className="shrink-0 rounded-full hover:bg-secondary hover:text-foreground">
-                    <Link href={back}>Back to your application</Link>
+                    <LocaleLink href={back}>Back to your application</LocaleLink>
                   </Button>
                 </div>
               ) : null}

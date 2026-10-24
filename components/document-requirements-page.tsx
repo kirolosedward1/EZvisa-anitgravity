@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import Link from "next/link"
+import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { ArrowRight, Check, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -33,6 +33,7 @@ const SITUATIONAL = [
 
 export function DocumentRequirementsPage({ initialCountry }: DocumentRequirementsPageProps) {
   const router = useRouter()
+  const localize = useLocalizedHref()
   const [open, setOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const country = initialCountry
@@ -65,7 +66,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
 
   const handleCountryChange = (next: string) => {
     setOpen(false)
-    if (next !== country) router.push(getCountryUrl(next))
+    if (next !== country) router.push(localize(getCountryUrl(next)))
   }
 
   return (
@@ -152,7 +153,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
         {destination && (
           <section className="pb-4">
             <div className="container mx-auto max-w-6xl px-4 sm:px-6">
-              <Link
+              <LocaleLink
                 href={`/destinations/${destination.slug}`}
                 className="group flex items-center justify-between gap-4 rounded-3xl border border-border/70 px-6 py-5 transition-colors hover:bg-secondary/50"
               >
@@ -161,7 +162,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                   <span className="text-sm text-muted-foreground">Where to apply, when to apply, and common questions.</span>
                 </span>
                 <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary rtl:rotate-180" aria-hidden="true" />
-              </Link>
+              </LocaleLink>
             </div>
           </section>
         )}

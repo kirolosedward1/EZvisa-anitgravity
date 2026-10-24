@@ -3,12 +3,14 @@
 import { ArrowRight, Check } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import Image from "next/image"
 import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
 
 export function ContactSection() {
   const locale = useSiteLocale()
@@ -64,15 +66,15 @@ export function ContactSection() {
                 />
               </p>
               <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                <Link
+                <LocaleLink
                   href="/apply"
                   className="group inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
                 >
                   <LangText en="Start your application" ar="ابدأ الطلب" />
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-                </Link>
+                </LocaleLink>
                 <Link
-                  href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
+                  href={getWhatsAppUrl("Hi EZvisa! I have a question about my visa application.", locale === "ar")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary sm:w-auto"

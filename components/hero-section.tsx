@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, ShieldCheck, Clock, BookOpen, Plane, ChevronDown, Tag } from "lucide-react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import Image from "next/image"
 import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
@@ -330,9 +330,9 @@ export function HeroSection() {
                         disabled={!fromCountry || !toCountry}
                         asChild
                       >
-                        <Link href={handleGetStarted()}>
+                        <LocaleLink href={handleGetStarted()}>
                           <LangText en="Get started" ar="ابدأ" /> <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
+                        </LocaleLink>
                       </Button>
                     </motion.div>
                   </div>

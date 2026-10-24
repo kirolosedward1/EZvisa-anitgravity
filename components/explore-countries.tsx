@@ -1,5 +1,5 @@
 import Image from "next/image"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight } from "lucide-react"
 import { PreparationLine, ReadyLine } from "@/components/ready-line"
 import { CountryFlag } from "@/components/country-flag"
@@ -27,19 +27,19 @@ export function ExploreCountries() {
               <PreparationLine />
             </p>
           </div>
-          <Link
+          <LocaleLink
             href="/destinations"
             className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:self-auto"
           >
             <LangText en="View all countries" ar="عرض كل الدول" />
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-          </Link>
+          </LocaleLink>
         </div>
 
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((country) => (
             <li key={country.slug}>
-              <Link
+              <LocaleLink
                 href={`/destinations/${country.slug}`}
                 className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-2.5 pe-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
               >
@@ -62,7 +62,7 @@ export function ExploreCountries() {
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
                   <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
                 </span>
-              </Link>
+              </LocaleLink>
             </li>
           ))}
         </ul>

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import type { EmailOtpType } from "@supabase/supabase-js"
 import { createServerClient } from "@/lib/supabase/server"
 import { safeNext, publicOrigin } from "@/lib/auth/redirect"
+import { isArabicPath } from "@/lib/auth/confirm-next"
+import { localizePath } from "@/lib/route-path"
 import { classifyAuthError, type AuthIssue } from "@/lib/auth/errors"
 
 /**
@@ -16,9 +18,10 @@ export async function GET(request: Request) {
   const next = safeNext(searchParams.get("next"))
   const type = searchParams.get("type") ?? ""
   const base = publicOrigin(request)
+  const arabic = isArabicPath(next)
 
   const fail = (issue: AuthIssue) => {
-    const to = new URL("/login", base)
+    const to = new URL(arabic ? "/ar/login" : "/login", base)
     to.searchParams.set("error", issue)
     if (type) to.searchParams.set("type", type)
     if (next !== "/dashboard") to.searchParams.set("next", next)
@@ -48,6 +51,6 @@ export async function GET(request: Request) {
     return fail("link-expired")
   }
 
-  if (recovery) return NextResponse.redirect(new URL("/reset-password", base))
+  if (recovery) return NextResponse.redirect(new URL(localizePath("/reset-password", arabic), base))
   return NextResponse.redirect(new URL(next, base))
 }

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, Suspense } from "react"
-import Link from "next/link"
+import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -14,8 +14,10 @@ import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const localize = useLocalizedHref()
   const rawNext = searchParams.get("next") || "/dashboard"
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const safe = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const next = localize(safe)
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -52,7 +54,7 @@ function SignupForm() {
       <div className="w-full max-w-md space-y-6 p-8 bg-card rounded-xl shadow-lg border border-border/50 text-center">
         <h2 className="text-2xl font-semibold tracking-tight text-emerald-600">Check your email</h2>
         <p className="text-muted-foreground">We sent you a verification link to {email}. Please verify your account to continue.</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push("/login")}>Back to login</Button>
+        <Button variant="outline" className="mt-4" onClick={() => router.push(localize("/login"))}>Back to login</Button>
       </div>
     )
   }
@@ -113,9 +115,9 @@ function SignupForm() {
 
       <div className="text-center text-sm text-muted-foreground">
         Already have an account?{" "}
-        <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-medium text-primary hover:underline">
+        <LocaleLink href={`/login?next=${encodeURIComponent(next)}`} className="font-medium text-primary hover:underline">
           Sign in
-        </Link>
+        </LocaleLink>
       </div>
     </div>
   )

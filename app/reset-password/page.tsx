@@ -1,6 +1,7 @@
 "use client"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useLocalizedHref } from "@/components/locale-link"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +11,7 @@ import { Loader2 } from "lucide-react"
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const localize = useLocalizedHref()
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -30,7 +32,7 @@ export default function ResetPasswordPage() {
       setError(error.message)
       setIsLoading(false)
     } else {
-      router.push("/dashboard")
+      router.push(localize("/dashboard"))
       router.refresh()
     }
   }

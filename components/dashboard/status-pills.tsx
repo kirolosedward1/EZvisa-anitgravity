@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight } from "lucide-react"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { getStatusDisplay, narrowNextLabel, nextTaskHref, type ApplicationLike } from "@/lib/application-status"
@@ -11,7 +11,7 @@ export function StatusPills({ app }: { app: ApplicationLike }) {
     <div className="flex flex-wrap items-center gap-2 self-start">
       <StatusBadge tone={pill.tone}>{pill.label}</StatusBadge>
       {next && (
-        <Link
+        <LocaleLink
           href={nextTaskHref(app, next)}
           className="inline-flex items-center gap-1 rounded-full bg-[#FFF4EC] px-2.5 py-0.5 text-xs font-medium text-[#B83200]"
         >
@@ -20,7 +20,7 @@ export function StatusPills({ app }: { app: ApplicationLike }) {
             {narrowNextLabel()}
             <ArrowRight className="size-3" aria-hidden="true" />
           </span>
-        </Link>
+        </LocaleLink>
       )}
     </div>
   )

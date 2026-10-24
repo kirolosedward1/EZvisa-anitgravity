@@ -2,7 +2,7 @@
 
 // Sign in: Google, email + password, or a one-time email link. Same accounts and messages as the EZvisa app.
 import { Suspense, useRef, useState } from "react"
-import Link from "next/link"
+import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown, Eye, EyeOff, Loader2, Lock, Mail, PlayCircle } from "lucide-react"
 
@@ -43,7 +43,8 @@ function IconInput({ icon: Icon, className, ...props }: React.ComponentProps<typ
 function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = safeNext(searchParams.get("next"))
+  const localize = useLocalizedHref()
+  const next = localize(safeNext(searchParams.get("next")))
   const notice = noticeFromUrl(searchParams.get("error"), searchParams.get("type"))
 
   const [mode, setMode] = useState<Mode>(searchParams.get("type") === "magiclink" ? "link" : "password")
@@ -205,12 +206,12 @@ function LoginForm() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <Link
+                <LocaleLink
                   href={cleanEmail ? `/forgot-password?email=${encodeURIComponent(cleanEmail)}` : "/forgot-password"}
                   className="text-xs font-semibold text-primary hover:underline"
                 >
                   Forgot password?
-                </Link>
+                </LocaleLink>
               </div>
               <div className="relative">
                 <IconInput
@@ -276,13 +277,13 @@ function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground text-balance">
         New to EZvisa?{" "}
-        <Link href={`/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-primary hover:underline">
+        <LocaleLink href={`/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-primary hover:underline">
           Create an account
-        </Link>
+        </LocaleLink>
         {" or "}
-        <Link href="/apply" className="font-semibold text-primary hover:underline">
+        <LocaleLink href="/apply" className="font-semibold text-primary hover:underline">
           start an application
-        </Link>
+        </LocaleLink>
       </p>
 
       <details className="group rounded-2xl border border-border/70 bg-background">

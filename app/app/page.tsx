@@ -26,6 +26,7 @@ import { StoreBadges } from "@/components/app/store-badges"
 import { Walkthrough } from "@/components/app/walkthrough"
 import { generateBreadcrumbSchema, generateFAQSchema, generateStructuredData } from "@/lib/seo"
 import { getWhatsAppUrl } from "@/lib/whatsapp"
+import { requestLocale } from "@/lib/request-locale"
 import { cn } from "@/lib/utils"
 import hero from "@/components/app/app-hero.module.css"
 
@@ -74,9 +75,8 @@ const structuredData = generateStructuredData(
   generateFAQSchema(FAQS.map(({ question, answer }) => ({ question, answer }))),
 )
 
-const WHATSAPP_URL = getWhatsAppUrl("Hi EZvisa, I have a question about the app.")
-
-export default function AppPage() {
+export default async function AppPage() {
+  const whatsappUrl = getWhatsAppUrl("Hi EZvisa, I have a question about the app.", (await requestLocale()) === "ar")
   return (
     <>
       <ScrollToTop />
@@ -169,7 +169,7 @@ export default function AppPage() {
                     ))}
                   </ul>
                   <a
-                    href={WHATSAPP_URL}
+                    href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex w-fit items-center gap-2 font-medium text-primary hover:underline"

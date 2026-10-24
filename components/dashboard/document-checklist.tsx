@@ -1,4 +1,4 @@
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { Check, Upload } from "lucide-react"
 import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashboard-card"
 import { StatusBadge } from "@/components/dashboard/status-badge"
@@ -28,13 +28,13 @@ export function DocumentChecklist({ app }: { app: VisaApplication }) {
         description={`${received} of ${total} received`}
         action={
           received < total ? (
-            <Link
+            <LocaleLink
               href={`/track/${token}/upload`}
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
             >
               <Upload className="size-4" aria-hidden="true" />
               Upload
-            </Link>
+            </LocaleLink>
           ) : null
         }
       />
@@ -73,7 +73,7 @@ export function DocumentChecklist({ app }: { app: VisaApplication }) {
               {isReceived ? (
                 <StatusBadge tone="success">Received</StatusBadge>
               ) : (
-                <Link
+                <LocaleLink
                   href={`/track/${token}/upload?type=${doc.uploadType}`}
                   className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label={`Upload ${doc.label.toLowerCase()}`}
@@ -81,7 +81,7 @@ export function DocumentChecklist({ app }: { app: VisaApplication }) {
                   <StatusBadge tone="warning" className="transition-colors hover:bg-warning/20">
                     Upload
                   </StatusBadge>
-                </Link>
+                </LocaleLink>
               )}
             </li>
           )
