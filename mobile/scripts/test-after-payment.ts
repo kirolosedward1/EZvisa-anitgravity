@@ -60,7 +60,8 @@ db.user = ME;
     passportExpiry: inDays(2000), employmentStatus: "employed", jobTitle: "Engineer", companyName: "ACME", employmentStartDate: "2020-01-01", monthlySalary: "10000-15000" };
   ok(!continueQuestions(f, false).some((q) => !!firstError(q, f)), "all after-payment answers valid");
   await saveAfterPayment("app-1", f);
-  ok(app.entry_date === inDays(30) && app.exit_date === inDays(40) && app.duration_days === 10 && app.travel_purpose === "tourism", "trip columns written");
+  // The day count is inclusive: arrival and departure both count, so a 10-night trip is 11 days.
+  ok(app.entry_date === inDays(30) && app.exit_date === inDays(40) && app.duration_days === 11 && app.travel_purpose === "tourism", "trip columns written");
   ok(app.date_of_birth === "1992-02-02" && app.passport_number === "N7654321" && app.previous_schengen_visa === false && app.previous_rejections === false, "passport and history columns written");
   const n2 = JSON.parse(app.additional_notes);
   ok(n2.source === "mobile-app" && n2.submittedAt === "2026-10-01T09:00:00Z" && n2.wizard.firstName === "Aisha" && n2.wizard.destination === "Italy", "pre-payment answers and app keys kept");
