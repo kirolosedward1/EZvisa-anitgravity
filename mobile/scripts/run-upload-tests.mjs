@@ -13,7 +13,12 @@ await build({ entryPoints: [dir + "test-upload-queue.ts"], bundle: true, platfor
     b.onResolve({ filter: /^\.\/data$/ }, (a) => (a.importer.endsWith("uploads.ts") ? { path: s + "data-server.ts" } : undefined));
     // Any other Expo / React Native package is only imported, never called, in these tests.
     const keep = new Set(["expo-crypto", "expo-file-system", "react-native-url-polyfill/auto"]);
-    b.onResolve({ filter: /^(expo|@expo\/|react-native-)/ }, (a) => (keep.has(a.path) ? undefined : { path: s + "cjs-any.js" }));
+    b.onResolve({ filter: /^(expo|@expo\/|react-native-)/ }, (a) => {
+      // secureStorage (SDK 58) calls getItemAsync, setItemAsync and deleteItemAsync. The generic proxy
+      // has no real exports, so esbuild's CJS interop drops them. Use the in-memory SecureStore stub.
+      if (a.path === "expo-secure-store") return { path: s + "secure-store.js" };
+      return keep.has(a.path) ? undefined : { path: s + "cjs-any.js" };
+    });
   } }],
   banner: { js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);" } });
 const TEST_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "ezvisa-q-"));

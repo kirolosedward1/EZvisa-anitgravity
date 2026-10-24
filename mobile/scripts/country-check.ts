@@ -14,6 +14,7 @@ import { AR } from "../lib/ar";
 import { toApplication, type VisaRow } from "../lib/data";
 import { emptyForm } from "../lib/wizard";
 import { SCHENGEN_FUNDS_RULES, calculateRequiredFunds } from "../../lib/bank-requirements";
+import { SCHENGEN } from "../../lib/shared/wizard-contract";
 declare const process: any;
 
 let fail = 0; let pass = 0;
@@ -24,7 +25,8 @@ const web = (p: string) => readFileSync(root + p, "utf8");
 
 // ---- 1. countryInfo, all 29 ----
 ok(COUNTRY_LIST.length === 29, `29 countries (got ${COUNTRY_LIST.length})`);
-const webCountries = [...web("lib/countries.ts").split("export const SCHENGEN_COUNTRIES = [")[1].split("]")[0].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+const webCountries = SCHENGEN;
+ok(webCountries.length === 29, `shared contract SCHENGEN has 29 countries (got ${webCountries.length})`);
 const webDocs = Object.fromEntries([...web("lib/destinations.ts").matchAll(/slug: "([^"]+)"[\s\S]*?documentPath: "([^"]+)"/g)].map((m) => [m[1], m[2]]));
 for (const name of COUNTRY_LIST) {
   const i = countryInfo(toSlug(name));
@@ -33,7 +35,7 @@ for (const name of COUNTRY_LIST) {
   ok(!!i.nameAr && /[؀-ۿ]/.test(i.nameAr), `${name}: Arabic name`);
   ok(!!i.capitalAr && /[؀-ۿ]/.test(i.capitalAr), `${name}: Arabic capital (${i.capital})`);
   ok(i.docsUrl === `https://www.ezvisa.net${docsPath(i.slug)}`, `${name}: docs URL on www.ezvisa.net`);
-  ok(webCountries.includes(name), `${name}: the website builds its document page (SCHENGEN_COUNTRIES)`);
+  ok(webCountries.includes(name), `${name}: listed in the shared contract (SCHENGEN)`);
   ok(webDocs[i.slug] === docsPath(i.slug), `${name}: same path as web lib/destinations.ts (${webDocs[i.slug]})`);
 }
 ok(countryInfo("atlantis") === null && countryInfo("") === null, "unknown slug → null");
