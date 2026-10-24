@@ -3,9 +3,9 @@ import { ArrowRight, Download, Printer, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PayNowButton } from "@/components/dashboard/pay-now-button"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
-import { detailsMissing, getDocumentProgress, isPaid, type Stage } from "@/lib/application-status"
-import { PREPARATION_TIME } from "@/lib/copy"
+import { detailsMissing, getDocumentProgress, isPaid, REQUIRED_DOCUMENTS, type Stage } from "@/lib/application-status"
 import { requestLocale } from "@/lib/request-locale"
+import { customerText, type CustomerKey } from "@/lib/translations/customer"
 import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
@@ -13,13 +13,21 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
   const token = app.tracking_token ?? ""
   const { missing } = getDocumentProgress(app)
   const arabic = (await requestLocale()) === "ar"
+  const locale = arabic ? "ar" : "en"
+  const t = (key: CustomerKey, values?: Record<string, string | number>) => customerText(locale, key, values)
+  const docLabel: Record<(typeof REQUIRED_DOCUMENTS)[number]["key"], CustomerKey> = {
+    has_passport: "docs.passport",
+    has_photos: "docs.photo",
+    has_bank_statements: "docs.bank",
+    has_employment_proof: "docs.job",
+  }
 
   const content = (() => {
     switch (stage) {
       case "payment":
         return {
-          title: "Pay to start your application",
-          body: `Your application is saved. ${PREPARATION_TIME}`,
+          title: t("next.payTitle"),
+          body: t("next.payBody"),
           actions: (
             <PayNowButton
               applicationId={app.id}
@@ -31,45 +39,47 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
         }
       case "documents":
         return {
-          title: `Upload ${missing.length} remaining document${missing.length === 1 ? "" : "s"}`,
-          body: `Still needed: ${missing.map((doc) => doc.label.toLowerCase()).join(", ")}. Upload them on the website or in the EZvisa app.`,
+          title: missing.length === 1 ? t("next.uploadTitle", { n: missing.length }) : t("next.uploadTitlePlural", { n: missing.length }),
+          body: t("next.uploadBody", {
+            docs: missing.map((doc) => (arabic ? t(docLabel[doc.key]) : doc.label.toLowerCase())).join(arabic ? "، " : ", "),
+          }),
           actions: (
             <Button asChild className="rounded-full px-5">
               <LocaleLink href={`/track/${token}/upload?type=${missing[0]?.uploadType ?? ""}`}>
                 <Upload />
-                Upload documents
+                {t("status.upload")}
               </LocaleLink>
             </Button>
           ),
         }
       case "review":
         return {
-          title: "We're reviewing your documents",
-          body: "A specialist is checking them against the consulate's requirements. We'll email you if anything is missing.",
+          title: t("next.reviewTitle"),
+          body: t("next.reviewBody"),
           actions: null,
         }
       case "preparation":
         return {
-          title: "We're preparing your visa file",
-          body: PREPARATION_TIME,
+          title: t("next.prepTitle"),
+          body: t("next.prepBody"),
           actions: null,
         }
       case "ready":
         return {
-          title: "Your visa file is ready",
-          body: "Print it and take it to your appointment. It includes your cover letter, itinerary and submission order.",
+          title: t("next.readyTitle"),
+          body: t("next.readyBody"),
           actions: (
             <>
               <Button asChild className="rounded-full px-5">
                 <LocaleLink href={`/track/${token}/dossier`}>
                   <Printer />
-                  View &amp; print file
+                  {t("next.viewPrint")}
                 </LocaleLink>
               </Button>
               <Button asChild variant="outline" className="rounded-full px-5">
                 <a href={`/api/download-document?token=${token}`}>
                   <Download />
-                  Download package
+                  {t("next.download")}
                 </a>
               </Button>
             </>
@@ -77,19 +87,19 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
         }
       case "cancelled":
         return {
-          title: "Cancelled",
-          body: "This application is cancelled. There is nothing to pay.",
+          title: t("next.cancelledTitle"),
+          body: t("next.cancelledBody"),
           actions: null,
         }
       case "rejected":
         return {
-          title: "Let's talk about your application",
-          body: "Message us and a visa specialist will go through the refusal letter with you and explain your options, including reapplying.",
+          title: t("next.rejectedTitle"),
+          body: t("next.rejectedBody"),
           actions: (
             <Button asChild className="rounded-full px-5">
               <a href={getCaseTrackingWhatsAppUrl(app.id || token, app.destination_country, arabic)} target="_blank" rel="noopener noreferrer">
                 <WhatsAppIcon className="size-4" />
-                Talk to a specialist
+                {t("next.talk")}
               </a>
             </Button>
           ),
@@ -101,12 +111,12 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
   // nothing left to fill in, and "continue" would contradict the status.
   const inProgress = stage === "documents" || stage === "review" || stage === "preparation"
   if (inProgress && isPaid(app) && detailsMissing(app) && app.id) {
-    content.title = "Finish your application details"
-    content.body = "Payment received. Add your trip, passport and employment details, then upload your documents."
+    content.title = t("next.finishTitle")
+    content.body = t("next.finishBody")
     content.actions = (
       <Button asChild className="rounded-full px-5">
         <LocaleLink href={`/continue/${app.id}`}>
-          Continue application
+          {t("next.continue")}
           <ArrowRight className="rtl:rotate-180" />
         </LocaleLink>
       </Button>

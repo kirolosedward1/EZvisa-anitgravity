@@ -1,13 +1,14 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { ChevronLeft, Loader2 } from "lucide-react"
 import { LangText } from "@/components/lang-text"
 
 type WizardBarProps = {
   onBack?: () => void
   showBack?: boolean
-  continueLabel: string
-  continueLabelAr: string
+  continueLabel: ReactNode
+  continueLabelAr: ReactNode
   loading?: boolean
   loadingLabel?: string
   loadingLabelAr?: string

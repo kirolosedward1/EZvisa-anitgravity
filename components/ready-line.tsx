@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useState } from "react"
 import { usePathname } from "next/navigation"
-import { APPLICATION_READY, APPLICATION_READY_AR, PREPARATION_TIME, PREPARATION_TIME_AR } from "@/lib/copy"
+import { APPLICATION_READY, PREPARATION_TIME } from "@/lib/copy"
 import { LangText } from "@/components/lang-text"
 
 function isArabicPath(path: string | null | undefined) {
@@ -29,7 +29,7 @@ export function useArabic() {
 export function ReadyLine({ className }: { className?: string }) {
   return (
     <span className={className}>
-      <LangText en={APPLICATION_READY} ar={APPLICATION_READY_AR} />
+      <LangText en={APPLICATION_READY} ar={<>جاهز خلال <bdi dir="ltr">1–2</bdi> يوم</>} />
     </span>
   )
 }
@@ -38,7 +38,7 @@ export function ReadyLine({ className }: { className?: string }) {
 export function PreparationLine({ className }: { className?: string }) {
   return (
     <span className={className}>
-      <LangText en={PREPARATION_TIME} ar={PREPARATION_TIME_AR} />
+      <LangText en={PREPARATION_TIME} ar={<>نجهّز طلبك خلال <bdi dir="ltr">1–2</bdi> يوم. قرار السفارة يستغرق وقتًا أطول.</>} />
     </span>
   )
 }

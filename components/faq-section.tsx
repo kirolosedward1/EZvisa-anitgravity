@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { DigitRanges } from "@/components/digit-ranges"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
 import { Msg } from "@/components/msg"
 import { Image } from "@/components/image"
@@ -68,7 +69,7 @@ export function FAQSection() {
                       className="overflow-hidden"
                     >
                       <div className="pb-4 md:pb-6 pe-8 md:pe-12 text-start">
-                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.answer}</p>
+                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed"><DigitRanges text={faq.answer} /></p>
                       </div>
                     </motion.div>
                   )}

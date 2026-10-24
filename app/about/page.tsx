@@ -46,7 +46,7 @@ export default async function AboutPage() {
   const facts = [
     { value: price, label: pick("One fee per application", "رسم واحد لكل طلب") },
     { value: "29", label: pick("Schengen countries", "دولة شنغن") },
-    { value: arabic ? "1–2 يوم" : "1–2 days", label: pick("To prepare your file", "لتجهيز ملفك") },
+    { value: arabic ? <><bdi dir="ltr">1–2</bdi> يوم</> : "1–2 days", label: pick("To prepare your file", "لتجهيز ملفك") },
     { value: "5", label: pick("Documents we prepare", "مستندات نجهّزها") },
   ]
 
@@ -126,7 +126,7 @@ export default async function AboutPage() {
               <div key={String(fact.label)} className="flex flex-col gap-1 py-8">
                 <dt className="order-2 text-sm text-muted-foreground">{fact.label}</dt>
                 <dd className="order-1 text-3xl font-semibold tracking-tight tabular-nums text-foreground">
-                  {arabic ? <bdi dir="ltr">{fact.value}</bdi> : fact.value}
+                  {arabic && typeof fact.value === "string" ? <bdi dir="ltr">{fact.value}</bdi> : fact.value}
                 </dd>
               </div>
             ))}

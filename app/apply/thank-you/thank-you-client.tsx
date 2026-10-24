@@ -12,6 +12,8 @@ import { Loader2 } from "lucide-react"
 import { trackEvent } from "@/lib/analytics"
 import { clearWizardAfterPayment } from "@/lib/wizard-storage"
 import { LocaleLink } from "@/components/locale-link"
+import { useSiteLocale } from "@/components/locale-provider"
+import { customerText } from "@/lib/translations/customer"
 
 interface ApplicationData {
   firstName: string
@@ -31,6 +33,7 @@ interface ApplicationData {
 
 export function ThankYouClient() {
   const searchParams = useSearchParams()
+  const locale = useSiteLocale()
   const [applicationData, setApplicationData] = useState<ApplicationData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -109,15 +112,15 @@ export function ThankYouClient() {
         <SiteHeader />
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
-            <h1 className="text-2xl font-semibold mb-2">No Application Data Found</h1>
+            <h1 className="text-2xl font-semibold mb-2">{customerText(locale, "thanks.missingTitle")}</h1>
             <p className="text-muted-foreground mb-6">
-              We couldn't find your application details. Please contact support.
+              {customerText(locale, "thanks.missingBody")}
             </p>
             <LocaleLink
               href="/apply"
               className="text-primary hover:underline font-medium"
             >
-              Start New Application
+              {customerText(locale, "thanks.missingCta")}
             </LocaleLink>
           </div>
         </div>

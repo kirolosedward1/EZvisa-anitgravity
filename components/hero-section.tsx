@@ -375,7 +375,7 @@ export function HeroSection() {
                             <p className="text-xs md:text-sm text-primary-foreground/80 mt-0.5 leading-relaxed">
                               <LangText
                                 en="We fill in your application form and prepare your cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days."
-                                ar="نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال 1–2 يوم."
+                                ar={<>نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم.</>}
                               />
                             </p>
                           </div>
