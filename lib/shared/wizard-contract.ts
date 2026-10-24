@@ -194,8 +194,11 @@ export function passportCoversTrip(f: { passportExpiry: string; travelEndDate: s
   const need = new Date(base.getFullYear(), base.getMonth() + 3, base.getDate())
   return new Date(f.passportExpiry + "T00:00:00").getTime() >= need.getTime()
 }
+/** Inclusive stay: arrival and departure both count. Same calendar day is 1. A 10-night trip is 11.
+ *  Same date handling as the app (`Date.parse` of YYYY-MM-DD is UTC midnight): mobile/lib/data.ts `days()` and mobile/lib/wizard.ts `tripDays()`. */
+export const inclusiveStayDays = (start: string, end: string) => Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1
 export const tripDays = (f: Pick<WizardAnswers, "travelStartDate" | "travelEndDate">) =>
-  f.travelStartDate && f.travelEndDate ? Math.ceil((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) : 0
+  f.travelStartDate && f.travelEndDate ? inclusiveStayDays(f.travelStartDate, f.travelEndDate) : 0
 export const MAX_STAY_DAYS = 90
 export const MIN_LEAD_DAYS = 15
 
@@ -284,9 +287,9 @@ export function readiness(f: WizardAnswers) {
   let score = 70
   const checks: { label: string; passed: boolean }[] = []
   if (f.travelStartDate && f.travelEndDate) {
-    const start = new Date(f.travelStartDate + "T12:00:00"), end = new Date(f.travelEndDate + "T12:00:00")
-    const days = Math.round((end.getTime() - start.getTime()) / day)
-    if (days > 0 && days <= MAX_STAY_DAYS) { score += 8; checks.push({ label: `Stay duration (${days} days) within Schengen 90-day legal limit`, passed: true }) }
+    const start = new Date(f.travelStartDate + "T12:00:00")
+    const days = tripDays(f)
+    if (days >= 1 && days <= MAX_STAY_DAYS) { score += 8; checks.push({ label: `Stay duration (${days} days) within Schengen 90-day legal limit`, passed: true }) }
     else checks.push({ label: "Stay duration exceeds 90 days", passed: false })
     const until = Math.round((start.getTime() - Date.now()) / day)
     if (until >= MIN_LEAD_DAYS) { score += 7; checks.push({ label: `Lead time (${until} days) provides safe consular processing buffer`, passed: true }) }
@@ -410,7 +413,6 @@ export function continueAnswers(row: RowLike): Partial<WizardAnswers> {
 export const needsContinue = (row: RowLike) =>
   isPaid(row) && CONTINUE_STATUSES.includes(row.application_status ?? "submitted") && !continueComplete(continueAnswers(row))
 
-const days = (a: string, b: string) => Math.ceil((new Date(b).getTime() - new Date(a).getTime()) / day)
 const t = (s: unknown) => (typeof s === "string" ? s.trim() : "")
 
 /**
@@ -439,7 +441,7 @@ export function applicationColumns(f: Partial<WizardAnswers>, email: string, ste
     full_name: `${t(f.firstName)} ${t(f.lastName)}`.trim() || "Draft", email, phone: t(f.phone), nationality: t(f.nationality),
     destination_country: t(f.destination), date_of_birth: f.dateOfBirth || null, entry_date: start || null, exit_date: end || null,
     travel_purpose: t(f.purposeOfTrip), passport_number: t(f.passportNumber) || null,
-    duration_days: start && end ? days(start, end) : null,
+    duration_days: start && end ? inclusiveStayDays(start, end) : null,
     previous_schengen_visa: f.isFirstSchengenVisa ? f.isFirstSchengenVisa === "no" : false,
     previous_rejections: f.previousRefusals === "yes",
     rejection_details: f.previousRefusals === "yes" ? t(f.refusalDetails) || null : null,

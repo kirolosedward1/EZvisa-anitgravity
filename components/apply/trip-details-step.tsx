@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
 import { ArabicDateText } from "@/components/arabic-date"
-import { datesInOrder, formatDisplayDate, formatPageDate, isValidCalendarDate, schengenStayDays } from "@/lib/dates"
+import { fixedDatesAccepted, formatDisplayDate, formatPageDate } from "@/lib/dates"
 import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import { TravelDatesField } from "@/components/apply/travel-dates-field"
 import { WizardBar } from "@/components/apply/wizard-bar"
@@ -73,25 +73,11 @@ const balances = [
 const LAST_SCREEN = 9
 
 function datesAreValid(formData: FormData) {
-  const stay = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
+  const dates = fixedDatesAccepted(formData.travelStartDate, formData.travelEndDate)
   if (formData.datesFlexible === "yes") {
-    return (
-      !!formData.travelMonth &&
-      !!formData.tripLength &&
-      isValidCalendarDate(formData.travelStartDate) &&
-      isValidCalendarDate(formData.travelEndDate) &&
-      stay > 1 &&
-      stay <= 90
-    )
+    return !!formData.travelMonth && !!formData.tripLength && dates
   }
-  return (
-    formData.datesFlexible === "no" &&
-    isValidCalendarDate(formData.travelStartDate) &&
-    isValidCalendarDate(formData.travelEndDate) &&
-    datesInOrder(formData.travelStartDate, formData.travelEndDate) &&
-    stay > 1 &&
-    stay <= 90
-  )
+  return formData.datesFlexible === "no" && dates
 }
 
 export function TripDetailsStep({
