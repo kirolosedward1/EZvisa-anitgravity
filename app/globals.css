@@ -136,6 +136,12 @@
     @apply border-border outline-ring/50;
   }
 
+  /* Tailwind v4 resets buttons to the default arrow; every enabled button shows the hand, like links. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
   html {
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;

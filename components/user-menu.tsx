@@ -105,7 +105,7 @@ export function UserMenu() {
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger
         className={cn(
-          "h-10 w-10 flex items-center justify-center overflow-hidden rounded-full shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+          "h-10 w-10 flex cursor-pointer items-center justify-center overflow-hidden rounded-full shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           signedIn ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-secondary text-foreground hover:bg-primary/10 hover:text-primary data-[state=open]:bg-primary/10 data-[state=open]:text-primary",
         )}
         aria-label={signedIn ? `Account menu for ${viewer?.email}` : "Account menu / حسابي"}
