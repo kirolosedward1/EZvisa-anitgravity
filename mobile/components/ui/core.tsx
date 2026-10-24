@@ -145,7 +145,7 @@ export function FormRow({ label, error, ...p }: TextInputProps & { label: string
 export function SegmentedControl({ options, value, onChange, label }: { options: { value: string; label: string }[]; value: string; onChange: (v: string) => void; label: string }) {
   const c = useColors(); const dark = useIsDark();
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[{ flexDirection: "row", backgroundColor: c.fill, borderRadius: R.round, padding: 3 }, curve]}>
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[{ flexDirection: "row", width: "100%", alignSelf: "stretch", backgroundColor: c.fill, borderRadius: R.round, padding: 3 }, curve]}>
       {options.map((o) => {
         const on = o.value === value;
         return (
