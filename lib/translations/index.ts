@@ -111,6 +111,11 @@ export const translations = {
     receipt: {
       missingAmount: "This payment has no amount on file, so we can't issue a receipt here. Message us on WhatsApp and we'll send one.",
     },
+    dashboardEmpty: {
+      title: "No applications yet",
+      before: "We couldn't find any visa applications for",
+      after: "If you applied with a different email, sign in with that one instead.",
+    },
   },
   ar: {
     nav: {
@@ -221,6 +226,11 @@ export const translations = {
     },
     receipt: {
       missingAmount: "لا يوجد مبلغ مسجّل لهذه الدفعة، لذلك لا يمكننا إصدار إيصال هنا. راسلنا عبر واتساب وسنرسله إليك.",
+    },
+    dashboardEmpty: {
+      title: "لا توجد طلبات بعد",
+      before: "لم نعثر على أي طلبات تأشيرة للبريد",
+      after: "إذا تقدّمت ببريد إلكتروني مختلف، سجّل الدخول بذلك البريد.",
     },
   }
 }

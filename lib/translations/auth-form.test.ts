@@ -31,6 +31,12 @@ test("support and receipt lines stay English and use Modern Standard Arabic on /
   assert.equal(/[٠-٩۰-۹]/.test(translations.ar.receipt.missingAmount), false)
   assert.equal(/[A-Za-z]{4,}/.test(translations.ar.receipt.missingAmount), false)
   assert.notEqual(translations.ar.receipt.missingAmount, translations.en.receipt.missingAmount)
+  assert.equal(translations.en.dashboardEmpty.title, "No applications yet")
+  assert.equal(translations.ar.dashboardEmpty.title, "لا توجد طلبات بعد")
+  assert.equal(translations.en.dashboardEmpty.before, "We couldn't find any visa applications for")
+  assert.equal(translations.en.dashboardEmpty.after, "If you applied with a different email, sign in with that one instead.")
+  assert.equal(/[٠-٩۰-۹]/.test(translations.ar.dashboardEmpty.before + translations.ar.dashboardEmpty.after), false)
+  assert.equal(/[A-Za-z]{4,}/.test(translations.ar.dashboardEmpty.title), false)
 })
 
 test("an Arabic auth form never shows the raw provider error", () => {

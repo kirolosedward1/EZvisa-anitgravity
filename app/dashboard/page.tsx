@@ -3,7 +3,9 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { LogOut, Plus, Search } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
+import { LangText } from "@/components/lang-text";
 import { SiteHeader } from "@/components/site-header";
+import { translations } from "@/lib/translations";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { isDemoEmail, getDemoApplicationsByEmail, DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
@@ -121,10 +123,14 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <Search className="size-6" aria-hidden="true" />
               </span>
               <div className="flex flex-col gap-2">
-                <h2 className="text-xl font-semibold tracking-tight text-foreground">No applications yet</h2>
+                <h2 className="text-xl font-semibold tracking-tight text-foreground">
+                  <LangText en={translations.en.dashboardEmpty.title} ar={translations.ar.dashboardEmpty.title} />
+                </h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  We couldn&apos;t find any visa applications for <strong className="text-foreground">{user.email}</strong>.
-                  If you applied with a different email, sign in with that one instead.
+                  <LangText en={translations.en.dashboardEmpty.before} ar={translations.ar.dashboardEmpty.before} />{" "}
+                  <strong className="ltr-isolate text-foreground">{user.email}</strong>
+                  {". "}
+                  <LangText en={translations.en.dashboardEmpty.after} ar={translations.ar.dashboardEmpty.after} />
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
