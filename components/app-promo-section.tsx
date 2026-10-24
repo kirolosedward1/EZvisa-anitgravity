@@ -4,7 +4,8 @@ import { LocaleLink } from "@/components/locale-link"
 import { LangText } from "@/components/lang-text"
 import { IphoneFrame } from "@/components/app/iphone-frame"
 import { StoreBadges } from "@/components/app/store-badges"
-import { SCREENS } from "@/components/app/content"
+import { appCopy } from "@/components/app/localized"
+import { requestLocale } from "@/lib/request-locale"
 
 const POINTS = [
   {
@@ -25,7 +26,8 @@ const POINTS = [
 ]
 
 /** Homepage section promoting the EZvisa app, with two iPhone mockups showing real app screens. */
-export function AppPromoSection() {
+export async function AppPromoSection() {
+  const copy = appCopy(await requestLocale())
   return (
     <section id="app" aria-labelledby="app-promo-title" className="py-20 md:py-28">
       <div className="container mx-auto max-w-6xl px-4">
@@ -78,10 +80,10 @@ export function AppPromoSection() {
             <div className="relative mx-auto flex h-[420px] w-full max-w-sm items-end justify-center sm:h-[500px] lg:h-[540px]">
               <div aria-hidden="true" className="pointer-events-none absolute inset-0 [background-image:radial-gradient(circle_at_55%_60%,color-mix(in_oklch,var(--primary)_14%,transparent),transparent_60%)]" />
               <div className="absolute bottom-4 start-1/2 w-40 -translate-x-[95%] rotate-[-6deg] opacity-95 sm:w-48 lg:w-52 rtl:translate-x-[95%] rtl:rotate-[6deg]">
-                <IphoneFrame src={SCREENS.track.src} alt={SCREENS.track.alt} sizes="(min-width: 1024px) 208px, 192px" className="w-full" />
+                <IphoneFrame src={copy.screens.track.src} alt={copy.screens.track.alt} sizes="(min-width: 1024px) 208px, 192px" className="w-full" />
               </div>
               <div className="relative z-10 w-48 translate-x-[18%] sm:w-56 lg:w-60 rtl:-translate-x-[18%]">
-                <IphoneFrame src={SCREENS.home.src} alt={SCREENS.home.alt} sizes="(min-width: 1024px) 240px, 224px" className="w-full" />
+                <IphoneFrame src={copy.screens.home.src} alt={copy.screens.home.alt} sizes="(min-width: 1024px) 240px, 224px" className="w-full" />
               </div>
             </div>
           </div>
