@@ -11,6 +11,7 @@ import { LocaleLink } from "@/components/locale-link"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { useSiteLocale } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
+import { SectionPhoto } from "@/components/section-photo"
 
 export function ComparisonSection() {
   const locale = useSiteLocale()
@@ -55,16 +56,17 @@ export function ComparisonSection() {
   ]
 
   return (
-    <section className="bg-secondary/50 py-20 md:py-28">
-      <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
+    <section className="photo-hero relative overflow-hidden py-20 md:py-28">
+      <SectionPhoto src="/images/countries/italy.jpg" />
+      <div className="container relative mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
         <div className="flex flex-col items-start gap-5">
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <span className="inline-flex items-center rounded-full bg-background px-3 py-1 text-xs font-medium text-primary">
             <LangText en="Why EZvisa" ar="لماذا إيزي فيزا" />
           </span>
-          <h2 className="text-balance text-foreground">
+          <h2 className="hero-copy text-balance">
             <LangText en="Applying on your own vs. with EZvisa" ar="التقديم بنفسك مقارنة بالتقديم مع إيزي فيزا" />
           </h2>
-          <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+          <p className="hero-copy text-base leading-relaxed opacity-85 sm:text-lg">
             <LangText
               en="You can apply for a Schengen visa yourself. This is what changes when a specialist prepares the file with you."
               ar="يمكنك التقدّم لتأشيرة شنغن بنفسك. هذا ما يتغيّر عندما يجهّز مختص الملف معك."
