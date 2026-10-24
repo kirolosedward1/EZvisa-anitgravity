@@ -19,6 +19,20 @@ test("forgot-password and signup copy is Modern Standard Arabic with Western dig
   }
 })
 
+test("support and receipt lines stay English and use Modern Standard Arabic on /ar", () => {
+  assert.equal(translations.en.support.whatsApp, "WhatsApp Support")
+  assert.equal(translations.ar.support.whatsApp, "دعم واتساب")
+  assert.equal(translations.en.support.message, "Message us on WhatsApp")
+  assert.equal(translations.ar.support.message, "راسلنا عبر واتساب")
+  assert.equal(
+    translations.en.receipt.missingAmount,
+    "This payment has no amount on file, so we can't issue a receipt here. Message us on WhatsApp and we'll send one.",
+  )
+  assert.equal(/[٠-٩۰-۹]/.test(translations.ar.receipt.missingAmount), false)
+  assert.equal(/[A-Za-z]{4,}/.test(translations.ar.receipt.missingAmount), false)
+  assert.notEqual(translations.ar.receipt.missingAmount, translations.en.receipt.missingAmount)
+})
+
 test("an Arabic auth form never shows the raw provider error", () => {
   const raw = "Unable to validate email address: invalid format"
   assert.equal(authFormErrorText("ar", { message: raw }), translations.ar.authForm.errors["invalid-email"])

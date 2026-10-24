@@ -104,6 +104,13 @@ export const translations = {
         unknown: "Something went wrong. Try again.",
       },
     },
+    support: {
+      whatsApp: "WhatsApp Support",
+      message: "Message us on WhatsApp",
+    },
+    receipt: {
+      missingAmount: "This payment has no amount on file, so we can't issue a receipt here. Message us on WhatsApp and we'll send one.",
+    },
   },
   ar: {
     nav: {
@@ -207,6 +214,13 @@ export const translations = {
         disabled: "خيار تسجيل الدخول هذا غير متاح حاليًا.",
         unknown: "حدث خطأ. أعد المحاولة.",
       },
+    },
+    support: {
+      whatsApp: "دعم واتساب",
+      message: "راسلنا عبر واتساب",
+    },
+    receipt: {
+      missingAmount: "لا يوجد مبلغ مسجّل لهذه الدفعة، لذلك لا يمكننا إصدار إيصال هنا. راسلنا عبر واتساب وسنرسله إليك.",
     },
   }
 }
