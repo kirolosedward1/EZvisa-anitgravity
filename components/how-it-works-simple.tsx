@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, type ReactNode } from "react"
 import Image from "next/image"
 import { LocaleLink } from "@/components/locale-link"
 import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion"
@@ -14,9 +14,8 @@ import { ltr } from "@/lib/bidi"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { cn } from "@/lib/utils"
 
-function stepsFor(locale: DisplayLocale) {
+function stepsFor(locale: DisplayLocale): { number: string; title: string; description: ReactNode }[] {
   const price = formatAedLabel(PRICE_AED, locale)
-  const days = ltr("1–2")
   if (locale === "ar") {
     return [
       {
@@ -32,7 +31,11 @@ function stepsFor(locale: DisplayLocale) {
       {
         number: "3",
         title: "نجهّز ملفك",
-        description: `يملأ مختص التأشيرات نموذج الطلب ويعدّ خطاب التغطية وبرنامج الرحلة يومًا بيوم وحجوزات الطيران والفندق خلال ${days} يوم.`,
+        description: (
+          <>
+            يملأ مختص التأشيرات نموذج الطلب ويعدّ خطاب التغطية وبرنامج الرحلة يومًا بيوم وحجوزات الطيران والفندق خلال <bdi dir="ltr">1–2</bdi> يوم.
+          </>
+        ),
       },
       {
         number: "4",

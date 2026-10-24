@@ -141,7 +141,7 @@ export default async function PricingPage() {
                   {pick("Start your application", "ابدأ طلبك")}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
                 </LocaleLink>
-                <p className="text-sm text-muted-foreground">{pick("Ready in 1–2 days after your documents are in.", <>جاهز خلال {ltr("1–2")} يوم بعد وصول مستنداتك.</>)}</p>
+                <p className="text-sm text-muted-foreground">{pick("Ready in 1–2 days after your documents are in.", <>جاهز خلال <bdi dir="ltr">1–2</bdi> يوم بعد وصول مستنداتك.</>)}</p>
               </div>
             </div>
 

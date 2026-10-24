@@ -1,8 +1,15 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar, CreditCard, DollarSign, Globe, MapPin, User } from "lucide-react"
 import { format } from "date-fns"
+import { DirhamAmount } from "@/components/aed-amount"
+import { useSiteLocale } from "@/components/locale-provider"
+import { formatArabicDate } from "@/lib/dates"
+import { SCHENGEN_META } from "@/lib/countries"
+import { citizenshipNameAr } from "@/lib/nationalities"
+import { customerText } from "@/lib/translations/customer"
 
 interface ApplicationData {
   firstName: string
@@ -22,6 +29,8 @@ interface ApplicationSummaryCardProps {
 }
 
 export function ApplicationSummaryCard({ applicationData }: ApplicationSummaryCardProps) {
+  const locale = useSiteLocale()
+  const arabic = locale === "ar"
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "dd MMM yyyy")
@@ -29,52 +38,77 @@ export function ApplicationSummaryCard({ applicationData }: ApplicationSummaryCa
       return dateString
     }
   }
+  const travelDates: ReactNode = arabic ? (
+    <>
+      <bdi dir="ltr">{formatArabicDate(applicationData.travelStartDate) || applicationData.travelStartDate}</bdi>
+      {" – "}
+      <bdi dir="ltr">{formatArabicDate(applicationData.travelEndDate) || applicationData.travelEndDate}</bdi>
+    </>
+  ) : (
+    `${formatDate(applicationData.travelStartDate)} - ${formatDate(applicationData.travelEndDate)}`
+  )
+  const destination = arabic
+    ? SCHENGEN_META[applicationData.destination]?.ar || applicationData.destination
+    : applicationData.destination
+  const nationality = arabic ? citizenshipNameAr(applicationData.nationality) : applicationData.nationality
+  const packageName =
+    arabic && /^standard$/i.test(applicationData.packageType)
+      ? customerText("ar", "thanks.packageStandard")
+      : applicationData.packageType
 
-  const summaryItems = [
+  const summaryItems: { icon: typeof User; label: string; value: ReactNode }[] = [
     {
       icon: User,
-      label: "Applicant",
-      value: `${applicationData.firstName} ${applicationData.lastName}`,
+      label: customerText(locale, "thanks.applicant"),
+      value: arabic ? (
+        <bdi dir="ltr">{`${applicationData.firstName} ${applicationData.lastName}`}</bdi>
+      ) : (
+        `${applicationData.firstName} ${applicationData.lastName}`
+      ),
     },
     {
       icon: Globe,
-      label: "Nationality",
-      value: applicationData.nationality,
+      label: customerText(locale, "thanks.nationality"),
+      value: nationality,
     },
     {
       icon: MapPin,
-      label: "Destination",
-      value: applicationData.destination,
+      label: customerText(locale, "thanks.destination"),
+      value: destination,
     },
     {
       icon: Calendar,
-      label: "Travel Dates",
-      value: `${formatDate(applicationData.travelStartDate)} - ${formatDate(applicationData.travelEndDate)}`,
+      label: customerText(locale, "thanks.dates"),
+      value: travelDates,
     },
     {
       icon: DollarSign,
-      label: "Package",
-      value: applicationData.packageType,
+      label: customerText(locale, "thanks.package"),
+      value: arabic && packageName !== applicationData.packageType ? packageName : arabic ? <bdi dir="ltr">{packageName}</bdi> : packageName,
     },
     {
       icon: CreditCard,
-      label: "Amount Paid",
-      value: `${applicationData.currencySymbol} ${applicationData.paymentAmount.toFixed(2)}`,
+      label: customerText(locale, "thanks.amount"),
+      value: arabic ? (
+        <DirhamAmount amount={applicationData.paymentAmount} />
+      ) : (
+        `${applicationData.currencySymbol} ${applicationData.paymentAmount.toFixed(2)}`
+      ),
     },
   ]
 
   if (applicationData.transactionId) {
     summaryItems.push({
       icon: CreditCard,
-      label: "Transaction ID",
-      value: applicationData.transactionId,
+      label: customerText(locale, "thanks.transaction"),
+      value: arabic ? <bdi dir="ltr">{applicationData.transactionId}</bdi> : applicationData.transactionId,
     })
   }
 
   return (
     <Card className="sticky top-24 shadow-lg border-primary/20">
       <CardHeader className="border-b bg-[#F7F8FA]">
-        <CardTitle className="text-lg font-semibold">Application Summary</CardTitle>
+        <CardTitle className="text-lg font-semibold">{customerText(locale, "thanks.summary")}</CardTitle>
       </CardHeader>
       <CardContent className="pt-6">
         <div className="space-y-4">
@@ -98,10 +132,10 @@ export function ApplicationSummaryCard({ applicationData }: ApplicationSummaryCa
         {/* Status Badge */}
         <div className="mt-6 pt-6 border-t">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">Status</span>
+            <span className="text-sm font-medium text-muted-foreground">{customerText(locale, "thanks.status")}</span>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 text-xs font-semibold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Payment Confirmed
+              {customerText(locale, "thanks.confirmed")}
             </span>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { DigitRanges } from "@/components/digit-ranges"
 import { LocaleLink } from "@/components/locale-link"
 import { fillCompany } from "@/lib/legal/company"
 
@@ -10,7 +11,7 @@ function inline(text: string, key = "i"): ReactNode[] {
   let m: RegExpExecArray | null
   let n = 0
   while ((m = re.exec(text))) {
-    if (m.index > last) out.push(text.slice(last, m.index))
+    if (m.index > last) out.push(<DigitRanges key={`${key}-t${n}`} text={text.slice(last, m.index)} />)
     const t = m[0]
     const k = `${key}-${n++}`
     if (t.startsWith("**")) out.push(<strong key={k} className="text-foreground">{inline(t.slice(2, -2), k)}</strong>)
@@ -22,7 +23,7 @@ function inline(text: string, key = "i"): ReactNode[] {
     else out.push(<em key={k}>{inline(t.slice(1, -1), k)}</em>)
     last = m.index + t.length
   }
-  if (last < text.length) out.push(text.slice(last))
+  if (last < text.length) out.push(<DigitRanges key={`${key}-t${n}`} text={text.slice(last)} />)
   return out
 }
 

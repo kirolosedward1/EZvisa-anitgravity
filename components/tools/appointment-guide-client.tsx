@@ -15,6 +15,7 @@ import {
   CalendarDays,
   ShieldAlert
 } from "lucide-react"
+import { DigitRanges } from "@/components/digit-ranges"
 import { LocaleLink } from "@/components/locale-link"
 import { useSiteLocale } from "@/components/locale-provider"
 import { countryNameAr } from "@/lib/countries"
@@ -187,7 +188,7 @@ export function AppointmentGuideClient() {
                 <span>{t("Slot Pattern & Lead Time", "نمط المواعيد ومدة الحجز")}</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                {arabic ? activeAr.timing : active.timingTips}
+                {arabic ? <DigitRanges text={activeAr.timing} /> : active.timingTips}
               </p>
             </div>
 
@@ -265,7 +266,7 @@ export function AppointmentGuideClient() {
                   <strong className="text-foreground block">{t("Carry Card for Embassy Fee", "احمل بطاقة لرسوم السفارة")}</strong>
                   <span>
                     {arabic
-                      ? "رسم التأشيرة المعتاد للبالغ 90 يورو، ويُحصَّل في الشباك بالبطاقة أو نقدًا، مع رسم خدمة المركز نحو 100–140 درهم."
+                      ? <>رسم التأشيرة المعتاد للبالغ 90 يورو، ويُحصَّل في الشباك بالبطاقة أو نقدًا، مع رسم خدمة المركز نحو <bdi dir="ltr">100–140</bdi> درهم.</>
                       : "The standard 90 EUR adult visa fee is charged in AED at the counter by card or cash, along with the center's nominal service fee (~100-140 AED)."}
                   </span>
                 </div>

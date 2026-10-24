@@ -1,5 +1,6 @@
 import React from "react"
 import type { Metadata } from "next"
+import { ltr } from "@/lib/bidi"
 import { withArabicMeta } from "@/lib/page-meta"
 
 export function generateMetadata(): Promise<Metadata> {
@@ -32,7 +33,7 @@ export function generateMetadata(): Promise<Metadata> {
     },
     {
       title: "مستندات تأشيرة شنغن حسب الدولة",
-      description: "قوائم مستندات تأشيرة شنغن لـ29 دولة، للمقيمين في الإمارات. جاهز خلال 1–2 يوم.",
+      description: `قوائم مستندات تأشيرة شنغن لـ29 دولة، للمقيمين في الإمارات. جاهز خلال ${ltr("1–2")} يوم.`,
       path: "/ar/documents",
     },
   )

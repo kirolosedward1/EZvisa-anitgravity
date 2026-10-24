@@ -2,7 +2,10 @@
 
 import { useState } from "react"
 import { CreditCard, Loader2 } from "lucide-react"
+import { payLabel } from "@/components/aed-amount"
+import { useSiteLocale } from "@/components/locale-provider"
 import { Button } from "@/components/ui/button"
+import { customerText } from "@/lib/translations/customer"
 
 interface PayNowButtonProps {
   applicationId?: string
@@ -14,6 +17,8 @@ interface PayNowButtonProps {
 }
 
 export function PayNowButton({ applicationId, trackingToken, destination, amount = 249, className, label }: PayNowButtonProps) {
+  const locale = useSiteLocale()
+  const arabic = locale === "ar"
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -49,12 +54,12 @@ export function PayNowButton({ applicationId, trackingToken, destination, amount
         error: data.error || null,
         elapsedMs: data.elapsedMs ?? null,
       })
-      if (!res.ok || !data.redirect_url) throw new Error(data.error || "Could not start payment")
+      if (!res.ok || !data.redirect_url) throw new Error(arabic ? customerText("ar", "pay.startFailed") : data.error || "Could not start payment")
       window.location.href = data.redirect_url
     } catch (err) {
       console.error("Payment start failed:", err)
       const aborted = err instanceof Error && err.name === "AbortError"
-      setError(aborted ? "Ziina didn't open within 20 seconds." : "We couldn't open the payment page.")
+      setError(aborted ? customerText(locale, "pay.timeout") : customerText(locale, "pay.failed"))
       setLoading(false)
     } finally {
       window.clearTimeout(timer)
@@ -65,13 +70,13 @@ export function PayNowButton({ applicationId, trackingToken, destination, amount
     <div className="flex flex-col gap-2">
       <Button onClick={handlePay} disabled={loading} className={`rounded-full px-5 ${className ?? ""}`}>
         {loading ? <Loader2 className="animate-spin" /> : <CreditCard />}
-        {loading ? "Opening Ziina…" : label ?? `Pay ${amount} AED`}
+        {loading ? customerText(locale, "pay.opening") : label ?? payLabel(amount, arabic)}
       </Button>
       {error && (
         <div role="alert" className="flex flex-col items-start gap-2">
           <p className="text-xs text-destructive">{error}</p>
           <Button type="button" variant="outline" onClick={handlePay} disabled={loading} className="h-8 rounded-full px-4 text-xs">
-            Retry
+            {customerText(locale, "pay.retry")}
           </Button>
         </div>
       )}

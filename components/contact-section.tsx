@@ -1,5 +1,6 @@
 "use client"
 
+import type { ReactNode } from "react"
 import { ArrowRight, Check } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
@@ -8,15 +9,14 @@ import Image from "next/image"
 import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
-import { ltr } from "@/lib/bidi"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { getWhatsAppUrl } from "@/lib/whatsapp"
 
 export function ContactSection() {
   const locale = useSiteLocale()
   const price = formatAedLabel(PRICE_AED, locale)
-  const benefits = locale === "ar"
-    ? ["تعبئة نموذج الطلب", "خطاب التغطية وبرنامج الرحلة", "حجوزات الطيران والفندق", `جاهز خلال ${ltr("1–2")} يوم`, "استرداد كامل قبل أن نبدأ مراجعة مستنداتك"]
+  const benefits: ReactNode[] = locale === "ar"
+    ? ["تعبئة نموذج الطلب", "خطاب التغطية وبرنامج الرحلة", "حجوزات الطيران والفندق", <>جاهز خلال <bdi dir="ltr">1–2</bdi> يوم</>, "استرداد كامل قبل أن نبدأ مراجعة مستنداتك"]
     : ["Application form filled in", "Cover letter and itinerary", "Flight and hotel reservations", "Ready in 1–2 days", "Full refund before we start reviewing your documents"]
 
   return (
@@ -50,8 +50,8 @@ export function ContactSection() {
             </div>
 
             <ul className="grid w-full grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-              {benefits.map((benefit) => (
-                <li key={benefit} className="flex items-center gap-2.5 text-sm font-medium text-foreground">
+              {benefits.map((benefit, index) => (
+                <li key={index} className="flex items-center gap-2.5 text-sm font-medium text-foreground">
                   <Check className="size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
                   {benefit}
                 </li>

@@ -2,7 +2,11 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useLocalizedHref } from "@/components/locale-link"
+import { LangText } from "@/components/lang-text"
+import { useSiteLocale } from "@/components/locale-provider"
+import { classifyAuthError } from "@/lib/auth/errors"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { translations } from "@/lib/translations"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,6 +16,8 @@ import { Loader2 } from "lucide-react"
 export default function ResetPasswordPage() {
   const router = useRouter()
   const localize = useLocalizedHref()
+  const locale = useSiteLocale()
+  const copy = translations[locale].auth
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -29,7 +35,7 @@ export default function ResetPasswordPage() {
     })
 
     if (error) {
-      setError(error.message)
+      setError(locale === "ar" ? copy.errors[classifyAuthError(error)] : error.message)
       setIsLoading(false)
     } else {
       router.push(localize("/dashboard"))
@@ -42,7 +48,9 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
         <div className="text-center">
           <h2 className="text-3xl font-semibold tracking-tight">Set new password</h2>
-          <p className="text-muted-foreground mt-2">Enter your new password below</p>
+          <p className="text-muted-foreground mt-2">
+            <LangText en={translations.en.auth.newPasswordLead} ar={translations.ar.auth.newPasswordLead} />
+          </p>
         </div>
 
         <form onSubmit={handleUpdate} className="space-y-6">
@@ -53,7 +61,9 @@ export default function ResetPasswordPage() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="password">New Password</Label>
+            <Label htmlFor="password">
+              <LangText en={translations.en.auth.newPasswordLabel} ar={translations.ar.auth.newPasswordLabel} />
+            </Label>
             <Input
               id="password"
               type="password"
@@ -65,7 +75,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Updating...</> : "Update password"}
+            {isLoading ? <><Loader2 className="me-2 h-4 w-4 animate-spin" />{copy.updating}</> : copy.updatePassword}
           </Button>
         </form>
       </div>

@@ -3,49 +3,53 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle2, Mail, FileSearch, Phone, FileCheck, Plane } from "lucide-react"
 import { motion } from "framer-motion"
+import { useSiteLocale } from "@/components/locale-provider"
+import { customerText, type CustomerKey } from "@/lib/translations/customer"
 
 export function NextStepsTimeline() {
+  const locale = useSiteLocale()
+  const t = (key: CustomerKey) => customerText(locale, key)
   const steps = [
     {
       icon: CheckCircle2,
-      title: "Payment Confirmed",
-      description: "Your payment has been successfully processed",
-      time: "Just now",
+      title: t("thanks.s1"),
+      description: t("thanks.s1Body"),
+      time: t("thanks.s1Time"),
       status: "completed" as const,
     },
     {
       icon: Mail,
-      title: "Confirmation Email Sent",
-      description: "Check your inbox for application details and next steps",
-      time: "Within 5 minutes",
+      title: t("thanks.s2"),
+      description: t("thanks.s2Body"),
+      time: t("thanks.s2Time"),
       status: "completed" as const,
     },
     {
       icon: FileSearch,
-      title: "Document Review",
-      description: "Our experts will review your documents and requirements",
-      time: "Within 24 hours",
+      title: t("thanks.s3"),
+      description: t("thanks.s3Body"),
+      time: t("thanks.s3Time"),
       status: "in-progress" as const,
     },
     {
       icon: Phone,
-      title: "Expert Contact",
-      description: "Our team will reach out via WhatsApp or email if needed",
-      time: "1-2 business days",
+      title: t("thanks.s4"),
+      description: t("thanks.s4Body"),
+      time: t("thanks.s4Time"),
       status: "upcoming" as const,
     },
     {
       icon: FileCheck,
-      title: "Documents Prepared",
-      description: "Complete visa application package ready for submission",
-      time: "3-5 business days",
+      title: t("thanks.s5"),
+      description: t("thanks.s5Body"),
+      time: t("thanks.s5Time"),
       status: "upcoming" as const,
     },
     {
       icon: Plane,
-      title: "Application Submitted",
-      description: "Your application submitted to the embassy/consulate",
-      time: "Within 1 week",
+      title: t("thanks.s6"),
+      description: t("thanks.s6Body"),
+      time: t("thanks.s6Time"),
       status: "upcoming" as const,
     },
   ]
@@ -66,9 +70,9 @@ export function NextStepsTimeline() {
   return (
     <Card className="shadow-lg">
       <CardHeader className="border-b">
-        <CardTitle className="text-xl font-semibold">What Happens Next</CardTitle>
+        <CardTitle className="text-xl font-semibold">{t("thanks.nextTitle")}</CardTitle>
         <p className="text-sm text-muted-foreground mt-1">
-          Your visa application journey - step by step
+          {t("thanks.nextIntro")}
         </p>
       </CardHeader>
       <CardContent className="pt-6">
@@ -111,14 +115,14 @@ export function NextStepsTimeline() {
         <div className="mt-8 p-4 bg-primary/5 rounded-lg border border-primary/20">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-foreground">Estimated Completion</p>
+              <p className="text-sm font-semibold text-foreground">{t("thanks.estimate")}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Your complete visa package ready for submission
+                {t("thanks.estimateBody")}
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-lg font-semibold text-primary">5-7 Days</p>
-              <p className="text-xs text-muted-foreground">Business days</p>
+            <div className="text-end">
+              <p className="text-lg font-semibold text-primary">{t("thanks.estimateDays")}</p>
+              <p className="text-xs text-muted-foreground">{t("thanks.businessDays")}</p>
             </div>
           </div>
         </div>
