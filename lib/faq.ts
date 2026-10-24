@@ -1,3 +1,5 @@
+import { ltr } from "@/lib/bidi"
+
 export type FaqItem = { question: string; answer: string }
 
 /** English FAQ. Source: faq.md (Home › Questions). */
@@ -83,6 +85,6 @@ export const FAQ_AR: FaqItem[] = [
   },
   {
     question: "كم يستغرق تجهيز الطلب؟",
-    answer: "نجهّز طلبك خلال 1–2 يوم. قرار السفارة يستغرق وقتًا أطول.",
+    answer: `نجهّز طلبك خلال ${ltr("1–2")} يوم. قرار السفارة يستغرق وقتًا أطول.`,
   },
 ]

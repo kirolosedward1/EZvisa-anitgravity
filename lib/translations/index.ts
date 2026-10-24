@@ -1,3 +1,5 @@
+import { ltr } from "@/lib/bidi"
+
 export type Language = "en" | "ar"
 
 export const translations = {
@@ -80,7 +82,7 @@ export const translations = {
       badge: "إعداد ملفات تأشيرة شنغن في الإمارات",
       title: "ملف تأشيرة شنغن الخاص بك، مجهز باحترافية",
       subtitle: "نقوم بإعداد ملف طلب التأشيرة الكامل — استمارات التقديم، حجوزات الطيران والفنادق، وخطاب التغطية الشخصي، وخطة السفر — جاهز لموعد السفارة.",
-      turnaround: "جاهز خلال 1–2 يوم",
+      turnaround: `جاهز خلال ${ltr("1–2")} يوم`,
       pricePoint: "من 249 درهم",
       cta: "ابدأ تقديم الطلب",
     },

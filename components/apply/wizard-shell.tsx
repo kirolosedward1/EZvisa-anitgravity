@@ -67,7 +67,7 @@ function SummaryRows({ formData }: { formData: FormData }) {
     {
       label: "Processing",
       labelAr: "المعالجة",
-      value: <LangText en="1–2 days" ar="1–2 يوم" />,
+      value: <LangText en="1–2 days" ar={<><bdi dir="ltr">1–2</bdi> يوم</>} />,
     },
   ]
 
