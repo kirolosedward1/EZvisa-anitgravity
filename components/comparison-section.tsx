@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { ArrowRight, Check, Minus } from "lucide-react"
 import { motion } from "framer-motion"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { ReadyLine } from "@/components/ready-line"
 import { APPLICATION_READY } from "@/lib/copy"
 import { LangText } from "@/components/lang-text"

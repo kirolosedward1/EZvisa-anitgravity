@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import { Image } from "@/components/image"
 import type { BlogPost } from "@/lib/blog"
 import { Calendar, Clock } from "lucide-react"
 import { motion } from "framer-motion"
