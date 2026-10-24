@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Minus } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
+import { CompanyLegalNotice } from "@/components/legal/company-details"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
 import { ContactSection } from "@/components/contact-section"
@@ -105,6 +106,7 @@ export default function AboutPage() {
 
         <ContactSection />
       </div>
+      <CompanyLegalNotice />
       <Footer />
     </>
   )

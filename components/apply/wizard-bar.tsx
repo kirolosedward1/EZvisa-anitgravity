@@ -30,7 +30,7 @@ export function WizardBar({
   disabled = false,
 }: WizardBarProps) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E3E7EF] bg-[#FFFFFF]">
+    <div data-wizard-bar className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E3E7EF] bg-[#FFFFFF]">
       <div className="mx-auto flex w-full max-w-6xl px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <div className="flex w-full max-w-[560px] items-center gap-3">
           {showBack && onBack ? (
