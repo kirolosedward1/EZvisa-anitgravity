@@ -4,6 +4,7 @@ import { useMemo } from "react"
 import { ShieldCheck, CheckCircle2, AlertTriangle, ClipboardCheck } from "lucide-react"
 import { Msg } from "@/components/msg"
 import { FormData } from "@/lib/form-types"
+import { inclusiveStayDays, MAX_STAY_DAYS } from "@/lib/shared/wizard-contract"
 
 interface DossierReadinessCardProps {
   formData: FormData
@@ -17,9 +18,8 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
     // 1. Duration check
     if (formData.travelStartDate && formData.travelEndDate) {
       const start = new Date(formData.travelStartDate)
-      const end = new Date(formData.travelEndDate)
-      const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-      if (days > 0 && days <= 90) {
+      const days = inclusiveStayDays(formData.travelStartDate, formData.travelEndDate)
+      if (days >= 1 && days <= MAX_STAY_DAYS) {
         score += 8
         checks.push({ label: `Stay duration (${days} days) within Schengen 90-day legal limit`, passed: true })
       } else {

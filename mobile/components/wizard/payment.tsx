@@ -13,9 +13,9 @@ const lab = (opts: { value: string; label: string }[], v: string) => (v ? label(
 export function readiness(f: WizardForm) {
   let score = 70; const checks: { label: string; passed: boolean }[] = [];
   if (f.travelStartDate && f.travelEndDate) {
-    const start = new Date(f.travelStartDate + "T12:00:00"), end = new Date(f.travelEndDate + "T12:00:00");
-    const days = Math.round((end.getTime() - start.getTime()) / 864e5);
-    if (days > 0 && days <= 90) { score += 8; checks.push({ label: `Stay duration (${days} days) within Schengen 90-day legal limit`, passed: true }); }
+    const start = new Date(f.travelStartDate + "T12:00:00");
+    const days = tripDays(f);
+    if (days >= 1 && days <= 90) { score += 8; checks.push({ label: `Stay duration (${days} days) within Schengen 90-day legal limit`, passed: true }); }
     else checks.push({ label: "Stay duration exceeds 90 days", passed: false });
     const until = Math.round((start.getTime() - Date.now()) / 864e5);
     if (until >= 15) { score += 7; checks.push({ label: `Lead time (${until} days) provides safe consular processing buffer`, passed: true }); }
