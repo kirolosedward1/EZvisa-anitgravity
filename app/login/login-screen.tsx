@@ -19,6 +19,7 @@ import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { classifyAuthError, EMAIL_RE, type AuthIssue } from "@/lib/auth/errors"
 import { issueFromClientMessage, loginErrorText, loginInfoText, noticeFromQuery, type LoginErrorCode } from "@/lib/auth/login-notice"
 import { socialSignInError } from "@/lib/translations/auth-form"
+import { translations } from "@/lib/translations"
 import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
 import { cn } from "@/lib/utils"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -47,7 +48,9 @@ function LoginForm({
   errorCode: string | null
   email: string | null
 }) {
-  const arabic = useSiteLocale() === "ar"
+  const locale = useSiteLocale()
+  const arabic = locale === "ar"
+  const copy = translations[locale].authForm
   const t = (en: string, ar: string) => (arabic ? ar : en)
   const sayError = (code: LoginErrorCode) => t(loginErrorText("en", code), loginErrorText("ar", code))
   const router = useRouter()
@@ -157,13 +160,14 @@ function LoginForm({
 
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3">
-          <AppleSignInButton next={next} onError={onSocialError} />
-          <GoogleSignInButton next={next} label={t("Continue with Google", "المتابعة عبر Google")} onError={onSocialError} />
+          <AppleSignInButton next={next} label={copy.signInApple} onError={onSocialError} />
+          <GoogleSignInButton next={next} label={copy.signInGoogle} onError={onSocialError} />
+          <p className="text-center text-xs leading-relaxed text-muted-foreground">{copy.sameEmailFirst}</p>
         </div>
 
         <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
-          {t("or sign in with email", "أو سجّل الدخول بالبريد")}
+          {copy.orDivider}
           <span className="h-px flex-1 bg-border" />
         </div>
 

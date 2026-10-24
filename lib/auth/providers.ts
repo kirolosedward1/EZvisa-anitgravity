@@ -2,8 +2,8 @@
 // - Google is always offered (the main social login for EZvisa customers). It signs people in through Supabase OAuth,
 //   so the Google provider must be enabled on the project (docs/AUTH_SETUP.md); until it is, the button explains that
 //   instead of failing on an error page.
-// - Apple is always offered on /login and /signup. The button is Apple's own JS artwork and the round trip is
-//   Supabase OAuth back to /auth/callback. Until the Apple provider is enabled, the button says so. The project's
+// - Apple is always offered on /login and /signup. The button uses Apple's logo and the site font, and the round
+//   trip is Supabase OAuth back to /auth/callback. Until the Apple provider is enabled, the button says so. The project's
 //   public /auth/v1/settings (the same check as mobile/lib/apple.ts) is what tells the button to stop early.
 import { supabasePublicEnv } from "@/lib/supabase/client"
 

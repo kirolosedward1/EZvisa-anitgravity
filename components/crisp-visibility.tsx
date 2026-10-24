@@ -5,10 +5,13 @@ import { usePathname } from "next/navigation"
 
 function hidesChat(path: string | null | undefined) {
   if (!path) return false
-  return /\/apply(?:\/|$)|\/continue(?:\/|$)|\/payment-|\/checkout(?:\/|$)/.test(path)
+  const bare = path.split("?")[0].replace(/\/+$/, "") || "/"
+  if (/\/apply(?:\/|$)|\/continue(?:\/|$)|\/payment-|\/checkout(?:\/|$)/.test(bare)) return true
+  // Auth pages: the bubble covers the email label at 320px, including /ar and reset-password.
+  return /^(?:\/ar)?\/(?:login|signup|reset-password)$/.test(bare)
 }
 
-/** Hide the Crisp bubble on the wizard and checkout so it cannot cover the bottom bar. */
+/** Hide the Crisp bubble on the wizard, checkout, and auth pages so it cannot cover the form. */
 export function CrispVisibility() {
   const pathname = usePathname()
 

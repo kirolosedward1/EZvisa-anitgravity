@@ -265,8 +265,10 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
   reads applications the way the app does (ownership = row email equals the signed-in email).
 - **Google sign-in** is always offered on `/login` and `/signup` (`components/auth/google-sign-in.tsx`); it works
   once the Google provider is enabled on the Supabase project (`docs/AUTH_SETUP.md`). **Sign in with Apple**
-  (`components/auth/apple-sign-in.tsx`) is on the same pages, in English and `/ar`, and uses the same
-  `/auth/callback` round trip. It works once the Apple provider is enabled; until then the button explains that.
+  (`components/auth/apple-sign-in.tsx`) is above Google on the same pages, in English and `/ar`. The button uses
+  Apple's logo and the site font, and the same `/auth/callback` round trip. It works once the Apple provider is
+  enabled; until then the button explains that. Hide My Email (`@privaterelay.appleid.com`) is a separate account;
+  linking it from settings comes later.
 - **`pnpm sync:check`** (`scripts/check-app-sync.mts`) compares the contract with the app's files and exits 1 on
   drift; `.github/workflows/app-sync.yml` runs it on every push/PR to `main` and `mobile-app`. Run it before
   committing a change to anything in the contract.

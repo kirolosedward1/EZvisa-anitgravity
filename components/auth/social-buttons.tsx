@@ -1,7 +1,7 @@
 "use client"
 
 // Google sign-in through Supabase OAuth (PKCE). The round trip returns to /auth/callback. Apple lives in
-// components/auth/apple-sign-in.tsx (Apple's own button artwork). See lib/auth/providers.ts.
+// components/auth/apple-sign-in.tsx. See lib/auth/providers.ts.
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"

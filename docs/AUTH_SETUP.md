@@ -55,27 +55,30 @@ sync check compares them).
    2. Identifiers → Services ID (a separate identifier, used by the website): enable Sign in with Apple, configure
       it, and set the return URL to the Supabase callback
       `https://dravvaykssrbktztmrlj.supabase.co/auth/v1/callback`
-      (Authentication → Providers → Apple shows this same URL). Add the website domains the button will return
-      through: `ezvisa.net` and `www.ezvisa.net`.
+      (Authentication → Providers → Apple shows this same URL). Domains on the Services ID:
+      `ezvisa.net`, `www.ezvisa.net`, and `dravvaykssrbktztmrlj.supabase.co`.
    3. Keys → create a key, enable Sign in with Apple, and download the key file (`.p8`). It can be downloaded
       once. Keep the Key ID. The Team ID is on the membership page (and in the top right of the developer account).
-   4. The client secret Supabase stores is a JWT signed with that `.p8`. It expires every 6 months. When it
-      expires, Apple sign-in stops until the secret is generated again from the same key, Key ID and Team ID.
+   4. Generate the client-secret JWT from that `.p8` (Services ID, Team ID, Key ID). Supabase takes this JWT,
+      not the raw `.p8`. It expires every 6 months. When it expires, Apple sign-in stops until a new JWT is
+      generated from the same key, Key ID and Team ID.
    5. Sign in with Apple for Email Communication (Private Email Relay): register the domain that sends mail to
       customers (`ezvisa.net`, and the Resend sending domain if it differs). Add the SPF and DKIM records Apple
-      shows. Without this, mail to a Hide My Email address (`@privaterelay.appleid.com`) bounces.
-   6. Vercel preview hosts (`*.vercel.app`) cannot finish the round trip unless that exact preview domain is
-      registered on the Services ID. Apple does not accept a wildcard. Production `ezvisa.net` is the one that
-      matters; previews stay on email sign-in until a domain is added.
+      shows. Without this, mail to a Hide My Email address (`@privaterelay.appleid.com`) bounces. Hide My Email
+      creates a separate account. Linking it to an existing email account from settings comes later.
+   6. Do not register Vercel preview domains with Apple. Add the preview `/auth/callback` URLs on Supabase's
+      redirect allow list instead. That list accepts wildcards. Apple's Services ID does not, and previews are
+      not registered there.
 
    **Supabase → Authentication → Providers → Apple**
    - Turn the provider on.
-   - Services ID (client id), Team ID, Key ID, and the `.p8` contents (Supabase builds the client secret).
+   - Services ID (client id), Team ID, Key ID, and the client-secret JWT generated from the `.p8` (not the raw key file).
    - Also list the iOS bundle id `net.ezvisa.app` under client IDs so the app's native Apple button can share
      the same accounts. For Expo Go testing, add `host.exp.Exponent` as well.
    - Redirect URLs (Authentication → URL configuration, the same list as step 1): `https://www.ezvisa.net/auth/callback`,
-     `https://ezvisa.net/auth/callback`, and `http://localhost:3000/auth/callback`. The button always returns
-     through `/auth/callback`. A missing allow-list entry sends the person to the Site URL instead of the dashboard.
+     `https://ezvisa.net/auth/callback`, `http://localhost:3000/auth/callback`, and the preview `/auth/callback`
+     hosts (a wildcard is accepted here). The button always returns through `/auth/callback`. A missing allow-list
+     entry sends the person to the Site URL instead of the dashboard.
 4. **Email**: the default Supabase SMTP is rate-limited (a handful of emails per hour). Configure custom SMTP
    (Resend is already used for transactional mail) so sign-up confirmations and magic links are delivered.
 5. **Email templates**: keep `{{ .ConfirmationURL }}` (PKCE `?code=`), or use `{{ .TokenHash }}` with
