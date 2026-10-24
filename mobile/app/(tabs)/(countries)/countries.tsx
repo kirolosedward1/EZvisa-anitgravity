@@ -6,8 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COUNTRY_LIST, POPULAR, toSlug } from "../../../lib/countries";
-import { EmptyState, Flag, Icon, ListGroup, ListRow, PressScale, Text, useTabInset } from "../../../components/ui";
-import { Field } from "../../../components/AuthForm";
+import { EmptyState, Flag, Icon, ListGroup, ListRow, PressScale, SearchField, Text, useTabInset } from "../../../components/ui";
 import { useColors, useLargeText, S, R, HIT, ICON, curve } from "../../../lib/theme";
 import { PHOTOS } from "../../../lib/photos";
 import { select } from "../../../lib/haptics";
@@ -82,7 +81,7 @@ export default function Countries() {
           </View>
         </View>
         <Text variant="subhead" tone="secondary" style={{ marginBottom: S.xl }}>{tr("{n} Schengen destinations", { n: COUNTRY_LIST.length })}</Text>
-        <Field placeholder={tr("Search")} value={q} onChangeText={setQ} autoCorrect={false} returnKeyType="search" trailing={<Icon name="magnifyingglass" size={ICON.md} color={c.textSecondary} />} />
+        <SearchField placeholder={tr("Search")} value={q} onChangeText={setQ} />
         <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.gutter, paddingEnd: !t && !rtl && !grid ? S.xs : 0, marginTop: S.xl }}>
           {t ? (
             !results.length ? <EmptyState icon="magnifyingglass" title={tr("No results")} />

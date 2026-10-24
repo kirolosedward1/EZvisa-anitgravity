@@ -137,7 +137,7 @@ export default function Account() {
       <Stack.Screen options={{ headerShown: false }} />
       <Text variant="largeTitle" accessibilityRole="header" style={{ marginHorizontal: S.lg, marginBottom: S.xxl }}>{t("Account")}</Text>
       <View style={{ alignItems: "center", paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }}>
-        <View style={{ width: 88, height: 88, borderRadius: R.round, backgroundColor: c.fill, borderWidth: 1, borderColor: c.hairline, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={36} color={c.tertiaryLabel} /></View>
+        <View style={{ width: 88, height: 88, borderRadius: R.round, backgroundColor: c.accentMuted, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={36} color={c.accent} /></View>
         <Text variant="title2" center>{t("Sign in to track your visa")}</Text>
         <View style={{ alignSelf: "stretch", gap: S.xs, marginTop: S.sm }}>
           <Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />
@@ -187,6 +187,7 @@ export default function Account() {
           </View>
         </PressScale>
         <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
+        {!!u.email && <Text variant="subhead" tone="secondary" numberOfLines={1}>{u.email}</Text>}
       </View>
       {/* Name, email, sign-in method and member since live on their own page (account/details). */}
       <ListGroup inset={58}>

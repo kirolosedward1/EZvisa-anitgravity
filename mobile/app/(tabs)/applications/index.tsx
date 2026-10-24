@@ -2,10 +2,10 @@ import { useState } from "react";
 import { ScrollView, View, RefreshControl } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Chevron, SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments, HeaderIconButton } from "../../../components/ui";
+import { Chevron, SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
 import { buildTimeline, doneCount } from "../../../lib/timeline";
 import { useT, ltr } from "../../../lib/i18n";
-import { useColors, useIsDark, useLargeText, S, R, HIT, curve, card, ICON } from "../../../lib/theme";
+import { useColors, useIsDark, S, R, HIT, curve, card, ICON } from "../../../lib/theme";
 import { STATUS_LABEL, type Application } from "../../../lib/data";
 import { nextAction } from "../../../lib/nextStep";
 import { useApps, ACTIVE } from "../../../lib/useApps";
@@ -61,7 +61,7 @@ function AppCardSkeleton() {
 }
 
 export default function Applications() {
-  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT(); const large = useLargeText();
+  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
   const { session, apps, err, refreshing, refresh, discard } = useApps();
   const [tab, setTab] = useState<"active" | "past">("active");
   const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
@@ -71,11 +71,8 @@ export default function Applications() {
     <ScrollView scrollEnabled={!swiping} onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb, paddingHorizontal: S.lg, flexGrow: 1 }}
       refreshControl={session ? <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={c.tint} /> : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
-      {/* At accessibility sizes the large title takes the full width, so the toolbar button moves above it, where iOS
-          places bar buttons over a large title. */}
-      <View style={{ flexDirection: large ? "column-reverse" : "row", alignItems: large ? "flex-start" : "center", justifyContent: "space-between", gap: S.sm, marginBottom: S.lg }}>
-        <Text variant="largeTitle" accessibilityRole="header" style={{ flexShrink: 1 }}>{t("Applications")}</Text>
-        <View style={{ alignSelf: "flex-end" }}><HeaderIconButton icon="plus" label={t("New application")} onPress={() => router.push("/apply")} testID="new-application" /></View>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: S.lg }}>
+        <Text variant="largeTitle" accessibilityRole="header">{t("Applications")}</Text>
       </View>
       {!session ? (
         <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}>

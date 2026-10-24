@@ -3,10 +3,10 @@ import { PressScale } from "../ui";
 // country list, native date pickers (iOS inline calendar / wheel, Android dialog, web date input) and the website's
 // "additional countries" editor. All controls are VoiceOver-labelled and grow with Dynamic Type (no fixed heights).
 import { useEffect, useMemo, useState } from "react";
-import { FlatList, Platform, Pressable, TextInput, View } from "react-native";
+import { FlatList, Platform, Pressable, View } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Flag, Icon, Text, Button } from "../ui";
-import { useColors, useIsDark, S, R, T, curve, ICON } from "../../lib/theme";
+import { Flag, Icon, Text, Button, SearchField } from "../ui";
+import { useColors, useIsDark, S, R, curve, ICON } from "../../lib/theme";
 import { select } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 import { SCHENGEN, iso, type WizardForm } from "../../lib/wizard";
@@ -57,7 +57,7 @@ export function YesNoTiles({ label, value, onPick }: { label: string; value: str
 /** Inline searchable country list (flags). Fills the remaining screen; picking auto-advances. */
 /** `searchAll`: a wider list that typing also searches (nationality: the full visa-required list behind "Other nationality"). */
 export function CountryList({ names, value, onPick, searchPlaceholder, header, searchAll }: { names: string[]; value: string; onPick: (n: string) => void; searchPlaceholder: string; header: React.ReactElement; searchAll?: string[] }) {
-  const c = useColors(); const { t } = useT(); const [q, setQ] = useState("");
+  const { t } = useT(); const [q, setQ] = useState("");
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
     const known = value && (names.includes(value) || searchAll?.includes(value));
@@ -71,12 +71,7 @@ export function CountryList({ names, value, onPick, searchPlaceholder, header, s
       contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.xs }}
       ListHeaderComponent={<View style={{ gap: S.md, marginBottom: S.xs }}>
         {header}
-        {(names.length > 1 || !!searchAll) && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs, minHeight: 52, borderRadius: R.round, backgroundColor: c.card, paddingHorizontal: S.md }}>
-          <Icon name="magnifyingglass" size={16} color={c.secondaryLabel} />
-          <TextInput value={q} onChangeText={setQ} placeholder={t(searchPlaceholder)} placeholderTextColor={c.secondaryLabel} autoCorrect={false} returnKeyType="search" accessibilityLabel={t(searchPlaceholder)}
-            style={[T.body, { flex: 1, color: c.label, paddingVertical: S.sm }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
-          {!!q && <PressScale onPress={() => setQ("")} accessibilityRole="button" accessibilityLabel={t("Clear search")} style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}><Icon name="xmark.circle.fill" size={16} color={c.tertiaryLabel} /></PressScale>}
-        </View>}
+        {(names.length > 1 || !!searchAll) && <SearchField value={q} onChangeText={setQ} placeholder={t(searchPlaceholder)} />}
       </View>}
       ListEmptyComponent={<Text variant="subhead" tone="secondary" center style={{ marginTop: S.xl }}>{t("No country found.")}</Text>}
       renderItem={({ item }) => <AnswerRow label={t(item)} country={item === "Other" || item === "Other nationality" ? undefined : item} selected={item === value} onPress={() => onPick(item)} />} />

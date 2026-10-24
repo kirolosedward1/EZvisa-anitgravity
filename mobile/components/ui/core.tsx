@@ -27,10 +27,6 @@ export function Chevron({ size = ICON.sm, color, weight = "semibold" }: { size?:
 
 /** Bottom padding so content clears the floating tab bar. */
 export function useTabInset(extra = S.xl) { const i = useSafeAreaInsets(); return Math.max(i.bottom, 12) + TAB_BAR_HEIGHT + extra; }
-/** Distance from the screen bottom to the top edge of the floating tab bar (same formula as components/nav/TabBar),
- *  for controls pinned above it, such as a screen's sticky footer. */
-export const tabBarBottom = (insetBottom: number) => (insetBottom > 0 ? Math.max(insetBottom - S.xs, S.xs) : S.md);
-export function useTabBarTop() { const i = useSafeAreaInsets(); return tabBarBottom(i.bottom) + TAB_BAR_HEIGHT; }
 
 const APressable = Animated.createAnimatedComponent(Pressable);
 /** The one pressed state: spring scale to 0.97 + dim (and an optional 1pt lift for cards). Reduce Motion: dim only. */
@@ -136,6 +132,20 @@ export function TextField({ label, error, trailing, ...p }: TextInputProps & { l
     </View>
   );
 }
+/** The one search field (Home, Countries, the wizard's country lists): iOS search-bar look, a neutral fill with the
+ *  magnifier first and a clear button while there is text. Same height and radius as Home's search entry. */
+export function SearchField({ value, onChangeText, placeholder, testID, ...p }: Omit<TextInputProps, "style"> & { value: string; onChangeText: (v: string) => void; placeholder: string; testID?: string }) {
+  const c = useColors(); const { t } = useT();
+  return (
+    <View style={[{ minHeight: HIT, borderRadius: R.md, backgroundColor: c.fill, flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.sm }, curve]} testID={testID}>
+      <Icon name="magnifyingglass" size={ICON.md} color={c.secondaryLabel} weight="medium" />
+      <TextInput value={value} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor={c.secondaryLabel} accessibilityLabel={placeholder} autoCorrect={false} returnKeyType="search" maxFontSizeMultiplier={1.6} {...p}
+        style={[T.body, { flex: 1, color: c.label, minHeight: HIT, paddingVertical: 0 }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+      {!!value && <PressScale onPress={() => onChangeText("")} accessibilityRole="button" accessibilityLabel={t("Clear search")} hitSlop={S.xxs} style={{ width: HIT - S.xs, height: HIT - S.xs, alignItems: "center", justifyContent: "center" }}><Icon name="xmark.circle.fill" size={ICON.md} color={c.tertiaryLabel} /></PressScale>}
+    </View>
+  );
+}
+
 /** Labelled field row: label left, input right (iOS Settings style). */
 export function FormRow({ label, error, ...p }: TextInputProps & { label: string; error?: string }) {
   const c = useColors();
@@ -287,7 +297,8 @@ export function ProgressBar({ value, label = "Uploading" }: { value?: number; la
 export function Avatar({ name, size = 56, uri }: { name: string; size?: number; uri?: string | null }) {
   const c = useColors();
   const ini = name.split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("") || "?";
-  const box = { width: size, height: size, borderRadius: size / 2, backgroundColor: c.fill, borderWidth: 1, borderColor: c.hairline, alignItems: "center" as const, justifyContent: "center" as const, overflow: "hidden" as const };
+  // Initials sit on the brand's soft tint (the one accent, used quietly); a photo fills the circle.
+  const box = { width: size, height: size, borderRadius: size / 2, backgroundColor: uri ? c.fill : c.accentMuted, borderWidth: 1, borderColor: uri ? c.hairline : "transparent", alignItems: "center" as const, justifyContent: "center" as const, overflow: "hidden" as const };
   if (uri) return <View style={box} accessibilityElementsHidden><Image source={{ uri }} style={{ width: size, height: size }} contentFit="cover" accessibilityIgnoresInvertColors /></View>;
-  return <View style={box} accessibilityElementsHidden><Text variant={size > 48 ? "title3" : "headline"} maxFontSizeMultiplier={1}>{ini}</Text></View>;
+  return <View style={box} accessibilityElementsHidden><Text variant={size > 48 ? "title3" : "headline"} color={c.accent} maxFontSizeMultiplier={1}>{ini}</Text></View>;
 }

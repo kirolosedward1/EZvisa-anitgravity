@@ -6,7 +6,7 @@ import { View, Pressable, Image, StyleProp, ViewStyle } from "react-native";
 import { SvgXml } from "react-native-svg";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming, useReducedMotion } from "react-native-reanimated";
 import { router } from "expo-router";
-import { useColors, useContentScale, S, R, T, curve, SPRING } from "../../lib/theme";
+import { useColors, useIsDark, useContentScale, card, S, R, T, curve, SPRING } from "../../lib/theme";
 import { FLAG_SVG } from "../../assets/flags";
 import { STATUS_LABEL, type Application } from "../../lib/data";
 import { buildTimeline, type Step } from "../../lib/timeline";
@@ -196,10 +196,10 @@ export function CountryRow({ name, onPress }: { name: string; onPress: () => voi
 }
 
 export function StatusHeroCard({ a }: { a: Application }) {
-  const c = useColors(); const { t } = useT(); const name = a.countries?.name ?? ""; const status = t(stage(a).label);
+  const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? ""; const status = t(stage(a).label);
   return (
     <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${t(name)}, ${a.reference}, ${status}`}
-      style={[{ backgroundColor: c.card, borderRadius: R.card, padding: S.md, marginHorizontal: S.md, gap: S.md }, curve]}>
+      style={[card(c, dark, 0), { padding: S.md, marginHorizontal: S.md, gap: S.md }]}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
         <Flag country={name} size={40} />
         <View style={{ flex: 1 }}><Text variant="headline">{t(name)}</Text><Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text></View>

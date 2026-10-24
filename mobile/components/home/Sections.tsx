@@ -6,7 +6,7 @@ import Animated, { FadeIn, FadeInDown, LinearTransition, useAnimatedStyle, useRe
 import { router } from "expo-router";
 import { Text, Icon, Button, SectionHeader } from "../ui";
 import { Card } from "../../app/(tabs)/(countries)/countries";
-import { useColors, useLargeText, S, R, curve } from "../../lib/theme";
+import { useColors, useIsDark, useLargeText, card, S } from "../../lib/theme";
 import { SPRING } from "../../theme/tokens";
 import { COUNTRY_LIST } from "../../lib/countries";
 import { FAQ } from "../../lib/faq";
@@ -50,12 +50,12 @@ function Row({ q, a, open, last, onPress }: { q: string; a: string; open: boolea
 }
 
 export function FaqSection() {
-  const c = useColors(); const { t, lang } = useT(); const [open, setOpen] = useState<string | null>(null);
+  const c = useColors(); const dark = useIsDark(); const { t, lang } = useT(); const [open, setOpen] = useState<string | null>(null);
   const L = lang === "ar" ? "ar" : "en";
   return (
     <View style={{ marginTop: S.xl }} testID="home-faq">
       <SectionHeader title={t("Questions")} />
-      <Animated.View layout={LinearTransition.springify().damping(22).stiffness(240)} style={[{ marginHorizontal: S.lg, borderRadius: 24, backgroundColor: c.surface, overflow: "hidden" }, curve]}>
+      <Animated.View layout={LinearTransition.springify().damping(22).stiffness(240)} style={[card(c, dark, 0), { marginHorizontal: S.lg, overflow: "hidden" }]}>
         {FAQ.map((f, i) => <Row key={f.id} q={f.q[L]} a={f.a[L]} open={open === f.id} last={i === FAQ.length - 1} onPress={() => { select(); setOpen((x) => (x === f.id ? null : f.id)); }} />)}
       </Animated.View>
       <View style={{ alignItems: "center", marginTop: S.lg, marginBottom: S.x3 }}>

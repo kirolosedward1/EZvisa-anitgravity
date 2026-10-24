@@ -51,15 +51,11 @@ All ratios are WCAG 2.1, measured against `background`; they stay at 4.5:1 or ab
 
 ## Type (`theme/typography.ts`)
 
-The scale is Apple's iOS text styles at the default size (HIG › Typography › Specifications): `display`/`largeTitle` 34, `title1` 28, `title2` 22, `title3` 20, `headline`/`body` 17, `callout` 16, `subhead` 15, `footnote` 13, `caption` 12, `caption2` 11. Nothing is smaller than 11 pt. `overline` is the inset-grouped section header (13 pt, capitals). On iOS the system font sets its own tracking, so native text has no manual letter spacing; the web preview keeps SF's values.
+The scale follows Apple's text styles: `display` 40, `largeTitle` 34, `title1` 28, `title2` 22, `title3` 20, `headline`/`body` 17, `callout` 16, `subhead` 15, `footnote` 13, `caption` 12, `caption2` 11.
 
-Dynamic Type is always on. `TYPE_SCALE` caps each role: reading text grows to 2× (the HIG's 200%), titles to 1.75–2×, so a title always stays larger than the body text next to it. Fixed-size labels pass their own `maxFontSizeMultiplier`: tab labels (1×, as on iOS), avatar initials (1×), the A–Z index (1.2×), Home's country stories (1.35×). Inputs cap at `INPUT_SCALE` (1.6×).
+Dynamic Type is always on. `TYPE_SCALE` caps each role: body text grows to 2×, display text to 1.3×, and tab labels stay fixed, as on iOS. Inputs cap at `INPUT_SCALE` (1.6×).
 
-At large sizes (`useLargeText()`, 1.35× and up):
-- `ListRow` puts its value under the title, and nothing is cut to one line.
-- Photo grids (Countries, Home "Explore countries") drop to one column.
-- Toolbar buttons beside a large title (Applications "+", the Countries view toggle) move above it.
-- `useContentScale()` grows meaningful icons with the text, capped at 1.5×: chevrons, `IconTile`, the status timeline dots.
+`useLargeText()` is true from 1.35× upward. Use it to stack side-by-side layouts (for example, the country fact tiles). At those sizes `ListRow` also puts its value under its title, the photo grids (Countries, Home "Explore countries") drop to one column, and `useContentScale()` grows chevrons, `IconTile` and the status timeline dots (capped at 1.5×). None of this changes the default text size.
 
 ## Theme hook (`theme/useTheme.ts`)
 
@@ -76,11 +72,11 @@ At large sizes (`useLargeText()`, 1.35× and up):
 | `Card` | A static surface, or pressable with `onPress`/`onLongPress`. Supports `disabled`, `level` and `padded`. |
 | `Input` | Optional label, help and error text (the error replaces the help text and is announced). Focus shows an accent outline, an error shows a danger outline, and `editable={false}` dims it. Supports leading and trailing slots. |
 | `ListGroup` + `ListRow` | iOS inset-grouped list. A row can have an icon tile, flag, subtitle, value, chevron (mirrors in RTL), trailing slot, `destructive` or `disabled`. Separators use `marginStart` and the `LIST_INSET.text` / `.icon` / `.flag` insets. |
-| `TabBar` (`components/nav`) | Floating Liquid Glass capsule. Four tabs, each an icon over its label. Tabs only navigate: starting an application is the Applications toolbar "+" and the Home buttons. The bar stays visible on every screen inside a tab; only the keyboard and modal screens hide it. Pin a footer above it with `useTabBarTop()`. |
 | `Sheet` | Bottom sheet with a backdrop, grabber, title and close button. It slides up on a spring (fades under Reduce Motion) and closes on a drag down, a backdrop tap, the close button or Android back. |
 | `Screen` | Canvas background, safe areas (`edges`), gutter, a `tabBar` bottom inset, and optional scroll, refresh and keyboard avoidance. |
 | `Skeleton`, `SkeletonRows` | Shimmer placeholders (static under Reduce Motion). Arrange them to match the real layout. Use these rather than spinners for content. |
 | `EmptyState` | Icon, title, optional message and an action. |
+| `SearchField` | The one search field (Home look: neutral fill, leading magnifier, clear button). Countries and the wizard's country lists use it. |
 | Also | `SegmentedControl`, `ChipGroup`, `StatusPill` (neutral pill with a coloured dot), `Timeline`, `ProgressSegments`, `ProgressBar`, `HeaderIconButton`, `StickyCTA`, `IconTile`, `Avatar`, `Flag`, `PressScale` |
 
 **Pressed states.** Every tappable item goes through `PressScale`, which scales on a spring and dims. Under Reduce Motion it only dims.

@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Logo } from "../../../components/Logo";
 import { Chevron, ActionPill, StatusPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
 import { AppointmentCard } from "../../../components/Appointment";
-import { useColors, S, R, curve, ICON } from "../../../lib/theme";
+import { useColors, useIsDark, card, S, R, ICON } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { PHOTOS, THUMBS } from "../../../lib/photos";
 import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
@@ -40,7 +40,7 @@ const draftStep = (d: LocalDraft) => { const q = d.page.startsWith("q:") ? Q_BY_
 /** Hero for a submitted (or finished) application, built only from its live row: destination, trip dates, status,
  *  progress, ONE next action from the real state, the 5-step timeline, and the appointment when staff entered one. */
 function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () => void }) {
-  const c = useColors(); const { t, lang } = useT();
+  const c = useColors(); const dark = useIsDark(); const { t, lang } = useT();
   const [paying, setPaying] = useState(false);
   const name = a.countries?.name ?? "";
   const items = buildChecklist(requirementsFor(employmentOf(a)), a.documents, a.status).customer;
@@ -84,7 +84,7 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
       <View style={{ marginTop: S.md }}>
         <Button title={t(n.cta ?? "View application")} variant={actionable ? "primary" : "secondary"} loading={paying} onPress={act} />
       </View>
-      <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, paddingVertical: S.xs }, curve]} testID="home-timeline">
+      <View style={[card(c, dark, 0), { marginTop: S.lg, paddingVertical: S.xs }]} testID="home-timeline">
         <Text variant="footnote" tone="secondary" weight="600" style={{ paddingHorizontal: S.md, paddingTop: S.sm }} accessibilityRole="header">{t("Status")}</Text>
         <Timeline a={a} />
       </View>
@@ -215,7 +215,7 @@ function useResumePayment() {
 }
 
 export default function Home() {
-  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
+  const c = useColors(); const dark = useIsDark(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
   const { session, apps, unread, refreshing, refresh, err, load } = useApps(true, true);
   const photo = useAvatar(session?.user.id);
   const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
@@ -253,7 +253,7 @@ export default function Home() {
       </View>
       <View style={{ marginTop: S.xl }} />
       {loading ? <HeroSkeleton /> : failed ? (
-        <View style={[{ marginHorizontal: S.lg, marginBottom: S.xxl, borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]} testID="home-error" accessibilityLiveRegion="polite">
+        <View style={[card(c, dark, 0), { marginHorizontal: S.lg, marginBottom: S.xxl, padding: S.md, gap: S.sm }]} testID="home-error" accessibilityLiveRegion="polite">
           <Text variant="headline">{t("Couldn't load your applications.")}</Text>
           <Text variant="subhead" tone="secondary">{t("Check your connection and try again.")}</Text>
           <Button title={t("Try again")} size="M" variant="secondary" onPress={() => { tap(); load(); }} />
@@ -274,7 +274,7 @@ export default function Home() {
             </View>
           )}
           {session && apps?.length === 0 && (
-            <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]} testID="home-timeline-empty">
+            <View style={[card(c, dark, 0), { marginTop: S.lg, padding: S.md, gap: S.sm }]} testID="home-timeline-empty">
               <Text variant="headline">{t("No application yet")}</Text>
               <Text variant="subhead" tone="secondary">{t("Start an application to track it here.")}</Text>
               <Button title={t("Start application")} size="M" onPress={() => { tap(); router.push("/apply"); }} />
