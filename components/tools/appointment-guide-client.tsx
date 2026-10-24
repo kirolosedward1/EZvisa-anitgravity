@@ -15,7 +15,7 @@ import {
   CalendarDays,
   ShieldAlert
 } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { useSiteLocale } from "@/components/locale-provider"
 import { countryNameAr } from "@/lib/countries"
 
@@ -288,10 +288,10 @@ export function AppointmentGuideClient() {
                 asChild
                 className="w-full h-12 text-base font-semibold text-white shadow-lg shadow-blue-500/20 bg-[#0436DC]"
               >
-                <Link href="/apply" className="flex items-center justify-center gap-2">
+                <LocaleLink href="/apply" className="flex items-center justify-center gap-2">
                   <span>{t("Prepare My Complete Visa Dossier", "جهّز ملف التأشيرة")}</span>
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </LocaleLink>
               </Button>
               <p className="text-[11px] text-center text-muted-foreground">
                 {t("EZvisa organizes your full file ready for submission at VFS, TLS, or BLS.", "جهّز إيزي فيزا الملف للتسليم لدى VFS أو TLS أو BLS.")}

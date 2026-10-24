@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation"
-import Link from "next/link"
+import { redirectLocalized, requestLocale } from "@/lib/request-locale"
+import { LocaleLink } from "@/components/locale-link"
 import { format, parseISO } from "date-fns"
 import { ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -27,6 +27,7 @@ export function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
+  const arabic = (await requestLocale()) === "ar"
   const { id } = await params
   const demo = id.startsWith("demo-") ? getDemoApplicationByToken(id) : null
   let app: VisaApplication | null = demo
@@ -34,13 +35,13 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   if (!demo) {
     const supabase = await createServerClient()
     const { data: auth } = await supabase.auth.getUser()
-    if (!auth.user?.email) redirect(`/login?next=/trip/${id}`)
+    if (!auth.user?.email) redirectLocalized(`/login?next=/trip/${id}`, arabic)
     const { data } = await supabase.from("visa_applications").select("*").eq("id", id).eq("email", auth.user.email).maybeSingle()
     app = data
   }
 
-  if (!app) redirect("/dashboard")
-  if (!isPaid(app)) redirect(`/dashboard?id=${id}&pay=1#pay`)
+  if (!app) redirectLocalized("/dashboard", arabic)
+  if (!isPaid(app)) redirectLocalized(`/dashboard?id=${id}&pay=1#pay`, arabic)
 
   const start = app.entry_date || app.travel_start_date
   const end = app.exit_date || app.travel_end_date
@@ -68,10 +69,10 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
       <main id="main-content" className="min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
         <SupportApplication id={app.id ?? id} country={app.destination_country} status={getStatusLabel(app).label} step="trip" />
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-          <Link href={`/dashboard?id=${app.id ?? id}`} className="inline-flex items-center gap-2 self-start text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <LocaleLink href={`/dashboard?id=${app.id ?? id}`} className="inline-flex items-center gap-2 self-start text-sm text-muted-foreground transition-colors hover:text-foreground">
             <ArrowLeft className="size-4 rtl:rotate-180" aria-hidden="true" />
             Back to your application
-          </Link>
+          </LocaleLink>
 
           <div className="flex flex-col gap-2">
             <h1 className="app-title text-foreground">Your {country} trip</h1>
@@ -113,11 +114,11 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
           <div className="flex flex-wrap gap-2">
             {ready && token ? (
               <Button asChild className="rounded-full">
-                <Link href={`/track/${token}/dossier`}>Open your visa file</Link>
+                <LocaleLink href={`/track/${token}/dossier`}>Open your visa file</LocaleLink>
               </Button>
             ) : null}
             <Button asChild variant="outline" className="rounded-full hover:bg-secondary hover:text-foreground">
-              <Link href={`/dashboard?id=${app.id ?? id}`}>See your application</Link>
+              <LocaleLink href={`/dashboard?id=${app.id ?? id}`}>See your application</LocaleLink>
             </Button>
           </div>
           {!ready ? <p className="text-sm text-muted-foreground"><PreparationLine /></p> : null}

@@ -15,7 +15,7 @@ import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { requestLocale } from "@/lib/request-locale"
 import { ArrowRight } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 
@@ -171,19 +171,19 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           backgroundImage={destination.image}
         >
           <div className="flex flex-wrap items-center gap-3">
-            <Link
+            <LocaleLink
               href={applyHref}
               className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
             >
               {arabic ? `قدّم على تأشيرة ${place}` : `Apply for ${name}`}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-            </Link>
-            <Link
+            </LocaleLink>
+            <LocaleLink
               href={destination.documentPath}
               className="inline-flex h-12 items-center rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
             >
               {arabic ? "المستندات" : "See the documents"}
-            </Link>
+            </LocaleLink>
           </div>
         </InnerHero>
 

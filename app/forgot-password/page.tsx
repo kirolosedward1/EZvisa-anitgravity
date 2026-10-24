@@ -1,7 +1,7 @@
 "use client"
 import { Suspense, useState } from "react"
-import Link from "next/link"
 import { useSearchParams } from "next/navigation"
+import { LocaleLink } from "@/components/locale-link"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,12 +10,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
+import { authCallbackUrl } from "@/lib/auth/redirect"
 import { translations } from "@/lib/translations"
 import { authFormErrorText } from "@/lib/translations/auth-form"
 
 function ForgotPasswordForm() {
   const locale = useSiteLocale()
-  const arabic = locale === "ar"
   const copy = translations[locale].authForm
   const searchParams = useSearchParams()
   const [email, setEmail] = useState(searchParams.get("email") ?? "")
@@ -24,7 +24,6 @@ function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false)
 
   const supabase = createBrowserClient()
-  const loginHref = `${arabic ? "/ar" : ""}/login`
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +36,7 @@ function ForgotPasswordForm() {
     setError("")
 
     const { error } = await supabase.auth.resetPasswordForEmail(clean, {
-      redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+      redirectTo: authCallbackUrl({ type: "recovery" }),
     })
 
     if (error) {
@@ -63,7 +62,7 @@ function ForgotPasswordForm() {
               <AlertDescription>{copy.resetSent}</AlertDescription>
             </Alert>
             <Button variant="outline" className="w-full" asChild>
-              <Link href={loginHref}>{copy.backToLogin}</Link>
+              <LocaleLink href="/login">{copy.backToLogin}</LocaleLink>
             </Button>
           </div>
         ) : (

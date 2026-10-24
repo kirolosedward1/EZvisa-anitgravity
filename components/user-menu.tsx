@@ -28,6 +28,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { LocaleLink } from "@/components/locale-link"
+import { useSiteLocale } from "@/components/locale-provider"
+import { signOutAction } from "@/lib/route-path"
 import { LangText } from "@/components/lang-text"
 import { createBrowserClient, supabasePublicEnv } from "@/lib/supabase/client"
 import { useAvatarUrl } from "@/lib/avatar"
@@ -95,6 +97,7 @@ export function useViewer(): { viewer: Viewer; ready: boolean } {
 export function UserMenu() {
   const { viewer, ready } = useViewer()
   const photo = useAvatarUrl(viewer?.user)
+  const signOut = signOutAction(useSiteLocale() === "ar")
 
   const signedIn = !!viewer
 
@@ -137,7 +140,7 @@ export function UserMenu() {
               <MenuLink href="/contact" icon={LifeBuoy} en="Help & support" ar="المساعدة والدعم" />
             </DropdownMenuGroup>
             <DropdownMenuSeparator className="my-1.5" />
-            <form action="/api/auth/signout" method="POST">
+            <form action={signOut} method="POST">
               <DropdownMenuItem asChild className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive focus:text-destructive">
                 <button type="submit" className="w-full">
                   <LogOut className="size-4" aria-hidden="true" />

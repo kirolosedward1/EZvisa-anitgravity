@@ -2,6 +2,9 @@
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { LocaleLink } from "@/components/locale-link"
+import { useSiteLocale } from "@/components/locale-provider"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
 import { 
   Download, 
   FileText, 
@@ -21,6 +24,7 @@ interface ThankYouCTASectionProps {
 }
 
 export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectionProps) {
+  const arabic = useSiteLocale() === "ar"
   const whatsappMessage = `Hi! I just completed my visa application payment. Reference: ${orderId || transactionId || "N/A"}. Can you help me with the next steps?`
 
   const handleDownloadReceipt = () => {
@@ -66,13 +70,13 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               className="justify-start gap-2 h-auto py-3 bg-transparent"
               asChild
             >
-              <a href="/documents" target="_blank">
+              <LocaleLink href="/documents" target="_blank">
                 <FileText className="w-4 h-4" />
                 <div className="text-left flex-1">
                   <div className="font-medium">Document Checklist</div>
                   <div className="text-xs text-muted-foreground">What you'll need</div>
                 </div>
-              </a>
+              </LocaleLink>
             </Button>
           </div>
         </CardContent>
@@ -99,7 +103,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
               asChild
             >
               <a
-                href={`https://wa.me/971547109533?text=${encodeURIComponent(whatsappMessage)}`}
+                href={getWhatsAppUrl(whatsappMessage, arabic)}
                 target="_blank"
                 rel="noopener noreferrer"
               >

@@ -1,6 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { useLocalizedHref } from "@/components/locale-link"
 import { CountryFlag } from "@/components/country-flag"
 import { CountryName } from "@/components/country-name"
 import { SCHENGEN_META } from "@/lib/countries"
@@ -59,13 +60,13 @@ function DestinationCard({ name, onSelect }: { name: string; onSelect: (name: st
 
 export function TopDestinationsCarousel() {
   const router = useRouter()
+  const localize = useLocalizedHref()
 
   const handleDestinationClick = (countryName: string) => {
     // Save to localStorage
     localStorage.setItem("hero-to-country", countryName)
     // Navigate to apply page with pre-filled destination
-    const arabic = window.location.pathname === "/ar" || window.location.pathname.startsWith("/ar/")
-    router.push(`${arabic ? "/ar" : ""}/apply?to=${encodeURIComponent(countryName)}`)
+    router.push(localize(`/apply?to=${encodeURIComponent(countryName)}`))
   }
 
   return (

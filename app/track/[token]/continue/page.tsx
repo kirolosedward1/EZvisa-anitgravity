@@ -1,4 +1,5 @@
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
+import { redirectLocalized, requestLocale } from "@/lib/request-locale"
 import { getApplicationByToken } from "@/lib/applications"
 
 /** Older link format: the continue flow lives at /continue/[id] (it signs the customer in when needed). */
@@ -6,5 +7,5 @@ export default async function TrackContinueRedirect({ params }: { params: Promis
   const { token } = await params
   const app = await getApplicationByToken(token)
   if (!app?.id) notFound()
-  redirect(`/continue/${app.id}`)
+  redirectLocalized(`/continue/${app.id}`, (await requestLocale()) === "ar")
 }

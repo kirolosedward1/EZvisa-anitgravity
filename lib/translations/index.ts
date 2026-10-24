@@ -39,6 +39,24 @@ export const translations = {
     },
     auth: {
       linkExpired: "This link has expired or was already used. Ask for a new one.",
+      emailConfirmed: "Email confirmed. Sign in with your email and password.",
+      passwordRequired: "Enter your password.",
+      confirmationResent: "Confirmation email sent again. Check your inbox.",
+      errors: {
+        offline: "You're offline. Connect to the internet and try again.",
+        "wrong-credentials": "Wrong email or password.",
+        unconfirmed: "Confirm your email first. Check your inbox for the link.",
+        "rate-limited": "Too many tries. Wait a minute, then try again.",
+        exists: "This email already has an account. Sign in instead.",
+        "weak-password": "Choose a stronger password (at least 8 characters).",
+        "same-password": "Choose a password you haven't used before.",
+        "link-expired": "This link has expired or was already used. Ask for a new one.",
+        "other-device": "Open the link on the phone where you asked for it, or ask for a new one here.",
+        "session-ended": "Your session ended. Please sign in again.",
+        "invalid-email": "Enter a valid email.",
+        disabled: "This sign-in option isn't available right now.",
+        unknown: "Something went wrong. Try again.",
+      },
     },
     tools: {
       schengenTitle: "Schengen 90/180-Day Rule Calculator",
@@ -88,6 +106,7 @@ export const translations = {
       haveAccount: "Already have an account?",
       signIn: "Sign in",
       passwordTooShort: "Use at least 6 characters.",
+      newPasswordTitle: "Set new password",
       errors: {
         offline: "You're offline. Connect to the internet and try again.",
         "wrong-credentials": "Wrong email or password.",
@@ -115,6 +134,10 @@ export const translations = {
       title: "No applications yet",
       before: "We couldn't find any visa applications for",
       after: "If you applied with a different email, sign in with that one instead.",
+    },
+    dashboardHome: {
+      welcomeBack: "Welcome back,",
+      signedInAs: "Signed in as",
     },
   },
   ar: {
@@ -155,6 +178,24 @@ export const translations = {
     },
     auth: {
       linkExpired: "انتهت صلاحية هذا الرابط أو سبق استخدامه. اطلب رابطًا جديدًا.",
+      emailConfirmed: "تم تأكيد البريد الإلكتروني. سجّل الدخول ببريدك الإلكتروني وكلمة المرور.",
+      passwordRequired: "أدخل كلمة المرور.",
+      confirmationResent: "أُعيد إرسال رسالة التأكيد. راجع صندوق الوارد.",
+      errors: {
+        offline: "أنت غير متصل بالإنترنت. اتصل بالإنترنت ثم أعد المحاولة.",
+        "wrong-credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+        unconfirmed: "أكّد بريدك الإلكتروني أولًا. راجع صندوق الوارد للاطلاع على الرابط.",
+        "rate-limited": "محاولات كثيرة. انتظر دقيقة، ثم أعد المحاولة.",
+        exists: "هذا البريد الإلكتروني لديه حساب بالفعل. سجّل الدخول بدلًا من ذلك.",
+        "weak-password": "اختر كلمة مرور أقوى (8 أحرف على الأقل).",
+        "same-password": "اختر كلمة مرور لم تستخدمها من قبل.",
+        "link-expired": "انتهت صلاحية هذا الرابط أو سبق استخدامه. اطلب رابطًا جديدًا.",
+        "other-device": "افتح الرابط على الهاتف الذي طلبته منه، أو اطلب رابطًا جديدًا من هنا.",
+        "session-ended": "انتهت جلستك. يُرجى تسجيل الدخول مرة أخرى.",
+        "invalid-email": "أدخل بريدًا إلكترونيًا صالحًا.",
+        disabled: "خيار تسجيل الدخول هذا غير متاح حاليًا.",
+        unknown: "حدث خطأ. أعد المحاولة.",
+      },
     },
     tools: {
       schengenTitle: "حاسبة قاعدة 90/180 يوماً لشنغن",
@@ -204,6 +245,7 @@ export const translations = {
       haveAccount: "لديك حساب بالفعل؟",
       signIn: "تسجيل الدخول",
       passwordTooShort: "استخدم 6 أحرف على الأقل.",
+      newPasswordTitle: "تعيين كلمة مرور جديدة",
       errors: {
         offline: "أنت غير متصل بالإنترنت. اتصل بالإنترنت ثم أعد المحاولة.",
         "wrong-credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
@@ -231,6 +273,10 @@ export const translations = {
       title: "لا توجد طلبات بعد",
       before: "لم نعثر على أي طلبات تأشيرة للبريد",
       after: "إذا تقدّمت ببريد إلكتروني مختلف، سجّل الدخول بذلك البريد.",
+    },
+    dashboardHome: {
+      welcomeBack: "مرحبًا بعودتك،",
+      signedInAs: "تم تسجيل الدخول باسم",
     },
   }
 }

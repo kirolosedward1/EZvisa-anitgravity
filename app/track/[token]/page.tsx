@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
@@ -43,9 +43,9 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
           description={
             <>
               The same application is in the EZvisa app.{" "}
-              <Link href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
+              <LocaleLink href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
                 Sign in
-              </Link>{" "}
+              </LocaleLink>{" "}
               to see all your applications in one place.
             </>
           }

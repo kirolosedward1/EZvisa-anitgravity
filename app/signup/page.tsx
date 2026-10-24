@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, Suspense } from "react"
-import Link from "next/link"
+import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { Loader2 } from "lucide-react"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
+import { authCallbackUrl } from "@/lib/auth/redirect"
 import { ltr } from "@/lib/bidi"
 import { translations } from "@/lib/translations"
 import { authFormErrorText } from "@/lib/translations/auth-form"
@@ -22,8 +23,10 @@ function SignupForm() {
   const copy = translations[locale].authForm
   const router = useRouter()
   const searchParams = useSearchParams()
+  const localize = useLocalizedHref()
   const rawNext = searchParams.get("next") || "/dashboard"
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const safe = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const next = localize(safe)
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -32,7 +35,6 @@ function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
 
   const supabase = createBrowserClient()
-  const loginHref = `${arabic ? "/ar" : ""}/login?next=${encodeURIComponent(next)}`
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,7 +54,7 @@ function SignupForm() {
       email: clean,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`,
+        emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }),
       },
     })
 
@@ -72,7 +74,7 @@ function SignupForm() {
         <p className="text-muted-foreground">
           {copy.verificationSent} <span dir="ltr">{ltr(email.trim())}</span>. {copy.verifyContinue}
         </p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push(arabic ? "/ar/login" : "/login")}>{copy.backToLogin}</Button>
+        <Button variant="outline" className="mt-4" onClick={() => router.push(localize("/login"))}>{copy.backToLogin}</Button>
       </div>
     )
   }
@@ -142,9 +144,9 @@ function SignupForm() {
 
       <div className="text-center text-sm text-muted-foreground">
         {copy.haveAccount}{" "}
-        <Link href={loginHref} className="font-medium text-primary hover:underline">
+        <LocaleLink href={`/login?next=${encodeURIComponent(next)}`} className="font-medium text-primary hover:underline">
           {copy.signIn}
-        </Link>
+        </LocaleLink>
       </div>
     </div>
   )

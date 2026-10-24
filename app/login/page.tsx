@@ -2,7 +2,7 @@
 
 // Sign in: Google, email + password, or a one-time email link. Same accounts and messages as the EZvisa app.
 import { Suspense, useRef, useState } from "react"
-import Link from "next/link"
+import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronDown, Eye, EyeOff, Loader2, Lock, Mail, PlayCircle } from "lucide-react"
 
@@ -15,22 +15,13 @@ import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
-import { AUTH_MESSAGE, classifyAuthError, EMAIL_RE, isAuthIssue, type AuthIssue } from "@/lib/auth/errors"
+import { classifyAuthError, EMAIL_RE, type AuthIssue } from "@/lib/auth/errors"
+import { issueFromClientMessage, loginErrorText, loginInfoText, noticeFromQuery, type LoginErrorCode } from "@/lib/auth/login-notice"
 import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
-import { translations } from "@/lib/translations"
-import { LangText } from "@/components/lang-text"
 import { cn } from "@/lib/utils"
 import { useSiteLocale } from "@/components/locale-provider"
 
 type Mode = "password" | "link"
-
-/** /auth/callback sends failures back as ?error=<issue key>; older links may carry free text. */
-function noticeFromUrl(error: string | null, type: string | null): { tone: "error" | "info"; text: string } | null {
-  if (!error) return null
-  if (type === "signup" && error === "other-device") return { tone: "info", text: "Email confirmed. Sign in with your email and password." }
-  if (isAuthIssue(error)) return { tone: "error", text: AUTH_MESSAGE[error] }
-  return { tone: "error", text: AUTH_MESSAGE["link-expired"] }
-}
 
 function IconInput({ icon: Icon, className, ...props }: React.ComponentProps<typeof Input> & { icon: typeof Mail }) {
   return (
@@ -44,18 +35,20 @@ function IconInput({ icon: Icon, className, ...props }: React.ComponentProps<typ
 function LoginForm() {
   const arabic = useSiteLocale() === "ar"
   const t = (en: string, ar: string) => (arabic ? ar : en)
+  const sayError = (code: LoginErrorCode) => t(loginErrorText("en", code), loginErrorText("ar", code))
   const router = useRouter()
   const searchParams = useSearchParams()
-  const next = safeNext(searchParams.get("next"))
-  const notice = noticeFromUrl(searchParams.get("error"), searchParams.get("type"))
+  const localize = useLocalizedHref()
+  const next = localize(safeNext(searchParams.get("next")))
+  const notice = noticeFromQuery(searchParams.get("error"), searchParams.get("type"), searchParams.get("error_code"))
 
   const [mode, setMode] = useState<Mode>(searchParams.get("type") === "magiclink" ? "link" : "password")
   const [email, setEmail] = useState(searchParams.get("email") ?? "")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState(notice?.tone === "error" ? notice.text : "")
-  const [info, setInfo] = useState(notice?.tone === "info" ? t("Email confirmed. Sign in with your email and password.", "تم تأكيد البريد. سجّل الدخول ببريدك وكلمة المرور.") : "")
-  const [issue, setIssue] = useState<AuthIssue | null>(null)
+  const [error, setError] = useState(notice?.tone === "error" ? sayError(notice.code) : "")
+  const [info, setInfo] = useState(notice?.tone === "info" ? t(loginInfoText("en", notice.code), loginInfoText("ar", notice.code)) : "")
+  const [issue, setIssue] = useState<AuthIssue | null>(notice?.tone === "error" ? notice.code : null)
   const [linkSent, setLinkSent] = useState(false)
   const [busy, setBusy] = useState<"" | "password" | "link" | "resend">("")
   const inFlight = useRef(false)
@@ -75,7 +68,7 @@ function LoginForm() {
     } catch (e) {
       const k = classifyAuthError(e)
       setIssue(k)
-      setError(AUTH_MESSAGE[k])
+      setError(sayError(k))
     } finally {
       inFlight.current = false
       setBusy("")
@@ -84,8 +77,8 @@ function LoginForm() {
 
   const signIn = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!EMAIL_RE.test(cleanEmail)) return setError(AUTH_MESSAGE["invalid-email"])
-    if (!password) return setError(t("Enter your password.", "أدخل كلمة المرور."))
+    if (!EMAIL_RE.test(cleanEmail)) return setError(sayError("invalid-email"))
+    if (!password) return setError(sayError("password-required"))
     run("password", async () => {
       const { error } = await createBrowserClient().auth.signInWithPassword({ email: cleanEmail, password })
       if (error) throw error
@@ -95,7 +88,7 @@ function LoginForm() {
   }
 
   const sendLink = (kind: "link" | "resend") => {
-    if (!EMAIL_RE.test(cleanEmail)) return setError(AUTH_MESSAGE["invalid-email"])
+    if (!EMAIL_RE.test(cleanEmail)) return setError(sayError("invalid-email"))
     run(kind, async () => {
       const { error } = await createBrowserClient().auth.signInWithOtp({
         email: cleanEmail,
@@ -115,7 +108,7 @@ function LoginForm() {
         options: { emailRedirectTo: authCallbackUrl({ type: "signup", next }) },
       })
       if (error) throw error
-      setInfo(t("Confirmation email sent again. Check your inbox.", "أُعيد إرسال رسالة التأكيد. راجع صندوق الوارد."))
+      setInfo(t(loginInfoText("en", "confirmation-resent"), loginInfoText("ar", "confirmation-resent")))
       cooldown.start()
     })
 
@@ -136,7 +129,7 @@ function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-5">
-        <GoogleSignInButton next={next} label={t("Continue with Google", "المتابعة عبر Google")} onError={(m) => { setError(m); setInfo("") }} />
+        <GoogleSignInButton next={next} label={t("Continue with Google", "المتابعة عبر Google")} onError={(m) => { const k = issueFromClientMessage(m); setIssue(k); setError(sayError(k)); setInfo("") }} />
 
         <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
           <span className="h-px flex-1 bg-border" />
@@ -165,11 +158,7 @@ function LoginForm() {
         {error && (
           <Alert variant="destructive" className="rounded-xl">
             <AlertDescription>
-              {error === AUTH_MESSAGE["link-expired"] ? (
-                <LangText en={AUTH_MESSAGE["link-expired"]} ar={translations.ar.auth.linkExpired} />
-              ) : (
-                error
-              )}
+              {error}
               {issue === "unconfirmed" && (
                 <button
                   type="button"
@@ -208,12 +197,12 @@ function LoginForm() {
             <div className="flex flex-col gap-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">{t("Password", "كلمة المرور")}</Label>
-                <Link
-                  href={`${arabic ? "/ar" : ""}/forgot-password${cleanEmail ? `?email=${encodeURIComponent(cleanEmail)}` : ""}`}
+                <LocaleLink
+                  href={cleanEmail ? `/forgot-password?email=${encodeURIComponent(cleanEmail)}` : "/forgot-password"}
                   className="text-xs font-semibold text-primary hover:underline"
                 >
                   {t("Forgot password?", "نسيت كلمة المرور؟")}
-                </Link>
+                </LocaleLink>
               </div>
               <div className="relative">
                 <IconInput
@@ -279,13 +268,13 @@ function LoginForm() {
 
       <p className="text-center text-sm text-muted-foreground text-balance">
         {t("New to EZvisa?", "جديد على إيزي فيزا؟")}{" "}
-        <Link href={`${arabic ? "/ar" : ""}/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-primary hover:underline">
+        <LocaleLink href={`/signup?next=${encodeURIComponent(next)}`} className="font-semibold text-primary hover:underline">
           {t("Create an account", "أنشئ حسابًا")}
-        </Link>
+        </LocaleLink>
         {t(" or ", " أو ")}
-        <Link href="/apply" className="font-semibold text-primary hover:underline">
+        <LocaleLink href="/apply" className="font-semibold text-primary hover:underline">
           {t("start an application", "ابدأ طلبًا")}
-        </Link>
+        </LocaleLink>
       </p>
 
       <details className="group rounded-2xl border border-border/70 bg-background">

@@ -22,11 +22,13 @@ export function publicOrigin(request: Request): string {
 }
 
 /** Browser-side: the callback URL for an email link or an OAuth round trip. */
-export function authCallbackUrl(opts: { type?: LinkType; next?: string } = {}): string {
-  const url = new URL("/auth/callback", window.location.origin)
+export function authCallbackUrl(opts: { type?: LinkType; next?: string; path?: "/auth/callback" | "/api/auth/callback" } = {}): string {
+  const url = new URL(opts.path ?? "/auth/callback", window.location.origin)
   if (opts.type) url.searchParams.set("type", opts.type)
   const next = safeNext(opts.next)
   if (next !== "/dashboard") url.searchParams.set("next", next)
+  const path = window.location.pathname
+  if (next === "/ar" || next.startsWith("/ar/") || path === "/ar" || path.startsWith("/ar/")) url.searchParams.set("locale", "ar")
   return url.toString()
 }
 

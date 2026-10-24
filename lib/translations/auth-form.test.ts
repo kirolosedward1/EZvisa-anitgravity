@@ -37,6 +37,17 @@ test("support and receipt lines stay English and use Modern Standard Arabic on /
   assert.equal(translations.en.dashboardEmpty.after, "If you applied with a different email, sign in with that one instead.")
   assert.equal(/[٠-٩۰-۹]/.test(translations.ar.dashboardEmpty.before + translations.ar.dashboardEmpty.after), false)
   assert.equal(/[A-Za-z]{4,}/.test(translations.ar.dashboardEmpty.title), false)
+  assert.equal(translations.en.dashboardHome.welcomeBack, "Welcome back,")
+  assert.equal(translations.ar.dashboardHome.welcomeBack, "مرحبًا بعودتك،")
+  assert.equal(translations.en.dashboardHome.signedInAs, "Signed in as")
+  assert.equal(translations.ar.dashboardHome.signedInAs, "تم تسجيل الدخول باسم")
+  assert.equal(translations.en.authForm.newPasswordTitle, "Set new password")
+  assert.equal(translations.ar.authForm.newPasswordTitle, "تعيين كلمة مرور جديدة")
+  assert.equal(translations.en.authForm.resetTitle, "Reset password")
+  assert.equal(translations.ar.authForm.resetTitle, "إعادة تعيين كلمة المرور")
+  assert.equal(translations.en.authForm.resetSent, "We've sent a password reset link to your email.")
+  assert.equal(translations.ar.authForm.resetSent, "أرسلنا رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.")
+  assert.equal(/[٠-٩۰-۹]/.test(translations.ar.dashboardHome.welcomeBack + translations.ar.authForm.newPasswordTitle + translations.ar.authForm.resetSent), false)
 })
 
 test("an Arabic auth form never shows the raw provider error", () => {

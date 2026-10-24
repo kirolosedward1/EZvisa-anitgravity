@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight } from "lucide-react"
 import { destinations } from "@/lib/destinations"
 import { DestinationCard } from "@/components/destinations-catalog"
@@ -18,13 +18,13 @@ export function PopularDestinations() {
             <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><LangText en="Top Travel Spots" ar="أبرز الوجهات" /></span>
             <h2 className="text-foreground"><LangText en="Popular Destinations" ar="وجهات شائعة" /></h2>
           </div>
-          <Link
+          <LocaleLink
             href="/destinations"
             className="group inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary md:self-auto"
           >
             <LangText en="View All Destinations" ar="عرض كل الوجهات" />
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-          </Link>
+          </LocaleLink>
         </div>
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
