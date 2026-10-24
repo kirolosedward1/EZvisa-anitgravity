@@ -112,10 +112,82 @@ export function pathFromSiteUrl(raw: string | null | undefined): string | null {
 }
 
 /** Relative path, or a site URL reduced to one, then normalised. Null when neither is safe. */
-export function webConfirmNext(raw: string | null | undefined): string | null {
+function plainWebConfirmNext(raw: string | null | undefined): string | null {
   const relative = relativeConfirmNext(raw) ?? pathFromSiteUrl(raw)
   if (!relative) return null
   return normalizeLanding(relative)
+}
+
+const WEB_CALLBACK_PATHS = new Set(["/auth/callback", "/api/auth/callback"])
+const MAX_CALLBACK_UNWRAP = 5
+
+/**
+ * `/auth/callback` and `/api/auth/callback` are not destinations. Email links put them in `next`
+ * (sometimes nested). Peel them back to the inner `next` or `redirect`, checked with the same allowlist.
+ * `ezvisa://auth/callback` is not handled here.
+ */
+function unwrapWebCallback(raw: string | null | undefined, depth = 0): { path: string; arabic: boolean } | null {
+  if (!raw || depth > MAX_CALLBACK_UNWRAP) return null
+  const parts = webCallbackParts(raw)
+  if (!parts) return null
+  const arabicHere = parts.prefixedAr || parts.params.get("locale") === "ar"
+  if (depth === MAX_CALLBACK_UNWRAP) return settledCallback(null, arabicHere)
+  const inner = parts.params.get("next") || parts.params.get("redirect")
+  if (!inner) return settledCallback(null, arabicHere)
+  const nested = unwrapWebCallback(inner, depth + 1)
+  if (nested) return { path: nested.path, arabic: arabicHere || nested.arabic }
+  const app = appAuthCallback(inner)
+  if (app) return { path: app, arabic: arabicHere }
+  return settledCallback(plainWebConfirmNext(inner), arabicHere)
+}
+
+function settledCallback(path: string | null, arabic: boolean): { path: string; arabic: boolean } {
+  if (!path || path.startsWith("ezvisa:")) {
+    if (path?.startsWith("ezvisa:")) return { path, arabic }
+    return { path: arabic ? ARABIC_ACCOUNT_LANDING : CONFIRM_NEXT_FALLBACK, arabic }
+  }
+  const localized = withLocale(path, arabic || isArabicPath(path))
+  return { path: localized, arabic: localized === "/ar" || localized.startsWith("/ar/") }
+}
+
+/** A same-origin `/auth/callback` or `/api/auth/callback`, including an `/ar` prefix. Anything else is null. */
+function webCallbackParts(raw: string): { params: URLSearchParams; prefixedAr: boolean } | null {
+  const decoded = usable(raw)
+  if (!decoded || appAuthCallback(decoded)) return null
+  let url: URL
+  if (/^https:\/\//i.test(decoded)) {
+    try {
+      url = new URL(decoded)
+    } catch {
+      return null
+    }
+    if (url.protocol !== "https:" || url.username || url.password || url.port) return null
+    if (url.hostname !== "www.ezvisa.net" && url.hostname !== "ezvisa.net") return null
+    if (!SITE_ORIGINS.has(url.origin)) return null
+  } else if (decoded.startsWith("/") && !decoded.startsWith("//")) {
+    if (/[\s\\]/.test(decoded) || /[\u0000-\u001f\u007f]/.test(decoded)) return null
+    try {
+      url = new URL(decoded, "https://www.ezvisa.net")
+    } catch {
+      return null
+    }
+    if (url.origin !== "https://www.ezvisa.net" || url.username || url.password) return null
+  } else {
+    return null
+  }
+  let pathname = url.pathname
+  if (pathname.length > 1) pathname = pathname.replace(/\/+$/, "")
+  const prefixedAr = pathname === "/ar" || pathname.startsWith("/ar/")
+  const bare = prefixedAr ? pathname.slice(3) || "/" : pathname
+  const normalized = bare.length > 1 ? bare.replace(/\/+$/, "") : bare
+  if (!WEB_CALLBACK_PATHS.has(normalized)) return null
+  return { params: url.searchParams, prefixedAr }
+}
+
+export function webConfirmNext(raw: string | null | undefined): string | null {
+  const unwrapped = unwrapWebCallback(raw)
+  if (unwrapped) return unwrapped.path
+  return plainWebConfirmNext(raw)
 }
 
 /** Safe `next` for /auth/confirm: a web path, the app callback, or `fallback`. */
@@ -134,6 +206,7 @@ export function confirmDestination(type: string, rawNext: string | null | undefi
   const app = appAuthCallback(rawNext)
   if (app) return app
   const relative = webConfirmNext(rawNext)
+  if (relative?.startsWith("ezvisa:")) return relative
   const arabic = requestArabic || (!!relative && isArabicPath(relative))
   if (type === "recovery") return withLocale("/reset-password", arabic)
   return withLocale(relative ?? CONFIRM_NEXT_FALLBACK, arabic)
@@ -160,8 +233,50 @@ export function confirmFailureTarget(
   params.set("error", "link-expired")
   if (isEmailOtpType(type)) params.set("type", type)
   const relative = webConfirmNext(rawNext)
-  if (relative && relative !== CONFIRM_NEXT_FALLBACK) params.set("next", relative)
+  if (relative && relative !== CONFIRM_NEXT_FALLBACK && !relative.startsWith("ezvisa:")) params.set("next", relative)
   return `${path}?${params.toString()}`
+}
+
+export type CallbackLocale = { locale?: string | null; requestArabic?: boolean }
+
+/** Where /auth/callback should send someone who is already signed in, or who just exchanged a code. */
+export function callbackLanding(next: string | null | undefined, type: string, opts: CallbackLocale = {}): string {
+  const resolved = webConfirmNext(next)
+  if (resolved?.startsWith("ezvisa:")) return resolved
+  const arabic = !!opts.requestArabic || opts.locale === "ar" || (!!resolved && isArabicPath(resolved))
+  if (type === "recovery") return withLocale("/reset-password", arabic)
+  return withLocale(resolved ?? CONFIRM_NEXT_FALLBACK, arabic)
+}
+
+/** Login URL for a callback that cannot sign the visitor in. Raw `next` text is never copied through. */
+export function callbackFailureTarget(
+  issue: string,
+  next: string | null | undefined,
+  type: string,
+  opts: CallbackLocale = {},
+): string {
+  const landing = callbackLanding(next, "signup", opts)
+  const arabic = landing === "/ar" || landing.startsWith("/ar/")
+  const path = arabic ? "/ar/login" : "/login"
+  const params = new URLSearchParams()
+  params.set("error", /^[a-z0-9-]+$/.test(issue) ? issue : "unknown")
+  if (isEmailOtpType(type)) params.set("type", type)
+  if (landing !== CONFIRM_NEXT_FALLBACK && landing !== path) params.set("next", landing)
+  return `${path}?${params.toString()}`
+}
+
+/**
+ * No `code` and no `token_hash`. A live session continues to the validated page.
+ * Otherwise the visitor sees the expired-link message, in /ar when the link was Arabic.
+ */
+export function callbackTargetWhenNoCredential(
+  hasSession: boolean,
+  next: string | null | undefined,
+  type: string,
+  opts: CallbackLocale = {},
+): string {
+  if (hasSession) return callbackLanding(next, type, opts)
+  return callbackFailureTarget("link-expired", next, type, opts)
 }
 
 /** Keys this route writes. Any other key, or a repeated key, means an unencoded `next` was split on `&`. */
