@@ -154,10 +154,10 @@ export const getPaymentSuccessEmail = (data: ApplicationData, paymentAmount: num
                 <h3>📝 Next Steps</h3>
                 <ul>
                   <li>Our visa team will review your application within 24 hours</li>
-                  <li>We'll prepare your flight booking, hotel reservation, and travel itinerary</li>
+                  <li>We'll prepare your verifiable flight reservation, hotel reservation and travel itinerary for your visa application</li>
                   <li>You'll receive a personalized cover letter for your visa application</li>
                   <li>All documents will be sent to you via email</li>
-                  <li>Our support team is available 24/7 to assist you</li>
+                  <li>WhatsApp support is available 9am–6pm UAE time</li>
                 </ul>
               </div>
               

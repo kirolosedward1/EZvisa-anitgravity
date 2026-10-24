@@ -52,7 +52,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const headerRef = useRef<HTMLElement>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showWhatsAppTooltip, setShowWhatsAppTooltip] = useState(false)
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  // /ar/* renders the same pages: compare against the locale-free path so /ar gets exactly the EN header.
+  const pathname = rawPathname?.replace(/^\/ar(?=\/|$)/, "") || "/"
   const router = useRouter()
   const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
   const isWizardPage = path.startsWith("/apply")
@@ -214,7 +216,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           const elementPosition = element.getBoundingClientRect().top
           const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 20
           window.scrollTo({ top: offsetPosition, behavior: "smooth" })
-          window.history.replaceState(null, "", pathname)
+          window.history.replaceState(null, "", rawPathname)
         }
       }, 300)
     }
@@ -342,7 +344,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                   <div className="flex items-center justify-between mb-4 px-2">
                                     <h3 className="text-sm font-semibold tracking-tight text-foreground"><LangText en="Popular Destinations" ar="وجهات شائعة" /></h3>
                                     <LocaleLink href="/destinations" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                                      <LangText en="View all" ar="عرض الكل" /> <span className="hidden sm:inline"><LangText en="29 countries" ar="٢٩ دولة" /></span> &rarr;
+                                      <LangText en="View all" ar="عرض الكل" /> <span className="hidden sm:inline"><LangText en="29 countries" ar="29 دولة" /></span> &rarr;
                                     </LocaleLink>
                                   </div>
                                   <div className="grid grid-cols-2 gap-2">

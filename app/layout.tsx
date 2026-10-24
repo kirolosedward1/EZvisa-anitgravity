@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { headers } from "next/headers"
 import { IBM_Plex_Sans_Arabic, Poppins } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
 import { CookieConsent } from "@/components/cookie-consent"
 import { ScrollRestoration } from "@/components/scroll-restoration"
 import { ContinueApplicationNotification } from "@/components/continue-application-notification"
@@ -138,9 +137,6 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://client.crisp.chat" />
         
         {/* Mobile Favicon & Apple Touch Icons */}
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
@@ -154,55 +150,24 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
-        {/* Google Consent Mode defaults, before GA/GTM load. A visitor who chose "Necessary only" (or turned
-            analytics/marketing off) in the cookie banner is respected on every page; components/cookie-consent.tsx
-            sends updates when the choice changes. Previously the banner's choice was stored but never applied. */}
+        {/* Google Consent Mode v2 defaults (legal audit H1): everything denied until the visitor chooses.
+            GA/GTM/Crisp are NOT loaded here; components/cookie-consent.tsx injects them only after consent
+            and sends gtag('consent','update',...) when the choice changes. */}
         <Script id="consent-defaults" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
-            var c = null;
-            try { c = JSON.parse(localStorage.getItem('cookie-consent') || 'null'); } catch (e) {}
-            var a = !c || c.analytics !== false, m = !c || c.marketing !== false;
             gtag('consent', 'default', {
-              analytics_storage: a ? 'granted' : 'denied',
-              ad_storage: m ? 'granted' : 'denied',
-              ad_user_data: m ? 'granted' : 'denied',
-              ad_personalization: m ? 'granted' : 'denied'
+              ad_storage: 'denied',
+              analytics_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              wait_for_update: 500
             });
-          `}
-        </Script>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-3M5NW9FZYG"
-          strategy="lazyOnload"
-        />
-        <Script id="google-analytics" strategy="lazyOnload">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-3M5NW9FZYG');
-          `}
-        </Script>
-        <Script id="google-tag-manager" strategy="lazyOnload">
-          {`
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','GTM-PMXQRKLC');
           `}
         </Script>
       </head>
       <body className={`${poppins.variable} font-sans antialiased`}>
-        <noscript>
-          <iframe 
-            src="https://www.googletagmanager.com/ns.html?id=GTM-PMXQRKLC"
-            height="0" 
-            width="0" 
-            style={{ display: 'none', visibility: 'hidden' }}
-          />
-        </noscript>
         <LocaleProvider locale={arabic ? "ar" : "en"}>
         <LocaleDirection />
         <CrispVisibility />
@@ -213,22 +178,9 @@ export default async function RootLayout({
           <PageTransition>{children}</PageTransition>
         </main>
         <ContinueApplicationNotification />
+        {/* CookieConsent also mounts Vercel Analytics, only after analytics consent. */}
         <CookieConsent />
-        <Analytics />
         </LocaleProvider>
-        <Script id="crisp-chat" strategy="lazyOnload">
-          {`
-            window.$crisp=[];
-            window.CRISP_WEBSITE_ID="d907684d-1156-478a-b3e7-53259782c044";
-            (function(){
-              d=document;
-              s=d.createElement("script");
-              s.src="https://client.crisp.chat/l.js";
-              s.async=1;
-              d.getElementsByTagName("head")[0].appendChild(s);
-            })();
-          `}
-        </Script>
       </body>
     </html>
   )

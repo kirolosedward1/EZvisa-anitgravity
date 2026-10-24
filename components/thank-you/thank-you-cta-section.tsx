@@ -86,7 +86,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
             <div>
               <h3 className="font-semibold text-lg">Need Help?</h3>
               <p className="text-sm text-muted-foreground mt-0.5">
-                Our expert team is here to assist you 24/7
+                WhatsApp support, 9am–6pm UAE time
               </p>
             </div>
           </div>
