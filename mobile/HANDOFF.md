@@ -26,9 +26,11 @@ at https://claude.ai/customize/connectors and start a new session, or paste the 
 - `mobile-app` is **14 commits ahead of `main`** on 23 Oct (`71c638a` v10.2 … `48d0f01`, app code only; nothing outside `mobile/`).
   So Expo preview runs newer app code than `main`. Merging `mobile-app` into `main` cannot change the website.
 - `main` has app files `mobile-app` doesn't: leftovers of `de75fd8` (PR #15) that nothing imports: `lib/search.ts`,
-  `metro.config.js`, `scripts/ts-hooks.mjs`, `scripts/wizard-rules.test.ts` (fails: imports `NATIONALITY_OPTIONS`, which
-  no longer exists) and 4 screenshots. The `de75fd8` wizard bug itself is **fixed on `main`** (PR #23 kept `mobile-app`'s
-  wizard): on Expo web the first question lists the 29 destinations and moves on to Nationality.
+  `metro.config.js` and 4 screenshots. Its other two leftovers were deleted on 2026-10-24: `scripts/wizard-rules.test.ts`
+  (imported `cleanForm`, `NATIONALITY_OPTIONS`, `reviewQuestions`, `employmentQuestions` and `answer`, none of which exist
+  in the current wizard) and `scripts/ts-hooks.mjs` (the Node loader that only that test used). `mobile/` has no `npm test`.
+  The `de75fd8` wizard bug itself is **fixed on `main`** (PR #23 kept `mobile-app`'s wizard): on Expo web the first
+  question lists the 29 destinations and moves on to Nationality.
 - `main` @ `7be29de` checks: `npm ci`; `tsc` 0 errors; `eslint` 0 errors (160 warnings); privacy 41/41, upload 24/24,
   secure storage 12/12, push 12/12 + 29, timeline, appointment, drafts-check 6/6, payment e2e 20/20, drafts e2e 17/17 + 7/7,
   continue e2e 33/33, nav e2e 10/10. Auth e2e 27/28: the one failure is a stale assertion (it looks for the email on Account,
@@ -60,7 +62,7 @@ at https://claude.ai/customize/connectors and start a new session, or paste the 
 | 4 | Client inserts can set any column, incl. `payment_status` (audit B5, H6) | OPEN, needs an approved BEFORE INSERT guard (next number 0014) | Owner approval, then dev |
 | 5 | Supabase Auth: Site URL (was `http://localhost:3000`), redirect allow list for `ezvisa://` / `exp://`, "Confirm email" must be ON | Unverified (dashboard only) | Owner |
 | 6 | "Paid" date on the application page (v10.3, `mobile-app`, published) falls back to `updated_at`, which breaks the "real timestamps only" rule (§2f, audit H3/M7) | OPEN on `mobile-app` | Dev |
-| 7 | `mobile-app` and `main` differ (0.2); the `de75fd8` leftovers and failing test on `main` | OPEN | Dev: next `mobile-app` → `main` PR, then delete the leftovers |
+| 7 | `mobile-app` and `main` differ (0.2); the remaining `de75fd8` leftovers on `main` (`lib/search.ts`, `metro.config.js`, 4 screenshots). The failing `wizard-rules.test.ts` and its `ts-hooks.mjs` loader were deleted on 2026-10-24 | OPEN | Dev: next `mobile-app` → `main` PR, then delete the remaining leftovers |
 | 8 | At least 9 status-audit sessions ran the same task (`claude/mobile-status-audit-*`, `claude/live-state-check*`) | The `docs/live-state-check.sql` on `main` (from `mc2sve`) is the one to run: a second session ran it on local Postgres before and after applying 0001-0013, inside a READ ONLY transaction, with matching verdicts. The other branches' copies are duplicates | Owner: close the other audit sessions |
 | 9 | EAS `preview` environment still holds `EXPO_PUBLIC_WEB_URL` (unused); its other values matter only for manual `eas update` (CI sets its own) | OPEN | Owner |
 | 10 | No real-device pass (VoiceOver, Dynamic Type, Face ID, camera, push, real upload, real payment) and no development build | OPEN | Owner + dev |

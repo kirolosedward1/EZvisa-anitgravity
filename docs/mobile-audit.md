@@ -553,6 +553,10 @@ Judged by content, not SHA (several PRs were rebase-merged). "Into main" = what 
 | website `pnpm install`, `pnpm build` | pass | – |
 | website `pnpm lint` (= `tsc --noEmit`) | 2 errors (§0.3 N5) | – |
 
+**Resolved on `main` (2026-10-24):** `scripts/wizard-rules.test.ts` and `scripts/ts-hooks.mjs` (the Node loader only that
+test used) were deleted. The test imported `cleanForm`, `NATIONALITY_OPTIONS`, `reviewQuestions`, `employmentQuestions`
+and `answer`, which the current wizard (v10.3+) no longer exports; `mobile/` has no `npm test`.
+
 ### 14.3 Live checks (2026-10-23)
 - Vercel: www.ezvisa.net → project `e-zvisa-anitgravity`; Production deployment = `7be29de`, READY. Env names in HANDOFF §0.1 (values not read).
 - `GET https://www.ezvisa.net/api/check-payment?applicationId=00000000-0000-4000-8000-000000000000` → 404 `{"error":"Application not found"}`.
