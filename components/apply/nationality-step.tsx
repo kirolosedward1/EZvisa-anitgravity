@@ -17,7 +17,7 @@ import { TravellerSelect } from "@/components/apply/traveller-select"
 import { priceForTravellers } from "@/lib/currency"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { TRAVELLER_NONE } from "@/lib/travellers-client"
-import type { Traveller } from "@/lib/shared/wizard-contract"
+import { UAE_EMIRATES, type Traveller } from "@/lib/shared/wizard-contract"
 import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
 import { UserRound } from "lucide-react"
@@ -39,6 +39,17 @@ interface NationalityStepProps {
 }
 
 const fieldClass = cn(wizardFieldClass, "h-[52px]")
+
+/** Arabic names for the contract's emirates (stored value stays the English name, as in the app). */
+const EMIRATE_AR: Record<string, string> = {
+  "Abu Dhabi": "أبوظبي",
+  Dubai: "دبي",
+  Sharjah: "الشارقة",
+  Ajman: "عجمان",
+  "Umm Al Quwain": "أم القيوين",
+  "Ras Al Khaimah": "رأس الخيمة",
+  Fujairah: "الفجيرة",
+}
 
 function isValidEmail(email: string) {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -113,6 +124,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
     email: !formData.email.trim() || !isValidEmail(formData.email.trim()),
     // The form is noValidate, so the input's max isn't enforced by the browser: check the date and 18+ here.
     dateOfBirth: !isValidCalendarDate(formData.dateOfBirth) || formData.dateOfBirth < "1900-01-01" || (!!maxDob && formData.dateOfBirth > maxDob),
+    cityOfResidence: !UAE_EMIRATES.includes(formData.cityOfResidence),
   }
   const isFormValid = !Object.values(errors).some(Boolean)
 
@@ -373,6 +385,38 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
           </FieldError>
         ) : null}
       </div>
+
+      <fieldset className="mt-7" data-invalid={invalid("cityOfResidence")}>
+        <legend className={wizardLabelClass}>
+          <LangText en="Emirate you live in" ar="الإمارة التي تقيم فيها" />
+        </legend>
+        <div className="grid grid-cols-2 gap-2" role="radiogroup">
+          {UAE_EMIRATES.map((emirate) => {
+            const selected = formData.cityOfResidence === emirate
+            return (
+              <button
+                key={emirate}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => set({ cityOfResidence: emirate, countryOfResidence: "United Arab Emirates" })}
+                className={cn(
+                  "h-11 rounded-[10px] border px-3 text-start text-[15px] transition-colors",
+                  selected ? "border-primary bg-primary/10 font-medium text-primary" : "border-[#E3E7EF] bg-background text-foreground hover:border-primary/40",
+                  showErrors && errors.cityOfResidence && !selected && "border-[#B83200]",
+                )}
+              >
+                <LangText en={emirate} ar={EMIRATE_AR[emirate] ?? emirate} />
+              </button>
+            )
+          })}
+        </div>
+        {showErrors && errors.cityOfResidence ? (
+          <FieldError>
+            <LangText en="Choose the emirate you live in." ar="اختر الإمارة التي تقيم فيها." />
+          </FieldError>
+        ) : null}
+      </fieldset>
 
       <WizardBar
         onBack={onBack}

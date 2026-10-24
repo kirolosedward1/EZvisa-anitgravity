@@ -275,6 +275,9 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
   **continue application** at `/continue/[id]` (trip details → passport if missing → spouse if travelling together →
   employment; `lib/application-status.ts` `missingDetailSteps`) → upload documents → track. Trip, hotel, budget and
   spouse questions are never asked before payment. Old `/dashboard/continue` and `/track/[token]/continue` links redirect.
+  The traveller step also asks the **emirate** (`cityOfResidence`, required); the trip step ends with the **UAE
+  residence visa** question (`residenceVisaValid`). Contract: `PRE_PAYMENT_STEPS`, `DETAIL_STEPS`, `validateStep`,
+  `validateDetailStep`, `detailSteps` (version 2026-10-24.1).
 - **Saved travellers** (`public.travellers`, `scripts/007_travellers.sql`, owner = account email, owner-only RLS): the
   people a customer applied for. Rules in the contract (`TRAVELLER_KEYS`, `travellerKey`, `travellerFromAnswers`,
   `applyTraveller`, `travellerToRow`), server side in `lib/travellers.ts` (auto-saved when a case becomes paid and after

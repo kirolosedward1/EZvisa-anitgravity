@@ -7,6 +7,8 @@ export interface FormData {
   countryOfResidence: string
   cityOfResidence: string
   hasEmiratesId: "yes" | "no" | undefined
+  /** After payment (trip step): UAE residence visa valid at least 3 months after the return date. */
+  residenceVisaValid?: "yes" | "no" | ""
   firstName: string
   lastName: string
   email: string

@@ -60,7 +60,7 @@ const both = (name: string, fn: string, ...args: unknown[]) => {
 }
 
 // 1. Lists and option values (value + label must match: the value is what is stored, the label what both show).
-for (const k of ["SCHENGEN", "SCHENGEN_VISA_REQUIRED", "UAE_NATIONALITIES", "OTHER_NATIONALITY", "RESIDENCE_COUNTRIES", "DEFAULT_RESIDENCE", "UAE_EMIRATES", "MARITAL", "EMPLOYMENT", "SALARY", "PURPOSES", "COMPANIONS", "FUNDING", "BALANCE", "HOTELS", "STEP_TITLES"])
+for (const k of ["SCHENGEN", "SCHENGEN_VISA_REQUIRED", "UAE_NATIONALITIES", "OTHER_NATIONALITY", "RESIDENCE_COUNTRIES", "DEFAULT_RESIDENCE", "UAE_EMIRATES", "MARITAL", "EMPLOYMENT", "SALARY", "PURPOSES", "COMPANIONS", "FUNDING", "BALANCE", "HOTELS", "STEP_TITLES", "DETAIL_STEP_TITLES", "PRE_PAYMENT_STEPS", "DETAIL_STEPS"])
   eq(`${k}`, web[k], app[k])
 
 // 2. Answer keys and defaults.
@@ -71,7 +71,7 @@ eq("answer defaults", web.emptyAnswers, app.emptyForm)
 const married = { ...web.emptyAnswers, maritalStatus: "married", spouseAccompanying: "yes" }
 both("visibleSteps (single)", "visibleSteps", web.emptyAnswers)
 both("visibleSteps (spouse travels)", "visibleSteps", married)
-for (const s of ["personal", "spouse", "employment", "trip-details", "payment", "documents", "nonsense", undefined])
+for (const s of ["destination", "personal", "spouse", "employment", "trip-details", "payment", "documents", "nonsense", undefined])
   both(`parseStep(${JSON.stringify(s)})`, "parseStep", s)
 
 // 4. Validation: same error keys and messages on the same fixtures.
@@ -81,6 +81,7 @@ const valid = {
   email: "ab@example.com", phone: "+971501234567", dateOfBirth: "1990-01-01", hasValidPassport: "yes", passportExpiry: future(24), maritalStatus: "single",
   purposeOfTrip: "tourism", travelStartDate: future(2), travelEndDate: future(2).replace(/\d{2}$/, "20"), datesFlexible: "yes", travelingWith: "alone",
   hotelCategory: "3-star", fundingSource: "self", balanceRange: "under-10000", isFirstSchengenVisa: "yes", previousRefusals: "no",
+  passportNumber: "N1234567", residenceVisaValid: "yes",
 }
 const fixtures: Record<string, any> = {
   empty: web.emptyAnswers,
@@ -97,10 +98,16 @@ const fixtures: Record<string, any> = {
   "employed, incomplete": { ...valid, employmentStatus: "employed", jobTitle: "x" },
   "freelancer, incomplete": { ...valid, employmentStatus: "freelancer" },
   "student": { ...valid, employmentStatus: "student" },
+  "no emirate": { ...valid, cityOfResidence: "" },
+  "no passport number": { ...valid, passportNumber: "" },
+  "residence visa unanswered": { ...valid, hasEmiratesId: "", residenceVisaValid: "" },
 }
 for (const [name, f] of Object.entries(fixtures)) {
-  for (const step of ["personal", "spouse", "employment", "trip-details"])
+  for (const step of ["destination", "personal"])
     both(`validateStep(${step}) on "${name}"`, "validateStep", step, f)
+  for (const step of ["trip", "passport", "spouse", "employment"])
+    both(`validateDetailStep(${step}) on "${name}"`, "validateDetailStep", step, f)
+  both(`detailSteps on "${name}"`, "detailSteps", f)
   both(`validatePassportNumber on "${name}"`, "validatePassportNumber", f)
   both(`continueComplete on "${name}"`, "continueComplete", f)
   both(`firstIncomplete on "${name}"`, "firstIncomplete", f)

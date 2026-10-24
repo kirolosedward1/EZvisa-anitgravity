@@ -69,7 +69,7 @@ const balances = [
   { value: "50000-plus", en: "50,000 AED or more", ar: "50,000 درهم أو أكثر", desc: "A high closing balance.", descAr: "رصيد ختامي مرتفع." },
 ]
 
-const LAST_SCREEN = 9
+const LAST_SCREEN = 10
 
 function datesAreValid(formData: FormData) {
   const stay = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
@@ -146,6 +146,7 @@ export function TripDetailsStep({
     if (screen === 5) return !!formData.balanceRange
     if (screen === 6) return !!formData.isFirstSchengenVisa
     if (screen === 7) return !!formData.previousRefusals && (formData.previousRefusals !== "yes" || !!formData.refusalDetails?.trim())
+    if (screen === 10) return formData.residenceVisaValid === "yes" || formData.residenceVisaValid === "no"
     return true
   }
 
@@ -643,6 +644,48 @@ export function TripDetailsStep({
                 rows={5}
                 className={cn(wizardFieldClass, "min-h-32 py-3")}
               />
+            </div>
+          ) : null}
+
+          {screen === 10 ? (
+            <div>
+              <WizardQuestion
+                title="Is your UAE residence visa valid at least 3 months after your return date?"
+                titleAr="هل إقامتك في الإمارات صالحة لمدة 3 أشهر على الأقل بعد تاريخ عودتك؟"
+                helper="Embassies check that you can return to the UAE."
+                helperAr="تتحقق السفارات من قدرتك على العودة إلى الإمارات."
+              />
+              <ChoiceList label="UAE residence visa">
+                <ChoiceRow
+                  title="Yes"
+                  titleAr="نعم"
+                  description="It is valid for at least 3 months after I return."
+                  descriptionAr="صالحة لمدة 3 أشهر على الأقل بعد عودتي."
+                  selected={formData.residenceVisaValid === "yes"}
+                  onSelect={() => select({ residenceVisaValid: "yes" })}
+                />
+                <ChoiceRow
+                  title="No"
+                  titleAr="لا"
+                  description="It expires sooner, or I'm renewing it."
+                  descriptionAr="تنتهي قبل ذلك، أو أقوم بتجديدها."
+                  selected={formData.residenceVisaValid === "no"}
+                  onSelect={() => select({ residenceVisaValid: "no" })}
+                />
+              </ChoiceList>
+              {showErrors && !formData.residenceVisaValid ? (
+                <FieldError>
+                  <LangText en="Choose yes or no." ar="اختر نعم أو لا." />
+                </FieldError>
+              ) : null}
+              {formData.residenceVisaValid === "no" ? (
+                <p className="mt-6 rounded-xl border border-border bg-secondary px-4 py-3 text-sm leading-relaxed text-foreground" role="status">
+                  <LangText
+                    en="Most embassies need your UAE residence visa to be valid at least 3 months after you return. Renew it before your appointment; our team will guide you."
+                    ar="تشترط معظم السفارات أن تكون إقامتك في الإمارات صالحة لمدة 3 أشهر على الأقل بعد عودتك. جدّدها قبل موعدك، وسيرشدك فريقنا."
+                  />
+                </p>
+              ) : null}
             </div>
           ) : null}
         </motion.div>

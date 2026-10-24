@@ -46,6 +46,7 @@ const EMPTY: Partial<FormData> = {
   previousTravel: [],
   preferredCities: [],
   itinerary: "",
+  residenceVisaValid: "",
   passportNumber: "",
   spouseFirstName: "",
   spouseLastName: "",
@@ -61,7 +62,7 @@ const EMPTY: Partial<FormData> = {
 const TRIP_KEYS = [
   "purposeOfTrip", "travelStartDate", "travelEndDate", "datesFlexible", "travelMonth", "tripLength", "travelingWith",
   "hotelCategory", "fundingSource", "balanceRange", "isFirstSchengenVisa", "previousRefusals", "refusalDetails",
-  "willVisitOtherCountries", "additionalCountries", "itinerary",
+  "willVisitOtherCountries", "additionalCountries", "itinerary", "residenceVisaValid",
 ] as const
 const SPOUSE_KEYS = ["spouseFirstName", "spouseLastName", "spouseHasValidPassport", "spouseOccupation", "spouseTravellerId"] as const
 const EMPLOYMENT_KEYS = ["employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "hasNOC", "averageMonthlyIncome"] as const
@@ -86,7 +87,10 @@ export function ContinueForm({
   const router = useRouter()
   const passportPlaceholder = useMessage("apply.passportPlaceholderN")
   const [index, setIndex] = useState(0)
-  const [tripScreen, setTripScreen] = useState(0)
+  // A trip already answered except for the newer UAE residence-visa question opens straight on that question (screen 10).
+  const [tripScreen, setTripScreen] = useState(() =>
+    initial.purposeOfTrip && initial.travelStartDate && initial.hotelCategory && !initial.residenceVisaValid ? 10 : 0,
+  )
   const [form, setForm] = useState<Partial<FormData>>({ ...EMPTY, ...initial })
   const [error, setError] = useState("")
   const [pending, setPending] = useState(false)

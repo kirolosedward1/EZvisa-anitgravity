@@ -50,6 +50,7 @@ const OPTIONS: Record<string, Set<string>> = {
   isFirstSchengenVisa: new Set(["yes", "no"]),
   previousRefusals: new Set(["yes", "no"]),
   willVisitOtherCountries: new Set(["yes", "no"]),
+  residenceVisaValid: new Set(["yes", "no"]),
 }
 
 const str = (v: unknown, max = 200) => (typeof v === "string" ? sanitizeInput(v.trim(), max) : "")
