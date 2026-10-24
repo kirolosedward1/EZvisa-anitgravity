@@ -71,11 +71,14 @@ eq("answer defaults", web.emptyAnswers, app.emptyForm)
 const married = { ...web.emptyAnswers, maritalStatus: "married", spouseAccompanying: "yes" }
 both("visibleSteps (single)", "visibleSteps", web.emptyAnswers)
 both("visibleSteps (spouse travels)", "visibleSteps", married)
+both("postSteps (single)", "postSteps", web.emptyAnswers)
+both("postSteps (spouse travels)", "postSteps", married)
 for (const s of ["personal", "spouse", "employment", "trip-details", "payment", "documents", "nonsense", undefined])
   both(`parseStep(${JSON.stringify(s)})`, "parseStep", s)
 
 // 4. Validation: same error keys and messages on the same fixtures.
 const future = (months: number) => { const d = new Date(); d.setMonth(d.getMonth() + months); return d.toISOString().slice(0, 10) }
+const plusDays = (isoDay: string, n: number) => { const d = new Date(isoDay + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10) }
 const valid = {
   ...web.emptyAnswers, destination: "France", nationality: "India", cityOfResidence: "Dubai", hasEmiratesId: "yes", firstName: "A", lastName: "B",
   email: "ab@example.com", phone: "+971501234567", dateOfBirth: "1990-01-01", hasValidPassport: "yes", passportExpiry: future(24), maritalStatus: "single",
@@ -92,6 +95,12 @@ const fixtures: Record<string, any> = {
   "married, no answer": { ...valid, maritalStatus: "married" },
   "spouse travels, empty": { ...married, ...valid, maritalStatus: "married", spouseAccompanying: "yes" },
   "trip too long": { ...valid, travelEndDate: future(6) },
+  // Stays count both the arrival and the departure day: 90 days is allowed, 91 is not.
+  "90-day stay": { ...valid, travelEndDate: plusDays(valid.travelStartDate, 89) },
+  "91-day stay": { ...valid, travelEndDate: plusDays(valid.travelStartDate, 90) },
+  "impossible return date": { ...valid, travelEndDate: `${new Date().getFullYear() + 1}-02-30` },
+  "passport step answered": { ...valid, residenceVisaValid: "yes", passportNumber: "N1234567", employmentStatus: "student" },
+  "expired passport": { ...valid, passportExpiry: "2020-01-01" },
   "trip too soon": { ...valid, travelStartDate: new Date().toISOString().slice(0, 10) },
   "refusal without details": { ...valid, previousRefusals: "yes" },
   "employed, incomplete": { ...valid, employmentStatus: "employed", jobTitle: "x" },
@@ -99,7 +108,7 @@ const fixtures: Record<string, any> = {
   "student": { ...valid, employmentStatus: "student" },
 }
 for (const [name, f] of Object.entries(fixtures)) {
-  for (const step of ["personal", "spouse", "employment", "trip-details"])
+  for (const step of ["personal", "passport", "spouse", "employment", "trip-details"])
     both(`validateStep(${step}) on "${name}"`, "validateStep", step, f)
   both(`validatePassportNumber on "${name}"`, "validatePassportNumber", f)
   both(`continueComplete on "${name}"`, "continueComplete", f)

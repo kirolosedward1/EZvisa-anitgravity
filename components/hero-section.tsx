@@ -11,7 +11,7 @@ import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
-import { PRICE_AED } from "@/lib/shared/wizard-contract"
+import { FEATURED_NATIONALITIES, PRICE_AED, SCHENGEN } from "@/lib/shared/wizard-contract"
 import { LangText } from "@/components/lang-text"
 import { SCHENGEN_META } from "@/lib/countries"
 import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
@@ -32,15 +32,7 @@ const countryFlags: Record<string, string> = {
   "Russian Federation": "🇷🇺", Syria: "🇸🇾",
 }
 
-const schengenCountries = [
-  "Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark",
-  "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland",
-  "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta",
-  "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia",
-  "Slovenia", "Spain", "Sweden", "Switzerland",
-]
-
-const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+const fromCountries = FEATURED_NATIONALITIES
   .map((name) => CITIZENSHIP_OPTIONS.find((country) => country.name === name))
   .filter((country): country is NonNullable<typeof country> => Boolean(country))
 
@@ -298,7 +290,7 @@ export function HeroSection() {
                           <CommandList className="max-h-[300px] p-2">
                             <CommandEmpty><LangText en="No country found." ar="لم يُعثر على دولة." /></CommandEmpty>
                             <CommandGroup>
-                              {schengenCountries.map((country) => (
+                              {SCHENGEN.map((country) => (
                                 <CommandItem
                                   key={country}
                                   value={country}

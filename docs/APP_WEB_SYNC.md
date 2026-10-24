@@ -10,7 +10,7 @@ of rules. This document says what is shared, where it lives, and how to change i
 | Rule | Website source | App source |
 |---|---|---|
 | Price: 249 AED, ×2 when the spouse travels | `lib/shared/wizard-contract.ts` (`PRICE_AED`, `priceAed`) | `mobile/lib/wizard.ts` |
-| Wizard answers, defaults, step order, validation | `lib/shared/wizard-contract.ts` (`WizardAnswers`, `visibleSteps`, `validate*`) | `mobile/lib/wizard.ts` |
+| Wizard answers, defaults, step order, validation | `lib/shared/wizard-contract.ts` (`WizardAnswers`, `visibleSteps`, `postSteps`, `validate*`) | `mobile/lib/wizard.ts` |
 | Country, nationality, emirate and option lists (values **and** labels) | `lib/shared/wizard-contract.ts` | `mobile/lib/wizard.ts` |
 | Statuses, labels, "paid", "finished", "takes documents", "needs the after-payment step" | `lib/shared/wizard-contract.ts` | `mobile/lib/wizard.ts`, `mobile/lib/data.ts` |
 | Document types → `has_*` flag, bucket, path scheme, size/MIME limits | `lib/shared/wizard-contract.ts` (`DOC_FLAG`, `DOC_BUCKET`, …) | `mobile/lib/data.ts` |
@@ -33,21 +33,23 @@ and the app can mirror it one-to-one.
 | `POST /api/webhooks/ziina` | Verified webhook that marks the row paid |
 | `POST /api/upload-document` (`Authorization: Bearer <session>`, multipart `file`, `applicationId`, `documentType`, `uploadId`) | Document uploads; sets the `has_*` flag and `additional_notes.uploads` |
 | `GET /api/upload-document?id=` (Bearer) or `?token=` | Checklist status + `required` flags |
-| `POST /api/continue-application` | After-payment step (passport number + employment), same JSON as the app's `saveContinueAnswers` |
+| `POST /api/continue-application` | After-payment step (trip, passport, spouse, employment), same JSON as the app's `saveContinueAnswers` |
 | `GET /app-return` | Hands Ziina's return back to the app (`ezvisa://payment-return`) |
 | `GET /api/app-config` | The whole contract as JSON (price, lists, steps, statuses, document types, traveller keys) |
 | `GET /api/travellers` (Bearer) · `POST` · `PATCH /api/travellers/[id]` · `DELETE` | Saved travellers of the account: the list (backfilled once from past paid/submitted cases), add, edit / mark used, remove. The app reads through GET and writes to the table directly (RLS). |
 
 ## 3. The customer journey, same on both
 
-1. **Wizard** — personal → spouse (if married and travelling together) → trip details → payment. No passport number,
-   employment or documents before payment. Drafts are saved to one `draft` row per email and can be resumed on either
+1. **Wizard** — `visibleSteps`: personal (destination, nationality, traveller, contact, marital status, spouse
+   coming) → payment. No trip, spouse, employment or documents questions before payment (the website's traveller step
+   also takes the date of birth and passport number when the customer has them). Drafts are saved to one `draft` row per email and can be resumed on either
    platform (`/apply?draft=<id>` on the website). Signed in with saved travellers: a **"Who is travelling?"** drop-down
    (website traveller step) / question (app, right after the destination) fills the traveller fields from
    `public.travellers`; the picked id is kept in `additional_notes.travellerId`.
 2. **Payment** — Ziina, 249 AED (498 with spouse). The server computes the amount.
-3. **Continue application** — passport number + employment, stored in `additional_notes.wizard` and
-   `passport_number`. Website: `/dashboard/continue?id=` or `/track/<token>/continue`. The spouse step offers the
+3. **Continue application** — `postSteps`: trip details → passport → spouse (if travelling together) → employment,
+   stored in `additional_notes.wizard` and `passport_number`. Website: `/continue/[id]` (old `/dashboard/continue?id=`
+   and `/track/<token>/continue` links redirect); `lib/application-status.ts missingDetailSteps` skips answered steps. The spouse step offers the
    saved travellers too (`additional_notes.spouseTravellerId`).
    **Saved travellers** are written automatically: when a case becomes paid (`lib/ziina.ts applyIntentStatus` →
    `lib/travellers.ts rememberTravellersFromApplication`: main applicant, plus the spouse when travelling together),

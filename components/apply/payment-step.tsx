@@ -6,7 +6,8 @@ import { LocaleLink } from "@/components/locale-link"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { WizardQuestion } from "@/components/apply/wizard-choices"
 import { getReference } from "@/lib/application-status"
-import { CURRENCIES, priceForTravellers } from "@/lib/currency"
+import { CURRENCIES } from "@/lib/currency"
+import { priceAed } from "@/lib/shared/wizard-contract"
 import { SCHENGEN_META } from "@/lib/countries"
 import { citizenshipName } from "@/lib/nationalities"
 import { trackEvent } from "@/lib/analytics"
@@ -96,7 +97,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
     }
   }, [])
 
-  const paymentAmount = priceForTravellers(formData.spouseAccompanying)
+  const paymentAmount = priceAed(formData.spouseAccompanying)
   const reference = getReference(trackingToken)
   const laterHref = applicationId ? `/dashboard?id=${applicationId}&pay=1#pay` : "/dashboard"
   const shownError = submitError || paymentError

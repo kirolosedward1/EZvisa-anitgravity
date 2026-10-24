@@ -10,24 +10,7 @@ import { motion } from "framer-motion"
 import { CountryFlag } from "@/components/country-flag"
 import { flagIso } from "@/lib/nationalities"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
-
-const fromCountries = [
-  "Egypt",
-  "India",
-  "Jordan",
-  "Pakistan",
-  "Russian Federation",
-  "Syria",
-  "Turkey",
-  "United Arab Emirates",
-  "Saudi Arabia",
-  "Philippines",
-  "Bangladesh",
-  "Sri Lanka",
-  "Nigeria",
-  "Kenya",
-  "South Africa",
-]
+import { FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
 
 export function StartApplicationBox() {
   const [selectedNationality, setSelectedNationality] = useState("")
@@ -112,7 +95,7 @@ export function StartApplicationBox() {
                 <CommandList className="max-h-[300px]">
                   <CommandEmpty>No country found.</CommandEmpty>
                   <CommandGroup>
-                    {fromCountries.map((country) => (
+                    {FEATURED_NATIONALITIES.map((country) => (
                       <CommandItem
                         key={country}
                         value={country}

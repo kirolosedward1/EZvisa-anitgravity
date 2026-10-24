@@ -156,9 +156,12 @@ export function validatePassport(f: WizardForm): Errors {
     else if (f.passportExpiry < iso(new Date())) e.passportExpiry = "This passport has expired. Enter the expiry date of your current passport.";
     else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date";
   }
-  // Required unless the answer is "No" (website rows don't store the validity answer, only the number column).
-  if (f.hasValidPassport !== "no" && !f.passportNumber.trim()) e.passportNumber = "Passport number is required";
-  return e;
+  return { ...e, ...validatePassportNumber(f) };
+}
+/** Passport number, asked after payment. Required unless the answer is "No" (website rows don't store the validity
+ *  answer, only the number column). */
+export function validatePassportNumber(f: Pick<WizardForm, "hasValidPassport" | "passportNumber">): Errors {
+  return f.hasValidPassport !== "no" && !(f.passportNumber ?? "").trim() ? { passportNumber: "Passport number is required" } : {};
 }
 export function validateSpouse(f: WizardForm): Errors {
   const e: Errors = {};
@@ -209,8 +212,14 @@ export function validateTrip(f: WizardForm): Errors {
 }
 export const validateStep = (s: WizardStep, f: WizardForm): Errors =>
   s === "personal" ? validatePersonal(f) : s === "passport" ? validatePassport(f) : s === "spouse" ? validateSpouse(f) : s === "employment" ? validateEmployment(f) : s === "trip-details" ? validateTrip(f) : {};
-/** First visible step that is still incomplete, or null when everything is valid. */
+/** First step before payment that is still incomplete, or null when everything before payment is valid. */
 export const firstIncomplete = (f: WizardForm): WizardStep | null => visibleSteps(f).find((s) => s !== "payment" && Object.keys(validateStep(s, f)).length > 0) ?? null;
+/** Employment answers complete. */
+export const employmentComplete = (f: Partial<WizardForm>) => Object.keys(validateEmployment({ ...emptyForm, ...f })).length === 0;
+/** Passport number and employment answered: what the team needs before preparing the file (the full after-payment
+ *  checklist is postSteps). */
+export const continueComplete = (f: Partial<WizardForm>) =>
+  employmentComplete(f) && Object.keys(validatePassportNumber({ hasValidPassport: f.hasValidPassport ?? "", passportNumber: f.passportNumber ?? "" })).length === 0;
 
 /** decodeURIComponent that never throws (expo-router params are already decoded; a lone "%" used to crash). */
 export function safeDecode(s: string): string { try { return decodeURIComponent(s); } catch { return s; } }

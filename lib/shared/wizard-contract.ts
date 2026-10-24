@@ -18,7 +18,7 @@
  *  - Website components must import lists/rules from here, never keep their own copies.
  */
 
-export const CONTRACT_VERSION = "2026-10-23.1"
+export const CONTRACT_VERSION = "2026-10-24.1"
 
 // ---------------------------------------------------------------------------------------------------------
 // Business constants
@@ -105,7 +105,9 @@ export const label = (opts: Opt[], v: string) => opts.find((o) => o.value === v)
 // ---------------------------------------------------------------------------------------------------------
 
 export type YesNo = "yes" | "no" | ""
-export type WizardStep = "personal" | "spouse" | "employment" | "trip-details" | "payment"
+/** "personal" (destination, nationality, traveller, contact, marital status) and "payment" are asked before payment; the
+ * rest after payment on Continue application (/continue/[id] on the website, app/continue/[id].tsx in the app). */
+export type WizardStep = "personal" | "spouse" | "employment" | "trip-details" | "passport" | "payment"
 export type MaritalStatus = "" | "single" | "married" | "divorced" | "widowed"
 export type EmploymentStatus = "" | "employed" | "business" | "freelancer" | "student" | "unemployed" | "retired"
 export type CountryVisit = { country: string; arrivalDate: string; departureDate: string }
@@ -117,6 +119,8 @@ export type WizardAnswers = {
   firstName: string; lastName: string; email: string; phone: string; phoneCountry: string; phoneLocal: string; whatsappOptIn: boolean
   dateOfBirth: string; passportNumber: string; passportExpiry: string; hasValidPassport: YesNo
   maritalStatus: MaritalStatus; spouseAccompanying: YesNo
+  /** UAE residence visa valid at least 3 months after the return date (app passport step; website rows answered hasEmiratesId). */
+  residenceVisaValid: YesNo
   // spouse
   spouseFirstName: string; spouseLastName: string; spouseHasValidPassport: YesNo; spouseOccupation: string
   // employment (asked AFTER payment on both platforms)
@@ -132,7 +136,7 @@ export type WizardAnswers = {
 export const emptyAnswers: WizardAnswers = {
   destination: "", nationality: "", countryOfResidence: "United Arab Emirates", cityOfResidence: "", hasEmiratesId: "",
   firstName: "", lastName: "", email: "", phone: "", phoneCountry: "AE", phoneLocal: "", whatsappOptIn: true,
-  dateOfBirth: "", passportNumber: "", passportExpiry: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "",
+  dateOfBirth: "", passportNumber: "", passportExpiry: "", hasValidPassport: "", maritalStatus: "", spouseAccompanying: "", residenceVisaValid: "",
   spouseFirstName: "", spouseLastName: "", spouseHasValidPassport: "", spouseOccupation: "",
   employmentStatus: "", jobTitle: "", companyName: "", employmentStartDate: "", monthlySalary: "", hasNOC: "", averageMonthlyIncome: "",
   purposeOfTrip: "", travelStartDate: "", travelEndDate: "", datesFlexible: "", travelingWith: "", hotelCategory: "", fundingSource: "", balanceRange: "",
@@ -145,20 +149,22 @@ export const STEP_TITLES: Record<WizardStep, { title: string; description: strin
   spouse: { title: "Spouse Information", description: "Spouse details" },
   employment: { title: "Employment", description: "Work & income details" },
   "trip-details": { title: "Trip Details", description: "Travel intent & preferences" },
+  passport: { title: "Passport & Residence", description: "Passport and UAE residence" },
   payment: { title: "Review & Payment", description: "Confirm & complete payment" },
 }
 export const showSpouse = (f: Pick<WizardAnswers, "maritalStatus" | "spouseAccompanying">) => f.maritalStatus === "married" && f.spouseAccompanying === "yes"
+/** Steps asked BEFORE payment (the wizard): only what the price and the account need. */
+export const visibleSteps = (_f: Pick<WizardAnswers, "maritalStatus" | "spouseAccompanying">): WizardStep[] => ["personal", "payment"]
 /**
- * Steps asked BEFORE payment (spouse only when married and the spouse travels). Employment and the passport number
- * are asked after payment ("Continue application") on both platforms.
+ * Steps asked AFTER payment (Continue application), in order: trip, passport, spouse (only when married and the spouse
+ * travels), employment. Same order as lib/application-status.ts missingDetailSteps.
  */
-export const visibleSteps = (f: Pick<WizardAnswers, "maritalStatus" | "spouseAccompanying">): WizardStep[] =>
-  showSpouse(f) ? ["personal", "spouse", "trip-details", "payment"] : ["personal", "trip-details", "payment"]
-/** URL step slug -> step; "documents" is the web's legacy alias for payment; "employment" moved after payment. */
+export const postSteps = (f: Partial<Pick<WizardAnswers, "maritalStatus" | "spouseAccompanying">>): WizardStep[] =>
+  showSpouse({ maritalStatus: f.maritalStatus ?? "", spouseAccompanying: f.spouseAccompanying ?? "" }) ? ["trip-details", "passport", "spouse", "employment"] : ["trip-details", "passport", "employment"]
+/** URL step slug -> wizard step. Only "personal" and "payment" are asked before payment ("documents" is the web's legacy
+ * alias for payment); any other slug, including the old trip-details / spouse / employment links, opens personal. */
 export function parseStep(s?: string | null): WizardStep {
-  if (s === "documents") return "payment"
-  if (s === "employment") return "trip-details"
-  return (["personal", "spouse", "employment", "trip-details", "payment"] as string[]).includes(s ?? "") ? (s as WizardStep) : "personal"
+  return s === "payment" || s === "documents" ? "payment" : "personal"
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -194,34 +200,51 @@ export function passportCoversTrip(f: { passportExpiry: string; travelEndDate: s
   const need = new Date(base.getFullYear(), base.getMonth() + 3, base.getDate())
   return new Date(f.passportExpiry + "T00:00:00").getTime() >= need.getTime()
 }
+/** Inclusive Schengen stay: both the arrival day and the departure day count (lib/dates.ts schengenStayDays). */
 export const tripDays = (f: Pick<WizardAnswers, "travelStartDate" | "travelEndDate">) =>
-  f.travelStartDate && f.travelEndDate ? Math.ceil((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) : 0
+  f.travelStartDate && f.travelEndDate ? Math.round((Date.parse(f.travelEndDate) - Date.parse(f.travelStartDate)) / day) + 1 : 0
+/** A real calendar date in YYYY-MM-DD (rejects e.g. 2026-02-31, which Date.parse would roll over). */
+export const realDate = (s: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s)
+  if (!m) return false
+  const d = new Date(+m[1], +m[2] - 1, +m[3])
+  return d.getFullYear() === +m[1] && d.getMonth() === +m[2] - 1 && d.getDate() === +m[3]
+}
 export const MAX_STAY_DAYS = 90
 export const MIN_LEAD_DAYS = 15
 
 export function validatePersonal(f: WizardAnswers): Errors {
   const e: Errors = {}
   if (!f.destination) e.destination = "Please select a destination"
-  if (!needsSchengenVisa(f.nationality)) e.nationality = "Please select your nationality"
+  if (!f.nationality) e.nationality = "Please select your nationality"
+  else if (!needsSchengenVisa(f.nationality)) e.nationality = "Citizens of this country don't need a Schengen visa for short visits, so we can't apply for one. Choose another nationality if you hold one."
   if (!RESIDENCE_COUNTRIES.includes(f.countryOfResidence)) e.countryOfResidence = "Please select your country of residence"
   if (!f.cityOfResidence.trim()) e.cityOfResidence = "City is required"
   else if (f.countryOfResidence === "United Arab Emirates" && !UAE_EMIRATES.includes(f.cityOfResidence)) e.cityOfResidence = "Please select your emirate"
-  if (f.countryOfResidence === "United Arab Emirates" && !f.hasEmiratesId) e.hasEmiratesId = "Please choose Yes or No"
   if (!f.firstName.trim()) e.firstName = "First name is required"
   if (!f.lastName.trim()) e.lastName = "Last name is required"
   if (!f.email.trim()) e.email = "Email is required"; else if (!isValidEmail(f.email.trim())) e.email = "Please enter a valid email address. Check for typos in the domain."
-  if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = "Please enter a valid phone number (7-15 digits)."
-  if (!f.dateOfBirth) e.dateOfBirth = "Please select your date of birth (must be 18+)"; else if (Date.parse(f.dateOfBirth) > adultMax().getTime()) e.dateOfBirth = "You must be 18 or older"
-  if (!f.hasValidPassport) e.hasValidPassport = "Please choose Yes or No"
-  else if (f.hasValidPassport === "no") e.hasValidPassport = "You need a valid passport (at least 6 months validity from your travel date) before applying."
-  else {
-    // The passport NUMBER is asked after payment (validatePassportNumber); validity and expiry stay here.
-    if (!f.passportExpiry) e.passportExpiry = "Please select your passport expiry date"
-    else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date"
-  }
+  if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Phone number is required"; else if (!isValidPhone(f.phone)) e.phone = (f.phoneCountry || "AE") === "AE" ? "Enter a valid UAE mobile number" : "Enter a valid phone number"
   if (!f.maritalStatus) e.maritalStatus = "Please select your marital status"
   if (f.maritalStatus === "married" && !f.spouseAccompanying) e.spouseAccompanying = "Please choose Yes or No"
   return e
+}
+/**
+ * After payment: UAE residence, date of birth and passport. A "No" (passport or residence) is recorded and shown as a
+ * note, not blocked: the customer has paid and the team follows up. Website rows answered hasEmiratesId instead of
+ * residenceVisaValid.
+ */
+export function validatePassport(f: WizardAnswers): Errors {
+  const e: Errors = {}
+  if (!f.residenceVisaValid && !f.hasEmiratesId) e.residenceVisaValid = "Please choose Yes or No"
+  if (!f.dateOfBirth) e.dateOfBirth = "Please select your date of birth (must be 18+)"; else if (Date.parse(f.dateOfBirth) > adultMax().getTime()) e.dateOfBirth = "You must be 18 or older"
+  if (!f.hasValidPassport) e.hasValidPassport = "Please choose Yes or No"
+  else if (f.hasValidPassport === "yes") {
+    if (!f.passportExpiry) e.passportExpiry = "Please select your passport expiry date"
+    else if (f.passportExpiry < iso(new Date())) e.passportExpiry = "This passport has expired. Enter the expiry date of your current passport."
+    else if (!passportCoversTrip(f)) e.passportExpiry = "Passport must be valid at least 3 months after your return date"
+  }
+  return { ...e, ...validatePassportNumber(f) }
 }
 export function validateSpouse(f: WizardAnswers): Errors {
   const e: Errors = {}
@@ -249,8 +272,12 @@ export function validateTrip(f: WizardAnswers): Errors {
   const e: Errors = {}
   if (!f.purposeOfTrip) e.purposeOfTrip = "Please select the purpose of your trip"
   if (!f.travelStartDate) e.travelStartDate = "Please select a departure date"
-  else if (Date.parse(f.travelStartDate) < earliestDeparture().getTime() - day / 2) e.travelStartDate = "Departure must be at least 15 days from today"
+  // Compare calendar dates as strings: Date.parse("YYYY-MM-DD") is UTC midnight, which shifted the rule by a day west of UTC.
+  else if (realDate(f.travelStartDate) && f.travelStartDate < iso(earliestDeparture())) e.travelStartDate = "Departure must be at least 15 days from today"
+  if (f.travelStartDate && !realDate(f.travelStartDate)) e.travelStartDate = "Please enter a valid date"
   if (!f.travelEndDate) e.travelEndDate = "Please select a return date"
+  else if (!realDate(f.travelEndDate)) e.travelEndDate = "Please enter a valid date"
+  else if (!f.travelStartDate && f.travelEndDate <= iso(earliestDeparture())) e.travelEndDate = "Return date must be at least 16 days from today"
   else if (f.travelStartDate && tripDays(f) <= 0) e.travelEndDate = "Return date must be after departure date"
   else if (tripDays(f) > MAX_STAY_DAYS) e.travelEndDate = "Schengen visits are limited to 90 days"
   else if (f.passportExpiry && !passportCoversTrip(f)) e.travelEndDate = "Passport must be valid at least 3 months after your return date"
@@ -265,8 +292,8 @@ export function validateTrip(f: WizardAnswers): Errors {
   return e
 }
 export const validateStep = (s: WizardStep, f: WizardAnswers): Errors =>
-  s === "personal" ? validatePersonal(f) : s === "spouse" ? validateSpouse(f) : s === "employment" ? validateEmployment(f) : s === "trip-details" ? validateTrip(f) : {}
-/** First visible step that is still incomplete, or null when everything before payment is valid. */
+  s === "personal" ? validatePersonal(f) : s === "passport" ? validatePassport(f) : s === "spouse" ? validateSpouse(f) : s === "employment" ? validateEmployment(f) : s === "trip-details" ? validateTrip(f) : {}
+/** First step before payment that is still incomplete, or null when everything before payment is valid. */
 export const firstIncomplete = (f: WizardAnswers): WizardStep | null => visibleSteps(f).find((s) => s !== "payment" && Object.keys(validateStep(s, f)).length > 0) ?? null
 
 /** Passport number, asked after payment. Required (website rule) unless the answer was "no valid passport". */
@@ -275,7 +302,8 @@ export function validatePassportNumber(f: Pick<WizardAnswers, "hasValidPassport"
 }
 /** Employment answers complete. */
 export const employmentComplete = (f: Partial<WizardAnswers>) => Object.keys(validateEmployment({ ...emptyAnswers, ...f })).length === 0
-/** Everything asked after payment (Continue application): passport number + employment. */
+/** Passport number and employment answered: what the team needs before preparing the file (the full after-payment
+ *  checklist, trip and spouse included, is lib/application-status.ts missingDetailSteps). */
 export const continueComplete = (f: Partial<WizardAnswers>) =>
   employmentComplete(f) && Object.keys(validatePassportNumber({ hasValidPassport: f.hasValidPassport ?? "", passportNumber: f.passportNumber ?? "" })).length === 0
 
@@ -602,7 +630,7 @@ export function contractJson() {
     siteUrl: SITE_URL_OFFICIAL, appSchemes: APP_SCHEMES, whatsapp: WHATSAPP_NUMBER, supportEmail: SUPPORT_EMAIL,
     countries: { schengen: SCHENGEN, visaRequired: SCHENGEN_VISA_REQUIRED, uaeNationalities: UAE_NATIONALITIES, otherNationality: OTHER_NATIONALITY, residence: RESIDENCE_COUNTRIES, emirates: UAE_EMIRATES },
     options: { marital: MARITAL, employment: EMPLOYMENT, salary: SALARY, purposes: PURPOSES, companions: COMPANIONS, funding: FUNDING, balance: BALANCE, hotels: HOTELS },
-    wizard: { steps: STEP_TITLES, prePaymentSteps: visibleSteps(emptyAnswers), withSpouse: visibleSteps({ maritalStatus: "married", spouseAccompanying: "yes" }), afterPayment: ["passportNumber", "employment"], answerKeys: ANSWER_KEYS, maxStayDays: MAX_STAY_DAYS, minLeadDays: MIN_LEAD_DAYS },
+    wizard: { steps: STEP_TITLES, prePaymentSteps: visibleSteps(emptyAnswers), withSpouse: visibleSteps({ maritalStatus: "married", spouseAccompanying: "yes" }), afterPayment: postSteps(emptyAnswers), afterPaymentWithSpouse: postSteps({ maritalStatus: "married", spouseAccompanying: "yes" }), answerKeys: ANSWER_KEYS, maxStayDays: MAX_STAY_DAYS, minLeadDays: MIN_LEAD_DAYS },
     statuses: { application: APPLICATION_STATUSES, payment: PAYMENT_STATUSES, labels: STATUS_LABEL, finished: FINISHED_STATUSES, fileReady: FILE_READY_STATUSES, upload: UPLOAD_STATUSES, continue: CONTINUE_STATUSES, discardable: DISCARDABLE_STATUSES },
     documents: { bucket: DOC_BUCKET, maxBytes: MAX_UPLOAD_BYTES, mime: UPLOAD_MIME, flags: DOC_FLAG, types: DOC_TYPES, requirements: REQUIREMENTS },
   }

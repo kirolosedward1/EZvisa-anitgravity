@@ -16,8 +16,7 @@ import { UserMenu, useViewer } from "@/components/user-menu"
 import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
-
-const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+import { FEATURED_NATIONALITIES } from "@/lib/shared/wizard-contract"
 
 function WhatsAppGlyph({ className }: { className?: string }) {
   return (
@@ -613,7 +612,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                           transition={{ duration: 0.2 }}
                           className="absolute bottom-full left-0 right-0 mb-2 bg-background border border-border rounded-2xl shadow-xl overflow-hidden z-10 max-h-60 overflow-y-auto py-1"
                         >
-                          {nationalities.map((nationality) => (
+                          {FEATURED_NATIONALITIES.map((nationality) => (
                             <button
                               key={nationality}
                               onClick={() => handleNationalitySelect(nationality)}
