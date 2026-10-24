@@ -26,7 +26,7 @@ function stepsFor(locale: DisplayLocale) {
       },
       {
         number: "2",
-        title: `ادفع ${price}`,
+        title: `ادفع ${ltr(price)}`,
         description: `ادفع بالبطاقة أو ${ltr("Apple Pay")} أو ${ltr("Google Pay")}. تواريخ الرحلة وبيانات الجواز والعمل تأتي بعد الدفع، عندما تكون جاهزًا.`,
       },
       {
@@ -120,7 +120,7 @@ function PayVisual() {
       </dl>
       <span className="mt-4 flex h-11 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
         <Lock className="size-4" aria-hidden="true" />
-        <LangText en={`Pay ${price}`} ar={`ادفع ${price}`} />
+        <LangText en={`Pay ${price}`} ar={<>ادفع <bdi dir="ltr">{price}</bdi></>} />
       </span>
       <div className="mt-4 scale-90">
         <PaymentMarks />

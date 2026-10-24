@@ -42,7 +42,7 @@ export function ContactSection() {
               <p className="max-w-md text-base leading-relaxed text-muted-foreground md:text-lg">
                 <LangText
                   en={`Starting takes about five minutes. Pay ${price}, add the rest of your details when you're ready, and a visa specialist prepares your file.`}
-                  ar={`يبدأ الأمر في نحو خمس دقائق. ادفع ${price}، وأضف بقية بياناتك عندما تكون جاهزًا، ويجهّز مختص التأشيرات ملفك.`}
+                  ar={<>يبدأ الأمر في نحو خمس دقائق. ادفع <bdi dir="ltr">{price}</bdi>، وأضف بقية بياناتك عندما تكون جاهزًا، ويجهّز مختص التأشيرات ملفك.</>}
                 />
               </p>
             </div>
