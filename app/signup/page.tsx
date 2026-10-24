@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
+import { authCallbackUrl } from "@/lib/auth/redirect"
 
 function SignupForm() {
   const router = useRouter()
@@ -34,7 +35,7 @@ function SignupForm() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`,
+        emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }),
       },
     })
 
