@@ -14,8 +14,8 @@ export function ContactSection() {
   const locale = useSiteLocale()
   const price = formatAedLabel(PRICE_AED, locale)
   const benefits = locale === "ar"
-    ? ["تعبئة نموذج الطلب", "خطاب التغطية وبرنامج الرحلة", "حجوزات الطيران والفندق", `جاهز خلال ${ltr("1–2")} يوم`]
-    : ["Application form filled in", "Cover letter and itinerary", "Flight and hotel reservations", "Ready in 1–2 days"]
+    ? ["تعبئة نموذج الطلب", "خطاب التغطية وبرنامج الرحلة", "حجوزات الطيران والفندق", `جاهز خلال ${ltr("1–2")} يوم`, "استرداد كامل قبل بدء التجهيز"]
+    : ["Application form filled in", "Cover letter and itinerary", "Flight and hotel reservations", "Ready in 1–2 days", "Full refund before we start"]
 
   return (
     <section id="contact" className="bg-background py-20 md:py-28">
@@ -56,13 +56,19 @@ export function ContactSection() {
               ))}
             </ul>
 
-            <div className="flex w-full flex-col gap-5 border-t border-border pt-6">
+            <div className="flex w-full flex-col gap-5 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                <LangText
+                  en={<>Starting at <span dir="ltr" className="text-2xl font-semibold tabular-nums text-foreground">{formatAedLabel(PRICE_AED, "en")}</span></>}
+                  ar={<>يبدأ من <span dir="ltr" className="text-2xl font-semibold tabular-nums text-foreground">{formatAedLabel(PRICE_AED, "ar")}</span></>}
+                />
+              </p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/apply"
                   className="group inline-flex h-12 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
                 >
-                  <LangText en="Start your application" ar="ابدأ طلبك" />
+                  <LangText en="Start application" ar="ابدأ الطلب" />
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
                 </Link>
                 <Link
