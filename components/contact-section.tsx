@@ -14,8 +14,8 @@ export function ContactSection() {
   const locale = useSiteLocale()
   const price = formatAedLabel(PRICE_AED, locale)
   const benefits = locale === "ar"
-    ? ["تعبئة نموذج الطلب", "خطاب التغطية وبرنامج الرحلة", "حجوزات الطيران والفندق", `جاهز خلال ${ltr("1–2")} يوم`, "استرداد كامل قبل بدء التجهيز"]
-    : ["Application form filled in", "Cover letter and itinerary", "Flight and hotel reservations", "Ready in 1–2 days", "Full refund before we start"]
+    ? ["تعبئة نموذج الطلب", "خطاب التغطية وبرنامج الرحلة", "حجوزات الطيران والفندق", `جاهز خلال ${ltr("1–2")} يوم`, "استرداد كامل قبل أن نبدأ مراجعة مستنداتك"]
+    : ["Application form filled in", "Cover letter and itinerary", "Flight and hotel reservations", "Ready in 1–2 days", "Full refund before we start reviewing your documents"]
 
   return (
     <section id="contact" className="bg-background py-20 md:py-28">
@@ -68,7 +68,7 @@ export function ContactSection() {
                   href="/apply"
                   className="group inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
                 >
-                  <LangText en="Start application" ar="ابدأ الطلب" />
+                  <LangText en="Start your application" ar="ابدأ الطلب" />
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
                 </Link>
                 <Link

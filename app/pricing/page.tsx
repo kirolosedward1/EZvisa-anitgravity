@@ -169,32 +169,32 @@ export default async function PricingPage() {
         <section className="border-t border-border/70 py-20 md:py-24">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{pick("Refunds", "الاسترداد")}</span>
-              <h2 className="text-balance text-foreground">{pick("When you get the fee back.", "متى يُعاد الرسم.")}</h2>
+              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Refunds</span>
+              <h2 className="text-balance text-foreground">When you get the fee back.</h2>
               <Link href="/refund-policy" className="text-sm font-medium text-primary hover:underline">
-                {pick("Read the full refund policy", "اقرأ سياسة الاسترداد كاملة")}
+                Read the full refund policy
               </Link>
             </div>
             <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
               <div className="flex flex-col gap-4">
-                <h3 className="panel-title text-foreground">{pick("Full refund", "استرداد كامل")}</h3>
+                <h3 className="panel-title text-foreground">Full refund</h3>
                 <ul className="flex flex-col gap-3 text-sm leading-relaxed text-muted-foreground">
                   <li className="flex items-start gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
-                    {pick("You cancel before we start reviewing your documents.", "تلغي قبل أن نبدأ مراجعة مستنداتك.")}
+                    You cancel before we start reviewing your documents.
                   </li>
                   <li className="flex items-start gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
-                    {pick("We can't deliver your file because of an error on our side.", "لا نستطيع تسليم ملفك بسبب خطأ من جانبنا.")}
+                    We can&apos;t deliver your file because of an error on our side.
                   </li>
                   <li className="flex items-start gap-3">
                     <Check className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
-                    {pick("You were charged twice for the same application.", "خُصم المبلغ مرتين عن الطلب نفسه.")}
+                    You were charged twice for the same application.
                   </li>
                 </ul>
               </div>
               <div className="flex flex-col gap-4">
-                <h3 className="panel-title text-foreground">{pick("No refund", "لا استرداد")}</h3>
+                <h3 className="panel-title text-foreground">No refund</h3>
                 <ul className="flex flex-col gap-3 text-sm leading-relaxed text-muted-foreground">
                   <li className="flex items-start gap-3">
                     <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />
@@ -202,7 +202,7 @@ export default async function PricingPage() {
                   </li>
                   <li className="flex items-start gap-3">
                     <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />
-                    {pick("You change your mind after we've reviewed your documents.", "تغيّر رأيك بعد أن نراجع مستنداتك.")}
+                    You change your mind after we&apos;ve reviewed your documents.
                   </li>
                 </ul>
               </div>

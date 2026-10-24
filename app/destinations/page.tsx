@@ -47,7 +47,7 @@ export default function DestinationsPage() {
           description={
             <LangText
               en="The visa centre, embassy fee and documents for each of the 29 Schengen countries. Our fee is the same 249 AED for every one."
-              ar={<>مركز التأشيرات ورسوم السفارة والمستندات لكل دولة من دول شنغن الـ<bdi dir="ltr">29</bdi>. رسومنا <bdi dir="ltr">249 درهم</bdi> لكل دولة.</>}
+              ar="مركز التأشيرات ورسوم السفارة والمستندات لكل دولة من دول شنغن الـ ٢٩. رسومنا ٢٤٩ درهمًا لكل دولة."
             />
           }
           randomizeBackground={true}

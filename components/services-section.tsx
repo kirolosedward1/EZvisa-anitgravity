@@ -218,7 +218,7 @@ export function ServicesSection() {
               <p className="text-base font-semibold text-foreground">
                 <LangText
                   en={`All five for ${formatAedLabel(PRICE_AED, "en")}, one flat fee`}
-                  ar={<>الخمسة كلها مقابل <bdi dir="ltr">{formatAedLabel(PRICE_AED, "ar")}</bdi>، برسم واحد</>}
+                  ar={`الخمسة كلها مقابل ${formatAedLabel(PRICE_AED, "ar")}، برسم واحد`}
                 />
               </p>
               <p className="text-sm text-muted-foreground">

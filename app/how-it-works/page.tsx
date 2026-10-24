@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   if (arabic) {
     return {
       title: "كيف تعمل: من أول إجابة حتى موعد التأشيرة",
-      description: `كيف تجهّز ${ltr("EZvisa")} ملف تأشيرة شنغن: أجب عن بضعة أسئلة، وادفع ${ltr(price)}، وارفع مستنداتك، واستلم نموذج الطلب وخطاب التغطية وبرنامج الرحلة والحجوزات خلال ${ltr("1–2")} يوم.`,
+      description: `كيف تجهّز ${ltr("EZvisa")} ملف تأشيرة شنغن: أجب عن بضعة أسئلة، وادفع ${price}، وارفع مستنداتك، واستلم نموذج الطلب وخطاب التغطية وبرنامج الرحلة والحجوزات خلال ${ltr("1–2")} يوم.`,
       alternates: { canonical: "https://www.ezvisa.net/ar/how-it-works" },
       openGraph: {
         title: "كيف تعمل إيزي فيزا",
@@ -58,7 +58,7 @@ export default async function HowItWorksPage() {
           title={arabic ? "أنت تجيب عن الأسئلة. ونحن نجهّز الملف." : "You answer the questions. We prepare the file."}
           description={
             arabic
-              ? `يبدأ الأمر في نحو خمس دقائق مقابل ${ltr(price)}. ثم يجهّز مختص التأشيرات كل ما يطلبه مركز التأشيرات، وتأخذه معك إلى موعدك.`
+              ? `يبدأ الأمر في نحو خمس دقائق مقابل ${price}. ثم يجهّز مختص التأشيرات كل ما يطلبه مركز التأشيرات، وتأخذه معك إلى موعدك.`
               : `Starting takes about five minutes and ${price}. A visa specialist then prepares everything the visa centre asks for, and you take it to your appointment.`
           }
         >

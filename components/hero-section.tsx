@@ -170,7 +170,7 @@ export function HeroSection() {
               className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl text-xs font-semibold text-primary-foreground cursor-default"
             >
               <span className="tracking-wide uppercase text-[10px] font-semibold text-primary-foreground">
-                <LangText en="For UAE residents · All 29 Schengen countries" ar={<>للمقيمين في الإمارات · جميع دول شنغن الـ<bdi dir="ltr">29</bdi></>} />
+                <LangText en="For UAE residents · All 29 Schengen countries" ar="للمقيمين في الإمارات · جميع دول شنغن الـ٢٩" />
               </span>
             </motion.div>
 
@@ -200,7 +200,7 @@ export function HeroSection() {
                   
                   {/* Selector 1 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar={<><bdi dir="ltr">1.</bdi> جنسيتي</>} /></span>
+                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="١. جنسيتي" /></span>
                     <Popover open={fromOpen} onOpenChange={setFromOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -260,7 +260,7 @@ export function HeroSection() {
 
                   {/* Selector 2 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="2. My Destination" ar={<><bdi dir="ltr">2.</bdi> وجهتي</>} /></span>
+                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="٢. وجهتي" /></span>
                     <Popover open={toOpen} onOpenChange={setToOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -365,7 +365,7 @@ export function HeroSection() {
                             <p className="text-xs md:text-sm text-primary-foreground/80 mt-0.5 leading-relaxed">
                               <LangText
                                 en="We fill in your application form and prepare your cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days."
-                                ar={<>نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم.</>}
+                                ar="نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال ١–٢ يوم."
                               />
                             </p>
                           </div>
