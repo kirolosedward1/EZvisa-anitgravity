@@ -5,16 +5,17 @@ import { Button } from "@/components/ui/button"
 import { ArrowRight, ShieldCheck, Clock, BookOpen, Plane, ChevronDown, Tag } from "lucide-react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import Link from "next/link"
-import Image from "next/image"
+import { LocaleLink } from "@/components/locale-link"
+import { Image } from "@/components/image"
 import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { LangText } from "@/components/lang-text"
-import { SCHENGEN_META } from "@/lib/countries"
-import { CITIZENSHIP_OPTIONS, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { SCHENGEN_META, countryNameAr } from "@/lib/countries"
+import { CITIZENSHIP_OPTIONS, citizenshipLabelAr, citizenshipName, citizenshipSearchValue, toCitizenshipIso } from "@/lib/nationalities"
+import { HOMEPAGE_NATIONALITIES, SCHENGEN } from "@/lib/shared/wizard-contract"
 import { CountryFlag } from "@/components/country-flag"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 import { stableIndex } from "@/lib/stable-index"
@@ -32,15 +33,9 @@ const countryFlags: Record<string, string> = {
   "Russian Federation": "🇷🇺", Syria: "🇸🇾",
 }
 
-const schengenCountries = [
-  "Austria", "Belgium", "Bulgaria", "Croatia", "Czech Republic", "Denmark",
-  "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Iceland",
-  "Italy", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta",
-  "Netherlands", "Norway", "Poland", "Portugal", "Romania", "Slovakia",
-  "Slovenia", "Spain", "Sweden", "Switzerland",
-]
+const schengenCountries = SCHENGEN
 
-const fromCountries = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+const fromCountries = HOMEPAGE_NATIONALITIES
   .map((name) => CITIZENSHIP_OPTIONS.find((country) => country.name === name))
   .filter((country): country is NonNullable<typeof country> => Boolean(country))
 
@@ -92,7 +87,9 @@ export function HeroSection() {
     if (toCountry) localStorage.setItem("hero-to-country", toCountry)
   }, [toCountry])
 
-  const fromLabel = citizenshipName(fromCountry) || fromCountry
+  const fromEn = citizenshipName(fromCountry) || fromCountry
+  const fromAr = citizenshipLabelAr(fromCountry) || fromEn
+  const fromLabel = arabic ? fromAr : fromEn
 
   const handleGetStarted = () => {
     const params = new URLSearchParams()
@@ -154,7 +151,15 @@ export function HeroSection() {
           {/* Background Image */}
           <Image
             src={heroBgImage || "/images/berlin-hero-bg.jpg"}
-            alt={heroBgCountryName ? `${heroBgCountryName} background` : "Berlin sunset background"}
+            alt={
+              heroBgCountryName
+                ? arabic
+                  ? `خلفية ${countryNameAr(heroBgCountryName)}`
+                  : `${heroBgCountryName} background`
+                : arabic
+                  ? "خلفية غروب برلين"
+                  : "Berlin sunset background"
+            }
             fill
             priority
             sizes="(max-width: 768px) 100vw, 1200px"
@@ -170,7 +175,7 @@ export function HeroSection() {
               className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl text-xs font-semibold text-primary-foreground cursor-default"
             >
               <span className="tracking-wide uppercase text-[10px] font-semibold text-primary-foreground">
-                <LangText en="For UAE residents · All 29 Schengen countries" ar="للمقيمين في الإمارات · جميع دول شنغن الـ٢٩" />
+                <LangText en="For UAE residents · All 29 Schengen countries" ar="للمقيمين في الإمارات · جميع دول شنغن الـ29" />
               </span>
             </motion.div>
 
@@ -200,7 +205,7 @@ export function HeroSection() {
                   
                   {/* Selector 1 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="١. جنسيتي" /></span>
+                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="1. My Nationality" ar="1. جنسيتي" /></span>
                     <Popover open={fromOpen} onOpenChange={setFromOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -247,7 +252,7 @@ export function HeroSection() {
                                 >
                                   <div className="flex items-center gap-3">
                                     <CountryFlag iso={country.iso} title={country.name} />
-                                    <span className="font-medium">{country.name}</span>
+                                    <span className="font-medium">{arabic ? citizenshipLabelAr(country.iso) : country.name}</span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -260,7 +265,7 @@ export function HeroSection() {
 
                   {/* Selector 2 */}
                   <div className="flex-1 flex flex-col gap-1.5 text-left">
-                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="٢. وجهتي" /></span>
+                    <span className="text-xs font-semibold text-primary-foreground/85 uppercase tracking-wider px-1"><LangText en="2. My Destination" ar="2. وجهتي" /></span>
                     <Popover open={toOpen} onOpenChange={setToOpen}>
                       <PopoverTrigger asChild>
                         <button
@@ -278,7 +283,7 @@ export function HeroSection() {
                             {toCountry ? (
                               <div className="flex items-center gap-2">
                                 <CountryFlag iso={SCHENGEN_META[toCountry]?.iso} title={toCountry} />
-                                <span className="text-base font-semibold truncate text-foreground">{toCountry}</span>
+                                <span className="text-base font-semibold truncate text-foreground">{arabic ? countryNameAr(toCountry) : toCountry}</span>
                               </div>
                             ) : (
                               <span className="text-sm font-medium text-muted-foreground"><LangText en="Pick a destination" ar="اختر الوجهة" /></span>
@@ -301,13 +306,13 @@ export function HeroSection() {
                               {schengenCountries.map((country) => (
                                 <CommandItem
                                   key={country}
-                                  value={country}
+                                  value={`${country} ${countryNameAr(country)}`}
                                   onSelect={() => { setToCountry(country); setToOpen(false) }}
                                   className="cursor-pointer py-3 px-4 text-base rounded-xl hover:bg-primary/10 transition-colors my-1"
                                 >
                                   <div className="flex items-center gap-3">
                                     <CountryFlag iso={SCHENGEN_META[country]?.iso} title={country} />
-                                    <span className="font-medium">{country}</span>
+                                    <span className="font-medium">{arabic ? countryNameAr(country) : country}</span>
                                   </div>
                                 </CommandItem>
                               ))}
@@ -330,9 +335,9 @@ export function HeroSection() {
                         disabled={!fromCountry || !toCountry}
                         asChild
                       >
-                        <Link href={handleGetStarted()}>
+                        <LocaleLink href={handleGetStarted()}>
                           <LangText en="Get started" ar="ابدأ" /> <ArrowRight className="ml-2 h-5 w-5" />
-                        </Link>
+                        </LocaleLink>
                       </Button>
                     </motion.div>
                   </div>
@@ -358,14 +363,14 @@ export function HeroSection() {
                           <div>
                             <div className="font-semibold text-primary-foreground text-sm md:text-base">
                               <LangText
-                                en={`Schengen visa required for ${fromLabel} citizens visiting ${toCountry}`}
-                                ar={`تأشيرة شنغن مطلوبة لمواطني ${fromLabel} عند زيارة ${toCountry}`}
+                                en={`Schengen visa required for ${fromEn} citizens visiting ${toCountry}`}
+                                ar={`تأشيرة شنغن مطلوبة لمواطني ${fromAr} عند زيارة ${countryNameAr(toCountry)}`}
                               />
                             </div>
                             <p className="text-xs md:text-sm text-primary-foreground/80 mt-0.5 leading-relaxed">
                               <LangText
                                 en="We fill in your application form and prepare your cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days."
-                                ar="نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال ١–٢ يوم."
+                                ar={<>نعبّئ نموذج طلبك ونجهّز خطاب التغطية وخط السير اليومي وحجوزات الطيران والفندق. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم.</>}
                               />
                             </p>
                           </div>
@@ -391,7 +396,7 @@ export function HeroSection() {
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
                 <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
-                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en={`${PRICE_AED} AED, one flat fee`} ar={`${PRICE_AED} درهمًا، رسوم ثابتة`} /></span>
+                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en={`${PRICE_AED} AED, one flat fee`} ar={`${PRICE_AED} درهم، رسوم ثابتة`} /></span>
               </div>
             </motion.div>
           </motion.div>
@@ -399,7 +404,7 @@ export function HeroSection() {
           </div> {/* Content Wrapper close */}
           {heroBgCountryName && (
             <div className="absolute bottom-4 right-6 md:bottom-5 md:right-8 text-[9px] md:text-[10px] text-[#0A0F1F]/40 tracking-widest font-semibold uppercase z-20 pointer-events-none select-none">
-              {heroBgCountryName}
+              {arabic ? countryNameAr(heroBgCountryName) : heroBgCountryName}
             </div>
           )}
         </motion.div>

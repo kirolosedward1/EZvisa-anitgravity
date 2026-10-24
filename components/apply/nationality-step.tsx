@@ -3,6 +3,7 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { LangText } from "@/components/lang-text"
+import { useMessage } from "@/components/use-message"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import {
   ChoiceList,
@@ -16,12 +17,12 @@ import { TravellerSelect } from "@/components/apply/traveller-select"
 import { priceForTravellers } from "@/lib/currency"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { TRAVELLER_NONE } from "@/lib/travellers-client"
-import type { Traveller } from "@/lib/shared/wizard-contract"
+import { UAE_EMIRATES, type Traveller } from "@/lib/shared/wizard-contract"
 import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
 import { UserRound } from "lucide-react"
 import { normalizePassport, toWesternDigits } from "@/lib/digits"
-import { isValidPhone } from "@/lib/phone"
+import { phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "@/lib/phone"
 
 interface NationalityStepProps {
   formData: FormData
@@ -39,6 +40,17 @@ interface NationalityStepProps {
 
 const fieldClass = cn(wizardFieldClass, "h-[52px]")
 
+/** Arabic names for the contract's emirates (stored value stays the English name, as in the app). */
+const EMIRATE_AR: Record<string, string> = {
+  "Abu Dhabi": "أبوظبي",
+  Dubai: "دبي",
+  Sharjah: "الشارقة",
+  Ajman: "عجمان",
+  "Umm Al Quwain": "أم القيوين",
+  "Ras Al Khaimah": "رأس الخيمة",
+  Fujairah: "الفجيرة",
+}
+
 function isValidEmail(email: string) {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
   if (!emailRegex.test(email)) return false
@@ -50,27 +62,6 @@ function isValidEmail(email: string) {
   return !invalidDomains.includes(domain.toLowerCase())
 }
 
-/** The visible prefix is always +971. Digits are stored as "+971 5xxxxxxx". */
-function localPhone(phone: string) {
-  const trimmed = toWesternDigits(phone).trim()
-  if (trimmed.startsWith("+971")) return trimmed.slice(4).replace(/[^\d]/g, "")
-  return trimmed.replace(/[^\d]/g, "")
-}
-
-function composePhone(local: string) {
-  const digits = toWesternDigits(local).replace(/[^\d]/g, "")
-  return digits ? `+971 ${digits}` : ""
-}
-
-/** UAE numbers are usually written 050 123 4567 or pasted with 971 / 00971: keep only the national number after
- *  +971 ("+971 0501234567" is not a valid international number). Applied when the step is submitted. */
-function nationalNumber(local: string) {
-  let digits = toWesternDigits(local).replace(/[^\d]/g, "")
-  if (digits.startsWith("00971")) digits = digits.slice(5)
-  else if (digits.startsWith("971") && digits.length >= 11) digits = digits.slice(3)
-  return digits.replace(/^0/, "")
-}
-
 /** Local calendar date (YYYY-MM-DD); toISOString() is UTC and is a day behind in the UAE before 04:00. */
 function localIso(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
@@ -79,11 +70,13 @@ function localIso(date: Date) {
 export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading, travellers = [], onPickTraveller, travellerNotice }: NationalityStepProps) {
   const [showErrors, setShowErrors] = useState(false)
   const [maxDob, setMaxDob] = useState("")
+  const passportPlaceholder = useMessage("apply.passportPlaceholderN")
   const seeded = useRef(false)
   const dobDigits = useRef("")
   const withSpouse = formData.spouseAccompanying === "yes"
   const spousePrice = priceForTravellers("yes")
-  const phone = composePhone(nationalNumber(localPhone(formData.phone || "")))
+  const typedPhone = phoneTypingValue(formData.phone || "")
+  const phone = uaeMobileE164(formData.phone || "") ?? ""
 
   useEffect(() => {
     const date = new Date()
@@ -107,10 +100,11 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
     firstName: !formData.firstName.trim(),
     lastName: !formData.lastName.trim(),
     passport: !formData.passportNumber.trim(),
-    phone: !phone || !isValidPhone(phone),
+    phone: !phone,
     email: !formData.email.trim() || !isValidEmail(formData.email.trim()),
     // The form is noValidate, so the input's max isn't enforced by the browser: check the date and 18+ here.
     dateOfBirth: !isValidCalendarDate(formData.dateOfBirth) || formData.dateOfBirth < "1900-01-01" || (!!maxDob && formData.dateOfBirth > maxDob),
+    cityOfResidence: !UAE_EMIRATES.includes(formData.cityOfResidence),
   }
   const isFormValid = !Object.values(errors).some(Boolean)
 
@@ -227,7 +221,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             set({ passportNumber, hasValidPassport: passportNumber.trim() ? "yes" : undefined })
           }}
           inputMode="text"
-          placeholder="e.g. N1234567"
+          placeholder={passportPlaceholder}
           autoCapitalize="characters"
           autoCorrect="off"
           spellCheck={false}
@@ -246,12 +240,13 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
           <LangText en="Phone" ar="الهاتف" />
         </label>
         <div
+          dir="ltr"
           className={cn(
             "flex h-[52px] items-center rounded-[10px] border border-[#E3E7EF] bg-[#FFFFFF] focus-within:border-[#0436DC] focus-within:shadow-[0_0_0_3px_rgba(4,54,220,0.12)]",
             showErrors && errors.phone && "border-[#B83200] focus-within:border-[#B83200] focus-within:shadow-none",
           )}
         >
-          <span className="ps-4 text-[15px] text-[#0A0F1F]" dir="ltr">
+          <span className="ps-4 text-[15px] text-[#0A0F1F]">
             +971
           </span>
           <input
@@ -260,8 +255,13 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             inputMode="numeric"
             autoComplete="tel-national"
             dir="ltr"
-            value={localPhone(formData.phone || "")}
-            onChange={(event) => set({ phone: composePhone(event.target.value) })}
+            value={formData.phone && formData.phone === phone ? uaeLocalDigits(formData.phone) : typedPhone}
+            onChange={(event) => set({ phone: phoneTypingValue(event.target.value) })}
+            onBlur={(event) => {
+              const raw = phoneTypingValue(event.currentTarget.value)
+              const e = uaeMobileE164(raw)
+              if (e) updateFormData({ phone: e })
+            }}
             placeholder="50 123 4567"
             aria-invalid={invalid("phone")}
             className="h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-[15px] text-[#0A0F1F] outline-none placeholder:text-[#5B6475]"
@@ -270,8 +270,8 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
         {showErrors && errors.phone ? (
           <FieldError>
             <LangText
-              en={phone ? "Enter a valid phone number." : "Enter your phone number."}
-              ar={phone ? "أدخل رقم هاتف صحيحًا." : "أدخل رقم الهاتف."}
+              en={typedPhone ? "Enter a valid phone number." : "Enter your phone number."}
+              ar={typedPhone ? "أدخل رقم هاتف صحيحًا." : "أدخل رقم الهاتف."}
             />
           </FieldError>
         ) : null}
@@ -289,7 +289,13 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             description="One applicant"
             descriptionAr="متقدم واحد"
             selected={!withSpouse}
-            onSelect={() => set({ maritalStatus: "single", spouseAccompanying: "no" })}
+            onSelect={() =>
+              set({
+                maritalStatus: "single",
+                spouseAccompanying: "no",
+                ...(formData.travelingWith === "spouse" ? { travelingWith: "alone" } : {}),
+              })
+            }
           />
           <ChoiceRow
             indicator="radio"
@@ -298,7 +304,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             description={`Two applicants, ${spousePrice} AED. Spouse details after payment.`}
             descriptionAr={`متقدمان، ${spousePrice} درهم. بيانات الزوج أو الزوجة بعد الدفع.`}
             selected={withSpouse}
-            onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes" })}
+            onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes", travelingWith: "spouse" })}
           />
         </ChoiceList>
       </div>
@@ -365,6 +371,38 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
           </FieldError>
         ) : null}
       </div>
+
+      <fieldset className="mt-7" data-invalid={invalid("cityOfResidence")}>
+        <legend className={wizardLabelClass}>
+          <LangText en="Emirate you live in" ar="الإمارة التي تقيم فيها" />
+        </legend>
+        <div className="grid grid-cols-2 gap-2" role="radiogroup">
+          {UAE_EMIRATES.map((emirate) => {
+            const selected = formData.cityOfResidence === emirate
+            return (
+              <button
+                key={emirate}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                onClick={() => set({ cityOfResidence: emirate, countryOfResidence: "United Arab Emirates" })}
+                className={cn(
+                  "h-11 rounded-[10px] border px-3 text-start text-[15px] transition-colors",
+                  selected ? "border-primary bg-primary/10 font-medium text-primary" : "border-[#E3E7EF] bg-background text-foreground hover:border-primary/40",
+                  showErrors && errors.cityOfResidence && !selected && "border-[#B83200]",
+                )}
+              >
+                <LangText en={emirate} ar={EMIRATE_AR[emirate] ?? emirate} />
+              </button>
+            )
+          })}
+        </div>
+        {showErrors && errors.cityOfResidence ? (
+          <FieldError>
+            <LangText en="Choose the emirate you live in." ar="اختر الإمارة التي تقيم فيها." />
+          </FieldError>
+        ) : null}
+      </fieldset>
 
       <WizardBar
         onBack={onBack}

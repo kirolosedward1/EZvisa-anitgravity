@@ -6,14 +6,30 @@
 // here or in the app, never over WhatsApp or email.
 import { useRef, useState } from "react"
 import { Check, Loader2, Upload } from "lucide-react"
+import { useSiteLocale } from "@/components/locale-provider"
 import { DOC_FLAG, MAX_UPLOAD_BYTES, UPLOAD_MIME, type Requirement } from "@/lib/shared/wizard-contract"
+import { customerText, type CustomerKey } from "@/lib/translations/customer"
 import { cn } from "@/lib/utils"
+
+const DOC_TITLE: Record<string, CustomerKey> = {
+  passportCopy: "docs.passportBio",
+  residencyCopy: "docs.residency",
+  photo: "docs.photo",
+  bankStatement: "docs.bank",
+  nocCertificate: "docs.noc",
+}
+const DOC_HINT: Record<string, CustomerKey> = {
+  passportCopy: "docs.passportBioHint",
+  photo: "docs.photoShort",
+  bankStatement: "docs.bankStamped",
+}
 
 type RowState = { phase: "idle" | "uploading" | "done" | "error"; message?: string; fileName?: string }
 
-function validate(file: File): string | null {
-  if (!(file.type in UPLOAD_MIME)) return "Use a PDF, JPG or PNG file."
-  if (file.size > MAX_UPLOAD_BYTES) return "This file is larger than 5 MB. Use a smaller scan or photo."
+function validate(file: File, arabic: boolean): string | null {
+  const locale = arabic ? "ar" : "en"
+  if (!(file.type in UPLOAD_MIME)) return customerText(locale, "docs.badType")
+  if (file.size > MAX_UPLOAD_BYTES) return customerText(locale, "docs.tooBig")
   return null
 }
 
@@ -26,21 +42,27 @@ function ChecklistRow({
   received: boolean
   onUpload: (file: File, documentType: string) => Promise<void>
 }) {
+  const locale = useSiteLocale()
+  const arabic = locale === "ar"
   const input = useRef<HTMLInputElement>(null)
   const [state, setState] = useState<RowState>({ phase: "idle" })
   const [dragging, setDragging] = useState(false)
   const busy = state.phase === "uploading"
+  const titleKey = DOC_TITLE[row.document_type]
+  const hintKey = DOC_HINT[row.document_type]
+  const title = arabic && titleKey ? customerText("ar", titleKey) : row.title
+  const hint = arabic && hintKey ? customerText("ar", hintKey) : row.description || customerText(locale, "docs.fallback")
 
   const send = async (file: File | undefined) => {
     if (!file || busy) return
-    const problem = validate(file)
+    const problem = validate(file, arabic)
     if (problem) return setState({ phase: "error", message: problem })
     setState({ phase: "uploading", fileName: file.name })
     try {
       await onUpload(file, row.document_type)
       setState({ phase: "done", fileName: file.name })
     } catch (error) {
-      setState({ phase: "error", message: error instanceof Error ? error.message : "The upload didn't go through. Try again." })
+      setState({ phase: "error", message: arabic ? customerText("ar", "docs.failed") : error instanceof Error ? error.message : "The upload didn't go through. Try again." })
     } finally {
       if (input.current) input.current.value = ""
     }
@@ -77,15 +99,15 @@ function ChecklistRow({
         )}
 
         <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="text-sm font-medium text-foreground">{row.title}</span>
+          <span className="text-sm font-medium text-foreground">{title}</span>
           <span className="truncate text-xs text-muted-foreground">
             {busy
-              ? `Uploading ${state.fileName}…`
+              ? customerText(locale, "docs.uploading", { name: state.fileName ?? "" })
               : state.phase === "done"
-                ? `${state.fileName} uploaded`
+                ? customerText(locale, "docs.uploaded", { name: state.fileName ?? "" })
                 : done
-                  ? "Received"
-                  : row.description || "PDF, JPG or PNG, up to 5 MB"}
+                  ? customerText(locale, "docs.received")
+                  : hint}
           </span>
         </div>
 
@@ -100,17 +122,17 @@ function ChecklistRow({
         />
         <label
           htmlFor={inputId}
-          aria-label={`${done ? "Replace" : "Upload"} ${row.title.toLowerCase()}`}
+          aria-label={`${customerText(locale, done ? "docs.replace" : "docs.upload")} ${title}`}
           className={cn(
             "inline-flex h-9 shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 text-sm font-medium transition-colors",
             busy && "pointer-events-none opacity-50",
             done ? "text-muted-foreground hover:bg-secondary hover:text-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90",
           )}
         >
-          {done ? "Replace" : (
+          {done ? customerText(locale, "docs.replace") : (
             <>
               <Upload className="size-4" aria-hidden="true" />
-              Upload
+              {customerText(locale, "docs.upload")}
             </>
           )}
         </label>
@@ -134,19 +156,20 @@ export function UploadChecklist({
   status: Record<string, unknown>
   onUpload: (file: File, documentType: string) => Promise<void>
 }) {
+  const locale = useSiteLocale()
   const received = rows.filter((r) => !!status[DOC_FLAG[r.document_type]]).length
   const percent = rows.length ? Math.round((received / rows.length) * 100) : 0
 
   return (
-    <section aria-label="Your documents" className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+    <section aria-label={customerText(locale, "docs.yours")} className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
       <div className="flex flex-col gap-3 px-5 pb-2 pt-5 sm:px-6">
         <div className="flex items-baseline justify-between gap-4">
-          <h2 className="panel-title text-foreground">Your documents</h2>
+          <h2 className="panel-title text-foreground">{customerText(locale, "docs.yours")}</h2>
           <span className="text-sm tabular-nums text-muted-foreground">
-            {received} of {rows.length} received
+            {customerText(locale, "docs.count", { n: received, total: rows.length })}
           </span>
         </div>
-        <div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={received} aria-valuemin={0} aria-valuemax={rows.length} aria-label="Documents received">
+        <div className="h-1.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={received} aria-valuemin={0} aria-valuemax={rows.length} aria-label={customerText(locale, "docs.progress")}>
           <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${percent}%` }} />
         </div>
       </div>

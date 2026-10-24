@@ -54,7 +54,7 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       tracking_token: "ez-demo-ready-fr2026",
       full_name: "Ahmed Hassan",
       email: "demo.ready@ezvisa.net",
-      phone: "+971 50 123 4567",
+      phone: "+971 54 710 9533",
       nationality: "Egyptian",
       destination_country: "France",
       travel_purpose: "Tourism & Exploration",

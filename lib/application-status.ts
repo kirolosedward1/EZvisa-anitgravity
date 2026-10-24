@@ -119,7 +119,9 @@ export function missingDetailSteps(app: ApplicationLike): DetailStep[] {
   const start = text(app.entry_date) || text(app.travel_start_date) || text(wizard.travelStartDate)
   const end = text(app.exit_date) || text(app.travel_end_date) || text(wizard.travelEndDate)
   const purpose = text(app.travel_purpose) || text(wizard.purposeOfTrip)
-  const tripAnswered = !!purpose && !!start && !!end && !!text(wizard.hotelCategory)
+  // The UAE residence-visa question (asked last on the trip step); rows that answered the older Emirates ID question are done.
+  const residenceAnswered = !!text(wizard.residenceVisaValid) || !!text(wizard.hasEmiratesId)
+  const tripAnswered = !!purpose && !!start && !!end && !!text(wizard.hotelCategory) && residenceAnswered
   const spouseTravels = text(notes.spouseAccompanying) === "yes" || text(wizard.spouseAccompanying) === "yes"
   const spouseAnswered = !!text(wizard.spouseFirstName) && !!text(wizard.spouseLastName) && !!text(wizard.spouseHasValidPassport)
   const missing: DetailStep[] = []

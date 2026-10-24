@@ -6,6 +6,7 @@
 import { useState } from "react"
 import type React from "react"
 import { useRouter } from "next/navigation"
+import { useLocalizedHref } from "@/components/locale-link"
 import { TripDetailsStep } from "@/components/apply/trip-details-step"
 import { SpouseStep } from "@/components/apply/spouse-step"
 import { EmploymentStep } from "@/components/apply/employment-step"
@@ -13,6 +14,7 @@ import { WizardBar } from "@/components/apply/wizard-bar"
 import { ChoiceList, ChoiceRow, FieldError, WizardQuestion, wizardFieldClass, wizardLabelClass } from "@/components/apply/wizard-choices"
 import { TravellerSelect } from "@/components/apply/traveller-select"
 import { LangText } from "@/components/lang-text"
+import { useMessage } from "@/components/use-message"
 import { normalizePassport } from "@/lib/digits"
 import { cn } from "@/lib/utils"
 import type { DetailStep } from "@/lib/application-status"
@@ -45,6 +47,7 @@ const EMPTY: Partial<FormData> = {
   previousTravel: [],
   preferredCities: [],
   itinerary: "",
+  residenceVisaValid: "",
   passportNumber: "",
   spouseFirstName: "",
   spouseLastName: "",
@@ -60,7 +63,7 @@ const EMPTY: Partial<FormData> = {
 const TRIP_KEYS = [
   "purposeOfTrip", "travelStartDate", "travelEndDate", "datesFlexible", "travelMonth", "tripLength", "travelingWith",
   "hotelCategory", "fundingSource", "balanceRange", "isFirstSchengenVisa", "previousRefusals", "refusalDetails",
-  "willVisitOtherCountries", "additionalCountries", "itinerary",
+  "willVisitOtherCountries", "additionalCountries", "itinerary", "residenceVisaValid",
 ] as const
 const SPOUSE_KEYS = ["spouseFirstName", "spouseLastName", "spouseHasValidPassport", "spouseOccupation", "spouseTravellerId"] as const
 const EMPLOYMENT_KEYS = ["employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "hasNOC", "averageMonthlyIncome"] as const
@@ -83,8 +86,13 @@ export function ContinueForm({
   initial: Partial<FormData>
 }) {
   const router = useRouter()
+  const localize = useLocalizedHref()
+  const passportPlaceholder = useMessage("apply.passportPlaceholderN")
   const [index, setIndex] = useState(0)
-  const [tripScreen, setTripScreen] = useState(0)
+  // A trip already answered except for the newer UAE residence-visa question opens straight on that question (screen 10).
+  const [tripScreen, setTripScreen] = useState(() =>
+    initial.purposeOfTrip && initial.travelStartDate && initial.hotelCategory && !initial.residenceVisaValid ? 10 : 0,
+  )
   const [form, setForm] = useState<Partial<FormData>>({ ...EMPTY, ...initial })
   const [error, setError] = useState("")
   const [pending, setPending] = useState(false)
@@ -134,7 +142,7 @@ export function ContinueForm({
         return
       }
       if (last) {
-        router.push(uploadHref)
+        router.push(localize(uploadHref))
         router.refresh()
         return
       }
@@ -221,7 +229,7 @@ export function ContinueForm({
               title="Do you have a valid passport?"
               titleAr="هل لديك جواز سفر ساري المفعول؟"
               helper="It should be valid for at least 3 months after you return."
-              helperAr="يجب أن يكون صالحًا لمدة ٣ أشهر على الأقل بعد عودتك."
+              helperAr="يجب أن يكون صالحًا لمدة 3 أشهر على الأقل بعد عودتك."
             />
             <ChoiceList label="Valid passport">
               <ChoiceRow
@@ -251,7 +259,7 @@ export function ContinueForm({
                   value={form.passportNumber || ""}
                   onChange={(event) => { update({ passportNumber: normalizePassport(event.target.value) }); setPassportErrors(false) }}
                   inputMode="text"
-                  placeholder="e.g. N1234567"
+                  placeholder={passportPlaceholder}
                   autoCapitalize="characters"
                   autoCorrect="off"
                   spellCheck={false}

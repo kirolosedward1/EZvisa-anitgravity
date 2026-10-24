@@ -3,12 +3,15 @@
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { DigitRanges } from "@/components/digit-ranges"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
-import { useArabic } from "@/components/ready-line"
+import { Msg } from "@/components/msg"
+import { Image } from "@/components/image"
+import { useSiteLocale } from "@/components/locale-provider"
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
-  const arabic = useArabic()
+  const arabic = useSiteLocale() === "ar"
   const faqs = arabic ? FAQ_AR : FAQ_EN
 
   const toggleFAQ = (index: number) => {
@@ -25,9 +28,11 @@ export function FAQSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-12 lg:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-3 md:mb-4 leading-tight tracking-tight">Frequently asked questions</h2>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-3 md:mb-4 leading-tight tracking-tight">
+            <Msg id="faq.heading" />
+          </h2>
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Everything you need to know about our visa application service.
+            <Msg id="faq.intro" />
           </p>
         </motion.div>
 
@@ -64,7 +69,7 @@ export function FAQSection() {
                       className="overflow-hidden"
                     >
                       <div className="pb-4 md:pb-6 pe-8 md:pe-12 text-start">
-                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.answer}</p>
+                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed"><DigitRanges text={faq.answer} /></p>
                       </div>
                     </motion.div>
                   )}
@@ -83,16 +88,16 @@ export function FAQSection() {
               className="lg:sticky lg:top-24"
             >
               <div className="relative aspect-[3/4] w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow-xl ring-1 ring-border/50">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                  src="https://videos.pexels.com/video-files/27497252/12153786_1440_2560_30fps.mp4"
-                >
-                  Your browser does not support the video tag.
-                </video>
+                {/* A remote autoplay <video> crashes WebKit while parsing the home
+                    document (Playwright WebKit and the same engine at 390 and 1440),
+                    so this column is a still. */}
+                <Image
+                  src="/images/woman-travel.png"
+                  alt={arabic ? "مسافرة" : "Traveller"}
+                  fill
+                  sizes="320px"
+                  className="object-cover"
+                />
               </div>
             </motion.div>
           </div>

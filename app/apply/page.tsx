@@ -8,7 +8,10 @@ import { PaymentStep } from "@/components/apply/payment-step"
 import { WizardShell } from "@/components/apply/wizard-shell"
 import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useSiteLocale } from "@/components/locale-provider"
+import { localizePath } from "@/lib/route-path"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -184,17 +187,11 @@ const defaultFormData: WizardFormData = {
   spousePhoto: null,
 }
 
-function localizeApplyPath(path: string) {
-  if (typeof window === "undefined") return path
-  const pathName = window.location.pathname
-  const onArabic = pathName === "/ar" || pathName.startsWith("/ar/")
-  if (!onArabic || path.startsWith("/ar")) return path
-  return `/ar${path}`
-}
-
 function ApplyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const arabic = useSiteLocale() === "ar"
+  const localizeApplyPath = (path: string) => localizePath(path, arabic)
 
   const [formData, setFormData] = useState<WizardFormData>(defaultFormData)
   const [isInitialized, setIsInitialized] = useState(false)
@@ -521,7 +518,7 @@ function ApplyPageContent() {
 
   const renderStepContent = () => {
     if (!isInitialized) {
-      return <div className="p-8 text-center text-muted-foreground">Loading...</div>
+      return <div className="p-8 text-center text-muted-foreground"><Msg id="apply.loading" /></div>
     }
 
     const stepSlug = getStepSlug(currentStep)
@@ -639,7 +636,7 @@ function ApplyPageContent() {
 
 export default function ApplyPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-[100dvh]">Loading...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[100dvh]"><Msg id="apply.loading" /></div>}>
       <ApplyPageContent />
     </Suspense>
   )

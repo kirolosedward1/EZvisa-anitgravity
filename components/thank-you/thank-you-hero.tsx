@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { CheckCircle2, Mail } from "lucide-react"
+import { useSiteLocale } from "@/components/locale-provider"
+import { customerText } from "@/lib/translations/customer"
 
 interface ApplicationData {
   firstName: string
@@ -16,6 +18,8 @@ interface ThankYouHeroProps {
 }
 
 export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
+  const locale = useSiteLocale()
+  const arabic = locale === "ar"
   const [showConfetti, setShowConfetti] = useState(false)
   const [emailSent, setEmailSent] = useState(false)
 
@@ -79,14 +83,19 @@ export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
             transition={{ delay: 0.3 }}
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mb-4 text-[#0A0F1F]">
-              Payment <span className="text-[#0436DC]">Successful!</span>
+              {customerText(locale, "thanks.paid")} <span className="text-[#0436DC]">{customerText(locale, "thanks.paidAccent")}</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-6">
-              Welcome aboard, {applicationData.firstName}!
+              {arabic ? (
+                <>
+                  أهلًا بك، <bdi dir="ltr">{applicationData.firstName}</bdi>
+                </>
+              ) : (
+                customerText("en", "thanks.welcome", { name: applicationData.firstName })
+              )}
             </p>
             <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Your visa application has been received and our expert team is already reviewing it. 
-              We'll have you travel-ready in no time.
+              {customerText(locale, "thanks.received")}
             </p>
           </motion.div>
 
@@ -99,7 +108,13 @@ export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
               className="mt-8 inline-flex items-center gap-2 bg-primary/10 px-6 py-3 rounded-full"
             >
               <span className="text-sm font-medium text-primary">
-                Reference: #{applicationData.orderId}
+                {arabic ? (
+                  <>
+                    المرجع: <bdi dir="ltr">#{applicationData.orderId}</bdi>
+                  </>
+                ) : (
+                  customerText("en", "thanks.reference", { id: applicationData.orderId })
+                )}
               </span>
             </motion.div>
           )}
@@ -113,7 +128,13 @@ export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
           >
             <Mail className="w-5 h-5" />
             <span className="text-sm font-medium">
-              Confirmation email sent to {applicationData.email}
+              {arabic ? (
+                <>
+                  أُرسلت رسالة التأكيد إلى <bdi dir="ltr">{applicationData.email}</bdi>
+                </>
+              ) : (
+                customerText("en", "thanks.email", { email: applicationData.email })
+              )}
             </span>
           </motion.div>
 

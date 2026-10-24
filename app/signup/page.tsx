@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, Suspense } from "react"
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
+import { useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,12 +11,21 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
+import { useSiteLocale } from "@/components/locale-provider"
+import { EMAIL_RE } from "@/lib/auth/errors"
+import { authCallbackUrl } from "@/lib/auth/redirect"
+import { translations } from "@/lib/translations"
+import { authFormErrorText } from "@/lib/translations/auth-form"
 
 function SignupForm() {
-  const router = useRouter()
+  const locale = useSiteLocale()
+  const arabic = locale === "ar"
+  const copy = translations[locale].authForm
   const searchParams = useSearchParams()
+  const localize = useLocalizedHref()
   const rawNext = searchParams.get("next") || "/dashboard"
-  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const safe = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const next = localize(safe)
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -32,8 +41,8 @@ function SignupForm() {
     setResending(true)
     await supabase.auth.resend({
       type: "signup",
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}` },
+      email: email.trim(),
+      options: { emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }) },
     })
     setResending(false)
     cooldown.start()
@@ -41,19 +50,28 @@ function SignupForm() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    const clean = email.trim()
+    if (!EMAIL_RE.test(clean)) {
+      setError(copy.errors["invalid-email"])
+      return
+    }
+    if (password.length < 6) {
+      setError(copy.passwordTooShort)
+      return
+    }
     setIsLoading(true)
     setError("")
-    
+
     const { error } = await supabase.auth.signUp({
-      email,
+      email: clean,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}`,
+        emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }),
       },
     })
 
     if (error) {
-      setError(error.message)
+      setError(authFormErrorText(locale, error))
       setIsLoading(false)
     } else {
       setSuccess(true)
@@ -66,8 +84,9 @@ function SignupForm() {
     return (
       <div className="w-full max-w-md rounded-xl border border-border/50 bg-card p-8 shadow-lg">
         <EmailSent
-          email={email}
-          note="Open it to confirm your account, then you can sign in."
+          title={copy.checkEmailTitle}
+          email={email.trim()}
+          note={copy.verifyContinue}
           onResend={resend}
           resending={resending}
           left={cooldown.left}
@@ -80,11 +99,11 @@ function SignupForm() {
   return (
     <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
       <div className="text-center">
-        <h2 className="text-3xl font-semibold tracking-tight text-foreground">Create an account</h2>
-        <p className="text-muted-foreground mt-2">Sign up to track and manage your visa applications</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">{copy.signupTitle}</h1>
+        <p className="text-muted-foreground mt-2">{copy.signupSubtitle}</p>
       </div>
 
-      <form onSubmit={handleSignup} className="space-y-6">
+      <form onSubmit={handleSignup} className="space-y-6" noValidate>
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
@@ -93,24 +112,29 @@ function SignupForm() {
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email address</Label>
+            <Label htmlFor="email">{copy.emailLabel}</Label>
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              dir="ltr"
+              autoComplete="email"
+              inputMode="email"
+              placeholder={copy.emailPlaceholder}
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => { setEmail(e.target.value); setError("") }}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{copy.passwordLabel}</Label>
             <Input
               id="password"
               type="password"
+              dir="ltr"
+              autoComplete="new-password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => { setPassword(e.target.value); setError("") }}
               required
               minLength={6}
             />
@@ -120,22 +144,26 @@ function SignupForm() {
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Signing up...
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              {copy.signingUp}
             </>
           ) : (
-            "Create account"
+            copy.createAccount
           )}
         </Button>
       </form>
 
-      <GoogleSignInButton next={next} label="Sign up with Google" />
+      <GoogleSignInButton
+        next={next}
+        label={copy.signUpGoogle}
+        onError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
+      />
 
       <div className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
-        <Link href={`/login?next=${encodeURIComponent(next)}`} className="font-medium text-primary hover:underline">
-          Sign in
-        </Link>
+        {copy.haveAccount}{" "}
+        <LocaleLink href={`/login?next=${encodeURIComponent(next)}`} className="font-medium text-primary hover:underline">
+          {copy.signIn}
+        </LocaleLink>
       </div>
     </div>
   )
@@ -144,7 +172,7 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
-      <Suspense fallback={<div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
+      <Suspense fallback={<div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" /></div>}>
         <SignupForm />
       </Suspense>
     </div>

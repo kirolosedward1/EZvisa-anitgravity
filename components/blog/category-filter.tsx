@@ -1,7 +1,8 @@
 "use client"
 
-import Link from "next/link"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { LocaleLink, localizeHref } from "@/components/locale-link"
+import { NewsCategory } from "@/components/blog/news-copy"
 import { motion } from "framer-motion"
 import { ChevronDown } from "lucide-react"
 import { useState } from "react"
@@ -12,13 +13,12 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ categories, selectedCategory }: CategoryFilterProps) {
-  const searchParams = useSearchParams()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(false)
 
   const handleCategoryChange = (category: string) => {
     const href = category === "All" ? "/news" : `/news?category=${encodeURIComponent(category)}`
-    router.push(href)
+    router.push(localizeHref(href))
     setIsOpen(false)
     setTimeout(() => window.scrollTo(0, 0), 0)
   }
@@ -37,7 +37,7 @@ export function CategoryFilter({ categories, selectedCategory }: CategoryFilterP
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Link
+              <LocaleLink
                 href={href}
                 className={`px-6 py-2.5 rounded-full font-medium transition-all ${
                   isActive
@@ -45,8 +45,8 @@ export function CategoryFilter({ categories, selectedCategory }: CategoryFilterP
                     : "bg-background border border-border hover:border-primary hover:text-primary"
                 }`}
               >
-                {category}
-              </Link>
+                <NewsCategory category={category} />
+              </LocaleLink>
             </motion.div>
           )
         })}
@@ -57,7 +57,7 @@ export function CategoryFilter({ categories, selectedCategory }: CategoryFilterP
           onClick={() => setIsOpen(!isOpen)}
           className="w-full px-4 py-3 bg-background border border-border rounded-lg flex items-center justify-between hover:border-primary transition-colors"
         >
-          <span className="font-medium">{selectedCategory}</span>
+          <span className="font-medium"><NewsCategory category={selectedCategory} /></span>
           <ChevronDown className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""}`} />
         </button>
 
@@ -78,7 +78,7 @@ export function CategoryFilter({ categories, selectedCategory }: CategoryFilterP
                     isActive ? "bg-primary/10 text-primary font-medium" : "hover:bg-muted"
                   }`}
                 >
-                  {category}
+                  <NewsCategory category={category} />
                 </button>
               )
             })}

@@ -2,30 +2,44 @@ import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { BankBalanceCalculatorClient } from "@/components/tools/bank-balance-calculator-client"
+import { withArabicMeta } from "@/lib/page-meta"
+import { requestLocale } from "@/lib/request-locale"
 
-export const metadata: Metadata = {
-  title: "Schengen Visa Bank Balance Calculator",
-  description: "Calculate the exact minimum bank balance required for your Schengen visa application from Dubai & Abu Dhabi. Country-specific consular requirements in AED.",
-  alternates: {
-    canonical: "https://www.ezvisa.net/tools/bank-balance-calculator",
-  },
-  openGraph: {
-    title: "Schengen Visa Bank Balance Calculator | EZvisa",
-    description: "Check official daily subsistence rates and required bank closing balances in AED for Spain, France, Italy, Germany, and Switzerland.",
-    url: "https://www.ezvisa.net/tools/bank-balance-calculator",
-    type: "website",
-  },
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "Schengen Visa Bank Balance Calculator",
+      description: "Calculate the exact minimum bank balance required for your Schengen visa application from Dubai & Abu Dhabi. Country-specific consular requirements in AED.",
+      alternates: {
+        canonical: "https://www.ezvisa.net/tools/bank-balance-calculator",
+      },
+      openGraph: {
+        title: "Schengen Visa Bank Balance Calculator | EZvisa",
+        description: "Check official daily subsistence rates and required bank closing balances in AED for Spain, France, Italy, Germany, and Switzerland.",
+        url: "https://www.ezvisa.net/tools/bank-balance-calculator",
+        type: "website",
+      },
+    },
+    {
+      title: "حاسبة الرصيد البنكي لتأشيرة شنغن",
+      description: "احسب الحد الأدنى للرصيد الختامي الذي يُظهره كشف حسابك في الإمارات، وفق المعدل اليومي لكل دولة، بالدرهم.",
+      path: "/ar/tools/bank-balance-calculator",
+    },
+  )
 }
 
-export default function BankBalanceCalculatorPage() {
+export default async function BankBalanceCalculatorPage() {
+  const arabic = (await requestLocale()) === "ar"
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: "Schengen Visa Proof of Funds Calculator",
-    url: "https://www.ezvisa.net/tools/bank-balance-calculator",
+    name: arabic ? "حاسبة إثبات الملاءة لتأشيرة شنغن" : "Schengen Visa Proof of Funds Calculator",
+    url: arabic ? "https://www.ezvisa.net/ar/tools/bank-balance-calculator" : "https://www.ezvisa.net/tools/bank-balance-calculator",
     applicationCategory: "FinanceApplication",
     operatingSystem: "All",
-    description: "Calculate statutory minimum bank balances required by European embassies for UAE residents.",
+    description: arabic
+      ? "احسب الحد الأدنى للرصيد البنكي الذي تطلبه السفارات الأوروبية من المقيمين في الإمارات."
+      : "Calculate statutory minimum bank balances required by European embassies for UAE residents.",
     offers: {
       "@type": "Offer",
       price: "0",
@@ -42,13 +56,15 @@ export default function BankBalanceCalculatorPage() {
         <div className="container max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-2 block">
-              Financial Readiness Utility
+              {arabic ? "حاسبة الملاءة المالية" : "Financial Readiness Utility"}
             </span>
             <h1 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight">
-              Schengen Visa Bank Balance Calculator
+              {arabic ? "حاسبة الرصيد البنكي لتأشيرة شنغن" : "Schengen Visa Bank Balance Calculator"}
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">
-              Find out the exact closing balance your UAE bank statement needs to show for your European visa application, tailored to each country&apos;s legal daily subsistence requirements.
+              {arabic
+                ? "اعرف الرصيد الختامي الذي يحتاج كشف حسابك في الإمارات إلى إظهاره، وفق المعدل اليومي المعتمد لكل دولة."
+                : "Find out the exact closing balance your UAE bank statement needs to show for your European visa application, tailored to each country's legal daily subsistence requirements."}
             </p>
           </div>
 

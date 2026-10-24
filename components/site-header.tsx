@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import { Image } from "@/components/image"
 import Link from "next/link"
 import { LocaleLink } from "@/components/locale-link"
 import { Button } from "@/components/ui/button"
@@ -15,9 +15,12 @@ import { CountryFlag } from "@/components/country-flag"
 import { UserMenu, useViewer } from "@/components/user-menu"
 import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
+import { HOMEPAGE_NATIONALITIES } from "@/lib/shared/wizard-contract"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
+import { useSiteLocale } from "@/components/locale-provider"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
 
-const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
+const nationalities = HOMEPAGE_NATIONALITIES
 
 function WhatsAppGlyph({ className }: { className?: string }) {
   return (
@@ -52,7 +55,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const headerRef = useRef<HTMLElement>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showWhatsAppTooltip, setShowWhatsAppTooltip] = useState(false)
-  const pathname = usePathname()
+  const rawPathname = usePathname()
+  // /ar/* renders the same pages: compare against the locale-free path so /ar gets exactly the EN header.
+  const pathname = rawPathname?.replace(/^\/ar(?=\/|$)/, "") || "/"
   const router = useRouter()
   const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
   const isWizardPage = path.startsWith("/apply")
@@ -73,6 +78,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const [pageUrl, setPageUrl] = useState<string | null>(null)
   // Application pages register their case so WhatsApp opens with its reference, status and page.
   const supportCase = useSupportCase()
+  const arabic = useSiteLocale() === "ar"
 
   useEffect(() => {
     const el = headerRef.current
@@ -103,7 +109,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     return `Hi! I have a question about visa services. I'm currently viewing: ${baseUrl}`
   }
 
-  const whatsappLink = `https://wa.me/971547109533?text=${encodeURIComponent(getWhatsAppMessage())}`
+  const whatsappLink = getWhatsAppUrl(getWhatsAppMessage(), arabic)
 
   useEffect(() => {
     if (isMenuOpen) {
@@ -214,7 +220,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           const elementPosition = element.getBoundingClientRect().top
           const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 20
           window.scrollTo({ top: offsetPosition, behavior: "smooth" })
-          window.history.replaceState(null, "", pathname)
+          window.history.replaceState(null, "", rawPathname)
         }
       }, 300)
     }
@@ -342,7 +348,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                   <div className="flex items-center justify-between mb-4 px-2">
                                     <h3 className="text-sm font-semibold tracking-tight text-foreground"><LangText en="Popular Destinations" ar="وجهات شائعة" /></h3>
                                     <LocaleLink href="/destinations" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                                      <LangText en="View all" ar="عرض الكل" /> <span className="hidden sm:inline"><LangText en="29 countries" ar="٢٩ دولة" /></span> &rarr;
+                                      <LangText en="View all" ar="عرض الكل" /> <span className="hidden sm:inline"><LangText en="29 countries" ar="29 دولة" /></span> &rarr;
                                     </LocaleLink>
                                   </div>
                                   <div className="grid grid-cols-2 gap-2">

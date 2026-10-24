@@ -7,8 +7,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { useSiteLocale } from "@/components/locale-provider"
+
+const ERROR_AR: Record<string, string> = {
+  "Too many messages. Please wait a minute and try again.": "رسائل كثيرة. انتظر دقيقة ثم أعد المحاولة.",
+  "Please fill in your name, a valid email and a message.": "أدخل اسمك وبريدًا صالحًا ورسالة.",
+  "Email service not configured": "خدمة البريد غير مهيأة.",
+  "We couldn't send your message. Please try again or reach us on WhatsApp.": "تعذّر إرسال رسالتك. أعد المحاولة أو راسلنا على واتساب.",
+  "Failed to send message. Please try again.": "تعذّر إرسال الرسالة. أعد المحاولة.",
+  "An unexpected network error occurred. Please try again later.": "حدث خطأ في الشبكة. أعد المحاولة لاحقًا.",
+}
 
 export function ContactForm() {
+  const arabic = useSiteLocale() === "ar"
+  const t = (en: string, ar: string) => (arabic ? ar : en)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [subject, setSubject] = useState("")
@@ -34,13 +46,14 @@ export function ContactForm() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to send message. Please try again.");
+        throw new Error(data.message || t("Failed to send message. Please try again.", "تعذّر إرسال الرسالة. أعد المحاولة."));
       }
 
       setIsSuccess(true)
     } catch (error: any) {
       setIsError(true)
-      setErrorMessage(error.message || "An unexpected network error occurred. Please try again later.")
+      const raw = error.message || "An unexpected network error occurred. Please try again later."
+      setErrorMessage(arabic ? ERROR_AR[raw] || raw : raw)
     } finally {
       setIsSubmitting(false)
     }
@@ -57,9 +70,9 @@ export function ContactForm() {
             exit={{ opacity: 0 }}
             className="relative z-10"
           >
-            <h2 className="panel-title panel-title-lg mb-1.5 text-foreground">Send us a message</h2>
+            <h2 className="panel-title panel-title-lg mb-1.5 text-foreground">{t("Send us a message", "أرسل لنا رسالة")}</h2>
             <p className="mb-8 text-sm text-muted-foreground">
-              We&apos;ll reply by email. If your message is about an existing application, please include your EZ- reference.
+              {t("We'll reply by email. If your message is about an existing application, please include your EZ- reference.", "سنرد عليك بالبريد الإلكتروني. إذا كانت رسالتك عن طلب قائم، يُرجى ذكر مرجع EZ-.")}
             </p>
 
             {isError && (
@@ -76,13 +89,13 @@ export function ContactForm() {
                     htmlFor="name"
                     className="text-sm font-medium text-foreground"
                   >
-                    Full name
+                    {t("Full name", "الاسم الكامل")}
                   </Label>
                   <Input
                     id="name"
                     type="text"
                     autoComplete="name"
-                    placeholder="John Doe"
+                    placeholder={t("John Doe", "الاسم")}
                     required
                     disabled={isSubmitting}
                     value={name}
@@ -95,13 +108,13 @@ export function ContactForm() {
                     htmlFor="email"
                     className="text-sm font-medium text-foreground"
                   >
-                    Email
+                    {t("Email", "البريد الإلكتروني")}
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     autoComplete="email"
-                    placeholder="john@example.com"
+                    placeholder={t("john@example.com", "name@example.com")}
                     required
                     disabled={isSubmitting}
                     value={email}
@@ -116,12 +129,12 @@ export function ContactForm() {
                   htmlFor="subject"
                   className="text-sm font-medium text-foreground"
                 >
-                  Subject
+                  {t("Subject", "الموضوع")}
                 </Label>
                 <Input
                   id="subject"
                   type="text"
-                  placeholder="Question about visa application"
+                  placeholder={t("Question about visa application", "سؤال عن طلب التأشيرة")}
                   required
                   disabled={isSubmitting}
                   value={subject}
@@ -135,11 +148,11 @@ export function ContactForm() {
                   htmlFor="message"
                   className="text-sm font-medium text-foreground"
                 >
-                  Message
+                  {t("Message", "الرسالة")}
                 </Label>
                 <Textarea
                   id="message"
-                  placeholder="Tell us how we can help you..."
+                  placeholder={t("Tell us how we can help you...", "أخبرنا كيف نساعدك...")}
                   required
                   disabled={isSubmitting}
                   rows={5}
@@ -158,12 +171,12 @@ export function ContactForm() {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                    Sending...
+                    {t("Sending...", "جارٍ الإرسال...")}
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    Send message
+                    {t("Send message", "أرسل الرسالة")}
                   </>
                 )}
               </Button>
@@ -180,9 +193,17 @@ export function ContactForm() {
             <div className="mb-6 flex size-14 items-center justify-center rounded-full bg-success/10 text-success">
               <CheckCircle2 className="size-7" aria-hidden="true" />
             </div>
-            <h3 className="panel-title panel-title-lg mb-2 text-foreground">Message sent</h3>
+            <h3 className="panel-title panel-title-lg mb-2 text-foreground">{t("Message sent", "أُرسلت الرسالة")}</h3>
             <p className="mb-8 max-w-md text-sm leading-relaxed text-muted-foreground">
-              Thanks, <span className="font-medium text-foreground">{name}</span>. A visa specialist will reply to <span className="font-medium text-foreground">{email}</span>. If it&apos;s urgent, message us on WhatsApp.
+              {arabic ? (
+                <>
+                  شكرًا، <span className="font-medium text-foreground">{name}</span>. سيرد مختص تأشيرات على <span className="font-medium text-foreground">{email}</span>. إذا كان الأمر عاجلًا، راسلنا على واتساب.
+                </>
+              ) : (
+                <>
+                  Thanks, <span className="font-medium text-foreground">{name}</span>. A visa specialist will reply to <span className="font-medium text-foreground">{email}</span>. If it&apos;s urgent, message us on WhatsApp.
+                </>
+              )}
             </p>
             <Button
               onClick={() => {
@@ -195,7 +216,7 @@ export function ContactForm() {
               variant="outline"
               className="h-12 rounded-full px-6 text-sm font-semibold"
             >
-              Send another message
+              {t("Send another message", "أرسل رسالة أخرى")}
             </Button>
           </motion.div>
         )}

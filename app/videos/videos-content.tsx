@@ -7,12 +7,15 @@ import { Play, Clock } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { InnerHero } from "@/components/inner-hero"
 import { ContactSection } from "@/components/contact-section"
+import { useSiteLocale } from "@/components/locale-provider"
 
 const videos = [
   {
     id: 1,
     title: "How to apply for a Schengen visa",
+    titleAr: "كيف تقدّم لطلب تأشيرة شنغن",
     description: "A quick overview of the Schengen visa application process.",
+    descriptionAr: "الخطوات من أول إجابة حتى موعد مركز التأشيرات، في نحو 20 ثانية.",
     thumbnail: "https://img.youtube.com/vi/OMkd3GwgYn8/maxresdefault.jpg",
     duration: "0:21",
     youtubeUrl: "https://www.youtube.com/shorts/OMkd3GwgYn8",
@@ -21,6 +24,7 @@ const videos = [
 ]
 
 export default function VideosContent() {
+  const arabic = useSiteLocale() === "ar"
   const [selectedVideo, setSelectedVideo] = useState<typeof videos[0] | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -41,9 +45,13 @@ export default function VideosContent() {
       <SiteHeader forceBackground={true} />
       <div className="flex-1">
         <InnerHero
-          badge="Guides"
-          title="Video guides"
-          description="Short videos explaining the Schengen visa process. You can find more on our YouTube and TikTok channels."
+          badge={arabic ? "أدلة" : "Guides"}
+          title={arabic ? "أدلة بالفيديو" : "Video guides"}
+          description={
+            arabic
+              ? "مقاطع قصيرة تشرح خطوات طلب تأشيرة شنغن. تجد المزيد على قناتينا في يوتيوب وتيك توك."
+              : "Short videos explaining the Schengen visa process. You can find more on our YouTube and TikTok channels."
+          }
         />
 
         {/* Videos Grid Section */}
@@ -62,7 +70,7 @@ export default function VideosContent() {
                     {/* Thumbnail Image */}
                     <img 
                       src={video.thumbnail || "/placeholder.svg"} 
-                      alt={video.title}
+                      alt={arabic ? video.titleAr : video.title}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-foreground/0 transition-colors duration-300 group-hover:bg-foreground/30" />
@@ -83,9 +91,9 @@ export default function VideosContent() {
                   {/* Video Info */}
                   <div className="p-4">
                     <h3 className="panel-title mb-1.5 line-clamp-2 text-foreground transition-colors group-hover:text-primary">
-                      {video.title}
+                      {arabic ? video.titleAr : video.title}
                     </h3>
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{video.description}</p>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{arabic ? video.descriptionAr : video.description}</p>
                   </div>
                 </button>
               ))}

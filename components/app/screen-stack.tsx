@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { motion } from "framer-motion"
 
 import { useTranslation } from "@/lib/translations/use-translation"

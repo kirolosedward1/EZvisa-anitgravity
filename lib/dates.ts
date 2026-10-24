@@ -101,6 +101,50 @@ export function formatTravelMonth(value?: string | null): string {
   return `${MONTHS_LONG[month - 1]} ${match[1]}`
 }
 
+/** Arabic month name for a YYYY-MM travel month, for example نوفمبر 2026. */
+export function formatTravelMonthAr(value?: string | null): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(value?.trim() ?? "")
+  if (!match) return ""
+  const month = Number(match[2])
+  if (month < 1 || month > 12) return ""
+  return `${MONTHS_AR[month - 1]} ${match[1]}`
+}
+
+/**
+ * «24 أكتوبر 2026». Day, Arabic month name, year, Western digits, no weekday or comma.
+ * A calendar date (YYYY-MM-DD) stays on that day. Timestamps use the UAE calendar.
+ * Pass `withTime` for a clock, still without a comma: «24 أكتوبر 2026 في 4:00 م».
+ * Render with ArabicDate so the phrase stays RTL. A dir="ltr" wrapper puts the day on the left.
+ */
+export function formatArabicDate(value?: string | Date | null, withTime = false): string {
+  if (value == null || value === "") return ""
+  const calendar = typeof value === "string" ? parseCalendarDate(value) : null
+  const date = calendar ? new Date(`${calendar.iso}T12:00:00Z`) : value instanceof Date ? value : new Date(value)
+  if (Number.isNaN(date.getTime())) return ""
+  return new Intl.DateTimeFormat("ar-EG-u-nu-latn", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: calendar ? "UTC" : "Asia/Dubai",
+    ...(withTime && !calendar ? { hour: "numeric" as const, minute: "2-digit" as const, hour12: true as const } : {}),
+  }).format(date)
+}
+
+/** Page-language date. Arabic keeps Western digits, for example 11 نوفمبر. */
+export function formatPageDate(value: string, arabic: boolean, withYear = false) {
+  const parsed = parseCalendarDate(value)
+  if (!parsed) return value
+  const [year, month, day] = parsed.iso.split("-").map(Number)
+  const date = new Date(Date.UTC(year, month - 1, day, 12))
+  return new Intl.DateTimeFormat(arabic ? "ar-EG" : "en-GB", {
+    day: "numeric",
+    month: arabic ? "long" : "short",
+    timeZone: "UTC",
+    numberingSystem: "latn",
+    ...(withYear ? { year: "numeric" as const } : {}),
+  }).format(date)
+}
+
 export function upcomingTravelMonths(count = 12, now = new Date()) {
   const year = now.getUTCFullYear()
   const month = now.getUTCMonth()

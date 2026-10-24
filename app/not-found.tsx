@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button"
 import { FileQuestion, Home, ArrowLeft } from "lucide-react"
-import Link from "next/link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
+import { LangText } from "@/components/lang-text"
+import { LocaleLink } from "@/components/locale-link"
 
 export default function NotFound() {
   return (
@@ -16,26 +17,30 @@ export default function NotFound() {
 
           <h1 className="text-6xl font-semibold text-primary mb-4">404</h1>
 
-          <h2 className="text-2xl font-semibold text-foreground mb-3">Page Not Found</h2>
+          <h2 className="text-2xl font-semibold text-foreground mb-3">
+            <LangText en="Page Not Found" ar="الصفحة غير موجودة" />
+          </h2>
 
           <p className="text-muted-foreground mb-8">
-            The page you are looking for does not exist or has been moved. Please check the URL or navigate back to the
-            homepage.
+            <LangText
+              en="The page you are looking for does not exist or has been moved. Please check the URL or navigate back to the homepage."
+              ar="الصفحة التي تبحث عنها غير موجودة أو نُقلت. تحقق من الرابط أو ارجع إلى الرئيسية."
+            />
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button asChild className="gap-2">
-              <Link href="/">
+              <LocaleLink href="/">
                 <Home className="w-4 h-4" />
-                Go Home
-              </Link>
+                <LangText en="Go Home" ar="الرئيسية" />
+              </LocaleLink>
             </Button>
 
             <Button variant="outline" asChild className="gap-2 bg-transparent">
-              <Link href="/documents">
+              <LocaleLink href="/documents">
                 <ArrowLeft className="w-4 h-4" />
-                View Documents
-              </Link>
+                <LangText en="View Documents" ar="المستندات" />
+              </LocaleLink>
             </Button>
           </div>
         </div>

@@ -16,7 +16,18 @@ async function handleSignOut(request: Request) {
     // Graceful fallback
   }
 
-  return NextResponse.redirect(new URL("/login", request.url), {
+  const referer = request.headers.get("referer")
+  let refererArabic = false
+  if (referer) {
+    try {
+      const path = new URL(referer).pathname
+      refererArabic = path === "/ar" || path.startsWith("/ar/")
+    } catch {
+      refererArabic = false
+    }
+  }
+  const arabic = request.headers.get("x-ez-locale") === "ar" || refererArabic
+  return NextResponse.redirect(new URL(arabic ? "/ar/login" : "/login", request.url), {
     status: 302,
   })
 }

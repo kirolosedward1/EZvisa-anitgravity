@@ -3,9 +3,11 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowUp } from "lucide-react"
+import { useMessage } from "@/components/use-message"
 import { Button } from "@/components/ui/button"
 
 export function BackToTop() {
+  const backLabel = useMessage("news.backToTop")
   const [isVisible, setIsVisible] = useState(false)
   const [mounted, setMounted] = useState(false)
 
@@ -72,7 +74,7 @@ export function BackToTop() {
             onClick={scrollToTop}
             size="icon"
             className="h-12 w-12 rounded-full shadow-lg hover:shadow-xl transition-all bg-primary text-primary-foreground"
-            aria-label="Back to top"
+            aria-label={backLabel}
           >
             <ArrowUp className="h-5 w-5" />
           </Button>

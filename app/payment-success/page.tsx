@@ -1,6 +1,6 @@
 "use client"
 
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Check, ClipboardList, Clock, FileText, Loader2, MessageCircle, RefreshCw, Upload, X } from "lucide-react"
@@ -9,7 +9,7 @@ import { LangText } from "@/components/lang-text"
 import { PaymentWaitBang, PaymentWaitRing } from "@/components/payment/payment-mark"
 import { useArabic } from "@/components/ready-line"
 import { useEffect, useState, Suspense } from "react"
-import { getPaymentConfirmationWhatsAppUrl, getWhatsAppUrl } from "@/lib/whatsapp"
+import { getPaymentConfirmationWhatsAppUrl } from "@/lib/whatsapp"
 import { clearWizardAfterPayment } from "@/lib/wizard-storage"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 
@@ -116,16 +116,14 @@ function PaymentSuccessContent() {
   const reference = UUID_RE.test(appId) ? referenceOf(appId) : ""
   const continueHref = localePath(UUID_RE.test(appId) ? `/continue/${appId}` : "/dashboard")
   const uploadHref = localePath(token && !UUID_RE.test(token) ? `/track/${token}/upload` : "/dashboard")
-  const whatsappHref = arabic
-    ? getWhatsAppUrl(`مرحبًا EZvisa! أتممت الدفع${destination ? ` إلى ${destination}` : ""}${reference ? ` (المرجع: ${reference})` : ""}.`)
-    : getPaymentConfirmationWhatsAppUrl(appId || token || "EZVISA", destination)
+  const whatsappHref = getPaymentConfirmationWhatsAppUrl(appId || token || "EZVISA", destination, arabic)
 
   const nextSteps = [
     {
       icon: ClipboardList,
       en: "Continue your application",
       ar: "أكمل طلبك",
-      body: { en: "Trip plan, passport and employment details. About 5 minutes.", ar: "خطة الرحلة والجواز وبيانات العمل. حوالي ٥ دقائق." },
+      body: { en: "Trip plan, passport and employment details. About 5 minutes.", ar: "خطة الرحلة والجواز وبيانات العمل. حوالي 5 دقائق." },
     },
     {
       icon: Upload,
@@ -137,7 +135,7 @@ function PaymentSuccessContent() {
       icon: FileText,
       en: "We prepare your visa file",
       ar: "نجهّز ملف التأشيرة",
-      body: { en: "A specialist reviews it within 24 hours: cover letter, itinerary and bookings.", ar: "يراجعه مختص خلال ٢٤ ساعة: خطاب التغطية وخط السير والحجوزات." },
+      body: { en: "A specialist reviews it within 24 hours: cover letter, itinerary and bookings.", ar: "يراجعه مختص خلال 24 ساعة: خطاب التغطية وخط السير والحجوزات." },
     },
   ]
 
@@ -250,15 +248,15 @@ function PaymentSuccessContent() {
               {outcome === "paid" && (
                 <>
                   <Button asChild size="lg" className="h-12 rounded-xl px-6 text-sm font-semibold">
-                    <Link href={continueHref}>
+                    <LocaleLink href={continueHref}>
                       <LangText en="Continue application" ar="أكمل الطلب" />
                       <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-                    </Link>
+                    </LocaleLink>
                   </Button>
                   <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
-                    <Link href={uploadHref}>
+                    <LocaleLink href={uploadHref}>
                       <LangText en="Upload documents first" ar="ارفع المستندات أولًا" />
-                    </Link>
+                    </LocaleLink>
                   </Button>
                 </>
               )}
@@ -268,21 +266,21 @@ function PaymentSuccessContent() {
                     <LangText en="Check again" ar="تحقق مجددًا" />
                   </Button>
                   <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
-                    <Link href={applicationHref}><LangText en="Go to my application" ar="الانتقال إلى طلبي" /></Link>
+                    <LocaleLink href={applicationHref}><LangText en="Go to my application" ar="الانتقال إلى طلبي" /></LocaleLink>
                   </Button>
                 </>
               )}
               {outcome === "failed" && (
                 <Button asChild size="lg" className="h-12 rounded-xl px-6 text-sm font-semibold">
-                  <Link href={localePath("/apply?step=payment&retry=true")}>
+                  <LocaleLink href={localePath("/apply?step=payment&retry=true")}>
                     <RefreshCw className="size-4" aria-hidden="true" />
                     <LangText en="Retry payment" ar="إعادة محاولة الدفع" />
-                  </Link>
+                  </LocaleLink>
                 </Button>
               )}
               {(outcome === "cancelled" || outcome === "missing") && (
                 <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
-                  <Link href={localePath("/dashboard")}><LangText en="Go to my dashboard" ar="الانتقال إلى لوحتي" /></Link>
+                  <LocaleLink href={localePath("/dashboard")}><LangText en="Go to my dashboard" ar="الانتقال إلى لوحتي" /></LocaleLink>
                 </Button>
               )}
             </div>
@@ -293,9 +291,9 @@ function PaymentSuccessContent() {
               <MessageCircle className="size-4" aria-hidden="true" />
               <LangText en="Questions? Message us on WhatsApp" ar="لديك سؤال؟ راسلنا على واتساب" />
             </a>
-            <Link href={localePath("/dashboard")} className="font-medium text-foreground hover:underline">
+            <LocaleLink href={localePath("/dashboard")} className="font-medium text-foreground hover:underline">
               <LangText en="Go to dashboard" ar="الذهاب إلى لوحتي" />
-            </Link>
+            </LocaleLink>
           </p>
         </div>
       </main>

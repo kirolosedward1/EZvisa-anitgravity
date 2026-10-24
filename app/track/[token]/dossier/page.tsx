@@ -1,16 +1,23 @@
-import { notFound, redirect } from "next/navigation"
+import { notFound } from "next/navigation"
+import { redirectLocalized, requestLocale } from "@/lib/request-locale"
 import { createClient } from "@supabase/supabase-js"
 import { generateCompleteDossierPack } from "@/lib/documents/templates"
 import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
 import { DossierViewerClient } from "@/components/track/dossier-viewer-client"
 import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
 
-export const metadata: Metadata = {
-  title: "Consular Dossier Package",
-  robots: {
-    index: false,
-    follow: false,
-  },
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "Consular Dossier Package",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    },
+    { title: "ملف الطلب", path: "/ar/track" },
+  )
 }
 
 import { isDemoToken, getDemoApplicationByToken } from "@/lib/demo-data"
@@ -49,13 +56,14 @@ export default async function DossierPage({ params }: { params: Promise<{ token:
   }
 
   const isPaid = appData.payment_status === "completed" || appData.payment_status === "paid"
+  const arabic = (await requestLocale()) === "ar"
 
   if (!isPaid) {
-    redirect(`/track/${token}#pay`)
+    redirectLocalized(`/track/${token}#pay`, arabic)
   }
 
   const dossierHtml = generateCompleteDossierPack(appData)
-  const whatsAppUrl = getCaseTrackingWhatsAppUrl(appData.id || token, appData.destination_country)
+  const whatsAppUrl = getCaseTrackingWhatsAppUrl(appData.id || token, appData.destination_country, arabic)
 
   return (
     <DossierViewerClient

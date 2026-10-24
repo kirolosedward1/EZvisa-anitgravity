@@ -153,7 +153,7 @@ Usage rules:
 | `comparison-section.tsx` | DIY vs EZvisa comparison |
 | `contact-section.tsx` | Homepage CTA section |
 | `faq-section.tsx` | Accordion FAQ |
-| `inner-hero.tsx` | Heading for every inner page: copy left, destination photo card right (`variant="plain"` for legal pages, which use the `.legal-copy` text styles) |
+| `inner-hero.tsx` | Heading for every inner page: a rounded destination-photo box with a dark scrim and centred white copy; each path gets its own country photo (`stableIndex` on the locale-free path). Legal pages use the `.legal-copy` text styles below it. |
 | `after-payment-timeline.tsx` | What happens after payment, and when (How it works + destination pages) |
 | `top-destinations-carousel.tsx` | Animated destination/flag carousel (Embla) |
 | `document-requirements-page.tsx`, `documents/document-split.tsx`, `documents/country-facts.tsx` | Documents flow: per-country page, "you provide / we prepare" split, facts strip (visa centre, fee, timing) |
@@ -275,6 +275,9 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
   **continue application** at `/continue/[id]` (trip details → passport if missing → spouse if travelling together →
   employment; `lib/application-status.ts` `missingDetailSteps`) → upload documents → track. Trip, hotel, budget and
   spouse questions are never asked before payment. Old `/dashboard/continue` and `/track/[token]/continue` links redirect.
+  The traveller step also asks the **emirate** (`cityOfResidence`, required); the trip step ends with the **UAE
+  residence visa** question (`residenceVisaValid`). Contract: `PRE_PAYMENT_STEPS`, `DETAIL_STEPS`, `validateStep`,
+  `validateDetailStep`, `detailSteps` (version 2026-10-24.1).
 - **Saved travellers** (`public.travellers`, `scripts/007_travellers.sql`, owner = account email, owner-only RLS): the
   people a customer applied for. Rules in the contract (`TRAVELLER_KEYS`, `travellerKey`, `travellerFromAnswers`,
   `applyTraveller`, `travellerToRow`), server side in `lib/travellers.ts` (auto-saved when a case becomes paid and after

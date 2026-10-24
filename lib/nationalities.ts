@@ -1,3 +1,5 @@
+import { CITIZENSHIP_AR } from "@/messages/ar-citizenship"
+
 /** Citizenship options for people who need a Schengen visa.
  * GCC countries (AE, BH, KW, OM, QA, SA) are excluded. One row per ISO code.
  */
@@ -162,7 +164,30 @@ export function citizenshipName(value?: string | null): string {
   return citizenshipByIso(value)?.name ?? ""
 }
 
-/** Search matches the English name and the ISO code. */
+export function citizenshipNameAr(value?: string | null): string {
+  const iso = toCitizenshipIso(value)
+  return (iso && CITIZENSHIP_AR[iso]) || citizenshipName(value)
+}
+
+/** English label for an ISO code or an English country name. */
+export function citizenshipLabel(value?: string | null): string {
+  if (!value) return ""
+  return citizenshipName(value) || CITIZENSHIP_OPTIONS.find((country) => country.name === value)?.name || value
+}
+
+const NAME_AR_EXTRA: Record<string, string> = {
+  "United Arab Emirates": "الإمارات العربية المتحدة",
+  "Saudi Arabia": "السعودية",
+}
+
+/** Arabic label for an ISO code or an English country name. */
+export function citizenshipLabelAr(value?: string | null): string {
+  if (!value) return ""
+  const iso = toCitizenshipIso(value) || CITIZENSHIP_OPTIONS.find((country) => country.name === value)?.iso
+  return (iso && CITIZENSHIP_AR[iso]) || NAME_AR_EXTRA[value] || citizenshipLabel(value)
+}
+
+/** Search matches the English name, the Arabic name, and the ISO code. */
 export function citizenshipSearchValue(country: Citizenship): string {
-  return `${country.name} ${country.iso}`
+  return `${country.name} ${CITIZENSHIP_AR[country.iso] ?? ""} ${country.iso}`
 }

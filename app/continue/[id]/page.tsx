@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { redirectLocalized, requestLocale } from "@/lib/request-locale"
 import { SiteHeader } from "@/components/site-header"
 import { ContinueForm } from "@/app/continue/[id]/continue-form"
 import { createServerClient } from "@/lib/supabase/server"
@@ -8,7 +8,15 @@ import type { VisaApplication } from "@/lib/types/visa-application"
 import { SupportApplication } from "@/components/support-application"
 import type { FormData } from "@/lib/form-types"
 
-export const metadata = { title: "Continue application", robots: { index: false, follow: false } }
+import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
+
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    { title: "Continue application", robots: { index: false, follow: false } },
+    { title: "أكمل الطلب", path: "/ar/continue" },
+  )
+}
 
 /** Answers already saved on the row (wizard notes from the website or the app, then the columns), to pre-fill. */
 function savedAnswers(app: VisaApplication): Partial<FormData> {
@@ -36,6 +44,7 @@ function savedAnswers(app: VisaApplication): Partial<FormData> {
 }
 
 export default async function ContinuePage({ params }: { params: Promise<{ id: string }> }) {
+  const arabic = (await requestLocale()) === "ar"
   const { id } = await params
   const demo = id.startsWith("demo-") ? getDemoApplicationByToken(id) : null
   let app: VisaApplication | null = demo
@@ -43,18 +52,18 @@ export default async function ContinuePage({ params }: { params: Promise<{ id: s
   if (!demo) {
     const supabase = await createServerClient()
     const { data: auth } = await supabase.auth.getUser()
-    if (!auth.user?.email) redirect(`/login?next=/continue/${id}`)
+    if (!auth.user?.email) redirectLocalized(`/login?next=/continue/${id}`, arabic)
     const { data } = await supabase.from("visa_applications").select("*").eq("id", id).eq("email", auth.user.email).maybeSingle()
     app = data
   }
 
-  if (!app) redirect("/dashboard")
-  if (!isPaid(app)) redirect(`/dashboard?id=${id}&pay=1#pay`)
+  if (!app) redirectLocalized("/dashboard", arabic)
+  if (!isPaid(app)) redirectLocalized(`/dashboard?id=${id}&pay=1#pay`, arabic)
 
   const steps = missingDetailSteps(app)
   const token = app.tracking_token || ""
   if (steps.length === 0) {
-    redirect(docsMissingCount(app) > 0 && token ? `/track/${token}/upload` : `/dashboard?id=${id}`)
+    redirectLocalized(docsMissingCount(app) > 0 && token ? `/track/${token}/upload` : `/dashboard?id=${id}`, arabic)
   }
 
   return (

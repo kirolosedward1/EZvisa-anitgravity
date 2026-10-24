@@ -17,7 +17,7 @@ import { rememberTravellersFromApplication } from "@/lib/travellers"
 import { sanitizeInput } from "@/lib/sanitize"
 import { canonicalSchengenCountry } from "@/lib/countries"
 import { toWesternDigits, normalizePassport } from "@/lib/digits"
-import { hasInvalidPhone } from "@/lib/phone"
+import { hasInvalidPhone, uaeMobileE164 } from "@/lib/phone"
 
 // Arabic/Persian digits typed on the client become Western before validation and saving (Western input unchanged).
 const DIGIT_FIELDS = ["phone", "dateOfBirth", "travelStartDate", "travelEndDate", "travelMonth", "tripLength", "employmentStartDate"]
@@ -50,6 +50,7 @@ const OPTIONS: Record<string, Set<string>> = {
   isFirstSchengenVisa: new Set(["yes", "no"]),
   previousRefusals: new Set(["yes", "no"]),
   willVisitOtherCountries: new Set(["yes", "no"]),
+  residenceVisaValid: new Set(["yes", "no"]),
 }
 
 const str = (v: unknown, max = 200) => (typeof v === "string" ? sanitizeInput(v.trim(), max) : "")
@@ -61,6 +62,8 @@ export async function POST(request: Request) {
   if (hasInvalidPhone(body.phone)) {
     return NextResponse.json({ success: false, message: "Enter a valid phone number." }, { status: 400 })
   }
+  // Same canonical form as submit-application. A missing or blank phone is left untouched.
+  const storedPhone = typeof body.phone === "string" ? (uaeMobileE164(body.phone) ?? "") : ""
   const id = typeof body.id === "string" ? body.id : ""
   if (!id) return NextResponse.json({ error: "Missing application" }, { status: 400 })
   // Demo sandbox rows live in code (lib/demo-data): nothing to save, and no Supabase session.
@@ -163,6 +166,7 @@ export async function POST(request: Request) {
     }
   }
   wizard.lastEditedOn = "website"
+  if (storedPhone) wizard.phone = storedPhone
   notes.wizard = wizard
   // The saved traveller the spouse was picked from ("Who is travelling?" on the spouse step), if any.
   const spouseTravellerId = typeof body.spouseTravellerId === "string" && UUID_RE.test(body.spouseTravellerId) ? body.spouseTravellerId : ""
@@ -177,6 +181,7 @@ export async function POST(request: Request) {
   if (start) patch.entry_date = start
   if (end) patch.exit_date = end
   if (start && end) patch.duration_days = schengenStayDays(start, end)
+  if (storedPhone) patch.phone = storedPhone
 
   const { data: saved, error } = await supabase.from("visa_applications").update(patch).eq("id", id).eq("email", email).select("id")
   if (error) {

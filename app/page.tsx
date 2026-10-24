@@ -2,7 +2,7 @@ import { SiteHeader } from "@/components/site-header"
 import { HeroSection } from "@/components/hero-section"
 import { PopularDestinations } from "@/components/popular-destinations"
 import { ExploreCountries } from "@/components/explore-countries"
-import { FAQ_EN } from "@/lib/faq"
+import { FAQ_AR, FAQ_EN } from "@/lib/faq"
 import { WHATSAPP_DISPLAY } from "@/lib/contact"
 import dynamic from "next/dynamic"
 
@@ -15,12 +15,21 @@ const FAQSection = dynamic(() => import("@/components/faq-section").then(mod => 
 const ContactSection = dynamic(() => import("@/components/contact-section").then(mod => mod.ContactSection), { ssr: true })
 const Footer = dynamic(() => import("@/components/footer").then(mod => mod.Footer), { ssr: true })
 import type { Metadata } from "next"
+import { formatAedLabel } from "@/lib/currency"
+import { ltr } from "@/lib/bidi"
+import { requestLocale } from "@/lib/request-locale"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const arabic = (await requestLocale()) === "ar"
+  const price = formatAedLabel(PRICE_AED, arabic ? "ar" : "en")
+  const description = arabic
+    ? `طلبات تأشيرة شنغن يجهّزها مختصون للمقيمين في الإمارات: نموذج الطلب وخطاب التغطية وبرنامج يومي وحجوزات الطيران والفندق. جاهز خلال ${ltr("1–2")} يوم مقابل ${price}.`
+    : "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED."
+  return {
   // absolute: the root template would otherwise append a second "| EZvisa".
-  title: { absolute: "Schengen Visa Application Service for UAE Residents | EZvisa" },
-  description:
-    "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
+  title: { absolute: arabic ? "خدمة طلب تأشيرة شنغن للمقيمين في الإمارات | EZvisa" : "Schengen Visa Application Service for UAE Residents | EZvisa" },
+  description,
   keywords: [
     "Schengen visa UAE",
     "Schengen visa Dubai",
@@ -42,8 +51,8 @@ export const metadata: Metadata = {
     canonical: "https://www.ezvisa.net/",
   },
   openGraph: {
-    title: "Schengen Visa Application Service for UAE Residents | EZvisa",
-    description: "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED.",
+    title: arabic ? "خدمة طلب تأشيرة شنغن للمقيمين في الإمارات | EZvisa" : "Schengen Visa Application Service for UAE Residents | EZvisa",
+    description: arabic ? `ملف تأشيرة شنغن يجهّزه مختصون خلال ${ltr("1–2")} يوم: النموذج وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. ${price}.` : "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED.",
     url: "https://www.ezvisa.net/",
     type: "website",
     images: [
@@ -55,9 +64,12 @@ export const metadata: Metadata = {
       },
     ],
   },
+  }
 }
 
-export default function Home() {
+export default async function Home() {
+  const arabic = (await requestLocale()) === "ar"
+  const price = formatAedLabel(PRICE_AED, arabic ? "ar" : "en")
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -72,8 +84,9 @@ export default function Home() {
           width: 600,
           height: 200,
         },
-        description:
-          "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
+        description: arabic
+          ? `طلبات تأشيرة شنغن يجهّزها مختصون للمقيمين في الإمارات. جاهز خلال ${ltr("1–2")} يوم مقابل ${price}.`
+          : "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
         address: {
           "@type": "PostalAddress",
           addressCountry: "AE",
@@ -102,7 +115,7 @@ export default function Home() {
         publisher: {
           "@id": "https://www.ezvisa.net/#organization",
         },
-        inLanguage: "en-US",
+        inLanguage: arabic ? "ar" : "en-US",
       },
       {
         "@type": "Service",
@@ -129,7 +142,7 @@ export default function Home() {
       {
         "@type": "FAQPage",
         "@id": "https://www.ezvisa.net/#faqpage",
-        mainEntity: FAQ_EN.map((item) => ({
+        mainEntity: (arabic ? FAQ_AR : FAQ_EN).map((item) => ({
           "@type": "Question",
           name: item.question,
           acceptedAnswer: { "@type": "Answer", text: item.answer },
