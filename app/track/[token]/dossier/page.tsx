@@ -5,13 +5,19 @@ import { generateCompleteDossierPack } from "@/lib/documents/templates"
 import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
 import { DossierViewerClient } from "@/components/track/dossier-viewer-client"
 import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
 
-export const metadata: Metadata = {
-  title: "Consular Dossier Package",
-  robots: {
-    index: false,
-    follow: false,
-  },
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "Consular Dossier Package",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    },
+    { title: "ملف الطلب", path: "/ar/track" },
+  )
 }
 
 import { isDemoToken, getDemoApplicationByToken } from "@/lib/demo-data"

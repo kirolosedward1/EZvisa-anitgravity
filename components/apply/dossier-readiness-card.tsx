@@ -2,6 +2,7 @@
 
 import { useMemo } from "react"
 import { ShieldCheck, CheckCircle2, AlertTriangle, ClipboardCheck } from "lucide-react"
+import { Msg } from "@/components/msg"
 import { FormData } from "@/lib/form-types"
 
 interface DossierReadinessCardProps {
@@ -127,7 +128,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
       </div>
 
       <div className="pt-2 border-t border-border/30 text-[11px] text-muted-foreground leading-relaxed">
-        <strong>What we check:</strong> before your file is ready, a visa specialist checks that your application form, itinerary, flight and hotel reservations and cover letter all match each other and the consulate's checklist. The visa decision is always the embassy's.
+        <strong><Msg id="dossier.checkLabel" /></strong> <Msg id="dossier.checkBody" />
       </div>
     </div>
   )

@@ -12,6 +12,7 @@ import { Msg } from "@/components/msg"
 import { useMessage } from "@/components/use-message"
 import { LangText } from "@/components/lang-text"
 import { LocaleLink } from "@/components/locale-link"
+import { useSiteLocale } from "@/components/locale-provider"
 import { formatPrice, PRICES, type Currency } from "@/lib/currency"
 
 const fromCountries = [
@@ -37,6 +38,8 @@ export function StartApplicationBox() {
   const [isMobile, setIsMobile] = useState(false)
   const [currency, setCurrency] = useState<Currency>("AED")
   const searchCountry = useMessage("apply.searchCountry")
+  const locale = useSiteLocale()
+  const priceLabel = formatPrice(PRICES.visaApplication, currency, locale)
 
   useEffect(() => {
     setIsMobile(window.innerWidth < 768)
@@ -159,7 +162,9 @@ export function StartApplicationBox() {
         {/* Pricing and Benefits */}
         <div className="pt-4 border-t border-gray-200">
           <div className="text-center mb-4">
-            <div className="text-3xl font-medium text-primary mb-1">{formatPrice(PRICES.visaApplication, currency)}</div>
+            <div className="text-3xl font-medium text-primary mb-1">
+              {locale === "ar" ? <bdi dir="ltr">{priceLabel}</bdi> : priceLabel}
+            </div>
             <div className="text-xs text-muted-foreground"><Msg id="hiw.assistance" /></div>
           </div>
 

@@ -571,7 +571,6 @@ export const en = {
   "dest.factPriceBody": "Flat fee for full application form, itineraries, hotel/flight reservations & support.",
   "dest.factRefundLabel": "Refunds",
   "dest.factRefundValue": "Full refund before we start",
-  "dest.factRefundBody": "Full refund of service fee in case of visa rejection. Real confidence.",
   "dest.processBadge": "The Process",
   "dest.processTitle": "How to Apply for {name} Visa",
   "dest.processBody": "We make the application process simple, quick, and stress-free. Here is what to expect.",
@@ -666,6 +665,7 @@ export const en = {
   "news.tag.approval": "approval rates",
   "news.tag.uae": "UAE",
   "news.tag.fast": "fast processing",
+  "news.tag.processing": "schengen processing times",
   "news.tag.noc": "NOC",
   "news.tag.requiredDocs": "required documents",
   "news.tag.employer": "employer letter",
@@ -751,6 +751,8 @@ export const en = {
   "calc.faq1a": "No. The 180-day period is a rolling calendar window, not linked to individual visa validity dates. Even if you receive a new visa, any days spent in the Schengen area within the preceding 180 days count toward your 90-day limit.",
   "calc.faq2q": "Can I leave for 1 day and re-enter?",
   "calc.faq2a": "A brief exit does not reset the 90-day counter. You can only stay for the number of days that ensures you have not spent more than 90 days in the 180-day period looking backward from each day of your stay.",
+  "dossier.checkLabel": "What we check:",
+  "dossier.checkBody": "before your file is ready, a visa specialist checks that your application form, itinerary, flight and hotel reservations and cover letter all match each other and the consulate's checklist. The visa decision is always the embassy's.",
 } as const
 
 export type MessageKey = keyof typeof en

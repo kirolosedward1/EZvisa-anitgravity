@@ -16,7 +16,15 @@ import { PreparationLine } from "@/components/ready-line"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import { SupportApplication } from "@/components/support-application"
 
-export const metadata = { title: "Trip plan", robots: { index: false, follow: false } }
+import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
+
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    { title: "Trip plan", robots: { index: false, follow: false } },
+    { title: "خطة الرحلة", path: "/ar/trip" },
+  )
+}
 
 export default async function TripPage({ params }: { params: Promise<{ id: string }> }) {
   const arabic = (await requestLocale()) === "ar"

@@ -1,11 +1,17 @@
 import { Metadata } from 'next'
+import { withArabicMeta } from '@/lib/page-meta'
 
-export const metadata: Metadata = {
-  title: "Application Wizard",
-  robots: {
-    index: false,
-    follow: false,
-  },
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
+      title: "Application Wizard",
+      robots: {
+        index: false,
+        follow: false,
+      },
+    },
+    { title: "نموذج الطلب", path: "/ar/apply" },
+  )
 }
 
 export default function ApplyLayout({

@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { InnerHero } from "@/components/inner-hero"
@@ -6,7 +7,9 @@ import { DestinationsCatalog } from "@/components/destinations-catalog"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { LangText } from "@/components/lang-text"
 
-export const metadata: Metadata = {
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
   title: "Schengen Visa Destinations & Document Checklists",
   description:
     "Explore Schengen countries supported by EZvisa UAE. View detailed document lists for France, Germany, Italy, Spain, Switzerland, and 24 other nations. Pre-fill your visa wizard and start your application today.",
@@ -28,6 +31,13 @@ export const metadata: Metadata = {
     url: "https://www.ezvisa.net/destinations",
     type: "website",
   },
+    },
+    {
+      title: "وجهات شنغن وقوائم المستندات",
+      description: "29 وجهة شنغن للمقيمين في الإمارات، مع قائمة المستندات لكل دولة. الرسم 249 درهم.",
+      path: "/ar/destinations",
+    },
+  )
 }
 
 export default function DestinationsPage() {
@@ -47,7 +57,7 @@ export default function DestinationsPage() {
           description={
             <LangText
               en="The visa centre, embassy fee and documents for each of the 29 Schengen countries. Our fee is the same 249 AED for every one."
-              ar="مركز التأشيرات ورسوم السفارة والمستندات لكل دولة من دول شنغن الـ 29. رسومنا 249 درهمًا لكل دولة."
+              ar="مركز التأشيرات ورسوم السفارة والمستندات لكل دولة من دول شنغن الـ29. رسومنا 249 درهم لكل دولة."
             />
           }
           randomizeBackground={true}

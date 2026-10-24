@@ -3,7 +3,8 @@ import Image from "next/image"
 import { Calendar, Clock } from "lucide-react"
 import { LocaleLink } from "@/components/locale-link"
 import { Msg } from "@/components/msg"
-import { NewsCategory, NewsDate, NewsReadTime, NewsTitle } from "@/components/blog/news-copy"
+import { NewsCategory, NewsDate, NewsReadTime, NewsTitle, newsTitleText } from "@/components/blog/news-copy"
+import { requestLocale } from "@/lib/request-locale"
 
 export async function RelatedPosts({
   currentSlug,
@@ -12,6 +13,7 @@ export async function RelatedPosts({
   currentSlug: string
   category: string
 }) {
+  const locale = await requestLocale()
   const allPosts = await getAllPosts()
 
   // Filter posts by same category, exclude current post, limit to 3
@@ -33,7 +35,7 @@ export async function RelatedPosts({
               <div className="relative h-48 overflow-hidden">
                 <Image
                   src={post.featuredImage || "/placeholder.svg"}
-                  alt={post.title}
+                  alt={newsTitleText(locale, post.slug, post.title)}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                 />

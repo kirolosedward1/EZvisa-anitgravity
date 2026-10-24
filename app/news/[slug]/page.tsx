@@ -10,8 +10,10 @@ import { RelatedPosts } from "@/components/blog/related-posts"
 import { Button } from "@/components/ui/button"
 import { LocaleLink } from "@/components/locale-link"
 import { Msg } from "@/components/msg"
-import { NewsTag, NewsTitle } from "@/components/blog/news-copy"
+import { NewsTag, NewsTitle, newsExcerptText, newsTitleText } from "@/components/blog/news-copy"
 import { ARABIC_POSTS } from "@/lib/blog-ar"
+import { requestLocale } from "@/lib/request-locale"
+import { withArabicMeta } from "@/lib/page-meta"
 import { Rocket } from "lucide-react"
 import { TableOfContents } from "@/components/blog/table-of-contents"
 import { StartApplicationBox } from "@/components/start-application-box"
@@ -29,46 +31,53 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPostBySlug(slug)
 
   if (!post) {
-    return {
-      title: "Post Not Found",
-    }
+    return withArabicMeta({ title: "Post Not Found" }, { title: "المقال غير موجود", path: "/ar/news" })
   }
 
   // Most posts have no SEO overrides: fall back to the post's own title and excerpt so the tab title is never empty.
   const metaTitle = post.seo?.metaTitle?.trim() || post.title
   const metaDescription = post.seo?.metaDescription?.trim() || post.excerpt
+  const arTitle = newsTitleText("ar", slug, metaTitle)
+  const arDescription = newsExcerptText("ar", slug, metaDescription)
 
-  return {
-    title: metaTitle,
-    description: metaDescription,
-    keywords: post.seo.keywords,
-    authors: [{ name: post.author }],
-    alternates: {
-      canonical: `https://www.ezvisa.net/news/${slug}`,
-    },
-    openGraph: {
+  return withArabicMeta(
+    {
       title: metaTitle,
       description: metaDescription,
-      images: [
-        {
-          url: post.featuredImage,
-          width: 1200,
-          height: 630,
-          alt: post.title,
-        },
-      ],
-      type: "article",
-      publishedTime: post.publishedAt,
-      authors: [post.author],
-      url: `https://www.ezvisa.net/news/${slug}`,
+      keywords: post.seo.keywords,
+      authors: [{ name: post.author }],
+      alternates: {
+        canonical: `https://www.ezvisa.net/news/${slug}`,
+      },
+      openGraph: {
+        title: metaTitle,
+        description: metaDescription,
+        images: [
+          {
+            url: post.featuredImage,
+            width: 1200,
+            height: 630,
+            alt: (await requestLocale()) === "ar" ? arTitle : post.title,
+          },
+        ],
+        type: "article",
+        publishedTime: post.publishedAt,
+        authors: [post.author],
+        url: `https://www.ezvisa.net/news/${slug}`,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: metaTitle,
+        description: metaDescription,
+        images: [post.featuredImage],
+      },
     },
-    twitter: {
-      card: "summary_large_image",
-      title: metaTitle,
-      description: metaDescription,
-      images: [post.featuredImage],
+    {
+      title: arTitle,
+      description: arDescription,
+      path: `/ar/news/${slug}`,
     },
-  }
+  )
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {

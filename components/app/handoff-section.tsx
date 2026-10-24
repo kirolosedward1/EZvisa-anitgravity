@@ -3,6 +3,8 @@
 import { useLayoutEffect, useRef, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { CountryFlag } from "@/components/country-flag"
+import { useSiteLocale } from "@/components/locale-provider"
+import { countryNameAr } from "@/lib/countries"
 import { Check, ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -20,18 +22,19 @@ interface Flight {
   height: number
 }
 
-function ApplicationCard({ className }: { className?: string }) {
+function ApplicationCard({ className, arabic }: { className?: string; arabic: boolean }) {
+  const place = arabic ? countryNameAr("Germany") : "Germany"
   return (
     <div className={cn("flex h-full w-full flex-col gap-2 rounded-2xl bg-primary p-4 text-primary-foreground", className)}>
       <div className="flex items-center gap-2">
-        <CountryFlag iso="DE" title="Germany" />
-        <span className="text-sm font-semibold">Germany</span>
+        <CountryFlag iso="DE" title={place} />
+        <span className="text-sm font-semibold">{place}</span>
       </div>
-      <span className="text-xs opacity-85">Draft · Trip details</span>
+      <span className="text-xs opacity-85">{arabic ? "مسودة · تفاصيل الرحلة" : "Draft · Trip details"}</span>
       <span className="mt-1 h-1 w-full overflow-hidden rounded-full bg-primary-foreground/30">
         <span className="block h-full w-1/2 rounded-full bg-primary-foreground" />
       </span>
-      <span className="text-xs opacity-85">Saved just now</span>
+      <span className="text-xs opacity-85">{arabic ? "حُفظ الآن" : "Saved just now"}</span>
     </div>
   )
 }
@@ -51,6 +54,7 @@ function Field({ label, value }: { label: string; value: string }) {
  * with reduced motion, the card simply sits in the phone.
  */
 export function HandoffSection() {
+  const arabic = useSiteLocale() === "ar"
   const sectionRef = useRef<HTMLDivElement>(null)
   const fromRef = useRef<HTMLDivElement>(null)
   const toRef = useRef<HTMLDivElement>(null)
@@ -88,21 +92,21 @@ export function HandoffSection() {
       <BrowserFrame url="ezvisa.net/apply" className="w-full lg:justify-self-end lg:max-w-md">
         <div className="flex flex-col gap-4 p-5 sm:p-6">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Step 4 of 5</span>
-            <span>Trip details</span>
+            <span>{arabic ? "الخطوة 4 من 5" : "Step 4 of 5"}</span>
+            <span>{arabic ? "تفاصيل الرحلة" : "Trip details"}</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
             <div className="h-full w-4/5 rounded-full bg-primary" />
           </div>
-          <h3 className="text-lg font-semibold tracking-tight text-foreground">Trip details</h3>
-          <Field label="Destination" value="Germany" />
-          <Field label="Travel dates" value="12 – 24 Mar" />
+          <h3 className="text-lg font-semibold tracking-tight text-foreground">{arabic ? "تفاصيل الرحلة" : "Trip details"}</h3>
+          <Field label={arabic ? "الوجهة" : "Destination"} value={arabic ? countryNameAr("Germany") : "Germany"} />
+          <Field label={arabic ? "تواريخ السفر" : "Travel dates"} value={arabic ? "12–24 مارس" : "12 – 24 Mar"} />
           <div className="flex h-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-            Continue
+            {arabic ? "متابعة" : "Continue"}
           </div>
           <div ref={fromRef} className="flex items-center gap-2 text-xs text-muted-foreground">
             <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
-            <span>Saved to your account · just now</span>
+            <span>{arabic ? "حُفظ في حسابك · الآن" : "Saved to your account · just now"}</span>
           </div>
         </div>
       </BrowserFrame>
@@ -115,28 +119,28 @@ export function HandoffSection() {
               <span className="h-2.5 w-6 rounded-sm bg-foreground" aria-hidden="true" />
             </div>
             <div className="flex flex-col gap-1">
-              <span className="text-xs font-medium text-muted-foreground">Germany · Draft</span>
-              <h4 className="text-lg font-semibold leading-tight tracking-tight">Pick up where you left off</h4>
+              <span className="text-xs font-medium text-muted-foreground">{arabic ? `${countryNameAr("Germany")} · مسودة` : "Germany · Draft"}</span>
+              <h4 className="text-lg font-semibold leading-tight tracking-tight">{arabic ? "أكمل من حيث توقفت" : "Pick up where you left off"}</h4>
             </div>
             <div ref={toRef} className="relative h-28 w-full rounded-2xl bg-muted">
-              <ApplicationCard className={cn(!landed && "invisible")} />
+              <ApplicationCard arabic={arabic} className={cn(!landed && "invisible")} />
             </div>
             <ul className="flex flex-col divide-y divide-background overflow-hidden rounded-2xl bg-muted text-xs">
               <li className="flex items-center justify-between px-3 py-2.5">
-                <span className="font-medium">Personal details</span>
+                <span className="font-medium">{arabic ? "البيانات الشخصية" : "Personal details"}</span>
                 <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
               </li>
               <li className="flex items-center justify-between px-3 py-2.5">
-                <span className="font-medium">Trip details</span>
+                <span className="font-medium">{arabic ? "تفاصيل الرحلة" : "Trip details"}</span>
                 <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
               </li>
               <li className="flex items-center justify-between px-3 py-2.5">
-                <span className="font-medium">Employment</span>
+                <span className="font-medium">{arabic ? "العمل" : "Employment"}</span>
                 <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
               </li>
             </ul>
             <div className="mt-auto flex h-11 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-              Continue
+              {arabic ? "متابعة" : "Continue"}
             </div>
           </div>
         </IphoneFrame>
@@ -152,7 +156,7 @@ export function HandoffSection() {
           transition={{ duration: 0.9, ease: REVEAL_EASE, opacity: { duration: 0.25 } }}
           onAnimationComplete={() => setLanded(true)}
         >
-          <ApplicationCard />
+          <ApplicationCard arabic={arabic} />
         </motion.div>
       )}
     </div>
