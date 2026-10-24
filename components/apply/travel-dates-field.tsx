@@ -10,6 +10,7 @@ import {
   TRIP_LENGTHS,
   formatPageDate,
   formatShortDate,
+  fixedTripRange,
   schengenEndDate,
   schengenStayDays,
   upcomingTravelMonths,
@@ -94,13 +95,9 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
 
   const onRangeSelect = (range: { from?: Date; to?: Date } | undefined) => {
     const from = range?.from ? isoFromDate(range.from) : ""
-    let to = range?.to ? isoFromDate(range.to) : ""
-    if (from && to && to < from) {
-      applyFixed(to, "")
-      return
-    }
-    if (from && to && to === from) to = ""
-    applyFixed(from, to)
+    const to = range?.to ? isoFromDate(range.to) : ""
+    const next = fixedTripRange(from, to)
+    applyFixed(next.start, next.end)
   }
 
   const applyLength = (days: number) => {
@@ -141,7 +138,7 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
 
   const modeMissing = showErrors && !formData.datesFlexible
   const fixedMissing = showErrors && fixed && (!start || !end)
-  const fixedOrder = showErrors && fixed && !!start && !!end && end <= start
+  const fixedOrder = showErrors && fixed && !!start && !!end && end < start
   const fixedLong = showErrors && fixed && stay > 90
   const monthMissing = showErrors && flexible && !formData.travelMonth
   const lengthMissing = showErrors && flexible && !formData.tripLength
@@ -221,7 +218,7 @@ export function TravelDatesField({ formData, updateFormData, showErrors, onClear
               )
             })}
           </div>
-          {start && end && stay > 1 ? <StayLine start={start} end={end} stay={stay} /> : null}
+          {start && end && stay >= 1 ? <StayLine start={start} end={end} stay={stay} /> : null}
           {fixedMissing ? (
             <FieldError>
               <LangText en="Select a departure date, then a return date." ar="اختر تاريخ المغادرة ثم تاريخ العودة." />

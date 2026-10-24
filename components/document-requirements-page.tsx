@@ -25,7 +25,7 @@ interface DocumentRequirementsPageProps {
 
 // Documents that help in particular situations, on top of the core file.
 const SITUATIONAL = [
-  { title: "Previous Schengen visas", titleAr: "تأشيرات شنغن السابقة", body: "Copies of earlier visas show a history of travelling and returning.", bodyAr: "نسخ التأشيرات السابقة تُظهر سجل سفر وعودة." },
+  { title: "Previous Schengen visas", titleAr: "تأشيرات شنغن السابقة", body: "Copies of any Schengen visas you've held before.", bodyAr: "نسخ من أي تأشيرات شنغن حصلت عليها سابقًا." },
   { title: "Travelling with your spouse", titleAr: "السفر مع الزوج أو الزوجة", body: "Marriage certificate, attested and translated into English if needed.", bodyAr: "عقد الزواج، مصدّق ومترجَم إلى الإنجليزية إذا لزم." },
   { title: "Travelling with children", titleAr: "السفر مع الأطفال", body: "Birth certificates, and a consent letter from a parent who isn't travelling.", bodyAr: "شهادات الميلاد، وخطاب موافقة من الوالد الذي لا يسافر." },
   { title: "Self-employed or a business owner", titleAr: "عمل حر أو صاحب عمل", body: "Trade licence and company bank statements instead of a salary certificate.", bodyAr: "الرخصة التجارية وكشوف حساب الشركة بدل شهادة الراتب." },
@@ -78,14 +78,15 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
       <div className="min-h-screen bg-background">
         <InnerHero
           badge={arabic ? `تأشيرة ${place} السياحية` : `${country} tourist visa`}
-          title={arabic ? `مستندات تأشيرة ${place} من الإمارات.` : `Documents for a ${country} visa from the UAE.`}
+          title={arabic ? `متطلبات تأشيرة ${place} للمقيمين في الإمارات` : `${country} visa requirements for UAE residents`}
           description={
             arabic
-              ? `ما يطلبه مركز تأشيرات ${place}، وما تحضره بنفسك، وما نجهّزه لك.`
-              : `What the ${country} visa centre asks for, what you bring yourself, and what we prepare for you.`
+              ? `المستندات التي تحتاجها للتقدّم لتأشيرة سياحية إلى ${place} من الإمارات، والمستندات التي نجهّزها لك.`
+              : `The documents you need to apply for a ${country} tourist visa from the UAE, and the ones we prepare for you.`
           }
           backgroundImage={destination?.image || `/images/countries/${slug}.jpg`}
         >
+          <div className="flex justify-center">
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button variant="outline" className="h-12 w-full justify-between rounded-full border-border bg-background px-4 font-normal sm:w-72">
@@ -119,6 +120,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
               </Command>
             </PopoverContent>
           </Popover>
+          </div>
         </InnerHero>
 
         <CountryFacts slug={slug} />
@@ -127,11 +129,11 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
         <section className="py-20 md:py-24">
           <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
             <div className="flex max-w-2xl flex-col gap-4">
-              <h2 className="text-balance text-foreground">{arabic ? `ملف ${place}` : `The file for ${country}`}</h2>
+              <h2 className="text-balance text-foreground">{arabic ? "المستندات المطلوبة" : "Required documents"}</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
                 {arabic
-                  ? `سفارة ${place} تطلب المستندات الأساسية نفسها كبقية منطقة شنغن. أحضر ما في الجهة الأولى، وما في الجهة الأخرى يُكتب ويُحجز لرحلتك.`
-                  : `The ${country} embassy asks for the same core documents as the rest of the Schengen area. Bring the ones on the left; the ones on the right are written and booked for your trip.`}
+                  ? `تطلب ${place} المستندات الأساسية نفسها كبقية دول شنغن. تقدّم أنت المستندات في القائمة الأولى، ونجهّز نحن ما في القائمة الثانية.`
+                  : `${country} asks for the same core documents as other Schengen countries. You provide the documents in the first list, and we prepare the ones in the second.`}
               </p>
             </div>
             <DocumentSplit country={country} />
@@ -142,11 +144,11 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
         <section className="border-t border-border/70 py-20 md:py-24">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
-              <h2 className="text-balance text-foreground">{arabic ? "إذا كان وضعك مختلفًا" : "If your situation is different"}</h2>
+              <h2 className="text-balance text-foreground">{arabic ? "مستندات إضافية" : "Additional documents"}</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
                 {arabic
-                  ? "نخبرك أيّ هذه ينطبق بعد قراءة إجاباتك. لا تحتاج إلى تحديد ذلك قبل أن تبدأ."
-                  : "We'll tell you which of these apply once we've read your answers. You don't need to work it out before you start."}
+                  ? "قد تحتاج حسب ظروفك إلى بعض المستندات التالية. سنؤكد لك ما ينطبق عليك بعد مراجعة طلبك."
+                  : "Depending on your circumstances, you may also need some of the following. We'll confirm which apply to you after reviewing your application."}
               </p>
             </div>
             <ul className="flex flex-col">
@@ -168,8 +170,8 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                 className="group flex items-center justify-between gap-4 rounded-3xl border border-border/70 px-6 py-5 transition-colors hover:bg-secondary/50"
               >
                 <span className="flex flex-col gap-0.5">
-                  <span className="font-medium text-foreground">{arabic ? `دليل تأشيرة ${place} الكامل` : `The full ${country} visa guide`}</span>
-                  <span className="text-sm text-muted-foreground">{arabic ? "أين تقدّم، ومتى، والأسئلة الشائعة." : "Where to apply, when to apply, and common questions."}</span>
+                  <span className="font-medium text-foreground">{arabic ? `دليل تأشيرة ${place}` : `${country} visa guide`}</span>
+                  <span className="text-sm text-muted-foreground">{arabic ? "أين ومتى تقدّم، وإجابات الأسئلة الشائعة." : "Where and when to apply, and answers to common questions."}</span>
                 </span>
                 <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary rtl:rotate-180" aria-hidden="true" />
               </LocaleLink>

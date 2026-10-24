@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { EmailSent } from "@/components/auth/email-sent"
 import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
 import { authCallbackUrl } from "@/lib/auth/redirect"
@@ -51,19 +52,23 @@ function ForgotPasswordForm() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
-        <div className="text-center">
-          <h1 className="text-3xl font-semibold tracking-tight">{copy.resetTitle}</h1>
-          <p className="text-muted-foreground mt-2">{copy.resetSubtitle}</p>
-        </div>
+        {!success && (
+          <div className="text-center">
+            <h1 className="text-3xl font-semibold tracking-tight">{copy.resetTitle}</h1>
+            <p className="text-muted-foreground mt-2">{copy.resetSubtitle}</p>
+          </div>
+        )}
 
         {success ? (
-          <div className="space-y-4">
-            <Alert className="bg-emerald-50 text-emerald-900 border-emerald-200">
-              <AlertDescription>{copy.resetSent}</AlertDescription>
-            </Alert>
-            <Button variant="outline" className="w-full" asChild>
-              <LocaleLink href="/login">{copy.backToLogin}</LocaleLink>
-            </Button>
+          <div className="flex flex-col gap-6">
+            <EmailSent
+              email={email.trim()}
+              note={locale === "ar" ? "افتحه لاختيار كلمة مرور جديدة." : "Open it to choose a new password."}
+              onChangeEmail={() => setSuccess(false)}
+            />
+            <LocaleLink href="/login" className="text-sm font-medium text-primary hover:underline">
+              {copy.backToLogin}
+            </LocaleLink>
           </div>
         ) : (
           <form onSubmit={handleReset} className="space-y-6" noValidate>

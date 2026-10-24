@@ -169,16 +169,6 @@ export function HeroSection() {
 
           {/* Content Wrapper */}
           <div className="relative z-10 w-full flex flex-col items-center">
-            {/* Trust badge */}
-            <motion.div 
-              variants={itemVariants} 
-              className="mb-6 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl text-xs font-semibold text-primary-foreground cursor-default"
-            >
-              <span className="tracking-wide uppercase text-[10px] font-semibold text-primary-foreground">
-                <LangText en="For UAE residents · All 29 Schengen countries" ar="للمقيمين في الإمارات · جميع دول شنغن الـ29" />
-              </span>
-            </motion.div>
-
             {/* Headline */}
             <motion.h1 variants={itemVariants} className="hero-copy max-w-4xl text-balance text-white">
               <LangText

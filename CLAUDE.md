@@ -109,7 +109,7 @@ The site was redesigned to feel like a **real, trustworthy professional service*
 - Headings are **semibold sans (Poppins)** with tight tracking — **no italic editorial/serif display type**.
 - Section labels are compact **pill chips** (e.g. `inline-flex ... rounded-full bg-primary/10 text-primary text-xs font-medium`), not `— Eyebrow` dashes or `01 /` numbering.
 - Depth comes from subtle shadows, soft gradients, masked dot grids, and gentle radial glows — **never decorative blobs, heavy mesh, grain, or glassmorphism**.
-  - One exception, at the owner's request: the homepage hero's country selector card, its eligibility note, the rating pill and the three reassurance chips are frosted glass over the hero photo (`bg-primary-foreground/10 backdrop-blur-xl`, white text). The two pickers inside stay solid white. Don't spread glass to other sections.
+  - One exception, at the owner's request: the homepage hero's country selector card, its eligibility note and the three reassurance chips are frosted glass over the hero photo (`bg-primary-foreground/10 backdrop-blur-xl`, white text). The two pickers inside stay solid white. Don't spread glass to other sections.
 
 ### Color tokens (defined in `app/globals.css` `:root`, OKLCH)
 | Token | Purpose | Notes |
@@ -153,7 +153,7 @@ Usage rules:
 | `comparison-section.tsx` | DIY vs EZvisa comparison |
 | `contact-section.tsx` | Homepage CTA section |
 | `faq-section.tsx` | Accordion FAQ |
-| `inner-hero.tsx` | Heading for every inner page: copy left, destination photo card right (`variant="plain"` for legal pages, which use the `.legal-copy` text styles) |
+| `inner-hero.tsx` | Heading for every inner page: a rounded destination-photo box with a dark scrim and centred white copy; each path gets its own country photo (`stableIndex` on the locale-free path). Legal pages use the `.legal-copy` text styles below it. |
 | `after-payment-timeline.tsx` | What happens after payment, and when (How it works + destination pages) |
 | `top-destinations-carousel.tsx` | Animated destination/flag carousel (Embla) |
 | `document-requirements-page.tsx`, `documents/document-split.tsx`, `documents/country-facts.tsx` | Documents flow: per-country page, "you provide / we prepare" split, facts strip (visa centre, fee, timing) |

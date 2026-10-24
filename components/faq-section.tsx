@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { DigitRanges } from "@/components/digit-ranges"
@@ -8,6 +8,54 @@ import { FAQ_AR, FAQ_EN } from "@/lib/faq"
 import { Msg } from "@/components/msg"
 import { Image } from "@/components/image"
 import { useSiteLocale } from "@/components/locale-provider"
+
+const FAQ_VIDEO = "https://videos.pexels.com/video-files/27497252/12153786_1440_2560_30fps.mp4"
+
+/**
+ * The Eiffel Tower clip beside the FAQ. A remote autoplay <video> in the server HTML crashed WebKit while it parsed
+ * the home document, so the page ships a still and the <video> element is only created after hydration, once the
+ * column is near the viewport. Reduced-motion visitors keep the still.
+ */
+function FaqVideo({ alt }: { alt: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [play, setPlay] = useState(false)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPlay(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "200px" },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} className="absolute inset-0">
+      <Image src="/images/eiffel-tower-view.jpg" alt={alt} fill sizes="384px" className="object-cover" />
+      {play && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          onCanPlay={() => setReady(true)}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}
+          src={FAQ_VIDEO}
+        />
+      )}
+    </div>
+  )
+}
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
@@ -88,16 +136,7 @@ export function FAQSection() {
               className="lg:sticky lg:top-24"
             >
               <div className="relative aspect-[3/4] w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow-xl ring-1 ring-border/50">
-                {/* A remote autoplay <video> crashes WebKit while parsing the home
-                    document (Playwright WebKit and the same engine at 390 and 1440),
-                    so this column is a still. */}
-                <Image
-                  src="/images/woman-travel.png"
-                  alt={arabic ? "مسافرة" : "Traveller"}
-                  fill
-                  sizes="320px"
-                  className="object-cover"
-                />
+                <FaqVideo alt={arabic ? "برج إيفل في باريس" : "The Eiffel Tower in Paris"} />
               </div>
             </motion.div>
           </div>

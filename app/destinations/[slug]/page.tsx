@@ -104,7 +104,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         },
         {
           question: `أين أقدّم لطلب تأشيرة ${place} في الإمارات؟`,
-          answer: `تتولى ${centreAr} طلبات تأشيرة ${place}، ولها مراكز في دبي وأبوظبي. تحجز الموعد على موقعهم، ثم تسلّم ملفك وتدفع رسوم السفارة وتقدّم بصماتك هناك.`,
+          answer: `تتولى ${centreAr} طلبات تأشيرة ${place}، ولها مراكز في دبي وأبوظبي. تحجز موعدك على موقعهم، وفي الموعد تقدّم ملفك وتدفع رسوم السفارة وتسجّل بصماتك.`,
         },
         {
           question: `هل أستطيع زيارة دول أخرى بتأشيرة ${place}؟`,
@@ -112,7 +112,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         },
         {
           question: `متى أقدّم لطلب تأشيرة ${place}؟`,
-          answer: "يمكنك التقديم قبل السفر بمدة تصل إلى 6 أشهر، ولا يقل عن 15 يومًا. تقل المواعيد قبل الصيف وعطل الشتاء، فابدأ قبل 6 إلى 8 أسابيع إن استطعت.",
+          answer: "يمكنك التقديم قبل السفر بمدة تصل إلى 6 أشهر، ولا يقل عن 15 يومًا. تمتلئ المواعيد بسرعة قبل عطلتي الصيف والشتاء، لذا ننصح بالبدء قبل السفر بـ6 إلى 8 أسابيع.",
         },
         {
           question: "كم تتقاضى إيزي فيزا، ومتى يُسترد الرسم؟",
@@ -130,7 +130,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         },
         {
           question: `Where do I apply for a ${name} visa in the UAE?`,
-          answer: `${name} visa applications are handled by ${centre}, with centres in Dubai and Abu Dhabi. You book the appointment on their website, then hand in your file, pay the embassy fee and give your fingerprints there.`,
+          answer: `${name} visa applications are handled by ${centre}, which has centres in Dubai and Abu Dhabi. You book your appointment on their website. At the appointment, you submit your file, pay the embassy fee and give your fingerprints.`,
         },
         {
           question: `Can I visit other countries on a ${name} visa?`,
@@ -138,7 +138,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         },
         {
           question: `When should I apply for my ${name} visa?`,
-          answer: "You can apply up to 6 months before you travel and no later than 15 days before. Appointments get scarce before summer and the winter holidays, so start 6 to 8 weeks ahead if you can.",
+          answer: "You can apply up to 6 months before you travel and no later than 15 days before. Appointments fill up quickly before the summer and winter holidays, so we recommend starting 6 to 8 weeks before you travel.",
         },
         {
           question: "What does EZvisa cost, and when is it refunded?",
@@ -156,21 +156,21 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-background">
         <InnerHero
-          badge={arabic ? `${place} · تأشيرة شنغن` : `${name} · Schengen visa`}
-          title={arabic ? `ملف تأشيرة ${place}، نجهّزه من الإمارات.` : `Your ${name} visa file, prepared from the UAE.`}
+          badge={place}
+          title={arabic ? `تأشيرة شنغن إلى ${place} من الإمارات` : `${name} Schengen visa from the UAE`}
           description={
             arabic ? (
               <>
-                نعبّئ نموذج طلب {place}، ونكتب خطاب التغطية، ونضع برنامج الرحلة، ونرتّب حجوزات الطيران والفندق. جاهز خلال{" "}
+                نجهّز طلب تأشيرة {place} كاملًا: نموذج الطلب وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. جاهز خلال{" "}
                 <bdi dir="ltr">1–2</bdi> يوم مقابل <bdi dir="ltr">{price}</bdi>.
               </>
             ) : (
-              `We fill in your ${name} application form, write your cover letter, plan your itinerary and arrange your flight and hotel reservations. Ready in 1–2 days for ${PRICE_AED} AED.`
+              `We prepare your complete ${name} visa application: the application form, cover letter, itinerary, and flight and hotel reservations. Ready in 1–2 days for ${PRICE_AED} AED.`
             )
           }
           backgroundImage={destination.image}
         >
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <LocaleLink
               href={applyHref}
               className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
@@ -180,7 +180,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
             </LocaleLink>
             <LocaleLink
               href={destination.documentPath}
-              className="inline-flex h-12 items-center rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+              className="inline-flex h-12 items-center rounded-full bg-background px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
             >
               {arabic ? "المستندات" : "See the documents"}
             </LocaleLink>
@@ -192,11 +192,11 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <section className="py-20 md:py-24">
           <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
             <div className="flex max-w-2xl flex-col gap-4">
-              <h2 className="text-balance text-foreground">{arabic ? `ماذا يتضمن ملف ${place}` : `What goes into your ${name} file`}</h2>
+              <h2 className="text-balance text-foreground">{arabic ? `مستندات طلب ${place}` : `Documents for your ${name} application`}</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
                 {arabic
-                  ? `سفارة ${place} تقرأ مستنداتك معًا. نجهّز الأجزاء التي يجب كتابتها أو حجزها لرحلتك، ونتأكد من أنها تطابق ما تحضره.`
-                  : `The ${name} embassy reads your documents together. We prepare the parts that have to be written or booked for your trip, and check that they match the ones you bring.`}
+                  ? "تقدّم أنت مستنداتك الشخصية، ونجهّز الباقي. ونتأكد أيضًا من تطابق كل المستندات قبل أن تقدّم طلبك."
+                  : "You provide your personal documents, and we prepare the rest. We also check that all of them are consistent before you submit your application."}
               </p>
             </div>
             <DocumentSplit country={name} />
@@ -208,10 +208,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         <section className="py-20 md:py-28">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                {arabic ? "أسئلة" : "Questions"}
-              </span>
-              <h2 className="text-balance text-foreground">{arabic ? `التقديم على تأشيرة ${place} من الإمارات` : `Applying for ${name} from the UAE`}</h2>
+              <h2 className="text-balance text-foreground">{arabic ? "الأسئلة الشائعة" : "Frequently asked questions"}</h2>
             </div>
             <Accordion type="single" collapsible className="w-full border-t border-border/70">
               {faqs.map((faq, idx) => (

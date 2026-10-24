@@ -2,7 +2,7 @@
 
 import { useState, Suspense } from "react"
 import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -11,10 +11,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { AppleSignInButton } from "@/components/auth/apple-sign-in"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
+import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
 import { authCallbackUrl } from "@/lib/auth/redirect"
-import { ltr } from "@/lib/bidi"
 import { translations } from "@/lib/translations"
 import { authFormErrorText } from "@/lib/translations/auth-form"
 
@@ -22,7 +22,6 @@ function SignupForm() {
   const locale = useSiteLocale()
   const arabic = locale === "ar"
   const copy = translations[locale].authForm
-  const router = useRouter()
   const searchParams = useSearchParams()
   const localize = useLocalizedHref()
   const rawNext = searchParams.get("next") || "/dashboard"
@@ -36,6 +35,19 @@ function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
 
   const supabase = createBrowserClient()
+  const cooldown = useCooldown()
+  const [resending, setResending] = useState(false)
+
+  const resend = async () => {
+    setResending(true)
+    await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }) },
+    })
+    setResending(false)
+    cooldown.start()
+  }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,17 +77,22 @@ function SignupForm() {
     } else {
       setSuccess(true)
       setIsLoading(false)
+      cooldown.start()
     }
   }
 
   if (success) {
     return (
-      <div className="w-full max-w-md space-y-6 p-8 bg-card rounded-xl shadow-lg border border-border/50 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-emerald-600">{copy.checkEmailTitle}</h1>
-        <p className="text-muted-foreground">
-          {copy.verificationSent} <span dir="ltr">{ltr(email.trim())}</span>. {copy.verifyContinue}
-        </p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push(localize("/login"))}>{copy.backToLogin}</Button>
+      <div className="w-full max-w-md rounded-xl border border-border/50 bg-card p-8 shadow-lg">
+        <EmailSent
+          title={copy.checkEmailTitle}
+          email={email.trim()}
+          note={copy.verifyContinue}
+          onResend={resend}
+          resending={resending}
+          left={cooldown.left}
+          onChangeEmail={() => setSuccess(false)}
+        />
       </div>
     )
   }

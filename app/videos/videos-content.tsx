@@ -14,7 +14,7 @@ const videos = [
     id: 1,
     title: "How to apply for a Schengen visa",
     titleAr: "كيف تقدّم لطلب تأشيرة شنغن",
-    description: "The steps from your first answer to your visa centre appointment, in about 20 seconds.",
+    description: "A quick overview of the Schengen visa application process.",
     descriptionAr: "الخطوات من أول إجابة حتى موعد مركز التأشيرات، في نحو 20 ثانية.",
     thumbnail: "https://img.youtube.com/vi/OMkd3GwgYn8/maxresdefault.jpg",
     duration: "0:21",
@@ -46,11 +46,11 @@ export default function VideosContent() {
       <div className="flex-1">
         <InnerHero
           badge={arabic ? "أدلة" : "Guides"}
-          title={arabic ? "أدلة قصيرة لتأشيرة شنغن." : "Short guides to the Schengen visa."}
+          title={arabic ? "أدلة بالفيديو" : "Video guides"}
           description={
             arabic
-              ? "مقاطع سريعة عن كيفية عمل الطلب وما تحضره إلى موعدك. المزيد على يوتيوب وتيك توك."
-              : "Quick videos on how the application works and what to bring to your appointment. More are on our YouTube and TikTok."
+              ? "مقاطع قصيرة تشرح خطوات طلب تأشيرة شنغن. تجد المزيد على قناتينا في يوتيوب وتيك توك."
+              : "Short videos explaining the Schengen visa process. You can find more on our YouTube and TikTok channels."
           }
         />
 

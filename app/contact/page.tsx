@@ -49,8 +49,8 @@ const CHANNELS = [
     label: "WhatsApp",
     labelAr: "واتساب",
     value: WHATSAPP_DISPLAY,
-    note: "The quickest way to reach us. Send questions, photos of documents you're unsure about, or voice notes.",
-    noteAr: "أسرع طريقة للوصول إلينا. أرسل أسئلة، أو صور مستندات لست متأكدًا منها، أو رسائل صوتية.",
+    note: "The fastest way to reach us with questions about your application.",
+    noteAr: "أسرع طريقة للتواصل معنا بشأن أسئلتك عن طلبك.",
     href: whatsAppUrl(),
     external: true,
     icon: <WhatsAppIcon className="size-5" />,
@@ -59,8 +59,8 @@ const CHANNELS = [
     label: "Email",
     labelAr: "البريد الإلكتروني",
     value: "info@ezvisa.net",
-    note: "Best for longer questions and refund requests. Include your EZ- reference if you have one.",
-    noteAr: "الأنسب للأسئلة الطويلة وطلبات الاسترداد. أضف مرجع EZ- إن كان لديك.",
+    note: "For detailed questions and refund requests. Please include your EZ- reference if you have one.",
+    noteAr: "للأسئلة المفصلة وطلبات الاسترداد. يُرجى ذكر مرجع EZ- إن كان لديك.",
     href: "mailto:info@ezvisa.net",
     external: false,
     icon: <Mail className="size-5" aria-hidden="true" />,
@@ -69,8 +69,8 @@ const CHANNELS = [
     label: "Phone",
     labelAr: "الهاتف",
     value: WHATSAPP_DISPLAY,
-    note: "The same number. Calls 9 AM to 6 PM, UAE time.",
-    noteAr: "الرقم نفسه. المكالمات من 9 صباحًا إلى 6 مساءً بتوقيت الإمارات.",
+    note: "Same number as WhatsApp. Calls from 9 AM to 6 PM, UAE time.",
+    noteAr: "رقم واتساب نفسه. المكالمات من 9 صباحًا إلى 6 مساءً بتوقيت الإمارات.",
     href: telUrl(),
     external: false,
     icon: <Phone className="size-5" aria-hidden="true" />,
@@ -89,11 +89,11 @@ export default async function ContactPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge={arabic ? "تواصل" : "Contact"}
-          title={arabic ? "تحدّث إلى مختص تأشيرات." : "Talk to a visa specialist."}
+          title={arabic ? "تواصل معنا" : "Contact us"}
           description={
             arabic
-              ? "اسأل عن رحلتك قبل أن تدفع، أو عن طلب بدأته. يصلك الرد من شخص يجهّز ملفات التأشيرة، لا من نص جاهز."
-              : "Ask about your trip before you pay, or about an application you've already started. You'll get an answer from someone who prepares visa files, not a script."
+              ? "لديك سؤال عن رحلتك أو عن طلب بدأته؟ تواصل معنا عبر واتساب أو البريد الإلكتروني أو الهاتف."
+              : "Questions about your trip or about an application you've already started? Contact us on WhatsApp, by email or by phone."
           }
         />
 
@@ -146,15 +146,15 @@ export default async function ContactPage() {
               <p className="text-sm text-muted-foreground">
                 {arabic ? (
                   <>
-                    الأسئلة الشائعة مجابة في{" "}
+                    تجد إجابات أخرى في{" "}
                     <LocaleLink href="/#faq" className="font-medium text-primary hover:underline">
-                      الأسئلة
+                      الأسئلة الشائعة
                     </LocaleLink>
                     .
                   </>
                 ) : (
                   <>
-                    Common questions are answered in the{" "}
+                    You can also find answers in our{" "}
                     <LocaleLink href="/#faq" className="font-medium text-primary hover:underline">
                       FAQ
                     </LocaleLink>

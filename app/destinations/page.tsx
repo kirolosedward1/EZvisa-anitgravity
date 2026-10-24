@@ -50,14 +50,14 @@ export default function DestinationsPage() {
           badge={<LangText en="Destinations" ar="الوجهات" />}
           title={
             <LangText
-              en="Pick your Schengen destination."
-              ar="اختر وجهتك في شنغن."
+              en="Schengen destinations"
+              ar="وجهات شنغن"
             />
           }
           description={
             <LangText
-              en="The visa centre, embassy fee and documents for each of the 29 Schengen countries. Our fee is the same 249 AED for every one."
-              ar="مركز التأشيرات ورسوم السفارة والمستندات لكل دولة من دول شنغن الـ29. رسومنا 249 درهم لكل دولة."
+              en="Visa requirements, visa centres and embassy fees for all 29 Schengen countries. Our service fee is 249 AED for any destination."
+              ar="متطلبات التأشيرة ومراكز التأشيرات ورسوم السفارة لدول شنغن الـ29. رسوم خدمتنا 249 درهم لأي وجهة."
             />
           }
           randomizeBackground={true}

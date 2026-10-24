@@ -72,7 +72,7 @@ export function ContactForm() {
           >
             <h2 className="panel-title panel-title-lg mb-1.5 text-foreground">{t("Send us a message", "أرسل لنا رسالة")}</h2>
             <p className="mb-8 text-sm text-muted-foreground">
-              {t("We reply by email. For anything about an application you've started, include your EZ- reference.", "نرد بالبريد. إذا كان الأمر عن طلب بدأته، أضف مرجع EZ-.")}
+              {t("We'll reply by email. If your message is about an existing application, please include your EZ- reference.", "سنرد عليك بالبريد الإلكتروني. إذا كانت رسالتك عن طلب قائم، يُرجى ذكر مرجع EZ-.")}
             </p>
 
             {isError && (

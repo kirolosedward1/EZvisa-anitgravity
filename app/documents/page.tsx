@@ -34,17 +34,17 @@ export default function DocumentsPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge={arabic ? "المستندات" : "Documents"}
-          title={arabic ? "مستندات تأشيرة شنغن، حسب الدولة." : "The documents for your Schengen visa, by country."}
+          title={arabic ? "مستندات تأشيرة شنغن حسب الدولة" : "Schengen visa documents by country"}
           description={
             arabic
-              ? "كل دول شنغن تطلب من المقيم في الإمارات الملف الأساسي نفسه. اختر وجهتك لمعرفة مركز التأشيرات والرسوم وما يختلف."
-              : "Every Schengen country asks UAE residents for the same core file. Pick your destination for its visa centre, fees and the details that differ."
+              ? "اختر وجهتك لمعرفة المستندات المطلوبة ومركز التأشيرات الذي يستقبل الطلبات ورسوم السفارة."
+              : "Select your destination to see the required documents, the visa centre that handles applications, and the embassy fee."
           }
         >
           <label htmlFor="country-search" className="sr-only">
             {arabic ? "ابحث عن دولة" : "Search for a country"}
           </label>
-          <div className="relative">
+          <div className="relative mx-auto max-w-md">
             <Search className="pointer-events-none absolute start-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
               id="country-search"
@@ -90,12 +90,11 @@ export default function DocumentsPage() {
         <section className="border-t border-border/70 bg-secondary/40 py-20 md:py-28">
           <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
             <div className="flex max-w-2xl flex-col items-start gap-4">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{arabic ? "كل الدول" : "Every country"}</span>
-              <h2 className="text-balance text-foreground">{arabic ? "نصف الملف منك. والنصف الآخر منا." : "Half the file is yours. The other half is ours."}</h2>
+              <h2 className="text-balance text-foreground">{arabic ? "مستندات كل دول شنغن" : "Documents for every Schengen country"}</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
                 {arabic
-                  ? "تحضر المستندات التي لا يستطيع غيرك الحصول عليها. ونجهّز ما يجب كتابته أو حجزه لرحلتك، ونتأكد من أن الجميع متّسق."
-                  : "You bring the documents only you can get. We prepare the ones that have to be written or booked for your trip, and check that all of them agree."}
+                  ? "تطلب كل دول شنغن المستندات الأساسية نفسها. تقدّم أنت مستنداتك الشخصية، ونجهّز الباقي ضمن الخدمة."
+                  : "All Schengen countries ask for the same core documents. You provide your personal documents, and we prepare the rest as part of the service."}
               </p>
             </div>
             <DocumentSplit />

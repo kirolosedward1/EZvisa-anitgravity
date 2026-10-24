@@ -11,50 +11,50 @@ const priceAr = formatAedLabel(PRICE_AED, "ar")
 const STEPS = [
   {
     when: { en: "Right after you pay", ar: "فور الدفع" },
-    title: { en: "A receipt and your EZ reference", ar: `إيصال ومرجع ${ltr("EZ-")}` },
+    title: { en: "Confirmation and receipt", ar: "التأكيد والإيصال" },
     body: {
-      en: `You get an email with your ${priceEn} receipt and an EZ- reference. The application is in your account and in the EZvisa app from that moment.`,
-      ar: `يصلك بريد فيه إيصال ${priceAr} ومرجع ${ltr("EZ-")}. يصبح الطلب في حسابك وفي تطبيق ${ltr("EZvisa")} من تلك اللحظة.`,
+      en: `You receive a confirmation email with your ${priceEn} receipt and your EZ- reference number. Your application appears in your account and in the EZvisa app.`,
+      ar: `يصلك بريد تأكيد فيه إيصال ${priceAr} ورقم مرجع ${ltr("EZ-")}. ويظهر طلبك في حسابك وفي تطبيق ${ltr("EZvisa")}.`,
     },
   },
   {
     when: { en: "Same day", ar: "في اليوم نفسه" },
     title: { en: "Finish your application", ar: "أكمل طلبك" },
     body: {
-      en: "Add your travel dates, where you plan to stay, your passport and your job details. It takes about ten minutes and saves as you go.",
-      ar: "أضف تواريخ السفر ومكان الإقامة وبيانات الجواز والعمل. يستغرق ذلك نحو عشر دقائق ويُحفظ أولًا بأول.",
+      en: "Add your travel dates, accommodation plans, passport and employment details. This takes about 10 minutes, and your answers are saved automatically.",
+      ar: "أضف تواريخ السفر وخطط الإقامة وبيانات الجواز والعمل. يستغرق ذلك نحو 10 دقائق، وتُحفظ إجاباتك تلقائيًا.",
     },
   },
   {
     when: { en: "Same day", ar: "في اليوم نفسه" },
     title: { en: "Upload your documents", ar: "ارفع مستنداتك" },
     body: {
-      en: "Passport, Emirates ID, residence visa, photo, bank statement, and a salary certificate or NOC. Upload each one on the website or in the app, from your phone if that's easier.",
-      ar: `جواز السفر، و${ltr("Emirates ID")}، وتأشيرة الإقامة، والصورة، وكشف الحساب، وشهادة الراتب أو ${ltr("NOC")}. ارفع كل مستند على الموقع أو في التطبيق، ومن هاتفك إن كان ذلك أسهل.`,
+      en: "Upload your passport, Emirates ID, residence visa, photo, bank statement, and salary certificate or NOC on the website or in the EZvisa app.",
+      ar: `ارفع جواز السفر و${ltr("Emirates ID")} وتأشيرة الإقامة والصورة وكشف الحساب وشهادة الراتب أو ${ltr("NOC")} على الموقع أو في تطبيق ${ltr("EZvisa")}.`,
     },
   },
   {
     when: { en: "Within 1–2 days", ar: <>خلال <bdi dir="ltr">1–2</bdi> يوم</> },
     title: { en: "Your file is ready", ar: "ملفك جاهز" },
     body: {
-      en: "A visa specialist checks your documents and prepares the application form, cover letter, itinerary, and flight and hotel reservations. You download them from your account.",
-      ar: "يراجع مختص التأشيرات مستنداتك ويجهّز نموذج الطلب وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. تنزّلها من حسابك.",
+      en: "A visa specialist reviews your documents and prepares your application form, cover letter, itinerary, and flight and hotel reservations. You can download everything from your account.",
+      ar: "يراجع مختص التأشيرات مستنداتك ويجهّز نموذج الطلب وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. ويمكنك تنزيلها كلها من حسابك.",
     },
   },
   {
     when: { en: "Your appointment", ar: "موعدك" },
     title: { en: "Submit at the visa centre", ar: "قدّم في مركز التأشيرات" },
     body: {
-      en: "Book a slot with the country's visa centre (VFS Global, BLS or TLScontact), pay the embassy fee there, give your fingerprints and hand in the file.",
-      ar: `احجز موعدًا في مركز تأشيرات الدولة (${ltr("VFS Global")} أو ${ltr("BLS")} أو ${ltr("TLScontact")})، وادفع رسوم السفارة هناك، وقدّم بصماتك وسلّم الملف.`,
+      en: "Book an appointment with the visa centre for your destination (VFS Global, BLS International or TLScontact). On the day, you submit your file, pay the embassy fee and give your fingerprints.",
+      ar: `احجز موعدًا في مركز التأشيرات الخاص بوجهتك (${ltr("VFS Global")} أو ${ltr("BLS International")} أو ${ltr("TLScontact")}). وفي يوم الموعد تقدّم ملفك وتدفع رسوم السفارة وتسجّل بصماتك.`,
     },
   },
   {
     when: { en: "Usually 15 days", ar: "عادة 15 يومًا" },
     title: { en: "The embassy decides", ar: "السفارة تقرّر" },
     body: {
-      en: "Most decisions come within 15 calendar days, and can take up to 45 in busy months. The visa centre tells you when your passport is ready to collect.",
-      ar: "تصل معظم القرارات خلال 15 يومًا، وقد تصل إلى 45 يومًا في الأشهر المزدحمة. يخبرك مركز التأشيرات عندما يصبح جوازك جاهزًا للاستلام.",
+      en: "Embassies usually decide within 15 calendar days. In busy periods this can take up to 45 days. The visa centre lets you know when your passport is ready to collect.",
+      ar: "تصدر السفارات قرارها عادة خلال 15 يومًا تقويميًا، وقد يمتد ذلك إلى 45 يومًا في فترات الذروة. ويبلغك مركز التأشيرات عندما يصبح جوازك جاهزًا للاستلام.",
     },
   },
 ]
@@ -70,12 +70,12 @@ export async function AfterPaymentTimeline() {
             {pick({ en: "After you pay", ar: "بعد الدفع" })}
           </span>
           <h2 className="text-balance text-foreground">
-            {pick({ en: "What happens, and when.", ar: "ماذا يحدث، ومتى." })}
+            {pick({ en: "What happens after payment", ar: "ماذا يحدث بعد الدفع" })}
           </h2>
           <p className="text-base leading-relaxed text-muted-foreground">
             {pick({
-              en: "Our part takes one to two days. The rest depends on your appointment date and the embassy.",
-              ar: "جزءنا يستغرق يومًا أو يومين. والباقي يعتمد على تاريخ موعدك وعلى السفارة.",
+              en: "We prepare your file within 1–2 days of receiving your documents. The rest of the timeline depends on your appointment date and the embassy.",
+              ar: "نجهّز ملفك خلال يوم إلى يومين من استلام مستنداتك. وتعتمد بقية المدة على تاريخ موعدك وعلى السفارة.",
             })}
           </p>
         </div>

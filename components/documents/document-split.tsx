@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, FileText } from "lucide-react"
+import { BookUser, Briefcase, Camera, ClipboardList, Hotel, IdCard, Landmark, PenLine, Plane, Route, ShieldPlus, type LucideIcon } from "lucide-react"
 import { REQUIREMENTS } from "@/lib/shared/wizard-contract"
 import { useSiteLocale } from "@/components/locale-provider"
 import { countryNameAr } from "@/lib/countries"
@@ -13,12 +13,20 @@ const YOU_AR: Record<string, { title: string; note: string }> = {
   nocCertificate: { title: "شهادة راتب أو عدم ممانعة", note: "من صاحب العمل، إذا كنت موظفًا" },
 }
 
+const PROVIDE_ICON: Record<string, LucideIcon> = {
+  passportCopy: BookUser,
+  residencyCopy: IdCard,
+  photo: Camera,
+  bankStatement: Landmark,
+  nocCertificate: Briefcase,
+}
+
 const WE_PREPARE = [
-  { title: "Schengen application form", titleAr: "نموذج طلب شنغن", note: "Filled in from your answers and checked", noteAr: "يُعبّأ من إجاباتك ويُراجع" },
-  { title: "Cover letter", titleAr: "خطاب التغطية", note: "Written for your trip, signed by you", noteAr: "مكتوب لرحلتك، وتوقّعه أنت" },
-  { title: "Day-by-day itinerary", titleAr: "برنامج يومي", note: "Matches your flight and hotel dates", noteAr: "يطابق تواريخ الطيران والفندق" },
-  { title: "Flight reservation", titleAr: "حجز طيران", note: "For the visa, no ticket to buy", noteAr: "للتأشيرة، من دون شراء تذكرة" },
-  { title: "Hotel reservation", titleAr: "حجز فندق", note: "Covers every night of the trip", noteAr: "يغطي كل ليلة من الرحلة" },
+  { title: "Schengen application form", titleAr: "نموذج طلب شنغن", note: "Filled in from your answers and checked", noteAr: "يُعبّأ من إجاباتك ويُراجع", icon: ClipboardList },
+  { title: "Cover letter", titleAr: "خطاب التغطية", note: "Written for your trip, signed by you", noteAr: "مكتوب لرحلتك، وتوقّعه أنت", icon: PenLine },
+  { title: "Day-by-day itinerary", titleAr: "برنامج يومي", note: "Matches your flight and hotel dates", noteAr: "يطابق تواريخ الطيران والفندق", icon: Route },
+  { title: "Flight reservation", titleAr: "حجز طيران", note: "For the visa, no ticket to buy", noteAr: "للتأشيرة، من دون شراء تذكرة", icon: Plane },
+  { title: "Hotel reservation", titleAr: "حجز فندق", note: "Covers every night of the trip", noteAr: "يغطي كل ليلة من الرحلة", icon: Hotel },
 ]
 
 /** The core Schengen file for UAE residents: what the customer brings and what EZvisa prepares. */
@@ -35,11 +43,13 @@ export function DocumentSplit({ country }: { country?: string }) {
       const title = r.document_type === "nocCertificate" ? "Salary certificate or NOC" : r.title
       const ar = YOU_AR[r.document_type]
       return {
+        icon: PROVIDE_ICON[r.document_type] ?? ClipboardList,
         title: arabic && ar ? ar.title : title,
         note: arabic && ar ? ar.note : note,
       }
     }),
     {
+      icon: ShieldPlus,
       title: arabic ? "تأمين السفر" : "Travel insurance",
       note: arabic
         ? "تغطية طبية بقيمة €30,000. اشترها عبرنا كإضافة، أو أحضر وثيقتك"
@@ -60,8 +70,10 @@ export function DocumentSplit({ country }: { country?: string }) {
         </div>
         <ul className="flex flex-col">
           {youProvide.map((item) => (
-            <li key={item.title} className="flex items-start gap-3 border-t border-border/70 py-3.5 first:border-0 first:pt-0 last:pb-0">
-              <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <li key={item.title} className="flex items-center gap-3.5 border-t border-border/70 py-3.5 first:border-0 first:pt-0 last:pb-0">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
+                <item.icon className="size-4" aria-hidden="true" />
+              </span>
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">{item.title}</span>
                 {item.note && <span className="text-sm text-muted-foreground">{item.note}</span>}
@@ -86,8 +98,10 @@ export function DocumentSplit({ country }: { country?: string }) {
         </div>
         <ul className="flex flex-col">
           {WE_PREPARE.map((item) => (
-            <li key={item.title} className="flex items-start gap-3 border-t border-primary/10 py-3.5 first:border-0 first:pt-0 last:pb-0">
-              <Check className="mt-0.5 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
+            <li key={item.title} className="flex items-center gap-3.5 border-t border-primary/10 py-3.5 first:border-0 first:pt-0 last:pb-0">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <item.icon className="size-4" aria-hidden="true" />
+              </span>
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">{arabic ? item.titleAr : item.title}</span>
                 <span className="text-sm text-muted-foreground">{arabic ? item.noteAr : item.note}</span>

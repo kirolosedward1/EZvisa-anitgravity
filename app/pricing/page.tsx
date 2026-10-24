@@ -46,13 +46,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const INCLUDED = [
-  { en: "Schengen application form, filled in and checked", ar: "نموذج طلب شنغن، معبّأ ومراجع" },
-  { en: "Cover letter written for your trip", ar: "خطاب تغطية مكتوب لرحلتك" },
-  { en: "Day-by-day itinerary that matches your bookings", ar: "برنامج يومي يطابق حجوزاتك" },
-  { en: "Flight reservation for the visa, no ticket to buy", ar: "حجز طيران للتأشيرة، من دون شراء تذكرة" },
-  { en: "Hotel reservation for every night of the trip", ar: "حجز فندق لكل ليلة من الرحلة" },
-  { en: "Every document you upload checked by a visa specialist", ar: "كل مستند ترفعه يراجعه مختص تأشيرات" },
-  { en: "Answers on WhatsApp and email until your appointment", ar: `إجابات عبر ${ltr("WhatsApp")} والبريد حتى موعدك` },
+  { en: "Completed Schengen visa application form", ar: "نموذج طلب تأشيرة شنغن معبّأ" },
+  { en: "Cover letter for your trip", ar: "خطاب تغطية لرحلتك" },
+  { en: "Day-by-day travel itinerary", ar: "برنامج رحلة يومي" },
+  { en: "Flight reservation (no ticket purchase needed)", ar: "حجز طيران (من دون شراء تذكرة)" },
+  { en: "Hotel reservations for your full stay", ar: "حجوزات فندق لكامل إقامتك" },
+  { en: "Document check by a visa specialist", ar: "مراجعة المستندات من مختص تأشيرات" },
+  { en: "Support on WhatsApp and email until your appointment", ar: `دعم عبر ${ltr("WhatsApp")} والبريد حتى موعدك` },
 ]
 
 const SEPARATE = [
@@ -80,8 +80,8 @@ const SEPARATE = [
   {
     title: { en: "Translation, attestation and courier", ar: "الترجمة والتصديق والتوصيل" },
     body: {
-      en: "Only if a document needs it. We tell you when that's the case.",
-      ar: "فقط إذا احتاج مستند إلى ذلك. نخبرك عندما يكون الأمر كذلك.",
+      en: "Only needed for some documents. We'll let you know if any apply to you.",
+      ar: "مطلوبة لبعض المستندات فقط. سنخبرك إن كان أي منها ينطبق عليك.",
     },
   },
 ]
@@ -100,10 +100,10 @@ export default async function PricingPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge={pick("Pricing", "الأسعار")}
-          title={pick(`${price} for your whole visa file.`, `${price} مقابل ملف التأشيرة كاملًا.`)}
+          title={pick("Pricing", "الأسعار")}
           description={pick(
-            `One fee, paid when you start. Travelling with your spouse? We prepare both applications together for ${spouse}.`,
-            `رسم واحد يُدفع عند البدء. تسافر مع الزوج أو الزوجة؟ نجهّز الطلبين معًا مقابل ${spouse}.`,
+            `One fixed fee of ${price} per application, or ${spouse} when your spouse travels with you. Embassy fees and travel insurance are paid separately.`,
+            `رسم ثابت قدره ${price} لكل طلب، أو ${spouse} عندما يسافر معك الزوج أو الزوجة. رسوم السفارة وتأمين السفر تُدفع بشكل منفصل.`,
           )}
         />
 
@@ -141,7 +141,7 @@ export default async function PricingPage() {
                   {pick("Start your application", "ابدأ طلبك")}
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
                 </LocaleLink>
-                <p className="text-sm text-muted-foreground">{pick("Ready in 1–2 days after your documents are in.", <>جاهز خلال <bdi dir="ltr">1–2</bdi> يوم بعد وصول مستنداتك.</>)}</p>
+                <p className="text-sm text-muted-foreground">{pick("Your file is ready 1–2 days after you upload your documents.", <>يصبح ملفك جاهزًا خلال <bdi dir="ltr">1–2</bdi> يوم من رفع مستنداتك.</>)}</p>
               </div>
             </div>
 
@@ -149,7 +149,7 @@ export default async function PricingPage() {
             <div className="flex flex-col gap-6 rounded-3xl bg-secondary/60 p-6 sm:p-10">
               <div className="flex flex-col gap-2">
                 <h2 className="panel-title text-foreground">{pick("Paid separately", "يُدفع بشكل منفصل")}</h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">{pick("These go to the embassy, the visa centre or the insurer, not to us. EZvisa is not VAT-registered; prices shown are final.", "هذه تذهب إلى السفارة أو مركز التأشيرات أو شركة التأمين، لا إلينا. إيزي فيزا غير مسجّلة لضريبة القيمة المضافة؛ الأسعار المعروضة نهائية.")}</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">{pick("These costs are paid to the embassy, the visa centre or the insurer. EZvisa is not VAT-registered, so the prices shown are final.", "تُدفع هذه التكاليف للسفارة أو مركز التأشيرات أو شركة التأمين. إيزي فيزا غير مسجّلة لضريبة القيمة المضافة، لذا فالأسعار المعروضة نهائية.")}</p>
               </div>
               <ul className="flex flex-col">
                 {SEPARATE.map((item) => (
@@ -170,8 +170,7 @@ export default async function PricingPage() {
         <section className="border-t border-border/70 py-20 md:py-24">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{pick("Refunds", "الاسترداد")}</span>
-              <h2 className="text-balance text-foreground">{pick("When you get the fee back.", "متى يُعاد الرسم.")}</h2>
+              <h2 className="text-balance text-foreground">{pick("Refunds", "الاسترداد")}</h2>
               <LocaleLink href="/refund-policy" className="text-sm font-medium text-primary hover:underline">
                 {pick("Read the full refund policy", "اقرأ سياسة الاسترداد كاملة")}
               </LocaleLink>
@@ -199,7 +198,7 @@ export default async function PricingPage() {
                 <ul className="flex flex-col gap-3 text-sm leading-relaxed text-muted-foreground">
                   <li className="flex items-start gap-3">
                     <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />
-                    {pick("The embassy refuses the visa. The decision is theirs, and our work on the file is done.", "ترفض السفارة التأشيرة. القرار لها، وعملنا على الملف قد اكتمل.")}
+                    {pick("The embassy refuses your visa application.", "رفض السفارة لطلب تأشيرتك.")}
                   </li>
                   <li className="flex items-start gap-3">
                     <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />

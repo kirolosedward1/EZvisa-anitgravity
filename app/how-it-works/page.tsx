@@ -55,14 +55,14 @@ export default async function HowItWorksPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge={arabic ? "كيف تعمل" : "How it works"}
-          title={arabic ? "أنت تجيب عن الأسئلة. ونحن نجهّز الملف." : "You answer the questions. We prepare the file."}
+          title={arabic ? "كيف تعمل إيزي فيزا" : "How EZvisa works"}
           description={
             arabic
-              ? `يبدأ الأمر في نحو خمس دقائق مقابل ${price}. ثم يجهّز مختص التأشيرات كل ما يطلبه مركز التأشيرات، وتأخذه معك إلى موعدك.`
-              : `Starting takes about five minutes and ${price}. A visa specialist then prepares everything the visa centre asks for, and you take it to your appointment.`
+              ? `أجب عن بعض الأسئلة عن رحلتك وادفع ${price}. بعدها يجهّز مختص التأشيرات نموذج الطلب وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق خلال يوم إلى يومين.`
+              : `Answer a few questions about your trip and pay ${price}. A visa specialist then prepares your application form, cover letter, itinerary, and flight and hotel reservations within 1–2 days.`
           }
         >
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-3">
             <LocaleLink
               href="/apply"
               className="group inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
@@ -72,9 +72,9 @@ export default async function HowItWorksPage() {
             </LocaleLink>
             <LocaleLink
               href="/pricing"
-              className="inline-flex h-12 items-center rounded-full border border-border px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
+              className="inline-flex h-12 items-center rounded-full bg-background px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
             >
-              {arabic ? "اطّلع على التكلفة" : "See what it costs"}
+              {arabic ? "الأسعار" : "View pricing"}
             </LocaleLink>
           </div>
         </InnerHero>

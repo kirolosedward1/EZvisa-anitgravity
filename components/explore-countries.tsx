@@ -6,6 +6,7 @@ import { CountryFlag } from "@/components/country-flag"
 import { destinations } from "@/lib/destinations"
 import { SCHENGEN_META } from "@/lib/countries"
 import { LangText } from "@/components/lang-text"
+import { SectionPhoto } from "@/components/section-photo"
 
 /** Six Schengen countries that are not in the popular row (France, Italy, Spain, Germany, Switzerland). */
 const EXPLORE = ["Greece", "Netherlands", "Austria", "Portugal", "Czech Republic", "Hungary"]
@@ -16,14 +17,15 @@ export function ExploreCountries() {
   )
 
   return (
-    <section className="bg-secondary/50 py-16 md:py-20" aria-labelledby="explore-countries-heading">
-      <div className="container mx-auto max-w-6xl px-4 sm:px-6">
+    <section className="photo-hero relative overflow-hidden py-16 md:py-20" aria-labelledby="explore-countries-heading">
+      <SectionPhoto src="/images/countries/switzerland.jpg" />
+      <div className="container relative mx-auto max-w-6xl px-4 sm:px-6">
         <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div className="flex flex-col gap-2">
-            <h2 id="explore-countries-heading" className="text-foreground">
+            <h2 id="explore-countries-heading" className="hero-copy">
               <LangText en="Explore countries" ar="استكشف الدول" />
             </h2>
-            <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
+            <p className="hero-copy max-w-2xl text-base leading-relaxed opacity-85">
               <PreparationLine />
             </p>
           </div>
@@ -41,14 +43,15 @@ export function ExploreCountries() {
             <li key={country.slug}>
               <LocaleLink
                 href={`/destinations/${country.slug}`}
-                className="group flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-2.5 pe-4 shadow-xs transition-all hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                className="group flex items-center gap-4 rounded-2xl bg-card p-2.5 pe-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
               >
                 <span className="relative size-16 shrink-0 overflow-hidden rounded-xl">
                   <Image
                     src={country.image}
                     alt=""
                     fill
-                    sizes="64px"
+                    // The photos are 3:2, so object-cover scales them up to fill the square: ask for twice the width.
+                    sizes="128px"
                     className="object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 </span>
