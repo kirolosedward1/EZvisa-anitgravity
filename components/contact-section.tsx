@@ -3,7 +3,7 @@
 import { ArrowRight, Check } from "lucide-react"
 import { motion } from "framer-motion"
 import Link from "next/link"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"

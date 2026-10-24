@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { usePathname } from "next/navigation"
 import { MapPin } from "lucide-react"
 import { destinations } from "@/lib/destinations"
