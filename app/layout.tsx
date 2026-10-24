@@ -6,7 +6,6 @@ import { CookieConsent } from "@/components/cookie-consent"
 import { ScrollRestoration } from "@/components/scroll-restoration"
 import { ContinueApplicationNotification } from "@/components/continue-application-notification"
 import { NavigationProgressBar } from "@/components/navigation-progress"
-import { PageTransition } from "@/components/page-transition"
 import { LocaleDirection } from "@/components/locale-direction"
 import { LocaleProvider } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
@@ -180,7 +179,11 @@ export default async function RootLayout({
         <ScrollRestoration />
         {/* overflow-x-clip (not hidden): hidden would turn <main> into a scroll container and stop position: sticky from working on every page */}
         <main className="overflow-x-clip w-full flex flex-col min-h-screen">
-          <PageTransition>{children}</PageTransition>
+          {/* This wrapper used to live in PageTransition. That client div was
+              replayed against the streamed page Suspense boundary
+              (dev diff: client div.w-full.flex-1 vs server Suspense) and React
+              reported hydration error #418. It is server markup now. */}
+          <div className="w-full flex-1 flex flex-col">{children}</div>
         </main>
         <ContinueApplicationNotification />
         {/* CookieConsent also mounts Vercel Analytics, only after analytics consent. */}
