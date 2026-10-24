@@ -12,7 +12,24 @@
 import { readFileSync, readdirSync, statSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
+// Markers below were checked against this exact Next release. A newer Next
+// can move the bootstrap chunk or the page-script flags; refuse to no-op.
+const EXPECTED_NEXT = "16.0.10"
+
 const root = join(import.meta.dirname, "..", "node_modules")
+
+function fail(message) {
+  console.error(`defer-next-scripts: ${message}`)
+  process.exit(1)
+}
+
+const installedNext = JSON.parse(readFileSync(join(root, "next/package.json"), "utf8")).version
+if (installedNext !== EXPECTED_NEXT) {
+  fail(
+    `installed next@${installedNext}, pinned next@${EXPECTED_NEXT}. ` +
+      "Re-check the async/defer markers and update EXPECTED_NEXT before upgrading.",
+  )
+}
 
 const scriptPairs = [
   [
@@ -127,3 +144,35 @@ for (const name of readdirSync(runtimeDir)) {
     console.log("runtime bundle already defer:", name)
   }
 }
+
+function mustInclude(rel, needle, label) {
+  const path = join(root, rel)
+  let src
+  try {
+    src = readFileSync(path, "utf8")
+  } catch {
+    fail(`missing ${rel} (${label})`)
+  }
+  if (!src.includes(needle)) fail(`${rel} has no ${label}`)
+  return src
+}
+
+// The files next start actually renders with. Already-patched and freshly
+// patched copies both have to match; a missing marker is a failed patch.
+for (const rel of [
+  "react-dom/cjs/react-dom-server.node.production.js",
+  "next/dist/compiled/react-dom/cjs/react-dom-server.node.production.js",
+]) {
+  const src = mustInclude(rel, toMarker, "deferred bootstrap chunk")
+  if (src.includes(fromMarker)) fail(`${rel} still emits an async bootstrap chunk`)
+}
+
+for (const name of ["app-page.runtime.prod.js", "app-page.runtime.dev.js"]) {
+  const rel = `next/dist/compiled/next-server/${name}`
+  const src = mustInclude(rel, runtimeDefer, "deferred webpack runtime")
+  if (src.includes(runtimeMarker)) fail(`${name} still emits an async webpack runtime`)
+  if (src.includes("async:!0")) fail(`${name} still sets async:!0 on a Next script`)
+  if (!src.includes("defer:!0")) fail(`${name} never set defer:!0 on the page-chunk scripts`)
+}
+
+console.log(`defer-next-scripts: next@${installedNext} ok`)
