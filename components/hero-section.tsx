@@ -6,7 +6,7 @@ import { ArrowRight, ShieldCheck, Clock, BookOpen, Plane, ChevronDown, Tag } fro
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { LocaleLink } from "@/components/locale-link"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"

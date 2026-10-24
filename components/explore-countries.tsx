@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight } from "lucide-react"
 import { PreparationLine, ReadyLine } from "@/components/ready-line"
