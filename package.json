@@ -9,7 +9,7 @@
     "start": "next start",
     "sync:check": "node scripts/check-app-sync.mts",
     "check:ar": "node scripts/check-ar-copy.mts",
-    "test": "node --experimental-strip-types --test lib/auth/confirm-next.test.ts lib/auth/email-templates.test.ts lib/auth/login-notice.test.ts lib/shared/wizard-contract.duration.test.ts",
+    "test": "node --experimental-strip-types --test lib/auth/confirm-next.test.ts lib/auth/email-templates.test.ts lib/auth/login-notice.test.ts lib/route-path.test.ts lib/whatsapp.test.ts lib/shared/wizard-contract.duration.test.ts",
     "test:payments": "npx tsx scripts/test-ziina-payment.mts"
   },
   "dependencies": {

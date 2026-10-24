@@ -76,10 +76,9 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-const WHATSAPP_URL = getWhatsAppUrl("Hi EZvisa, I have a question about the app.")
-
 export default async function AppPage() {
   const arabic = (await requestLocale()) === "ar"
+  const whatsappUrl = getWhatsAppUrl("Hi EZvisa, I have a question about the app.", arabic)
   const copy = appCopy(arabic ? "ar" : "en")
   const description = arabic ? DESCRIPTION_AR : DESCRIPTION
   const structuredData = generateStructuredData(
@@ -205,7 +204,7 @@ export default async function AppPage() {
                     ))}
                   </ul>
                   <a
-                    href={WHATSAPP_URL}
+                    href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex w-fit items-center gap-2 font-medium text-primary hover:underline"

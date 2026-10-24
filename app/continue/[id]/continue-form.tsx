@@ -6,6 +6,7 @@
 import { useState } from "react"
 import type React from "react"
 import { useRouter } from "next/navigation"
+import { useLocalizedHref } from "@/components/locale-link"
 import { TripDetailsStep } from "@/components/apply/trip-details-step"
 import { SpouseStep } from "@/components/apply/spouse-step"
 import { EmploymentStep } from "@/components/apply/employment-step"
@@ -84,6 +85,7 @@ export function ContinueForm({
   initial: Partial<FormData>
 }) {
   const router = useRouter()
+  const localize = useLocalizedHref()
   const passportPlaceholder = useMessage("apply.passportPlaceholderN")
   const [index, setIndex] = useState(0)
   const [tripScreen, setTripScreen] = useState(0)
@@ -136,7 +138,7 @@ export function ContinueForm({
         return
       }
       if (last) {
-        router.push(uploadHref)
+        router.push(localize(uploadHref))
         router.refresh()
         return
       }

@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -50,7 +50,7 @@ export default function ForgotPasswordPage() {
               <AlertDescription>We've sent a password reset link to your email.</AlertDescription>
             </Alert>
             <Button variant="outline" className="w-full" asChild>
-              <Link href="/login">Back to login</Link>
+              <LocaleLink href="/login">Back to login</LocaleLink>
             </Button>
           </div>
         ) : (

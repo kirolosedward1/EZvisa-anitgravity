@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation"
+import { redirectLocalized, requestLocale } from "@/lib/request-locale"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { AccountView, type AccountApplication, type AccountProfile } from "@/app/account/account-view"
@@ -23,10 +23,11 @@ const str = (v: unknown) => (typeof v === "string" ? v.trim() : "")
 // sign-in, application history, receipts, support, sign out and delete account. Phone-only settings (Face ID,
 // reminders, appearance) stay in the app.
 export default async function AccountPage() {
+  const arabic = (await requestLocale()) === "ar"
   const supabase = await createServerClient()
   const { data } = await supabase.auth.getUser()
   const user = data.user
-  if (!user?.email) redirect("/login?next=/account")
+  if (!user?.email) redirectLocalized("/login?next=/account", arabic)
 
   const meta = (user.user_metadata ?? {}) as Record<string, unknown>
   const identities = (user.identities ?? []).map((identity) => identity.provider)

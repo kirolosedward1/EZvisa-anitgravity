@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { AlertTriangle, RefreshCw, Home } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
 
 export default function Error({
   error,
@@ -33,10 +33,10 @@ export default function Error({
           </Button>
 
           <Button variant="outline" asChild className="gap-2 bg-transparent">
-            <Link href="/">
+            <LocaleLink href="/">
               <Home className="w-4 h-4" />
               Go Home
-            </Link>
+            </LocaleLink>
           </Button>
         </div>
 
