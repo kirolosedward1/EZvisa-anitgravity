@@ -8,16 +8,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Flag, Icon, Text, type IconName } from "../ui";
 import { CountrySheet } from "../CountryPicker";
 import { useColors, useIsDark, S, R, T, ICON } from "../../lib/theme";
-import { useT } from "../../lib/i18n";
+import { useT, type Lang } from "../../lib/i18n";
 import { select } from "../../lib/haptics";
 
 const H = 56;
 export const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const parse = (s: string) => (s ? new Date(s + "T12:00:00") : undefined);
-export const fmtShort = (s: string) => (s ? parse(s)!.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "");
+/** Day, long month, year — the saved-traveller list (`useFmtDate`). Arabic keeps Western digits (`12 مايو 1990`). */
+export const formatListDate = (s: string, lang: Lang) => (s ? parse(s)!.toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
+export const fmtShort = (s: string, lang: Lang = "en") => (lang === "ar" ? formatListDate(s, lang) : s ? parse(s)!.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "");
 const ord = (n: number) => (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th");
-/** date-fns "PPP", as the web's date picker shows it: "November 18th, 2026". */
-export const fmtLong = (s: string) => { if (!s) return ""; const d = parse(s)!; return `${d.toLocaleDateString("en-US", { month: "long" })} ${d.getDate()}${ord(d.getDate())}, ${d.getFullYear()}`; };
+/** English stays date-fns "PPP" ("May 12th, 1990"). Arabic uses the list formatter. */
+export const fmtLong = (s: string, lang: Lang = "en") => {
+  if (!s) return "";
+  if (lang === "ar") return formatListDate(s, lang);
+  const d = parse(s)!;
+  return `${d.toLocaleDateString("en-US", { month: "long" })} ${d.getDate()}${ord(d.getDate())}, ${d.getFullYear()}`;
+};
 
 /** Uppercase field label, like the web's labelStyles. */
 export function Label({ children, nativeID }: { children: string; nativeID?: string }) {
@@ -115,15 +122,19 @@ export function CountryField({ label, value, names, placeholder, searchPlacehold
 
 /** Date input: iOS sheet with the inline calendar, Android dialog, web <input type=date>. */
 export function DateField({ label, value, onChange, min, max, placeholder = "Select date", error, disabled }: { label: string; value: string; onChange: (v: string) => void; min?: string; max?: string; placeholder?: string; error?: boolean; disabled?: boolean }) {
-  const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets();
+  const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const { lang, rtl } = useT();
   const [open, setOpen] = useState(false);
   const minD = min ? parse(min) : undefined, maxD = max ? parse(max) : undefined;
   const now = new Date();
   const initial = parse(value) ?? (maxD && maxD < now ? maxD : minD && minD > now ? minD : now);
   const [draft, setDraft] = useState(initial);
+  // Shown text only. onChange still stores the ISO date.
+  const shown = value ? fmtLong(value, lang) : placeholder;
+  const textAlign = rtl ? "right" : "left";
+  const writingDirection = rtl ? "rtl" : "ltr";
   const box = (
     <View style={[boxStyle(c, error), { flexDirection: "row", alignItems: "center", gap: S.xs, opacity: disabled ? 0.5 : 1 }]}>
-      <Text variant="body" style={{ flex: 1, paddingVertical: S.sm }} color={value ? c.label : c.secondaryLabel}>{value ? fmtLong(value) : placeholder}</Text>
+      <Text variant="body" style={{ flex: 1, paddingVertical: S.sm, textAlign, writingDirection }} color={value ? c.label : c.secondaryLabel}>{shown}</Text>
       <Icon name="calendar" size={16} color={c.secondaryLabel} />
     </View>
   );
@@ -137,7 +148,7 @@ export function DateField({ label, value, onChange, min, max, placeholder = "Sel
   );
   return (
     <>
-      <Pressable disabled={disabled} onPress={() => { select(); setDraft(initial); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmtLong(value) : "not set"}`} accessibilityHint="Opens a date picker">{box}</Pressable>
+      <Pressable disabled={disabled} onPress={() => { select(); setDraft(initial); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? shown : "not set"}`} accessibilityHint="Opens a date picker">{box}</Pressable>
       {Platform.OS === "android" && open && <DateTimePicker value={initial} mode="date" minimumDate={minD} maximumDate={maxD} onChange={(e, d) => { setOpen(false); if (e.type === "set" && d) onChange(iso(d)); }} />}
       {Platform.OS === "ios" && (
         <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
