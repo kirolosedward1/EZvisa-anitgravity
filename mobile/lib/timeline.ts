@@ -12,7 +12,7 @@ import { buildChecklist } from "./checklist";
 import { appointmentOf } from "./appointment";
 import { isDiscarded } from "./discard";
 
-export type StepKey = "submitted" | "paid" | "documents" | "appointment" | "decision";
+export type StepKey = "submitted" | "paid" | "documents" | "appointment" | "file";
 /** done: the data says it happened. current: the step being worked on now. attention: needs the customer (failed
  *  payment, rejected document). failed: refused or cancelled. todo: not reached. */
 export type StepState = "done" | "current" | "todo" | "attention" | "failed";
@@ -58,16 +58,16 @@ export function buildTimeline(a: Application): Step[] {
   const ap = appointmentOf(a);
   steps.push({ key: "appointment", label: "Appointment", state: ap ? "done" : "todo", at: ap?.at ?? null, scheduled: !!ap, note: ap?.centre });
 
-  // 5. Decision: completed = granted, rejected = refused, cancelled ends the case. No decision time column exists.
-  if (st === "completed") steps.push({ key: "decision", label: "Visa granted", state: "done", at: null });
-  else if (st === "rejected") steps.push({ key: "decision", label: "Visa refused", state: "failed", at: null });
-  else if (st === "cancelled") steps.push({ key: "decision", label: "Cancelled", state: "failed", at: null });
-  else steps.push({ key: "decision", label: "Decision", state: "todo", at: null });
+  // 5. File ready to download: what EZvisa delivers. Done once staff mark the file ready (or anything after it, the
+  //    embassy's decision included: completed / rejected only happen after the file was delivered). Cancelled ends the
+  //    case. No ready-at column exists, so no time.
+  if (st === "cancelled") steps.push({ key: "file", label: "Cancelled", state: "failed", at: null });
+  else steps.push({ key: "file", label: "File ready to download", state: FILE_READY.includes(st) || st === "rejected" ? "done" : "todo", at: null });
 
-  // The first open step after the last finished one is "current" (nothing is current once the case has ended).
+  // The first step not yet done is "current" (nothing is current once the case has ended). The file can be ready
+  // before an appointment is entered, so an open Appointment ahead of a finished File ready is still the current step.
   if (!["completed", "rejected", "cancelled"].includes(st)) {
-    const lastDone = steps.reduce((m, s, i) => (s.state === "done" ? i : m), -1);
-    const next = steps.findIndex((s, i) => i > lastDone && s.state !== "done");
+    const next = steps.findIndex((s) => s.state !== "done");
     if (next >= 0 && steps[next].state === "todo") steps[next] = { ...steps[next], state: "current" };
   }
   return steps;

@@ -35,7 +35,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 { const a = row({}); const s = buildTimeline(a);
   ok(st(s, "submitted").state === "done" && st(s, "submitted").at === base.created_at, "A website row: Submitted done at created_at");
   ok(st(s, "paid").state === "current" && st(s, "paid").at === null, "A unpaid: Paid is current, no time");
-  ok(["documents", "appointment", "decision"].every((k) => st(s, k as any).state === "todo"), "A later steps not done");
+  ok(["documents", "appointment", "file"].every((k) => st(s, k as any).state === "todo"), "A later steps not done");
   ok(next(a).kind === "pay", "A next action: Pay"); }
 
 // B. App draft submitted in the app, paid, documents partly uploaded.
@@ -56,9 +56,9 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
   const s = buildTimeline(a);
   ok(st(s, "documents").state === "done" && st(s, "documents").at === "2026-10-07T10:00:00Z", "D Documents done at the last real upload time");
   ok(st(s, "appointment").state === "done" && st(s, "appointment").at === future && st(s, "appointment").scheduled === true, "D Appointment shows the scheduled time");
-  ok(st(s, "decision").state === "current", "D Decision is the current step");
+  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download", "D File ready to download is done");
   ok(next(a).kind === "appointment" && next(a).cta === "View appointment", "D next action: View appointment");
-  ok(doneCount(s) === 4, "D progress 4 of 5"); }
+  ok(doneCount(s) === 5, "D progress 5 of 5"); }
 
 // E. Appointment already passed, no decision yet.
 { const a = row({ application_status: "ready", payment_status: "paid", appointment_at: past }, { ...app, wizard: selfEmployed, uploads: ALL.map((t) => up(t, "2026-10-04T10:00:00Z")) });
@@ -66,17 +66,18 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 
 // F. Refused (status rejected).
 { const a = row({ application_status: "rejected", payment_status: "paid" }, { ...app, wizard: selfEmployed }); const s = buildTimeline(a);
-  ok(st(s, "decision").state === "failed" && st(s, "decision").label === "Visa refused" && st(s, "decision").at === null, "F Decision failed: Visa refused, no time");
-  ok(!s.some((x) => x.state === "current"), "F nothing is current after a decision");
+  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download" && st(s, "file").at === null, "F refused after the file was delivered: File ready done, no time");
+  ok(!s.some((x) => x.state === "current"), "F nothing is current once the case has ended");
   ok(next(a).title === "Visa refused", "F next action: Visa refused"); }
 
 // G. Granted (status completed).
 { const s = buildTimeline(row({ application_status: "completed", payment_status: "paid" }, { ...app }));
-  ok(st(s, "decision").state === "done" && st(s, "decision").label === "Visa granted", "G Decision done: Visa granted"); }
+  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download", "G granted: File ready done");
+  ok(s.at(-1)!.key === "file", "G the last step is File ready to download"); }
 
 // H. Cancelled by EZvisa after payment.
 { const s = buildTimeline(row({ application_status: "cancelled", payment_status: "paid" }, { ...app, submittedAt: "2026-10-02T09:30:00Z" }));
-  ok(st(s, "submitted").state === "done" && st(s, "paid").state === "done" && st(s, "decision").label === "Cancelled" && st(s, "decision").state === "failed", "H staff-cancelled paid case: Cancelled"); }
+  ok(st(s, "submitted").state === "done" && st(s, "paid").state === "done" && st(s, "file").label === "Cancelled" && st(s, "file").state === "failed", "H staff-cancelled paid case: Cancelled"); }
 
 // I. Discarded by the customer while still a draft: nothing is marked done.
 { const a = row({ application_status: "cancelled" }, { ...app, discarded_at: "2026-10-05T10:00:00Z" }); const s = buildTimeline(a);

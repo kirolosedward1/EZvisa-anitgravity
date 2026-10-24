@@ -501,7 +501,7 @@ export const AR: Record<string, string> = {
   "Couldn't load your applications.": "تعذّر تحميل طلباتك.", "Check your connection and try again.": "تحقق من اتصالك وحاول مجددًا.", "Other applications": "طلبات أخرى",
   "Calendar access is off": "الوصول إلى التقويم متوقف", "Allow calendar access in Settings to add this appointment.": "اسمح بالوصول إلى التقويم من الإعدادات لإضافة هذا الموعد.",
   "Couldn't open the calendar.": "تعذّر فتح التقويم.", "Please try again.": "يرجى المحاولة مجددًا.",
-  "in progress": "قيد التنفيذ", "needs attention": "يحتاج إلى إجراء", "not yet": "ليس بعد", "Visa granted": "مُنحت التأشيرة", "Decision": "القرار",
+  "in progress": "قيد التنفيذ", "needs attention": "يحتاج إلى إجراء", "not yet": "ليس بعد", "Visa granted": "مُنحت التأشيرة", "Decision": "القرار", "File ready to download": "الملف جاهز للتنزيل",
   "View appointment": "عرض الموعد", "Awaiting decision": "بانتظار القرار", "Re-upload needed": "يلزم إعادة الرفع",
   // chat 08: payment result
   "Updating your application. This can take a minute.": "جارٍ تحديث طلبك. قد يستغرق ذلك دقيقة.",
