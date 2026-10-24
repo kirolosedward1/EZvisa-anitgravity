@@ -6,12 +6,15 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { LangText } from "@/components/lang-text"
 import { useArabic } from "@/components/ready-line"
+import { useLocalizedHref } from "@/components/locale-link"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
 
 export default function PaymentFailedPage() {
   const router = useRouter()
   const arabic = useArabic()
+  const localize = useLocalizedHref()
   const [canRetry, setCanRetry] = useState(false)
 
   useEffect(() => {
@@ -20,12 +23,10 @@ export default function PaymentFailedPage() {
   }, [])
 
   const handleRetry = () => {
-    router.push(`${arabic ? "/ar" : ""}/apply?step=payment&retry=true`)
+    router.push(localize("/apply?step=payment&retry=true"))
   }
 
-  const whatsAppText = arabic
-    ? "مرحبًا، أحتاج مساعدة لأن عملية الدفع لم تكتمل. هل يمكنكم المساعدة؟"
-    : "Hi, I need help with my payment that failed. Can you assist me?"
+  const whatsAppHref = getWhatsAppUrl("Hi, I need help with my payment that failed. Can you assist me?", arabic)
 
   const reasons = [
     { icon: CreditCard, en: "Insufficient funds", ar: "الرصيد غير كافٍ" },
@@ -111,7 +112,7 @@ export default function PaymentFailedPage() {
               
               {/* WhatsApp */}
               <a 
-                href={`https://wa.me/971547109533?text=${encodeURIComponent(whatsAppText)}`}
+                href={whatsAppHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"

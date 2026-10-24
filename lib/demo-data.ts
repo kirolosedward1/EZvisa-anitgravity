@@ -1,4 +1,5 @@
 import type { VisaApplication } from "@/lib/types/visa-application";
+import type { Traveller } from "@/lib/shared/wizard-contract";
 
 export type DemoScenario = "ready" | "pending" | "multi";
 
@@ -53,13 +54,13 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       tracking_token: "ez-demo-ready-fr2026",
       full_name: "Ahmed Hassan",
       email: "demo.ready@ezvisa.net",
-      phone: "+971 50 123 4567",
+      phone: "+971 54 710 9533",
       nationality: "Egyptian",
       destination_country: "France",
       travel_purpose: "Tourism & Exploration",
       entry_date: "2026-05-15",
       exit_date: "2026-05-25",
-      duration_days: 10,
+      duration_days: 11,
       has_passport: true,
       has_photos: true,
       has_bank_statements: true,
@@ -86,7 +87,7 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       travel_purpose: "Tourism & Leisure",
       entry_date: "2026-06-10",
       exit_date: "2026-06-22",
-      duration_days: 12,
+      duration_days: 13,
       has_passport: true,
       has_photos: false,
       has_bank_statements: false,
@@ -113,7 +114,7 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       travel_purpose: "Vacation & Culture",
       entry_date: "2026-07-01",
       exit_date: "2026-07-14",
-      duration_days: 13,
+      duration_days: 14,
       has_passport: true,
       has_photos: true,
       has_bank_statements: true,
@@ -138,7 +139,7 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       travel_purpose: "Tourism & Family Visit",
       entry_date: "2026-07-15",
       exit_date: "2026-07-28",
-      duration_days: 13,
+      duration_days: 14,
       has_passport: true,
       has_photos: true,
       has_bank_statements: true,
@@ -152,6 +153,20 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       created_at: "2026-03-08T09:30:00.000Z",
       updated_at: "2026-03-09T11:20:00.000Z",
     },
+  ],
+};
+
+/** Saved travellers of the demo accounts (GET /api/travellers never reads or writes the database for them). */
+export const DEMO_TRAVELLERS: Record<string, Traveller[]> = {
+  "demo.ready@ezvisa.net": [
+    { id: "demo-traveller-ready-1", relationship: "self", firstName: "Ahmed", lastName: "Hassan", nationality: "Egypt", dateOfBirth: "1988-04-12", passportNumber: "A12345678", passportExpiry: "2031-06-30", hasValidPassport: "yes", phone: "+971 50 123 4567", phoneCountry: "AE", cityOfResidence: "Dubai", lastUsedAt: "2026-03-01T09:00:00.000Z" },
+  ],
+  "demo.pending@ezvisa.net": [
+    { id: "demo-traveller-pending-1", relationship: "self", firstName: "Sara", lastName: "Al-Mansoor", nationality: "Jordan", dateOfBirth: "1992-11-03", passportNumber: "K98765432", passportExpiry: "2030-01-15", hasValidPassport: "yes", phone: "+971 55 765 4321", phoneCountry: "AE", cityOfResidence: "Abu Dhabi", lastUsedAt: "2026-03-05T09:00:00.000Z" },
+  ],
+  "demo.family@ezvisa.net": [
+    { id: "demo-traveller-family-1", relationship: "self", firstName: "Marcus", lastName: "Vance", nationality: "India", dateOfBirth: "1985-02-20", passportNumber: "Z11223344", passportExpiry: "2032-09-09", hasValidPassport: "yes", phone: "+971 52 111 2222", phoneCountry: "AE", cityOfResidence: "Dubai", lastUsedAt: "2026-03-08T09:00:00.000Z" },
+    { id: "demo-traveller-family-2", relationship: "spouse", firstName: "Elena", lastName: "Vance", nationality: "India", dateOfBirth: "1987-07-14", passportNumber: "Z55667788", passportExpiry: "2029-12-01", hasValidPassport: "yes", cityOfResidence: "Dubai", lastUsedAt: "2026-03-08T09:00:00.000Z" },
   ],
 };
 

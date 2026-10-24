@@ -2,13 +2,17 @@ import { getAllPosts, categories } from "@/lib/blog"
 import { BlogHero } from "@/components/blog/blog-hero"
 import { CategoryFilter } from "@/components/blog/category-filter"
 import { BlogCard } from "@/components/blog/blog-card"
+import { Msg } from "@/components/msg"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import type { Metadata } from "next"
+import { withArabicMeta } from "@/lib/page-meta"
 
 export const revalidate = 3600
 
-export const metadata: Metadata = {
+export function generateMetadata(): Promise<Metadata> {
+  return withArabicMeta(
+    {
   title: "Schengen Visa News, Guides & Travel Tips",
   description:
     "Latest Schengen visa guides, travel tips, and document requirements for 2026. Expert advice on European visa applications, common mistakes, and success stories. Stay updated with visa policy changes.",
@@ -29,6 +33,13 @@ export const metadata: Metadata = {
     url: "https://www.ezvisa.net/news",
     type: "website",
   },
+    },
+    {
+      title: "أخبار وأدلة تأشيرة شنغن",
+      description: "أدلة ومستندات ومواعيد تأشيرة شنغن للمقيمين في الإمارات في 2026.",
+      path: "/ar/news",
+    },
+  )
 }
 
 export default async function NewsPage({
@@ -59,7 +70,7 @@ export default async function NewsPage({
 
             {filteredPosts.length === 0 && (
               <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg">No posts found in this category.</p>
+                <p className="text-muted-foreground text-lg"><Msg id="news.empty" /></p>
               </div>
             )}
           </div>

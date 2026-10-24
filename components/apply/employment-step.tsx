@@ -16,6 +16,8 @@ interface EmploymentStepProps {
   onNext: () => void
   onBack: () => void
   isLoading?: boolean
+  continueLabel?: string
+  continueLabelAr?: string
 }
 
 const inputStyles =
@@ -28,7 +30,7 @@ const toggleActiveStyles =
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
-export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoading }: EmploymentStepProps) {
+export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoading, continueLabel = "Save and upload documents", continueLabelAr = "احفظ وارفع المستندات" }: EmploymentStepProps) {
   const [showErrors, setShowErrors] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -212,8 +214,8 @@ export function EmploymentStep({ formData, updateFormData, onNext, onBack, isLoa
       <WizardBar
         onBack={onBack}
         loading={isLoading}
-        continueLabel="Save and upload documents"
-        continueLabelAr="احفظ وارفع المستندات"
+        continueLabel={continueLabel}
+        continueLabelAr={continueLabelAr}
         loadingLabel="Processing..."
         loadingLabelAr="جارٍ المعالجة..."
       />

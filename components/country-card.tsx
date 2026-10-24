@@ -1,6 +1,8 @@
 "use client"
 
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
+import { countryNameAr } from "@/components/country-name"
 import { ArrowRight } from "lucide-react"
 import { motion } from "framer-motion"
 import { SCHENGEN_META, type CountryData } from "@/lib/countries"
@@ -15,7 +17,7 @@ interface CountryCardProps {
 export function CountryCard({ country }: CountryCardProps) {
   return (
     <motion.div initial={false}>
-      <Link
+      <LocaleLink
         href={`/documents/required-documents-to-apply-for-a-tourist-visa-in-${country.slug}`}
         className="block group"
       >
@@ -24,7 +26,10 @@ export function CountryCard({ country }: CountryCardProps) {
           <div className="flex items-center gap-3">
             <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
             <div className="flex-1 min-w-0">
-              <h3 className="text-base font-medium group-hover:text-primary transition-colors">{country.name}</h3>
+              <h3 className="text-base font-medium group-hover:text-primary transition-colors">
+                <span className="rtl:hidden">{country.name}</span>
+                <span className="hidden rtl:inline">{countryNameAr(country.name)}</span>
+              </h3>
               <ReadyLine className="text-xs text-muted-foreground" />
             </div>
             <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all flex-shrink-0" />
@@ -37,11 +42,20 @@ export function CountryCard({ country }: CountryCardProps) {
             <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} />
             <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
-          <h3 className="text-xl font-medium mb-1 group-hover:text-primary transition-colors">{country.name}</h3>
+          <h3 className="text-xl font-medium mb-1 group-hover:text-primary transition-colors">
+            <span className="rtl:hidden">{country.name}</span>
+            <span className="hidden rtl:inline">{countryNameAr(country.name)}</span>
+          </h3>
           <p className="text-xs text-muted-foreground mb-3"><ReadyLine /></p>
-          <p className="text-sm text-muted-foreground">{country.description}</p>
+          <p className="text-sm text-muted-foreground">
+            <Msg
+              id="documents.cardDescription"
+              values={{ country: country.name }}
+              valuesAr={{ country: countryNameAr(country.name) }}
+            />
+          </p>
         </div>
-      </Link>
+      </LocaleLink>
     </motion.div>
   )
 }

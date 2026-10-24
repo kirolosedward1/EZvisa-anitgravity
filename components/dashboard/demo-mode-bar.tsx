@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocalizedHref } from "@/components/locale-link";
+import { useSiteLocale } from "@/components/locale-provider";
+import { signOutAction } from "@/lib/route-path";
 import { DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
-import { Sparkles, CheckCircle2, AlertCircle, Files, LogOut, Loader2 } from "lucide-react";
+import { CheckCircle2, AlertCircle, Files, LogOut, Loader2 } from "lucide-react";
 
 interface DemoModeBarProps {
   currentScenario: DemoScenario;
@@ -13,6 +16,8 @@ interface DemoModeBarProps {
 
 export function DemoModeBar({ currentScenario, applicantName, applicantEmail }: DemoModeBarProps) {
   const router = useRouter();
+  const signOut = signOutAction(useSiteLocale() === "ar");
+  const localize = useLocalizedHref();
   const [switching, setSwitching] = useState<string | null>(null);
 
   const handleSwitch = async (scenario: DemoScenario) => {
@@ -22,15 +27,15 @@ export function DemoModeBar({ currentScenario, applicantName, applicantEmail }: 
       const res = await fetch("/api/auth/demo-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scenario, next: "/dashboard" }),
+        body: JSON.stringify({ scenario, next: localize("/dashboard") }),
       });
       if (res.ok) {
-        window.location.href = "/dashboard";
+        window.location.href = localize("/dashboard");
       } else {
-        window.location.href = `/api/auth/demo-login?scenario=${scenario}&next=/dashboard`;
+        window.location.href = `/api/auth/demo-login?scenario=${scenario}&next=${encodeURIComponent(localize("/dashboard"))}`;
       }
     } catch {
-      window.location.href = `/api/auth/demo-login?scenario=${scenario}&next=/dashboard`;
+      window.location.href = `/api/auth/demo-login?scenario=${scenario}&next=${encodeURIComponent(localize("/dashboard"))}`;
     }
   };
 
@@ -39,7 +44,7 @@ export function DemoModeBar({ currentScenario, applicantName, applicantEmail }: 
       <div className="container mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 text-sm sm:px-6 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <span className="inline-flex items-center gap-1 rounded-full border border-warning/25 bg-warning/10 px-2.5 py-0.5 text-xs font-medium text-warning">
-            <Sparkles className="size-3.5" aria-hidden="true" /> Demo mode
+            Demo mode
           </span>
           <span className="text-muted-foreground">
             Viewing as <strong className="font-medium text-foreground">{applicantName}</strong> ({applicantEmail})
@@ -73,7 +78,7 @@ export function DemoModeBar({ currentScenario, applicantName, applicantEmail }: 
             );
           })}
 
-          <form action="/api/auth/signout" method="POST">
+          <form action={signOut} method="POST">
             <button
               type="submit"
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"

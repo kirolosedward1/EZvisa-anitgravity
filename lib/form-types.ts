@@ -7,6 +7,8 @@ export interface FormData {
   countryOfResidence: string
   cityOfResidence: string
   hasEmiratesId: "yes" | "no" | undefined
+  /** After payment (trip step): UAE residence visa valid at least 3 months after the return date. */
+  residenceVisaValid?: "yes" | "no" | ""
   firstName: string
   lastName: string
   email: string
@@ -17,8 +19,12 @@ export interface FormData {
   hasValidPassport: "yes" | "no" | undefined
   dateOfBirth: string
   passportNumber: string
+  /** Saved traveller (public.travellers) the traveller step was filled from; "none" = the customer chose "Someone else". */
+  travellerId?: string
 
   // Spouse Step
+  /** Saved traveller the spouse step was filled from (after payment). */
+  spouseTravellerId?: string
   spouseFirstName: string
   spouseLastName: string
   spouseHasValidPassport: "yes" | "no" | undefined

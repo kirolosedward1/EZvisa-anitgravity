@@ -49,9 +49,18 @@ const check = (name: string, ok: boolean, detail?: string) => { results.push({ o
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b)
 const diff = (a: unknown, b: unknown) => `website=${JSON.stringify(a)}\n      app=${JSON.stringify(b)}`
 const eq = (name: string, a: unknown, b: unknown) => check(name, same(a, b), same(a, b) ? undefined : diff(a, b))
+// Calls a rule on both sides; a rule one side no longer exports is reported as drift, not a crash.
+const both = (name: string, fn: string, ...args: unknown[]) => {
+  const w = typeof web[fn] === "function", a = typeof app[fn] === "function"
+  if (!w || !a) return check(name, false, `${fn}() is missing on ${!w && !a ? "both sides" : !w ? "the website (lib/shared/wizard-contract.ts)" : "the app (mobile/lib/wizard.ts)"}`)
+  let wv: unknown, av: unknown
+  try { wv = web[fn](...args) } catch (e) { wv = `throws: ${(e as Error).message}` }
+  try { av = app[fn](...args) } catch (e) { av = `throws: ${(e as Error).message}` }
+  eq(name, wv, av)
+}
 
 // 1. Lists and option values (value + label must match: the value is what is stored, the label what both show).
-for (const k of ["SCHENGEN", "SCHENGEN_VISA_REQUIRED", "UAE_NATIONALITIES", "OTHER_NATIONALITY", "RESIDENCE_COUNTRIES", "DEFAULT_RESIDENCE", "UAE_EMIRATES", "MARITAL", "EMPLOYMENT", "SALARY", "PURPOSES", "COMPANIONS", "FUNDING", "BALANCE", "HOTELS", "STEP_TITLES"])
+for (const k of ["SCHENGEN", "SCHENGEN_VISA_REQUIRED", "UAE_NATIONALITIES", "OTHER_NATIONALITY", "RESIDENCE_COUNTRIES", "DEFAULT_RESIDENCE", "UAE_EMIRATES", "MARITAL", "EMPLOYMENT", "SALARY", "PURPOSES", "COMPANIONS", "FUNDING", "BALANCE", "HOTELS", "STEP_TITLES", "DETAIL_STEP_TITLES", "PRE_PAYMENT_STEPS", "DETAIL_STEPS"])
   eq(`${k}`, web[k], app[k])
 
 // 2. Answer keys and defaults.
@@ -60,10 +69,10 @@ eq("answer defaults", web.emptyAnswers, app.emptyForm)
 
 // 3. Step order and legacy slugs.
 const married = { ...web.emptyAnswers, maritalStatus: "married", spouseAccompanying: "yes" }
-eq("visibleSteps (single)", web.visibleSteps(web.emptyAnswers), app.visibleSteps(app.emptyForm))
-eq("visibleSteps (spouse travels)", web.visibleSteps(married), app.visibleSteps(married))
-for (const s of ["personal", "spouse", "employment", "trip-details", "payment", "documents", "nonsense", undefined])
-  eq(`parseStep(${JSON.stringify(s)})`, web.parseStep(s), app.parseStep(s))
+both("visibleSteps (single)", "visibleSteps", web.emptyAnswers)
+both("visibleSteps (spouse travels)", "visibleSteps", married)
+for (const s of ["destination", "personal", "spouse", "employment", "trip-details", "payment", "documents", "nonsense", undefined])
+  both(`parseStep(${JSON.stringify(s)})`, "parseStep", s)
 
 // 4. Validation: same error keys and messages on the same fixtures.
 const future = (months: number) => { const d = new Date(); d.setMonth(d.getMonth() + months); return d.toISOString().slice(0, 10) }
@@ -72,6 +81,7 @@ const valid = {
   email: "ab@example.com", phone: "+971501234567", dateOfBirth: "1990-01-01", hasValidPassport: "yes", passportExpiry: future(24), maritalStatus: "single",
   purposeOfTrip: "tourism", travelStartDate: future(2), travelEndDate: future(2).replace(/\d{2}$/, "20"), datesFlexible: "yes", travelingWith: "alone",
   hotelCategory: "3-star", fundingSource: "self", balanceRange: "under-10000", isFirstSchengenVisa: "yes", previousRefusals: "no",
+  passportNumber: "N1234567", residenceVisaValid: "yes",
 }
 const fixtures: Record<string, any> = {
   empty: web.emptyAnswers,
@@ -88,17 +98,50 @@ const fixtures: Record<string, any> = {
   "employed, incomplete": { ...valid, employmentStatus: "employed", jobTitle: "x" },
   "freelancer, incomplete": { ...valid, employmentStatus: "freelancer" },
   "student": { ...valid, employmentStatus: "student" },
+  "no emirate": { ...valid, cityOfResidence: "" },
+  "no passport number": { ...valid, passportNumber: "" },
+  "residence visa unanswered": { ...valid, hasEmiratesId: "", residenceVisaValid: "" },
 }
 for (const [name, f] of Object.entries(fixtures)) {
-  for (const step of ["personal", "spouse", "employment", "trip-details"])
-    eq(`validateStep(${step}) on "${name}"`, web.validateStep(step, f), app.validateStep(step, f))
-  eq(`validatePassportNumber on "${name}"`, web.validatePassportNumber(f), app.validatePassportNumber(f))
-  eq(`continueComplete on "${name}"`, web.continueComplete(f), app.continueComplete(f))
-  eq(`firstIncomplete on "${name}"`, web.firstIncomplete(f), app.firstIncomplete(f))
+  for (const step of ["destination", "personal"])
+    both(`validateStep(${step}) on "${name}"`, "validateStep", step, f)
+  for (const step of ["trip", "passport", "spouse", "employment"])
+    both(`validateDetailStep(${step}) on "${name}"`, "validateDetailStep", step, f)
+  both(`detailSteps on "${name}"`, "detailSteps", f)
+  both(`validatePassportNumber on "${name}"`, "validatePassportNumber", f)
+  both(`continueComplete on "${name}"`, "continueComplete", f)
+  both(`firstIncomplete on "${name}"`, "firstIncomplete", f)
 }
-eq("passportCoversTrip", [web.passportCoversTrip({ passportExpiry: future(2), travelEndDate: future(1) }), web.passportCoversTrip({ passportExpiry: future(5), travelEndDate: future(1) })],
-  [app.passportCoversTrip({ passportExpiry: future(2), travelEndDate: future(1) }), app.passportCoversTrip({ passportExpiry: future(5), travelEndDate: future(1) })])
-eq("coerceResidence", web.coerceResidence({ countryOfResidence: "Qatar", cityOfResidence: "dubai", hasEmiratesId: "yes" }), app.coerceResidence({ countryOfResidence: "Qatar", cityOfResidence: "dubai", hasEmiratesId: "yes" }))
+both("passportCoversTrip (2 months)", "passportCoversTrip", { passportExpiry: future(2), travelEndDate: future(1) })
+both("passportCoversTrip (5 months)", "passportCoversTrip", { passportExpiry: future(5), travelEndDate: future(1) })
+both("coerceResidence", "coerceResidence", { countryOfResidence: "Qatar", cityOfResidence: "dubai", hasEmiratesId: "yes" })
+
+// 4b. Saved travellers: same keys, dedupe rule, answer <-> traveller mapping and row mapping on both sides.
+for (const k of ["TRAVELLERS_TABLE", "TRAVELLER_RELATIONSHIPS", "TRAVELLER_SOURCES", "TRAVELLER_KEYS"]) eq(k, web[k], app[k])
+const travellerFixtures: Record<string, any> = {
+  "paid applicant": { ...valid, passportNumber: "n 123-4567", passportExpiry: future(30), phoneCountry: "AE", phoneLocal: "50 123 4567" },
+  "no passport": { ...valid, hasValidPassport: "no" },
+  "visa-exempt nationality": { ...valid, nationality: "United Arab Emirates", passportNumber: "A1" },
+  "spouse": { ...married, ...valid, spouseFirstName: " Mary ", spouseLastName: "Edward", spouseHasValidPassport: "yes" },
+  "nameless": { ...web.emptyAnswers, passportNumber: "X1" },
+}
+for (const [name, f] of Object.entries(travellerFixtures)) {
+  both(`travellerFromAnswers on "${name}"`, "travellerFromAnswers", f)
+  both(`spouseFromAnswers on "${name}"`, "spouseFromAnswers", f)
+  const t = web.travellerFromAnswers(f) ?? { firstName: "A", lastName: "B" }
+  both(`travellerKey on "${name}"`, "travellerKey", t)
+  both(`travellerKeys on "${name}"`, "travellerKeys", t)
+  both(`travellerLabel on "${name}"`, "travellerLabel", t)
+  both(`travellerToRow on "${name}"`, "travellerToRow", t, "Me@Example.com", "self")
+  both(`applyTraveller on "${name}"`, "applyTraveller", { ...web.emptyAnswers, phone: "+971500000000", phoneLocal: "50 000 0000" }, t)
+  both(`applySpouseTraveller on "${name}"`, "applySpouseTraveller", { ...web.emptyAnswers }, t)
+}
+const travellerRow = { id: "11111111-2222-4333-8444-555555555555", relationship: "spouse", first_name: "Mary", last_name: "Edward", date_of_birth: "1991-05-04", nationality: "Egypt", passport_number: "a9876543", passport_expiry: "2031-01-01", phone: "+971501234567", phone_country: "AE", city_of_residence: "Dubai", last_used_at: "2026-10-01T00:00:00Z" }
+both("travellerFromRow", "travellerFromRow", travellerRow)
+both("travellerFromRow (unknown relationship)", "travellerFromRow", { ...travellerRow, relationship: "child", passport_number: null })
+both("defaultTraveller (self wins)", "defaultTraveller", [{ id: "a", relationship: "other", lastUsedAt: "2026-10-02" }, { id: "b", relationship: "self", lastUsedAt: null }])
+both("defaultTraveller (most recent)", "defaultTraveller", [{ id: "a", relationship: "other", lastUsedAt: "2026-10-02" }, { id: "b", relationship: "spouse", lastUsedAt: "2026-10-03" }])
+both("maskPassport", "maskPassport", "ab 12 34 56")
 
 // 5. Data layer: document types, statuses, bucket (regex on mobile/lib/data.ts; it imports native modules).
 const data = read("lib/data.ts")
@@ -147,7 +190,7 @@ eq("price rule (249 / 498)", [web.priceAed("no"), web.priceAed("yes")], [web.PRI
 check("payment-step takes the price from the contract", /priceAed\(/.test(webFile("components/apply/payment-step.tsx")))
 
 // 8. The website must not keep its own copies of the lists.
-for (const f of ["components/apply/nationality-step.tsx", "components/apply/trip-details-step.tsx", "components/hero-section.tsx", "components/site-header.tsx", "components/start-application-box.tsx", "components/how-it-works-content.tsx", "components/document-requirements-page.tsx"]) {
+for (const f of ["components/apply/nationality-step.tsx", "components/apply/trip-details-step.tsx", "components/hero-section.tsx", "components/site-header.tsx", "components/start-application-box.tsx", "components/document-requirements-page.tsx"]) {
   const src = webFile(f)
   check(`${f} has no private nationality/destination list`, !/const (nationalityCountries|fromCountries|nationalities|schengenCountries|residenceCountries)\s*=\s*\[/.test(src), "import the list from lib/shared/wizard-contract.ts instead")
 }

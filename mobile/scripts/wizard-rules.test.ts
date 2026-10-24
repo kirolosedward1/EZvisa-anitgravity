@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emptyForm, coerceResidence, validatePersonal, validatePassport, validateStep, UAE_NATIONALITIES, OTHER_NATIONALITY, SCHENGEN_VISA_REQUIRED, SCHENGEN, UAE_EMIRATES, RESIDENCE_COUNTRIES, type WizardForm } from "../lib/wizard";
-import { QUESTIONS, Q_BY_ID, activeQuestions, progressOf, normalizePage } from "../lib/questions";
+import { QUESTIONS, Q_BY_ID, activeQuestions, progressOf, normalizePage, setAccountEmail, setTravellers } from "../lib/questions";
 import { searchCountries } from "../lib/search";
 import { WORLD } from "../lib/world";
 import { AR } from "../lib/ar";
@@ -22,6 +22,15 @@ test("before payment: the website's destination and traveller steps, in its orde
   const post = postIds(form({ hasValidPassport: "yes" }));
   assert.ok(post.indexOf("hasValidPassport") < post.indexOf("passportNumberAfter"));
   assert.ok(!post.includes("passportExpiry") && !post.includes("dateOfBirth"));
+});
+
+test("saved travellers: \"Who is travelling?\" opens the traveller step when signed in with saved travellers", () => {
+  setAccountEmail("me@example.com"); setTravellers([{ id: "t1", relationship: "self", firstName: "A", lastName: "B" }]);
+  try {
+    assert.deepEqual(ids(form()).slice(0, 4), ["destination", "nationality", "traveller", "name"]);
+    setTravellers([]);
+    assert.ok(!ids(form()).includes("traveller"), "no saved travellers: no question");
+  } finally { setAccountEmail(null); setTravellers([]); }
 });
 
 test("trip questions follow the website order, ending with the residence visa", () => {

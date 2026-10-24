@@ -6,12 +6,17 @@ import { Button } from "@/components/ui/button"
 import { X, Clock } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
+import { useLocalizedHref } from "@/components/locale-link"
 
 export function ContinueApplicationNotification() {
   const [isVisible, setIsVisible] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
+  const localize = useLocalizedHref()
+  const dismissLabel = useMessage("continue.dismiss")
 
   useEffect(() => {
     // Don't show on the wizard pages themselves
@@ -71,7 +76,7 @@ export function ContinueApplicationNotification() {
   }
 
   const handleContinue = () => {
-    router.push(pathname?.startsWith("/ar") ? "/ar/apply" : "/apply")
+    router.push(localize("/apply"))
   }
 
   if (!isVisible) {
@@ -90,7 +95,7 @@ export function ContinueApplicationNotification() {
         <button
           onClick={handleDismiss}
           className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label="Dismiss notification"
+          aria-label={dismissLabel}
         >
           <X className="h-4 w-4" />
         </button>
@@ -103,10 +108,10 @@ export function ContinueApplicationNotification() {
           
           <div className="flex-1">
             <h3 className="text-base font-semibold text-gray-900 mb-1">
-              Continue your application
+              <Msg id="continue.title" />
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              You have an unfinished visa application. Pick up where you left off!
+              <Msg id="continue.body" />
             </p>
             
             <Button
@@ -114,7 +119,7 @@ export function ContinueApplicationNotification() {
               size="sm"
               className="w-full bg-primary hover:bg-primary/90 text-white"
             >
-              Continue Application
+              <Msg id="continue.action" />
             </Button>
           </div>
         </div>

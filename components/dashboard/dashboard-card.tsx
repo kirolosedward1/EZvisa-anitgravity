@@ -7,7 +7,7 @@ export function DashboardCard({
 }: React.ComponentProps<"section">) {
   return (
     <section
-      className={cn("rounded-2xl border border-border/60 bg-card text-card-foreground shadow-sm", className)}
+      className={cn("rounded-2xl border border-border/70 bg-card text-card-foreground shadow-xs", className)}
       {...props}
     >
       {children}
@@ -17,19 +17,21 @@ export function DashboardCard({
 
 export function DashboardCardHeader({
   title,
-  icon: Icon,
+  description,
   action,
 }: {
   title: string
+  description?: React.ReactNode
+  /** Kept for older call sites; section headings no longer carry an icon. */
   icon?: React.ComponentType<{ className?: string }>
   action?: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-border/60 px-6 py-4">
-      <h2 className="flex items-center gap-2 text-base font-semibold tracking-tight text-foreground">
-        {Icon && <Icon className="size-4 text-primary" />}
-        {title}
-      </h2>
+    <div className="flex items-center justify-between gap-4 px-6 pb-1 pt-5">
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <h2 className="panel-title text-foreground">{title}</h2>
+        {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
+      </div>
       {action}
     </div>
   )

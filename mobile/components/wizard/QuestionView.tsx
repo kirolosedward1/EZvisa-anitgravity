@@ -9,11 +9,12 @@ import { PhoneField } from "../CountryPicker";
 import { Checkbox, Note } from "./fields";
 import { DatesAnswer, DatesSummary } from "./dates";
 import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries } from "./answers";
+import { TravellerRows } from "./travellers";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { select, tap } from "../../lib/haptics";
 import { OTHER_NATIONALITY, tripDays, iso as isoLocal, type WizardForm } from "../../lib/wizard";
-import { type Question, questionErrors, firstError, isAnswered, getAccountEmail } from "../../lib/questions";
+import { type Question, questionErrors, firstError, isAnswered, getAccountEmail, getTravellers } from "../../lib/questions";
 
 type Props = {
   q: Question; f: WizardForm; patch: (x: Partial<WizardForm>) => void;
@@ -134,11 +135,13 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
       );
       case "dates": return <DatesAnswer f={f} patch={patch} />;
       case "countries": return <AdditionalCountries f={f} onChange={(v) => patch({ additionalCountries: v })} />;
+      // Saved travellers (lib/travellers.ts): tapping one fills the answers it carries; the screen decides where to go next.
+      case "traveller": return <TravellerRows travellers={getTravellers()} onPick={pick} />;
       default: return null;
     }
   })();
 
-  const auto = q.kind === "choice" || q.kind === "yesno" || q.kind === "country";
+  const auto = q.kind === "choice" || q.kind === "yesno" || q.kind === "country" || q.kind === "traveller";
   const showBtn = !auto || answered || !q.required;
   const btnTitle = !q.required && !answered ? t("Skip") : doneLabel ?? t("Continue");
   const bar = showBtn ? (

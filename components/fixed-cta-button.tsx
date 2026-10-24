@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
-import Link from "next/link"
+import { LocaleLink } from "@/components/locale-link"
+import { Msg } from "@/components/msg"
 import { useEffect, useState } from "react"
 
 interface FixedCTAButtonProps {
@@ -26,17 +27,18 @@ export function FixedCTAButton({ country }: FixedCTAButtonProps) {
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: isVisible ? 0 : 100, opacity: isVisible ? 1 : 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
+      data-wizard-bar
       className="fixed bottom-3 left-3 right-3 z-50 lg:hidden"
     >
-      <Link
+      <LocaleLink
         href={`/apply?to=${encodeURIComponent(country)}`}
         className="block w-full text-primary-foreground rounded-xl shadow-2xl hover:shadow-xl transition-all duration-300 border border-primary/20 bg-[#0436DC]"
       >
         <div className="flex items-center justify-center py-3 px-5">
-          <div className="text-base font-semibold text-center">Start Your Application</div>
+          <div className="text-base font-semibold text-center"><Msg id="documents.start" /></div>
           <ArrowRight className="h-4 w-4 ml-2 flex-shrink-0" />
         </div>
-      </Link>
+      </LocaleLink>
     </motion.div>
   )
 }

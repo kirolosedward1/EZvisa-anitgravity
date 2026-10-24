@@ -1,31 +1,43 @@
 import { Metadata } from "next"
+import { headers } from "next/headers"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
+import { Msg } from "@/components/msg"
 import { SchengenCalculatorClient } from "@/components/tools/schengen-calculator-client"
+import { message, type Locale } from "@/messages"
 
-export const metadata: Metadata = {
-  title: "Schengen 90/180-Day Calculator",
-  description: "Free interactive Schengen 90/180 day rule calculator for UAE residents. Check your remaining allowable days, avoid overstay penalties, and plan your European trip.",
-  alternates: {
-    canonical: "https://www.ezvisa.net/tools/schengen-calculator",
-  },
-  openGraph: {
-    title: "Schengen 90/180-Day Calculator | EZvisa",
-    description: "Calculate your legal Schengen stay within the rolling 180-day window. Compliant with European Commission Border Code rules.",
-    url: "https://www.ezvisa.net/tools/schengen-calculator",
-    type: "website",
-  },
+async function pageLocale(): Promise<Locale> {
+  const arabic = (await headers()).get("x-ez-locale") === "ar"
+  return arabic ? "ar" : "en"
 }
 
-export default function SchengenCalculatorPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await pageLocale()
+  return {
+    title: message(locale, "calc.metaTitle"),
+    description: message(locale, "calc.metaDescription"),
+    alternates: {
+      canonical: "https://www.ezvisa.net/tools/schengen-calculator",
+    },
+    openGraph: {
+      title: message(locale, "calc.ogTitle"),
+      description: message(locale, "calc.ogDescription"),
+      url: "https://www.ezvisa.net/tools/schengen-calculator",
+      type: "website",
+    },
+  }
+}
+
+export default async function SchengenCalculatorPage() {
+  const locale = await pageLocale()
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    name: "Schengen 90/180-Day Rule Calculator",
+    name: message(locale, "calc.jsonName"),
     url: "https://www.ezvisa.net/tools/schengen-calculator",
     applicationCategory: "TravelApplication",
     operatingSystem: "All",
-    description: "Calculate legal short-stay duration in the Schengen area under the official 90/180-day rolling rule.",
+    description: message(locale, "calc.jsonDescription"),
     offers: {
       "@type": "Offer",
       price: "0",
@@ -42,13 +54,13 @@ export default function SchengenCalculatorPage() {
         <div className="container max-w-5xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-2 block">
-              Free Traveler Utility
+              <Msg id="calc.eyebrow" />
             </span>
             <h1 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight">
-              Schengen 90/180-Day Calculator
+              <Msg id="calc.title" />
             </h1>
             <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">
-              Verify your European stay compliance. Calculate your remaining allowed days under the European Commission short-stay regulations before scheduling your visa appointment.
+              <Msg id="calc.intro" />
             </p>
           </div>
 

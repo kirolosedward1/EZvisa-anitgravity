@@ -4,10 +4,12 @@ import { CaseSummary } from "@/components/dashboard/case-summary"
 import { DocumentChecklist } from "@/components/dashboard/document-checklist"
 import { SupportCard } from "@/components/dashboard/support-card"
 import { getStage } from "@/lib/application-status"
+import { requestLocale } from "@/lib/request-locale"
+import { customerText } from "@/lib/translations/customer"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
 /** The application detail layout shared by /dashboard and /track/[token] */
-export function ApplicationView({
+export async function ApplicationView({
   app,
   relatedApps,
   hrefFor,
@@ -21,19 +23,21 @@ export function ApplicationView({
   allowDiscard?: boolean
 }) {
   const stage = getStage(app)
+  const arabic = (await requestLocale()) === "ar"
+  const locale = arabic ? "ar" : "en"
 
   return (
     <div className="flex flex-col gap-6">
-      <ApplicationSwitcher apps={relatedApps} activeId={app.id} hrefFor={hrefFor} />
+      <ApplicationSwitcher apps={relatedApps} activeId={app.id} hrefFor={hrefFor} arabic={arabic} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          <ApplicationOverview app={app} stage={stage} />
-          <DocumentChecklist app={app} />
+          <ApplicationOverview app={app} stage={stage} arabic={arabic} />
+          <DocumentChecklist app={app} arabic={arabic} />
         </div>
-        <aside className="flex flex-col gap-6" aria-label="Case details and support">
-          <CaseSummary app={app} stage={stage} showTrackingLink={showTrackingLink} allowDiscard={allowDiscard} />
-          <SupportCard token={app.tracking_token ?? ""} destination={app.destination_country} />
+        <aside className="flex flex-col gap-6" aria-label={customerText(locale, "case.aside")}>
+          <CaseSummary app={app} stage={stage} showTrackingLink={showTrackingLink} allowDiscard={allowDiscard} arabic={arabic} />
+          <SupportCard id={app.id} token={app.tracking_token ?? ""} destination={app.destination_country} />
         </aside>
       </div>
     </div>

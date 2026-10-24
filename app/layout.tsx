@@ -1,14 +1,16 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { headers } from "next/headers"
-import { Poppins } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
+import { IBM_Plex_Sans_Arabic, Poppins } from "next/font/google"
 import { CookieConsent } from "@/components/cookie-consent"
 import { ScrollRestoration } from "@/components/scroll-restoration"
 import { ContinueApplicationNotification } from "@/components/continue-application-notification"
 import { NavigationProgressBar } from "@/components/navigation-progress"
-import { PageTransition } from "@/components/page-transition"
 import { LocaleDirection } from "@/components/locale-direction"
+import { LocaleProvider } from "@/components/locale-provider"
+import { formatAedLabel } from "@/lib/currency"
+import { ltr } from "@/lib/bidi"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { CrispVisibility } from "@/components/crisp-visibility"
 import Script from "next/script"
 import "./globals.css"
@@ -20,14 +22,31 @@ const poppins = Poppins({
   display: "swap",
 })
 
-export const metadata: Metadata = {
+// Arabic glyphs only. Latin keeps Poppins because this subset's unicode-range does not cover it.
+const plexArabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["400", "500", "600"],
+  variable: "--font-arabic",
+  display: "swap",
+  preload: false,
+})
+
+export async function generateMetadata(): Promise<Metadata> {
+  const arabic = (await headers()).get("x-ez-locale") === "ar"
+  const price = formatAedLabel(PRICE_AED, arabic ? "ar" : "en")
+  const description = arabic
+    ? `طلبات تأشيرة شنغن يجهّزها مختصون للمقيمين في الإمارات: نموذج الطلب وخطاب التغطية وبرنامج يومي وحجوزات الطيران والفندق. جاهز خلال ${ltr("1–2")} يوم مقابل ${price}.`
+    : "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED."
+  const twitterDescription = arabic
+    ? `ملف تأشيرة شنغن يجهّزه مختصون خلال ${ltr("1–2")} يوم: النموذج وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. ${price}.`
+    : "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED."
+  return {
   metadataBase: new URL("https://www.ezvisa.net"),
   title: {
-    default: "EZvisa - Schengen Visa Application Service | 98% Approval Rate",
+    default: arabic ? "EZvisa | خدمة طلب تأشيرة شنغن للمقيمين في الإمارات" : "EZvisa | Schengen Visa Application Service for UAE Residents",
     template: "%s | EZvisa",
   },
-  description:
-    "Get your Schengen visa approved fast with EZvisa. AI-powered visa application assistance for 29 European countries. Expert help with documents, itinerary, and cover letters. 98% approval rate. Starting from 249 AED.",
+  description,
   keywords: [
     "Schengen visa",
     "tourist visa Europe",
@@ -54,12 +73,11 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
-    description:
-      "AI-powered Schengen visa application service for 29 European countries. Expert assistance with documents, itinerary & cover letters. 98% approval rate. From 249 AED.",
+    title: arabic ? "EZvisa | خدمة طلب تأشيرة شنغن للمقيمين في الإمارات" : "EZvisa | Schengen Visa Application Service for UAE Residents",
+    description,
     url: "https://www.ezvisa.net/",
     siteName: "EZvisa",
-    locale: "en_US",
+    locale: arabic ? "ar" : "en_US",
     type: "website",
     images: [
       {
@@ -72,9 +90,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "EZvisa - Get Your Schengen Visa Approved | 98% Success Rate",
-    description:
-      "AI-powered Schengen visa service. Expert help for 29 European countries. 98% approval rate. From 249 AED.",
+    title: arabic ? "EZvisa | خدمة طلب تأشيرة شنغن للمقيمين في الإمارات" : "EZvisa | Schengen Visa Application Service for UAE Residents",
+    description: twitterDescription,
     images: ["https://www.ezvisa.net/images/logo-main.png"],
     creator: "@ezvisa",
   },
@@ -94,6 +111,7 @@ export const metadata: Metadata = {
   // engines those pages duplicate the homepage. Each indexable page sets its own (the homepage in app/page.tsx).
   // (The placeholder site-verification codes were removed: they published meaningless meta tags.)
   generator: 'v0.app'
+  }
 }
 
 export const viewport: Viewport = {
@@ -111,12 +129,19 @@ export default async function RootLayout({
 }>) {
   const arabic = (await headers()).get("x-ez-locale") === "ar"
   return (
-    <html lang={arabic ? "ar" : "en"} dir={arabic ? "rtl" : "ltr"} className="bg-background" suppressHydrationWarning>
+    <html
+      lang={arabic ? "ar" : "en"}
+      dir={arabic ? "rtl" : "ltr"}
+      className={arabic ? `${plexArabic.variable} bg-background` : "bg-background"}
+      suppressHydrationWarning
+    >
       <head>
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="https://client.crisp.chat" />
-        
+        {/* Streamed Suspense reveals ($RC → $RV) run on the next frame when $RT
+            is unset, which mutates the boundary while hydration is replaying it
+            (React #418). Setting $RT before any body script takes React's
+            delayed reveal path so the swap happens after hydration. */}
+        <script dangerouslySetInnerHTML={{ __html: "self.$RT=performance.now()" }} />
+
         {/* Mobile Favicon & Apple Touch Icons */}
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
         <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png?v=3" />
@@ -129,79 +154,41 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
-        {/* Google Consent Mode defaults, before GA/GTM load. A visitor who chose "Necessary only" (or turned
-            analytics/marketing off) in the cookie banner is respected on every page; components/cookie-consent.tsx
-            sends updates when the choice changes. Previously the banner's choice was stored but never applied. */}
+        {/* Google Consent Mode v2 defaults (legal audit H1): everything denied until the visitor chooses.
+            GA/GTM/Crisp are NOT loaded here; components/cookie-consent.tsx injects them only after consent
+            and sends gtag('consent','update',...) when the choice changes. */}
         <Script id="consent-defaults" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
-            var c = null;
-            try { c = JSON.parse(localStorage.getItem('cookie-consent') || 'null'); } catch (e) {}
-            var a = !c || c.analytics !== false, m = !c || c.marketing !== false;
             gtag('consent', 'default', {
-              analytics_storage: a ? 'granted' : 'denied',
-              ad_storage: m ? 'granted' : 'denied',
-              ad_user_data: m ? 'granted' : 'denied',
-              ad_personalization: m ? 'granted' : 'denied'
+              ad_storage: 'denied',
+              analytics_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              wait_for_update: 500
             });
-          `}
-        </Script>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-3M5NW9FZYG"
-          strategy="lazyOnload"
-        />
-        <Script id="google-analytics" strategy="lazyOnload">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-3M5NW9FZYG');
-          `}
-        </Script>
-        <Script id="google-tag-manager" strategy="lazyOnload">
-          {`
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','GTM-PMXQRKLC');
           `}
         </Script>
       </head>
       <body className={`${poppins.variable} font-sans antialiased`}>
-        <noscript>
-          <iframe 
-            src="https://www.googletagmanager.com/ns.html?id=GTM-PMXQRKLC"
-            height="0" 
-            width="0" 
-            style={{ display: 'none', visibility: 'hidden' }}
-          />
-        </noscript>
+        <LocaleProvider locale={arabic ? "ar" : "en"}>
         <LocaleDirection />
         <CrispVisibility />
         <NavigationProgressBar />
         <ScrollRestoration />
         {/* overflow-x-clip (not hidden): hidden would turn <main> into a scroll container and stop position: sticky from working on every page */}
         <main className="overflow-x-clip w-full flex flex-col min-h-screen">
-          <PageTransition>{children}</PageTransition>
+          {/* This wrapper used to live in PageTransition. That client div was
+              replayed against the streamed page Suspense boundary
+              (dev diff: client div.w-full.flex-1 vs server Suspense) and React
+              reported hydration error #418. It is server markup now. */}
+          <div className="w-full flex-1 flex flex-col">{children}</div>
         </main>
         <ContinueApplicationNotification />
+        {/* CookieConsent also mounts Vercel Analytics, only after analytics consent. */}
         <CookieConsent />
-        <Analytics />
-        <Script id="crisp-chat" strategy="lazyOnload">
-          {`
-            window.$crisp=[];
-            window.CRISP_WEBSITE_ID="d907684d-1156-478a-b3e7-53259782c044";
-            (function(){
-              d=document;
-              s=d.createElement("script");
-              s.src="https://client.crisp.chat/l.js";
-              s.async=1;
-              d.getElementsByTagName("head")[0].appendChild(s);
-            })();
-          `}
-        </Script>
+        </LocaleProvider>
       </body>
     </html>
   )

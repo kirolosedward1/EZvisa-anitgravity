@@ -2,18 +2,12 @@ import type { Metadata } from "next"
 import { Check, MessageCircle, Smartphone } from "lucide-react"
 
 import { SiteHeader } from "@/components/site-header"
+import { LangText } from "@/components/lang-text"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { AppFaq } from "@/components/app/app-faq"
-import {
-  DETAILS,
-  FAQS,
-  HERO_SCREENS,
-  PRICE_LABEL,
-  STATUS_POINTS,
-  STATUS_STEPS,
-  WALKTHROUGH_STEPS,
-} from "@/components/app/content"
+import { PRICE_LABEL } from "@/components/app/content"
+import { appCopy } from "@/components/app/localized"
 import { DetailsList } from "@/components/app/details-list"
 import { DownloadSection } from "@/components/app/download-section"
 import { HandoffSection } from "@/components/app/handoff-section"
@@ -23,6 +17,8 @@ import { SectionHeading } from "@/components/app/section-heading"
 import { StatusTimeline } from "@/components/app/status-timeline"
 import { StoreBadges } from "@/components/app/store-badges"
 import { Walkthrough } from "@/components/app/walkthrough"
+import { requestLocale } from "@/lib/request-locale"
+import { translations } from "@/lib/translations"
 import { generateBreadcrumbSchema, generateFAQSchema, generateStructuredData } from "@/lib/seo"
 import { getWhatsAppUrl } from "@/lib/whatsapp"
 import { cn } from "@/lib/utils"
@@ -31,51 +27,80 @@ import hero from "@/components/app/app-hero.module.css"
 const PAGE_URL = "https://www.ezvisa.net/app"
 const TITLE = "EZvisa App – Schengen visa from your phone"
 const DESCRIPTION = `Apply for your Schengen visa, pay ${PRICE_LABEL} when it's ready, upload your documents and follow the real status from the EZvisa iPhone app. Same account as ezvisa.net. Android coming soon.`
+const TITLE_AR = "تطبيق إيزي فيزا لتأشيرة شنغن"
+const DESCRIPTION_AR =
+  "قدّم لطلب تأشيرة شنغن، وادفع 249 درهم عندما يكون الملف جاهزًا، وارفع مستنداتك وتابع الحالة من تطبيق إيزي فيزا لآيفون. الحساب نفسه على ezvisa.net. أندرويد قريبًا."
 
-export const metadata: Metadata = {
-  title: { absolute: TITLE },
-  description: DESCRIPTION,
-  keywords: ["EZvisa app", "Schengen visa app", "visa application app UAE", "track visa application", "iPhone visa app"],
-  alternates: { canonical: PAGE_URL },
-  openGraph: {
-    title: TITLE,
+export async function generateMetadata(): Promise<Metadata> {
+  const english: Metadata = {
+    title: { absolute: TITLE },
     description: DESCRIPTION,
-    url: PAGE_URL,
-    siteName: "EZvisa",
-    type: "website",
-    locale: "en_US",
-    images: [{ url: "/app/og.png", width: 1200, height: 630, alt: "The EZvisa app shown on an iPhone" }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: TITLE,
-    description: DESCRIPTION,
-    images: ["/app/og.png"],
-  },
+    keywords: ["EZvisa app", "Schengen visa app", "visa application app UAE", "track visa application", "iPhone visa app"],
+    alternates: { canonical: PAGE_URL },
+    openGraph: {
+      title: TITLE,
+      description: DESCRIPTION,
+      url: PAGE_URL,
+      siteName: "EZvisa",
+      type: "website",
+      locale: "en_US",
+      images: [{ url: "/app/og.png", width: 1200, height: 630, alt: "The EZvisa app shown on an iPhone" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: TITLE,
+      description: DESCRIPTION,
+      images: ["/app/og.png"],
+    },
+  }
+  if ((await requestLocale()) !== "ar") return english
+  return {
+    ...english,
+    title: TITLE_AR,
+    description: DESCRIPTION_AR,
+    alternates: { canonical: "https://www.ezvisa.net/ar/app" },
+    openGraph: {
+      title: TITLE_AR,
+      description: DESCRIPTION_AR,
+      url: "https://www.ezvisa.net/ar/app",
+      siteName: "EZvisa",
+      type: "website",
+      locale: "ar",
+      images: [{ url: "/app/og.png", width: 1200, height: 630, alt: "تطبيق إيزي فيزا على آيفون" }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: TITLE_AR,
+      description: DESCRIPTION_AR,
+      images: ["/app/og.png"],
+    },
+  }
 }
 
-const structuredData = generateStructuredData(
-  {
-    "@type": "SoftwareApplication",
-    "@id": `${PAGE_URL}#app`,
-    name: "EZvisa",
-    url: PAGE_URL,
-    description: DESCRIPTION,
-    operatingSystem: "iOS",
-    applicationCategory: "TravelApplication",
-    offers: { "@type": "Offer", price: "0", priceCurrency: "AED" },
-    publisher: { "@id": "https://www.ezvisa.net/#organization" },
-  },
-  generateBreadcrumbSchema([
-    { name: "Home", url: "/" },
-    { name: "App", url: "/app" },
-  ]),
-  generateFAQSchema(FAQS.map(({ question, answer }) => ({ question, answer }))),
-)
+export default async function AppPage() {
+  const arabic = (await requestLocale()) === "ar"
+  const whatsappUrl = getWhatsAppUrl("Hi EZvisa, I have a question about the app.", arabic)
+  const copy = appCopy(arabic ? "ar" : "en")
+  const description = arabic ? DESCRIPTION_AR : DESCRIPTION
+  const structuredData = generateStructuredData(
+    {
+      "@type": "SoftwareApplication",
+      "@id": `${PAGE_URL}#app`,
+      name: "EZvisa",
+      url: arabic ? "https://www.ezvisa.net/ar/app" : PAGE_URL,
+      description,
+      operatingSystem: "iOS",
+      applicationCategory: "TravelApplication",
+      offers: { "@type": "Offer", price: "0", priceCurrency: "AED" },
+      publisher: { "@id": "https://www.ezvisa.net/#organization" },
+    },
+    generateBreadcrumbSchema([
+      { name: arabic ? "الرئيسية" : "Home", url: arabic ? "/ar" : "/" },
+      { name: arabic ? "التطبيق" : "App", url: arabic ? "/ar/app" : "/app" },
+    ]),
+    generateFAQSchema(copy.faqs.map(({ question, answer }) => ({ question, answer }))),
+  )
 
-const WHATSAPP_URL = getWhatsAppUrl("Hi EZvisa, I have a question about the app.")
-
-export default function AppPage() {
   return (
     <>
       <ScrollToTop />
@@ -96,7 +121,7 @@ export default function AppPage() {
                     )}
                   >
                     <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
-                    Available for iPhone
+                    {arabic ? "متاح لآيفون" : "Available for iPhone"}
                   </span>
                   <h1
                     id="app-hero-heading"
@@ -106,23 +131,31 @@ export default function AppPage() {
                       hero.delay1,
                     )}
                   >
-                    Your Schengen visa application, on your phone.
+                    <LangText en="Your Schengen visa application, on your phone." ar="طلب تأشيرة شنغن، على هاتفك." />
                   </h1>
                   <p className={cn("max-w-md text-lg leading-relaxed text-muted-foreground", hero.enter, hero.delay2)}>
-                    Start an application, pay {PRICE_LABEL} when it&apos;s ready, add your documents and follow its
-                    status, from the same account you use on ezvisa.net.
+                    {arabic ? (
+                      <>
+                        ابدأ الطلب، وادفع <bdi dir="ltr">{copy.priceLabel}</bdi> عندما يكون الملف جاهزًا، وأضف مستنداتك وتابع حالته، من الحساب نفسه الذي تستخدمه على ezvisa.net.
+                      </>
+                    ) : (
+                      <>
+                        Start an application, pay {PRICE_LABEL} when it&apos;s ready, add your documents and follow its
+                        status, from the same account you use on ezvisa.net.
+                      </>
+                    )}
                   </p>
                   <div className={cn(hero.enter, hero.delay3)}>
                     <StoreBadges />
                   </div>
                   <p className={cn("text-sm leading-relaxed text-muted-foreground", hero.enter, hero.delay4)}>
-                    Free to download. iPhone now, Android soon.
+                    {arabic ? "التنزيل مجاني. آيفون الآن، وأندرويد قريبًا." : "Free to download. iPhone now, Android soon."}
                   </p>
                 </div>
 
                 <div className={cn("flex justify-center lg:justify-end", hero.enter, hero.delay2)}>
                   <HeroDevice
-                    screens={HERO_SCREENS}
+                    screens={copy.heroScreens}
                     frameClassName="w-64 sm:w-72 lg:w-80 xl:w-88"
                     sizes="(min-width: 1280px) 352px, (min-width: 1024px) 320px, (min-width: 640px) 288px, 256px"
                   />
@@ -137,12 +170,12 @@ export default function AppPage() {
               <Reveal>
                 <SectionHeading
                   id="app-walkthrough-heading"
-                  chip="How the app works"
-                  title="Apply, pay, upload, track."
-                  lede="One question per screen, in the order our experts need the answers, saved as you go."
+                  chip={arabic ? "كيف يعمل التطبيق" : "How the app works"}
+                  title={<LangText en="Apply, pay, upload, track." ar="قدّم، ادفع، ارفع، وتابع." />}
+                  lede={arabic ? "سؤال واحد في كل شاشة، بالترتيب الذي يحتاجه المختصون، ويُحفظ وأنت تتقدّم." : "One question per screen, in the order our experts need the answers, saved as you go."}
                 />
               </Reveal>
-              <Walkthrough steps={WALKTHROUGH_STEPS} />
+              <Walkthrough steps={copy.walkthrough} />
             </div>
           </section>
 
@@ -153,14 +186,18 @@ export default function AppPage() {
                 <Reveal>
                   <SectionHeading
                     id="app-status-heading"
-                    chip="Status tracking"
-                    title="The same status our team sees."
-                    lede="Your application moves through fixed stages. Each one is stamped with the time it happened, and appointment details appear as soon as our staff enter them."
+                    chip={arabic ? "متابعة الحالة" : "Status tracking"}
+                    title={<LangText en="The same status our team sees." ar="نفس الحالة التي يراها فريقنا." />}
+                    lede={
+                      arabic
+                        ? "يمر طلبك بمراحل ثابتة. كل مرحلة مختومة بوقت حدوثها، وتظهر تفاصيل الموعد فور إدخال الفريق لها."
+                        : "Your application moves through fixed stages. Each one is stamped with the time it happened, and appointment details appear as soon as our staff enter them."
+                    }
                   />
                 </Reveal>
                 <Reveal delay={0.05} className="flex flex-col gap-6">
                   <ul className="flex flex-col gap-3">
-                    {STATUS_POINTS.map((point) => (
+                    {copy.statusPoints.map((point) => (
                       <li key={point} className="flex items-start gap-3 text-base leading-relaxed text-muted-foreground">
                         <Check className="mt-1.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
                         <span>{point}</span>
@@ -168,18 +205,18 @@ export default function AppPage() {
                     ))}
                   </ul>
                   <a
-                    href={WHATSAPP_URL}
+                    href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex w-fit items-center gap-2 font-medium text-primary hover:underline"
                   >
                     <MessageCircle className="h-4 w-4" aria-hidden="true" />
-                    Message us on WhatsApp
+                    <LangText en={translations.en.support.message} ar={translations.ar.support.message} />
                   </a>
                 </Reveal>
               </div>
               <div className="lg:col-span-6">
-                <StatusTimeline steps={STATUS_STEPS} caption="Example application" />
+                <StatusTimeline steps={copy.statusSteps} caption={arabic ? "مثال لطلب" : "Example application"} />
               </div>
             </div>
           </section>
@@ -190,14 +227,20 @@ export default function AppPage() {
               <Reveal>
                 <SectionHeading
                   id="app-handoff-heading"
-                  chip="Website and app"
-                  title="Start on ezvisa.net. Finish on your phone."
-                  lede="The website and the app share one account and one backend. An application you start in a browser is waiting in the app at the same question, and the other way round."
+                  chip={arabic ? "الموقع والتطبيق" : "Website and app"}
+                  title={<LangText en="Start on ezvisa.net. Finish on your phone." ar="ابدأ على ezvisa.net. وأكمل على هاتفك." />}
+                  lede={
+                    arabic
+                      ? "الموقع والتطبيق يشتركان في حساب واحد ونظام واحد. الطلب الذي تبدأه في المتصفح ينتظرك في التطبيق عند السؤال نفسه، والعكس صحيح."
+                      : "The website and the app share one account and one backend. An application you start in a browser is waiting in the app at the same question, and the other way round."
+                  }
                   align="center"
                 />
               </Reveal>
               <HandoffSection />
-              <p className="text-center text-sm text-muted-foreground">Sign in with the same email you used on the website.</p>
+              <p className="text-center text-sm text-muted-foreground">
+                {arabic ? "سجّل الدخول بالبريد نفسه الذي استخدمته على الموقع." : "Sign in with the same email you used on the website."}
+              </p>
             </div>
           </section>
 
@@ -208,14 +251,14 @@ export default function AppPage() {
                 <Reveal>
                   <SectionHeading
                     id="app-details-heading"
-                    chip="Also in the app"
-                    title="Things you'd only notice if they were missing."
+                    chip={arabic ? "أيضًا في التطبيق" : "Also in the app"}
+                    title={<LangText en="Things you'd only notice if they were missing." ar="تفاصيل لن تلاحظها إلا إذا غابت." />}
                   />
                 </Reveal>
               </div>
               <div className="lg:col-span-8">
                 <Reveal delay={0.05}>
-                  <DetailsList items={DETAILS} />
+                  <DetailsList items={copy.details} />
                 </Reveal>
               </div>
             </div>
@@ -225,10 +268,10 @@ export default function AppPage() {
           <section className="border-t border-border bg-secondary py-20 md:py-28" aria-labelledby="app-faq-heading">
             <div className="container mx-auto flex max-w-3xl flex-col gap-10 px-4 sm:px-6">
               <Reveal>
-                <SectionHeading id="app-faq-heading" title="Common questions" align="center" />
+                <SectionHeading id="app-faq-heading" title={<LangText en="Common questions" ar="أسئلة شائعة" />} align="center" />
               </Reveal>
               <Reveal delay={0.05}>
-                <AppFaq faqs={FAQS} />
+                <AppFaq faqs={copy.faqs} />
               </Reveal>
             </div>
           </section>

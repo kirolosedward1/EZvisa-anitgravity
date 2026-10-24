@@ -79,20 +79,3 @@ export function PrefillOffer({ name, onUse, onDismiss }: { name: string; onUse: 
     </Card>
   );
 }
-
-/** The website's "Who is travelling?" choice: a saved traveller fills the details (still editable), or someone else. */
-export function TravellerOffer({ travellers, onPick, onSomeoneElse }: {
-  travellers: { id: string; label: string }[]; onPick: (id: string) => void; onSomeoneElse: () => void;
-}) {
-  const { t } = useT();
-  return (
-    <Card testID="traveller-offer">
-      <Text variant="headline">{t("Who is travelling?")}</Text>
-      <Text variant="subhead" tone="secondary">{t("Pick a saved traveller to fill in the details below. You can still edit them.")}</Text>
-      <View style={{ gap: S.sm }}>
-        {travellers.slice(0, 4).map((x) => <Button key={x.id} title={x.label} variant="secondary" size="M" onPress={() => onPick(x.id)} />)}
-        <Button title={t("Someone else")} variant="secondary" size="M" onPress={onSomeoneElse} />
-      </View>
-    </Card>
-  );
-}

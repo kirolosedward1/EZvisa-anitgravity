@@ -17,7 +17,29 @@ import {
 } from "@/lib/dates"
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { canonicalSchengenCountry } from "@/lib/countries"
+import { UUID_RE } from "@/lib/applications"
 import { ACTIVE_APPLICATION_LIMIT } from "@/lib/active-applications"
+import { applicantCount } from "@/lib/currency"
+import { toWesternDigits, normalizePassport } from "@/lib/digits"
+import { hasInvalidPhone, uaeMobileE164 } from "@/lib/phone"
+
+// Arabic/Persian digits typed on the client become Western before validation and saving (Western input unchanged).
+const DIGIT_FIELDS = ["phone", "dateOfBirth", "travelStartDate", "travelEndDate", "travelMonth", "tripLength", "employmentStartDate"]
+function normalizeDigits(input: unknown): Record<string, any> {
+  if (!input || typeof input !== "object") return {}
+  const f: Record<string, any> = { ...(input as Record<string, any>) }
+  for (const key of DIGIT_FIELDS) if (typeof f[key] === "string") f[key] = toWesternDigits(f[key])
+  if (typeof f.passportNumber === "string") f.passportNumber = normalizePassport(f.passportNumber)
+  if (Array.isArray(f.additionalCountries)) {
+    f.additionalCountries = f.additionalCountries.map((v: unknown) => {
+      if (!v || typeof v !== "object") return v
+      const visit: Record<string, any> = { ...(v as Record<string, any>) }
+      for (const key of ["arrivalDate", "departureDate"]) if (typeof visit[key] === "string") visit[key] = toWesternDigits(visit[key])
+      return visit
+    })
+  }
+  return f
+}
 
 const DUPLICATE_WINDOW_MS = 10 * 60 * 1000
 
@@ -111,7 +133,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const formData = await request.json()
+    const formData = normalizeDigits(await request.json())
     
     // Sanitize inputs
     const sanitizedData = {
@@ -140,6 +162,10 @@ export async function POST(request: Request) {
         { status: 400 },
       )
     }
+    if (hasInvalidPhone(sanitizedData.phone)) {
+      return NextResponse.json({ success: false, message: "Enter a valid phone number." }, { status: 400 })
+    }
+    sanitizedData.phone = uaeMobileE164(sanitizedData.phone) ?? ""
 
     const flexible = formData.datesFlexible === "yes"
     let flexibleNote = ""
@@ -172,16 +198,17 @@ export async function POST(request: Request) {
       if (formData.travelEndDate && !endDate) {
         return NextResponse.json({ success: false, message: INVALID_DATE_MESSAGE }, { status: 400 })
       }
-      if (!startDate || !endDate) {
+      // Dates are asked after payment (/continue/[id]), like in the app: none is fine, but not just one of them.
+      if (!!startDate !== !!endDate) {
         return NextResponse.json(
           { success: false, message: "Please select a departure date and a return date." },
           { status: 400 },
         )
       }
-      if (!datesInOrder(startDate.iso, endDate.iso)) {
+      if (startDate && endDate && !datesInOrder(startDate.iso, endDate.iso)) {
         return NextResponse.json({ success: false, message: RETURN_AFTER_DEPARTURE }, { status: 400 })
       }
-      if (startDate.iso < todayIsoUae()) {
+      if (startDate && startDate.iso < todayIsoUae()) {
         return NextResponse.json({ success: false, message: "Your departure date is in the past. Please choose new dates." }, { status: 400 })
       }
     }
@@ -350,8 +377,12 @@ export async function POST(request: Request) {
         jobTitle: sanitizedData.jobTitle,
         companyName: sanitizedData.companyName,
         monthlySalary: text(formData.monthlySalary, 50),
-        spouseAccompanying: formData.spouseAccompanying === "yes" ? "yes" : "no",
+        travelingWith: text(formData.travelingWith, 50),
+        spouseAccompanying: formData.spouseAccompanying === "yes" || formData.travelingWith === "spouse" ? "yes" : "no",
+        applicantCount: applicantCount(formData.spouseAccompanying, formData.travelingWith),
         ...(flexibleNote ? { flexibleDates: flexibleNote } : {}),
+        // The saved traveller the traveller step was filled from ("Who is travelling?"), if any.
+        ...(typeof formData.travellerId === "string" && UUID_RE.test(formData.travellerId) ? { travellerId: formData.travellerId } : {}),
         // Answers from the trip and spouse screens (previously collected but never saved anywhere).
         wizard: wizardAnswers(formData),
       }),

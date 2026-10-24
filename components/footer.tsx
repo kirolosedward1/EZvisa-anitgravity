@@ -1,13 +1,20 @@
 "use client"
 
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { useState } from "react"
+import { usePathname } from "next/navigation"
 import { ChevronDown, ArrowUpRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { LangText } from "@/components/lang-text"
 import { LocaleLink } from "@/components/locale-link"
 import { PaymentMarks } from "@/components/payment-marks"
+import { openCookieSettings } from "@/components/cookie-consent"
+import { CompanyFooterBlock } from "@/components/legal/company-details"
+import { COMPANY, COMPANY_DETAILS_READY } from "@/lib/legal/company"
+import { getWhatsAppUrl } from "@/lib/whatsapp"
+import { useSiteLocale } from "@/components/locale-provider"
+import { supportMessage, useSupportCase } from "@/lib/support-context"
 
 const socialLinks = [
   {
@@ -91,6 +98,8 @@ const footerSections = [
     links: [
       { href: "/privacy-policy", label: "Privacy policy", labelAr: "سياسة الخصوصية" },
       { href: "/terms-of-service", label: "Terms of service", labelAr: "شروط الخدمة" },
+      { href: "/cookie-policy", label: "Cookie policy", labelAr: "سياسة ملفات تعريف الارتباط" },
+      { href: "/disclaimer", label: "Disclaimer", labelAr: "إخلاء المسؤولية" },
       { href: "#cookie-settings", label: "Cookie settings", labelAr: "إعدادات ملفات تعريف الارتباط", isCookieButton: true },
     ],
   },
@@ -103,14 +112,64 @@ interface FooterProps {
   limitWidth?: boolean
 }
 
+/** Customer pages (dashboard, account, tracking, receipts): a one-line footer instead of the marketing footer. */
+/** Inlined at build time (next.config env), so the server HTML and the browser render the same year. */
+const BUILD_YEAR = process.env.NEXT_PUBLIC_BUILD_YEAR ?? "2026"
+
+const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip", "/continue"]
+
+function AccountFooter({ className }: { className?: string }) {
+  const year = BUILD_YEAR
+  const arabic = useSiteLocale() === "ar"
+  // On an application page the message names the case, its status and the page (lib/support-context.ts).
+  const supportCase = useSupportCase()
+  const links = [
+    { href: "/contact", en: "Help", ar: "المساعدة" },
+    { href: "/privacy-policy", en: "Privacy", ar: "الخصوصية" },
+    { href: "/terms-of-service", en: "Terms", ar: "الشروط" },
+    { href: "/refund-policy", en: "Refunds", ar: "الاسترداد" },
+  ]
+  return (
+    <footer className={cn("border-t border-border/80 bg-background text-foreground", className)}>
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-4 py-6 text-sm text-muted-foreground md:flex-row md:justify-between">
+        <p>
+          <LangText
+            en={<>&copy; {year} EZvisa</>}
+            ar={<>&copy; {year} إيزي فيزا</>}
+          />
+        </p>
+        <nav aria-label="Footer" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <a
+            href={getWhatsAppUrl(supportCase ? supportMessage(supportCase) : "Hi EZvisa! I have a question about my visa application.", arabic)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-[#1A7F37] hover:underline"
+          >
+            <LangText en="WhatsApp support" ar="الدعم عبر واتساب" />
+          </a>
+          {links.map((link) => (
+            <LocaleLink key={link.href} href={link.href} className="hover:text-foreground">
+              <LangText en={link.en} ar={link.ar} />
+            </LocaleLink>
+          ))}
+        </nav>
+      </div>
+    </footer>
+  )
+}
+
 export function Footer({ 
   simplified = false,
   className = "",
   transparent = false,
   limitWidth = false
 }: FooterProps) {
-  const currentYear = new Date().getUTCFullYear()
+  const currentYear = BUILD_YEAR
   const [openSection, setOpenSection] = useState<string | null>(null)
+  const pathname = usePathname()
+  const arabic = useSiteLocale() === "ar"
+  const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
+  if (ACCOUNT_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) return <AccountFooter className={className} />
 
   const toggleSection = (title: string) => {
     setOpenSection(openSection === title ? null : title)
@@ -123,10 +182,6 @@ export function Footer({
       limitWidth ? "w-full max-w-[1312px] mx-auto" : "",
       className
     )}>
-      {/* Decorative orbs */}
-      <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-accent/5 pointer-events-none hidden md:block" />
-      <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-accent/4 pointer-events-none hidden md:block" />
-
       {/* Decorative flight path overlay */}
       <div className="absolute top-12 left-[10%] w-[300px] h-[220px] pointer-events-none select-none opacity-[0.05] dark:opacity-[0.08] -rotate-[15deg] hidden md:block">
         <Image
@@ -163,15 +218,15 @@ export function Footer({
 
                 <p className="text-[#3A4150] leading-relaxed max-w-md">
                   <LangText
-                    en="Schengen visa specialists trusted by 5,000+ travelers from across the UAE."
-                    ar="متخصصون في تأشيرات شنغن، ويثق بنا أكثر من ٥٬٠٠٠ مسافر في الإمارات."
+                    en="Schengen visa applications prepared by specialists for people living in the UAE."
+                    ar="طلبات تأشيرة شنغن يجهّزها متخصصون للمقيمين في الإمارات."
                   />
                 </p>
 
                 <div className="mt-8 flex flex-wrap items-center gap-2 text-sm text-[#3A4150]">
                   <span><LangText en="Questions?" ar="لديك سؤال؟" /></span>
                   <a
-                    href="https://wa.me/971547109533?text=Hi%20EZvisa!%20I%20have%20a%20question%20about%20my%20visa%20application."
+                    href={getWhatsAppUrl("Hi EZvisa! I have a question about my visa application.", arabic)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-[#1A7F37] hover:underline transition-colors font-medium"
@@ -210,10 +265,7 @@ export function Footer({
                           <li key={link.href}>
                             {link.isCookieButton ? (
                               <button
-                                onClick={() => {
-                                  localStorage.removeItem("cookie-consent")
-                                  window.location.reload()
-                                }}
+                                onClick={openCookieSettings}
                                 className="text-muted-foreground hover:text-foreground transition-colors text-sm"
                               >
                                 <LangText en={link.label} ar={link.labelAr} />
@@ -241,10 +293,7 @@ export function Footer({
                         <li key={link.href}>
                           {link.isCookieButton ? (
                             <button
-                              onClick={() => {
-                                  localStorage.removeItem("cookie-consent")
-                                  window.location.reload()
-                              }}
+                              onClick={openCookieSettings}
                               className="block py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                             >
                               <LangText en={link.label} ar={link.labelAr} />
@@ -267,16 +316,19 @@ export function Footer({
 
             {/* Disclaimer */}
             <div className="border-t border-border/80 pt-6 mb-8 text-center">
+              <div className="text-xs leading-relaxed max-w-4xl mx-auto text-[#3A4150] mb-3">
+                <CompanyFooterBlock />
+              </div>
               <p className="text-xs leading-relaxed max-w-4xl mx-auto text-[#3A4150]/70">
                 <LangText
                   en={
                     <>
-                      <span className="font-medium text-[#0A0F1F]/80">Disclaimer:</span> EZvisa is not a travel agency. We provide document preparation and guidance services only. We do not guarantee visa approval — final decisions rest solely with the respective embassy or consulate. All travel arrangements and visa outcomes are subject to official government policies.
+                      <span className="font-medium text-[#0A0F1F]/80">Disclaimer:</span> EZvisa is a private company and is not affiliated with any government, embassy or consulate. EZvisa is a private visa application preparation service. We are not a government body and are not affiliated with any embassy, consulate, visa application centre (including VFS Global) or government authority. We do not guarantee visa approval; the decision rests solely with the embassy or consulate. Our fees are service fees only and do not include government or visa centre fees. EZvisa is not VAT-registered; prices shown are final.
                     </>
                   }
                   ar={
                     <>
-                      <span className="font-medium text-[#0A0F1F]/80">إخلاء مسؤولية:</span> إيزي فيزا ليست وكالة سفر. نقدّم خدمات تجهيز المستندات والإرشاد فقط. لا نضمن الموافقة على التأشيرة — القرار النهائي يعود حصريًا إلى السفارة أو القنصلية المختصة. تخضع ترتيبات السفر ونتائج التأشيرة للسياسات الرسمية.
+                      <span className="font-medium text-[#0A0F1F]/80">إخلاء مسؤولية:</span> إيزي فيزا شركة خاصة وغير تابعة لأي حكومة أو سفارة أو قنصلية. إيزي فيزا خدمة خاصة لتجهيز طلبات التأشيرة. لسنا جهة حكومية ولسنا تابعين لأي سفارة أو قنصلية أو مركز طلبات تأشيرات (بما في ذلك VFS Global) أو أي جهة حكومية. لا نضمن الموافقة على التأشيرة؛ القرار يعود حصريًا إلى السفارة أو القنصلية. رسومنا رسوم خدمة فقط ولا تشمل الرسوم الحكومية أو رسوم مراكز التأشيرات. إيزي فيزا غير مسجّلة لضريبة القيمة المضافة؛ الأسعار المعروضة نهائية.
                     </>
                   }
                 />
@@ -311,8 +363,8 @@ export function Footer({
 
             <p className="text-xs text-[#3A4150] text-center md:text-end">
               <LangText
-                en={<>&copy; <span suppressHydrationWarning>{currentYear}</span> EZvisa · ezvisa.net</>}
-                ar={<>&copy; <span suppressHydrationWarning>{currentYear}</span> إيزي فيزا · ezvisa.net</>}
+                en={<>&copy; {currentYear} {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. All rights reserved. · ` : ""}EZvisa</>}
+                ar={<>&copy; {currentYear} {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. جميع الحقوق محفوظة. · ` : ""}EZvisa</>}
               />
             </p>
           </div>

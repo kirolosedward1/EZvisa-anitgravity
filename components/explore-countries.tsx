@@ -1,8 +1,12 @@
-import Image from "next/image"
-import Link from "next/link"
+import { Image } from "@/components/image"
+import { LocaleLink } from "@/components/locale-link"
+import { ArrowRight } from "lucide-react"
 import { PreparationLine, ReadyLine } from "@/components/ready-line"
+import { CountryFlag } from "@/components/country-flag"
 import { destinations } from "@/lib/destinations"
-import { Button } from "@/components/ui/button"
+import { SCHENGEN_META } from "@/lib/countries"
+import { LangText } from "@/components/lang-text"
+import { SectionPhoto } from "@/components/section-photo"
 
 /** Six Schengen countries that are not in the popular row (France, Italy, Spain, Germany, Switzerland). */
 const EXPLORE = ["Greece", "Netherlands", "Austria", "Portugal", "Czech Republic", "Hungary"]
@@ -13,44 +17,58 @@ export function ExploreCountries() {
   )
 
   return (
-    <section className="bg-background py-16 md:py-20" aria-labelledby="explore-countries-heading">
-      <div className="container mx-auto max-w-6xl px-4 md:px-6">
-        <div className="mb-8 flex flex-col gap-2">
-          <h2 id="explore-countries-heading" className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-            Explore countries
-          </h2>
-          <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
-            <PreparationLine />
-          </p>
+    <section className="photo-hero relative overflow-hidden py-16 md:py-20" aria-labelledby="explore-countries-heading">
+      <SectionPhoto src="/images/countries/switzerland.jpg" />
+      <div className="container relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div className="flex flex-col gap-2">
+            <h2 id="explore-countries-heading" className="hero-copy">
+              <LangText en="Explore countries" ar="استكشف الدول" />
+            </h2>
+            <p className="hero-copy max-w-2xl text-base leading-relaxed opacity-85">
+              <PreparationLine />
+            </p>
+          </div>
+          <LocaleLink
+            href="/destinations"
+            className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:self-auto"
+          >
+            <LangText en="View all countries" ar="عرض كل الدول" />
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
+          </LocaleLink>
         </div>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {cards.map((country) => (
-            <Link
-              key={country.slug}
-              href={`/destinations/${country.slug}`}
-              className="group overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
-            >
-              <span className="relative block aspect-[4/3]">
-                <Image
-                  src={country.image}
-                  alt={`${country.name} destination`}
-                  fill
-                  sizes="(min-width: 768px) 33vw, 50vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-              </span>
-              <span className="flex flex-col gap-1 p-3">
-                <span className="font-semibold text-foreground">{country.name}</span>
-                <ReadyLine className="text-xs text-muted-foreground" />
-              </span>
-            </Link>
+            <li key={country.slug}>
+              <LocaleLink
+                href={`/destinations/${country.slug}`}
+                className="group flex items-center gap-4 rounded-2xl bg-card p-2.5 pe-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                <span className="relative size-16 shrink-0 overflow-hidden rounded-xl">
+                  <Image
+                    src={country.image}
+                    alt=""
+                    fill
+                    // The photos are 3:2, so object-cover scales them up to fill the square: ask for twice the width.
+                    sizes="128px"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="flex items-center gap-2 font-semibold text-foreground">
+                    <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={country.name} className="size-4" />
+                    <span className="truncate"><LangText en={country.name} ar={SCHENGEN_META[country.name]?.ar ?? country.name} /></span>
+                  </span>
+                  <ReadyLine className="text-xs text-muted-foreground" />
+                </span>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-muted-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                  <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+                </span>
+              </LocaleLink>
+            </li>
           ))}
-        </div>
-        <div className="mt-8">
-          <Button asChild className="rounded-full px-5">
-            <Link href="/destinations">View all countries</Link>
-          </Button>
-        </div>
+        </ul>
       </div>
     </section>
   )
