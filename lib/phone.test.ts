@@ -1,6 +1,13 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { hasInvalidPhone, isValidPhone, uaeMobileE164 } from "./phone"
+import { hasInvalidPhone, isValidPhone, leadPhoneForSend, phoneTypingValue, uaeMobileE164 } from "./phone"
+
+/** The field's onChange: each new character is appended, then only Western digits (and a leading +) are kept. */
+function typePhone(chars: string) {
+  let value = ""
+  for (const char of chars) value = phoneTypingValue(value + char)
+  return value
+}
 
 test("1111111 is rejected", () => {
   assert.equal(isValidPhone("1111111"), false)
@@ -46,6 +53,38 @@ test("a submitted phone is rejected only when it is present and invalid", () => 
   assert.equal(hasInvalidPhone(""), false)
   assert.equal(hasInvalidPhone("   "), false)
   assert.equal(hasInvalidPhone(undefined), false)
+})
+
+test("typing or pasting a repeated dial code is not stripped until validation", () => {
+  const typed = typePhone("971971501234567")
+  assert.equal(typed, "971971501234567")
+  assert.equal(uaeMobileE164(typed), null)
+
+  const typedWithTrunk = typePhone("00971971501234567")
+  assert.equal(typedWithTrunk, "00971971501234567")
+  assert.equal(uaeMobileE164(typedWithTrunk), null)
+
+  assert.equal(phoneTypingValue("971971501234567"), "971971501234567")
+  assert.equal(uaeMobileE164(phoneTypingValue("971971501234567")), null)
+  assert.equal(phoneTypingValue("00971971501234567"), "00971971501234567")
+  assert.equal(uaeMobileE164("00971971501234567"), null)
+
+  // A trunk 0 stays on screen; blur and submit are what turn it into +971501234567.
+  assert.equal(typePhone("0501234567"), "0501234567")
+  assert.equal(uaeMobileE164(typePhone("0501234567")), "+971501234567")
+  assert.equal(phoneTypingValue("+971 50-123 4567"), "+971501234567")
+  assert.equal(phoneTypingValue("50+123"), "50123")
+})
+
+test("a HubSpot lead rejects an invalid phone and sends +971XXXXXXXXX when valid", () => {
+  for (const phone of ["50123", "971971501234567", "+201012345678"]) {
+    assert.deepEqual(leadPhoneForSend(phone), { error: "Enter a valid phone number." })
+  }
+  assert.deepEqual(leadPhoneForSend(""), { phone: "" })
+  assert.deepEqual(leadPhoneForSend("   "), { phone: "" })
+  assert.deepEqual(leadPhoneForSend(undefined), { phone: "" })
+  assert.deepEqual(leadPhoneForSend("0501234567"), { phone: "+971501234567" })
+  assert.deepEqual(leadPhoneForSend("+971 50 123 4567"), { phone: "+971501234567" })
 })
 
 test("too short, repeated dial code, and foreign numbers are rejected", () => {

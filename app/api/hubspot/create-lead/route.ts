@@ -3,7 +3,7 @@ import { waitUntil } from "@vercel/functions"
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit"
 import { sanitizeInput, sanitizeEmail } from "@/lib/sanitize"
 import { toWesternDigits } from "@/lib/digits"
-import { uaeMobileE164 } from "@/lib/phone"
+import { leadPhoneForSend, uaeMobileE164 } from "@/lib/phone"
 
 const HUBSPOT_TIMEOUT_MS = 10_000
 
@@ -220,8 +220,15 @@ Applied: ${new Date().toLocaleString()}`
 
 export async function POST(request: Request) {
   try {
-    const clientIp = getClientIp(request)
     const formData = await request.json()
+    const decision = leadPhoneForSend(formData && typeof formData === "object" ? (formData as { phone?: unknown }).phone : undefined)
+    if ("error" in decision) {
+      return NextResponse.json({ success: false, message: decision.error }, { status: 400 })
+    }
+    // A blank phone is left as sent. A valid one is the +971 E.164 form the job stores.
+    if (decision.phone && formData && typeof formData === "object") (formData as { phone?: string }).phone = decision.phone
+
+    const clientIp = getClientIp(request)
 
     // Return as soon as the work is queued. waitUntil keeps the invocation
     // alive after this response so the Ziina redirect cannot drop the lead.

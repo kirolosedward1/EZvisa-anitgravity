@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
 import { UserRound } from "lucide-react"
 import { normalizePassport, toWesternDigits } from "@/lib/digits"
-import { isValidPhone, uaeLocalDigits, uaeMobileE164 } from "@/lib/phone"
+import { phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "@/lib/phone"
 
 interface NationalityStepProps {
   formData: FormData
@@ -64,7 +64,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
   const dobDigits = useRef("")
   const withSpouse = formData.spouseAccompanying === "yes"
   const spousePrice = priceForTravellers("yes")
-  const phoneLocal = uaeLocalDigits(formData.phone || "")
+  const typedPhone = phoneTypingValue(formData.phone || "")
   const phone = uaeMobileE164(formData.phone || "") ?? ""
 
   useEffect(() => {
@@ -89,7 +89,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
     firstName: !formData.firstName.trim(),
     lastName: !formData.lastName.trim(),
     passport: !formData.passportNumber.trim(),
-    phone: !phone || !isValidPhone(phone),
+    phone: !phone,
     email: !formData.email.trim() || !isValidEmail(formData.email.trim()),
     // The form is noValidate, so the input's max isn't enforced by the browser: check the date and 18+ here.
     dateOfBirth: !isValidCalendarDate(formData.dateOfBirth) || formData.dateOfBirth < "1900-01-01" || (!!maxDob && formData.dateOfBirth > maxDob),
@@ -243,10 +243,12 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             inputMode="numeric"
             autoComplete="tel-national"
             dir="ltr"
-            value={uaeLocalDigits(formData.phone || "")}
-            onChange={(event) => {
-              const local = uaeLocalDigits(event.target.value)
-              set({ phone: local ? `+971${local}` : "" })
+            value={formData.phone && formData.phone === phone ? uaeLocalDigits(formData.phone) : typedPhone}
+            onChange={(event) => set({ phone: phoneTypingValue(event.target.value) })}
+            onBlur={(event) => {
+              const raw = phoneTypingValue(event.currentTarget.value)
+              const next = uaeMobileE164(raw) ?? uaeLocalDigits(raw)
+              if (next && next !== raw) updateFormData({ phone: next })
             }}
             placeholder="50 123 4567"
             aria-invalid={invalid("phone")}
@@ -256,8 +258,8 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
         {showErrors && errors.phone ? (
           <FieldError>
             <LangText
-              en={phoneLocal ? "Enter a valid phone number." : "Enter your phone number."}
-              ar={phoneLocal ? "أدخل رقم هاتف صحيحًا." : "أدخل رقم الهاتف."}
+              en={typedPhone ? "Enter a valid phone number." : "Enter your phone number."}
+              ar={typedPhone ? "أدخل رقم هاتف صحيحًا." : "أدخل رقم الهاتف."}
             />
           </FieldError>
         ) : null}
