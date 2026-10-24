@@ -84,3 +84,7 @@ Dynamic Type is always on. `TYPE_SCALE` caps each role: body text grows to 2×, 
 - Navigation rows, back, close and secondary buttons stay silent.
 
 **RTL.** Use `start`/`end`, `marginStart`/`paddingEnd`, `borderTopStartRadius` and `borderEndWidth`. Never `left`/`right` or `textAlign: "right"`. Directional icons switch on `useT().rtl`. The one documented exception is the tab-bar lens, which is positioned from the measured layout x.
+
+## Mascot (`components/mascot/`)
+
+Globi is the wizard's guide: a round brand-blue globe with soft invented continents, a paper plane on a dotted orbit, stubby arms and white sneakers, drawn in the wordmark's black outline. `Globi` (react-native-svg) takes `pose` (one per question), `mood`, `tie` and `size`, and bobs gently unless Reduce Motion is on. `prompts.ts` maps every question id in `lib/questions.ts` to a pose and the line Globi says; `MascotHeader` renders him beside a `primaryFill` speech bubble, and `QuestionView` shows it above the formal label, which stays on screen as the caption and the accessible header (`question-title`). Copy rules: short, warm, first person, says what Globi will do with the answer, never promises approval, the customer's first name at most once per screen. Arabic lines live in `lib/ar.ts`.
