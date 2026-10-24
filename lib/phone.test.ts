@@ -20,6 +20,11 @@ test("a UAE mobile is accepted and stored as +971XXXXXXXXX", () => {
   assert.equal(uaeMobileE164("00971501234567"), "+971501234567")
 })
 
+test("continue-application saves 0501234567 and 00971 50 123 4567 as +971501234567", () => {
+  assert.equal(uaeMobileE164("0501234567"), "+971501234567")
+  assert.equal(uaeMobileE164("00971 50 123 4567"), "+971501234567")
+})
+
 test("Arabic-digit input is accepted", () => {
   assert.equal(isValidPhone("+٩٧١٥٠١٢٣٤٥٦٧"), true)
   assert.equal(isValidPhone("٥٠١٢٣٤٥٦٧"), true)
