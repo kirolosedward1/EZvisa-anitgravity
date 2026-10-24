@@ -18,7 +18,7 @@
  *  - Website components must import lists/rules from here, never keep their own copies.
  */
 
-export const CONTRACT_VERSION = "2026-10-22.1"
+export const CONTRACT_VERSION = "2026-10-23.1"
 
 // ---------------------------------------------------------------------------------------------------------
 // Business constants
@@ -387,6 +387,10 @@ export type ApplicationNotes = {
   contactEmail?: string
   /** Set when the customer discarded an unpaid case (status also becomes "cancelled"). */
   discarded_at?: string
+  /** public.travellers row the main applicant was filled from ("Who is travelling?" drop-down), if any. */
+  travellerId?: string
+  /** public.travellers row the spouse was filled from (after-payment spouse step), if any. */
+  spouseTravellerId?: string
   itinerary?: unknown
   appointment?: unknown
 }
@@ -474,10 +478,126 @@ export function pickAnswers(form: Record<string, unknown>): Partial<WizardAnswer
   return out as Partial<WizardAnswers>
 }
 
+// ---------------------------------------------------------------------------------------------------------
+// Saved travellers (public.travellers, scripts/007_travellers.sql): one row per person a customer applied for.
+// Owner = the account email (same rule as visa_applications). Rows are written by the server when a case is paid
+// (lib/travellers.ts) and by the app after the after-payment step; both clients read them for the
+// "Who is travelling?" drop-down and Account → Saved travellers. Passport numbers live only here, never in auth metadata.
+// ---------------------------------------------------------------------------------------------------------
+
+export const TRAVELLERS_TABLE = "travellers"
+export const TRAVELLER_RELATIONSHIPS = ["self", "spouse", "other"] as const
+export type TravellerRelationship = (typeof TRAVELLER_RELATIONSHIPS)[number]
+export const TRAVELLER_SOURCES = ["application", "backfill", "manual"] as const
+/** Wizard answers a saved traveller carries. Email is the account's and marital status drives the price: neither is one. */
+export const TRAVELLER_KEYS = ["firstName", "lastName", "dateOfBirth", "nationality", "passportNumber", "passportExpiry", "hasValidPassport", "phone", "phoneCountry", "phoneLocal", "cityOfResidence"] as const
+export type TravellerKey = (typeof TRAVELLER_KEYS)[number]
+export type TravellerDetails = Partial<Pick<WizardAnswers, TravellerKey>>
+export type Traveller = TravellerDetails & { id: string; relationship: TravellerRelationship; lastUsedAt?: string | null }
+
+const tstr = (v: unknown) => (typeof v === "string" ? v.trim() : "")
+const tday = (v: unknown) => { const x = tstr(v).slice(0, 10); return /^\d{4}-\d{2}-\d{2}$/.test(x) && !isNaN(Date.parse(x)) ? x : "" }
+/** Passport numbers compare upper-case, letters and digits only ("n 123-4567" = "N1234567"). */
+export const normalizePassport = (v?: string | null) => tstr(v).toUpperCase().replace(/[^A-Z0-9]/g, "")
+/** "••••4567": the last 4 characters of a passport number, for lists and the drop-down. */
+export const maskPassport = (v?: string | null) => { const p = normalizePassport(v); return p ? `••••${p.slice(-4)}` : "" }
+const nameKey = (t: { firstName?: string; lastName?: string; dateOfBirth?: string }) =>
+  `n:${tstr(t.lastName).toLowerCase().replace(/\s+/g, " ")}|${tstr(t.firstName).toLowerCase().replace(/\s+/g, " ")}|${tday(t.dateOfBirth)}`
+/** Dedupe key of a traveller: the passport number when known, else last name | first name | date of birth. */
+export const travellerKey = (t: { firstName?: string; lastName?: string; dateOfBirth?: string; passportNumber?: string }) => {
+  const p = normalizePassport(t.passportNumber)
+  return p ? `p:${p}` : nameKey(t)
+}
+/** Every key a row for this person may have been saved under (passport key first): a spouse saved by name only is
+ *  found again when their own application later brings the passport number. */
+export const travellerKeys = (t: { firstName?: string; lastName?: string; dateOfBirth?: string; passportNumber?: string }) =>
+  [...new Set([travellerKey(t), nameKey(t), nameKey({ ...t, dateOfBirth: "" })])]
+export const travellerName = (t: { firstName?: string; lastName?: string }) => `${tstr(t.firstName)} ${tstr(t.lastName)}`.trim()
+/** "Kirolos Edward · ••••4567" (nationality and flag are shown by the UI, translated). */
+export const travellerLabel = (t: { firstName?: string; lastName?: string; passportNumber?: string }) =>
+  [travellerName(t), maskPassport(t.passportNumber)].filter(Boolean).join(" · ")
+
+/** The main applicant described by a set of answers, or null without a name. Nationality only when visa-required. */
+export function travellerFromAnswers(f: Partial<WizardAnswers>): TravellerDetails | null {
+  const firstName = tstr(f.firstName), lastName = tstr(f.lastName)
+  if (!firstName || !lastName) return null
+  const passportNumber = normalizePassport(f.passportNumber)
+  const t: TravellerDetails = { firstName, lastName }
+  const dateOfBirth = tday(f.dateOfBirth); if (dateOfBirth) t.dateOfBirth = dateOfBirth
+  if (needsSchengenVisa(tstr(f.nationality))) t.nationality = tstr(f.nationality)
+  if (passportNumber) t.passportNumber = passportNumber
+  const passportExpiry = tday(f.passportExpiry); if (passportExpiry) t.passportExpiry = passportExpiry
+  if (f.hasValidPassport === "yes" || f.hasValidPassport === "no") t.hasValidPassport = f.hasValidPassport
+  else if (passportNumber) t.hasValidPassport = "yes"
+  if (tstr(f.phone)) { t.phone = tstr(f.phone); if (tstr(f.phoneCountry)) t.phoneCountry = tstr(f.phoneCountry); if (tstr(f.phoneLocal)) t.phoneLocal = tstr(f.phoneLocal) }
+  if (UAE_EMIRATES.includes(tstr(f.cityOfResidence))) t.cityOfResidence = tstr(f.cityOfResidence)
+  return t
+}
+/** The spouse described by a set of answers (name + passport validity only), or null without a name. */
+export function spouseFromAnswers(f: Partial<WizardAnswers>): TravellerDetails | null {
+  const firstName = tstr(f.spouseFirstName), lastName = tstr(f.spouseLastName)
+  if (!firstName || !lastName) return null
+  const t: TravellerDetails = { firstName, lastName }
+  if (f.spouseHasValidPassport === "yes" || f.spouseHasValidPassport === "no") t.hasValidPassport = f.spouseHasValidPassport
+  return t
+}
+/** Fills the traveller fields from a saved traveller. Every field stays editable afterwards. A nationality that is
+ *  not visa-required is skipped; an expired passport is applied and left to validation. */
+export function applyTraveller<T extends Partial<WizardAnswers>>(f: T, t: TravellerDetails): T {
+  const out: Record<string, unknown> = { ...f }
+  for (const k of TRAVELLER_KEYS) {
+    const v = t[k]
+    if (v === undefined || v === null || v === "") continue
+    if (k === "nationality" && !needsSchengenVisa(v as string)) continue
+    out[k] = v
+  }
+  // The saved phone replaces the typed one entirely: stale split fields would otherwise rebuild the old number.
+  if (tstr(t.phone) && !tstr(t.phoneLocal)) { out.phoneLocal = ""; out.phoneCountry = tstr(t.phoneCountry) || (f.phoneCountry ?? "AE") }
+  if (normalizePassport(t.passportNumber) || tday(t.passportExpiry)) out.hasValidPassport = "yes"
+  return out as T
+}
+/** Fills the spouse fields from a saved traveller. */
+export function applySpouseTraveller<T extends Partial<WizardAnswers>>(f: T, t: TravellerDetails): T {
+  return { ...f, spouseFirstName: tstr(t.firstName), spouseLastName: tstr(t.lastName), ...(t.hasValidPassport ? { spouseHasValidPassport: t.hasValidPassport } : {}) }
+}
+/** Pick the traveller to preselect on a fresh form: the one marked "self", else the most recently used, else the first. */
+export function defaultTraveller<T extends Traveller>(list: T[]): T | null {
+  if (!list.length) return null
+  return list.find((t) => t.relationship === "self") ?? [...list].sort((a, b) => (b.lastUsedAt ?? "").localeCompare(a.lastUsedAt ?? ""))[0] ?? null
+}
+
+/** public.travellers row -> Traveller (both clients read rows the same way). */
+export function travellerFromRow(row: Record<string, unknown>): Traveller {
+  const r = (k: string) => tstr(row[k])
+  const t: Traveller = { id: r("id"), relationship: (TRAVELLER_RELATIONSHIPS as readonly string[]).includes(r("relationship")) ? (r("relationship") as TravellerRelationship) : "other", lastUsedAt: r("last_used_at") || null }
+  if (r("first_name")) t.firstName = r("first_name")
+  if (r("last_name")) t.lastName = r("last_name")
+  if (tday(row.date_of_birth)) t.dateOfBirth = tday(row.date_of_birth)
+  if (r("nationality")) t.nationality = r("nationality")
+  if (normalizePassport(r("passport_number"))) { t.passportNumber = normalizePassport(r("passport_number")); t.hasValidPassport = "yes" }
+  if (tday(row.passport_expiry)) t.passportExpiry = tday(row.passport_expiry)
+  if (r("phone")) { t.phone = r("phone"); if (r("phone_country")) t.phoneCountry = r("phone_country") }
+  if (r("city_of_residence")) t.cityOfResidence = r("city_of_residence")
+  return t
+}
+/** Traveller -> public.travellers columns (id, timestamps and source are set by the caller / the database). */
+export function travellerToRow(t: TravellerDetails, email: string, relationship: TravellerRelationship) {
+  return {
+    email: tstr(email).toLowerCase(), relationship,
+    first_name: tstr(t.firstName), last_name: tstr(t.lastName),
+    date_of_birth: tday(t.dateOfBirth) || null, nationality: needsSchengenVisa(tstr(t.nationality)) ? tstr(t.nationality) : null,
+    passport_number: normalizePassport(t.passportNumber) || null, passport_expiry: tday(t.passportExpiry) || null,
+    phone: tstr(t.phone) || null, phone_country: tstr(t.phoneCountry) || null,
+    city_of_residence: UAE_EMIRATES.includes(tstr(t.cityOfResidence)) ? tstr(t.cityOfResidence) : null,
+    dedupe_key: travellerKey(t),
+  }
+}
+
 /** The JSON published at GET /api/app-config (what a released app may refresh at runtime). */
 export function contractJson() {
   return {
     version: CONTRACT_VERSION,
+    travellers: { table: TRAVELLERS_TABLE, keys: TRAVELLER_KEYS, relationships: TRAVELLER_RELATIONSHIPS, sources: TRAVELLER_SOURCES },
     price: { aed: PRICE_AED, spouseMultiplier: SPOUSE_MULTIPLIER, currency: CURRENCY },
     siteUrl: SITE_URL_OFFICIAL, appSchemes: APP_SCHEMES, whatsapp: WHATSAPP_NUMBER, supportEmail: SUPPORT_EMAIL,
     countries: { schengen: SCHENGEN, visaRequired: SCHENGEN_VISA_REQUIRED, uaeNationalities: UAE_NATIONALITIES, otherNationality: OTHER_NATIONALITY, residence: RESIDENCE_COUNTRIES, emirates: UAE_EMIRATES },

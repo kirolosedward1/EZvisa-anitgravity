@@ -7,11 +7,11 @@ export const phoneDisplay = (v: string) => { try { return parsePhoneNumberFromSt
 import { WORLD } from "./world";
 import {
   SCHENGEN, UAE_NATIONALITIES, EMIRATE_OPTIONS, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
-  visibleSteps, postSteps, validateStep, adultMax, earliestDeparture, iso, label as optLabel, type WizardForm, type WizardStep, type Errors,
+  visibleSteps, postSteps, validateStep, adultMax, earliestDeparture, iso, label as optLabel, type WizardForm, type WizardStep, type Errors, type Traveller,
 } from "./wizard";
 
 export type Opt = { value: string; label: string };
-export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "dates" | "contact" | "textarea" | "countries" | "pair";
+export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "dates" | "contact" | "textarea" | "countries" | "pair" | "traveller";
 /** One text field of a "pair" screen (two fields on one page). */
 export type PairField = { key: keyof WizardForm; label: string; placeholder: string; contentType?: string; autoComplete?: string };
 export type Question = {
@@ -47,10 +47,19 @@ const EMP = (f: WizardForm) => f.employmentStatus === "employed";
 let accountEmail: string | null = null;
 export const setAccountEmail = (e: string | null | undefined) => { accountEmail = e?.trim().toLowerCase() || null; };
 export const getAccountEmail = () => accountEmail;
+/** The account's saved travellers (lib/travellers.ts fetchTravellers, set by the wizard screen): the "Who is travelling?"
+ *  question applies only when there is at least one. Kept here (not in lib/travellers.ts) to avoid an import cycle. */
+let travellers: Traveller[] = [];
+export const setTravellers = (list: Traveller[]) => { travellers = list; };
+export const getTravellers = () => travellers;
 
 export const QUESTIONS: Question[] = [
   // ======== BEFORE PAYMENT (step "personal"): only what the price and the account need ========
   { id: "destination", step: "personal", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "country", names: SCHENGEN, searchPlaceholder: "Search country..." },
+  // Signed in with saved travellers (lib/travellers.ts): pick one and the answers it carries are filled in (the wizard
+  // then jumps to the first unanswered question). Owns no form key: never an error, never on Review.
+  { id: "traveller", step: "personal", keys: [], label: "Who is travelling?", required: true, kind: "traveller", hint: "Pick a saved traveller to fill in the details. You can still edit them.",
+    applies: () => !!accountEmail && getTravellers().length > 0 },
   { id: "nationality", step: "personal", keys: ["nationality"], label: "Nationality", required: true, kind: "country", names: UAE_NATIONALITIES, searchPlaceholder: "Search nationality...",
     allNames: SCHENGEN_VISA_REQUIRED },
   // Country of residence is always the UAE (RESIDENCE_COUNTRIES), set in emptyForm, so it has no screen.
@@ -195,6 +204,7 @@ export function progressOf(f: WizardForm, page: string) {
 
 /** Human value for the review list (labels from the website's options). */
 export function displayValue(q: Question, f: WizardForm, t: (s: string) => string = (s) => s, fmtDate: (s: string) => string = (s) => s): string {
+  if (q.kind === "traveller") return [f.firstName, f.lastName].filter(Boolean).join(" ");
   const v = f[q.keys[0]] as any;
   switch (q.kind) {
     case "choice": return v ? t(optLabel(q.options!, v)) : "";

@@ -34,6 +34,10 @@ Deno.serve(async (req: Request) => {
     const { error: ue2 } = await admin.from("visa_applications").update({ rejection_details: null, submission_ip: null, user_agent: null, appointment_address: null, appointment_centre: null, appointment_at: null, appointment_lat: null, appointment_lng: null, document_reviews: {}, tracking_token: crypto.randomUUID() }).in("id", ids);
     if (ue2) console.error("delete-account: extra anonymisation failed", ue2.code);
   }
+  // Saved travellers (migrations/0015, owner = email). The auth.users delete trigger removes them too; this keeps the
+  // function complete on its own.
+  const { error: te } = await admin.from("travellers").delete().eq("email", email);
+  if (te && te.code !== "42P01") console.error("delete-account: travellers delete failed", te.code); // 42P01 = table not created yet
   // Profile photo (avatars/<uid>/...).
   const { data: avatars } = await admin.storage.from("avatars").list(user.id, { limit: 100 });
   if (avatars?.length) await admin.storage.from("avatars").remove(avatars.map((f: { name: string }) => `${user.id}/${f.name}`));

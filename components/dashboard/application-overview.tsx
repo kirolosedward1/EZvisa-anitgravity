@@ -1,6 +1,6 @@
 import Image from "next/image"
 import { format, parseISO } from "date-fns"
-import { CalendarDays, UserRound } from "lucide-react"
+import { CalendarClock, CalendarDays, UserRound } from "lucide-react"
 import { DashboardCard } from "@/components/dashboard/dashboard-card"
 import { NextStepCard } from "@/components/dashboard/next-step-card"
 import { ProgressTracker } from "@/components/dashboard/progress-tracker"
@@ -57,6 +57,19 @@ export function ApplicationOverview({ app, stage }: { app: VisaApplication; stag
           </div>
           <StatusPills app={app} />
         </div>
+
+        {app.appointment_at ? (
+          <div className="flex items-start gap-3 rounded-xl border border-border/70 px-4 py-3 text-sm">
+            <CalendarClock className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="font-medium text-foreground">Appointment {format(new Date(app.appointment_at), "EEE, MMM d yyyy 'at' h:mm a")}</span>
+              <span className="text-muted-foreground">
+                {[app.appointment_centre, app.appointment_address].filter(Boolean).join(", ")}
+                {app.appointment_reference ? ` · Ref ${app.appointment_reference}` : ""}
+              </span>
+            </div>
+          </div>
+        ) : null}
 
         {stage !== "rejected" && stage !== "cancelled" && <ProgressTracker stage={stage} />}
 

@@ -3,22 +3,18 @@
 import { useState } from "react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
-import { Play, Eye, Clock, Rocket } from "lucide-react"
+import { Play, Clock } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { InnerHero } from "@/components/inner-hero"
-import { LangText } from "@/components/lang-text"
-import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
-import Link from "next/link"
-import Image from "next/image"
+import { ContactSection } from "@/components/contact-section"
 
 const videos = [
   {
     id: 1,
-    title: "How to Apply for Schengen Visa",
-    description: "Complete step-by-step guide to applying for your Schengen visa successfully",
+    title: "How to apply for a Schengen visa",
+    description: "The steps from your first answer to your visa centre appointment, in about 20 seconds.",
     thumbnail: "https://img.youtube.com/vi/OMkd3GwgYn8/maxresdefault.jpg",
     duration: "0:21",
-    views: "1.2K",
     youtubeUrl: "https://www.youtube.com/shorts/OMkd3GwgYn8",
     embedUrl: "https://www.youtube.com/embed/OMkd3GwgYn8",
   },
@@ -43,123 +39,63 @@ export default function VideosContent() {
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader forceBackground={true} />
-      <main className="flex-1">
+      <div className="flex-1">
         <InnerHero
-          badge={<LangText en="Guides" ar="الأدلة" />}
-          title={
-            <LangText
-              en={<>Video <span className="text-primary">Guides</span></>}
-              ar={<>أدلة <span className="text-primary">الفيديو</span></>}
-            />
-          }
-          description="Watch our expert video tutorials to learn everything about visa applications, document preparation, and avoiding common mistakes."
-          gradientType="aurora"
+          badge="Guides"
+          title="Short guides to the Schengen visa."
+          description="Quick videos on how the application works and what to bring to your appointment. More are on our YouTube and TikTok."
         />
 
         {/* Videos Grid Section */}
-        <section className="py-12 md:py-16">
-          <div className="w-full max-w-7xl mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+        <section className="pb-20 md:pb-24">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
               {videos.map((video) => (
-                <div
+                <button
+                  type="button"
                   key={video.id}
                   onClick={() => handleVideoClick(video)}
-                  className="group relative bg-card rounded-xl overflow-hidden border border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg cursor-pointer"
+                  className="group relative cursor-pointer overflow-hidden rounded-3xl border border-border/70 bg-card text-start transition-colors hover:border-primary/40"
                 >
                   {/* Video Thumbnail with 9:16 aspect ratio */}
-                  <div className="relative aspect-[9/16] overflow-hidden bg-[#F7F8FA]">
+                  <div className="relative aspect-[9/16] overflow-hidden bg-secondary">
                     {/* Thumbnail Image */}
                     <img 
                       src={video.thumbnail || "/placeholder.svg"} 
                       alt={video.title}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
+                    <div className="absolute inset-0 bg-foreground/0 transition-colors duration-300 group-hover:bg-foreground/30" />
                     <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-primary/90 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                        <Play className="h-7 w-7 text-white ml-1" fill="currentColor" />
+                      <div className="flex size-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform duration-300 group-hover:scale-105">
+                        <Play className="ms-1 size-7" fill="currentColor" aria-hidden="true" />
                       </div>
                     </div>
 
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-[#0A0F1F]/70" />
-
                     {/* Duration badge */}
-                    <div className="absolute top-3 right-3 px-2 py-1 bg-black/75 rounded-md flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-white" />
-                      <span className="text-xs font-medium text-white">{video.duration}</span>
+                    <div className="absolute end-3 top-3 px-2 py-1 rounded-md bg-foreground/75 flex items-center gap-1">
+                      <Clock className="size-3 text-background" aria-hidden="true" />
+                      <span className="text-xs font-medium text-background">{video.duration}</span>
                     </div>
 
-                    {/* View count */}
-                    <div className="absolute bottom-3 left-3 px-2 py-1 bg-black/75 rounded-md flex items-center gap-1">
-                      <Eye className="h-3 w-3 text-white" />
-                      <span className="text-xs font-medium text-white">{video.views}</span>
-                    </div>
                   </div>
 
                   {/* Video Info */}
                   <div className="p-4">
-                    <h3 className="font-semibold text-sm md:text-base mb-2 line-clamp-2 group-hover:text-primary transition-colors">
+                    <h3 className="panel-title mb-1.5 line-clamp-2 text-foreground transition-colors group-hover:text-primary">
                       {video.title}
                     </h3>
-                    <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{video.description}</p>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{video.description}</p>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
 
           </div>
         </section>
 
-        {/* Additional Info / CTA */}
-        <section className="py-16 md:py-20 bg-background overflow-hidden relative">
-          {/* Subtle background blur */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full pointer-events-none" />
-          
-          <div className="container mx-auto px-4 max-w-6xl relative z-10">
-            <div className="photo-hero relative w-full rounded-[2rem] md:rounded-[2.5rem] border border-border/60 shadow-2xl p-8 md:p-12 overflow-hidden flex flex-col items-center text-center min-h-[320px] justify-center bg-slate-900">
-              
-              {/* Background Image of scenic country */}
-              <div className="absolute inset-0 z-0 select-none pointer-events-none">
-                <Image
-                  src="/images/countries/france.jpg"
-                  alt="Scenic France"
-                  fill
-                  className="object-cover opacity-85 contrast-[1.05]"
-                  sizes="(max-width: 1200px) 100vw, 1152px"
-                  priority
-                />
-                <PhotoHeroOverlay />
-              </div>
-
-              {/* Dot grid decoration */}
-              <div
-                className="absolute inset-0 opacity-[0.1] pointer-events-none z-10 hidden md:block"
-                style={{
-                  backgroundImage: "none",
-                  backgroundSize: "24px 24px",
-                  maskImage: "none",
-                  WebkitMaskImage: "none",
-                }}
-              />
-              
-              <div className="relative z-20 max-w-2xl mx-auto flex flex-col items-center">
-                <h2 className="hero-copy mb-4 text-balance text-white">
-                  Need Help With Your Application?
-                </h2>
-                <p className="text-white/85 text-base md:text-lg mb-8 leading-relaxed max-w-xl font-medium">
-                  Our experts will review your documents and ensure everything is perfect before submission.
-                </p>
-                <Link href="/apply">
-                  <button className="px-8 py-3.5 bg-white text-primary hover:bg-slate-50 transition-all duration-300 font-semibold inline-flex items-center gap-2.5 shadow-xl hover:-translate-y-0.5 cursor-pointer rounded-xl">
-                    <Rocket className="h-5 w-5 text-primary" />
-                    Start Your Application
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+        <ContactSection />
+      </div>
       <Footer />
 
       {/* Video Modal */}

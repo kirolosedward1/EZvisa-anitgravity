@@ -1,5 +1,5 @@
 /**
- * WhatsApp Concierge & Deep-Link Utility
+ * WhatsApp deep links for support questions. Documents are uploaded on the website or in the app, never sent here.
  * Generates contextual WhatsApp links for UAE customer service. The case reference in every message is the one the
  * app, the dashboard and the emails show: EZ- + the first 8 hex of the application id (lib/shared/wizard-contract.ts).
  */
@@ -23,11 +23,5 @@ export function getPaymentConfirmationWhatsAppUrl(idOrToken: string, destination
   const destText = destination ? ` for ${destination}` : ""
   return getWhatsAppUrl(
     `Hi EZvisa! I just completed my payment${destText} (Ref: ${referenceOf(idOrToken)}). Please confirm receipt and let me know when my file review begins.`
-  )
-}
-
-export function getDocumentHelpWhatsAppUrl(idOrToken: string): string {
-  return getWhatsAppUrl(
-    `Hi EZvisa! I need help uploading my documents for case ${referenceOf(idOrToken)}. Can I send them to you here?`
   )
 }

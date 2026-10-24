@@ -14,11 +14,8 @@ import { LangText } from "@/components/lang-text"
 import { CountryFlag } from "@/components/country-flag"
 import { UserMenu, useViewer } from "@/components/user-menu"
 import { cn } from "@/lib/utils"
-import { CountryName } from "@/components/country-name"
-import { Msg } from "@/components/msg"
-import { citizenshipName, citizenshipNameAr, toCitizenshipIso } from "@/lib/nationalities"
+import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
-import { canonicalPath } from "@/lib/route-path"
 
 const nationalities = ["Egypt", "India", "Jordan", "Pakistan", "Russian Federation", "Syria"]
 
@@ -53,19 +50,18 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ hideNavigation = false, forceBackground = false }: SiteHeaderProps) {
   const headerRef = useRef<HTMLElement>(null)
-  const headerBarRef = useRef<HTMLDivElement>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showWhatsAppTooltip, setShowWhatsAppTooltip] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-  const path = canonicalPath(pathname)
+  const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
   const isWizardPage = path.startsWith("/apply")
   const { viewer } = useViewer()
   const isMinimal = matches(path, MINIMAL_PREFIXES)
   // Signed-in customers get the short account header everywhere; customer pages use it before the check finishes.
   const isAccount = !isMinimal && (matches(path, ACCOUNT_PREFIXES) || !!viewer)
   const isFull = !isMinimal && !isAccount
-  const isHomePage = path === "/"
+  const isHomePage = pathname === "/"
   
   const [selectedNationality, setSelectedNationality] = useState("")
   const [isNationalityOpen, setIsNationalityOpen] = useState(false)
@@ -79,19 +75,14 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const supportCase = useSupportCase()
 
   useEffect(() => {
-    const header = headerRef.current
-    const bar = headerBarRef.current
-    if (!header) return
+    const el = headerRef.current
+    if (!el) return
     const apply = () => {
-      // Marketing header: the fixed padding is transparent, so measure the visible pill.
-      // Wizard header: the plain bar is the header itself. Its border-box bottom is the flush line.
-      const box = (bar ?? header).getBoundingClientRect()
-      document.documentElement.style.setProperty("--site-header-height", `${Math.round(box.bottom)}px`)
+      document.documentElement.style.setProperty("--site-header-height", `${Math.round(el.getBoundingClientRect().height)}px`)
     }
     apply()
     const observer = new ResizeObserver(apply)
-    observer.observe(header, { box: "border-box" })
-    if (bar) observer.observe(bar, { box: "border-box" })
+    observer.observe(el)
     return () => observer.disconnect()
     // The minimal bar and the full header are different elements: measure whichever is mounted.
   }, [isMinimal])
@@ -104,12 +95,11 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     if (supportCase) return supportMessage(supportCase)
     const baseUrl = pageUrl ?? ""
     if (isWizardPage) return `Hi! I need help with my visa application. I'm currently on the application page: ${baseUrl}`
-    if (path === "/") return `Hi! I'm interested in applying for a Schengen visa. Can you help me get started?`
-    if (path.startsWith("/destinations")) return `Hi! I have questions about travel destinations and document checklists. Page: ${baseUrl}`
-    if (path.startsWith("/documents")) return `Hi! I have questions about the required documents for my visa application. Page: ${baseUrl}`
-    if (path.startsWith("/news")) return `Hi! I have a question about visa information. Page: ${baseUrl}`
-    if (path.startsWith("/contact")) return `Hi! I'd like to get in touch regarding visa services.`
-    if (path.startsWith("/success-stories")) return `Hi! I saw your success stories and I'm interested in applying for a visa.`
+    if (pathname === '/') return `Hi! I'm interested in applying for a Schengen visa. Can you help me get started?`
+    if (pathname?.startsWith('/destinations')) return `Hi! I have questions about travel destinations and document checklists. Page: ${baseUrl}`
+    if (pathname?.startsWith('/documents')) return `Hi! I have questions about the required documents for my visa application. Page: ${baseUrl}`
+    if (pathname?.startsWith('/news')) return `Hi! I have a question about visa information. Page: ${baseUrl}`
+    if (pathname?.startsWith('/contact')) return `Hi! I'd like to get in touch regarding visa services.`
     return `Hi! I have a question about visa services. I'm currently viewing: ${baseUrl}`
   }
 
@@ -198,7 +188,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
 
   const scrollToSection = (sectionId: string) => {
     setIsMenuOpen(false)
-    if (path === "/") {
+    if (pathname === "/") {
       setTimeout(() => {
         const element = document.getElementById(sectionId)
         if (element) {
@@ -215,7 +205,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   }
 
   useEffect(() => {
-    if (path === "/" && window.location.hash) {
+    if (pathname === "/" && window.location.hash) {
       const sectionId = window.location.hash.substring(1)
       setTimeout(() => {
         const element = document.getElementById(sectionId)
@@ -224,7 +214,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           const elementPosition = element.getBoundingClientRect().top
           const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 20
           window.scrollTo({ top: offsetPosition, behavior: "smooth" })
-          window.history.replaceState(null, "", window.location.pathname)
+          window.history.replaceState(null, "", pathname)
         }
       }, 300)
     }
@@ -234,7 +224,6 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "Services", ar: "الخدمات", id: "services", type: "scroll" },
     { label: "Destinations", ar: "الوجهات", id: "/destinations", type: "link" },
     { label: "Documents", ar: "المستندات", id: "/documents", type: "link" },
-    { label: "Success Stories", ar: "قصص النجاح", id: "testimonials", type: "scroll" },
     { label: "FAQ", ar: "الأسئلة الشائعة", id: "faq", type: "scroll" },
     { label: "News", ar: "الأخبار", id: "/news", type: "link" },
     { label: "Videos", ar: "الفيديوهات", id: "/videos", type: "link" },
@@ -279,7 +268,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
         }`}
       >
         <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-7xl">
-          <div ref={headerBarRef} className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
+          <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
             scrolled || forceBackground || !isFull
               ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
               : "bg-transparent border-transparent"
@@ -353,7 +342,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                   <div className="flex items-center justify-between mb-4 px-2">
                                     <h3 className="text-sm font-semibold tracking-tight text-foreground"><LangText en="Popular Destinations" ar="وجهات شائعة" /></h3>
                                     <LocaleLink href="/destinations" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
-                                      <LangText en="View all" ar="عرض الكل" /> <span className="hidden sm:inline"><LangText en="29 countries" ar="29 دولة" /></span> &rarr;
+                                      <LangText en="View all" ar="عرض الكل" /> <span className="hidden sm:inline"><LangText en="29 countries" ar="٢٩ دولة" /></span> &rarr;
                                     </LocaleLink>
                                   </div>
                                   <div className="grid grid-cols-2 gap-2">
@@ -365,12 +354,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                       >
                                         <CountryFlag iso={SCHENGEN_META[dest.name]?.iso} title={dest.name} />
                                         <div className="flex-1 min-w-0">
-                                          <div className="text-sm font-semibold text-foreground group-hover/item:text-primary transition-colors truncate">
-                                            <CountryName name={dest.name} />
-                                          </div>
-                                          <div className="text-[11px] text-muted-foreground truncate">
-                                            <Msg id="destinations.visaType" />
-                                          </div>
+                                          <div className="text-sm font-semibold text-foreground group-hover/item:text-primary transition-colors truncate">{dest.name}</div>
+                                          <div className="text-[11px] text-muted-foreground truncate">{dest.visaType}</div>
                                         </div>
                                       </LocaleLink>
                                     ))}
@@ -559,9 +544,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                       className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary/50 transition-colors"
                                     >
                                       <CountryFlag iso={SCHENGEN_META[dest.name]?.iso} title={dest.name} />
-                                      <span className="site-menu-item text-foreground">
-                                        <CountryName name={dest.name} />
-                                      </span>
+                                      <span className="site-menu-item text-foreground">{dest.name}</span>
                                     </LocaleLink>
                                   ))}
                                   <LocaleLink
@@ -611,10 +594,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                       {selectedNationality ? (
                         <div className="flex items-center gap-3">
                           <CountryFlag iso={toCitizenshipIso(selectedNationality)} title={citizenshipName(selectedNationality) || selectedNationality} />
-                          <span className="font-medium">
-                            <span className="rtl:hidden">{citizenshipName(selectedNationality) || selectedNationality}</span>
-                            <span className="hidden rtl:inline">{citizenshipNameAr(selectedNationality) || selectedNationality}</span>
-                          </span>
+                          <span className="font-medium">{citizenshipName(selectedNationality) || selectedNationality}</span>
                         </div>
                       ) : (
                         <span className="text-[#5B6475] font-medium"><LangText en="Select nationality" ar="اختر الجنسية" /></span>
@@ -641,10 +621,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                             >
                               <div className="flex items-center gap-3">
                                 <CountryFlag iso={toCitizenshipIso(nationality)} title={nationality} />
-                                <span className="font-medium">
-                                  <span className="rtl:hidden">{nationality}</span>
-                                  <span className="hidden rtl:inline">{citizenshipNameAr(nationality) || nationality}</span>
-                                </span>
+                                <span className="font-medium">{nationality}</span>
                               </div>
                               {selectedNationality === nationality && <Check className="h-5 w-5 text-primary" />}
                             </button>
