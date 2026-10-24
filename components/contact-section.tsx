@@ -29,11 +29,11 @@ export function ContactSection() {
           </div>
 
           <div className="flex flex-col items-start gap-6 p-8 md:p-12 lg:p-14">
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Ready when you are</span>
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Get started</span>
             <div className="flex flex-col gap-4">
-              <h2 className="text-balance text-foreground">Start your Schengen visa application today.</h2>
+              <h2 className="text-balance text-foreground">Start your Schengen visa application</h2>
               <p className="max-w-md text-base leading-relaxed text-muted-foreground md:text-lg">
-                Starting takes about five minutes. Pay {PRICE_AED} AED, add the rest of your details when you're ready, and a visa specialist prepares your file.
+                It takes about five minutes to start. Once you've paid {PRICE_AED} AED, you can add the rest of your details at any time, and a visa specialist will prepare your file.
               </p>
             </div>
 

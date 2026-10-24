@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { EmailSent } from "@/components/auth/email-sent"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -38,19 +39,24 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12">
       <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
-        <div className="text-center">
-          <h2 className="text-3xl font-semibold tracking-tight">Reset password</h2>
-          <p className="text-muted-foreground mt-2">Enter your email to receive a reset link</p>
-        </div>
+        {!success && (
+          <div className="text-center">
+            <h1 className="text-foreground">Reset password</h1>
+            <p className="text-muted-foreground mt-2">Enter your email to receive a reset link</p>
+          </div>
+        )}
 
         {success ? (
-          <div className="space-y-4">
-            <Alert className="bg-emerald-50 text-emerald-900 border-emerald-200">
-              <AlertDescription>We've sent a password reset link to your email.</AlertDescription>
-            </Alert>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/login">Back to login</Link>
-            </Button>
+          <div className="flex flex-col gap-6">
+            <EmailSent
+              title="Check your email"
+              email={email}
+              note="Open it to choose a new password."
+              onChangeEmail={() => setSuccess(false)}
+            />
+            <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+              Back to sign in
+            </Link>
           </div>
         ) : (
           <form onSubmit={handleReset} className="space-y-6">

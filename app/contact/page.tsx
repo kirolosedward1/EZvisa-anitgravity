@@ -36,7 +36,7 @@ const CHANNELS = [
   {
     label: "WhatsApp",
     value: WHATSAPP_DISPLAY,
-    note: "The quickest way to reach us. Send questions, photos of documents you're unsure about, or voice notes.",
+    note: "The fastest way to reach us with questions about your application.",
     href: whatsAppUrl(),
     external: true,
     icon: <WhatsAppIcon className="size-5" />,
@@ -44,7 +44,7 @@ const CHANNELS = [
   {
     label: "Email",
     value: "info@ezvisa.net",
-    note: "Best for longer questions and refund requests. Include your EZ- reference if you have one.",
+    note: "For detailed questions and refund requests. Please include your EZ- reference if you have one.",
     href: "mailto:info@ezvisa.net",
     external: false,
     icon: <Mail className="size-5" aria-hidden="true" />,
@@ -52,7 +52,7 @@ const CHANNELS = [
   {
     label: "Phone",
     value: WHATSAPP_DISPLAY,
-    note: "The same number. Calls 9 AM to 6 PM, UAE time.",
+    note: "Same number as WhatsApp. Calls from 9 AM to 6 PM, UAE time.",
     href: telUrl(),
     external: false,
     icon: <Phone className="size-5" aria-hidden="true" />,
@@ -67,8 +67,8 @@ export default function ContactPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge="Contact"
-          title="Talk to a visa specialist."
-          description="Ask about your trip before you pay, or about an application you've already started. You'll get an answer from someone who prepares visa files, not a script."
+          title="Contact us"
+          description="Questions about your trip or about an application you've already started? Contact us on WhatsApp, by email or by phone."
         />
 
         <section className="pb-20 md:pb-28">
@@ -106,7 +106,7 @@ export default function ContactPage() {
               </div>
 
               <p className="text-sm text-muted-foreground">
-                Common questions are answered in the{" "}
+                You can also find answers in our{" "}
                 <Link href="/#faq" className="font-medium text-primary hover:underline">
                   FAQ
                 </Link>

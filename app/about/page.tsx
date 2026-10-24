@@ -31,10 +31,10 @@ const FACTS = [
 ]
 
 const WE_DONT = [
-  "We're not an embassy or a visa centre, and we don't work for one. The decision on your visa is always the embassy's.",
-  "We don't promise approval. Nobody honestly can, and anyone who does is selling you something else.",
-  "We don't book or attend your visa centre appointment. You book the slot; we make sure the file you bring is right.",
-  "We don't sell plane tickets. Your flight and hotel reservations are for the visa, so you don't pay for a trip before you have one.",
+  "We are not an embassy or a visa centre, and we are not affiliated with one. Visa decisions are made by the embassy.",
+  "We can't guarantee that your visa will be approved.",
+  "We don't book visa centre appointments or attend them with you.",
+  "We don't sell flight tickets. The flight and hotel reservations we provide are for your visa application.",
 ]
 
 export default function AboutPage() {
@@ -45,8 +45,8 @@ export default function AboutPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge="About EZvisa"
-          title="We prepare Schengen visa files for people who live in the UAE."
-          description="A visa application is judged on paper. We make sure yours is complete, and that every page tells the same story about your trip."
+          title="About EZvisa"
+          description="EZvisa prepares Schengen visa applications for UAE residents. We complete your forms, prepare your supporting documents and check everything before you submit it."
         />
 
         {/* What we do */}
@@ -55,19 +55,18 @@ export default function AboutPage() {
             <h2 className="text-balance text-foreground">What we do</h2>
             <div className="flex flex-col gap-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
               <p>
-                You tell us about your trip and upload your documents. A visa specialist reads them, fills in your Schengen
-                application form, writes a cover letter for your trip, plans a day-by-day itinerary, and arranges flight and
-                hotel reservations that match it.
+                You tell us about your trip and upload your documents. A visa specialist then completes your Schengen
+                application form, writes your cover letter, plans a day-by-day itinerary, and arranges flight and hotel
+                reservations for your travel dates.
               </p>
               <p>
-                Before anything comes back to you, we check that the whole file agrees with itself: the dates, the cities, your
-                job and your bank statements. A consulate officer reads all of it together, and gaps between documents are
-                what raise questions.
+                Before we send you the file, we check that your dates, destinations, employment details and bank statements
+                match across every document. Inconsistencies between documents are a common reason for an embassy to ask for
+                more information or to refuse an application.
               </p>
               <p>
-                Most of our customers are expats from India, Egypt, Jordan, Pakistan and other countries whose passports need a
-                Schengen visa, travelling on a UAE residence visa. The rules for you are the same at every embassy, and we work
-                with them every day.
+                Most of our customers live in the UAE on a residence visa and hold a passport that needs a Schengen visa, such as
+                an Indian, Egyptian, Jordanian or Pakistani passport.
               </p>
             </div>
           </div>
@@ -90,7 +89,6 @@ export default function AboutPage() {
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
               <h2 className="text-balance text-foreground">What we don&apos;t do</h2>
-              <p className="text-base leading-relaxed text-muted-foreground">So you know exactly what you&apos;re paying for.</p>
             </div>
             <ul className="flex flex-col">
               {WE_DONT.map((line) => (

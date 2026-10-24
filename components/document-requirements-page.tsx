@@ -24,7 +24,7 @@ interface DocumentRequirementsPageProps {
 
 // Documents that help in particular situations, on top of the core file.
 const SITUATIONAL = [
-  { title: "Previous Schengen visas", body: "Copies of earlier visas show a history of travelling and returning." },
+  { title: "Previous Schengen visas", body: "Copies of any Schengen visas you've held before." },
   { title: "Travelling with your spouse", body: "Marriage certificate, attested and translated into English if needed." },
   { title: "Travelling with children", body: "Birth certificates, and a consent letter from a parent who isn't travelling." },
   { title: "Self-employed or a business owner", body: "Trade licence and company bank statements instead of a salary certificate." },
@@ -74,8 +74,8 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
       <div className="min-h-screen bg-background">
         <InnerHero
           badge={`${country} tourist visa`}
-          title={`Documents for a ${country} visa from the UAE.`}
-          description={`What the ${country} visa centre asks for, what you bring yourself, and what we prepare for you.`}
+          title={`${country} visa requirements for UAE residents`}
+          description={`The documents you need to apply for a ${country} tourist visa from the UAE, and the ones we prepare for you.`}
           backgroundImage={destination?.image || `/images/countries/${slug}.jpg`}
         >
           <div className="flex justify-center">
@@ -121,10 +121,10 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
         <section className="py-20 md:py-24">
           <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
             <div className="flex max-w-2xl flex-col gap-4">
-              <h2 className="text-balance text-foreground">The file for {country}</h2>
+              <h2 className="text-balance text-foreground">Required documents</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
-                The {country} embassy asks for the same core documents as the rest of the Schengen area. Bring the ones on the
-                left; the ones on the right are written and booked for your trip.
+                {country} asks for the same core documents as other Schengen countries. You provide the documents in the first
+                list, and we prepare the ones in the second.
               </p>
             </div>
             <DocumentSplit country={country} />
@@ -135,9 +135,9 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
         <section className="border-t border-border/70 py-20 md:py-24">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
-              <h2 className="text-balance text-foreground">If your situation is different</h2>
+              <h2 className="text-balance text-foreground">Additional documents</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
-                We&apos;ll tell you which of these apply once we&apos;ve read your answers. You don&apos;t need to work it out before you start.
+                Depending on your circumstances, you may also need some of the following. We&apos;ll confirm which apply to you after reviewing your application.
               </p>
             </div>
             <ul className="flex flex-col">
@@ -159,8 +159,8 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                 className="group flex items-center justify-between gap-4 rounded-3xl border border-border/70 px-6 py-5 transition-colors hover:bg-secondary/50"
               >
                 <span className="flex flex-col gap-0.5">
-                  <span className="font-medium text-foreground">The full {country} visa guide</span>
-                  <span className="text-sm text-muted-foreground">Where to apply, when to apply, and common questions.</span>
+                  <span className="font-medium text-foreground">{country} visa guide</span>
+                  <span className="text-sm text-muted-foreground">Where and when to apply, and answers to common questions.</span>
                 </span>
                 <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-primary rtl:rotate-180" aria-hidden="true" />
               </Link>

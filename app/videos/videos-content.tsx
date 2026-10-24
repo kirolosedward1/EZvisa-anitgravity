@@ -12,7 +12,7 @@ const videos = [
   {
     id: 1,
     title: "How to apply for a Schengen visa",
-    description: "The steps from your first answer to your visa centre appointment, in about 20 seconds.",
+    description: "A quick overview of the Schengen visa application process.",
     thumbnail: "https://img.youtube.com/vi/OMkd3GwgYn8/maxresdefault.jpg",
     duration: "0:21",
     youtubeUrl: "https://www.youtube.com/shorts/OMkd3GwgYn8",
@@ -42,8 +42,8 @@ export default function VideosContent() {
       <div className="flex-1">
         <InnerHero
           badge="Guides"
-          title="Short guides to the Schengen visa."
-          description="Quick videos on how the application works and what to bring to your appointment. More are on our YouTube and TikTok."
+          title="Video guides"
+          description="Short videos explaining the Schengen visa process. You can find more on our YouTube and TikTok channels."
         />
 
         {/* Videos Grid Section */}

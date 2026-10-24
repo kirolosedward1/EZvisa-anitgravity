@@ -35,8 +35,8 @@ export default function HowItWorksPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge="How it works"
-          title="You answer the questions. We prepare the file."
-          description={`Starting takes about five minutes and ${PRICE_AED} AED. A visa specialist then prepares everything the visa centre asks for, and you take it to your appointment.`}
+          title="How EZvisa works"
+          description={`Answer a few questions about your trip and pay ${PRICE_AED} AED. A visa specialist then prepares your application form, cover letter, itinerary, and flight and hotel reservations within 1–2 days.`}
         >
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Link
@@ -50,7 +50,7 @@ export default function HowItWorksPage() {
               href="/pricing"
               className="inline-flex h-12 items-center rounded-full bg-background px-6 text-sm font-semibold text-foreground transition-colors hover:bg-secondary"
             >
-              See what it costs
+              View pricing
             </Link>
           </div>
         </InnerHero>

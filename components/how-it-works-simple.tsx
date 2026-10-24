@@ -159,7 +159,7 @@ export function HowItWorksSimple({ standalone = false }: { standalone?: boolean 
       <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:gap-6">
         <div className="flex flex-col items-start gap-5">
           {!standalone && <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">How it works</span>}
-          <h2 className="max-w-2xl text-balance text-foreground">From your first answer to your embassy appointment.</h2>
+          <h2 className="max-w-2xl text-balance text-foreground">Four steps to your visa appointment</h2>
           {!standalone && <Link
             href="/how-it-works"
             className="group inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"

@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
+import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 
 function SignupForm() {
   const router = useRouter()
@@ -24,6 +25,19 @@ function SignupForm() {
   const [isLoading, setIsLoading] = useState(false)
 
   const supabase = createBrowserClient()
+  const cooldown = useCooldown()
+  const [resending, setResending] = useState(false)
+
+  const resend = async () => {
+    setResending(true)
+    await supabase.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback?next=${encodeURIComponent(next)}` },
+    })
+    setResending(false)
+    cooldown.start()
+  }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,15 +58,21 @@ function SignupForm() {
     } else {
       setSuccess(true)
       setIsLoading(false)
+      cooldown.start()
     }
   }
 
   if (success) {
     return (
-      <div className="w-full max-w-md space-y-6 p-8 bg-card rounded-xl shadow-lg border border-border/50 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight text-emerald-600">Check your email</h2>
-        <p className="text-muted-foreground">We sent you a verification link to {email}. Please verify your account to continue.</p>
-        <Button variant="outline" className="mt-4" onClick={() => router.push("/login")}>Back to login</Button>
+      <div className="w-full max-w-md rounded-xl border border-border/50 bg-card p-8 shadow-lg">
+        <EmailSent
+          email={email}
+          note="Open it to confirm your account, then you can sign in."
+          onResend={resend}
+          resending={resending}
+          left={cooldown.left}
+          onChangeEmail={() => setSuccess(false)}
+        />
       </div>
     )
   }

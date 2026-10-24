@@ -28,8 +28,8 @@ export default function DocumentsPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge="Documents"
-          title="The documents for your Schengen visa, by country."
-          description="Every Schengen country asks UAE residents for the same core file. Pick your destination for its visa centre, fees and the details that differ."
+          title="Schengen visa documents by country"
+          description="Select your destination to see the required documents, the visa centre that handles applications, and the embassy fee."
         >
           <label htmlFor="country-search" className="sr-only">
             Search for a country
@@ -80,11 +80,10 @@ export default function DocumentsPage() {
         <section className="border-t border-border/70 bg-secondary/40 py-20 md:py-28">
           <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6">
             <div className="flex max-w-2xl flex-col items-start gap-4">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Every country</span>
-              <h2 className="text-balance text-foreground">Half the file is yours. The other half is ours.</h2>
+              <h2 className="text-balance text-foreground">Documents for every Schengen country</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
-                You bring the documents only you can get. We prepare the ones that have to be written or booked for your trip, and
-                check that all of them agree.
+                All Schengen countries ask for the same core documents. You provide your personal documents, and we prepare the
+                rest as part of the service.
               </p>
             </div>
             <DocumentSplit />

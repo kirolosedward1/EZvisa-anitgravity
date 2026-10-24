@@ -59,7 +59,7 @@ export function ContactForm() {
           >
             <h2 className="panel-title panel-title-lg mb-1.5 text-foreground">Send us a message</h2>
             <p className="mb-8 text-sm text-muted-foreground">
-              We reply by email. For anything about an application you&apos;ve started, include your EZ- reference.
+              We&apos;ll reply by email. If your message is about an existing application, please include your EZ- reference.
             </p>
 
             {isError && (

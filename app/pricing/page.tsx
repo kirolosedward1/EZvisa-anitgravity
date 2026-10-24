@@ -25,13 +25,13 @@ export const metadata: Metadata = {
 }
 
 const INCLUDED = [
-  "Schengen application form, filled in and checked",
-  "Cover letter written for your trip",
-  "Day-by-day itinerary that matches your bookings",
-  "Flight reservation for the visa, no ticket to buy",
-  "Hotel reservation for every night of the trip",
-  "Every document you upload checked by a visa specialist",
-  "Answers on WhatsApp and email until your appointment",
+  "Completed Schengen visa application form",
+  "Cover letter for your trip",
+  "Day-by-day travel itinerary",
+  "Flight reservation (no ticket purchase needed)",
+  "Hotel reservations for your full stay",
+  "Document check by a visa specialist",
+  "Support on WhatsApp and email until your appointment",
 ]
 
 const SEPARATE = [
@@ -49,7 +49,7 @@ const SEPARATE = [
   },
   {
     title: "Translation, attestation and courier",
-    body: "Only if a document needs it. We tell you when that's the case.",
+    body: "Only needed for some documents. We'll let you know if any apply to you.",
   },
 ]
 
@@ -63,8 +63,8 @@ export default function PricingPage() {
       <div className="min-h-screen bg-background">
         <InnerHero
           badge="Pricing"
-          title={`${PRICE_AED} AED for your whole visa file.`}
-          description={`One fee, paid when you start. Travelling with your spouse? We prepare both applications together for ${withSpouse} AED.`}
+          title="Pricing"
+          description={`One fixed fee of ${PRICE_AED} AED per application, or ${withSpouse} AED when your spouse travels with you. Embassy fees and travel insurance are paid separately.`}
         />
 
         <section className="pb-20 md:pb-28">
@@ -99,7 +99,7 @@ export default function PricingPage() {
                   Start your application
                   <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
                 </Link>
-                <p className="text-sm text-muted-foreground">Ready in 1–2 days after your documents are in.</p>
+                <p className="text-sm text-muted-foreground">Your file is ready 1–2 days after you upload your documents.</p>
               </div>
             </div>
 
@@ -107,7 +107,7 @@ export default function PricingPage() {
             <div className="flex flex-col gap-6 rounded-3xl bg-secondary/60 p-6 sm:p-10">
               <div className="flex flex-col gap-2">
                 <h2 className="panel-title text-foreground">Paid separately</h2>
-                <p className="text-sm leading-relaxed text-muted-foreground">These go to the embassy, the visa centre or the insurer, not to us.</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">These costs are paid to the embassy, the visa centre or the insurer.</p>
               </div>
               <ul className="flex flex-col">
                 {SEPARATE.map((item) => (
@@ -128,8 +128,7 @@ export default function PricingPage() {
         <section className="border-t border-border/70 py-20 md:py-24">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
             <div className="flex flex-col items-start gap-4">
-              <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Refunds</span>
-              <h2 className="text-balance text-foreground">When you get the fee back.</h2>
+              <h2 className="text-balance text-foreground">Refunds</h2>
               <Link href="/refund-policy" className="text-sm font-medium text-primary hover:underline">
                 Read the full refund policy
               </Link>
@@ -157,7 +156,7 @@ export default function PricingPage() {
                 <ul className="flex flex-col gap-3 text-sm leading-relaxed text-muted-foreground">
                   <li className="flex items-start gap-3">
                     <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />
-                    The embassy refuses the visa. The decision is theirs, and our work on the file is done.
+                    The embassy refuses your visa application.
                   </li>
                   <li className="flex items-start gap-3">
                     <Minus className="mt-0.5 size-4 shrink-0 text-muted-foreground" strokeWidth={2.5} aria-hidden="true" />

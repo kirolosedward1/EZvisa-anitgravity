@@ -55,7 +55,7 @@ export function ComparisonSection() {
       <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
         <div className="flex flex-col items-start gap-5">
           <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">Why EZvisa</span>
-          <h2 className="text-balance text-foreground">On your own, or with a visa specialist.</h2>
+          <h2 className="text-balance text-foreground">Applying on your own vs. with EZvisa</h2>
           <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
             You can apply for a Schengen visa yourself. This is what changes when a specialist prepares the file with you.
           </p>
