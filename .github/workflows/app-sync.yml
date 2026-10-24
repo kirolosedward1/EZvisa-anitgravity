@@ -59,7 +59,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22.x"
+          cache: pnpm
 
-      - name: Run unit tests
-        run: pnpm test
+      - name: Install and run unit tests
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
