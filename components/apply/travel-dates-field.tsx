@@ -5,6 +5,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { LangText } from "@/components/lang-text"
 import { ChoiceList, ChoiceRow, FieldError } from "@/components/apply/wizard-choices"
 import { cn } from "@/lib/utils"
+import { ArabicDateText } from "@/components/arabic-date"
 import {
   TRIP_LENGTHS,
   formatPageDate,
@@ -46,12 +47,14 @@ function minDepartureIso() {
 
 function StayLine({ start, end, stay }: { start: string; end: string; stay: number }) {
   return (
-    <p className="text-[15px] text-[#0A0F1F]" dir="ltr">
-      <span className="rtl:hidden">
+    <p className="text-[15px] text-[#0A0F1F]">
+      <span className="rtl:hidden" dir="ltr">
         {formatShortDate(start)} – {formatShortDate(end)}
       </span>
       <span className="hidden rtl:inline">
-        {formatPageDate(start, true)} – {formatPageDate(end, true)}
+        <ArabicDateText text={formatPageDate(start, true)} />
+        {" – "}
+        <ArabicDateText text={formatPageDate(end, true)} />
       </span>
       {" · "}
       {stay} <LangText en="days" ar="يومًا" />

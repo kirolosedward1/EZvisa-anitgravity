@@ -4,8 +4,11 @@ import { ChevronRight, ExternalLink, Printer, Receipt, Upload } from "lucide-rea
 import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashboard-card"
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { StatusBadge } from "@/components/dashboard/status-badge"
+import { DirhamAmount } from "@/components/aed-amount"
 import { getReference, isPaid, type Stage } from "@/lib/application-status"
+import { ArabicDate } from "@/components/arabic-date"
 import { PRICE_AED, referenceOf } from "@/lib/shared/wizard-contract"
+import { customerText, statusText } from "@/lib/translations/customer"
 import { isDiscardable } from "@/lib/active-applications"
 import { DiscardButton } from "@/components/dashboard/discard-button"
 import type { VisaApplication } from "@/lib/types/visa-application"
@@ -19,56 +22,67 @@ export function CaseSummary({
   stage,
   showTrackingLink = true,
   allowDiscard = false,
+  arabic,
 }: {
   app: VisaApplication
   stage: Stage
   showTrackingLink?: boolean
   allowDiscard?: boolean
+  arabic: boolean
 }) {
+  const locale = arabic ? "ar" : "en"
   const token = app.tracking_token ?? ""
   // The id-based reference, the one the app, emails and WhatsApp use; the token form only for rows without an id.
   const reference = app.id ? referenceOf(app.id) : getReference(token)
   const paid = isPaid(app)
 
   const links = [
-    showTrackingLink && { href: `/track/${token}`, label: "Shareable tracking page", icon: ExternalLink },
-    paid && stage !== "ready" && { href: `/track/${token}/upload`, label: "Upload documents", icon: Upload },
-    stage === "ready" && { href: `/track/${token}/dossier`, label: "Print visa file (A4)", icon: Printer },
-    paid && app.id && typeof app.payment_amount === "number" && { href: `/receipt/${app.id}`, label: "View receipt", icon: Receipt },
-    paid && app.id && { href: `/trip/${app.id}`, label: "Trip plan", icon: ExternalLink },
+    showTrackingLink && { href: `/track/${token}`, label: customerText(locale, "case.track"), icon: ExternalLink },
+    paid && stage !== "ready" && { href: `/track/${token}/upload`, label: customerText(locale, "case.upload"), icon: Upload },
+    stage === "ready" && { href: `/track/${token}/dossier`, label: customerText(locale, "case.print"), icon: Printer },
+    paid && app.id && typeof app.payment_amount === "number" && { href: `/receipt/${app.id}`, label: customerText(locale, "case.receipt"), icon: Receipt },
+    paid && app.id && { href: `/trip/${app.id}`, label: customerText(locale, "case.trip"), icon: ExternalLink },
   ].filter(Boolean) as { href: string; label: string; icon: typeof ExternalLink }[]
 
   return (
-    <DashboardCard aria-label="Case details">
-      <DashboardCardHeader title="Case details" />
+    <DashboardCard aria-label={customerText(locale, "case.title")}>
+      <DashboardCardHeader title={customerText(locale, "case.title")} />
       <dl className="flex flex-col gap-3 px-6 pb-5 pt-4 text-sm">
         <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Reference</dt>
+          <dt className="text-muted-foreground">{customerText(locale, "case.reference")}</dt>
           <dd className="ltr-isolate flex items-center gap-1 font-semibold tabular-nums text-foreground">
             {reference}
-            {reference && <CopyButton value={reference} label="Copy reference" />}
+            {reference && <CopyButton value={reference} label={customerText(locale, "case.copy")} copiedLabel={customerText(locale, "case.copied")} />}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Payment</dt>
+          <dt className="text-muted-foreground">{customerText(locale, "case.payment")}</dt>
           <dd>
             <StatusBadge tone={(app.application_status || "").toLowerCase() === "cancelled" ? "neutral" : paid ? "success" : "warning"}>
-              {(app.application_status || "").toLowerCase() === "cancelled" ? "Cancelled" : paid ? "Paid" : "Pending"}
+              {statusText(locale, (app.application_status || "").toLowerCase() === "cancelled" ? "Cancelled" : paid ? "Paid" : "Pending")}
             </StatusBadge>
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Amount</dt>
-          <dd className="ltr-isolate font-medium tabular-nums text-foreground">{app.payment_amount || PRICE_AED} AED</dd>
+          <dt className="text-muted-foreground">{customerText(locale, "case.amount")}</dt>
+          <dd className="font-medium tabular-nums text-foreground">
+            {arabic ? <DirhamAmount amount={app.payment_amount || PRICE_AED} /> : `${app.payment_amount || PRICE_AED} AED`}
+          </dd>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Created</dt>
-          <dd className="font-medium text-foreground">{formatDate(app.created_at ?? undefined) ?? "—"}</dd>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">Last update</dt>
+          <dt className="text-muted-foreground">{customerText(locale, "case.created")}</dt>
           <dd className="font-medium text-foreground">
-            {formatDate(app.updated_at || app.created_at || undefined, "MMM d, h:mm a") ?? "—"}
+            {arabic ? <ArabicDate value={app.created_at} fallback="—" /> : formatDate(app.created_at ?? undefined) ?? "—"}
+          </dd>
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <dt className="text-muted-foreground">{customerText(locale, "case.updated")}</dt>
+          <dd className="font-medium text-foreground">
+            {arabic ? (
+              <ArabicDate value={app.updated_at || app.created_at} withTime fallback="—" />
+            ) : (
+              formatDate(app.updated_at || app.created_at || undefined, "MMM d, h:mm a") ?? "—"
+            )}
           </dd>
         </div>
       </dl>

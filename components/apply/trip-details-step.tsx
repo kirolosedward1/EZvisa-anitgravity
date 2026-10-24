@@ -7,6 +7,7 @@ import { BriefcaseBusiness, CircleEllipsis, GraduationCap, Plus, Stethoscope, Tr
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
+import { ArabicDateText } from "@/components/arabic-date"
 import { fixedDatesAccepted, formatDisplayDate, formatPageDate } from "@/lib/dates"
 import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import { TravelDatesField } from "@/components/apply/travel-dates-field"
@@ -578,12 +579,14 @@ export function TripDetailsStep({
                             <p className="truncate text-[15px] font-medium text-[#0A0F1F]">
                               <LangText en={visit.country} ar={SCHENGEN_META[visit.country]?.ar || visit.country} />
                             </p>
-                            <p className="text-[13px] text-[#5B6475]" dir="ltr">
-                              <span className="rtl:hidden">
+                            <p className="text-[13px] text-[#5B6475]">
+                              <span className="rtl:hidden" dir="ltr">
                                 {formatDisplayDate(visit.arrivalDate)} – {formatDisplayDate(visit.departureDate)}
                               </span>
                               <span className="hidden rtl:inline">
-                                {formatPageDate(visit.arrivalDate, true)} – {formatPageDate(visit.departureDate, true)}
+                                <ArabicDateText text={formatPageDate(visit.arrivalDate, true)} />
+                                {" – "}
+                                <ArabicDateText text={formatPageDate(visit.departureDate, true)} />
                               </span>
                             </p>
                           </div>

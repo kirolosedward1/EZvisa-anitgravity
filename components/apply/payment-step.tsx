@@ -352,7 +352,11 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         continueType="button"
         onContinue={handlePayment}
         continueLabel={`Pay ${paymentAmount} AED`}
-        continueLabelAr={`ادفع ${paymentAmount} درهم`}
+        continueLabelAr={
+          <>
+            ادفع <bdi dir="ltr">{paymentAmount}</bdi> درهم
+          </>
+        }
         loadingLabel="Opening Ziina…"
         loadingLabelAr="جارٍ فتح زينة…"
       />

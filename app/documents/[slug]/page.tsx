@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { DocumentRequirementsPage } from "@/components/document-requirements-page"
 import { countryNameAr, getCountryBySlug } from "@/lib/countries"
 import { requestLocale } from "@/lib/request-locale"
+import { ltr } from "@/lib/bidi"
 import { withArabicMeta } from "@/lib/page-meta"
 import { SCHENGEN_COUNTRIES } from "@/lib/countries"
 import { VISA_RULES } from "@/lib/visa-rules"
@@ -56,7 +57,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     },
     {
       title: `مستندات تأشيرة ${nameAr} السياحية`,
-      description: `قائمة مستندات تأشيرة ${nameAr} السياحية للمقيمين في الإمارات. نجهّز الملف خلال 1–2 يوم.`,
+      description: `قائمة مستندات تأشيرة ${nameAr} السياحية للمقيمين في الإمارات. نجهّز الملف خلال ${ltr("1–2")} يوم.`,
       path: `/ar/documents/${canonicalSlug}`,
     },
   )

@@ -208,9 +208,10 @@ export default async function ToolsIndexPage() {
               </h2>
 
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
-                {t(
-                  "From embassy application forms and verifiable flight & hotel reservations to customized cover letters and travel insurance, get your complete Schengen dossier ready in 24–48 hours.",
-                  "نموذج الطلب وحجوزات الطيران والفندق وخطاب التغطية وبرنامج الرحلة. جاهز خلال 1–2 يوم. تأمين السفر إضافة اختيارية.",
+                {arabic ? (
+                  <>نموذج الطلب وحجوزات الطيران والفندق وخطاب التغطية وبرنامج الرحلة. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم. تأمين السفر إضافة اختيارية.</>
+                ) : (
+                  "From embassy application forms and verifiable flight & hotel reservations to customized cover letters and travel insurance, get your complete Schengen dossier ready in 24–48 hours."
                 )}
               </p>
 

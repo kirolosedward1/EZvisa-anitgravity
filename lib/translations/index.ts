@@ -1,3 +1,5 @@
+import { ltr } from "../bidi.ts"
+
 export type Language = "en" | "ar"
 
 export const translations = {
@@ -42,6 +44,10 @@ export const translations = {
       emailConfirmed: "Email confirmed. Sign in with your email and password.",
       passwordRequired: "Enter your password.",
       confirmationResent: "Confirmation email sent again. Check your inbox.",
+      newPasswordLead: "Enter your new password below",
+      newPasswordLabel: "New Password",
+      updatePassword: "Update password",
+      updating: "Updating...",
       errors: {
         offline: "You're offline. Connect to the internet and try again.",
         "wrong-credentials": "Wrong email or password.",
@@ -157,7 +163,7 @@ export const translations = {
       badge: "إعداد ملفات تأشيرة شنغن في الإمارات",
       title: "ملف تأشيرة شنغن الخاص بك، مجهز باحترافية",
       subtitle: "نقوم بإعداد ملف طلب التأشيرة الكامل — استمارات التقديم، حجوزات الطيران والفنادق، وخطاب التغطية الشخصي، وخطة السفر — جاهز لموعد السفارة.",
-      turnaround: "جاهز خلال 1–2 يوم",
+      turnaround: `جاهز خلال ${ltr("1–2")} يوم`,
       pricePoint: "من 249 درهم",
       cta: "ابدأ تقديم الطلب",
     },
@@ -181,6 +187,10 @@ export const translations = {
       emailConfirmed: "تم تأكيد البريد الإلكتروني. سجّل الدخول ببريدك الإلكتروني وكلمة المرور.",
       passwordRequired: "أدخل كلمة المرور.",
       confirmationResent: "أُعيد إرسال رسالة التأكيد. راجع صندوق الوارد.",
+      newPasswordLead: "أدخل كلمة المرور الجديدة أدناه",
+      newPasswordLabel: "كلمة المرور الجديدة",
+      updatePassword: "تحديث كلمة المرور",
+      updating: "جارٍ التحديث...",
       errors: {
         offline: "أنت غير متصل بالإنترنت. اتصل بالإنترنت ثم أعد المحاولة.",
         "wrong-credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",

@@ -1,6 +1,6 @@
 "use client"
 
-import { useLayoutEffect, useRef, useState } from "react"
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { CountryFlag } from "@/components/country-flag"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -39,7 +39,7 @@ function ApplicationCard({ className, arabic }: { className?: string; arabic: bo
   )
 }
 
-function Field({ label, value }: { label: string; value: string }) {
+function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs font-medium text-muted-foreground">{label}</span>
@@ -100,7 +100,7 @@ export function HandoffSection() {
           </div>
           <h3 className="text-lg font-semibold tracking-tight text-foreground">{arabic ? "تفاصيل الرحلة" : "Trip details"}</h3>
           <Field label={arabic ? "الوجهة" : "Destination"} value={arabic ? countryNameAr("Germany") : "Germany"} />
-          <Field label={arabic ? "تواريخ السفر" : "Travel dates"} value={arabic ? "12–24 مارس" : "12 – 24 Mar"} />
+          <Field label={arabic ? "تواريخ السفر" : "Travel dates"} value={arabic ? <><bdi dir="ltr">12–24</bdi> مارس</> : "12 – 24 Mar"} />
           <div className="flex h-10 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
             {arabic ? "متابعة" : "Continue"}
           </div>

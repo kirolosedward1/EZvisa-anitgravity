@@ -60,7 +60,13 @@ export function DestinationCard({ country, compact = false }: { country: Destina
                 <LangText en={spec.label} ar={spec.ar} />
               </dt>
               <dd className="text-xs font-semibold tabular-nums">
-                <LangText en={spec.value} ar={spec.valueAr} />
+                {arabic && spec.label === "Ready in" ? (
+                  <>
+                    <bdi dir="ltr">1–2</bdi> يوم
+                  </>
+                ) : (
+                  <LangText en={spec.value} ar={spec.valueAr} />
+                )}
               </dd>
             </div>
           ))}
