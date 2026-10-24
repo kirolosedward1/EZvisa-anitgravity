@@ -137,7 +137,12 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        
+        {/* Streamed Suspense reveals ($RC → $RV) run on the next frame when $RT
+            is unset, which mutates the boundary while hydration is replaying it
+            (React #418). Setting $RT before any body script takes React's
+            delayed reveal path so the swap happens after hydration. */}
+        <script dangerouslySetInnerHTML={{ __html: "self.$RT=performance.now()" }} />
+
         {/* Mobile Favicon & Apple Touch Icons */}
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
         <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png?v=3" />

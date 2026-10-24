@@ -1,5 +1,5 @@
 import { LocaleLink } from "@/components/locale-link"
-import Image from "next/image"
+import { Image } from "@/components/image"
 
 /** Shared frame for the sign-in, sign-up and password pages. */
 export function AuthCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {

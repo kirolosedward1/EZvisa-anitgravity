@@ -1,6 +1,6 @@
 "use client"
 
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { format, parseISO } from "date-fns"
 import { Download } from "lucide-react"
 import { Button } from "@/components/ui/button"

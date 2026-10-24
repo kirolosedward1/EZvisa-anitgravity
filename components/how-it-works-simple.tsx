@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { LocaleLink } from "@/components/locale-link"
 import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion"
 import { ArrowRight, Check, ChevronDown, Lock, Plane } from "lucide-react"

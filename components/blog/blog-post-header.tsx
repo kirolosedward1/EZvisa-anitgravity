@@ -1,4 +1,4 @@
-import Image from "next/image"
+import { Image } from "@/components/image"
 import type { BlogPost } from "@/lib/blog"
 import { Calendar, Clock } from "lucide-react"
 import { NewsCategory, NewsDate, NewsReadTime, NewsTitle, newsTitleText } from "@/components/blog/news-copy"

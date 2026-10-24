@@ -64,7 +64,7 @@ export function InnerHero({
         </div>
 
         {image && (
-          <figure className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-secondary lg:aspect-[5/4]">
+          <figure className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl lg:aspect-[5/4]" style={{ backgroundColor: "#F3F5F9" }}>
             <Image
               src={image}
               alt={place ? `${place}` : ""}
