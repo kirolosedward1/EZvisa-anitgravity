@@ -5,11 +5,11 @@ import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
 import { Msg } from "@/components/msg"
-import { useArabic } from "@/components/ready-line"
+import { useSiteLocale } from "@/components/locale-provider"
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
-  const arabic = useArabic()
+  const arabic = useSiteLocale() === "ar"
   const faqs = arabic ? FAQ_AR : FAQ_EN
 
   const toggleFAQ = (index: number) => {

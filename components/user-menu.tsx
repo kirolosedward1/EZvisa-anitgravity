@@ -31,6 +31,7 @@ import { LocaleLink } from "@/components/locale-link"
 import { LangText } from "@/components/lang-text"
 import { createBrowserClient, supabasePublicEnv } from "@/lib/supabase/client"
 import { useAvatarUrl } from "@/lib/avatar"
+import { AvatarPhoto } from "@/components/avatar-photo"
 import { cn } from "@/lib/utils"
 
 function readDemoCookie(): boolean {
@@ -107,13 +108,7 @@ export function UserMenu() {
         aria-label={signedIn ? `Account menu for ${viewer?.email}` : "Account menu / حسابي"}
       >
         {signedIn && viewer ? (
-          photo ? (
-            // Signed storage URL or the Google picture: not routed through next/image.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photo} alt="" className="size-full rounded-full object-cover" referrerPolicy="no-referrer" />
-          ) : (
-            <span className="text-sm font-semibold">{initialsOf(viewer)}</span>
-          )
+          <AvatarPhoto src={photo} initials={<span className="text-sm font-semibold">{initialsOf(viewer)}</span>} className="size-full" />
         ) : (
           <UserRound className="h-5 w-5" aria-hidden="true" />
         )}
@@ -123,14 +118,7 @@ export function UserMenu() {
         {signedIn && viewer ? (
           <>
             <DropdownMenuLabel className="flex items-center gap-3 px-3 py-2.5 font-normal">
-              <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                {photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={photo} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
-                ) : (
-                  initialsOf(viewer)
-                )}
-              </span>
+              <AvatarPhoto src={photo} initials={initialsOf(viewer)} className="size-9 shrink-0 bg-primary/10 text-sm font-semibold text-primary" />
               <span className="flex min-w-0 flex-col">
                 <span className="truncate text-sm font-semibold text-foreground">{viewer.name || <LangText en="Signed in" ar="مسجّل الدخول" />}</span>
                 <span className="truncate text-xs text-muted-foreground">{viewer.demo ? <LangText en="Demo sandbox" ar="حساب تجريبي" /> : viewer.email}</span>

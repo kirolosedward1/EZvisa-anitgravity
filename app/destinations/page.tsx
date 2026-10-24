@@ -35,22 +35,21 @@ export default function DestinationsPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-[#F7F8FA]">
+      <div className="min-h-screen bg-secondary/40">
         <InnerHero
           badge={<LangText en="Destinations" ar="الوجهات" />}
           title={
             <LangText
-              en={<>Explore Schengen <span className="text-[#0436DC]">Destinations</span></>}
-              ar={<>استكشف وجهات <span className="text-[#0436DC]">شنغن</span></>}
+              en="Pick your Schengen destination."
+              ar="اختر وجهتك في شنغن."
             />
           }
           description={
             <LangText
-              en="Find tailored visa checklists, processing times, and prices for all 29 Schengen member states. We make visa applications simple."
-              ar="اعثر على قوائم المستندات وأوقات التجهيز والأسعار لدول شنغن الـ 29. نجعل طلب التأشيرة بسيطًا."
+              en="The visa centre, embassy fee and documents for each of the 29 Schengen countries. Our fee is the same 249 AED for every one."
+              ar="مركز التأشيرات ورسوم السفارة والمستندات لكل دولة من دول شنغن الـ ٢٩. رسومنا ٢٤٩ درهمًا لكل دولة."
             />
           }
-          gradientType="default"
           randomizeBackground={true}
         />
 

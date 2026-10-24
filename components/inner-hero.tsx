@@ -1,14 +1,14 @@
 "use client"
 
 import React from "react"
-import { motion } from "framer-motion"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
+import { MapPin } from "lucide-react"
 import { destinations } from "@/lib/destinations"
-import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
+import { SCHENGEN_META } from "@/lib/countries"
+import { LangText } from "@/components/lang-text"
 import { stableIndex } from "@/lib/stable-index"
-import { canonicalPath } from "@/lib/route-path"
-import { CountryName } from "@/components/country-name"
+import { cn } from "@/lib/utils"
 
 interface InnerHeroProps {
   badge?: React.ReactNode
@@ -16,140 +16,70 @@ interface InnerHeroProps {
   description?: React.ReactNode
   backgroundImage?: string
   randomizeBackground?: boolean
+  /** "photo": copy on the left, a destination photo on the right. "plain": copy only (legal pages). */
+  variant?: "photo" | "plain"
+  /** Kept for older call sites; no longer used. */
   gradientType?: "default" | "ocean" | "sunset" | "aurora"
   children?: React.ReactNode
   className?: string
 }
 
+/**
+ * Inner-page heading. Copy sits on the page background, left-aligned; the photo is a separate card with the
+ * country named under it. Every page gets a destination photo, fixed per path so it never flashes between renders.
+ */
 export function InnerHero({
   badge,
   title,
   description,
   backgroundImage,
-  // Every inner page gets a destination photo (fixed per page, so it doesn't flash between renders).
   randomizeBackground = true,
+  variant = "photo",
   children,
   className = "",
 }: InnerHeroProps) {
   const pathname = usePathname()
-  const picked = randomizeBackground ? destinations[stableIndex(canonicalPath(pathname), destinations.length)] : undefined
+  const picked = randomizeBackground ? destinations[stableIndex(pathname || "inner", destinations.length)] : undefined
   const named = destinations.find((destination) => destination.image === backgroundImage)
-  const heroBgImage = backgroundImage || picked?.image
-  const heroBgCountryName = named?.name || picked?.name
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.1,
-      },
-    },
-  } as const
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { type: "spring" as const, stiffness: 100, damping: 15 },
-    },
-  } as const
+  const image = variant === "photo" ? backgroundImage || picked?.image : undefined
+  const place = named?.name || (backgroundImage ? undefined : picked?.name)
 
   return (
-    <section className={`relative bg-background pt-12 pb-12 px-4 overflow-x-clip ${className}`}>
-      {/* Flight Path Curve Decoration (Left) */}
-      <div className="absolute -bottom-8 left-[6%] w-[220px] h-[150px] pointer-events-none hidden lg:block select-none -rotate-[12deg] opacity-[0.22] dark:opacity-[0.15] dark:brightness-0 dark:invert">
-        <Image
-          src="/images/flight-path-3.png"
-          alt=""
-          fill
-          sizes="220px"
-          className="object-contain"
-          priority
-        />
-      </div>
-
-      {/* Flight Path Curve Decoration (Right) */}
-      <div className="absolute top-6 right-[8%] w-[260px] h-[180px] pointer-events-none hidden md:block select-none rotate-[8deg] opacity-[0.25] dark:opacity-[0.18] dark:brightness-0 dark:invert">
-        <Image
-          src="/images/flight-path-3.png"
-          alt=""
-          fill
-          sizes="260px"
-          className="object-contain"
-          priority
-        />
-      </div>
-
-      <div className="container mx-auto max-w-6xl">
-        <div className={`relative w-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden border border-[#E3E7EF] shadow-2xl px-6 py-24 md:py-28 flex flex-col items-center text-center bg-[#FFFFFF] ${heroBgImage ? "photo-hero" : ""}`}>
-          {heroBgImage ? (
-            <>
-              <div className="absolute inset-0 w-full h-full pointer-events-none">
-                <Image
-                  src={heroBgImage}
-                  alt=""
-                  fill
-                  priority
-                  quality={75}
-                  sizes="(max-width: 1200px) 100vw, 1200px"
-                  className="object-cover object-center"
-                />
-              </div>
-              <PhotoHeroOverlay />
-            </>
-          ) : null}
-
-          {/* Content Container */}
-          <motion.div
-            variants={containerVariants}
-            initial={false}
-            animate="visible"
-            className="relative z-10 flex flex-col items-center max-w-3xl mx-auto w-full"
-          >
-            {/* Glassmorphic Badge Pill */}
-            {badge && (
-              <motion.div
-                variants={itemVariants}
-                className="mb-5 inline-flex items-center px-4 py-1.5 rounded-full border text-xs font-semibold uppercase tracking-wider shadow-sm cursor-default bg-[#F7F8FA] text-[#0436DC] border-[#E3E7EF]"
-              >
-                {badge}
-              </motion.div>
-            )}
-
-            {/* Title */}
-            <motion.h1
-              variants={itemVariants}
-              className={`text-balance ${heroBgImage ? "hero-copy text-white" : "text-[#0A0F1F]"}`}
-            >
-              {title}
-            </motion.h1>
-
-            {/* Description */}
-            {description && (
-              <motion.p
-                variants={itemVariants}
-                className={`mt-4 max-w-2xl ${heroBgImage ? "hero-copy text-white/90" : "text-[#3A4150]"}`}
-              >
-                {description}
-              </motion.p>
-            )}
-
-            {/* Optional actions/inputs row */}
-            {children && (
-              <motion.div variants={itemVariants} className="mt-8 w-full">
-                {children}
-              </motion.div>
-            )}
-          </motion.div>
-          {heroBgCountryName && (
-            <div className={`absolute bottom-4 end-6 md:bottom-5 md:end-8 text-[9px] md:text-[10px] tracking-widest font-semibold uppercase z-20 pointer-events-none select-none ${heroBgImage ? "text-white/70" : "text-[#0A0F1F]/40"}`}>
-              <CountryName name={heroBgCountryName} />
-            </div>
+    <section className={cn("bg-background pb-12 pt-28 md:pb-16 md:pt-32", variant === "plain" && "border-b border-border/70", className)}>
+      <div
+        className={cn(
+          "container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6",
+          image && "lg:grid-cols-[minmax(0,6fr)_minmax(0,5fr)] lg:items-center lg:gap-14",
+        )}
+      >
+        <div className="flex min-w-0 flex-col items-start gap-5">
+          {badge && (
+            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">{badge}</span>
           )}
+          <h1 className="max-w-2xl text-balance text-foreground">{title}</h1>
+          {description && <p className="max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">{description}</p>}
+          {children && <div className="mt-2 w-full max-w-xl">{children}</div>}
         </div>
+
+        {image && (
+          <figure className="relative aspect-[16/10] w-full overflow-hidden rounded-3xl bg-secondary lg:aspect-[5/4]">
+            <Image
+              src={image}
+              alt={place ? `${place}` : ""}
+              fill
+              priority
+              quality={75}
+              sizes="(min-width: 1024px) 480px, 100vw"
+              className="object-cover"
+            />
+            {place && (
+              <figcaption className="absolute bottom-4 start-4 inline-flex items-center gap-1.5 rounded-full bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-sm">
+                <MapPin className="size-3.5 text-primary" aria-hidden="true" />
+                <LangText en={<bdi dir="ltr">{place}</bdi>} ar={SCHENGEN_META[place]?.ar ?? <bdi dir="ltr">{place}</bdi>} />
+              </figcaption>
+            )}
+          </figure>
+        )}
       </div>
     </section>
   )

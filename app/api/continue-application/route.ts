@@ -12,8 +12,29 @@ import {
   TRIP_LENGTHS,
 } from "@/lib/dates"
 import { isPaid } from "@/lib/application-status"
+import { UUID_RE } from "@/lib/applications"
+import { rememberTravellersFromApplication } from "@/lib/travellers"
 import { sanitizeInput } from "@/lib/sanitize"
 import { canonicalSchengenCountry } from "@/lib/countries"
+import { toWesternDigits, normalizePassport } from "@/lib/digits"
+
+// Arabic/Persian digits typed on the client become Western before validation and saving (Western input unchanged).
+const DIGIT_FIELDS = ["phone", "dateOfBirth", "travelStartDate", "travelEndDate", "travelMonth", "tripLength", "employmentStartDate"]
+function normalizeDigits(input: unknown): Record<string, any> {
+  if (!input || typeof input !== "object") return {}
+  const f: Record<string, any> = { ...(input as Record<string, any>) }
+  for (const key of DIGIT_FIELDS) if (typeof f[key] === "string") f[key] = toWesternDigits(f[key])
+  if (typeof f.passportNumber === "string") f.passportNumber = normalizePassport(f.passportNumber)
+  if (Array.isArray(f.additionalCountries)) {
+    f.additionalCountries = f.additionalCountries.map((v: unknown) => {
+      if (!v || typeof v !== "object") return v
+      const visit: Record<string, any> = { ...(v as Record<string, any>) }
+      for (const key of ["arrivalDate", "departureDate"]) if (typeof visit[key] === "string") visit[key] = toWesternDigits(visit[key])
+      return visit
+    })
+  }
+  return f
+}
 
 // Post-payment answers (/continue/[id]), the same ones the app asks after payment: trip details, passport, spouse
 // and employment. Every field is optional per request: each continue screen saves only what it asked.
@@ -35,7 +56,7 @@ const yesNo = (v: unknown) => (v === "yes" || v === "no" ? v : "")
 const bad = (error: string) => NextResponse.json({ error }, { status: 400 })
 
 export async function POST(request: Request) {
-  const body = await request.json().catch(() => ({}))
+  const body = normalizeDigits(await request.json().catch(() => ({})))
   const id = typeof body.id === "string" ? body.id : ""
   if (!id) return NextResponse.json({ error: "Missing application" }, { status: 400 })
   // Demo sandbox rows live in code (lib/demo-data): nothing to save, and no Supabase session.
@@ -139,6 +160,10 @@ export async function POST(request: Request) {
   }
   wizard.lastEditedOn = "website"
   notes.wizard = wizard
+  // The saved traveller the spouse was picked from ("Who is travelling?" on the spouse step), if any.
+  const spouseTravellerId = typeof body.spouseTravellerId === "string" && UUID_RE.test(body.spouseTravellerId) ? body.spouseTravellerId : ""
+  if (spouseTravellerId) notes.spouseTravellerId = spouseTravellerId
+  else if (body.spouseTravellerId === null) delete notes.spouseTravellerId
 
   const patch: Record<string, string | number> = { additional_notes: JSON.stringify(notes) }
   if (passportNumber) patch.passport_number = passportNumber
@@ -158,5 +183,7 @@ export async function POST(request: Request) {
   if (!saved?.length) {
     return NextResponse.json({ error: "This application can no longer be edited here. Please contact support." }, { status: 409 })
   }
+  // The case is paid: an updated passport number or a newly named spouse goes to the account's saved travellers.
+  await rememberTravellersFromApplication({ ...app, email, passport_number: passportNumber || app.passport_number, additional_notes: JSON.stringify(notes) })
   return NextResponse.json({ ok: true })
 }

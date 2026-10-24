@@ -121,6 +121,11 @@ export async function applyIntentStatus(
   // reconcile cron). Previously only the webhook emailed, and it usually arrived after check-payment had already
   // stored "paid", so the confirmation email was skipped. EmailService dedupes per (event, application).
   if (next === "paid" || next === "failed") await sendPaymentEmail(stored, intent, next)
+  // Paid: the people on the case become saved travellers of the account (lib/travellers.ts; never throws).
+  if (next === "paid") {
+    const { rememberTravellersFromApplication } = await import("@/lib/travellers")
+    await rememberTravellersFromApplication(stored, supabase)
+  }
   return { row: stored, status: next, changed: true }
 }
 

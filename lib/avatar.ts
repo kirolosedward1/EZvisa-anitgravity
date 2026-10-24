@@ -13,28 +13,76 @@ const SIZE = 256
 type Meta = Record<string, unknown>
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : "")
 
+// Signed URLs are valid for an hour. Keep them (in memory, and for the tab session) so the header, the menu and the
+// account page share one request and later pages show the photo at once. Only the URL to the user's own photo is
+// kept, never the image or other account data. The key includes avatar_version, so a new upload is never shown stale.
+const SIGNED_TTL = 3600
+const REUSE_FOR_MS = 50 * 60 * 1000
+const memory = new Map<string, { url: string; until: number }>()
+const pending = new Map<string, Promise<string | null>>()
+
+function cached(key: string): string | null {
+  const hit = memory.get(key)
+  if (hit && hit.until > Date.now()) return hit.url
+  try {
+    const raw = sessionStorage.getItem(`ez_avatar:${key}`)
+    const saved = raw ? (JSON.parse(raw) as { url: string; until: number }) : null
+    if (saved && saved.until > Date.now()) {
+      memory.set(key, saved)
+      return saved.url
+    }
+  } catch {
+    // storage unavailable (private mode): fetch instead
+  }
+  return null
+}
+
+function signedUrl(path: string, key: string): Promise<string | null> {
+  const hit = cached(key)
+  if (hit) return Promise.resolve(hit)
+  const inFlight = pending.get(key)
+  if (inFlight) return inFlight
+  const request = createBrowserClient()
+    .storage.from(BUCKET)
+    .createSignedUrl(path, SIGNED_TTL)
+    .then(({ data }) => {
+      const url = data?.signedUrl ?? null
+      if (url) {
+        const entry = { url, until: Date.now() + REUSE_FOR_MS }
+        memory.set(key, entry)
+        try {
+          sessionStorage.setItem(`ez_avatar:${key}`, JSON.stringify(entry))
+        } catch {
+          // ignore
+        }
+      }
+      return url
+    })
+    .finally(() => pending.delete(key))
+  pending.set(key, request)
+  return request
+}
+
 /** The URL to show for this user's photo, or null (then initials are shown). */
 export function useAvatarUrl(user: Pick<User, "id" | "user_metadata"> | null | undefined): string | null {
   const meta = (user?.user_metadata ?? {}) as Meta
   const path = str(meta.avatar_path)
+  const key = path ? `${path}#${String(meta.avatar_version ?? "")}` : ""
   const provider = str(meta.avatar_url) || str(meta.picture)
-  const [signed, setSigned] = useState<{ path: string; url: string } | null>(null)
+  const [signed, setSigned] = useState<{ key: string; url: string } | null>(null)
 
   useEffect(() => {
     if (!path) return
     let alive = true
-    createBrowserClient()
-      .storage.from(BUCKET)
-      .createSignedUrl(path, 3600)
-      .then(({ data }) => {
-        if (alive && data?.signedUrl) setSigned({ path, url: data.signedUrl })
-      })
+    signedUrl(path, key).then((url) => {
+      if (alive && url) setSigned({ key, url })
+    })
     return () => {
       alive = false
     }
-  }, [path])
+  }, [path, key])
 
-  if (path) return signed?.path === path ? signed.url : null
+  if (path) return signed?.key === key ? signed.url : null
   return provider || null
 }
 
@@ -78,7 +126,8 @@ export async function uploadAvatar(file: File): Promise<void> {
   const old = str((user.user_metadata as Meta)?.avatar_path)
   const { error } = await supabase.storage.from(BUCKET).upload(path, blob, { contentType: "image/jpeg", upsert: true })
   if (error) throw new Error(friendly(error.message))
-  const { error: metaError } = await supabase.auth.updateUser({ data: { avatar_path: path } })
+  // avatar_version changes the cache key, so every page shows the new photo instead of the old signed URL.
+  const { error: metaError } = await supabase.auth.updateUser({ data: { avatar_path: path, avatar_version: Date.now() } })
   if (metaError) throw new Error(friendly(metaError.message))
   // The app may have saved another format (avatar.png, avatar.heic): this one replaces it.
   if (old && old !== path) await supabase.storage.from(BUCKET).remove([old]).catch(() => {})
