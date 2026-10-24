@@ -19,7 +19,7 @@ export function phoneTypingValue(input: string): string {
 /**
  * Digits after one UAE prefix (+971, 00971, or 971) and any leading zeros.
  * The prefix is removed once: 971971… stays 971… and then fails the mobile pattern.
- * Used on blur and submit, not while the field is being typed.
+ * Callers must not strip first. A second pass would turn 971971501234567 into a valid mobile.
  */
 export function uaeLocalDigits(input: string): string {
   let digits = toWesternDigits(input).replace(/\D/g, "")

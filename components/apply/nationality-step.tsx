@@ -247,8 +247,8 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             onChange={(event) => set({ phone: phoneTypingValue(event.target.value) })}
             onBlur={(event) => {
               const raw = phoneTypingValue(event.currentTarget.value)
-              const next = uaeMobileE164(raw) ?? uaeLocalDigits(raw)
-              if (next && next !== raw) updateFormData({ phone: next })
+              const e = uaeMobileE164(raw)
+              if (e) updateFormData({ phone: e })
             }}
             placeholder="50 123 4567"
             aria-invalid={invalid("phone")}

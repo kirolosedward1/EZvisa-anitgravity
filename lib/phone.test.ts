@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { hasInvalidPhone, isValidPhone, leadPhoneForSend, phoneTypingValue, uaeMobileE164 } from "./phone"
+import { hasInvalidPhone, isValidPhone, leadPhoneForSend, phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "./phone"
 
 /** The field's onChange: each new character is appended, then only Western digits (and a leading +) are kept. */
 function typePhone(chars: string) {
@@ -74,6 +74,25 @@ test("typing or pasting a repeated dial code is not stripped until validation", 
   assert.equal(uaeMobileE164(typePhone("0501234567")), "+971501234567")
   assert.equal(phoneTypingValue("+971 50-123 4567"), "+971501234567")
   assert.equal(phoneTypingValue("50+123"), "50123")
+})
+
+test("type, blur, then validate rejects a doubled 971 in every prefix form", () => {
+  // Blur rewrites only when uaeMobileE164 accepts the typed value. Continue blurs the field.
+  const blur = (raw: string) => uaeMobileE164(raw) ?? raw
+  for (const input of ["971971501234567", "00971971501234567", "+971971501234567"]) {
+    const typed = typePhone(input)
+    const blurred = blur(typed)
+    assert.equal(blurred, typed)
+    assert.equal(uaeMobileE164(blurred), null)
+    assert.equal(isValidPhone(blurred), false)
+    // One strip leaves the second 971. Validating that remainder would strip again and accept it.
+    const once = uaeLocalDigits(blurred)
+    assert.equal(once.startsWith("971"), true)
+    assert.equal(uaeMobileE164(blurred), null)
+  }
+  const valid = blur(typePhone("0501234567"))
+  assert.equal(valid, "+971501234567")
+  assert.equal(uaeMobileE164(valid), "+971501234567")
 })
 
 test("a HubSpot lead rejects an invalid phone and sends +971XXXXXXXXX when valid", () => {
