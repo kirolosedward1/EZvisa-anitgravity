@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Flag, Icon, Text, type IconName } from "../ui";
 import { CountrySheet } from "../CountryPicker";
 import { useColors, useIsDark, S, R, T, ICON } from "../../lib/theme";
+import { useT } from "../../lib/i18n";
 import { select } from "../../lib/haptics";
 
 const H = 56;
@@ -38,12 +39,19 @@ export function FormField({ label, error, children }: { label: string; error?: s
 
 export function Input({ error, style, ...p }: TextInputProps & { error?: boolean }) {
   const c = useColors();
+  const { rtl } = useT();
+  // Language, not the platform: an Arabic placeholder or a Latin value (a name, a passport
+  // number) otherwise stays on the left, because the input's own direction defaults to auto.
+  const textAlign = rtl ? "right" : "left";
+  const writingDirection = rtl ? "rtl" : "ltr";
   // A bare TextInput's intrinsic width expands a sheet past the right inset. A row + flex:1
   // locks the bordered box to the field column, the same width as the selects and date fields.
   return (
     <View style={{ flexDirection: "row", alignSelf: "stretch", width: "100%" }}>
-      <TextInput placeholderTextColor={c.secondaryLabel} {...p}
-        style={[T.body, boxStyle(c, error), { color: c.label, paddingVertical: S.sm, flex: 1 }, Platform.OS === "web" && ({ outlineStyle: "none" } as any), style]} />
+      <TextInput placeholderTextColor={c.secondaryLabel} {...p} textAlign={textAlign}
+        // Web defaults the input to dir=auto, which ignores the app language and parks the placeholder on the left.
+        {...(Platform.OS === "web" ? { dir: writingDirection } : {})}
+        style={[T.body, boxStyle(c, error), { color: c.label, paddingVertical: S.sm, flex: 1 }, Platform.OS === "web" && ({ outlineStyle: "none" } as any), style, { textAlign, writingDirection }]} />
     </View>
   );
 }
@@ -55,20 +63,23 @@ type Opt = { value: string; label: string };
 /** <select>: iOS action sheet, Android dialog spinner, web <select>. The visible box always matches the web input. */
 export function SelectField({ label, value, options, placeholder, onChange, error, disabled }: { label: string; value: string; options: Opt[]; placeholder: string; onChange: (v: string) => void; error?: boolean; disabled?: boolean }) {
   const c = useColors();
+  const { t } = useT();
+  // `value` stays the stored English key ("Dubai"). The closed field and the list show the same localized name.
   const cur = options.find((o) => o.value === value);
+  const curLabel = cur ? t(cur.label) : undefined;
   const box = (
     <View style={[boxStyle(c, error), { flexDirection: "row", alignItems: "center", gap: S.xs, opacity: disabled ? 0.5 : 1 }]}>
-      <Text variant="body" style={{ flex: 1, paddingVertical: S.sm }} color={cur ? c.label : c.secondaryLabel}>{cur?.label ?? placeholder}</Text>
+      <Text variant="body" style={{ flex: 1, paddingVertical: S.sm }} color={cur ? c.label : c.secondaryLabel}>{curLabel ?? placeholder}</Text>
       <Icon name="chevron.down" size={13} color={c.secondaryLabel} weight="semibold" />
     </View>
   );
   if (Platform.OS === "ios") {
     const open = () => {
       select();
-      ActionSheetIOS.showActionSheetWithOptions({ title: label, options: [...options.map((o) => o.label), "Cancel"], cancelButtonIndex: options.length, tintColor: c.tint },
+      ActionSheetIOS.showActionSheetWithOptions({ title: label, options: [...options.map((o) => t(o.label)), t("Cancel")], cancelButtonIndex: options.length, tintColor: c.tint },
         (i) => { if (i < options.length) onChange(options[i].value); });
     };
-    return <Pressable disabled={disabled} onPress={open} accessibilityRole="button" accessibilityLabel={`${label}, ${cur?.label ?? "not selected"}`} accessibilityHint="Opens a list">{box}</Pressable>;
+    return <Pressable disabled={disabled} onPress={open} accessibilityRole="button" accessibilityLabel={`${label}, ${curLabel ?? "not selected"}`} accessibilityHint="Opens a list">{box}</Pressable>;
   }
   // Android/web: a transparent native picker on top of the styled box receives the tap.
   return (
@@ -77,7 +88,7 @@ export function SelectField({ label, value, options, placeholder, onChange, erro
       <Picker selectedValue={value} enabled={!disabled} onValueChange={(v) => { if (v !== "") onChange(String(v)); }} accessibilityLabel={label} prompt={label}
         style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0, width: "100%", height: "100%" } as any}>
         <Picker.Item label={placeholder} value="" enabled={false} />
-        {options.map((o) => <Picker.Item key={o.value} label={o.label} value={o.value} />)}
+        {options.map((o) => <Picker.Item key={o.value} label={t(o.label)} value={o.value} />)}
       </Picker>
     </View>
   );
@@ -85,13 +96,15 @@ export function SelectField({ label, value, options, placeholder, onChange, erro
 
 /** Searchable country combobox (web Popover + Command): flag, name, ⌃⌄; opens a sheet with search. */
 export function CountryField({ label, value, names, placeholder, searchPlaceholder, onChange, error }: { label: string; value: string; names?: string[]; placeholder: string; searchPlaceholder: string; onChange: (name: string) => void; error?: boolean }) {
-  const c = useColors(); const [open, setOpen] = useState(false);
+  const c = useColors(); const [open, setOpen] = useState(false); const { t } = useT();
+  // `value` stays the stored English country name ("Egypt"). The closed field shows the same Arabic the list uses.
+  const shown = value ? t(value) : "";
   return (
     <>
-      <Pressable onPress={() => { select(); setOpen(true); }} accessibilityRole="combobox" accessibilityLabel={`${label}, ${value || "not selected"}`} accessibilityHint="Opens a searchable list"
+      <Pressable onPress={() => { select(); setOpen(true); }} accessibilityRole="combobox" accessibilityLabel={`${label}, ${shown || "not selected"}`} accessibilityHint="Opens a searchable list"
         style={({ pressed }) => [boxStyle(c, error), { flexDirection: "row", alignItems: "center", gap: S.xs, opacity: pressed ? 0.7 : 1 }]}>
         {!!value && <Flag country={value} size={22} />}
-        <Text variant="body" weight={value ? "500" : "400"} style={{ flex: 1, paddingVertical: S.sm }} color={value ? c.label : c.secondaryLabel}>{value || placeholder}</Text>
+        <Text variant="body" weight={value ? "500" : "400"} style={{ flex: 1, paddingVertical: S.sm }} color={value ? c.label : c.secondaryLabel}>{shown || placeholder}</Text>
         <Icon name="chevron.up.chevron.down" size={13} color={c.secondaryLabel} />
       </Pressable>
       <CountrySheet visible={open} title={label.replace(/ \*$/, "")} names={names} searchPlaceholder={searchPlaceholder} selectedName={value}
