@@ -7,7 +7,7 @@ import { ProgressTracker } from "@/components/dashboard/progress-tracker"
 import { StatusPills } from "@/components/dashboard/status-pills"
 import { CountryFlag } from "@/components/country-flag"
 import { SCHENGEN_META } from "@/lib/countries"
-import { formatArabicDate } from "@/lib/dates"
+import { ArabicDate } from "@/components/arabic-date"
 import { destinations } from "@/lib/destinations"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 import { customerText } from "@/lib/translations/customer"
@@ -25,12 +25,12 @@ function formatTravelDates(app: VisaApplication, arabic: boolean): ReactNode {
     if (!end) return format(parseISO(start), "MMM d, yyyy")
     return `${startText} – ${format(parseISO(end), "MMM d, yyyy")}`
   }
-  if (!end) return <bdi dir="ltr">{formatArabicDate(start)}</bdi>
+  if (!end) return <ArabicDate value={start} />
   return (
     <>
-      <bdi dir="ltr">{formatArabicDate(start)}</bdi>
+      <ArabicDate value={start} />
       {" – "}
-      <bdi dir="ltr">{formatArabicDate(end)}</bdi>
+      <ArabicDate value={end} />
     </>
   )
 }
@@ -83,7 +83,7 @@ export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplicati
                 {arabic ? (
                   <>
                     {customerText("ar", "overview.appointment")}{" "}
-                    <bdi dir="ltr">{formatArabicDate(app.appointment_at, true)}</bdi>
+                    <ArabicDate value={app.appointment_at} withTime />
                   </>
                 ) : (
                   `Appointment ${format(new Date(app.appointment_at), "EEE, MMM d yyyy 'at' h:mm a")}`

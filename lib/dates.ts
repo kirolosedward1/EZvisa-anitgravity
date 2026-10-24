@@ -114,6 +114,7 @@ export function formatTravelMonthAr(value?: string | null): string {
  * «24 أكتوبر 2026». Day, Arabic month name, year, Western digits, no weekday or comma.
  * A calendar date (YYYY-MM-DD) stays on that day. Timestamps use the UAE calendar.
  * Pass `withTime` for a clock, still without a comma: «24 أكتوبر 2026 في 4:00 م».
+ * Render with ArabicDate so the phrase stays RTL. A dir="ltr" wrapper puts the day on the left.
  */
 export function formatArabicDate(value?: string | Date | null, withTime = false): string {
   if (value == null || value === "") return ""

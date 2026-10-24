@@ -6,7 +6,7 @@ import { CopyButton } from "@/components/dashboard/copy-button"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { DirhamAmount } from "@/components/aed-amount"
 import { getReference, isPaid, type Stage } from "@/lib/application-status"
-import { formatArabicDate } from "@/lib/dates"
+import { ArabicDate } from "@/components/arabic-date"
 import { PRICE_AED, referenceOf } from "@/lib/shared/wizard-contract"
 import { customerText, statusText } from "@/lib/translations/customer"
 import { isDiscardable } from "@/lib/active-applications"
@@ -72,14 +72,14 @@ export function CaseSummary({
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">{customerText(locale, "case.created")}</dt>
           <dd className="font-medium text-foreground">
-            {arabic ? <bdi dir="ltr">{formatArabicDate(app.created_at) || "—"}</bdi> : formatDate(app.created_at ?? undefined) ?? "—"}
+            {arabic ? <ArabicDate value={app.created_at} fallback="—" /> : formatDate(app.created_at ?? undefined) ?? "—"}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4">
           <dt className="text-muted-foreground">{customerText(locale, "case.updated")}</dt>
           <dd className="font-medium text-foreground">
             {arabic ? (
-              <bdi dir="ltr">{formatArabicDate(app.updated_at || app.created_at, true) || "—"}</bdi>
+              <ArabicDate value={app.updated_at || app.created_at} withTime fallback="—" />
             ) : (
               formatDate(app.updated_at || app.created_at || undefined, "MMM d, h:mm a") ?? "—"
             )}

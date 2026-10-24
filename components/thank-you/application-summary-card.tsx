@@ -6,7 +6,7 @@ import { Calendar, CreditCard, DollarSign, Globe, MapPin, User } from "lucide-re
 import { format } from "date-fns"
 import { DirhamAmount } from "@/components/aed-amount"
 import { useSiteLocale } from "@/components/locale-provider"
-import { formatArabicDate } from "@/lib/dates"
+import { ArabicDate } from "@/components/arabic-date"
 import { SCHENGEN_META } from "@/lib/countries"
 import { citizenshipNameAr } from "@/lib/nationalities"
 import { customerText } from "@/lib/translations/customer"
@@ -40,9 +40,9 @@ export function ApplicationSummaryCard({ applicationData }: ApplicationSummaryCa
   }
   const travelDates: ReactNode = arabic ? (
     <>
-      <bdi dir="ltr">{formatArabicDate(applicationData.travelStartDate) || applicationData.travelStartDate}</bdi>
+      <ArabicDate value={applicationData.travelStartDate} fallback={applicationData.travelStartDate} />
       {" – "}
-      <bdi dir="ltr">{formatArabicDate(applicationData.travelEndDate) || applicationData.travelEndDate}</bdi>
+      <ArabicDate value={applicationData.travelEndDate} fallback={applicationData.travelEndDate} />
     </>
   ) : (
     `${formatDate(applicationData.travelStartDate)} - ${formatDate(applicationData.travelEndDate)}`
