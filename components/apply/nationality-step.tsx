@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
 import { UserRound } from "lucide-react"
 import { normalizePassport, toWesternDigits } from "@/lib/digits"
-import { isValidPhone } from "@/lib/phone"
+import { phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "@/lib/phone"
 
 interface NationalityStepProps {
   formData: FormData
@@ -51,27 +51,6 @@ function isValidEmail(email: string) {
   return !invalidDomains.includes(domain.toLowerCase())
 }
 
-/** The visible prefix is always +971. Digits are stored as "+971 5xxxxxxx". */
-function localPhone(phone: string) {
-  const trimmed = toWesternDigits(phone).trim()
-  if (trimmed.startsWith("+971")) return trimmed.slice(4).replace(/[^\d]/g, "")
-  return trimmed.replace(/[^\d]/g, "")
-}
-
-function composePhone(local: string) {
-  const digits = toWesternDigits(local).replace(/[^\d]/g, "")
-  return digits ? `+971 ${digits}` : ""
-}
-
-/** UAE numbers are usually written 050 123 4567 or pasted with 971 / 00971: keep only the national number after
- *  +971 ("+971 0501234567" is not a valid international number). Applied when the step is submitted. */
-function nationalNumber(local: string) {
-  let digits = toWesternDigits(local).replace(/[^\d]/g, "")
-  if (digits.startsWith("00971")) digits = digits.slice(5)
-  else if (digits.startsWith("971") && digits.length >= 11) digits = digits.slice(3)
-  return digits.replace(/^0/, "")
-}
-
 /** Local calendar date (YYYY-MM-DD); toISOString() is UTC and is a day behind in the UAE before 04:00. */
 function localIso(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
@@ -85,7 +64,8 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
   const dobDigits = useRef("")
   const withSpouse = formData.spouseAccompanying === "yes"
   const spousePrice = priceForTravellers("yes")
-  const phone = composePhone(nationalNumber(localPhone(formData.phone || "")))
+  const typedPhone = phoneTypingValue(formData.phone || "")
+  const phone = uaeMobileE164(formData.phone || "") ?? ""
 
   useEffect(() => {
     const date = new Date()
@@ -109,7 +89,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
     firstName: !formData.firstName.trim(),
     lastName: !formData.lastName.trim(),
     passport: !formData.passportNumber.trim(),
-    phone: !phone || !isValidPhone(phone),
+    phone: !phone,
     email: !formData.email.trim() || !isValidEmail(formData.email.trim()),
     // The form is noValidate, so the input's max isn't enforced by the browser: check the date and 18+ here.
     dateOfBirth: !isValidCalendarDate(formData.dateOfBirth) || formData.dateOfBirth < "1900-01-01" || (!!maxDob && formData.dateOfBirth > maxDob),
@@ -248,12 +228,13 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
           <LangText en="Phone" ar="الهاتف" />
         </label>
         <div
+          dir="ltr"
           className={cn(
             "flex h-[52px] items-center rounded-[10px] border border-[#E3E7EF] bg-[#FFFFFF] focus-within:border-[#0436DC] focus-within:shadow-[0_0_0_3px_rgba(4,54,220,0.12)]",
             showErrors && errors.phone && "border-[#B83200] focus-within:border-[#B83200] focus-within:shadow-none",
           )}
         >
-          <span className="ps-4 text-[15px] text-[#0A0F1F]" dir="ltr">
+          <span className="ps-4 text-[15px] text-[#0A0F1F]">
             +971
           </span>
           <input
@@ -262,8 +243,13 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             inputMode="numeric"
             autoComplete="tel-national"
             dir="ltr"
-            value={localPhone(formData.phone || "")}
-            onChange={(event) => set({ phone: composePhone(event.target.value) })}
+            value={formData.phone && formData.phone === phone ? uaeLocalDigits(formData.phone) : typedPhone}
+            onChange={(event) => set({ phone: phoneTypingValue(event.target.value) })}
+            onBlur={(event) => {
+              const raw = phoneTypingValue(event.currentTarget.value)
+              const e = uaeMobileE164(raw)
+              if (e) updateFormData({ phone: e })
+            }}
             placeholder="50 123 4567"
             aria-invalid={invalid("phone")}
             className="h-full min-w-0 flex-1 border-0 bg-transparent px-3 text-[15px] text-[#0A0F1F] outline-none placeholder:text-[#5B6475]"
@@ -272,8 +258,8 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
         {showErrors && errors.phone ? (
           <FieldError>
             <LangText
-              en={phone ? "Enter a valid phone number." : "Enter your phone number."}
-              ar={phone ? "أدخل رقم هاتف صحيحًا." : "أدخل رقم الهاتف."}
+              en={typedPhone ? "Enter a valid phone number." : "Enter your phone number."}
+              ar={typedPhone ? "أدخل رقم هاتف صحيحًا." : "أدخل رقم الهاتف."}
             />
           </FieldError>
         ) : null}
