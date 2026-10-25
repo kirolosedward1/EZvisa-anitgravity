@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View, type ScrollViewInstance } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup } from "../../../components/ui";
+import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup, Surface } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
 import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, needsContinue, employmentOf } from "../../../lib/data";
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
@@ -134,13 +134,20 @@ export default function ApplicationDetail() {
           {isAbandoned(a) && <Pressable onPress={() => askDiscard(() => { discardApplication(a).then(() => (router.canGoBack() ? router.back() : router.replace("/applications"))).catch((e) => setUpErr(e?.message ?? String(e))); }, t)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="detail-discard" style={{ minWidth: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={20} color={c.red} /></Pressable>}
           <SupportButton header context={`application ${a.reference}`} />
         </View>) }} />
-      <View style={{ marginHorizontal: S.lg, marginTop: S.xs, marginBottom: S.xxl, gap: S.xs }}>
-        <Flag country={name} size={56} />
-        <Text variant="largeTitle" style={{ marginTop: S.sm }} accessibilityRole="header">{t(name)}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-          <Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text>
-          <StatusPill v={a.status} a={a} />
-        </View>
+      <View style={{ marginHorizontal: S.md, marginTop: S.xs, marginBottom: S.xxl }}>
+        <Surface level={1} style={{ padding: S.md, gap: S.md }}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: S.xs }}>
+            <StatusPill v={a.status} a={a} />
+            <Text variant="caption" tone="tertiary" tabular>{ltr(a.reference)}</Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
+            <Flag country={name} size={56} />
+            <View style={{ flex: 1 }}>
+              <Text variant="title2" accessibilityRole="header" numberOfLines={1}>{[t(name), a.travel_purpose && t(a.travel_purpose)].filter(Boolean).join(" · ")}</Text>
+              <Text variant="subhead" tone="secondary" numberOfLines={1} tabular>{[a.full_name, a.entry_date && fmtRange(a.entry_date, a.exit_date)].filter(Boolean).join(" · ")}</Text>
+            </View>
+          </View>
+        </Surface>
       </View>
       <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
       {locked && <View onLayout={(e) => { payY.current = e.nativeEvent.layout.y; }} />}
