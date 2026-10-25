@@ -224,7 +224,8 @@ export default function Apply() {
   // Keep ?step= in sync with the current step, like the site.
   useEffect(() => { if (hydrated && navReady && lastSlug.current !== undefined && step !== lastSlug.current) { lastSlug.current = step; router.setParams({ step }); } }, [step, navReady, hydrated]);
   // Signed-in users: always the account email (the email question is skipped), so the application shows up in their account.
-  useEffect(() => { const e = session?.user.email; if (e) setForm((x) => (x.email === e ? x : { ...x, email: e })); }, [session]);
+  // Re-applied whenever the email changes underneath (a new or switched draft, a traveller prefill), not only on sign-in.
+  useEffect(() => { const e = session?.user.email; if (e && f.email !== e) setForm((x) => (x.email === e ? x : { ...x, email: e })); }, [session, f.email]);
   // Every answer: save the account draft right away (local autosave runs on every change in lib/form.tsx).
   useEffect(() => { if (hydrated && session && !submitted) flushDraft(); }, [page]);
   // Funnel analytics (lib/analytics.ts): question ids, step names and the destination only; never answers.
@@ -252,8 +253,11 @@ export default function Apply() {
   const patch = (x: Partial<WizardForm>) => { setForm((y) => ({ ...y, ...x })); if (submitted) setSubmitted(null); };
   const goTo = (pg: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setPage(pg); setShowErr(false); };
 
-  const advance = (nf: WizardForm = fRef.current) => {
+  const advance = (nf0: WizardForm = fRef.current) => {
     if (!q) return;
+    // Signed in: the email question is never shown, so the account email always counts as answered.
+    const nf = session?.user.email && nf0.email !== session.user.email ? { ...nf0, email: session.user.email } : nf0;
+    if (nf !== nf0) { fRef.current = nf; patch({ email: nf.email }); }
     const e = firstError(q, nf);
     if (e) { hError(); setShowErr(true); setErrTick((n) => n + 1); AccessibilityInfo.announceForAccessibility(t(e)); return; }
     tap();
