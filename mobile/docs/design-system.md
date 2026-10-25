@@ -88,3 +88,15 @@ Dynamic Type is always on. `TYPE_SCALE` caps each role: body text grows to 2×, 
 ## Mascot (`components/mascot/`)
 
 Globi is the wizard's guide: a round brand-blue globe with soft invented continents, a paper plane on a dotted orbit, stubby arms and white sneakers, drawn in the wordmark's black outline. `Globi` (react-native-svg) takes `pose` (one per question), `mood`, `tie` and `size`, and bobs gently unless Reduce Motion is on. `prompts.ts` maps every question id in `lib/questions.ts` to a pose and the line Globi says; `MascotHeader` renders him beside a `primaryFill` speech bubble, and `QuestionView` shows it above the formal label, which stays on screen as the caption and the accessible header (`question-title`). Copy rules: short, warm, first person, says what Globi will do with the answer, never promises approval, the customer's first name at most once per screen. Arabic lines live in `lib/ar.ts`.
+
+## Glass chrome (`components/ui/Glass.tsx`)
+
+Small chrome uses the same Liquid Glass material as the tab bar: `Glass` (rounded slab with a specular rim) and `GlassFill`
+(fills its parent). Native `GlassView` on iOS 26+, `expo-blur` on older iOS, a translucent fill on Android. Used by
+`HeaderIconButton`, `CircleButton` (wizard, continue, upload, receipt and trip headers) and `StickyCTA`, which is now a
+floating dock with a soft fade above it. Content pages stay flat and white; glass is for things that float over content.
+
+Primary buttons carry a soft brand-blue glow in light mode (`0 6px 16px rgba(4,54,220,0.22)`), none in dark mode.
+
+The EZvisa logo appears only on the welcome screen and the receipt. Other headers use a 40pt spacer so titles stay centred.
+Globi appears in the wizard, on the payment result, and in empty states (`EmptyState mascot={<Globi … />}`), never as decoration.

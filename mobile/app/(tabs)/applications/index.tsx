@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ScrollView, View, RefreshControl } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Globi } from "../../../components/mascot/Globi";
 import { Chevron, SegmentedControl, EmptyState, Skeleton, Button, Flag, StatusPill, StatusPills, Text, Icon, PressScale, useTabInset, ProgressSegments } from "../../../components/ui";
 import { buildTimeline, doneCount } from "../../../lib/timeline";
 import { useT, ltr } from "../../../lib/i18n";
@@ -74,7 +75,7 @@ export default function Applications() {
       </View>
       {!session ? (
         <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}>
-          <EmptyState icon="doc.text" title={t("Your applications live here")} action={<Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />} />
+          <EmptyState icon="doc.text" mascot={<Globi pose="suitcase" size={128} />} title={t("Your applications live here")} action={<Button title={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />} />
         </View>
       ) : (<>
         <View style={{ marginBottom: S.xl }}><SegmentedControl label={t("Filter")} options={[{ value: "active", label: t("Active") }, { value: "past", label: t("Past") }]} value={tab} onChange={(v) => setTab(v as any)} /></View>
@@ -82,7 +83,7 @@ export default function Applications() {
         {!err && apps === null && <View style={{ gap: S.sm }} accessible accessibilityLabel={t("Loading")}>{[0, 1].map((i) => <AppCardSkeleton key={i} />)}</View>}
         {!err && apps && list.length === 0 && (
           <View style={{ flex: 1, justifyContent: "center", paddingBottom: S.x6 }}>
-            <EmptyState icon="airplane" title={tab === "active" ? t("No active applications") : t("Nothing here yet")} action={tab === "active" ? <Button title={t("Start application")} onPress={() => router.push("/apply")} /> : undefined} />
+            <EmptyState icon="airplane" mascot={<Globi pose={tab === "active" ? "plane" : "sleep"} mood={tab === "active" ? "happy" : "sleepy"} size={128} />} title={tab === "active" ? t("No active applications") : t("Nothing here yet")} action={tab === "active" ? <Button title={t("Start application")} onPress={() => router.push("/apply")} /> : undefined} />
           </View>
         )}
         <View style={{ gap: S.sm }}>{list.map((a) => <Animated.View key={a.id} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT}>{isAbandoned(a)
