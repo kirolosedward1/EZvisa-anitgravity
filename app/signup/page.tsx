@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
+import { AppleSignInButton } from "@/components/auth/apple-sign-in"
 import { GoogleSignInButton } from "@/components/auth/google-sign-in"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -97,11 +98,32 @@ function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
+    <div className="w-full max-w-md space-y-8 rounded-xl border border-border/50 bg-card px-4 py-8 shadow-lg sm:p-8">
       <div className="text-center">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">{copy.signupTitle}</h1>
         <p className="text-muted-foreground mt-2">{copy.signupSubtitle}</p>
       </div>
+
+      <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-3">
+          <AppleSignInButton
+            next={next}
+            label={copy.signUpApple}
+            onError={(message) => setError(authFormErrorText(locale, message))}
+          />
+          <GoogleSignInButton
+            next={next}
+            label={copy.signUpGoogle}
+            onError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
+          />
+          <p className="text-center text-xs leading-relaxed text-muted-foreground">{copy.sameEmailFirst}</p>
+        </div>
+
+        <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+          <span className="h-px flex-1 bg-border" />
+          {copy.orDivider}
+          <span className="h-px flex-1 bg-border" />
+        </div>
 
       <form onSubmit={handleSignup} className="space-y-6" noValidate>
         {error && (
@@ -152,12 +174,7 @@ function SignupForm() {
           )}
         </Button>
       </form>
-
-      <GoogleSignInButton
-        next={next}
-        label={copy.signUpGoogle}
-        onError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
-      />
+      </div>
 
       <div className="text-center text-sm text-muted-foreground">
         {copy.haveAccount}{" "}

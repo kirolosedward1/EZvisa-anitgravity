@@ -6,6 +6,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { listApplicationsFor, trackPath } from "@/lib/applications"
 import { getStatusLabel, isPaid } from "@/lib/application-status"
 import { referenceOf } from "@/lib/shared/wizard-contract"
+import { isAppleRelayEmail, metadataFullName } from "@/lib/auth/apple-profile"
 
 import type { Metadata } from "next"
 import { withArabicMeta } from "@/lib/page-meta"
@@ -36,7 +37,8 @@ export default async function AccountPage() {
   const profile: AccountProfile = {
     id: user.id,
     email: user.email,
-    name: str(meta.full_name) || [str(meta.first_name), str(meta.last_name)].filter(Boolean).join(" "),
+    name: metadataFullName(meta, user.email) || [str(meta.first_name), str(meta.last_name)].filter(Boolean).join(" "),
+    privateRelay: isAppleRelayEmail(user.email),
     phone: str(meta.phone),
     citizenship: str(meta.citizenship) || str(meta.nationality),
     providers,

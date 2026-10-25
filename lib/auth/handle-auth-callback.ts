@@ -4,6 +4,7 @@ import { createServerClient } from "@/lib/supabase/server"
 import { publicOrigin } from "@/lib/auth/redirect"
 import { classifyAuthError, type AuthIssue } from "@/lib/auth/errors"
 import { callbackFailureTarget, callbackLanding, isArabicPath } from "@/lib/auth/confirm-next"
+import { appleMetadataPatch, type AppleAuthUser } from "@/lib/auth/apple-profile"
 
 /**
  * OAuth and older email links land here with ?code= or ?token_hash=.
@@ -35,18 +36,38 @@ export async function handleAuthCallback(request: Request): Promise<NextResponse
   let recovery = type === "recovery"
   const supabase = await createServerClient()
 
+  // Apple omits the name after the first authorization and may only give a Hide My Email address.
+  // Saving what we can is optional: a failure here must not block the session.
+  const rememberApple = async (user: AppleAuthUser) => {
+    const patch = appleMetadataPatch(user)
+    if (!patch) return
+    try {
+      await supabase.auth.updateUser({ data: patch })
+    } catch {
+      // The session is already valid.
+    }
+  }
+
   if (code) {
     const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
     if (exchangeError) return fail(classifyAuthError(exchangeError))
     if ((data as { redirectType?: string | null }).redirectType === "recovery") recovery = true
+    await rememberApple(data.user)
   } else if (tokenHash && type) {
     const { error: verifyError } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type: type as EmailOtpType })
     if (verifyError) return fail(classifyAuthError(verifyError))
+    try {
+      const { data } = await supabase.auth.getUser()
+      await rememberApple(data.user)
+    } catch {
+      // The session is already valid.
+    }
   } else {
     let signedIn = false
     try {
       const { data, error: userError } = await supabase.auth.getUser()
       signedIn = !userError && !!data.user
+      if (signedIn) await rememberApple(data.user)
     } catch {
       signedIn = false
     }

@@ -16,6 +16,7 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import { ApplicationView } from "@/components/dashboard/application-view";
 import { visibleApplications } from "@/lib/active-applications";
+import { metadataFullName } from "@/lib/auth/apple-profile";
 import type { VisaApplication } from "@/lib/types/visa-application";
 import { SupportApplication } from "@/components/support-application";
 import { getStatusLabel } from "@/lib/application-status";
@@ -108,7 +109,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   relatedApps = visibleApplications(relatedApps);
 
-  const firstName = (user.user_metadata?.full_name || relatedApps[0]?.full_name || "").split(" ")[0];
+  const appName = typeof relatedApps[0]?.full_name === "string" ? relatedApps[0].full_name : "";
+  const firstName = (metadataFullName(user.user_metadata, user.email) || appName).split(" ")[0];
 
   if (!relatedApps || relatedApps.length === 0) {
     return (

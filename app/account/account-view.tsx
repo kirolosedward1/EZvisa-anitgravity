@@ -44,6 +44,7 @@ import { AvatarPhoto } from "@/components/avatar-photo"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 import { SCHENGEN_META } from "@/lib/countries"
 import { EMAIL_RE } from "@/lib/auth/errors"
+import { isAppleRelayEmail } from "@/lib/auth/apple-profile"
 import { SUPPORT_EMAIL } from "@/lib/shared/wizard-contract"
 import type { PillTone } from "@/lib/application-status"
 import { cn } from "@/lib/utils"
@@ -56,6 +57,8 @@ export type AccountProfile = {
   citizenship: string
   providers: string[]
   createdAt: string | null
+  /** Hide My Email (@privaterelay.appleid.com). The address is real; Apple forwards mail to it. */
+  privateRelay?: boolean
   userMetadata: Record<string, unknown>
 }
 
@@ -83,6 +86,7 @@ const PROVIDER_LABEL: Record<string, string> = { email: "Email", google: "Google
 const whatsappHref = (text: string, arabic: boolean) => getWhatsAppUrl(text, arabic)
 const displayPhone = (e164: string) => parsePhoneNumberFromString(e164 || "")?.formatInternational() || e164
 const initialsOf = (name: string, email: string) => {
+  if (!name.trim() && isAppleRelayEmail(email)) return "A"
   const parts = (name || email.split("@")[0]).split(/[\s._-]+/).filter(Boolean)
   return ((parts[0]?.[0] ?? "") + (name && parts[1] ? parts[1][0] : "")).toUpperCase() || "E"
 }
@@ -286,8 +290,21 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
           <input ref={fileRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(e) => pickPhoto(e.target.files?.[0])} />
 
           <div className="flex min-w-0 flex-col gap-1">
-            <p className="truncate text-xl font-semibold tracking-tight text-foreground">{profile.name || profile.email.split("@")[0]}</p>
+            <p className="truncate text-xl font-semibold tracking-tight text-foreground">
+              {profile.name.trim()
+                ? profile.name
+                : profile.privateRelay
+                  ? (arabic ? "حساب Apple" : "Apple Account")
+                  : profile.email.split("@")[0]}
+            </p>
             <p className="ltr-isolate truncate text-sm text-muted-foreground">{profile.email}</p>
+            {profile.privateRelay ? (
+              <p className="max-w-xs text-xs leading-relaxed text-muted-foreground">
+                {arabic
+                  ? "تخفي Apple بريدك الحقيقي. تصلك رسائل إيزي فيزا على هذا العنوان."
+                  : "Apple hides your real email. Messages from EZvisa still reach this address."}
+              </p>
+            ) : null}
             {memberSince ? <p className="text-xs text-muted-foreground">Member since {memberSince}</p> : null}
           </div>
           {photoError ? <p className="text-sm text-destructive" role="alert">{photoError}</p> : null}

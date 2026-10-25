@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js"
 import { createServerClient } from "@/lib/supabase/server"
 import { isDemoEmail, isDemoToken, getDemoApplicationByToken, getDemoApplicationsByEmail, DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import { metadataFullName } from "@/lib/auth/apple-profile"
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -35,7 +36,7 @@ export async function getSessionUser(demoParam?: string | null): Promise<Session
   try {
     const supabase = await createServerClient()
     const { data } = await supabase.auth.getUser()
-    if (data.user?.email) return { email: data.user.email.toLowerCase(), name: data.user.user_metadata?.full_name, demo: false }
+    if (data.user?.email) return { email: data.user.email.toLowerCase(), name: metadataFullName(data.user.user_metadata, data.user.email) || undefined, demo: false }
   } catch {
     // no session
   }
