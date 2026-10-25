@@ -229,8 +229,8 @@ export default function Account() {
         <ListRow title={t("Delete account")} destructive chevron={false} onPress={() => { setDelStep("ask"); setDelErr(null); setDel(true); }} />
       </ListGroup>
       <Modal visible={del} transparent animationType="fade" onRequestClose={() => setDel(false)}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
-          <View accessibilityViewIsModal style={{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.sm }} testID="delete-sheet">
+        <View style={{ flex: 1, backgroundColor: c.overlay, justifyContent: "center", padding: S.lg }}>
+          <View accessibilityViewIsModal style={{ backgroundColor: c.surfaceRaised, borderRadius: R.card, padding: S.lg, gap: S.sm }} testID="delete-sheet">
             <Text variant="title3" accessibilityRole="header">{delStep === "sure" ? t("Are you sure?") : t("Delete your account?")}</Text>
             <Text variant="subhead" tone="secondary">{delStep === "sure" ? t("This permanently deletes your account, uploaded documents and personal details. It can't be undone.") : t("Your account, uploaded documents and personal details are removed. Payment records are kept as required by law.")}</Text>
             {!!delErr && <Text variant="footnote" tone="red" testID="delete-error">{delErr}</Text>}

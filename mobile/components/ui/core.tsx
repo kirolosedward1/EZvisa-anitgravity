@@ -4,7 +4,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, wit
 import { SymbolView, SFSymbol } from "expo-symbols";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors, useIsDark, T, S, R, HIT, ICON, curve, elevation, card, SPRING, PRESS, DUR, TAB_BAR_HEIGHT, type Level } from "../../lib/theme";
+import { useColors, useIsDark, T, S, R, HIT, ICON, SIZE, curve, elevation, card, SPRING, PRESS, DUR, TAB_BAR_HEIGHT, type Level } from "../../lib/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { useShake } from "../../lib/motion";
@@ -118,12 +118,14 @@ export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPr
 
 export const KeyValueRow = ({ k, v }: { k: string; v: string }) => <ListRow title={k} value={v} />;
 
+/** Standalone text input (sheets, settings): the same bordered box as the wizard fields, blue while focused. */
 export function TextField({ label, error, trailing, ...p }: TextInputProps & { label: string; error?: boolean; trailing?: React.ReactNode }) {
-  const c = useColors();
+  const c = useColors(); const [focused, setFocused] = useState(false);
   return (
-    <View style={{ minHeight: 52, paddingHorizontal: S.md, flexDirection: "row", alignItems: "center", gap: S.xs }}>
+    <View style={[{ minHeight: SIZE.input, paddingHorizontal: S.md, flexDirection: "row", alignItems: "center", gap: S.xs, borderRadius: R.input, backgroundColor: c.surface, borderWidth: focused || error ? 1.5 : 1, borderColor: error ? c.red : focused ? c.accent : c.border }, curve]}>
       <TextInput placeholder={label} placeholderTextColor={error ? c.red : c.tertiaryLabel} accessibilityLabel={label} maxFontSizeMultiplier={1.6} {...p}
-        style={[T.body, { flex: 1, color: c.label, minHeight: 52, paddingVertical: 0 }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
+        onFocus={(e) => { setFocused(true); p.onFocus?.(e); }} onBlur={(e) => { setFocused(false); p.onBlur?.(e); }}
+        style={[T.body, { flex: 1, color: c.label, minHeight: SIZE.input - 2, paddingVertical: 0 }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
       {trailing}
     </View>
   );
