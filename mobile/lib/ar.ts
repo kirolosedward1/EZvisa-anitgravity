@@ -66,7 +66,7 @@ export const AR: Record<string, string> = {
   "Please select a balance range": "يرجى اختيار نطاق الرصيد", "Please add the refusal details": "يرجى إضافة تفاصيل الرفض",
   "Departure date must be after arrival date": "يجب أن يكون تاريخ المغادرة بعد تاريخ الوصول", "{c} is already added to your itinerary": "{c} مضافة بالفعل إلى خط سير رحلتك",
   // ---- wizard UI ----
-  "Back": "رجوع", "Back to review": "العودة إلى المراجعة", "Close": "إغلاق", "Continue": "متابعة", "Skip": "تخطي", "Save": "حفظ", "Optional": "اختياري", "Edit": "تعديل", "Cancel": "إلغاء",
+  "Next": "التالي", "and": "و", "Back": "رجوع", "Back to review": "العودة إلى المراجعة", "Close": "إغلاق", "Continue": "متابعة", "Skip": "تخطي", "Save": "حفظ", "Optional": "اختياري", "Edit": "تعديل", "Cancel": "إلغاء",
   "✓ Saved to your account": "✓ محفوظ في حسابك", "✓ Saved on this phone": "✓ محفوظ على هذا الهاتف", "Review": "المراجعة", "Tap an answer to change it.": "اضغط على أي إجابة لتغييرها.",
   "Some answers are missing.": "بعض الإجابات ناقصة.", "Missing": "ناقص", "Not answered": "بدون إجابة", "Including Accompanying Spouse": "يشمل الزوج/الزوجة المرافق", "Total Fee": "الرسوم الإجمالية",
   "Embassy fees are paid at the appointment.": "تُدفع رسوم السفارة عند الموعد.", "Sign in to submit. Your answers stay saved on this phone.": "سجّل الدخول للإرسال. تبقى إجاباتك محفوظة على هذا الهاتف.",
@@ -285,7 +285,7 @@ export const AR: Record<string, string> = {
   "Uploaded": "تم الرفع",
   "Under review": "قيد المراجعة",
   "Replaced": "مستبدل",
-  "Home": "الرئيسية", "Countries": "الدول",
+  "Home": "الرئيسية", "Countries": "الدول", "All": "الكل", "Preferences": "التفضيلات", "{n} new": "{n} جديد", "BLS": "BLS", "Search {n} Schengen countries": "ابحث في {n} دولة شنغن", "Same visa for all 29. Apply at the embassy of the country where you stay the most nights.": "تأشيرة واحدة للدول الـ29. قدّم لدى سفارة الدولة التي ستقضي فيها أكثر الليالي.",
   "Continue {x}": "متابعة {x}",
   "application": "الطلب",
   "Saved on this phone": "محفوظ على هذا الهاتف",
