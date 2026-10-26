@@ -44,7 +44,7 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
             docs: missing.map((doc) => (arabic ? t(docLabel[doc.key]) : doc.label.toLowerCase())).join(arabic ? "، " : ", "),
           }),
           actions: (
-            <Button asChild className="rounded-full px-5">
+            <Button asChild>
               <LocaleLink href={`/track/${token}/upload?type=${missing[0]?.uploadType ?? ""}`}>
                 <Upload />
                 {t("status.upload")}
@@ -70,13 +70,13 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
           body: t("next.readyBody"),
           actions: (
             <>
-              <Button asChild className="rounded-full px-5">
+              <Button asChild>
                 <LocaleLink href={`/track/${token}/dossier`}>
                   <Printer />
                   {t("next.viewPrint")}
                 </LocaleLink>
               </Button>
-              <Button asChild variant="outline" className="rounded-full px-5">
+              <Button asChild variant="outline">
                 <a href={`/api/download-document?token=${token}`}>
                   <Download />
                   {t("next.download")}
@@ -96,7 +96,7 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
           title: t("next.rejectedTitle"),
           body: t("next.rejectedBody"),
           actions: (
-            <Button asChild className="rounded-full px-5">
+            <Button asChild>
               <a href={getCaseTrackingWhatsAppUrl(app.id || token, app.destination_country, arabic)} target="_blank" rel="noopener noreferrer">
                 <WhatsAppIcon className="size-4" />
                 {t("next.talk")}
@@ -114,7 +114,7 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
     content.title = t("next.finishTitle")
     content.body = t("next.finishBody")
     content.actions = (
-      <Button asChild className="rounded-full px-5">
+      <Button asChild>
         <LocaleLink href={`/continue/${app.id}`}>
           {t("next.continue")}
           <ArrowRight className="rtl:rotate-180" />

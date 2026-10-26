@@ -439,7 +439,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               {isFull && (
                 <>
                   <div className="hidden sm:block">
-                    <Button variant="default" asChild className="h-10 rounded-full px-5 text-[15px] font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all hover:-translate-y-0.5">
+                    <Button variant="default" asChild>
                       <LocaleLink href="/apply" className="flex items-center gap-2">
                         <Rocket className="h-4 w-4" />
                         <LangText en="Get Started" ar="ابدأ الآن" />
@@ -456,7 +456,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                         transition={{ duration: 0.2 }}
                         className="sm:hidden overflow-hidden"
                       >
-                        <Button variant="default" asChild className="h-10 rounded-full px-4 font-semibold shadow-lg shadow-primary/20">
+                        <Button variant="default" asChild size="icon">
                           <LocaleLink href="/apply" className="flex items-center gap-1.5">
                             <Rocket className="h-4 w-4" />
                             <span className="sr-only"><LangText en="Get Started" ar="ابدأ الآن" /></span>

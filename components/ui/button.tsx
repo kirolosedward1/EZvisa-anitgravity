@@ -4,29 +4,33 @@ import { cva, type VariantProps } from 'class-variance-authority'
 
 import { cn } from '@/lib/utils'
 
+/** Trailing icon sits in a 20px white/20 disc. RTL flex puts that disc on the left, and the glyph mirrors. */
+const trailingIcon =
+  "[&>svg:last-child]:box-border [&>svg:last-child]:size-5 [&>svg:last-child]:shrink-0 [&>svg:last-child]:rounded-full [&>svg:last-child]:bg-primary-foreground/20 [&>svg:last-child]:p-[3px] [&>svg:last-child]:rtl:-scale-x-100"
+
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-[15px] font-medium leading-normal transition-[color,background-color,transform,box-shadow] duration-150 disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        default: `bg-primary text-primary-foreground shadow-none inset-shadow-[0_0_0_1px_color-mix(in_srgb,var(--primary)_72%,black)] hover:bg-[color-mix(in_srgb,var(--primary)_88%,black)] hover:inset-shadow-[0_0_0_1px_color-mix(in_srgb,var(--primary)_64%,black)] ${trailingIcon}`,
         destructive:
-          'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
+          'bg-destructive text-destructive-foreground shadow-none hover:bg-[color-mix(in_srgb,var(--destructive)_88%,black)] focus-visible:ring-destructive',
         outline:
-          'border bg-background shadow-xs hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
+          'border border-border bg-background text-foreground shadow-none hover:bg-[#E6E8EB] hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50',
         secondary:
-          'bg-secondary text-secondary-foreground hover:bg-secondary/80',
+          'border-0 bg-[#F1F2F4] text-[#3A4150] shadow-none hover:bg-[#E4E6EA] [&>svg:last-child]:size-4 [&>svg:last-child]:bg-transparent [&>svg:last-child]:p-0 [&>svg:last-child]:text-current [&>svg:last-child]:rtl:-scale-x-100',
         ghost:
-          'hover:bg-muted hover:text-foreground dark:hover:bg-muted/50',
-        link: 'text-primary underline-offset-4 hover:underline',
+          'bg-transparent text-foreground shadow-none hover:bg-[#F1F2F4] hover:text-foreground dark:hover:bg-muted/50',
+        link: 'h-auto min-h-0 rounded-none bg-transparent px-0 py-0 text-primary underline-offset-4 shadow-none hover:bg-transparent hover:underline active:scale-100',
       },
       size: {
-        default: 'h-9 px-4 py-2 has-[>svg]:px-3',
-        sm: 'h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5',
-        lg: 'h-10 rounded-md px-6 has-[>svg]:px-4',
-        icon: 'size-9',
-        'icon-sm': 'size-8',
-        'icon-lg': 'size-10',
+        default: 'h-12 min-h-12 px-6',
+        sm: 'h-11 min-h-11 gap-1.5 px-4',
+        lg: 'h-12 min-h-12 px-6',
+        icon: 'size-12 p-0 [&_svg]:!size-4 [&_svg]:!rounded-none [&_svg]:!bg-transparent [&_svg]:!p-0',
+        'icon-sm': 'size-11 p-0 [&_svg]:!size-4 [&_svg]:!rounded-none [&_svg]:!bg-transparent [&_svg]:!p-0',
+        'icon-lg': 'size-12 p-0 [&_svg]:!size-4 [&_svg]:!rounded-none [&_svg]:!bg-transparent [&_svg]:!p-0',
       },
     },
     defaultVariants: {

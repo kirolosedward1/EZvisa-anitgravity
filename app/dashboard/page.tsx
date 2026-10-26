@@ -139,7 +139,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
-                <Button asChild className="rounded-full px-5">
+                <Button asChild>
                   <LocaleLink href="/apply">
                     <Plus />
                     Start an application
@@ -182,7 +182,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <span className="ltr-isolate">{user.email}</span>
           </>}
           actions={
-            <Button asChild className="rounded-full px-5">
+            <Button asChild>
               <LocaleLink href="/apply">
                 <Plus />
                 New application

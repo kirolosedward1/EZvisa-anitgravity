@@ -67,7 +67,7 @@ export function EmailSent({
       </div>
 
       {inbox && (
-        <Button asChild className="h-12 w-full rounded-xl text-sm font-semibold">
+        <Button asChild className="w-full">
           <a href={inbox.url} target="_blank" rel="noopener noreferrer">
             {t(`Open ${inbox.name}`, `افتح ${inbox.name}`)}
             <ArrowUpRight className="size-4 rtl:-scale-x-100" aria-hidden="true" />

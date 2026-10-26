@@ -87,7 +87,7 @@ export default function PaymentFailedPage() {
               <Button 
                 onClick={handleRetry}
                 size="lg"
-                className="gap-2 px-8 w-full sm:w-auto"
+                className="w-full sm:w-auto"
               >
                 <RefreshCw className="w-4 h-4" />
                 <LangText en="Retry Payment" ar="إعادة محاولة الدفع" />

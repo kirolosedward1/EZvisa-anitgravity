@@ -135,7 +135,7 @@ export function StartApplicationBox() {
         <Button
           size="lg"
           asChild
-          className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl transition-all rounded-xl"
+          className="w-full"
         >
           <LocaleLink href="/apply" className="flex items-center justify-center gap-2">
             <Msg id="hiw.applyNowBang" />

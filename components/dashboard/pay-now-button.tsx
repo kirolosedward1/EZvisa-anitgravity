@@ -68,14 +68,14 @@ export function PayNowButton({ applicationId, trackingToken, destination, amount
 
   return (
     <div className="flex flex-col gap-2">
-      <Button onClick={handlePay} disabled={loading} className={`rounded-full px-5 ${className ?? ""}`}>
+      <Button onClick={handlePay} disabled={loading} className={className}>
         {loading ? <Loader2 className="animate-spin" /> : <CreditCard />}
         {loading ? customerText(locale, "pay.opening") : label ?? payLabel(amount, arabic)}
       </Button>
       {error && (
         <div role="alert" className="flex flex-col items-start gap-2">
           <p className="text-xs text-destructive">{error}</p>
-          <Button type="button" variant="outline" onClick={handlePay} disabled={loading} className="h-8 rounded-full px-4 text-xs">
+          <Button type="button" variant="outline" size="sm" onClick={handlePay} disabled={loading}>
             {customerText(locale, "pay.retry")}
           </Button>
         </div>

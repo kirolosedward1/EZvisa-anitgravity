@@ -66,7 +66,7 @@ export function SocialButtons({ next, onError, disabled }: { next?: string; onEr
         {shown.map((provider) => {
           const Mark = MARK[provider]
           return (
-            <Button key={provider} type="button" variant="outline" className="w-full h-11 rounded-xl font-semibold" disabled={disabled || !!busy} onClick={() => start(provider)}>
+            <Button key={provider} type="button" variant="outline" className="w-full" disabled={disabled || !!busy} onClick={() => start(provider)}>
               {busy === provider ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mark className="h-4 w-4" />}
               Continue with {PROVIDER_LABEL[provider]}
             </Button>

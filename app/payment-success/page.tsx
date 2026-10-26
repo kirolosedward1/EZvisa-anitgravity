@@ -247,13 +247,13 @@ function PaymentSuccessContent() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               {outcome === "paid" && (
                 <>
-                  <Button asChild size="lg" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                  <Button asChild size="lg">
                     <LocaleLink href={continueHref}>
                       <LangText en="Continue application" ar="أكمل الطلب" />
                       <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
                     </LocaleLink>
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                  <Button asChild size="lg" variant="outline">
                     <LocaleLink href={uploadHref}>
                       <LangText en="Upload documents first" ar="ارفع المستندات أولًا" />
                     </LocaleLink>
@@ -262,16 +262,16 @@ function PaymentSuccessContent() {
               )}
               {outcome === "pending" && (
                 <>
-                  <Button type="button" size="lg" className="h-12 rounded-xl px-6 text-sm font-semibold" onClick={() => setAttempt((n) => n + 1)}>
+                  <Button type="button" size="lg" onClick={() => setAttempt((n) => n + 1)}>
                     <LangText en="Check again" ar="تحقق مجددًا" />
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                  <Button asChild size="lg" variant="outline">
                     <LocaleLink href={applicationHref}><LangText en="Go to my application" ar="الانتقال إلى طلبي" /></LocaleLink>
                   </Button>
                 </>
               )}
               {outcome === "failed" && (
-                <Button asChild size="lg" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                <Button asChild size="lg">
                   <LocaleLink href={localePath("/apply?step=payment&retry=true")}>
                     <RefreshCw className="size-4" aria-hidden="true" />
                     <LangText en="Retry payment" ar="إعادة محاولة الدفع" />
@@ -279,7 +279,7 @@ function PaymentSuccessContent() {
                 </Button>
               )}
               {(outcome === "cancelled" || outcome === "missing") && (
-                <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                <Button asChild size="lg" variant="outline">
                   <LocaleLink href={localePath("/dashboard")}><LangText en="Go to my dashboard" ar="الانتقال إلى لوحتي" /></LocaleLink>
                 </Button>
               )}
