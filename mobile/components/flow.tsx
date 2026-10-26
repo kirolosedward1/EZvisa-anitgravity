@@ -1,10 +1,10 @@
 // Building blocks for the one-question-per-screen application flow.
 import { useEffect, useState } from "react";
-import { Platform, Pressable, Switch, TextInput, View, useWindowDimensions } from "react-native";
+import { Platform, Pressable, StyleSheet, Switch, TextInput, View, useWindowDimensions } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { useColors, useIsDark, S, R, T, ICON, curve, SPRING } from "../lib/theme";
-import { Icon, IconName, PressScale, Text, Flag, InlineError } from "./ui";
+import { useColors, useIsDark, S, R, T, ICON, curve, SPRING, elevation } from "../lib/theme";
+import { Icon, IconName, PressScale, Text, Flag, InlineError, Glass } from "./ui";
 import { select } from "../lib/haptics";
 // Haptics: selection tick on choices/toggles only; CircleButton (back, close, help) is navigation and stays silent.
 
@@ -16,8 +16,13 @@ export function FlowProgress({ value }: { value: number }) {
 }
 
 export function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
-  const c = useColors();
-  return <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={S.xxs} style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={ICON.sm + 1} color={c.label} weight="semibold" /></PressScale>;
+  const c = useColors(); const dark = useIsDark();
+  return (
+    <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={S.xxs} style={[{ width: 40, height: 40, borderRadius: R.round, alignItems: "center", justifyContent: "center" }, elevation(1, dark)]}>
+      <Glass radius={R.round} style={StyleSheet.absoluteFill} />
+      <Icon name={icon} size={ICON.sm + 1} color={c.label} weight="semibold" />
+    </PressScale>
+  );
 }
 
 export type FlowStep = { key: string; label: string; icon: IconName };

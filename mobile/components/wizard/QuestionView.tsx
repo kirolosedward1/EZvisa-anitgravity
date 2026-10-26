@@ -10,6 +10,8 @@ import { Checkbox, Note } from "./fields";
 import { DatesAnswer, DatesSummary } from "./dates";
 import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries } from "./answers";
 import { TravellerRows } from "./travellers";
+import { MascotHeader } from "../mascot/MascotHeader";
+import { promptFor } from "../mascot/prompts";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { select, tap } from "../../lib/haptics";
@@ -56,13 +58,16 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
   const days = q.id === "travelEndDate" ? tripDays(f) : 0;
   const label = q.kind === "contact" && account ? "Phone Number" : q.label;
 
+  // Globi asks the question in his own words; the formal label stays as the caption and the accessible header.
+  const mascot = !(allMode && q.allNames) && !!promptFor(q.id).say;
   const title = (
     <View style={{ gap: S.xs }}>
+      {mascot && <View style={{ marginBottom: S.xxs }}><MascotHeader questionId={q.id} f={f} /></View>}
       {(!q.required || chips) && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
         {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
         {chips}
       </View>}
-      <Text ref={titleRef} variant="title1" accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(label)}</Text>
+      <Text ref={titleRef} variant={mascot ? "subhead" : "title1"} tone={mascot ? "secondary" : "label"} weight={mascot ? "600" : undefined} accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(label)}</Text>
       {belowTitle}
       {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
@@ -126,7 +131,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
               {([[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const).map(([n, l]) => {
                 const [y, m, d] = f.travelStartDate.split("-").map(Number); const v = isoLocal(new Date(y, m - 1, d + n - 1)); const on = f.travelEndDate === v;
                 return <PressScale key={n} onPress={() => { select(); patch({ travelEndDate: v }); }} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={t(l)}
-                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? "#0436DC" : c.card, borderWidth: on ? 0 : 1, borderColor: "#E3E7EF" }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? "#FFFFFF" : c.label}>{t(l)}</Text></PressScale>;
+                  style={{ flexGrow: 1, flexBasis: 0, minWidth: 72, minHeight: 44, paddingHorizontal: S.xs, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: on ? c.accentFill : c.card, borderWidth: on ? 0 : 1, borderColor: c.border }}><Text variant="subhead" weight="600" numberOfLines={1} color={on ? c.onAccent : c.label}>{t(l)}</Text></PressScale>;
               })}
             </View>
           )}

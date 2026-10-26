@@ -4,8 +4,9 @@
 import { useCallback, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { Stack, router, useFocusEffect } from "expo-router";
+import { Globi } from "../../../components/mascot/Globi";
 import { ListGroup, ListRow, EmptyState, Button, Flag, Sheet, InlineError, SegmentedControl, SkeletonRows, useTabInset } from "../../../components/ui";
-import { FormField, CountryField, DateField, SelectField, Input, Label } from "../../../components/wizard/fields";
+import { FormField, CountryField, DateField, SelectField, Input } from "../../../components/wizard/fields";
 import { useFmtDate } from "../../../components/wizard/answers";
 import { useColors, S } from "../../../lib/theme";
 import { useAuth } from "../../../lib/auth";
@@ -67,7 +68,7 @@ export default function SavedTravellers() {
             {list.map((x) => <ListRow key={x.id} leading={<Flag country={x.nationality} size={28} />} title={travellerName(x)} subtitle={subtitle(x)} value={relation(x)} minHeight={56} onPress={() => open(x)} />)}
           </ListGroup>
         ) : (
-          <View style={{ paddingVertical: S.xl }}><EmptyState icon="person.2.fill" title={t("No saved travellers yet.")} message={loadErr ?? t("Everyone you apply for is added here after payment, so the next application starts filled in.")} /></View>
+          <View style={{ paddingVertical: S.xl }}><EmptyState icon="person.2.fill" mascot={<Globi pose="duo" size={120} />} title={t("No saved travellers yet.")} message={loadErr ?? t("Everyone you apply for is added here after payment, so the next application starts filled in.")} /></View>
         )}
       <ListGroup><ListRow title={t("Add traveller")} tint chevron={false} onPress={() => open()} /></ListGroup>
 
@@ -80,10 +81,9 @@ export default function SavedTravellers() {
             <FormField label={t("Last Name")}>
               <Input value={edit.d.lastName} onChangeText={set("lastName")} autoCapitalize="words" autoCorrect={false} textContentType="familyName" accessibilityLabel={t("Last Name")} placeholder={t("Enter last name")} />
             </FormField>
-            <View style={{ width: "100%", alignSelf: "stretch" }}>
-              <Label>{t("Who is this?")}</Label>
+            <FormField label={t("Who is this?")}>
               <SegmentedControl label={t("Who is this?")} value={edit.d.relationship} onChange={(v) => set("relationship")(v as TravellerRelationship)} options={RELATION.filter((r) => TRAVELLER_RELATIONSHIPS.includes(r.value)).map((r) => ({ value: r.value, label: t(r.label) }))} />
-            </View>
+            </FormField>
             <FormField label={t("Nationality")}>
               <CountryField label={t("Nationality")} value={edit.d.nationality} names={SCHENGEN_VISA_REQUIRED} placeholder={t("Select nationality")} searchPlaceholder={t("Search nationality...")} onChange={set("nationality")} />
             </FormField>

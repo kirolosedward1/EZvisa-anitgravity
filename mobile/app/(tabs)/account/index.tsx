@@ -14,9 +14,9 @@ import { lockSupported, lockEnabled, setLockEnabled, biometricLabel, lockAfter, 
 import { DateAnswer } from "../../../components/wizard/answers";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ListGroup, ListRow, Flag, Avatar, Text, Button, Icon, IconTile, SegmentedControl, PressScale, useTabInset } from "../../../components/ui";
+import { ListGroup, ListRow, Flag, Avatar, Text, Button, Icon, IconTile, SegmentedControl, PressScale, useTabInset, Surface, Chevron } from "../../../components/ui";
 import { useAppearance, type AppearancePref } from "../../../lib/appearance";
-import { useColors, S, R, ICON } from "../../../lib/theme";
+import { useColors, S, R, ICON, AVATAR } from "../../../lib/theme";
 import { supabase } from "../../../lib/supabase";
 import { whatsapp, email as mailSupport } from "../../../lib/api";
 import { useApps } from "../../../lib/useApps";
@@ -187,36 +187,37 @@ export default function Account() {
   return (
     <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb }}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={{ alignItems: "center", gap: S.xs, marginBottom: S.xxl }}>
-        {/* Tap the avatar (small + badge) to add, change or remove the profile photo. */}
-        <PressScale onPress={editPhoto} accessibilityRole="button" accessibilityLabel={photo ? t("Edit photo") : t("Add photo")} testID="avatar-edit">
-          <Avatar name={full} size={88} uri={photo} />
-          <View style={{ position: "absolute", end: 0, bottom: 0, width: 28, height: 28, borderRadius: R.round, backgroundColor: c.accentFill, borderWidth: 2, borderColor: c.bg, alignItems: "center", justifyContent: "center" }}>
-            <Icon name={photo ? "pencil" : "plus"} size={ICON.sm} color={c.onAccent} weight="bold" />
-          </View>
+      <Text variant="largeTitle" accessibilityRole="header" style={{ marginHorizontal: S.gutter, marginBottom: S.lg }}>{t("Account")}</Text>
+      {/* Profile card: photo (tap to add, change or remove it), name and email; opens Account details. */}
+      <View style={{ marginHorizontal: S.md, marginBottom: S.xxl }}>
+        <PressScale onPress={() => { router.push("/account/details"); }} accessibilityRole="button" accessibilityLabel={t("Account details")} scaleTo={0.985} lift>
+          <Surface level={1} style={{ padding: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }}>
+            <PressScale onPress={editPhoto} accessibilityRole="button" accessibilityLabel={photo ? t("Edit photo") : t("Add photo")} testID="avatar-edit">
+              <Avatar name={full} size={AVATAR.lg} uri={photo} />
+              <View style={{ position: "absolute", end: -2, bottom: -2, width: 22, height: 22, borderRadius: R.round, backgroundColor: c.accentFill, borderWidth: 2, borderColor: c.surfaceRaised, alignItems: "center", justifyContent: "center" }}>
+                <Icon name={photo ? "pencil" : "plus"} size={ICON.xs} color={c.onAccent} weight="bold" />
+              </View>
+            </PressScale>
+            <View style={{ flex: 1 }}>
+              <Text variant="title3" numberOfLines={1}>{full}</Text>
+              <Text variant="footnote" tone="secondary" numberOfLines={1}>{u.email}</Text>
+            </View>
+            <Chevron />
+          </Surface>
         </PressScale>
-        <Text variant="title1" style={{ marginTop: S.sm }}>{full}</Text>
       </View>
-      {/* Name, email, sign-in method and member since live on their own page (account/details). */}
-      <ListGroup inset={58}>
-        <ListRow icon="person.text.rectangle" iconColor={c.tint} title={t("Account details")} onPress={() => router.push("/account/details")} />
+      <ListGroup header={t("Applications")} inset={58}>
         <ListRow icon="person.2.fill" iconColor={c.tint} title={t("Saved travellers")} onPress={() => router.push("/account/travellers")} />
+        <ListRow icon="doc.text.fill" iconColor={c.tint} title={t("Application history")} value={apps?.length ? String(apps.length) : undefined} onPress={() => router.navigate("/applications")} />
       </ListGroup>
-      {!!apps?.length && (
-        <ListGroup header={t("Application history")} inset={S.md + 28 + S.md}>
-          {apps.map((a) => <ListRow key={a.id} leading={<Flag country={a.countries?.name ?? a.destination_country ?? ""} size={28} />} title={t(a.countries?.name ?? a.destination_country ?? "Application")}
-            subtitle={`${ltr(a.reference)} · ${t(stage(a).label)}`} minHeight={56} onPress={() => router.push(`/applications/${a.id}`, { withAnchor: true })} />)}
-        </ListGroup>
-      )}
       {!!paidApps.length && (
         <ListGroup header={t("Receipts")} footer={t("From your payment record. Tap to save or share a PDF.")} inset={58}>
           {paidApps.map((a) => <ListRow key={a.id} icon="doc.text.fill" iconColor={c.green} title={`${t("Receipt")} · ${ltr(a.reference)}`} subtitle={t(a.countries?.name ?? a.destination_country ?? "")}
             value={`${Number(a.payment_amount).toFixed(0)} ${a.currency || "AED"}`} onPress={() => router.push(`/receipt/${a.id}`)} />)}
         </ListGroup>
       )}
-      <ListGroup inset={58}>
-        <ListRow icon="bell.fill" iconColor={c.red} title={t("Notifications")} value={unread ? String(unread) : undefined} onPress={() => router.push("/account/notifications")} />
-        <ListRow icon="doc.text.fill" iconColor={c.tint} title={t("Applications")} onPress={() => router.navigate("/applications")} />
+      <ListGroup header={t("Preferences")} inset={58}>
+        <ListRow icon="bell.fill" iconColor={c.tint} title={t("Notifications")} value={unread ? t("{n} new", { n: unread }) : undefined} onPress={() => router.push("/account/notifications")} />
       </ListGroup>
       {language}
       {security}
@@ -228,8 +229,8 @@ export default function Account() {
         <ListRow title={t("Delete account")} destructive chevron={false} onPress={() => { setDelStep("ask"); setDelErr(null); setDel(true); }} />
       </ListGroup>
       <Modal visible={del} transparent animationType="fade" onRequestClose={() => setDel(false)}>
-        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
-          <View accessibilityViewIsModal style={{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.sm }} testID="delete-sheet">
+        <View style={{ flex: 1, backgroundColor: c.overlay, justifyContent: "center", padding: S.lg }}>
+          <View accessibilityViewIsModal style={{ backgroundColor: c.surfaceRaised, borderRadius: R.card, padding: S.lg, gap: S.sm }} testID="delete-sheet">
             <Text variant="title3" accessibilityRole="header">{delStep === "sure" ? t("Are you sure?") : t("Delete your account?")}</Text>
             <Text variant="subhead" tone="secondary">{delStep === "sure" ? t("This permanently deletes your account, uploaded documents and personal details. It can't be undone.") : t("Your account, uploaded documents and personal details are removed. Payment records are kept as required by law.")}</Text>
             {!!delErr && <Text variant="footnote" tone="red" testID="delete-error">{delErr}</Text>}
