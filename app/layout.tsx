@@ -106,7 +106,7 @@ export async function generateMetadata(): Promise<Metadata> {
       "max-snippet": -1,
     },
   },
-  manifest: "/site.webmanifest?v=5",
+  manifest: "/site.webmanifest?v=7",
   // No canonical here: a root canonical is inherited by every page that doesn't set its own, which told search
   // engines those pages duplicate the homepage. Each indexable page sets its own (the homepage in app/page.tsx).
   // (The placeholder site-verification codes were removed: they published meaningless meta tags.)
