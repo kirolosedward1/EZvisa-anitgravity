@@ -35,7 +35,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
         <Flag country={name} size={40} />
         <View style={{ flex: 1 }}>
           <Text variant="headline" numberOfLines={1}>{[t(name), a.travel_purpose && t(a.travel_purpose)].filter(Boolean).join(" · ")}</Text>
-          <Text variant="footnote" tone="secondary" numberOfLines={1} tabular>{[people, ltr(formatTripRange(a.entry_date, a.exit_date, lang))].filter(Boolean).join(" · ")}</Text>
+          <Text variant="footnote" tone="secondary" tabular>{[people, ltr(formatTripRange(a.entry_date, a.exit_date, lang))].filter(Boolean).join(" · ")}</Text>
         </View>
         {onDiscard && swiping ? (
           // The trash shows once the row is swiped; at rest the row has its chevron. Discard is a swipe, a long

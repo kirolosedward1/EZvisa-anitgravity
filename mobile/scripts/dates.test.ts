@@ -3,6 +3,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { formatAppointment, formatDay, formatDetailDate, formatDetailRange, formatListDate, formatTimelineStamp, formatTripRange } from "../lib/dates";
+import { AR } from "../lib/ar";
+import { formatPayAmount, payActionCopy, PAY_AED } from "../lib/payLabel";
+
+const fill = (s: string, v: Record<string, string>) => s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? `{${k}}`);
 
 const EASTERN = /[٠-٩]/;
 const deviceDay = (s: string) => new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" });
@@ -66,6 +70,33 @@ test("timeline stamps follow the app language", () => {
   assert.doesNotMatch(ar, EASTERN);
   assert.doesNotMatch(ar, /\bDec\b|AM|PM/);
   assert.doesNotMatch(arAppt, EASTERN);
+});
+
+test("Arabic pay label uses tanween and Western digits", () => {
+  assert.equal(formatPayAmount(249), "249");
+  assert.equal(formatPayAmount(498), "498");
+  const one = payActionCopy(249, "AED");
+  const two = payActionCopy(498, "AED");
+  assert.equal(one.title, PAY_AED);
+  assert.equal(one.cta, PAY_AED);
+  assert.equal(fill(AR[PAY_AED], one.vars!), "ادفع 249 درهمًا");
+  assert.equal(fill(AR[PAY_AED], two.vars!), "ادفع 498 درهمًا");
+  assert.equal(AR[PAY_AED].includes("\u064b"), true);
+  assert.doesNotMatch(fill(AR[PAY_AED], one.vars!), EASTERN);
+  assert.equal(payActionCopy(null, "AED").title, "Pay securely");
+});
+
+test("processing time is not a ranged يوم and uses Western digits", () => {
+  const compact = AR["Your file is ready in 1–2 days"];
+  const roomy = AR["Your file is ready in a day or two"];
+  const glance = AR["We prepare your file in 1–2 days. Embassy fees are paid at your appointment."];
+  assert.equal(compact, "ملفك جاهز خلال 1–2 أيام عمل");
+  assert.equal(roomy, "ملفك جاهز خلال يوم إلى يومين");
+  assert.match(glance, /يوم إلى يومين/);
+  for (const s of [compact, roomy, glance]) {
+    assert.doesNotMatch(s, EASTERN);
+    assert.doesNotMatch(s, /[0-9]\s*[–-]\s*[0-9]\s*يوم(?!ين)/);
+  }
 });
 
 test("appointment card uses a long month and Western digits in Arabic", () => {

@@ -22,6 +22,7 @@ import { Pressable } from "react-native";
 import { Icon, Chevron } from "../../../components/ui";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from "react-native-reanimated";
 import { formatDetailDate, formatDetailRange } from "../../../lib/dates";
+import { formatPayAmount, PAY_AED } from "../../../lib/payLabel";
 
 const EDITABLE = UPLOAD_STATUSES;
 const REFRESH_MS = 30_000;
@@ -119,6 +120,7 @@ export default function ApplicationDetail() {
   const paid = isPaid(a); const locked = a.status !== "draft" && !paid;
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
+  const due = quote?.amount ?? a.total_amount;
   return (
     <ScrollView ref={scroller} contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.tint} />}>
@@ -137,7 +139,7 @@ export default function ApplicationDetail() {
             <Flag country={name} size={56} />
             <View style={{ flex: 1 }}>
               <Text variant="title2" accessibilityRole="header" numberOfLines={1}>{[t(name), a.travel_purpose && t(a.travel_purpose)].filter(Boolean).join(" · ")}</Text>
-              <Text variant="subhead" tone="secondary" numberOfLines={1} tabular>{[a.full_name, a.entry_date && formatDetailRange(a.entry_date, a.exit_date, lang)].filter(Boolean).join(" · ")}</Text>
+              <Text variant="subhead" tone="secondary" tabular>{[a.full_name, a.entry_date && ltr(formatDetailRange(a.entry_date, a.exit_date, lang))].filter(Boolean).join(" · ")}</Text>
             </View>
           </View>
         </Surface>
@@ -148,7 +150,7 @@ export default function ApplicationDetail() {
         <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
           {ziina === "completed" || ziina === "pending"
             ? <ListRow icon="clock.fill" iconColor={c.tint} title={ziina === "completed" ? t("Payment received") : t("Payment processing")} subtitle={t("Updating your application…")} onPress={() => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } })} />
-            : <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : quote ? t("Pay {amount}", { amount: money(quote) }) : t("Pay securely")} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />}
+            : <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : due != null ? t(PAY_AED, { amount: formatPayAmount(due) }) : t("Pay securely")} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />}
         </ListGroup>
       )}
       {needsContinue(a) && (
@@ -165,7 +167,7 @@ export default function ApplicationDetail() {
       )}
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
-        {!!a.entry_date && <ListRow title={t("Dates")} value={formatDetailRange(a.entry_date, a.exit_date, lang)} />}
+        {!!a.entry_date && <ListRow title={t("Dates")} value={ltr(formatDetailRange(a.entry_date, a.exit_date, lang))} wrapValue />}
         {paid && <ListRow title={t("Paid")} value={formatDetailDate(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null, lang)} />}
         {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
