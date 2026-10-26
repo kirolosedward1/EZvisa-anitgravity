@@ -151,7 +151,7 @@ Usage rules:
 | `services-section.tsx` | 3-column services card grid |
 | `how-it-works-simple.tsx` | Step process with icons |
 | `comparison-section.tsx` | DIY vs EZvisa comparison |
-| `contact-section.tsx` | Homepage CTA section |
+| `latest-guides.tsx` | Closing "Visa guides" row (3 latest published guides) on marketing pages |
 | `faq-section.tsx` | Accordion FAQ |
 | `inner-hero.tsx` | Heading for every inner page: a rounded destination-photo box with a dark scrim and centred white copy; each path gets its own country photo (`stableIndex` on the locale-free path). Legal pages use the `.legal-copy` text styles below it. |
 | `after-payment-timeline.tsx` | What happens after payment, and when (How it works + destination pages) |

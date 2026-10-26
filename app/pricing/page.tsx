@@ -8,7 +8,7 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
-import { ContactSection } from "@/components/contact-section"
+import { LatestGuides } from "@/components/latest-guides"
 import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { requestLocale } from "@/lib/request-locale"
@@ -210,7 +210,7 @@ export default async function PricingPage() {
           </div>
         </section>
 
-        <ContactSection />
+        <LatestGuides />
       </div>
       <Footer />
     </>

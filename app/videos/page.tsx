@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import VideosContent from "./videos-content"
+import { LatestGuides } from "@/components/latest-guides"
 import { withArabicMeta } from "@/lib/page-meta"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,5 +36,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function VideosPage() {
-  return <VideosContent />
+  return (
+    <VideosContent>
+      <LatestGuides />
+    </VideosContent>
+  )
 }

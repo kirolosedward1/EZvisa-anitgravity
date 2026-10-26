@@ -7,7 +7,7 @@ import { InnerHero } from "@/components/inner-hero"
 import { CountryFacts } from "@/components/documents/country-facts"
 import { DocumentSplit } from "@/components/documents/document-split"
 import { AfterPaymentTimeline } from "@/components/after-payment-timeline"
-import { ContactSection } from "@/components/contact-section"
+import { LatestGuides } from "@/components/latest-guides"
 import { getProviderForDestination } from "@/lib/visa-rules"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { countryNameAr } from "@/lib/countries"
@@ -223,7 +223,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           </div>
         </section>
 
-        <ContactSection />
+        <LatestGuides />
       </div>
       <Footer />
     </>

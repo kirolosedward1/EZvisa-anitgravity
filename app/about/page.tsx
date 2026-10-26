@@ -6,7 +6,7 @@ import { Footer } from "@/components/footer"
 import { CompanyLegalNotice } from "@/components/legal/company-details"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
-import { ContactSection } from "@/components/contact-section"
+import { LatestGuides } from "@/components/latest-guides"
 import { formatAedLabel } from "@/lib/currency"
 import { requestLocale } from "@/lib/request-locale"
 import { withArabicMeta } from "@/lib/page-meta"
@@ -148,7 +148,7 @@ export default async function AboutPage() {
           </div>
         </section>
 
-        <ContactSection />
+        <LatestGuides />
       </div>
       <CompanyLegalNotice />
       <Footer />
