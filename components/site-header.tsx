@@ -459,7 +459,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                         <Button
                           variant="default"
                           asChild
-                          className="relative h-10 w-10 min-h-10 min-w-10 p-0 before:absolute before:-inset-[2px] before:content-[''] [&>svg]:!size-5 [&>svg]:!rounded-none [&>svg]:!bg-transparent [&>svg]:!p-0 [&>svg]:!text-primary-foreground"
+                          className="relative h-10 w-10 min-h-10 min-w-10 p-0 before:absolute before:-inset-[2px] before:content-[''] [&>svg]:!size-4 [&>svg]:!rounded-none [&>svg]:!bg-transparent [&>svg]:!p-0 [&>svg]:!text-primary-foreground"
                         >
                           <LocaleLink href="/apply">
                             <span className="sr-only"><LangText en="Get Started" ar="ابدأ الآن" /></span>
