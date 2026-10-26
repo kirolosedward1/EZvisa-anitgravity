@@ -199,7 +199,8 @@
 [dir="rtl"] .lucide-chevron-left,
 [dir="rtl"] .lucide-arrow-right,
 [dir="rtl"] .lucide-arrow-left,
-[dir="rtl"] .lucide-move-right {
+[dir="rtl"] .lucide-move-right,
+[dir="rtl"] .lucide-send {
   transform: scaleX(-1);
 }
 

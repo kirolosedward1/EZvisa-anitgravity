@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 import { ArrowRight, Check } from "lucide-react"
 import { motion } from "framer-motion"
 import { LocaleLink } from "@/components/locale-link"
+import { Button } from "@/components/ui/button"
 import { Image } from "@/components/image"
 import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -64,13 +65,12 @@ export function ContactSection() {
                 />
               </p>
               <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                <LocaleLink
-                  href="/apply"
-                  className="group inline-flex h-12 w-full items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:w-auto"
-                >
-                  <LangText en="Start your application" ar="ابدأ الطلب" />
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-                </LocaleLink>
+                <Button asChild className="w-full sm:w-auto">
+                  <LocaleLink href="/apply">
+                    <span><LangText en="Start your application" ar="ابدأ الطلب" /></span>
+                    <ArrowRight aria-hidden="true" />
+                  </LocaleLink>
+                </Button>
               </div>
             </div>
           </div>

@@ -11,6 +11,7 @@ import { TopDestinationsCarousel } from "@/components/top-destinations-carousel"
 import { motion, AnimatePresence } from "framer-motion"
 import { destinations } from "@/lib/destinations"
 import { ReadyLine, useArabic } from "@/components/ready-line"
+import { dirhamNoun } from "@/lib/currency"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { LangText } from "@/components/lang-text"
 import { SCHENGEN_META, countryNameAr } from "@/lib/countries"
@@ -326,7 +327,7 @@ export function HeroSection() {
                         asChild
                       >
                         <LocaleLink href={handleGetStarted()}>
-                          <LangText en="Get started" ar="ابدأ" />
+                          <span><LangText en="Get started" ar="ابدأ" /></span>
                           <ArrowRight aria-hidden="true" />
                         </LocaleLink>
                       </Button>
@@ -387,7 +388,7 @@ export function HeroSection() {
               </div>
               <div className="flex flex-col sm:flex-row items-center justify-center text-center sm:text-left gap-1 sm:gap-2 border border-primary-foreground/25 bg-primary-foreground/10 backdrop-blur-xl rounded-xl p-2 px-3 sm:px-4">
                 <Tag className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground flex-shrink-0" />
-                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en={`${PRICE_AED} AED, one flat fee`} ar={`${PRICE_AED} درهم، رسوم ثابتة`} /></span>
+                <span className="font-semibold text-primary-foreground text-[10px] sm:text-xs lg:text-sm leading-tight text-center sm:text-left"><LangText en={`${PRICE_AED} AED, one flat fee`} ar={`${PRICE_AED} ${dirhamNoun(PRICE_AED)}، رسوم ثابتة`} /></span>
               </div>
             </motion.div>
           </motion.div>

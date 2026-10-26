@@ -4,7 +4,7 @@ import { Image } from "@/components/image"
 import Link from "next/link"
 import { LocaleLink } from "@/components/locale-link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Rocket, ChevronDown, Check } from "lucide-react"
+import { Menu, X, ArrowRight, ChevronDown, Check } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname, useRouter } from "next/navigation"
@@ -273,8 +273,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           scrolled ? "py-2" : "py-4"
         }`}
       >
-        <div className="container mx-auto px-4 sm:px-6 flex justify-center max-w-7xl">
-          <div className={`w-full flex items-center justify-between gap-4 transition-all duration-300 rounded-full px-4 sm:px-6 py-2.5 ${
+        <div className="container mx-auto flex max-w-7xl justify-center px-2 min-[360px]:px-4 sm:px-6">
+          <div className={`flex w-full items-center justify-between gap-2 min-[360px]:gap-4 transition-all duration-300 rounded-full px-2 min-[360px]:px-4 sm:px-6 py-2.5 ${
             scrolled || forceBackground || !isFull
               ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
               : "bg-transparent border-transparent"
@@ -402,7 +402,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               </nav>
             )}
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex shrink-0 items-center gap-1 min-[360px]:gap-2 sm:gap-3">
               <div
                 className="relative flex items-center gap-2"
                 onMouseEnter={() => setShowWhatsAppTooltip(true)}
@@ -439,27 +439,31 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               {isFull && (
                 <>
                   <div className="hidden sm:block">
-                    <Button variant="default" asChild>
-                      <LocaleLink href="/apply" className="flex items-center gap-2">
-                        <Rocket className="h-4 w-4" />
-                        <LangText en="Get Started" ar="ابدأ الآن" />
+                    <Button variant="default" asChild className="h-10 min-h-10">
+                      <LocaleLink href="/apply">
+                        <span><LangText en="Get Started" ar="ابدأ الآن" /></span>
+                        <ArrowRight aria-hidden="true" />
                       </LocaleLink>
                     </Button>
                   </div>
-                  
+
                   <AnimatePresence>
                     {showGetStarted && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.9, width: 0 }}
-                        animate={{ opacity: 1, scale: 1, width: "auto" }}
-                        exit={{ opacity: 0, scale: 0.9, width: 0 }}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.2 }}
-                        className="sm:hidden overflow-hidden"
+                        className="shrink-0 sm:hidden"
                       >
-                        <Button variant="default" asChild size="icon">
-                          <LocaleLink href="/apply" className="flex items-center gap-1.5">
-                            <Rocket className="h-4 w-4" />
+                        <Button
+                          variant="default"
+                          asChild
+                          className="relative h-10 w-10 min-h-10 min-w-10 p-0 before:absolute before:-inset-[2px] before:content-[''] [&>svg]:!size-4 [&>svg]:!rounded-none [&>svg]:!bg-transparent [&>svg]:!p-0 [&>svg]:!text-primary-foreground"
+                        >
+                          <LocaleLink href="/apply">
                             <span className="sr-only"><LangText en="Get Started" ar="ابدأ الآن" /></span>
+                            <ArrowRight aria-hidden="true" />
                           </LocaleLink>
                         </Button>
                       </motion.div>
@@ -471,7 +475,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               {isFull && (
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`xl:hidden h-10 w-10 rounded-full transition-colors flex items-center justify-center border ${
+                className={`xl:hidden h-10 w-10 shrink-0 rounded-full transition-colors flex items-center justify-center border ${
                   isMenuOpen ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-secondary"
                 }`}
                 aria-label="Toggle menu / القائمة"

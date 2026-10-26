@@ -14,7 +14,7 @@ import {
   wizardLabelClass,
 } from "@/components/apply/wizard-choices"
 import { TravellerSelect } from "@/components/apply/traveller-select"
-import { priceForTravellers } from "@/lib/currency"
+import { dirhamNoun, priceForTravellers } from "@/lib/currency"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { TRAVELLER_NONE } from "@/lib/travellers-client"
 import { UAE_EMIRATES, type Traveller } from "@/lib/shared/wizard-contract"
@@ -302,7 +302,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             title="With my spouse"
             titleAr="مع الزوج أو الزوجة"
             description={`Two applicants, ${spousePrice} AED. Spouse details after payment.`}
-            descriptionAr={`متقدمان، ${spousePrice} درهم. بيانات الزوج أو الزوجة بعد الدفع.`}
+            descriptionAr={`متقدمان، ${spousePrice} ${dirhamNoun(spousePrice)}. بيانات الزوج أو الزوجة بعد الدفع.`}
             selected={withSpouse}
             onSelect={() => set({ maritalStatus: "married", spouseAccompanying: "yes", travelingWith: "spouse" })}
           />

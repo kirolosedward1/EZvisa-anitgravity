@@ -244,17 +244,17 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={() => loadCases(secret, filterStatus, searchQuery)}
               disabled={loading}
-              className="border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-200"
+              className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-              Refresh Cases
+              <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
+              <span>Refresh Cases</span>
             </Button>
             <Button
               variant="ghost"
-              size="sm"
+              size="xs"
               onClick={() => {
                 sessionStorage.removeItem("ez_admin_secret")
                 setIsAuthenticated(false)
@@ -284,20 +284,23 @@ export default function AdminPage() {
         <div className="flex flex-col md:flex-row gap-4 justify-between bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
           <div className="flex flex-wrap gap-2">
             {["all", "draft", "submitted", "reviewing", "awaiting_documents", "ready", "completed", "rejected", "cancelled"].map((st) => (
-              <button
+              <Button
                 key={st}
+                type="button"
+                size="xs"
+                variant={filterStatus === st ? "default" : "outline"}
                 onClick={() => {
                   setFilterStatus(st)
                   loadCases(secret, st, searchQuery)
                 }}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                className={
                   filterStatus === st
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-                }`}
+                    ? "capitalize"
+                    : "capitalize border-slate-800 bg-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                }
               >
                 {st}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -315,9 +318,9 @@ export default function AdminPage() {
               />
             </div>
             <Button
-              size="sm"
+              size="xs"
               onClick={() => loadCases(secret, filterStatus, searchQuery)}
-              className="bg-slate-800 hover:bg-slate-700 text-white"
+              className="bg-slate-800 text-white hover:bg-slate-700"
             >
               Search
             </Button>
@@ -433,7 +436,7 @@ export default function AdminPage() {
                         <div className="flex items-center justify-end gap-1.5 flex-wrap">
                           {c.application_status === "submitted" && (
                             <Button
-                              size="sm"
+                              size="xs"
                               onClick={() => handleStatusUpdate(c, "reviewing")}
                             >
                               Review
@@ -441,30 +444,33 @@ export default function AdminPage() {
                           )}
 
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="outline"
                             onClick={() => handleTriggerEmail(c.id, "documents.requested")}
-                            className="h-8 text-xs border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-300"
+                            className="border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800"
                           >
-                            <Mail className="w-3 h-3 mr-1" /> Request Docs
+                            <Mail className="size-3" aria-hidden="true" />
+                            <span>Request Docs</span>
                           </Button>
 
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="outline"
                             onClick={() => handleGenerateDocuments(c.id)}
-                            className="h-8 text-xs border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-300"
+                            className="border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800"
                           >
-                            <FileCode className="w-3 h-3 mr-1" /> Generate
+                            <FileCode className="size-3" aria-hidden="true" />
+                            <span>Generate</span>
                           </Button>
 
                           {c.application_status !== "ready" && (
                             <Button
-                              size="sm"
+                              size="xs"
                               onClick={() => handleTriggerEmail(c.id, "documents.ready")}
-                              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
+                              className="bg-emerald-600 text-white hover:bg-emerald-500"
                             >
-                              <CheckCircle2 className="w-3 h-3 mr-1" /> Mark Ready
+                              <CheckCircle2 className="size-3" aria-hidden="true" />
+                              <span>Mark Ready</span>
                             </Button>
                           )}
 

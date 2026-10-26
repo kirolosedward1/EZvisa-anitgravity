@@ -9,7 +9,7 @@ import { LocaleLink } from "@/components/locale-link"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { WizardQuestion } from "@/components/apply/wizard-choices"
 import { getReference } from "@/lib/application-status"
-import { CURRENCIES, applicantCount, formatAedLabel, priceForTravellers } from "@/lib/currency"
+import { CURRENCIES, applicantCount, dirhamNoun, formatAedLabel, priceForTravellers } from "@/lib/currency"
 import { priceAed } from "@/lib/shared/wizard-contract"
 import { message } from "@/messages"
 import { submitBody } from "@/lib/application-notes"
@@ -355,7 +355,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         continueLabel={`Pay ${paymentAmount} AED`}
         continueLabelAr={
           <>
-            ادفع <bdi dir="ltr">{paymentAmount}</bdi> درهم
+            ادفع <bdi dir="ltr">{paymentAmount}</bdi> {dirhamNoun(paymentAmount)}
           </>
         }
         loadingLabel="Opening Ziina…"
@@ -372,7 +372,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
             <p className="mt-2 text-[15px] leading-relaxed text-[#5B6475]">
               <LangText
                 en={`Secure payment of ${paymentAmount} AED. Please don't close this page.`}
-                ar={`دفع آمن بقيمة ${paymentAmount} درهم. لا تغلق هذه الصفحة.`}
+                ar={`دفع آمن بقيمة ${paymentAmount} ${dirhamNoun(paymentAmount)}. لا تغلق هذه الصفحة.`}
               />
             </p>
             <p className="mt-4 border-t border-[#E3E7EF] pt-4 text-[13px] leading-relaxed text-[#5B6475]">

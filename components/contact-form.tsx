@@ -170,13 +170,13 @@ export function ContactForm() {
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                    {t("Sending...", "جارٍ الإرسال...")}
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    <span>{t("Sending...", "جارٍ الإرسال...")}</span>
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
-                    {t("Send message", "أرسل الرسالة")}
+                    <Send className="size-4" aria-hidden="true" />
+                    <span>{t("Send message", "أرسل الرسالة")}</span>
                   </>
                 )}
               </Button>
