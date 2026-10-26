@@ -172,11 +172,21 @@ export function questionErrors(q: Question, f: WizardForm): Errors {
   return out;
 }
 export const firstError = (q: Question, f: WizardForm) => Object.values(questionErrors(q, f))[0] as string | undefined;
-export const isAnswered = (q: Question, f: WizardForm) => q.keys.some((k) => { const v = f[k]; return Array.isArray(v) ? v.length > 0 : typeof v === "boolean" ? false : !!String(v ?? "").trim(); });
+/** A real answer, not a default. Email & Phone owns the dial code (`phoneCountry`, "AE" on a blank form) and the
+ *  WhatsApp opt-in; neither is an answer, so the screen stays open until there is an email and a phone number.
+ *  Signed in, the account email counts (the email field is not shown). */
+export const isAnswered = (q: Question, f: WizardForm) => {
+  if (q.kind === "contact") return !!(getAccountEmail() || f.email.trim()) && !!(f.phone.trim() || f.phoneLocal.trim());
+  return q.keys.some((k) => { const v = f[k]; return Array.isArray(v) ? v.length > 0 : typeof v === "boolean" ? false : !!String(v ?? "").trim(); });
+};
 /** First question that still has an error (null when the whole application is valid). */
 export const firstInvalid = (f: WizardForm, phase: Phase = "pre") => activeQuestions(f, phase).find((q) => !!firstError(q, f)) ?? null;
-/** First question without an answer yet (used when a link prefilled some answers). */
-export const firstUnanswered = (f: WizardForm) => activeQuestions(f).find((q) => !isAnswered(q, f) && !!firstError(q, f)) ?? null;
+/** First required question still open (null when every required answer is in, so the wizard can go to Review).
+ *  The traveller picker owns no form key, so picking someone never stops on that screen. A question is open when
+ *  it has no real answer or the website's validation still rejects it — including Email & Phone, whose dial-code
+ *  default used to look like an answer and skip a traveller with no email or phone straight to Review. */
+export const firstUnanswered = (f: WizardForm) =>
+  activeQuestions(f).find((q) => q.required && q.keys.length > 0 && (!isAnswered(q, f) || !!firstError(q, f))) ?? null;
 
 /** Page ids: "q:<questionId>" or "review". Old pages (step slugs, v1 page names) map to the step's first question. */
 const LEGACY: Record<string, WizardStep> = { nationality: "destination", residence: "personal", contact: "personal", passport: "personal", marital: "personal", spouse: "personal" };

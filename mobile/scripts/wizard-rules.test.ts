@@ -2,8 +2,8 @@
 // Run: node --import ./scripts/ts-hooks.mjs scripts/wizard-rules.test.ts   (from mobile/, Node 22.18+)
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { emptyForm, coerceResidence, validatePersonal, validatePassport, validateStep, UAE_NATIONALITIES, OTHER_NATIONALITY, SCHENGEN_VISA_REQUIRED, SCHENGEN, UAE_EMIRATES, RESIDENCE_COUNTRIES, type WizardForm } from "../lib/wizard";
-import { QUESTIONS, Q_BY_ID, activeQuestions, progressOf, normalizePage, setAccountEmail, setTravellers } from "../lib/questions";
+import { emptyForm, applyTraveller, coerceResidence, validatePersonal, validatePassport, validateStep, UAE_NATIONALITIES, OTHER_NATIONALITY, SCHENGEN_VISA_REQUIRED, SCHENGEN, UAE_EMIRATES, RESIDENCE_COUNTRIES, type TravellerDetails, type WizardForm } from "../lib/wizard";
+import { QUESTIONS, Q_BY_ID, REVIEW, activeQuestions, firstUnanswered, progressOf, normalizePage, setAccountEmail, setTravellers } from "../lib/questions";
 import { searchCountries } from "../lib/search";
 import { WORLD } from "../lib/world";
 import { AR } from "../lib/ar";
@@ -31,6 +31,28 @@ test("saved travellers: \"Who is travelling?\" opens the traveller step when sig
     setTravellers([]);
     assert.ok(!ids(form()).includes("traveller"), "no saved travellers: no question");
   } finally { setAccountEmail(null); setTravellers([]); }
+});
+
+/** Where the wizard goes after a saved traveller is applied: the first required question still open, or Review. */
+const afterTraveller = (t: TravellerDetails, extra: Partial<WizardForm> = {}) => {
+  const f = applyTraveller(form({ destination: "France", maritalStatus: "single", spouseAccompanying: "no", ...extra }), t);
+  return firstUnanswered(f)?.id ?? REVIEW;
+};
+const FILLED: TravellerDetails = {
+  firstName: "Amina", lastName: "Hassan", nationality: "India", passportNumber: "A1234567",
+  dateOfBirth: "1990-01-01", cityOfResidence: "Dubai", phone: "+971501234567", phoneCountry: "AE", phoneLocal: "501234567",
+};
+
+test("saved traveller with no email or phone stops at the contact question", () => {
+  const noPhone: TravellerDetails = {
+    firstName: FILLED.firstName, lastName: FILLED.lastName, nationality: FILLED.nationality,
+    passportNumber: FILLED.passportNumber, dateOfBirth: FILLED.dateOfBirth, cityOfResidence: FILLED.cityOfResidence,
+  };
+  assert.equal(afterTraveller(noPhone), "contact");
+});
+
+test("saved traveller with every field filled goes to Review", () => {
+  assert.equal(afterTraveller(FILLED, { email: "amina@example.com" }), REVIEW);
 });
 
 test("trip questions follow the website order, ending with the residence visa", () => {
