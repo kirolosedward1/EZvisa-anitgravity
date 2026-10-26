@@ -106,7 +106,7 @@ export async function generateMetadata(): Promise<Metadata> {
       "max-snippet": -1,
     },
   },
-  manifest: "/site.webmanifest?v=3",
+  manifest: "/site.webmanifest?v=4",
   // No canonical here: a root canonical is inherited by every page that doesn't set its own, which told search
   // engines those pages duplicate the homepage. Each indexable page sets its own (the homepage in app/page.tsx).
   // (The placeholder site-verification codes were removed: they published meaningless meta tags.)
@@ -143,13 +143,13 @@ export default async function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: "self.$RT=performance.now()" }} />
 
         {/* Mobile Favicon & Apple Touch Icons */}
-        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=4" />
-        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png?v=4" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=4" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=4" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png?v=4" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png?v=4" />
-        <link rel="shortcut icon" href="/favicon.ico?v=4" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=5" />
+        <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-precomposed.png?v=5" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png?v=5" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png?v=5" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png?v=5" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png?v=5" />
+        <link rel="shortcut icon" href="/favicon.ico?v=5" />
         <meta name="apple-mobile-web-app-title" content="EZvisa" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
