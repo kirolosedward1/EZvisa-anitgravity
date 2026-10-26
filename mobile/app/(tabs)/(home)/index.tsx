@@ -2,10 +2,9 @@ import { ScrollView, View, RefreshControl, StyleSheet, type ScrollViewInstance }
 import { Image } from "expo-image";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Logo } from "../../../components/Logo";
-import { Chevron, ActionPill, StatusPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline } from "../../../components/ui";
+import { Chevron, ActionPill, StatusPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline, Surface, HeaderIconButton, IconTile } from "../../../components/ui";
 import { AppointmentCard } from "../../../components/Appointment";
-import { useColors, S, R, curve, ICON } from "../../../lib/theme";
+import { useColors, S, R, curve, ICON, AVATAR, SIZE } from "../../../lib/theme";
 import { POPULAR, toSlug } from "../../../lib/countries";
 import { PHOTOS, THUMBS } from "../../../lib/photos";
 import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
@@ -28,6 +27,7 @@ import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
 import { SwipeToDiscard, SwipeLock, SwipeActive } from "../../../components/SwipeToDiscard";
 import { useAvatar } from "../../../lib/avatar";
+import { whatsapp } from "../../../lib/api";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 import { Explore, FaqSection } from "../../../components/home/Sections";
 
@@ -65,26 +65,33 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
     }
   };
   const actionable = n.kind !== "none" && n.kind !== "open";
+  const meta = [tripDates(a, lang), cd].filter(Boolean).join(" · ");
   return (
-    <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl }} testID="home-hero">
-      <PressScale onPress={() => { tap(); open(); }} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={[t(name), status, tripDates(a, lang), cd].filter(Boolean).join(", ")} accessibilityHint={t("Opens the application")}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}>
-          <Text variant="largeTitle" accessibilityRole="header" numberOfLines={2} style={{ flex: 1 }}>{t(name || "Application")}</Text>
-          <Flag country={name} size={64} />
+    <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xxl }} testID="home-hero">
+      <Surface level={1} style={{ padding: S.md }}>
+        <PressScale onPress={() => { tap(); open(); }} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={[t(name), status, tripDates(a, lang), cd].filter(Boolean).join(", ")} accessibilityHint={t("Opens the application")}>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: S.xs }}>
+            <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: S.xs, flexShrink: 1 }}>
+              <View testID="hero-status"><StatusPill v={a.status} a={a} /></View>
+              {pending && <ActionPill label={t(pending.label)} />}
+            </View>
+            <Text variant="caption" tone="tertiary" tabular numberOfLines={1}>{a.reference}</Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginTop: S.md }}>
+            <Flag country={name} size={AVATAR.lg} />
+            <View style={{ flex: 1 }}>
+              <Text variant="title3" accessibilityRole="header" numberOfLines={1}>{t(name || "Application")}</Text>
+              {!!meta && <Text variant="subhead" tone="secondary" numberOfLines={1} tabular testID="hero-dates">{meta}</Text>}
+            </View>
+          </View>
+          <View style={{ marginTop: S.md }}><ProgressSegments count={steps.length} index={done} fraction={0} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t("{n} of {total} steps done", { n: done, total: steps.length })} /></View>
+        </PressScale>
+        <Text variant="subhead" tone="secondary" style={{ marginTop: S.md }} numberOfLines={3} testID="next-action">{[t(n.title), n.body && t(n.body)].filter(Boolean).join(" · ")}</Text>
+        <View style={{ marginTop: S.md }}>
+          <Button title={t(n.cta ?? "View application")} variant={actionable ? "primary" : "secondary"} loading={paying} onPress={act} />
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: S.xs, marginTop: S.xs }}>
-          <View testID="hero-status"><StatusPill v={a.status} a={a} /></View>
-          {pending && <ActionPill label={t(pending.label)} />}
-          {!!tripDates(a, lang) && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" tabular testID="hero-dates">{tripDates(a, lang)}</Text></>}
-          {!!cd && <><Text variant="callout" tone="tertiary">·</Text><Text variant="callout" tone="secondary" testID="countdown">{cd}</Text></>}
-        </View>
-        <View style={{ marginTop: S.md }}><ProgressSegments count={steps.length} index={done} fraction={0} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t("{n} of {total} steps done", { n: done, total: steps.length })} /></View>
-      </PressScale>
-      <Text variant="subhead" tone="secondary" style={{ marginTop: S.lg }} numberOfLines={3} testID="next-action">{[t(n.title), n.body && t(n.body)].filter(Boolean).join(" · ")}</Text>
-      <View style={{ marginTop: S.md }}>
-        <Button title={t(n.cta ?? "View application")} variant={actionable ? "primary" : "secondary"} loading={paying} onPress={act} />
-      </View>
-      <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, paddingVertical: S.xs }, curve]} testID="home-timeline">
+      </Surface>
+      <View style={[{ marginTop: S.md, borderRadius: R.card, backgroundColor: c.card, paddingVertical: S.xs }, curve]} testID="home-timeline">
         <Text variant="footnote" tone="secondary" weight="600" style={{ paddingHorizontal: S.md, paddingTop: S.sm }} accessibilityRole="header">{t("Status")}</Text>
         <Timeline a={a} />
       </View>
@@ -96,14 +103,18 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
 function DraftHero({ country, step, onContinue }: { country: string; step: string; onContinue: () => void }) {
   const { t } = useT();
   return (
-    <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl }} testID="home-hero-draft">
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}>
-        <Text variant="largeTitle" accessibilityRole="header" numberOfLines={2} style={{ flex: 1 }}>{t(country || "New application")}</Text>
-        {!!country && <Flag country={country} size={64} />}
-      </View>
-      <Text variant="callout" weight="600" tone="accent" style={{ marginTop: S.xs }}>{`${t("Draft")} · ${t(step)}`}</Text>
-      <Text variant="subhead" tone="secondary" style={{ marginTop: S.lg }} testID="next-action">{t("Not submitted yet.")}</Text>
-      <View style={{ marginTop: S.md }}><Button title={t("Continue draft")} onPress={() => { tap(); onContinue(); }} /></View>
+    <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xxl }} testID="home-hero-draft">
+      <Surface level={1} style={{ padding: S.md }}>
+        <Text variant="caption" weight="600" tone="accent">{`${t("Draft")} · ${t(step)}`}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginTop: S.md }}>
+          {!!country && <Flag country={country} size={AVATAR.lg} />}
+          <View style={{ flex: 1 }}>
+            <Text variant="title3" accessibilityRole="header" numberOfLines={1}>{t(country || "New application")}</Text>
+            <Text variant="subhead" tone="secondary" testID="next-action">{t("Not submitted yet.")}</Text>
+          </View>
+        </View>
+        <View style={{ marginTop: S.md }}><Button title={t("Continue draft")} onPress={() => { tap(); onContinue(); }} /></View>
+      </Surface>
     </View>
   );
 }
@@ -214,13 +225,14 @@ function useResumePayment() {
 }
 
 export default function Home() {
-  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
+  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t, lang } = useT();
   const { session, apps, unread, refreshing, refresh, err, load } = useApps(true, true);
   const photo = useAvatar(session?.user.id);
   const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
   useResumePayment();
   const scroll = useRef<ScrollViewInstance>(null); const apptY = useRef<number | null>(null);
   const name = (session?.user.user_metadata?.full_name as string | undefined)?.split(" ")[0];
+  const today = new Date().toLocaleDateString(lang === "ar" ? "ar" : undefined, { weekday: "long", day: "numeric", month: "long" });
   const items = useItems(session ? apps : null);
   const server = session ? apps ?? [] : [];
 
@@ -242,13 +254,19 @@ export default function Home() {
     <ScrollView scrollEnabled={!swiping} onScroll={onTabScroll} scrollEventThrottle={16} ref={scroll} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xs, paddingBottom: pb }}
       refreshControl={session ? <RefreshControl refreshing={refreshing} onRefresh={() => { tap(); refresh(); }} tintColor={c.tint} /> : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: S.lg, minHeight: 48 }}>
-        <Logo height={22} />
-        <PressScale onPress={() => { tap(); router.push(session ? "/account/notifications" : { pathname: "/auth", params: { mode: "signin" } }); }} accessibilityRole="button" accessibilityLabel={session ? (unread ? `Notifications, ${unread} unread` : "Notifications") : "Sign in"} hitSlop={8}>
-          {session ? (
-            <View><Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={36} uri={photo} />{unread > 0 && <View style={{ position: "absolute", top: -1, right: -1, width: 12, height: 12, borderRadius: R.xs, backgroundColor: c.red, borderWidth: 2, borderColor: c.bg }} />}</View>
-          ) : <View style={{ width: 44, height: 44, borderRadius: R.round, backgroundColor: c.card, alignItems: "center", justifyContent: "center" }}><Icon name="person.fill" size={16} color={c.label} /></View>}
-        </PressScale>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.gutter, minHeight: 48 }} testID="home-header">
+        {session ? (
+          <PressScale onPress={() => { tap(); router.navigate("/account"); }} accessibilityRole="button" accessibilityLabel={t("Account")} hitSlop={8}>
+            <Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={AVATAR.md} uri={photo} />
+          </PressScale>
+        ) : null}
+        <View style={{ flex: 1 }}>
+          <Text variant="caption" tone="secondary" numberOfLines={1}>{today}</Text>
+          <Text variant="title2" accessibilityRole="header" numberOfLines={1}>{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
+        </View>
+        {session
+          ? <HeaderIconButton icon="bell" label={unread ? `${t("Notifications")}, ${unread}` : t("Notifications")} dot={unread > 0} onPress={() => router.push("/account/notifications")} />
+          : <HeaderIconButton icon="person.fill" label={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />}
       </View>
       <View style={{ marginTop: S.xl }} />
       {loading ? <HeroSkeleton /> : failed ? (
@@ -265,10 +283,9 @@ export default function Home() {
       ) : draftItem ? (
         <DraftHero country={draftItem.country} step={draftItem.draft ?? ""} onContinue={continueDraft} />
       ) : (
-        <View style={{ paddingHorizontal: S.lg, marginBottom: S.xl }} testID="home-headline">
-          <Text variant="largeTitle" accessibilityRole="header">{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
+        <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xl }} testID="home-headline">
           {session && apps?.length === 0 && (
-            <View style={[{ marginTop: S.lg, borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]} testID="home-timeline-empty">
+            <View style={[{ borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]} testID="home-timeline-empty">
               <Text variant="headline">{t("No application yet")}</Text>
               <Text variant="subhead" tone="secondary">{t("Start an application to track it here.")}</Text>
               <Button title={t("Start application")} size="M" onPress={() => { tap(); router.push("/apply"); }} />
@@ -277,7 +294,7 @@ export default function Home() {
         </View>
       )}
       <PressScale onPress={() => { tap(); router.navigate("/countries"); }} accessibilityRole="search" accessibilityLabel={t("Search destinations")}
-        style={{ marginHorizontal: S.lg, marginBottom: S.xxl, minHeight: 44, borderRadius: R.md, backgroundColor: c.fill, flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.sm }}>
+        style={{ marginHorizontal: S.gutter, marginBottom: S.xl, minHeight: SIZE.row, borderRadius: R.input, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.md }}>
         <Icon name="magnifyingglass" size={ICON.md} color={c.secondaryLabel} weight="medium" />
         <Text variant="body" tone="secondary">{t("Search destinations")}</Text>
       </PressScale>
@@ -286,6 +303,18 @@ export default function Home() {
         {STORIES.map((n) => <Story key={n} name={n} />)}
       </ScrollView>
       <AppList items={others} title={heroKey ? t("Other applications") : t("Your applications")} />
+      <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xxl }}>
+        <PressScale onPress={() => { tap(); whatsapp(); }} accessibilityRole="button" accessibilityLabel={t("Need help?")} scaleTo={0.985} lift>
+          <Surface level={1} style={{ padding: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }}>
+            <IconTile name="logo.whatsapp" color={c.whatsapp} size={40} />
+            <View style={{ flex: 1 }}>
+              <Text variant="headline">{t("Need help?")}</Text>
+              <Text variant="footnote" tone="secondary" numberOfLines={2}>{t("Message us on WhatsApp or by email.")}</Text>
+            </View>
+            <Chevron />
+          </Surface>
+        </PressScale>
+      </View>
       <Explore />
       <FaqSection />
     </ScrollView>
