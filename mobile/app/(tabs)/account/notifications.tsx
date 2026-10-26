@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { RefreshControl, SectionList, View, StyleSheet } from "react-native";
 import { Stack, router, useFocusEffect } from "expo-router";
+import { Globi } from "../../../components/mascot/Globi";
 import { useTabInset, EmptyState, Button, PressScale, Text, SkeletonRows, SectionHeader } from "../../../components/ui";
 import { useColors, S, R, HIT, SIZE } from "../../../lib/theme";
 import { listNotifications, markRead, Notification } from "../../../lib/data";
@@ -27,7 +28,7 @@ export default function Notifications() {
       <SectionList sections={sections} keyExtractor={(n) => n.id} contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.background }} contentContainerStyle={{ paddingBottom: pb, flexGrow: 1 }} stickySectionHeadersEnabled={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} />}
         ListHeaderComponent={items === null ? <View style={{ marginTop: S.xl }}><SkeletonRows n={3} leading={S.sm} /></View> : undefined}
-        ListEmptyComponent={items === null ? undefined : <EmptyState icon="bell.slash" title={t("No notifications")} />}
+        ListEmptyComponent={items === null ? undefined : <EmptyState icon="bell.slash" mascot={<Globi pose="sleep" mood="sleepy" size={120} />} title={t("No notifications")} />}
         renderSectionHeader={({ section }) => <View style={{ marginTop: S.xl }}><SectionHeader title={section.title} /></View>}
         renderItem={({ item: n, index, section }) => {
           const first = index === 0, last = index === section.data.length - 1;

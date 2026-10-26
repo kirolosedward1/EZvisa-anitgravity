@@ -7,15 +7,20 @@ export const phoneDisplay = (v: string) => { try { return parsePhoneNumberFromSt
 import { WORLD } from "./world";
 import {
   SCHENGEN, UAE_NATIONALITIES, EMIRATE_OPTIONS, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
-  visibleSteps, postSteps, validateStep, adultMax, earliestDeparture, iso, label as optLabel, type WizardForm, type WizardStep, type Errors,
+  PRE_PAYMENT_STEPS, DETAIL_STEPS, showSpouse, validateStep, validateDetailStep, adultMax, earliestDeparture, iso, label as optLabel,
+  type WizardForm, type WizardStep, type DetailStep, type Errors, type Traveller,
 } from "./wizard";
+/** A question's step: before payment (destination, personal) or after payment (trip, passport, spouse, employment). */
+export type QStep = Exclude<WizardStep, "payment"> | DetailStep;
+const PRE: QStep[] = ["destination", "personal"];
+export const isPreStep = (s: QStep) => PRE.includes(s);
 
 export type Opt = { value: string; label: string };
-export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "dates" | "contact" | "textarea" | "countries" | "pair";
+export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "dates" | "contact" | "textarea" | "countries" | "pair" | "traveller";
 /** One text field of a "pair" screen (two fields on one page). */
 export type PairField = { key: keyof WizardForm; label: string; placeholder: string; contentType?: string; autoComplete?: string };
 export type Question = {
-  id: string; step: Exclude<WizardStep, "payment">; keys: (keyof WizardForm)[];
+  id: string; step: QStep; keys: (keyof WizardForm)[];
   /** The website's field label (without the trailing " *"). */
   label: string; required: boolean; kind: QKind;
   placeholder?: string; searchPlaceholder?: string; options?: Opt[]; names?: string[]; allNames?: string[];
@@ -47,56 +52,73 @@ const EMP = (f: WizardForm) => f.employmentStatus === "employed";
 let accountEmail: string | null = null;
 export const setAccountEmail = (e: string | null | undefined) => { accountEmail = e?.trim().toLowerCase() || null; };
 export const getAccountEmail = () => accountEmail;
+/** The account's saved travellers (lib/travellers.ts fetchTravellers, set by the wizard screen): the "Who is travelling?"
+ *  question applies only when there is at least one. Kept here (not in lib/travellers.ts) to avoid an import cycle. */
+let travellers: Traveller[] = [];
+export const setTravellers = (list: Traveller[]) => { travellers = list; };
+export const getTravellers = () => travellers;
 
 export const QUESTIONS: Question[] = [
-  // ======== BEFORE PAYMENT (step "personal"): only what the price and the account need ========
-  { id: "destination", step: "personal", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "country", names: SCHENGEN, searchPlaceholder: "Search country..." },
-  { id: "nationality", step: "personal", keys: ["nationality"], label: "Nationality", required: true, kind: "country", names: UAE_NATIONALITIES, searchPlaceholder: "Search nationality...",
+  // ======== BEFORE PAYMENT: the website's steps and fields, in its order ========
+  // ---- Step 1, Destination (website components/apply/destination-step.tsx) ----
+  { id: "destination", step: "destination", keys: ["destination"], label: "Destination Country (Schengen)", required: true, kind: "country", names: SCHENGEN, searchPlaceholder: "Search country..." },
+  // Signed in with saved travellers (lib/travellers.ts): the website's "Who is travelling?" drop-down, asked right after the
+  // destination. Picking one fills every answer it carries (nationality, name, passport number and expiry, date of birth,
+  // phone, emirate) and the wizard jumps to the first question still open, so a returning customer is not asked for
+  // their nationality or passport again. Owns no form key: never an error, never on Review.
+  { id: "traveller", step: "destination", keys: [], label: "Who is travelling?", required: true, kind: "traveller", hint: "Pick a saved traveller to fill in the details. You can still edit them.",
+    applies: () => !!accountEmail && getTravellers().length > 0 },
+  { id: "nationality", step: "destination", keys: ["nationality"], label: "Nationality", required: true, kind: "country", names: UAE_NATIONALITIES, searchPlaceholder: "Search nationality...",
     allNames: SCHENGEN_VISA_REQUIRED },
+  // ---- Step 2 (website components/apply/nationality-step.tsx) ----
   // Country of residence is always the UAE (RESIDENCE_COUNTRIES), set in emptyForm, so it has no screen.
-  { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "City of Residence", required: true, kind: "choice", options: EMIRATE_OPTIONS },
   { id: "name", step: "personal", keys: ["firstName", "lastName"], label: "Your Name", required: true, kind: "pair", hint: "As on your passport.",
     fields: [{ key: "firstName", label: "First Name", placeholder: "Enter first name", contentType: "givenName", autoComplete: "given-name" },
       { key: "lastName", label: "Last Name", placeholder: "Enter last name", contentType: "familyName", autoComplete: "family-name" }] },
+  { id: "passportNumber", step: "personal", keys: ["passportNumber"], label: "Passport Number", required: true, kind: "text", placeholder: "e.g. A1234567",
+    hint: "As printed on your passport's photo page.", text: { caps: "characters", upper: true },
+    onPick: (v) => (v.trim() ? { hasValidPassport: "yes" } : {}) },
   // Email + phone on one screen. Signed in: the account email is used and only the phone is shown (see accountEmail).
   { id: "contact", step: "personal", keys: ["email", "phone", "phoneLocal", "phoneCountry", "whatsappOptIn"], label: "Email & Phone Number", required: true, kind: "contact" },
-  { id: "maritalStatus", step: "personal", keys: ["maritalStatus"], label: "Marital Status", required: true, kind: "choice", options: MARITAL,
-    onPick: (v) => (v !== "married" ? { spouseAccompanying: "" } : {}) },
-  { id: "spouseAccompanying", step: "personal", keys: ["spouseAccompanying"], label: "Will your spouse accompany you?", required: true, kind: "yesno", applies: (f) => f.maritalStatus === "married" },
+  { id: "travellingWith", step: "personal", keys: ["spouseAccompanying"], label: "Travelling with", required: true, kind: "choice",
+    options: [{ value: "no", label: "Just me" }, { value: "yes", label: "With my spouse" }],
+    hint: "With your spouse: two applicants. Spouse details are asked after payment.",
+    onPick: (v, f) => (v === "yes"
+      ? { maritalStatus: "married", travelingWith: "spouse" }
+      : { maritalStatus: "single", ...(f.travelingWith === "spouse" ? { travelingWith: "alone" } : {}) }) },
+  { id: "dateOfBirth", step: "personal", keys: ["dateOfBirth"], label: "Date of Birth", required: true, kind: "date", placeholder: "Select date of birth", max: () => iso(adultMax()), dateStyle: "wheel", defaultDate: () => "1990-01-01" },
+  { id: "cityOfResidence", step: "personal", keys: ["cityOfResidence"], label: "Emirate you live in", required: true, kind: "choice", options: EMIRATE_OPTIONS },
 
   // ======== AFTER PAYMENT (Continue application) ========
   // ---- Trip Details ----
-  { id: "purposeOfTrip", step: "trip-details", keys: ["purposeOfTrip"], label: "Purpose of Trip", required: true, kind: "choice", options: PURPOSES },
+  { id: "purposeOfTrip", step: "trip", keys: ["purposeOfTrip"], label: "Purpose of Trip", required: true, kind: "choice", options: PURPOSES },
   // Departure + return (+ flexible) on one screen: "Fixed dates" range calendar or "Flexible" window.
-  { id: "dates", step: "trip-details", keys: ["travelStartDate", "travelEndDate", "datesFlexible"], label: "When are you travelling?", required: true, kind: "dates" },
-  { id: "travelingWith", step: "trip-details", keys: ["travelingWith"], label: "Who are you traveling with?", required: true, kind: "choice", options: COMPANIONS },
-  { id: "hotelCategory", step: "trip-details", keys: ["hotelCategory"], label: "Accommodation Preferences", required: true, kind: "choice", options: HOTELS },
-  { id: "fundingSource", step: "trip-details", keys: ["fundingSource"], label: "Funding Source", required: true, kind: "choice", options: FUNDING },
-  { id: "balanceRange", step: "trip-details", keys: ["balanceRange"], label: "Approx. Bank Balance Range", required: true, kind: "choice", options: BALANCE },
-  { id: "isFirstSchengenVisa", step: "trip-details", keys: ["isFirstSchengenVisa"], label: "Is this your first Schengen Visa?", required: true, kind: "yesno" },
-  { id: "previousRefusals", step: "trip-details", keys: ["previousRefusals"], label: "Have you ever had a visa refusal?", required: true, kind: "yesno",
+  { id: "dates", step: "trip", keys: ["travelStartDate", "travelEndDate", "datesFlexible"], label: "When are you travelling?", required: true, kind: "dates" },
+  { id: "travelingWith", step: "trip", keys: ["travelingWith"], label: "Who are you traveling with?", required: true, kind: "choice", options: COMPANIONS },
+  { id: "hotelCategory", step: "trip", keys: ["hotelCategory"], label: "Accommodation Preferences", required: true, kind: "choice", options: HOTELS },
+  { id: "fundingSource", step: "trip", keys: ["fundingSource"], label: "Funding Source", required: true, kind: "choice", options: FUNDING },
+  { id: "balanceRange", step: "trip", keys: ["balanceRange"], label: "Approx. Bank Balance Range", required: true, kind: "choice", options: BALANCE },
+  { id: "isFirstSchengenVisa", step: "trip", keys: ["isFirstSchengenVisa"], label: "Is this your first Schengen Visa?", required: true, kind: "yesno" },
+  { id: "previousRefusals", step: "trip", keys: ["previousRefusals"], label: "Have you ever had a visa refusal?", required: true, kind: "yesno",
     onPick: (v) => (v === "no" ? { refusalDetails: "" } : {}) },
-  { id: "refusalDetails", step: "trip-details", keys: ["refusalDetails"], label: "Refusal Details", required: true, kind: "textarea", applies: (f) => f.previousRefusals === "yes",
+  { id: "refusalDetails", step: "trip", keys: ["refusalDetails"], label: "Refusal Details", required: true, kind: "textarea", applies: (f) => f.previousRefusals === "yes",
     hint: "Please specify the country, date, and reason stated in the refusal letter. We will formulate a mitigation explanation in your cover letter.",
     placeholder: "e.g., Rejected by France in Nov 2025 due to insufficient justification of travel purpose..." },
-  { id: "willVisitOtherCountries", step: "trip-details", keys: ["willVisitOtherCountries"], label: "Will you be visiting other Schengen countries?", required: false, kind: "yesno",
+  { id: "willVisitOtherCountries", step: "trip", keys: ["willVisitOtherCountries"], label: "Will you be visiting other Schengen countries?", required: false, kind: "yesno",
     onPick: (v) => (v === "no" ? { additionalCountries: [] } : {}) },
-  { id: "additionalCountries", step: "trip-details", keys: ["additionalCountries"], label: "Additional Countries to Visit", required: false, kind: "countries", applies: (f) => f.willVisitOtherCountries === "yes",
+  { id: "additionalCountries", step: "trip", keys: ["additionalCountries"], label: "Additional Countries to Visit", required: false, kind: "countries", applies: (f) => f.willVisitOtherCountries === "yes",
     hint: "Add other Schengen countries you plan to visit during your trip" },
-  // ---- Passport & Residence ----
-  // Replaces "Do you have an Emirates ID?" (every UAE resident has one); website rows that answered that are not asked again.
-  { id: "residenceVisaValid", step: "passport", keys: ["residenceVisaValid"], label: "Is your UAE residence visa valid at least 3 months after your return date?", required: true, kind: "yesno",
+  // Last trip question, as on the website's trip step. Rows that answered the older "Emirates ID" question are not asked.
+  { id: "residenceVisaValid", step: "trip", keys: ["residenceVisaValid"], label: "Is your UAE residence visa valid at least 3 months after your return date?", required: true, kind: "yesno",
     applies: (f) => !f.hasEmiratesId,
     note: (f) => (f.residenceVisaValid === "no" ? { tone: "amber", text: "Most embassies need your UAE residence visa to be valid at least 3 months after you return. Renew it before your appointment; our team will guide you." } : null) },
-  { id: "dateOfBirth", step: "passport", keys: ["dateOfBirth"], label: "Date of Birth", required: true, kind: "date", placeholder: "Select date of birth", max: () => iso(adultMax()), dateStyle: "wheel", defaultDate: () => "1990-01-01" },
+  // ---- Passport, only when the number is still missing (older rows) ----
   { id: "hasValidPassport", step: "passport", keys: ["hasValidPassport"], label: "Do you have a valid passport?", required: true, kind: "yesno",
     hint: "Your passport should have at least 6 months validity from your travel date.",
-    onPick: (v) => (v === "no" ? { passportNumber: "", passportExpiry: "" } : {}),
+    onPick: (v) => (v === "no" ? { passportNumber: "" } : {}),
     note: (f) => (f.hasValidPassport === "no" ? { tone: "amber", text: "You'll need a valid passport (at least 6 months validity from your travel date) before your visa appointment. Our team will contact you." } : null) },
-  { id: "passportNumber", step: "passport", keys: ["passportNumber"], label: "Passport Number", required: true, kind: "text", placeholder: "e.g. A1234567", applies: (f) => f.hasValidPassport !== "no",
+  { id: "passportNumberAfter", step: "passport", keys: ["passportNumber"], label: "Passport Number", required: true, kind: "text", placeholder: "e.g. A1234567", applies: (f) => f.hasValidPassport !== "no",
     text: { caps: "characters", upper: true } },
-  { id: "passportExpiry", step: "passport", keys: ["passportExpiry"], label: "Passport Expiry Date", required: true, kind: "date", placeholder: "Select expiry date", applies: (f) => f.hasValidPassport === "yes",
-    min: () => todayIso(), dateStyle: "wheel", defaultDate: () => { const d = new Date(); return iso(new Date(d.getFullYear() + 3, d.getMonth(), d.getDate())); } },
   // ---- Spouse Information, only when married and the spouse travels ----
   { id: "spouseName", step: "spouse", keys: ["spouseFirstName", "spouseLastName"], label: "Spouse Name", required: true, kind: "pair", hint: "As on your spouse's passport.",
     fields: [{ key: "spouseFirstName", label: "Spouse First Name", placeholder: "Enter first name" }, { key: "spouseLastName", label: "Spouse Last Name", placeholder: "Enter last name" }] },
@@ -117,21 +139,22 @@ export const QUESTIONS: Question[] = [
 ];
 export const Q_BY_ID: Record<string, Question> = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
 /** Form keys asked after payment: the only answers Continue application may write (lib/data.ts saveAfterPayment). */
-export const POST_KEYS: (keyof WizardForm)[] = [...new Set(QUESTIONS.filter((q) => q.step !== "personal").flatMap((q) => q.keys))];
+export const POST_KEYS: (keyof WizardForm)[] = [...new Set(QUESTIONS.filter((q) => !isPreStep(q.step)).flatMap((q) => q.keys))];
 export const REVIEW = "review";
 
 export type Phase = "pre" | "post";
 /** Questions that apply to this form, in order. "pre" = the wizard before payment, "post" = Continue application. */
 export function activeQuestions(f: WizardForm, phase: Phase = "pre"): Question[] {
-  const steps = phase === "pre" ? visibleSteps(f) : postSteps(f);
+  // After payment: every Continue step in the website's order (spouse only when the spouse travels). Answered
+  // questions are skipped by the screen, so the customer sees exactly the steps the website's /continue shows.
+  const steps: QStep[] = phase === "pre" ? PRE_PAYMENT_STEPS.filter((s) => s !== "payment") as QStep[] : DETAIL_STEPS.filter((s) => s !== "spouse" || showSpouse(f));
   return steps.flatMap((s) => QUESTIONS.filter((q) => q.step === s && (!q.applies || q.applies(f))));
 }
-/** The questions Continue application asks for this row. Applications made on the website asked everything else
- *  there, so only passport (valid? + number) and employment are asked for them: the website clears the number on a
- *  "No" and does not store that answer. Shared by the screen and needsContinue. */
-export function continueQuestions(f: WizardForm, website: boolean): Question[] {
-  const qs = activeQuestions(f, "post");
-  return website ? qs.filter((x) => x.step === "employment" || x.id === "hasValidPassport" || x.id === "passportNumber") : qs;
+/** The questions Continue application asks for this row: the same after-payment steps for website and app rows
+ *  (the website's /continue asks trip, passport if missing, spouse and employment too). Shared by the screen and
+ *  needsContinue. `website` is kept for callers; it no longer changes the questions. */
+export function continueQuestions(f: WizardForm, _website?: boolean): Question[] {
+  return activeQuestions(f, "post");
 }
 const TOO_SOON = "Departure must be at least 15 days from today";
 /** firstError for Continue application. The 15-day minimum applies when the departure date is picked: a date already
@@ -144,7 +167,7 @@ export const continueError = (q: Question, f: WizardForm, saved: WizardForm) => 
 export const continueNeeded = (f: WizardForm, website: boolean) => continueQuestions(f, website).some((q) => !!continueError(q, f, f));
 /** Errors for one question: the website's step validation, limited to this question's fields. */
 export function questionErrors(q: Question, f: WizardForm): Errors {
-  const all = validateStep(q.step, f); const out: Errors = {};
+  const all = isPreStep(q.step) ? validateStep(q.step as WizardStep, f) : validateDetailStep(q.step as DetailStep, f); const out: Errors = {};
   for (const k of q.keys) if (all[k]) out[k] = all[k];
   return out;
 }
@@ -156,33 +179,38 @@ export const firstInvalid = (f: WizardForm, phase: Phase = "pre") => activeQuest
 export const firstUnanswered = (f: WizardForm) => activeQuestions(f).find((q) => !isAnswered(q, f) && !!firstError(q, f)) ?? null;
 
 /** Page ids: "q:<questionId>" or "review". Old pages (step slugs, v1 page names) map to the step's first question. */
-const LEGACY: Record<string, WizardStep> = { destination: "personal", nationality: "personal", residence: "personal", contact: "personal", passport: "personal", marital: "personal", work: "employment", purpose: "trip-details", dates: "trip-details", history: "trip-details", stay: "trip-details", funds: "trip-details" };
+const LEGACY: Record<string, WizardStep> = { nationality: "destination", residence: "personal", contact: "personal", passport: "personal", marital: "personal", spouse: "personal" };
 export function normalizePage(p: string | null | undefined, f: WizardForm): string {
   if (!p) return `q:${activeQuestions(f)[0].id}`;
   if (p === "q:nationalityOther") return "q:nationality"; // removed free-text question
   if (p === "q:firstName" || p === "q:lastName") return "q:name"; // merged screens
   if (p === "q:email" || p === "q:phone") return "q:contact";
   if (p === "q:travelStartDate" || p === "q:travelEndDate" || p === "q:datesFlexible") p = "q:dates"; // merged into one Dates screen
-  if (p === "q:countryOfResidence" || p === "q:hasEmiratesId") p = "q:cityOfResidence"; // no screen any more / asked after payment
+  if (p === "q:countryOfResidence" || p === "q:hasEmiratesId") p = "q:cityOfResidence"; // no screen any more
+  if (p === "q:maritalStatus" || p === "q:spouseAccompanying") p = "q:travellingWith"; // one "Travelling with" screen, as on the website
   if (p === REVIEW || p === "payment" || p === "documents") return REVIEW;
   // A question that is now asked after payment (old drafts): continue at the first open question, or Review.
-  if (p.startsWith("q:") && Q_BY_ID[p.slice(2)] && Q_BY_ID[p.slice(2)].step !== "personal") { const bad = firstInvalid(f); return bad ? `q:${bad.id}` : REVIEW; }
+  if (p.startsWith("q:") && Q_BY_ID[p.slice(2)] && !isPreStep(Q_BY_ID[p.slice(2)].step)) { const bad = firstInvalid(f); return bad ? `q:${bad.id}` : REVIEW; }
   if (p.startsWith("q:")) { const q = Q_BY_ID[p.slice(2)]; if (q && activeQuestions(f).includes(q)) return p; if (q) return pageForStep(q.step, f); }
-  const step = (["personal", "spouse", "employment", "trip-details"] as string[]).includes(p) ? (p as WizardStep) : LEGACY[p] ?? "personal";
+  const step = (["destination", "personal"] as string[]).includes(p) ? (p as WizardStep) : LEGACY[p] ?? "destination";
   return pageForStep(step, f);
 }
-export function pageForStep(step: WizardStep, f: WizardForm): string {
+export function pageForStep(step: WizardStep | QStep, f: WizardForm): string {
   if (step === "payment") return REVIEW;
   const qs = activeQuestions(f); const q = qs.find((x) => x.step === step) ?? qs[0];
   return `q:${q.id}`;
 }
-export const stepOfPage = (p: string): WizardStep => (p.startsWith("q:") ? Q_BY_ID[p.slice(2)]?.step ?? "personal" : "payment");
+export const stepOfPage = (p: string): WizardStep => {
+  if (!p.startsWith("q:")) return "payment";
+  const s = Q_BY_ID[p.slice(2)]?.step;
+  return s && isPreStep(s) ? (s as WizardStep) : "destination";
+};
 
 /** Progress grouped by the website's step names: one segment per visible step, filled by position inside it. */
 export function progressOf(f: WizardForm, page: string) {
-  const steps = visibleSteps(f); const qs = activeQuestions(f);
+  const steps = PRE_PAYMENT_STEPS; const qs = activeQuestions(f);
   const cur = page.startsWith("q:") ? Q_BY_ID[page.slice(2)] : null;
-  const curStep: WizardStep = cur ? cur.step : "payment";
+  const curStep: WizardStep = cur && isPreStep(cur.step) ? (cur.step as WizardStep) : "payment";
   const ci = steps.indexOf(curStep);
   const segs = steps.map((s: WizardStep, i) => {
     if (s === "payment") return { step: s, fill: curStep === "payment" ? 1 : 0, count: 1, index: curStep === "payment" ? 1 : 0 };
@@ -195,6 +223,7 @@ export function progressOf(f: WizardForm, page: string) {
 
 /** Human value for the review list (labels from the website's options). */
 export function displayValue(q: Question, f: WizardForm, t: (s: string) => string = (s) => s, fmtDate: (s: string) => string = (s) => s): string {
+  if (q.kind === "traveller") return [f.firstName, f.lastName].filter(Boolean).join(" ");
   const v = f[q.keys[0]] as any;
   switch (q.kind) {
     case "choice": return v ? t(optLabel(q.options!, v)) : "";

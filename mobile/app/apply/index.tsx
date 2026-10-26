@@ -27,8 +27,9 @@ import { useT } from "../../lib/i18n";
 import { SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp } from "../../lib/api";
 import { money, startPayment, usePaying, useQuote } from "../../lib/payments";
-import { submitApplication, guestSubmit, listRequirements, DraftConflictError, type Requirement } from "../../lib/data";
+import { submitApplication, guestSubmit, listRequirements, patchNotes, DraftConflictError, type Requirement } from "../../lib/data";
 import { PrefillOffer } from "../../components/wizard/extras";
+import { fetchTravellers, applyTravellerToForm, markTravellerUsed } from "../../lib/travellers";
 import { QuestionView } from "../../components/wizard/QuestionView";
 import { SyncIndicator, DraftConflictSheet } from "../../components/wizard/sync";
 import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, markPrefilled, markAsked, shouldAsk, type ProfileChange } from "../../lib/profile";
@@ -36,8 +37,8 @@ import { useNetInfo } from "@react-native-community/netinfo";
 import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
 import { WORLD } from "../../lib/world";
-import { emptyForm, type WizardForm, type WizardStep, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, hasAnswers, safeDecode } from "../../lib/wizard";
-import { type Question, setAccountEmail, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
+import { emptyForm, type WizardForm, type WizardStep, type Traveller, TRAVELLER_KEYS, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, hasAnswers, safeDecode } from "../../lib/wizard";
+import { type Question, setAccountEmail, setTravellers, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
 
 const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
@@ -48,7 +49,7 @@ const AUTO_MS = 260;
 const PREFILL_KEYS: (keyof WizardForm)[] = ["cityOfResidence", "hasEmiratesId", "maritalStatus",
   "spouseFirstName", "spouseLastName", "employmentStatus", "jobTitle", "companyName", "employmentStartDate", "monthlySalary", "averageMonthlyIncome"];
 const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f, nationality: SCHENGEN_VISA_REQUIRED.includes(f.nationality) ? f.nationality : "" });
-const STEP_ORDER: WizardStep[] = ["personal", "spouse", "employment", "trip-details", "payment"];
+const STEP_ORDER: WizardStep[] = ["destination", "personal", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
 /** Where you are: Details (the questions before payment) -> Review -> Payment. The line after Details fills as you answer. */
@@ -90,7 +91,24 @@ export default function Apply() {
   const net = useNetInfo(); const offline = net.isConnected === false;
   const [reqs, setReqs] = useState<Requirement[]>([]);
   const [prefill, setPrefill] = useState<{ values: Partial<WizardForm>; name: string } | null>(null); const prefillAsked = useRef<string | null>(null);
-  const [fromProfile, setFromProfile] = useState<{ key: string; values: Partial<WizardForm> } | null>(null); // answers filled from the profile in this draft
+  const [fromProfile, setFromProfile] = useState<{ key: string; values: Partial<WizardForm>; source?: "profile" | "traveller" } | null>(null); // answers filled from the profile / a saved traveller in this draft
+  // Saved travellers of the account (lib/travellers.ts): null while loading. The "Who is travelling?" question
+  // applies once the list is in (setTravellers); the silent profile prefill waits for it and steps aside when there are any.
+  const [travellers, setTravellersState] = useState<Traveller[] | null>(null);
+  const [pickedTraveller, setPickedTraveller] = useState<string | null>(null); // traveller id, or "none" for "Someone else"
+  useEffect(() => {
+    let on = true;
+    if (!uid) { setTravellers([]); setTravellersState([]); return; }
+    setTravellersState(null);
+    fetchTravellers().then((list) => { if (!on) return; setTravellers(list); setTravellersState(list); }).catch(() => { if (on) { setTravellers([]); setTravellersState([]); } });
+    return () => { on = false; };
+  }, [uid]);
+  useEffect(() => () => setTravellers([]), []); // leaving the wizard: the next open loads them again
+  // The picked traveller is recorded on the account's draft row (notes.travellerId), once the row exists.
+  useEffect(() => {
+    if (!pickedTraveller || !draftId || !session) return;
+    patchNotes(draftId, { travellerId: pickedTraveller === "none" ? undefined : pickedTraveller }).catch(() => {});
+  }, [pickedTraveller, draftId, session]);
   const [profileAsk, setProfileAsk] = useState<{ uid: string; key: string; changes: ProfileChange[] } | null>(null);
   const [profileBusy, setProfileBusy] = useState(false); const [profileErr, setProfileErr] = useState<string | null>(null); const [profileSavedFor, setProfileSavedFor] = useState<string | null>(null);
   const [milestone, setMilestone] = useState<string | null>(null); const prevStep = useRef<WizardStep | null>(null);
@@ -112,13 +130,14 @@ export default function Apply() {
   // stable answers of their last application. A draft that already has personal answers, or the account's draft that
   // resume is about to load (lib/form.tsx), is never touched. Every field stays editable; nothing is written back here.
   useEffect(() => {
-    if (!hydrated || !uid || submitted || prefillAsked.current === `${uid}:${activeKey}`) return;
+    if (!hydrated || !uid || submitted || travellers === null || prefillAsked.current === `${uid}:${activeKey}`) return;
     prefillAsked.current = `${uid}:${activeKey}`; // once per account and draft ("Start Fresh" / a new application gets its own)
     if (draftId || !isFreshDraft(fRef.current)) return;
     const key = activeKey; let on = true; // `on` turns false when the account or the draft changes meanwhile
+    const hasSaved = travellers.length > 0; // saved travellers: the customer picks one explicitly instead of a silent prefill
     loadProfile(uid).then((r) => {
       if (!on || !r || !isFreshDraft(fRef.current) || (r.hasDraft && !hasAnswers(fRef.current))) return;
-      const { form: nf, filled } = applyProfile(fRef.current, r.profile);
+      const { form: nf, filled } = hasSaved ? { form: fRef.current, filled: [] as ReturnType<typeof applyProfile>["filled"] } : applyProfile(fRef.current, r.profile);
       if (filled.length) {
         fRef.current = nf; setForm(nf); markPrefilled(key, uid);
         setFromProfile({ key, values: Object.fromEntries(filled.map((k) => [k, nf[k]])) });
@@ -133,7 +152,7 @@ export default function Apply() {
       if (Object.keys(values).length) setPrefill({ values, name: [...new Set(what)].join(" · ") || [w.firstName, w.lastName].filter(Boolean).join(" ") });
     }).catch(() => {});
     return () => { on = false; };
-  }, [hydrated, uid, activeKey]);
+  }, [hydrated, uid, activeKey, travellers]);
   // Review: if answers that came from the profile were changed, ask once whether to update the profile too.
   const onReview = rawPage === REVIEW;
   useEffect(() => {
@@ -199,14 +218,14 @@ export default function Apply() {
     if (!hydrated) return;
     if (lastSlug.current !== undefined && p.step === lastSlug.current) return;
     if (p.step === undefined) { if (lastSlug.current === undefined) lastSlug.current = stepOfPage(page); return; }
-    let s = parseStep(p.step);
-    if (s === "spouse" && !showSpouse(fRef.current)) s = "trip-details";
+    const s = parseStep(p.step);
     lastSlug.current = s; setDir(-1); setPage(pageForStep(s, fRef.current)); setShowErr(false); setEditing(null);
   }, [hydrated, p.step]);
   // Keep ?step= in sync with the current step, like the site.
   useEffect(() => { if (hydrated && navReady && lastSlug.current !== undefined && step !== lastSlug.current) { lastSlug.current = step; router.setParams({ step }); } }, [step, navReady, hydrated]);
   // Signed-in users: always the account email (the email question is skipped), so the application shows up in their account.
-  useEffect(() => { const e = session?.user.email; if (e) setForm((x) => (x.email === e ? x : { ...x, email: e })); }, [session]);
+  // Re-applied whenever the email changes underneath (a new or switched draft, a traveller prefill), not only on sign-in.
+  useEffect(() => { const e = session?.user.email; if (e && f.email !== e) setForm((x) => (x.email === e ? x : { ...x, email: e })); }, [session, f.email]);
   // Every answer: save the account draft right away (local autosave runs on every change in lib/form.tsx).
   useEffect(() => { if (hydrated && session && !submitted) flushDraft(); }, [page]);
   // Funnel analytics (lib/analytics.ts): question ids, step names and the destination only; never answers.
@@ -234,8 +253,11 @@ export default function Apply() {
   const patch = (x: Partial<WizardForm>) => { setForm((y) => ({ ...y, ...x })); if (submitted) setSubmitted(null); };
   const goTo = (pg: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setPage(pg); setShowErr(false); };
 
-  const advance = (nf: WizardForm = fRef.current) => {
+  const advance = (nf0: WizardForm = fRef.current) => {
     if (!q) return;
+    // Signed in: the email question is never shown, so the account email always counts as answered.
+    const nf = session?.user.email && nf0.email !== session.user.email ? { ...nf0, email: session.user.email } : nf0;
+    if (nf !== nf0) { fRef.current = nf; patch({ email: nf.email }); }
     const e = firstError(q, nf);
     if (e) { hError(); setShowErr(true); setErrTick((n) => n + 1); AccessibilityInfo.announceForAccessibility(t(e)); return; }
     tap();
@@ -253,6 +275,23 @@ export default function Apply() {
   /** Tap on a choice / Yes-No / country: save, then auto-advance (unless the website shows a warning for that answer). */
   const pick = (v: string) => {
     if (!q) return;
+    if (q.kind === "traveller") {
+      // "Who is travelling?": fill the answers the saved traveller carries, then jump to the first question still open.
+      const tr = v === "none" ? null : (travellers ?? []).find((x) => x.id === v) ?? null;
+      let nf = fRef.current;
+      if (tr) {
+        nf = cleanAfterPrefill(applyTravellerToForm(nf, tr)); fRef.current = nf; patch(nf);
+        setPickedTraveller(tr.id); markTravellerUsed(tr.id);
+        setFromProfile({ key: activeKey, source: "traveller", values: Object.fromEntries(TRAVELLER_KEYS.filter((k) => tr[k] !== undefined && tr[k] !== "").map((k) => [k, nf[k]])) });
+        AccessibilityInfo.announceForAccessibility(t("Details filled from your saved traveller. Check them and edit if needed."));
+      } else setPickedTraveller("none");
+      if (auto.current) clearTimeout(auto.current);
+      auto.current = setTimeout(() => {
+        if (editing) { setEditing(null); goTo(REVIEW, 1); return; }
+        const u = firstUnanswered(nf); goTo(u ? `q:${u.id}` : REVIEW, 1);
+      }, reduce ? 80 : AUTO_MS);
+      return;
+    }
     if (v === OTHER_NATIONALITY && q.allNames) { select(); setAllMode(true); return; }
     const changes = { [q.keys[0]]: v, ...(q.onPick?.(v, fRef.current) ?? {}) } as Partial<WizardForm>;
     const nf = { ...fRef.current, ...changes }; fRef.current = nf; patch(changes);
@@ -347,8 +386,8 @@ export default function Apply() {
 
   // ---------------- Review ----------------
   if (page === REVIEW) {
-    const qs = activeQuestions(f);
-    const groups = (["personal", "spouse", "employment", "trip-details"] as const).map((s) => ({ s, qs: qs.filter((x) => x.step === s) })).filter((g) => g.qs.length);
+    const qs = activeQuestions(f).filter((x) => x.kind !== "traveller"); // the picker owns no answer: its values show on the other rows
+    const groups = (["destination", "personal"] as const).map((s) => ({ s, qs: qs.filter((x) => x.step === s) })).filter((g) => g.qs.length);
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         {header}
@@ -437,7 +476,7 @@ export default function Apply() {
     <QuestionView q={q} f={f} patch={patch} pick={pick} advance={() => advance()} showErr={showErr} errTick={errTick} settled={settled}
       header={header} entering={entering} pageKey={page} titleRef={titleRef} allMode={allMode} doneLabel={editing ? t("Save") : undefined}
       chips={prefilledHere ? <View testID="from-profile" style={{ flexDirection: "row", alignItems: "center", gap: S.xxs, paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}>
-        <Icon name="person.crop.circle" size={12} color={c.tint} /><Text variant="caption" tone="secondary" weight="600">{t("From your profile")}</Text></View> : undefined}
+        <Icon name="person.crop.circle" size={12} color={c.tint} /><Text variant="caption" tone="secondary" weight="600">{t(fromProfile?.source === "traveller" ? "From your saved travellers" : "From your profile")}</Text></View> : undefined}
       belowTitle={!!prefill && !allMode ? <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} /> : undefined}>
       <DraftConflictSheet />
       <Modal visible={resumeAsk} transparent animationType="fade" onRequestClose={() => setResumeAsk(false)}>

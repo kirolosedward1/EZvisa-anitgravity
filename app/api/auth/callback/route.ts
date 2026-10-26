@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server"
-import { publicOrigin } from "@/lib/auth/redirect"
+import { handleAuthCallback } from "@/lib/auth/handle-auth-callback"
 
-/** Older sign-up emails pointed here; the real handler is /auth/callback. Keeps every query parameter. */
+export const dynamic = "force-dynamic"
+
+/** Older sign-up emails pointed here. Same rules as /auth/callback, including a session that is already signed in. */
 export function GET(request: Request) {
-  const url = new URL(request.url)
-  return NextResponse.redirect(new URL(`/auth/callback${url.search}`, publicOrigin(request)), 307)
+  return handleAuthCallback(request)
 }

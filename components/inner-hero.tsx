@@ -2,9 +2,11 @@
 
 import React from "react"
 import { motion } from "framer-motion"
-import Image from "next/image"
+import { Image } from "@/components/image"
 import { usePathname } from "next/navigation"
 import { destinations } from "@/lib/destinations"
+import { SCHENGEN_META } from "@/lib/countries"
+import { LangText } from "@/components/lang-text"
 import { PhotoHeroOverlay } from "@/components/photo-hero-overlay"
 import { stableIndex } from "@/lib/stable-index"
 
@@ -15,6 +17,8 @@ interface InnerHeroProps {
   backgroundImage?: string
   randomizeBackground?: boolean
   gradientType?: "default" | "ocean" | "sunset" | "aurora"
+  /** Kept for call sites written for the split hero; every page now gets the photo hero. */
+  variant?: "photo" | "plain"
   children?: React.ReactNode
   className?: string
 }
@@ -24,11 +28,14 @@ export function InnerHero({
   title,
   description,
   backgroundImage,
-  randomizeBackground = false,
+  // Every inner page gets a destination photo (fixed per page, so it doesn't flash between renders).
+  randomizeBackground = true,
   children,
   className = "",
 }: InnerHeroProps) {
-  const pathname = usePathname()
+  // The server renders /ar/* via a rewrite (it sees "/documents", the browser sees "/ar/documents"):
+  // use the locale-free path so the picked hero is identical on both sides (fixes React #418 on /ar).
+  const pathname = usePathname()?.replace(/^\/ar(?=\/|$)/, "") || "/"
   const picked = randomizeBackground ? destinations[stableIndex(pathname || "inner", destinations.length)] : undefined
   const named = destinations.find((destination) => destination.image === backgroundImage)
   const heroBgImage = backgroundImage || picked?.image
@@ -143,7 +150,7 @@ export function InnerHero({
           </motion.div>
           {heroBgCountryName && (
             <div className={`absolute bottom-4 end-6 md:bottom-5 md:end-8 text-[9px] md:text-[10px] tracking-widest font-semibold uppercase z-20 pointer-events-none select-none ${heroBgImage ? "text-white/70" : "text-[#0A0F1F]/40"}`}>
-              {heroBgCountryName}
+              <LangText en={heroBgCountryName} ar={SCHENGEN_META[heroBgCountryName]?.ar ?? heroBgCountryName} />
             </div>
           )}
         </div>

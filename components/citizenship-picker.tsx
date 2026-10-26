@@ -9,10 +9,13 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import {
   CITIZENSHIP_OPTIONS,
   citizenshipName,
+  citizenshipNameAr,
   citizenshipSearchValue,
   toCitizenshipIso,
 } from "@/lib/nationalities"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
 import { cn } from "@/lib/utils"
 
 export function CitizenshipPicker({
@@ -29,8 +32,10 @@ export function CitizenshipPicker({
   className?: string
 }) {
   const [open, setOpen] = useState(false)
+  const searchPlaceholder = useMessage("citizenship.search")
   const iso = toCitizenshipIso(value)
   const name = citizenshipName(value)
+  const nameAr = citizenshipNameAr(value)
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -45,7 +50,9 @@ export function CitizenshipPicker({
           {iso ? (
             <span className="flex min-w-0 items-center gap-2">
               <CountryFlag iso={iso} title={name} />
-              <span className="truncate text-foreground">{name}</span>
+              <span className="truncate text-foreground">
+                <LangText en={name} ar={nameAr || name} />
+              </span>
             </span>
           ) : (
             <span className="font-normal text-[#5B6475]">
@@ -57,9 +64,9 @@ export function CitizenshipPicker({
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
         <Command>
-          <CommandInput placeholder="Search by country or code" />
+          <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
-            <CommandEmpty>No nationality found.</CommandEmpty>
+            <CommandEmpty><Msg id="citizenship.empty" /></CommandEmpty>
             <CommandGroup>
               {CITIZENSHIP_OPTIONS.map((country) => (
                 <CommandItem
@@ -72,7 +79,9 @@ export function CitizenshipPicker({
                 >
                   <Check className={cn("me-2 size-4", iso === country.iso ? "opacity-100" : "opacity-0")} />
                   <span className="me-2"><CountryFlag iso={country.iso} title={country.name} /></span>
-                  <span className="flex-1">{country.name}</span>
+                  <span className="flex-1">
+                    <LangText en={country.name} ar={citizenshipNameAr(country.iso) || country.name} />
+                  </span>
                   <span className="ltr-isolate text-xs text-muted-foreground">{country.iso}</span>
                 </CommandItem>
               ))}

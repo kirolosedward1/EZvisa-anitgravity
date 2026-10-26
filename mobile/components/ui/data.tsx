@@ -115,7 +115,7 @@ export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
   // The step dot grows with the text and stays centred on the first line of its label (body text, capped at 2x).
   const k = useContentScale(1.6); const dot = Math.round(14 * k); const mark = Math.round(7 * k); const line = (T.body.lineHeight ?? 22) * useContentScale(2);
   const steps = buildTimeline(a);
-  const tone = (st: Step["state"], key: Step["key"]) => (st === "done" || st === "current" ? c.tint : st === "attention" ? c.orange : st === "failed" ? (key === "decision" && a.status === "cancelled" ? c.secondaryLabel : c.red) : c.tertiaryLabel);
+  const tone = (st: Step["state"], key: Step["key"]) => (st === "done" || st === "current" ? c.tint : st === "attention" ? c.orange : st === "failed" ? (key === "file" && a.status === "cancelled" ? c.secondaryLabel : c.red) : c.tertiaryLabel);
   return (
     <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} testID="timeline">
       {steps.map((s, i) => {

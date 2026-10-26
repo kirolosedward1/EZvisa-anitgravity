@@ -29,6 +29,8 @@ export type Notes = {
   lastEditedOn?: string;
   /** ISO time the app submitted the case (recorded at submit; drafts are created earlier, so created_at is not it). */
   submittedAt?: string;
+  /** public.travellers rows the main applicant / the spouse were filled from (lib/travellers.ts), if any. */
+  travellerId?: string; spouseTravellerId?: string;
 };
 export type Application = VisaRow & {
   status: AppStatus; reference: string; country_id: string | null;
@@ -175,7 +177,13 @@ function columns(f: WizardForm, email: string, step: string, prev: Notes = {}, q
       // A draft started on the website keeps its source; the step is always overwritten (undefined drops a stale question).
       source: prev.source ?? "mobile-app", platform: Platform.OS, lastEditedOn: "app", wizardStep: step, wizardQuestion: question ? question.replace(/^q:/, "") : undefined,
       ...(t(f.email).toLowerCase() !== email ? { contactEmail: t(f.email).toLowerCase() } : {}),
-      wizard: { ...f },
+      // The website's traveller step: a passport number means a valid passport, and "Just me" / "With my spouse"
+      // sets the marital status (components/apply/nationality-step.tsx).
+      wizard: {
+        ...f,
+        ...(t(f.passportNumber) && !f.hasValidPassport ? { hasValidPassport: "yes" as const } : {}),
+        ...(!f.maritalStatus && f.spouseAccompanying ? { maritalStatus: f.spouseAccompanying === "yes" ? ("married" as const) : ("single" as const) } : {}),
+      },
     } satisfies Notes),
   };
 }

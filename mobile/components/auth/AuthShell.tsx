@@ -1,10 +1,9 @@
 // Shared frame for the auth screens: top bar (logo + close, or back), large title, optional one-line subtitle, content.
 import { useEffect, useState } from "react";
-import { I18nManager, KeyboardAvoidingView, Platform, ScrollView, TextInput, TextInputProps, View } from "react-native";
+import { I18nManager, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TextInputProps, View } from "react-native";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import NetInfo from "@react-native-community/netinfo";
-import { Logo } from "../Logo";
 import { Button, Icon, PressScale, Text } from "../ui";
 import { useColors, T, S, R, HIT } from "../../lib/theme";
 import { tap } from "../../lib/haptics";
@@ -21,12 +20,12 @@ export function AuthShell({ title, subtitle, nav = "close", children, testID }: 
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: c.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined} testID={testID}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: S.lg, paddingTop: Platform.OS === "ios" ? S.md : insets.top + S.xs, minHeight: 56 }}>
         {nav === "back" ? (
-          <PressScale onPress={back} accessibilityRole="button" accessibilityLabel={t("Back")} hitSlop={4} style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: "center", justifyContent: "center" }}>
+          <PressScale onPress={back} accessibilityRole="button" accessibilityLabel={t("Back")} hitSlop={4} style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, alignItems: "center", justifyContent: "center" }}>
             <Icon name="chevron.left" size={16} color={c.label} weight="bold" style={{ transform: [{ scaleX: rtl || I18nManager.isRTL ? -1 : 1 }] }} />
           </PressScale>
-        ) : <Logo height={22} />}
+        ) : <View style={{ width: 40, height: 40 }} />}
         {nav === "close" && (
-          <PressScale onPress={() => { tap(); closeAuth(); }} accessibilityRole="button" accessibilityLabel={t("Close")} hitSlop={4} style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, alignItems: "center", justifyContent: "center" }}>
+          <PressScale onPress={() => { tap(); closeAuth(); }} accessibilityRole="button" accessibilityLabel={t("Close")} hitSlop={4} style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: c.border, alignItems: "center", justifyContent: "center" }}>
             <Icon name="xmark" size={14} color={c.label} weight="bold" />
           </PressScale>
         )}

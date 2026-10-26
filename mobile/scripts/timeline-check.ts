@@ -35,7 +35,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 { const a = row({}); const s = buildTimeline(a);
   ok(st(s, "submitted").state === "done" && st(s, "submitted").at === base.created_at, "A website row: Submitted done at created_at");
   ok(st(s, "paid").state === "current" && st(s, "paid").at === null, "A unpaid: Paid is current, no time");
-  ok(["documents", "appointment", "decision"].every((k) => st(s, k as any).state === "todo"), "A later steps not done");
+  ok(["documents", "appointment", "file"].every((k) => st(s, k as any).state === "todo"), "A later steps not done");
   ok(next(a).kind === "pay", "A next action: Pay"); }
 
 // B. App draft submitted in the app, paid, documents partly uploaded.
@@ -56,9 +56,9 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
   const s = buildTimeline(a);
   ok(st(s, "documents").state === "done" && st(s, "documents").at === "2026-10-07T10:00:00Z", "D Documents done at the last real upload time");
   ok(st(s, "appointment").state === "done" && st(s, "appointment").at === future && st(s, "appointment").scheduled === true, "D Appointment shows the scheduled time");
-  ok(st(s, "decision").state === "current", "D Decision is the current step");
+  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download", "D File ready to download is done");
   ok(next(a).kind === "appointment" && next(a).cta === "View appointment", "D next action: View appointment");
-  ok(doneCount(s) === 4, "D progress 4 of 5"); }
+  ok(doneCount(s) === 5, "D progress 5 of 5"); }
 
 // E. Appointment already passed, no decision yet.
 { const a = row({ application_status: "ready", payment_status: "paid", appointment_at: past }, { ...app, wizard: selfEmployed, uploads: ALL.map((t) => up(t, "2026-10-04T10:00:00Z")) });
@@ -66,17 +66,18 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 
 // F. Refused (status rejected).
 { const a = row({ application_status: "rejected", payment_status: "paid" }, { ...app, wizard: selfEmployed }); const s = buildTimeline(a);
-  ok(st(s, "decision").state === "failed" && st(s, "decision").label === "Visa refused" && st(s, "decision").at === null, "F Decision failed: Visa refused, no time");
-  ok(!s.some((x) => x.state === "current"), "F nothing is current after a decision");
+  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download" && st(s, "file").at === null, "F refused after the file was delivered: File ready done, no time");
+  ok(!s.some((x) => x.state === "current"), "F nothing is current once the case has ended");
   ok(next(a).title === "Visa refused", "F next action: Visa refused"); }
 
 // G. Granted (status completed).
 { const s = buildTimeline(row({ application_status: "completed", payment_status: "paid" }, { ...app }));
-  ok(st(s, "decision").state === "done" && st(s, "decision").label === "Visa granted", "G Decision done: Visa granted"); }
+  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download", "G granted: File ready done");
+  ok(s.at(-1)!.key === "file", "G the last step is File ready to download"); }
 
 // H. Cancelled by EZvisa after payment.
 { const s = buildTimeline(row({ application_status: "cancelled", payment_status: "paid" }, { ...app, submittedAt: "2026-10-02T09:30:00Z" }));
-  ok(st(s, "submitted").state === "done" && st(s, "paid").state === "done" && st(s, "decision").label === "Cancelled" && st(s, "decision").state === "failed", "H staff-cancelled paid case: Cancelled"); }
+  ok(st(s, "submitted").state === "done" && st(s, "paid").state === "done" && st(s, "file").label === "Cancelled" && st(s, "file").state === "failed", "H staff-cancelled paid case: Cancelled"); }
 
 // I. Discarded by the customer while still a draft: nothing is marked done.
 { const a = row({ application_status: "cancelled" }, { ...app, discarded_at: "2026-10-05T10:00:00Z" }); const s = buildTimeline(a);
@@ -103,7 +104,9 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 // N. The passport number is asked after payment too: employment done but no number (column or wizard) -> Continue application.
 { ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: { ...selfEmployed, hasValidPassport: "yes" } })).kind === "continue", "N paid, passport number missing: Continue application");
   ok(next(row({ payment_status: "paid", passport_number: null }, { ...app, wizard: afterPay })).kind !== "continue", "N paid, every after-payment answer in the wizard notes: no Continue");
-  ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { wizard: selfEmployed })).kind !== "continue", "N paid, number only in the passport_number column (website row): no Continue");
+  { const { passportNumber: _n, ...noNumber } = afterPay;
+    ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { wizard: noNumber })).kind !== "continue", "N paid, number only in the passport_number column (website row): no Continue"); }
+  ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { wizard: selfEmployed })).kind === "continue", "N website row with trip details still missing: Continue application (the website's /continue asks them too)");
   ok(next(row({ payment_status: "paid", passport_number: "N1234567" }, { ...app, wizard: { ...selfEmployed, passportNumber: "N1234567" } })).kind === "continue", "N paid app row with trip and passport answers missing: Continue application");
   ok(next(row({ payment_status: "pending", passport_number: null }, { ...app, wizard: selfEmployed })).kind === "pay", "N unpaid, no number: still Pay, never Continue"); }
 
@@ -137,7 +140,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 // R. Staff rejected a document the customer uploaded on the website (known only from has_passport). The review was
 //    written after the upload, and writing it moved updated_at on: the rejection must still show.
 { const a = row({ application_status: "reviewing", payment_status: "paid", passport_number: "N1234567", has_passport: true, updated_at: "2026-10-22T10:00:00.412+00:00",
-    document_reviews: { passportCopy: { status: "rejected", reason: "Blurry", at: "2026-10-22T10:00:00.000Z" } } }, { employmentStatus: "student" });
+    document_reviews: { passportCopy: { status: "rejected", reason: "Blurry", at: "2026-10-22T10:00:00.000Z" } } }, { employmentStatus: "student", wizard: afterPay });
   ok(st(buildTimeline(a), "documents").state === "attention", "R website-flag document rejected by staff: Documents needs attention");
   ok(next(a).kind === "upload" && next(a).title.startsWith("Re-upload"), `R website-flag document rejected: next action Re-upload (got "${next(a).title}")`); }
 
@@ -154,7 +157,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 // U. A website row after the customer answered "Continue application" in the app: it stays a website row, so its real
 //    submit time (created_at) is kept and Continue is not asked a second time with the app's full question set.
 { const webNotes = { employmentStatus: "student" };
-  const saved = { ...keepOrigin(webNotes), lastEditedOn: "app", wizard: { employmentStatus: "student", hasValidPassport: "yes", passportNumber: "N1234567" } };
+  const saved = { ...keepOrigin(webNotes), lastEditedOn: "app", wizard: { ...afterPay, employmentStatus: "student", hasValidPassport: "yes", passportNumber: "N1234567" } };
   const a = row({ application_status: "reviewing", payment_status: "paid", passport_number: "N1234567" }, saved);
   ok(saved.source !== "mobile-app", "U keepOrigin: a website row is not relabelled as an app row");
   ok(st(buildTimeline(a), "submitted").at === base.created_at, "U website row after Continue: Submitted keeps its real time");

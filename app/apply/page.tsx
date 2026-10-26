@@ -3,17 +3,23 @@
 import { DEFAULT_RESIDENCE, coerceResidence } from "@/lib/residence"
 import { useState, Suspense, useCallback, useEffect, useRef } from "react"
 import { NationalityStep } from "@/components/apply/nationality-step"
-import { TripDetailsStep } from "@/components/apply/trip-details-step"
+import { DestinationStep } from "@/components/apply/destination-step"
 import { PaymentStep } from "@/components/apply/payment-step"
-import { SpouseStep } from "@/components/apply/spouse-step"
 import { WizardShell } from "@/components/apply/wizard-shell"
 import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
+import { Msg } from "@/components/msg"
 import { useSearchParams, useRouter } from "next/navigation"
+import { useSiteLocale } from "@/components/locale-provider"
+import { localizePath } from "@/lib/route-path"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { toCitizenshipIso } from "@/lib/nationalities"
+import { fetchAccountNationality, readRememberedNationality, rememberNationality } from "@/lib/remembered-nationality"
+import { TRAVELLER_NONE, applyTravellerToWebForm, isFreshTravellerForm, markTravellerUsed, useTravellers } from "@/lib/travellers-client"
+import { defaultTraveller, type Traveller } from "@/lib/shared/wizard-contract"
+import { citizenshipName } from "@/lib/nationalities"
 
 import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
 const AUTO_SAVE_DELAY = 300
@@ -30,6 +36,8 @@ interface WizardFormData {
   whatsappOptIn?: boolean
   dateOfBirth: string
   passportNumber: string
+  /** Saved traveller the traveller step was filled from ("none" = the customer chose "Someone else"). */
+  travellerId?: string
   maritalStatus: "single" | "married" | "divorced" | "widowed" | ""
   employmentStatus: "employed" | "business" | "freelancer" | "student" | "unemployed" | "retired" | ""
   spouseNationality?: string
@@ -114,6 +122,7 @@ const defaultFormData: WizardFormData = {
   whatsappOptIn: true,
   dateOfBirth: "",
   passportNumber: "",
+  travellerId: "",
   maritalStatus: "",
   employmentStatus: "",
   jobTitle: "",
@@ -178,23 +187,16 @@ const defaultFormData: WizardFormData = {
   spousePhoto: null,
 }
 
-function localizeApplyPath(path: string) {
-  if (typeof window === "undefined") return path
-  const pathName = window.location.pathname
-  const onArabic = pathName === "/ar" || pathName.startsWith("/ar/")
-  if (!onArabic || path.startsWith("/ar")) return path
-  return `/ar${path}`
-}
-
 function ApplyPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const arabic = useSiteLocale() === "ar"
+  const localizeApplyPath = (path: string) => localizePath(path, arabic)
 
   const [formData, setFormData] = useState<WizardFormData>(defaultFormData)
   const [isInitialized, setIsInitialized] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [direction, setDirection] = useState(1)
-  const [tripScreen, setTripScreen] = useState(0)
   const [isTransitioning, setIsTransitioning] = useState(false)
   const [paymentError, setPaymentError] = useState<string | null>(null)
 
@@ -212,6 +214,23 @@ function ApplyPageContent() {
     if (c.countryOfResidence !== formData.countryOfResidence || c.cityOfResidence !== formData.cityOfResidence) setFormData(c)
   }, [formData])
 
+  // Preselect the nationality next time: remember every valid choice on this device.
+  useEffect(() => {
+    if (formData.nationality) rememberNationality(formData.nationality)
+  }, [formData.nationality])
+
+  // Nothing on this device (new browser): use the signed-in customer's latest application, if any.
+  useEffect(() => {
+    if (!isInitialized) return
+    let alive = true
+    fetchAccountNationality().then((iso) => {
+      if (alive && iso) setFormData((f) => (f.nationality ? f : { ...f, nationality: iso }))
+    })
+    return () => {
+      alive = false
+    }
+  }, [isInitialized])
+
   const handleContinuePrevious = useCallback(() => {
     if (pendingSavedData) {
       const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
@@ -222,6 +241,7 @@ function ApplyPageContent() {
       setFormData({
         ...defaultFormData,
         ...pendingSavedData,
+        nationality: pendingSavedData.nationality || readRememberedNationality(),
         ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
         ...(toCountry && { destination: toCountry }),
         ...(travelStartDate && { travelStartDate }),
@@ -242,6 +262,7 @@ function ApplyPageContent() {
     
     setFormData({
       ...defaultFormData,
+      nationality: readRememberedNationality(),
       ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
       ...(toCountry && { destination: toCountry }),
       ...(travelStartDate && { travelStartDate }),
@@ -250,7 +271,6 @@ function ApplyPageContent() {
     
     const slug = getStepSlug(1)
     setCurrentStep(1)
-    setTripScreen(0)
     router.replace(
       localizeApplyPath(`/apply?step=${slug}${fromCountry ? `&from=${encodeURIComponent(fromCountry)}` : ""}${toCountry ? `&to=${encodeURIComponent(toCountry)}` : ""}`),
       { scroll: false }
@@ -287,29 +307,21 @@ function ApplyPageContent() {
 
   const handleNext = useCallback(() => {
     trackEvent("application_step_completed", { step: currentStep, destination: formData.destination })
-    const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-    // 1 trip, 2 traveller, 3 spouse only when they are travelling, 4 review and pay.
-    let nextStep = Math.min(currentStep + 1, 4)
-    if (currentStep === 2 && !shouldShowSpouse) nextStep = 4
+    // 1 destination, 2 traveller, 4 review and pay. Trip and spouse details come after payment (/continue/[id]).
+    const nextStep = currentStep <= 1 ? 2 : 4
     setDirection(1)
     setCurrentStep(nextStep)
     scrollToWizardTop()
-  }, [currentStep, formData.destination, formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
+  }, [currentStep, formData.destination, scrollToWizardTop])
 
   const handleBack = useCallback(() => {
     setDirection(-1)
-    setCurrentStep((prevStep) => {
-      const shouldShowSpouse = formData.maritalStatus === "married" && formData.spouseAccompanying === "yes"
-      if (prevStep === 4) return shouldShowSpouse ? 3 : 2
-      if (prevStep <= 1) return 1
-      return prevStep - 1
-    })
+    setCurrentStep((prevStep) => (prevStep >= 3 ? 2 : 1))
     scrollToWizardTop()
-  }, [formData.maritalStatus, formData.spouseAccompanying, scrollToWizardTop])
+  }, [scrollToWizardTop])
 
   const editTrip = useCallback(() => {
     setDirection(-1)
-    setTripScreen(0)
     setCurrentStep(1)
     scrollToWizardTop()
   }, [scrollToWizardTop])
@@ -368,6 +380,7 @@ function ApplyPageContent() {
         setShowResumeModal(true)
         setFormData({
           ...defaultFormData,
+          nationality: readRememberedNationality(),
           ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
           ...(toCountry && { destination: toCountry }),
           ...(travelStartDate && { travelStartDate }),
@@ -377,6 +390,7 @@ function ApplyPageContent() {
         setFormData({
           ...defaultFormData,
           ...savedData,
+          nationality: savedData.nationality || readRememberedNationality(),
           ...(toCitizenshipIso(fromCountry) ? { nationality: toCitizenshipIso(fromCountry) } : {}),
           ...(toCountry && { destination: toCountry }),
           ...(travelStartDate && { travelStartDate }),
@@ -387,7 +401,7 @@ function ApplyPageContent() {
       if (stepSlug && isValidStep(stepSlug)) {
         setCurrentStep(getStepNumber(stepSlug))
       } else if (stepSlug) {
-        // Dropped slugs (employment, documents) and anything else start on Trip.
+        // Dropped slugs (employment, documents) and anything else start on Destination.
         const slug = getStepSlug(1)
         if (isMounted.current) {
           router.replace(
@@ -412,8 +426,40 @@ function ApplyPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Auto-fill logged-in user profile if available
+  // Saved travellers of the signed-in customer (lib/travellers.ts): the "Who is travelling?" drop-down.
+  const { travellers, email: accountEmail, loaded: travellersLoaded } = useTravellers()
+  const [travellerNotice, setTravellerNotice] = useState<{ nationality: string } | null>(null)
+
+  /** Fill the traveller step from a saved traveller (null = "Someone else"). Every field stays editable. */
+  const pickTraveller = useCallback((t: Traveller | null) => {
+    if (!t) {
+      setTravellerNotice(null)
+      setFormData((prev) => ({ ...prev, travellerId: TRAVELLER_NONE }))
+      return
+    }
+    const next = applyTravellerToWebForm(formData, t)
+    setTravellerNotice(formData.nationality && next.nationality !== formData.nationality ? { nationality: citizenshipName(next.nationality) || next.nationality } : null)
+    setFormData(next)
+    markTravellerUsed(t.id)
+    trackEvent("traveller_picked", { source: "saved", count: travellers.length })
+  }, [formData, travellers.length])
+
+  // Signed in, nothing typed yet: preselect a saved traveller (the one marked "You", else the most recently used).
+  // A resumed draft that already has a name, or a form where "Someone else" was chosen, is never touched.
   useEffect(() => {
+    if (!isInitialized || showResumeModal || !travellers.length) return
+    setFormData((prev) => {
+      if (!isFreshTravellerForm(prev) || prev.travellerId === TRAVELLER_NONE || (prev.travellerId && travellers.some((t) => t.id === prev.travellerId))) return prev
+      const t = defaultTraveller(travellers)
+      return t ? applyTravellerToWebForm(prev, t) : prev
+    })
+  }, [isInitialized, showResumeModal, travellers])
+
+  // No saved travellers: fill name, email and phone from the account's profile, as before.
+  useEffect(() => {
+    if (!travellersLoaded || !accountEmail) return
+    setFormData((prev) => (prev.email ? prev : { ...prev, email: accountEmail }))
+    if (travellers.length) return
     const loadAuthenticatedUser = async () => {
       try {
         const supabase = createBrowserClient()
@@ -427,12 +473,12 @@ function ApplyPageContent() {
             phone: prev.phone || (user.user_metadata?.phone || ""),
           }))
         }
-      } catch (err) {
+      } catch {
         // Non-blocking
       }
     }
     loadAuthenticatedUser()
-  }, [])
+  }, [travellersLoaded, accountEmail, travellers.length])
 
   useEffect(() => {
     if (!isInitialized || isUpdatingUrl.current || !isMounted.current) return
@@ -472,7 +518,7 @@ function ApplyPageContent() {
 
   const renderStepContent = () => {
     if (!isInitialized) {
-      return <div className="p-8 text-center text-muted-foreground">Loading...</div>
+      return <div className="p-8 text-center text-muted-foreground"><Msg id="apply.loading" /></div>
     }
 
     const stepSlug = getStepSlug(currentStep)
@@ -486,28 +532,18 @@ function ApplyPageContent() {
             onNext={handleNext}
             onBack={handleBack}
             isLoading={isTransitioning}
+            travellers={travellers}
+            onPickTraveller={pickTraveller}
+            travellerNotice={travellerNotice}
           />
         )
-      case "spouse":
+      case "destination":
         return (
-          <SpouseStep
+          <DestinationStep
             formData={formData}
             updateFormData={updateFormData}
             onNext={handleNext}
-            onBack={handleBack}
             isLoading={isTransitioning}
-          />
-        )
-      case "trip-details":
-        return (
-          <TripDetailsStep
-            formData={formData}
-            updateFormData={updateFormData}
-            onNext={handleNext}
-            onBack={handleBack}
-            isLoading={isTransitioning}
-            screen={tripScreen}
-            onScreenChange={setTripScreen}
           />
         )
       case "payment":
@@ -600,7 +636,7 @@ function ApplyPageContent() {
 
 export default function ApplyPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-[100dvh]">Loading...</div>}>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[100dvh]"><Msg id="apply.loading" /></div>}>
       <ApplyPageContent />
     </Suspense>
   )

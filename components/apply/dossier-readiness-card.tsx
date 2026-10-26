@@ -1,8 +1,10 @@
 "use client"
 
 import { useMemo } from "react"
-import { ShieldCheck, CheckCircle2, AlertTriangle, Sparkles } from "lucide-react"
+import { ShieldCheck, CheckCircle2, AlertTriangle, ClipboardCheck } from "lucide-react"
+import { Msg } from "@/components/msg"
 import { FormData } from "@/lib/form-types"
+import { inclusiveStayDays, MAX_STAY_DAYS } from "@/lib/shared/wizard-contract"
 
 interface DossierReadinessCardProps {
   formData: FormData
@@ -16,9 +18,8 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
     // 1. Duration check
     if (formData.travelStartDate && formData.travelEndDate) {
       const start = new Date(formData.travelStartDate)
-      const end = new Date(formData.travelEndDate)
-      const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-      if (days > 0 && days <= 90) {
+      const days = inclusiveStayDays(formData.travelStartDate, formData.travelEndDate)
+      if (days >= 1 && days <= MAX_STAY_DAYS) {
         score += 8
         checks.push({ label: `Stay duration (${days} days) within Schengen 90-day legal limit`, passed: true })
       } else {
@@ -80,7 +81,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/30 shrink-0">
-            <Sparkles className="w-5 h-5" />
+            <ClipboardCheck className="w-5 h-5" />
           </div>
           <div>
             <h4 className="font-semibold text-sm text-foreground uppercase tracking-wider">
@@ -127,7 +128,7 @@ export function DossierReadinessCard({ formData }: DossierReadinessCardProps) {
       </div>
 
       <div className="pt-2 border-t border-border/30 text-[11px] text-muted-foreground leading-relaxed">
-        <strong>Our Guarantee:</strong> EZvisa reviews every detail to ensure your application forms, travel itinerary, flight/hotel vouchers, and cover letter meet all procedural guidelines before delivery.
+        <strong><Msg id="dossier.checkLabel" /></strong> <Msg id="dossier.checkBody" />
       </div>
     </div>
   )

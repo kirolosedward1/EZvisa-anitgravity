@@ -1,14 +1,65 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ChevronDown } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { DigitRanges } from "@/components/digit-ranges"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
-import { useArabic } from "@/components/ready-line"
+import { Msg } from "@/components/msg"
+import { Image } from "@/components/image"
+import { useSiteLocale } from "@/components/locale-provider"
+
+const FAQ_VIDEO = "https://videos.pexels.com/video-files/27497252/12153786_1440_2560_30fps.mp4"
+
+/**
+ * The Eiffel Tower clip beside the FAQ. A remote autoplay <video> in the server HTML crashed WebKit while it parsed
+ * the home document, so the page ships a still and the <video> element is only created after hydration, once the
+ * column is near the viewport. Reduced-motion visitors keep the still.
+ */
+function FaqVideo({ alt }: { alt: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [play, setPlay] = useState(false)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPlay(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: "200px" },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  return (
+    <div ref={ref} className="absolute inset-0">
+      <Image src="/images/eiffel-tower-view.jpg" alt={alt} fill sizes="384px" className="object-cover" />
+      {play && (
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          preload="auto"
+          aria-hidden="true"
+          onCanPlay={() => setReady(true)}
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}
+          src={FAQ_VIDEO}
+        />
+      )}
+    </div>
+  )
+}
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
-  const arabic = useArabic()
+  const arabic = useSiteLocale() === "ar"
   const faqs = arabic ? FAQ_AR : FAQ_EN
 
   const toggleFAQ = (index: number) => {
@@ -25,9 +76,11 @@ export function FAQSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10 md:mb-12 lg:mb-16"
         >
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-3 md:mb-4 leading-tight tracking-tight">Frequently asked questions</h2>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-3 md:mb-4 leading-tight tracking-tight">
+            <Msg id="faq.heading" />
+          </h2>
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-            Everything you need to know about our visa application service.
+            <Msg id="faq.intro" />
           </p>
         </motion.div>
 
@@ -64,7 +117,7 @@ export function FAQSection() {
                       className="overflow-hidden"
                     >
                       <div className="pb-4 md:pb-6 pe-8 md:pe-12 text-start">
-                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed">{faq.answer}</p>
+                        <p className="text-sm md:text-base text-muted-foreground leading-relaxed"><DigitRanges text={faq.answer} /></p>
                       </div>
                     </motion.div>
                   )}
@@ -83,16 +136,7 @@ export function FAQSection() {
               className="lg:sticky lg:top-24"
             >
               <div className="relative aspect-[3/4] w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow-xl ring-1 ring-border/50">
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  className="w-full h-full object-cover"
-                  src="https://videos.pexels.com/video-files/27497252/12153786_1440_2560_30fps.mp4"
-                >
-                  Your browser does not support the video tag.
-                </video>
+                <FaqVideo alt={arabic ? "برج إيفل في باريس" : "The Eiffel Tower in Paris"} />
               </div>
             </motion.div>
           </div>

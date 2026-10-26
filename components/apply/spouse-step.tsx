@@ -3,6 +3,8 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { WizardBar } from "@/components/apply/wizard-bar"
+import { Msg } from "@/components/msg"
+import { useMessage } from "@/components/use-message"
 import { Info } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate, FieldValue } from "@/lib/form-types"
@@ -13,6 +15,8 @@ interface SpouseStepProps {
   onNext: () => void
   onBack: () => void
   isLoading?: boolean
+  continueLabel?: string
+  continueLabelAr?: string
 }
 
 const inputStyles =
@@ -23,9 +27,12 @@ const toggleActiveStyles =
 const toggleInactiveStyles =
   "h-12 rounded-xl font-medium text-sm transition-all duration-300 bg-background/40 text-muted-foreground border border-border/80 hover:bg-background/90 hover:text-foreground hover:border-border flex items-center justify-center cursor-pointer"
 
-export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading }: SpouseStepProps) {
+export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading, continueLabel = "Continue to Review & Pay", continueLabelAr = "تابع إلى المراجعة والدفع" }: SpouseStepProps) {
   const [isMobile, setIsMobile] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
+  const firstNamePlaceholder = useMessage("apply.firstNamePlaceholder")
+  const lastNamePlaceholder = useMessage("apply.lastNamePlaceholder")
+  const occupationPlaceholder = useMessage("spouse.occupationPlaceholder")
 
   useEffect(() => {
     const checkMobile = () => {
@@ -72,7 +79,7 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
       <div className="flex items-start gap-3.5 p-5 bg-blue-500/5 border border-blue-500/20 rounded-2xl shadow-sm">
         <Info className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Please provide your spouse's information for the visa application.
+          <Msg id="spouse.helper" />
         </p>
       </div>
 
@@ -84,7 +91,9 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
           aria-live="polite"
         >
           <Info className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-          <span>Please fill in all required spouse information before continuing.</span>
+          <span>
+            <Msg id="spouse.error" />
+          </span>
         </div>
       )}
 
@@ -93,13 +102,13 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
         {/* First Name */}
         <div>
           <label htmlFor="spouseFirstName" className={labelStyles}>
-            Spouse First Name *
+            <Msg id="spouse.firstName" />
           </label>
           <input
             id="spouseFirstName"
             value={formData.spouseFirstName || ""}
             onChange={(e) => handleFieldChange("spouseFirstName", e.target.value)}
-            placeholder="Enter first name"
+            placeholder={firstNamePlaceholder}
             required
             className={cn(inputStyles, "w-full", getErrorClass(formData.spouseFirstName))}
           />
@@ -108,13 +117,13 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
         {/* Last Name */}
         <div>
           <label htmlFor="spouseLastName" className={labelStyles}>
-            Spouse Last Name *
+            <Msg id="spouse.lastName" />
           </label>
           <input
             id="spouseLastName"
             value={formData.spouseLastName || ""}
             onChange={(e) => handleFieldChange("spouseLastName", e.target.value)}
-            placeholder="Enter last name"
+            placeholder={lastNamePlaceholder}
             required
             className={cn(inputStyles, "w-full", getErrorClass(formData.spouseLastName))}
           />
@@ -122,7 +131,9 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
 
         {/* Valid Passport */}
         <div className="md:col-span-2">
-          <label className={labelStyles}>Does your spouse have a valid passport? *</label>
+          <label className={labelStyles}>
+            <Msg id="spouse.passport" />
+          </label>
           <div className="flex gap-3 mt-1">
             <button
               type="button"
@@ -135,7 +146,7 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
                 setShowErrors(false)
               }}
             >
-              Yes
+              <Msg id="common.yes" />
             </button>
             <button
               type="button"
@@ -148,19 +159,23 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
                 setShowErrors(false)
               }}
             >
-              No
+              <Msg id="common.no" />
             </button>
           </div>
           {formData.spouseHasValidPassport === "yes" && (
             <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-emerald-500/5 p-3.5 rounded-xl border border-emerald-500/20">
               <Info className="w-4.5 h-4.5 text-emerald-500 shrink-0 mt-0.5" />
-              <span>Your spouse's passport should have at least 6 months validity from your travel date.</span>
+              <span>
+                <Msg id="spouse.passportYes" />
+              </span>
             </p>
           )}
           {formData.spouseHasValidPassport === "no" && (
             <p className="text-sm text-muted-foreground mt-3 flex items-start gap-2.5 bg-amber-500/5 p-3.5 rounded-xl border border-amber-500/20">
               <Info className="w-4.5 h-4.5 text-amber-500 shrink-0 mt-0.5" />
-              <span>Your spouse will need to obtain a valid passport before applying for a visa.</span>
+              <span>
+                <Msg id="spouse.passportNo" />
+              </span>
             </p>
           )}
         </div>
@@ -168,13 +183,13 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
         {/* Occupation */}
         <div className="md:col-span-2">
           <label htmlFor="spouseOccupation" className={labelStyles}>
-            Spouse Occupation (Optional)
+            <Msg id="spouse.occupation" />
           </label>
           <input
             id="spouseOccupation"
             value={formData.spouseOccupation || ""}
             onChange={(e) => handleFieldChange("spouseOccupation", e.target.value)}
-            placeholder="Enter occupation"
+            placeholder={occupationPlaceholder}
             className={cn(inputStyles, "w-full")}
           />
         </div>
@@ -184,8 +199,8 @@ export function SpouseStep({ formData, updateFormData, onNext, onBack, isLoading
       <WizardBar
         onBack={onBack}
         loading={isLoading}
-        continueLabel="Continue to Review & Pay"
-        continueLabelAr="تابع إلى المراجعة والدفع"
+        continueLabel={continueLabel}
+        continueLabelAr={continueLabelAr}
         loadingLabel="Processing..."
         loadingLabelAr="جارٍ المعالجة..."
       />

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { LocaleLink } from "@/components/locale-link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { 
@@ -468,7 +469,7 @@ export default function AdminPage() {
                             </Button>
                           )}
 
-                          <a
+                          <LocaleLink
                             href={`/track/${c.tracking_token}`}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -476,7 +477,7 @@ export default function AdminPage() {
                             title="View customer tracking page"
                           >
                             <ExternalLink className="w-4 h-4" />
-                          </a>
+                          </LocaleLink>
                         </div>
                       </td>
                     </tr>

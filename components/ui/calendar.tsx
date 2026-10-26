@@ -11,7 +11,9 @@ import { DayButton, DayPicker, getDefaultClassNames, type MonthCaptionProps } fr
 import { cn } from '@/lib/utils'
 import { Button, buttonVariants } from '@/components/ui/button'
 import { LangText } from '@/components/lang-text'
-import { MONTHS_AR, MONTHS_LONG, WEEKDAYS_AR, WEEKDAYS_EN } from '@/lib/dates'
+import { usePageArabic } from '@/components/use-message'
+import { message } from '@/messages'
+import { formatPageDate, MONTHS_AR, MONTHS_LONG, WEEKDAYS_AR, WEEKDAYS_EN } from '@/lib/dates'
 
 function Calendar({
   className,
@@ -205,18 +207,29 @@ function CalendarDayButton({
   ...props
 }: React.ComponentProps<typeof DayButton>) {
   const defaultClassNames = getDefaultClassNames()
+  const arabic = usePageArabic()
 
   const ref = React.useRef<HTMLButtonElement>(null)
   React.useEffect(() => {
     if (modifiers.focused) ref.current?.focus()
   }, [modifiers.focused])
 
+  const iso = `${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, "0")}-${String(day.date.getDate()).padStart(2, "0")}`
+  const { "aria-label": englishLabel, ...rest } = props
+  const ariaLabel = arabic
+    ? message("ar", "calendar.day", {
+        weekday: WEEKDAYS_AR[day.date.getDay()] ?? "",
+        date: formatPageDate(iso, true),
+      })
+    : englishLabel
+
   return (
     <Button
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={`${day.date.getFullYear()}-${String(day.date.getMonth() + 1).padStart(2, "0")}-${String(day.date.getDate()).padStart(2, "0")}`}
+      data-day={iso}
+      aria-label={ariaLabel}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
@@ -227,11 +240,11 @@ function CalendarDayButton({
       data-range-end={modifiers.range_end}
       data-range-middle={modifiers.range_middle}
       className={cn(
-        'data-[selected-single=true]:bg-[#0436DC] data-[selected-single=true]:text-white data-[range-middle=true]:bg-transparent data-[range-middle=true]:text-[#0A0F1F] data-[range-start=true]:bg-[#0436DC] data-[range-start=true]:text-white data-[range-end=true]:bg-[#0436DC] data-[range-end=true]:text-white group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 dark:hover:text-accent-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md [&>span]:text-xs [&>span]:opacity-70',
+        'data-[selected-single=true]:bg-[#0436DC] data-[selected-single=true]:text-white data-[range-middle=true]:bg-transparent data-[range-middle=true]:text-[#0A0F1F] data-[range-start=true]:bg-[#0436DC] data-[range-start=true]:text-white data-[range-end=true]:bg-[#0436DC] data-[range-end=true]:text-white group-data-[focused=true]/day:border-ring group-data-[focused=true]/day:ring-ring/50 dark:hover:text-foreground flex aspect-square size-auto w-full min-w-(--cell-size) flex-col gap-1 leading-none font-normal group-data-[focused=true]/day:relative group-data-[focused=true]/day:z-10 group-data-[focused=true]/day:ring-[3px] data-[range-end=true]:rounded-md data-[range-end=true]:rounded-r-md data-[range-middle=true]:rounded-none data-[range-start=true]:rounded-md data-[range-start=true]:rounded-l-md [&>span]:text-xs [&>span]:opacity-70',
         defaultClassNames.day,
         className,
       )}
-      {...props}
+      {...rest}
     />
   )
 }

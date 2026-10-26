@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { Msg } from "@/components/msg"
 import { Share2, Copy, Check } from "lucide-react"
 import { useState } from "react"
 
@@ -25,15 +26,15 @@ export function ShareButtons({ title, url }: { title: string; url: string }) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm font-medium text-muted-foreground">Share:</span>
+      <span className="text-sm font-medium text-muted-foreground"><Msg id="news.share" /></span>
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={handleShare} className="gap-2 bg-transparent">
           <Share2 className="h-4 w-4" />
-          Share
+          <Msg id="news.shareAction" />
         </Button>
         <Button variant="outline" size="sm" onClick={handleCopy} className="gap-2 bg-transparent">
           {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          {copied ? "Copied!" : "Copy Link"}
+          {copied ? <Msg id="news.copied" /> : <Msg id="news.copyLink" />}
         </Button>
       </div>
     </div>

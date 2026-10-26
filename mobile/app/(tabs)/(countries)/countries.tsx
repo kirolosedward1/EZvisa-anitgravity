@@ -6,6 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COUNTRY_LIST, POPULAR, toSlug } from "../../../lib/countries";
+import { centreFor } from "../../../lib/visaCentres";
+import { Globi } from "../../../components/mascot/Globi";
 import { EmptyState, Flag, Icon, ListGroup, ListRow, PressScale, SearchField, Text, useTabInset } from "../../../components/ui";
 import { useColors, useLargeText, S, R, HIT, ICON, curve } from "../../../lib/theme";
 import { PHOTOS } from "../../../lib/photos";
@@ -16,9 +18,12 @@ import { onTabScroll } from "../../../lib/tabBarScroll";
 const INSET = S.md + 28 + S.md; // separator starts under the name (flag is 28)
 /** The A-Z index starts below the title and search field. */
 const INDEX_TOP = 180;
-const Row = ({ name }: { name: string }) => { const { t } = useT(); return (
-  <ListRow title={t(name)} leading={<Flag country={name} />} onPress={() => router.push(`/country/${toSlug(name)}`)} />
+const Row = ({ name }: { name: string }) => { const { t } = useT(); const vc = centreFor(name); return (
+  <ListRow title={t(name)} subtitle={vc ? `${vc.provider} · ${t("Dubai")}, ${t("Abu Dhabi")}` : undefined} leading={<Flag country={name} size={40} />} onPress={() => router.push(`/country/${toSlug(name)}`)} />
 ); };
+type Filter = "all" | "popular" | "vfs" | "tls" | "bls";
+const FILTERS: { key: Filter; label: string }[] = [{ key: "all", label: "All" }, { key: "popular", label: "Popular" }, { key: "vfs", label: "VFS Global" }, { key: "tls", label: "TLScontact" }, { key: "bls", label: "BLS" }];
+const inFilter = (n: string, f: Filter) => f === "all" ? true : f === "popular" ? POPULAR.includes(n) : centreFor(n)?.key === f;
 
 /** Grid card: the country photo, a dark fade at the bottom, then the flag and the name. (Every Schengen country has
  *  the same 90-day limit, so the card no longer repeats it: the country screen states it once, under "At a glance".) */
@@ -48,8 +53,9 @@ const VIEW_KEY = "ezvisa.countries.view.v1"; // list or grid, a device preferenc
 export default function Countries() {
   const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets();
   const [q, setQ] = useState(""); const { t: tr, rtl } = useT();
-  const t = q.trim().toLowerCase();
-  const results = useMemo(() => COUNTRY_LIST.filter((n) => n.toLowerCase().includes(t) || tr(n).includes(q.trim())), [t, q, tr]);
+  const [filter, setFilter] = useState<Filter>("all");
+  const t = q.trim().toLowerCase() || (filter !== "all" ? " " : ""); // a filter behaves like a search: one flat result list
+  const results = useMemo(() => COUNTRY_LIST.filter((n) => inFilter(n, filter) && (!q.trim() || n.toLowerCase().includes(q.trim().toLowerCase()) || tr(n).includes(q.trim()))), [filter, q, tr]);
   const popular = POPULAR.slice(0, 4);
   const sections = useMemo(() => {
     if (rtl) return [["", [...COUNTRY_LIST].sort((x, y) => tr(x).localeCompare(tr(y), "ar"))]] as [string, string[]][]; // Arabic: one list in Arabic order, no Latin index
@@ -81,10 +87,22 @@ export default function Countries() {
           </View>
         </View>
         <Text variant="subhead" tone="secondary" style={{ marginBottom: S.xl }}>{tr("{n} Schengen destinations", { n: COUNTRY_LIST.length })}</Text>
-        <SearchField placeholder={tr("Search")} value={q} onChangeText={setQ} />
-        <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.gutter, paddingEnd: !t && !rtl && !grid ? S.xs : 0, marginTop: S.xl }}>
+        <SearchField placeholder={tr("Search {n} Schengen countries", { n: COUNTRY_LIST.length })} value={q} onChangeText={setQ} />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -S.gutter, marginTop: S.sm }} contentContainerStyle={{ paddingHorizontal: S.gutter, gap: S.xs }} accessibilityRole="radiogroup" testID="country-filters">
+          {FILTERS.map((f) => { const on = filter === f.key; return (
+            <PressScale key={f.key} onPress={() => { select(); setFilter(f.key); }} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={tr(f.label)}
+              style={{ minHeight: 36, paddingHorizontal: S.md, borderRadius: R.round, justifyContent: "center", backgroundColor: on ? c.primaryFill : c.surface, borderWidth: 1, borderColor: on ? c.primaryFill : c.border }}>
+              <Text variant="subhead" weight="600" color={on ? c.onPrimary : c.label}>{tr(f.label)}</Text>
+            </PressScale>
+          ); })}
+        </ScrollView>
+        <View style={[{ flexDirection: "row", gap: S.sm, alignItems: "flex-start", backgroundColor: c.accentSoft, borderRadius: R.lg, padding: S.sm, marginTop: S.md }, curve]}>
+          <Icon name="info.circle" size={ICON.md} color={c.accent} style={{ marginTop: 1 }} />
+          <Text variant="footnote" tone="secondary" style={{ flex: 1 }}>{tr("Same visa for all 29. Apply at the embassy of the country where you stay the most nights.")}</Text>
+        </View>
+        <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.gutter, paddingEnd: !t && !rtl && !grid ? S.xs : 0, marginTop: S.lg }}>
           {t ? (
-            !results.length ? <EmptyState icon="magnifyingglass" title={tr("No results")} />
+            !results.length ? <EmptyState icon="magnifyingglass" mascot={<Globi pose="magnify" mood="think" size={120} />} title={tr("No results")} />
               : grid ? <Grid names={results} w={cardW} ratio={ratio} /> : <ListGroup inset={INSET}>{results.map((n) => <Row key={n} name={n} />)}</ListGroup>
           ) : grid ? (<>
             <Text variant="title3" accessibilityRole="header" style={{ marginHorizontal: S.gutter, marginBottom: S.sm }}>{tr("Popular")}</Text>

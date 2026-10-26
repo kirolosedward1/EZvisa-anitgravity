@@ -3,15 +3,17 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { Plus, X } from "lucide-react"
+import { BriefcaseBusiness, CircleEllipsis, GraduationCap, Plus, Stethoscope, TreePalm, Users, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { FormData, FormDataUpdate } from "@/lib/form-types"
 import { CustomDatePicker } from "@/components/ui/custom-date-picker"
-import { datesInOrder, formatDisplayDate, isValidCalendarDate, schengenStayDays } from "@/lib/dates"
+import { ArabicDateText } from "@/components/arabic-date"
+import { fixedDatesAccepted, formatDisplayDate, formatPageDate } from "@/lib/dates"
 import { SCHENGEN_COUNTRIES, SCHENGEN_META } from "@/lib/countries"
 import { TravelDatesField } from "@/components/apply/travel-dates-field"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import { LangText } from "@/components/lang-text"
+import { CountryFlag } from "@/components/country-flag"
 import {
   ChoiceList,
   ChoiceRow,
@@ -32,12 +34,12 @@ interface TripDetailsStepProps {
 }
 
 const purposes = [
-  { value: "tourism", en: "Tourism", ar: "سياحة", desc: "A holiday or a short visit.", descAr: "عطلة أو زيارة قصيرة." },
-  { value: "business", en: "Business", ar: "عمل", desc: "Meetings or work travel.", descAr: "اجتماعات أو سفر عمل." },
-  { value: "family", en: "Family visit", ar: "زيارة عائلية", desc: "Seeing family in Europe.", descAr: "زيارة العائلة في أوروبا." },
-  { value: "medical", en: "Medical treatment", ar: "علاج", desc: "Care at a clinic or hospital.", descAr: "علاج في عيادة أو مستشفى." },
-  { value: "education", en: "Education or training", ar: "دراسة أو تدريب", desc: "A course or a study trip.", descAr: "دورة أو رحلة دراسية." },
-  { value: "other", en: "Other", ar: "سبب آخر", desc: "A reason not listed here.", descAr: "سبب غير موجود في القائمة." },
+  { value: "tourism", icon: TreePalm, en: "Tourism", ar: "سياحة", desc: "A holiday or a short visit.", descAr: "عطلة أو زيارة قصيرة." },
+  { value: "business", icon: BriefcaseBusiness, en: "Business", ar: "عمل", desc: "Meetings or work travel.", descAr: "اجتماعات أو سفر عمل." },
+  { value: "family", icon: Users, en: "Family visit", ar: "زيارة عائلية", desc: "Seeing family in Europe.", descAr: "زيارة العائلة في أوروبا." },
+  { value: "medical", icon: Stethoscope, en: "Medical treatment", ar: "علاج", desc: "Care at a clinic or hospital.", descAr: "علاج في عيادة أو مستشفى." },
+  { value: "education", icon: GraduationCap, en: "Education or training", ar: "دراسة أو تدريب", desc: "A course or a study trip.", descAr: "دورة أو رحلة دراسية." },
+  { value: "other", icon: CircleEllipsis, en: "Other", ar: "سبب آخر", desc: "A reason not listed here.", descAr: "سبب غير موجود في القائمة." },
 ]
 
 const companions = [
@@ -49,9 +51,9 @@ const companions = [
 ]
 
 const hotels = [
-  { value: "3-star", en: "3-star hotel", ar: "فندق ٣ نجوم", desc: "A mid-range hotel.", descAr: "فندق متوسط." },
-  { value: "4-star", en: "4-star hotel", ar: "فندق ٤ نجوم", desc: "A premium hotel.", descAr: "فندق مميز." },
-  { value: "5-star", en: "5-star hotel", ar: "فندق ٥ نجوم", desc: "A luxury hotel.", descAr: "فندق فاخر." },
+  { value: "3-star", en: "3-star hotel", ar: "فندق 3 نجوم", desc: "A mid-range hotel.", descAr: "فندق متوسط." },
+  { value: "4-star", en: "4-star hotel", ar: "فندق 4 نجوم", desc: "A premium hotel.", descAr: "فندق مميز." },
+  { value: "5-star", en: "5-star hotel", ar: "فندق 5 نجوم", desc: "A luxury hotel.", descAr: "فندق فاخر." },
   { value: "sponsor", en: "Staying with a host", ar: "الإقامة عند مضيف", desc: "A sponsor's home.", descAr: "منزل الكفيل." },
 ]
 
@@ -62,34 +64,20 @@ const funding = [
 ]
 
 const balances = [
-  { value: "under-10000", en: "Under 10,000 AED", ar: "أقل من ١٠٬٠٠٠ درهم", desc: "Closing balance under 10,000.", descAr: "الرصيد الختامي أقل من ١٠٬٠٠٠." },
-  { value: "10000-25000", en: "10,000 to 25,000 AED", ar: "من ١٠٬٠٠٠ إلى ٢٥٬٠٠٠ درهم", desc: "A mid closing balance.", descAr: "رصيد ختامي متوسط." },
-  { value: "25000-50000", en: "25,000 to 50,000 AED", ar: "من ٢٥٬٠٠٠ إلى ٥٠٬٠٠٠ درهم", desc: "A stronger closing balance.", descAr: "رصيد ختامي أعلى." },
-  { value: "50000-plus", en: "50,000 AED or more", ar: "٥٠٬٠٠٠ درهم أو أكثر", desc: "A high closing balance.", descAr: "رصيد ختامي مرتفع." },
+  { value: "under-10000", en: "Under 10,000 AED", ar: "أقل من 10,000 درهم", desc: "Closing balance under 10,000.", descAr: "الرصيد الختامي أقل من 10,000." },
+  { value: "10000-25000", en: "10,000 to 25,000 AED", ar: "من 10,000 إلى 25,000 درهم", desc: "A mid closing balance.", descAr: "رصيد ختامي متوسط." },
+  { value: "25000-50000", en: "25,000 to 50,000 AED", ar: "من 25,000 إلى 50,000 درهم", desc: "A stronger closing balance.", descAr: "رصيد ختامي أعلى." },
+  { value: "50000-plus", en: "50,000 AED or more", ar: "50,000 درهم أو أكثر", desc: "A high closing balance.", descAr: "رصيد ختامي مرتفع." },
 ]
 
-const LAST_SCREEN = 9
+const LAST_SCREEN = 10
 
 function datesAreValid(formData: FormData) {
-  const stay = schengenStayDays(formData.travelStartDate, formData.travelEndDate)
+  const dates = fixedDatesAccepted(formData.travelStartDate, formData.travelEndDate)
   if (formData.datesFlexible === "yes") {
-    return (
-      !!formData.travelMonth &&
-      !!formData.tripLength &&
-      isValidCalendarDate(formData.travelStartDate) &&
-      isValidCalendarDate(formData.travelEndDate) &&
-      stay > 1 &&
-      stay <= 90
-    )
+    return !!formData.travelMonth && !!formData.tripLength && dates
   }
-  return (
-    formData.datesFlexible === "no" &&
-    isValidCalendarDate(formData.travelStartDate) &&
-    isValidCalendarDate(formData.travelEndDate) &&
-    datesInOrder(formData.travelStartDate, formData.travelEndDate) &&
-    stay > 1 &&
-    stay <= 90
-  )
+  return formData.datesFlexible === "no" && dates
 }
 
 export function TripDetailsStep({
@@ -145,6 +133,7 @@ export function TripDetailsStep({
     if (screen === 5) return !!formData.balanceRange
     if (screen === 6) return !!formData.isFirstSchengenVisa
     if (screen === 7) return !!formData.previousRefusals && (formData.previousRefusals !== "yes" || !!formData.refusalDetails?.trim())
+    if (screen === 10) return formData.residenceVisaValid === "yes" || formData.residenceVisaValid === "no"
     return true
   }
 
@@ -226,6 +215,7 @@ export function TripDetailsStep({
                     titleAr={item.ar}
                     description={item.desc}
                     descriptionAr={item.descAr}
+                    icon={item.icon}
                     selected={formData.purposeOfTrip === item.value}
                     onSelect={() => select({ purposeOfTrip: item.value })}
                   />
@@ -273,7 +263,18 @@ export function TripDetailsStep({
                     description={item.desc}
                     descriptionAr={item.descAr}
                     selected={formData.travelingWith === item.value}
-                    onSelect={() => select({ travelingWith: item.value })}
+                    onSelect={() =>
+                      select(
+                        item.value === "spouse"
+                          ? { travelingWith: "spouse", maritalStatus: "married", spouseAccompanying: "yes" }
+                          : {
+                              travelingWith: item.value,
+                              ...(formData.travelingWith === "spouse"
+                                ? { spouseAccompanying: "no", maritalStatus: "single" }
+                                : {}),
+                            },
+                      )
+                    }
                   />
                 ))}
               </ChoiceList>
@@ -504,6 +505,7 @@ export function TripDetailsStep({
                           titleAr={SCHENGEN_META[country]?.ar || country}
                           description="Add this stop to the itinerary."
                           descriptionAr="أضف هذه المحطة إلى خط السير."
+                          leading={<CountryFlag iso={SCHENGEN_META[country]?.iso} country={country} className="size-7" />}
                           selected={newCountry === country}
                           onSelect={() => {
                             setNewCountry(country)
@@ -573,12 +575,20 @@ export function TripDetailsStep({
                     <ul className="divide-y divide-[#E3E7EF] border-y border-[#E3E7EF]">
                       {additionalCountries.map((visit) => (
                         <li key={visit.country} className="flex items-center justify-between gap-3 py-3">
-                          <div className="min-w-0">
+                          <CountryFlag iso={SCHENGEN_META[visit.country]?.iso} country={visit.country} className="size-7" />
+                          <div className="min-w-0 flex-1">
                             <p className="truncate text-[15px] font-medium text-[#0A0F1F]">
                               <LangText en={visit.country} ar={SCHENGEN_META[visit.country]?.ar || visit.country} />
                             </p>
-                            <p className="text-[13px] text-[#5B6475]" dir="ltr">
-                              {formatDisplayDate(visit.arrivalDate)} – {formatDisplayDate(visit.departureDate)}
+                            <p className="text-[13px] text-[#5B6475]">
+                              <span className="rtl:hidden" dir="ltr">
+                                {formatDisplayDate(visit.arrivalDate)} – {formatDisplayDate(visit.departureDate)}
+                              </span>
+                              <span className="hidden rtl:inline">
+                                <ArabicDateText text={formatPageDate(visit.arrivalDate, true)} />
+                                {" – "}
+                                <ArabicDateText text={formatPageDate(visit.departureDate, true)} />
+                              </span>
                             </p>
                           </div>
                           <button
@@ -623,6 +633,48 @@ export function TripDetailsStep({
                 rows={5}
                 className={cn(wizardFieldClass, "min-h-32 py-3")}
               />
+            </div>
+          ) : null}
+
+          {screen === 10 ? (
+            <div>
+              <WizardQuestion
+                title="Is your UAE residence visa valid at least 3 months after your return date?"
+                titleAr="هل إقامتك في الإمارات صالحة لمدة 3 أشهر على الأقل بعد تاريخ عودتك؟"
+                helper="Embassies check that you can return to the UAE."
+                helperAr="تتحقق السفارات من قدرتك على العودة إلى الإمارات."
+              />
+              <ChoiceList label="UAE residence visa">
+                <ChoiceRow
+                  title="Yes"
+                  titleAr="نعم"
+                  description="It is valid for at least 3 months after I return."
+                  descriptionAr="صالحة لمدة 3 أشهر على الأقل بعد عودتي."
+                  selected={formData.residenceVisaValid === "yes"}
+                  onSelect={() => select({ residenceVisaValid: "yes" })}
+                />
+                <ChoiceRow
+                  title="No"
+                  titleAr="لا"
+                  description="It expires sooner, or I'm renewing it."
+                  descriptionAr="تنتهي قبل ذلك، أو أقوم بتجديدها."
+                  selected={formData.residenceVisaValid === "no"}
+                  onSelect={() => select({ residenceVisaValid: "no" })}
+                />
+              </ChoiceList>
+              {showErrors && !formData.residenceVisaValid ? (
+                <FieldError>
+                  <LangText en="Choose yes or no." ar="اختر نعم أو لا." />
+                </FieldError>
+              ) : null}
+              {formData.residenceVisaValid === "no" ? (
+                <p className="mt-6 rounded-xl border border-border bg-secondary px-4 py-3 text-sm leading-relaxed text-foreground" role="status">
+                  <LangText
+                    en="Most embassies need your UAE residence visa to be valid at least 3 months after you return. Renew it before your appointment; our team will guide you."
+                    ar="تشترط معظم السفارات أن تكون إقامتك في الإمارات صالحة لمدة 3 أشهر على الأقل بعد عودتك. جدّدها قبل موعدك، وسيرشدك فريقنا."
+                  />
+                </p>
+              ) : null}
             </div>
           ) : null}
         </motion.div>
