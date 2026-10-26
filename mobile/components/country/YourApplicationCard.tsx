@@ -54,7 +54,7 @@ export function YourApplicationCard({ state, onContinueDraft }: { state: Country
   const steps = buildTimeline(a); const done = doneCount(steps);
   const status = t(a.status === "submitted" && isPaid(a) ? "Paid" : STATUS_LABEL[a.status] ?? a.status);
   const dates = tripDates(a, lang);
-  const next = [t(n.title), n.body && t(n.body)].filter(Boolean).join(" · ");
+  const next = [t(n.title, n.vars), n.body && t(n.body)].filter(Boolean).join(" · ");
   return (
     <View testID="country-yourapp">
       {header}

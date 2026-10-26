@@ -1,4 +1,4 @@
-import { ScrollView, View, RefreshControl, StyleSheet, type ScrollViewInstance } from "react-native";
+import { ScrollView, View, RefreshControl, StyleSheet, useWindowDimensions, type ScrollViewInstance } from "react-native";
 import { Image } from "expo-image";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,7 +20,7 @@ import { useAuth } from "../../../lib/auth";
 import { useForm, type LocalDraft } from "../../../lib/form";
 import { hasAnswers } from "../../../lib/wizard";
 import { Q_BY_ID } from "../../../lib/questions";
-import { useT } from "../../../lib/i18n";
+import { useT, ltr } from "../../../lib/i18n";
 import { countdown } from "../../../lib/countdown";
 import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
@@ -65,7 +65,10 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
     }
   };
   const actionable = n.kind !== "none" && n.kind !== "open";
-  const meta = [tripDates(a, lang), cd].filter(Boolean).join(" · ");
+  const { width } = useWindowDimensions();
+  const dates = tripDates(a, lang);
+  // From 375 up the date stays on one line; the countdown wraps beside it. Below that the whole line may wrap.
+  const meta = [dates && ltr(dates), cd].filter(Boolean).join(" · ");
   return (
     <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xxl }} testID="home-hero">
       <Surface level={1} style={{ padding: S.md }}>
@@ -81,14 +84,21 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
             <Flag country={name} size={AVATAR.lg} />
             <View style={{ flex: 1 }}>
               <Text variant="title3" accessibilityRole="header" numberOfLines={1}>{t(name || "Application")}</Text>
-              {!!meta && <Text variant="subhead" tone="secondary" numberOfLines={1} tabular testID="hero-dates">{meta}</Text>}
+              {!!meta && (width >= 375 ? (
+                <View testID="hero-dates" style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "baseline" }}>
+                  {!!dates && <Text variant="subhead" tone="secondary" tabular numberOfLines={1} style={{ flexShrink: 0, maxWidth: "100%" }}>{ltr(dates)}{cd ? " · " : ""}</Text>}
+                  {!!cd && <Text variant="subhead" tone="secondary" tabular style={{ flexShrink: 0 }}>{cd}</Text>}
+                </View>
+              ) : (
+                <Text variant="subhead" tone="secondary" tabular testID="hero-dates">{meta}</Text>
+              ))}
             </View>
           </View>
           <View style={{ marginTop: S.md }}><ProgressSegments count={steps.length} index={done} fraction={0} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t("{n} of {total} steps done", { n: done, total: steps.length })} /></View>
         </PressScale>
-        <Text variant="subhead" tone="secondary" style={{ marginTop: S.md }} numberOfLines={3} testID="next-action">{[t(n.title), n.body && t(n.body)].filter(Boolean).join(" · ")}</Text>
+        <Text variant="subhead" tone="secondary" style={{ marginTop: S.md }} numberOfLines={3} testID="next-action">{[t(n.title, n.vars), n.body && t(n.body)].filter(Boolean).join(" · ")}</Text>
         <View style={{ marginTop: S.md }}>
-          <Button title={t(n.cta ?? "View application")} variant={actionable ? "primary" : "secondary"} loading={paying} onPress={act} />
+          <Button title={t(n.cta ?? "View application", n.vars)} variant={actionable ? "primary" : "secondary"} loading={paying} onPress={act} />
         </View>
       </Surface>
       <View style={[card(c, dark, 0), { marginTop: S.md, paddingVertical: S.xs }]} testID="home-timeline">

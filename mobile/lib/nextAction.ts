@@ -2,10 +2,9 @@ import { isPaid, needsContinue, UPLOAD_STATUSES, type Application } from "./data
 import type { CheckItem } from "./checklist";
 import { appointmentOf } from "./appointment";
 import type { IconName } from "../components/ui";
+import { payActionCopy } from "./payLabel";
 
-export type NextAction = { icon: IconName; title: string; body: string; cta?: string; kind: "upload" | "pay" | "open" | "none" | "continue" | "draft" | "appointment"; tone: "tint" | "orange" | "red" | "green" };
-
-const money = (n: number | null, cur: string | null) => (n == null ? "" : `${Number(n).toLocaleString()} ${cur ?? ""}`.trim());
+export type NextAction = { icon: IconName; title: string; body: string; cta?: string; vars?: Record<string, string | number>; kind: "upload" | "pay" | "open" | "none" | "continue" | "draft" | "appointment"; tone: "tint" | "orange" | "red" | "green" };
 
 /** The single most useful thing to do next, derived only from the application's real status, payment and documents. */
 export function nextAction(a: Application, checklist: CheckItem[] | null): NextAction {
@@ -18,7 +17,11 @@ export function nextAction(a: Application, checklist: CheckItem[] | null): NextA
   // Refunded (fully or partly): never ask for the payment again.
   if (a.payment_status === "refunded" || a.payment_status === "partially_refunded") return { icon: "creditcard.fill", title: a.payment_status === "refunded" ? "Refunded" : "Part refunded", body: "Open the application for details.", cta: "View application", kind: "open", tone: "tint" };
   // Before payment, Pay is the only next action (documents unlock after payment).
-  if (a.status !== "draft" && !isPaid(a)) return { icon: "creditcard.fill", title: a.total_amount != null ? `Pay ${money(a.total_amount, a.currency)}` : "Pay securely", body: a.payment_status === "failed" ? "The last payment didn't go through." : "Documents unlock after payment.", cta: "Pay now", kind: "pay", tone: "orange" };
+  // Title and button share one key ("Pay {amount} AED") so Arabic can say «ادفع 249 درهمًا».
+  if (a.status !== "draft" && !isPaid(a)) {
+    const pay = payActionCopy(a.total_amount, a.currency);
+    return { icon: "creditcard.fill", title: pay.title, vars: pay.vars, body: a.payment_status === "failed" ? "The last payment didn't go through." : "Documents unlock after payment.", cta: pay.cta, kind: "pay", tone: "orange" };
+  }
   // Paid: passport number and employment details are asked now (moved out of the pre-payment wizard).
   if (needsContinue(a)) return { icon: "briefcase.fill", title: "Continue application", body: "Add your passport number and employment details.", cta: "Continue", kind: "continue", tone: "tint" };
   if (rejected.length) return { icon: "exclamationmark.circle.fill", title: rejected.length === 1 ? `Re-upload ${rejected[0].req.title}` : `Re-upload ${rejected.length} documents`, body: rejected[0].reason || "A document needs to be replaced.", cta: "Fix now", kind: "upload", tone: "red" };

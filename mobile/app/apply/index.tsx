@@ -27,6 +27,7 @@ import { useT } from "../../lib/i18n";
 import { SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp } from "../../lib/api";
 import { money, startPayment, usePaying, useQuote } from "../../lib/payments";
+import { formatPayAmount, PAY_AED } from "../../lib/payLabel";
 import { submitApplication, guestSubmit, listRequirements, patchNotes, DraftConflictError, type Requirement } from "../../lib/data";
 import { PrefillOffer } from "../../components/wizard/extras";
 import { fetchTravellers, applyTravellerToForm, markTravellerUsed } from "../../lib/travellers";
@@ -353,7 +354,7 @@ export default function Apply() {
       </View>
       <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
         <InlineError text={err} />
-        <Button title={paying ? t("Opening secure payment…") : quote ? t("Pay {amount}", { amount: money(quote) }) : t("Pay securely")} icon="creditcard.fill" loading={busy || paying} disabled={busy || paying} onPress={async () => {
+        <Button title={paying ? t("Opening secure payment…") : quote ? t(PAY_AED, { amount: formatPayAmount(quote.amount) }) : t("Pay securely")} icon="creditcard.fill" loading={busy || paying} disabled={busy || paying} onPress={async () => {
           if (inFlight.current || paying) return; inFlight.current = true; setBusy(true); setErr(null);
           const id = submitted.applicationId;
           const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned } }); setTimeout(() => setSubmitted(null), 400); };

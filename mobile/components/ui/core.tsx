@@ -100,21 +100,22 @@ export function IconTile({ name, color, size = 32 }: { name: IconName; color: st
   return <View style={[{ width: box, height: box, borderRadius: R.sm * k, backgroundColor: c.fillSubtle, alignItems: "center", justifyContent: "center" }, curve]}><Icon name={name} size={Math.round((ICON.md - 1) * k)} color={keep ? color : c.label} weight="regular" /></View>;
 }
 
-export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPress, onLongPress, chevron = !!onPress, trailing, destructive, tint, bold, a11yLabel, a11yHint, minHeight = 44 }: { title: string; subtitle?: string; leading?: React.ReactNode; icon?: IconName; iconColor?: string; value?: string; onPress?: () => void; onLongPress?: () => void; chevron?: boolean; trailing?: React.ReactNode; destructive?: boolean; tint?: boolean; bold?: boolean; a11yLabel?: string; a11yHint?: string; minHeight?: number }) {
+export function ListRow({ title, subtitle, leading, icon, iconColor, value, onPress, onLongPress, chevron = !!onPress, trailing, destructive, tint, bold, a11yLabel, a11yHint, minHeight = 44, wrapValue = false }: { title: string; subtitle?: string; leading?: React.ReactNode; icon?: IconName; iconColor?: string; value?: string; onPress?: () => void; onLongPress?: () => void; chevron?: boolean; trailing?: React.ReactNode; destructive?: boolean; tint?: boolean; bold?: boolean; a11yLabel?: string; a11yHint?: string; minHeight?: number; /** Long values (a cross-year date) sit under the title and wrap, instead of the 60% one-line cap. */ wrapValue?: boolean }) {
   const c = useColors(); const large = useLargeText();
+  const stack = large || wrapValue;
   // Large text (HIG › Typography › "Consider adjusting your layout at large font sizes"): the value moves under the
   // title and nothing is cut to one line. At the default size titles may wrap to two lines rather than truncate.
-  const valueText = !!value && <Text variant="body" tone="secondary" numberOfLines={large ? undefined : 1} ellipsizeMode="middle" style={large ? undefined : { flexShrink: 1, maxWidth: "60%", textAlign: "right" }} tabular>{value}</Text>;
+  const valueText = !!value && <Text variant="body" tone="secondary" numberOfLines={stack ? undefined : 1} ellipsizeMode={stack ? undefined : "middle"} style={stack ? undefined : { flexShrink: 1, maxWidth: "60%", textAlign: "right" }} tabular>{value}</Text>;
   return (
     <PressScale onPress={onPress ? () => { tap(); onPress(); } : undefined} onLongPress={onLongPress ? () => { tap(); onLongPress(); } : undefined} disabled={!onPress && !onLongPress} scaleTo={onPress ? PRESS.scale : 1} accessibilityRole={onPress ? "button" : "text"} accessibilityLabel={a11yLabel ?? [title, subtitle, value].filter(Boolean).join(", ")} accessibilityHint={a11yHint}
-      style={{ minHeight: subtitle ? Math.max(minHeight, 64) : Math.max(minHeight, 52), paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm }}>
+      style={{ minHeight: subtitle ? Math.max(minHeight, 64) : Math.max(minHeight, 52), paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: stack ? "flex-start" : "center", gap: S.sm }}>
       {leading ?? (icon ? <IconTile name={icon} color={iconColor ?? c.tint} /> : null)}
       <View style={{ flex: 1, minWidth: 80 }}>
         <Text variant={bold ? "headline" : "body"} color={destructive ? c.red : tint ? c.tint : undefined} numberOfLines={large ? undefined : 2}>{title}</Text>
         {!!subtitle && <Text variant="subhead" tone="secondary" numberOfLines={large ? undefined : 2}>{subtitle}</Text>}
-        {large && valueText}
+        {stack && valueText}
       </View>
-      {!large && valueText}
+      {!stack && valueText}
       {trailing}
       {chevron && <Chevron />}
     </PressScale>
