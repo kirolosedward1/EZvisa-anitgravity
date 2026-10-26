@@ -7,11 +7,12 @@ import { cn } from '@/lib/utils'
 
 /**
  * The disc is only the trailing icon: an svg that follows a label element.
+ * Solid white 24px circle; 5px padding leaves a 14px glyph in brand blue.
  * A leading icon is :first-child once the label is wrapped, so it stays plain.
  * Arrow mirroring is the single rule in app/globals.css. A second flip here cancels it.
  */
 const trailingIcon =
-  "[&>svg:last-child:not(:first-child)]:box-border [&>svg:last-child:not(:first-child)]:size-5 [&>svg:last-child:not(:first-child)]:shrink-0 [&>svg:last-child:not(:first-child)]:rounded-full [&>svg:last-child:not(:first-child)]:bg-primary-foreground/20 [&>svg:last-child:not(:first-child)]:p-[3px] [&>svg:first-child:not(:last-child)]:rounded-none [&>svg:first-child:not(:last-child)]:bg-transparent [&>svg:first-child:not(:last-child)]:p-0 [&>svg:first-child:not(:last-child)]:text-current"
+  "[&>svg:last-child:not(:first-child)]:box-border [&>svg:last-child:not(:first-child)]:size-6 [&>svg:last-child:not(:first-child)]:shrink-0 [&>svg:last-child:not(:first-child)]:rounded-full [&>svg:last-child:not(:first-child)]:bg-primary-foreground [&>svg:last-child:not(:first-child)]:p-[5px] [&>svg:last-child:not(:first-child)]:text-primary [&>svg:first-child:not(:last-child)]:rounded-none [&>svg:first-child:not(:last-child)]:bg-transparent [&>svg:first-child:not(:last-child)]:p-0 [&>svg:first-child:not(:last-child)]:text-current"
 
 /** Text nodes are not element children, so a leading svg would also be :last-child and take the disc. */
 function wrapLabels(children: ReactNode) {

@@ -4,7 +4,7 @@ import { Image } from "@/components/image"
 import Link from "next/link"
 import { LocaleLink } from "@/components/locale-link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, Rocket, ChevronDown, Check } from "lucide-react"
+import { Menu, X, ArrowRight, ChevronDown, Check } from "lucide-react"
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { usePathname, useRouter } from "next/navigation"
@@ -439,14 +439,14 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
               {isFull && (
                 <>
                   <div className="hidden sm:block">
-                    <Button variant="default" asChild>
-                      <LocaleLink href="/apply" className="flex items-center gap-2">
-                        <Rocket className="size-4" aria-hidden="true" />
+                    <Button variant="default" asChild className="h-10 min-h-10">
+                      <LocaleLink href="/apply">
                         <span><LangText en="Get Started" ar="ابدأ الآن" /></span>
+                        <ArrowRight aria-hidden="true" />
                       </LocaleLink>
                     </Button>
                   </div>
-                  
+
                   <AnimatePresence>
                     {showGetStarted && (
                       <motion.div
@@ -456,10 +456,10 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                         transition={{ duration: 0.2 }}
                         className="sm:hidden overflow-hidden"
                       >
-                        <Button variant="default" asChild size="icon">
-                          <LocaleLink href="/apply" className="flex items-center gap-1.5">
-                            <Rocket className="h-4 w-4" />
-                            <span className="sr-only"><LangText en="Get Started" ar="ابدأ الآن" /></span>
+                        <Button variant="default" asChild className="h-10 min-h-10 px-3">
+                          <LocaleLink href="/apply">
+                            <span><LangText en="Get Started" ar="ابدأ الآن" /></span>
+                            <ArrowRight aria-hidden="true" />
                           </LocaleLink>
                         </Button>
                       </motion.div>
