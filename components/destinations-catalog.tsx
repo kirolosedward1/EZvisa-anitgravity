@@ -12,6 +12,7 @@ import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { CountryFlag } from "@/components/country-flag"
 import { SCHENGEN_META } from "@/lib/countries"
+import { dirhamNoun } from "@/lib/currency"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
 type TabType = "all" | "schengen" | "non-schengen"
@@ -25,7 +26,7 @@ export function DestinationCard({ country, compact = false }: { country: Destina
   const allSpecs = [
     { label: "Type", ar: "النوع", value: country.region === "Schengen" ? "Schengen" : country.visaType, valueAr: country.region === "Schengen" ? "شنغن" : country.visaType },
     { label: "Ready in", ar: "جاهز خلال", value: "1–2 days", valueAr: "\u20661–2\u2069 يوم" },
-    { label: "Fee", ar: "الرسوم", value: `${PRICE_AED} AED`, valueAr: `${PRICE_AED} درهم` },
+    { label: "Fee", ar: "الرسوم", value: `${PRICE_AED} AED`, valueAr: `${PRICE_AED} ${dirhamNoun(PRICE_AED)}` },
   ]
   const specs = compact ? allSpecs.slice(1) : allSpecs
   return (
