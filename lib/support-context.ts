@@ -6,7 +6,7 @@
 import { useEffect, useSyncExternalStore } from "react"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 
-export type SupportStep = "overview" | "upload" | "continue" | "receipt" | "trip" | "dossier" | "payment"
+export type SupportStep = "overview" | "upload" | "continue" | "appointment" | "receipt" | "trip" | "dossier" | "payment"
 
 export type SupportCase = {
   /** Application id (preferred) or tracking token; the reference is EZ- + its first 8 hex, as everywhere else. */
@@ -20,6 +20,7 @@ const STEP_TEXT: Record<SupportStep, string> = {
   overview: "I'm looking at my application page.",
   upload: "I'm on the document upload page.",
   continue: "I'm answering the trip and traveller questions after payment.",
+  appointment: "I'm adding my visa appointment.",
   receipt: "It's about my payment receipt.",
   trip: "I'm looking at my trip plan.",
   dossier: "I'm looking at my prepared visa file.",

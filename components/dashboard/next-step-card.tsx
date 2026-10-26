@@ -3,7 +3,7 @@ import { ArrowRight, Download, Printer, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PayNowButton } from "@/components/dashboard/pay-now-button"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
-import { detailsMissing, getDocumentProgress, isPaid, REQUIRED_DOCUMENTS, type Stage } from "@/lib/application-status"
+import { customerProgress, detailsMissing, getDocumentProgress, isPaid, REQUIRED_DOCUMENTS, type Stage } from "@/lib/application-status"
 import { requestLocale } from "@/lib/request-locale"
 import { customerText, type CustomerKey } from "@/lib/translations/customer"
 import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
@@ -64,7 +64,22 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
           body: t("next.prepBody"),
           actions: null,
         }
-      case "ready":
+      case "ready": {
+        const progress = customerProgress(app)
+        if (progress.key === "appointment" && !progress.finished && app.id) {
+          return {
+            title: t("next.appointmentTitle"),
+            body: t("next.appointmentBody"),
+            actions: (
+              <Button asChild>
+                <LocaleLink href={`/appointment/${app.id}`}>
+                  {t("appt.add")}
+                  <ArrowRight />
+                </LocaleLink>
+              </Button>
+            ),
+          }
+        }
         return {
           title: t("next.readyTitle"),
           body: t("next.readyBody"),
@@ -85,6 +100,7 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
             </>
           ),
         }
+      }
       case "cancelled":
         return {
           title: t("next.cancelledTitle"),

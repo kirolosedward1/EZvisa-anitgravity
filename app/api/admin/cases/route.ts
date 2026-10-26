@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js"
 import { hasBearerSecret } from "@/lib/bearer-auth"
 
 const CASE_STATUSES = new Set(["draft", "submitted", "reviewing", "preparation", "awaiting_documents", "appointment_booked", "approved", "ready", "rejected", "cancelled", "completed"])
+const HELP_STATUSES = new Set(["requested", "contacted", "booked", "cancelled"])
 
 function getSupabaseAdmin() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -55,7 +56,11 @@ export async function GET(request: NextRequest) {
       has_employment_proof,
       has_photos,
       created_at,
-      updated_at
+      updated_at,
+      appointment_choice,
+      appointment_help_status,
+      appointment_at,
+      appointment_centre
     `)
     .order("created_at", { ascending: false })
     .limit(limit)
@@ -93,7 +98,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const { id, application_status, expected_updated_at, notes, actor = "admin_staff" } = await request.json()
+    const { id, application_status, appointment_help_status, expected_updated_at, notes, actor = "admin_staff" } = await request.json()
 
     if (!id || typeof id !== "string") {
       return NextResponse.json({ error: "Missing application ID" }, { status: 400 })
@@ -106,12 +111,16 @@ export async function PATCH(request: NextRequest) {
     if (application_status === "ready") {
       return NextResponse.json({ error: "Use the 'documents ready' email action to mark a case ready." }, { status: 400 })
     }
+    if (appointment_help_status && !HELP_STATUSES.has(appointment_help_status)) {
+      return NextResponse.json({ error: "Unknown appointment help status" }, { status: 400 })
+    }
 
     // 1+2. Update only if the record is still the version staff loaded (atomic; a separate read raced).
     const updatePayload: Record<string, any> = {
       updated_at: new Date().toISOString()
     }
     if (application_status) updatePayload.application_status = application_status
+    if (appointment_help_status) updatePayload.appointment_help_status = appointment_help_status
 
     let update = supabase.from("visa_applications").update(updatePayload).eq("id", id)
     if (expected_updated_at) update = update.eq("updated_at", expected_updated_at)

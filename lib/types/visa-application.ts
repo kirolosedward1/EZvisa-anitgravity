@@ -44,6 +44,10 @@ export interface VisaApplication {
   appointment_centre?: string | null
   appointment_address?: string | null
   appointment_reference?: string | null
+  appointment_choice?: string | null
+  appointment_help_status?: string | null
+  appointment_help_requested_at?: string | null
+  file_downloaded_at?: string | null
 
   // Metadata
   submission_ip?: string

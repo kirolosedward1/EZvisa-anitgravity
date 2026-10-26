@@ -32,10 +32,11 @@ jobs:
           git fetch origin mobile-app:refs/remotes/origin/mobile-app || true
 
       - name: Compare the website contract with the app
-        # On main (website) checkouts the app files come from the mobile-app branch; on mobile-app checkouts the
-        # app files are in ./mobile and the contract is read from main.
+        # main contains an old mobile/ tree, so file presence cannot tell the two sides apart.
+        # A mobile-app push, or a PR into mobile-app, reads ./mobile and the contract from main.
+        # A website push or PR reads the live app from origin/mobile-app and the contract in this checkout.
         run: |
-          if [ -f mobile/lib/wizard.ts ]; then
+          if [ "${{ github.base_ref }}" = "mobile-app" ] || [ "${{ github.ref }}" = "refs/heads/mobile-app" ]; then
             node scripts/check-app-sync.mts --mobile mobile --contract-ref origin/main
           else
             node scripts/check-app-sync.mts --ref origin/mobile-app

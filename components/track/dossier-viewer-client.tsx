@@ -32,18 +32,6 @@ export function DossierViewerClient({
     }, 150)
   }
 
-  const handleDownloadHtml = () => {
-    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `EZvisa_Consular_Dossier_${destinationCountry.replace(/\s+/g, "_")}_${token.substring(0, 8).toUpperCase()}.html`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
-
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
       {/* Top Floating Control Toolbar (Hidden in print) */}
@@ -81,14 +69,11 @@ export function DossierViewerClient({
               {isPrinting ? "Preparing Print..." : "Print Dossier (A4)"}
             </Button>
 
-            <Button
-              onClick={handleDownloadHtml}
-              variant="outline"
-              size="sm"
-              className="text-xs font-medium"
-            >
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Save HTML
+            <Button asChild variant="outline" size="sm" className="text-xs font-medium">
+              <a href={`/api/download-document?token=${encodeURIComponent(token)}&format=html`}>
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Save HTML
+              </a>
             </Button>
 
             <Button asChild variant="outline" size="sm" className="text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400">

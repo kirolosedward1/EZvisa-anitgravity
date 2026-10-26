@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { 
   Building2, 
-  MapPin, 
   Clock, 
   ExternalLink, 
   Search, 
@@ -16,6 +15,7 @@ import {
   ShieldAlert
 } from "lucide-react"
 import { DigitRanges } from "@/components/digit-ranges"
+import { VisaCentrePlace } from "@/components/visa-centre-place"
 import { LocaleLink } from "@/components/locale-link"
 import { useSiteLocale } from "@/components/locale-provider"
 import { countryNameAr } from "@/lib/countries"
@@ -160,24 +160,18 @@ export function AppointmentGuideClient() {
 
             {/* Locations */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-muted/20 border border-border/50 space-y-1">
+              <div className="p-4 rounded-xl bg-muted/20 border border-border/50">
                 <span className="text-[11px] font-semibold text-primary uppercase tracking-wider block">
                   {t("Dubai Application Center", "مركز التقديم في دبي")}
                 </span>
-                <p className="text-xs text-foreground font-medium flex items-start gap-1.5 mt-1">
-                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <span>{arabic ? activeAr.dubai : active.dubaiAddress}</span>
-                </p>
+                <VisaCentrePlace className="mt-2" centre={active.provider} address={active.dubaiAddress} locale={arabic ? "ar" : "en"} />
               </div>
 
-              <div className="p-4 rounded-xl bg-muted/20 border border-border/50 space-y-1">
+              <div className="p-4 rounded-xl bg-muted/20 border border-border/50">
                 <span className="text-[11px] font-semibold text-primary uppercase tracking-wider block">
                   {t("Abu Dhabi Application Center", "مركز التقديم في أبوظبي")}
                 </span>
-                <p className="text-xs text-foreground font-medium flex items-start gap-1.5 mt-1">
-                  <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-                  <span>{arabic ? activeAr.abuDhabi : active.abuDhabiAddress}</span>
-                </p>
+                <VisaCentrePlace className="mt-2" centre={active.provider} address={active.abuDhabiAddress} locale={arabic ? "ar" : "en"} />
               </div>
             </div>
 

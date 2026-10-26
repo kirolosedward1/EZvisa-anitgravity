@@ -1,6 +1,7 @@
 import { Image } from "@/components/image"
 import { format, parseISO } from "date-fns"
-import { CalendarClock, CalendarDays, UserRound } from "lucide-react"
+import { CalendarDays, UserRound } from "lucide-react"
+import { AppointmentCard } from "@/components/dashboard/appointment-card"
 import { DashboardCard } from "@/components/dashboard/dashboard-card"
 import { NextStepCard } from "@/components/dashboard/next-step-card"
 import { ProgressTracker } from "@/components/dashboard/progress-tracker"
@@ -11,7 +12,7 @@ import { ArabicDate } from "@/components/arabic-date"
 import { destinations } from "@/lib/destinations"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 import { customerText } from "@/lib/translations/customer"
-import type { Stage } from "@/lib/application-status"
+import { customerProgress, type Stage } from "@/lib/application-status"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import type { ReactNode } from "react"
 
@@ -36,12 +37,23 @@ function formatTravelDates(app: VisaApplication, arabic: boolean): ReactNode {
 }
 
 /** The case at a glance: destination photo with flag, name and reference, then progress and the next step. */
-export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplication; stage: Stage; arabic: boolean }) {
+export function ApplicationOverview({
+  app,
+  stage,
+  arabic,
+  showHelp = false,
+}: {
+  app: VisaApplication
+  stage: Stage
+  arabic: boolean
+  showHelp?: boolean
+}) {
   const locale = arabic ? "ar" : "en"
   const countryEn = app.destination_country || "Schengen"
   const country = arabic ? SCHENGEN_META[countryEn]?.ar || (countryEn === "Schengen" ? "شنغن" : countryEn) : countryEn
   const photo = destinations.find((d) => d.name === countryEn)?.image
   const reference = app.id ? referenceOf(app.id) : ""
+  const progress = stage === "rejected" || stage === "cancelled" ? null : customerProgress(app)
 
   return (
     <DashboardCard aria-label={customerText(locale, "overview.caseAria", { country })} className="overflow-hidden">
@@ -75,29 +87,9 @@ export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplicati
           <StatusPills app={app} arabic={arabic} />
         </div>
 
-        {app.appointment_at ? (
-          <div className="flex items-start gap-3 rounded-xl border border-border/70 px-4 py-3 text-sm">
-            <CalendarClock className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="font-medium text-foreground">
-                {arabic ? (
-                  <>
-                    {customerText("ar", "overview.appointment")}{" "}
-                    <ArabicDate value={app.appointment_at} withTime />
-                  </>
-                ) : (
-                  `Appointment ${format(new Date(app.appointment_at), "EEE, MMM d yyyy 'at' h:mm a")}`
-                )}
-              </span>
-              <span className="text-muted-foreground">
-                {[app.appointment_centre, app.appointment_address].filter(Boolean).join(", ")}
-                {app.appointment_reference ? ` · ${customerText(locale, "overview.ref")} ${app.appointment_reference}` : ""}
-              </span>
-            </div>
-          </div>
-        ) : null}
+        <AppointmentCard app={app} arabic={arabic} showHelp={showHelp} />
 
-        {stage !== "rejected" && stage !== "cancelled" && <ProgressTracker stage={stage} arabic={arabic} />}
+        {progress && <ProgressTracker progress={progress} arabic={arabic} />}
 
         <NextStepCard app={app} stage={stage} />
       </div>

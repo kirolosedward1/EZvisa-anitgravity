@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { ChevronLeft, Loader2 } from "lucide-react"
+import { ArrowRight, ChevronLeft, Loader2 } from "lucide-react"
 import { LangText } from "@/components/lang-text"
 import { Button } from "@/components/ui/button"
 
@@ -16,6 +16,10 @@ type WizardBarProps = {
   continueType?: "submit" | "button"
   onContinue?: () => void
   disabled?: boolean
+  /** Later screen keeps Back and uses its own actions. */
+  showContinue?: boolean
+  /** Trailing arrow disc, the same one as other primary actions. */
+  arrow?: boolean
 }
 
 /** Wizard footer. Back is an icon. Continue fills the rest of the form width. */
@@ -30,6 +34,8 @@ export function WizardBar({
   continueType = "submit",
   onContinue,
   disabled = false,
+  showContinue = true,
+  arrow = false,
 }: WizardBarProps) {
   return (
     <div data-wizard-bar className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E3E7EF] bg-[#FFFFFF]">
@@ -48,7 +54,7 @@ export function WizardBar({
               </span>
             </button>
           ) : null}
-          <Button
+          {showContinue ? <Button
             type={continueType}
             onClick={onContinue}
             disabled={disabled || loading}
@@ -66,7 +72,8 @@ export function WizardBar({
                 <LangText en={continueLabel} ar={continueLabelAr} />
               </span>
             )}
-          </Button>
+            {!loading && arrow ? <ArrowRight /> : null}
+          </Button> : null}
         </div>
       </div>
     </div>

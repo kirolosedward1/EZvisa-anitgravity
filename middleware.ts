@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server"
 import { updateSession } from "@/lib/supabase/middleware"
 
 /** Signed-in, server-rendered pages: refresh the Supabase session cookies before the page renders. */
-const SESSION_PATHS = ["/dashboard", "/account", "/continue", "/trip", "/receipt"]
+const SESSION_PATHS = ["/dashboard", "/account", "/continue", "/appointment", "/trip", "/receipt"]
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -35,6 +35,7 @@ export const config = {
     "/dashboard/:path*",
     "/account/:path*",
     "/continue/:path*",
+    "/appointment/:path*",
     "/trip/:path*",
     "/receipt/:path*",
   ],

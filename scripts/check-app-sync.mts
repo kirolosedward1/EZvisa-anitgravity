@@ -4,7 +4,11 @@
 //
 //   pnpm sync:check                         # app files from ./mobile, or from the mobile-app branch when absent
 //   pnpm sync:check -- --mobile ../path     # app files from another checkout
+//   pnpm sync:check -- --ref origin/mobile-app
 //   pnpm sync:check -- --ref origin/mobile-app --contract-ref origin/main
+//
+// --ref reads the app from that git ref even when ./mobile exists. main carries an old mobile/ tree;
+// the live app is the mobile-app branch, so the website CI job must pass --ref.
 //
 // Exit code 1 on any drift. Runs on plain Node 22+ (type stripping), no build step, no network.
 import { execFileSync } from "node:child_process"
@@ -16,6 +20,7 @@ import { pathToFileURL, fileURLToPath } from "node:url"
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const args = process.argv.slice(2)
 const opt = (name: string, def?: string) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : def }
+const refGiven = args.includes("--ref")
 const ref = opt("--ref", "origin/mobile-app")!
 const contractRef = opt("--contract-ref")
 let mobileDir = opt("--mobile")
@@ -29,7 +34,9 @@ const fromGit = (r: string, file: string) => {
   return out
 }
 const APP_FILES = ["lib/wizard.ts", "lib/data.ts", "lib/payments.ts", "lib/config.ts", "lib/authErrors.ts", "app.json", "app/apply/index.tsx", "app/continue/[id].tsx"]
-if (!mobileDir && fs.existsSync(path.join(ROOT, "mobile/lib/wizard.ts"))) mobileDir = path.join(ROOT, "mobile")
+// main also contains mobile/lib/wizard.ts, and that copy is behind the mobile-app branch.
+// An explicit --ref is how the website job selects the live app; do not let the stale tree win.
+if (!mobileDir && !refGiven && fs.existsSync(path.join(ROOT, "mobile/lib/wizard.ts"))) mobileDir = path.join(ROOT, "mobile")
 if (!mobileDir) {
   console.log(`app files: ${ref} (git)`)
   for (const f of APP_FILES) { try { fromGit(ref, `mobile/${f}`) } catch { /* optional file */ } }

@@ -3,7 +3,9 @@ import { ApplicationSwitcher } from "@/components/dashboard/application-switcher
 import { CaseSummary } from "@/components/dashboard/case-summary"
 import { DocumentChecklist } from "@/components/dashboard/document-checklist"
 import { SupportCard } from "@/components/dashboard/support-card"
-import { getStage } from "@/lib/application-status"
+import { getSessionUser } from "@/lib/applications"
+import { ownsApplication } from "@/lib/appointment"
+import { getStage, isPaid } from "@/lib/application-status"
 import { requestLocale } from "@/lib/request-locale"
 import { customerText } from "@/lib/translations/customer"
 import type { VisaApplication } from "@/lib/types/visa-application"
@@ -25,6 +27,8 @@ export async function ApplicationView({
   const stage = getStage(app)
   const arabic = (await requestLocale()) === "ar"
   const locale = arabic ? "ar" : "en"
+  const viewer = await getSessionUser()
+  const showHelp = Boolean(viewer && ownsApplication(app, viewer.email) && isPaid(app))
 
   return (
     <div className="flex flex-col gap-6">
@@ -32,7 +36,7 @@ export async function ApplicationView({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
-          <ApplicationOverview app={app} stage={stage} arabic={arabic} />
+          <ApplicationOverview app={app} stage={stage} arabic={arabic} showHelp={showHelp} />
           <DocumentChecklist app={app} arabic={arabic} />
         </div>
         <aside className="flex flex-col gap-6" aria-label={customerText(locale, "case.aside")}>
