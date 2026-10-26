@@ -12,7 +12,7 @@ email on both and sees the same applications.
 | Create account | `/signup` | password ≥ 8 characters, confirmation email |
 | Forgot / reset password | `/forgot-password`, `/reset-password` | reset link → `/auth/callback?type=recovery` → `/reset-password` |
 | Google | `/login`, `/signup` | always shown; works once the Google provider is enabled in Supabase (below), until then it says "Google sign-in isn't set up yet" |
-| Apple | `/login`, `/signup` (and `/ar`) | always shown; Apple's own button. Works once the Apple provider is enabled (below). Until then it says "Apple sign-in isn't set up yet" |
+| Apple | `/login`, `/signup` (and `/ar`) | hidden unless `NEXT_PUBLIC_APPLE_SIGNIN_ENABLED=true`. When on, Apple's own button. Works once the Apple provider is enabled (below). Until then the button says "Apple sign-in isn't set up yet" |
 | Demo accounts | `/login` | cookie-based sandbox, no Supabase user |
 
 Every email link and OAuth round trip lands on **`/auth/callback`** (`app/auth/callback/route.ts`), which exchanges

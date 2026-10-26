@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
-import { AppleSignInButton } from "@/components/auth/apple-sign-in"
-import { GoogleSignInButton } from "@/components/auth/google-sign-in"
+import { SocialSignIn } from "@/components/auth/social-sign-in"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
@@ -105,25 +104,15 @@ function SignupForm() {
       </div>
 
       <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-3">
-          <AppleSignInButton
-            next={next}
-            label={copy.signUpApple}
-            onError={(message) => setError(authFormErrorText(locale, message))}
-          />
-          <GoogleSignInButton
-            next={next}
-            label={copy.signUpGoogle}
-            onError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
-          />
-          <p className="text-center text-xs leading-relaxed text-muted-foreground">{copy.sameEmailFirst}</p>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          {copy.orDivider}
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        <SocialSignIn
+          next={next}
+          appleLabel={copy.signUpApple}
+          googleLabel={copy.signUpGoogle}
+          linkingNote={copy.sameEmailFirst}
+          divider={copy.orDivider}
+          onAppleError={(message) => setError(authFormErrorText(locale, message))}
+          onGoogleError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
+        />
 
       <form onSubmit={handleSignup} className="space-y-6" noValidate>
         {error && (

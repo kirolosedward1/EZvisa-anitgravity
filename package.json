@@ -11,7 +11,7 @@
     "postinstall": "node scripts/defer-next-scripts.mjs",
     "sync:check": "node scripts/check-app-sync.mts",
     "check:ar": "node scripts/check-ar-copy.mts",
-    "test": "node --experimental-strip-types --test lib/auth/confirm-next.test.ts lib/auth/email-templates.test.ts lib/auth/login-notice.test.ts lib/auth/apple-profile.test.ts lib/chat-routes.test.ts lib/route-path.test.ts lib/whatsapp.test.ts lib/dates-ar.test.ts lib/translations/auth-form.test.ts lib/shared/wizard-contract.duration.test.ts",
+    "test": "node --experimental-strip-types --test lib/auth/confirm-next.test.ts lib/auth/email-templates.test.ts lib/auth/login-notice.test.ts lib/auth/apple-profile.test.ts lib/auth/apple-signin-flag.test.ts lib/chat-routes.test.ts lib/route-path.test.ts lib/whatsapp.test.ts lib/dates-ar.test.ts lib/translations/auth-form.test.ts lib/shared/wizard-contract.duration.test.ts && tsx --test lib/auth/apple-sign-in-ui.test.tsx",
     "test:payments": "npx tsx scripts/test-ziina-payment.mts"
   },
   "dependencies": {
@@ -84,6 +84,7 @@
     "@types/react-dom": "^19",
     "postcss": "^8.5",
     "tailwindcss": "^4.1.9",
+    "tsx": "^4.23.15",
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
   },

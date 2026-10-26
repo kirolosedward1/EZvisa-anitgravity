@@ -12,8 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
-import { AppleSignInButton } from "@/components/auth/apple-sign-in"
-import { GoogleSignInButton } from "@/components/auth/google-sign-in"
+import { SocialSignIn } from "@/components/auth/social-sign-in"
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { classifyAuthError, EMAIL_RE, type AuthIssue } from "@/lib/auth/errors"
@@ -159,17 +158,15 @@ function LoginForm({
       </div>
 
       <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-3">
-          <AppleSignInButton next={next} label={copy.signInApple} onError={onSocialError} />
-          <GoogleSignInButton next={next} label={copy.signInGoogle} onError={onSocialError} />
-          <p className="text-center text-xs leading-relaxed text-muted-foreground">{copy.sameEmailFirst}</p>
-        </div>
-
-        <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          {copy.orDivider}
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        <SocialSignIn
+          next={next}
+          appleLabel={copy.signInApple}
+          googleLabel={copy.signInGoogle}
+          linkingNote={copy.sameEmailFirst}
+          divider={copy.orDivider}
+          onAppleError={onSocialError}
+          onGoogleError={onSocialError}
+        />
 
         <div className="grid grid-cols-2 rounded-xl bg-secondary p-1 text-sm font-medium" role="tablist" aria-label={t("Sign-in method", "طريقة تسجيل الدخول")}>
           {(["password", "link"] as Mode[]).map((m) => (
