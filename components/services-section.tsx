@@ -182,21 +182,25 @@ export function ServicesSection() {
                   onClick={() => setActive(index)}
                   onKeyDown={(e) => onKey(e, index)}
                   className={cn(
-                    "group flex shrink-0 items-center gap-3 rounded-2xl border text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    "px-3.5 py-2.5 lg:w-full lg:gap-4 lg:px-4 lg:py-3.5",
+                    "group flex shrink-0 items-start gap-4 rounded-2xl border text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "px-3.5 py-2.5 lg:w-full lg:px-4 lg:py-3.5",
                     selected ? "border-border bg-card shadow-sm" : "border-transparent hover:bg-secondary",
                   )}
                 >
                   <span
                     className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors lg:size-10",
-                      selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
+                      "flex h-5 w-7 shrink-0 items-center lg:h-6",
+                      selected ? "text-primary" : "text-[#6B7280]",
                     )}
                   >
-                    <Icon className="size-4 lg:size-5" aria-hidden="true" />
+                    <Icon
+                      className={cn("size-7", Icon === Plane && "rtl:-scale-x-100")}
+                      strokeWidth={1.5}
+                      aria-hidden="true"
+                    />
                   </span>
                   <span className="flex min-w-0 flex-col">
-                    <span className={cn("flex items-center gap-2 whitespace-nowrap text-sm font-semibold lg:text-base", selected ? "text-foreground" : "text-foreground/80")}>
+                    <span className={cn("flex items-center gap-2 whitespace-nowrap text-sm font-semibold leading-5 lg:text-base lg:leading-6", selected ? "text-foreground" : "text-foreground/80")}>
                       {text(service.title)}
                       {service.extra ? <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"><LangText en="Extra" ar="إضافة" /></span> : null}
                     </span>
