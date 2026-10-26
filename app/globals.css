@@ -313,6 +313,7 @@ h3.panel-title.panel-title-lg {
 }
 
 /* Wizard questions are a step tighter than the site H2 (22px, 28px from 768px). */
+h1.wizard-question,
 h2.wizard-question {
   font-size: 22px;
   font-weight: 600;
@@ -321,6 +322,7 @@ h2.wizard-question {
 }
 
 @media (min-width: 768px) {
+  h1.wizard-question,
   h2.wizard-question {
     font-size: 28px;
     line-height: 1.2;

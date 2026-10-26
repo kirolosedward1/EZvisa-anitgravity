@@ -39,6 +39,10 @@ interface CaseItem {
   has_photos: boolean
   created_at: string
   updated_at: string
+  appointment_choice?: string | null
+  appointment_help_status?: string | null
+  appointment_at?: string | null
+  appointment_centre?: string | null
 }
 
 export default function AdminPage() {
@@ -124,6 +128,33 @@ export default function AdminPage() {
       }
 
       setActionMessage(`Case #${caseItem.id.substring(0, 8)} updated to ${newStatus}`)
+      loadCases(secret, filterStatus, searchQuery)
+    } catch (err: any) {
+      setActionError(err.message)
+    }
+  }
+
+  const handleHelpStatus = async (caseItem: CaseItem, helpStatus: string) => {
+    if (!helpStatus) return
+    setActionError(null)
+    setActionMessage(null)
+    try {
+      const res = await fetch("/api/admin/cases", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${secret}`,
+        },
+        body: JSON.stringify({
+          id: caseItem.id,
+          appointment_help_status: helpStatus,
+          expected_updated_at: caseItem.updated_at,
+          notes: `Appointment help status set to ${helpStatus}`,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to update appointment help")
+      setActionMessage(`Appointment help for #${caseItem.id.substring(0, 8)} set to ${helpStatus}`)
       loadCases(secret, filterStatus, searchQuery)
     } catch (err: any) {
       setActionError(err.message)
@@ -430,6 +461,23 @@ export default function AdminPage() {
                         >
                           {c.application_status}
                         </span>
+                        {c.appointment_choice ? (
+                          <p className="mt-2 text-[10px] text-slate-400">Choice: {c.appointment_choice}</p>
+                        ) : null}
+                        <label className="mt-2 block text-[10px] text-slate-400">
+                          Help status
+                          <select
+                            value={c.appointment_help_status || ""}
+                            onChange={(event) => handleHelpStatus(c, event.target.value)}
+                            className="mt-1 block w-full rounded border border-slate-700 bg-slate-900 px-1 py-1 text-[11px] text-slate-200"
+                          >
+                            <option value="">—</option>
+                            <option value="requested">requested</option>
+                            <option value="contacted">contacted</option>
+                            <option value="booked">booked</option>
+                            <option value="cancelled">cancelled</option>
+                          </select>
+                        </label>
                       </td>
 
                       <td className="p-4 pr-6 text-right">

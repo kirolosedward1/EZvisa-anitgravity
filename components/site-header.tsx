@@ -31,7 +31,7 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 }
 
 /** Task pages (wizard, after-payment questions, payment status): logo, "Need help?" and WhatsApp only. */
-const MINIMAL_PREFIXES = ["/apply", "/continue", "/payment-success", "/payment-failed"]
+const MINIMAL_PREFIXES = ["/apply", "/continue", "/appointment", "/payment-success", "/payment-failed"]
 /** Customer pages: always the short account header. */
 const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip"]
 

@@ -3,6 +3,22 @@ import { createClient } from "@supabase/supabase-js"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { generateCompleteDossierPack } from "@/lib/documents/templates"
 import { isDemoToken, getDemoApplicationByToken } from "@/lib/demo-data"
+import type { SupabaseClient } from "@supabase/supabase-js"
+
+/** First download unlocks the appointment step. A missing column must not block the file. */
+async function stampDownloaded(supabase: SupabaseClient, id?: string | null) {
+  if (!id) return
+  try {
+    const { error } = await supabase
+      .from("visa_applications")
+      .update({ file_downloaded_at: new Date().toISOString() })
+      .eq("id", id)
+      .is("file_downloaded_at", null)
+    if (error) console.error("file_downloaded_at:", error.message)
+  } catch (err) {
+    console.error("file_downloaded_at:", err)
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -76,6 +92,7 @@ export async function GET(request: NextRequest) {
 
     // Direct HTML dossier download requested
     if (format === "html") {
+      await stampDownloaded(supabase, appData.id)
       const dossierHtml = generateCompleteDossierPack(appData)
       const sanitizedCountry = (appData.destination_country || "Schengen").replace(/\s+/g, "_")
       return new NextResponse(dossierHtml, {
@@ -96,6 +113,7 @@ export async function GET(request: NextRequest) {
       .createSignedUrl(finalFilePath, 3600) // 1 hour expiration
 
     if (error || !data) {
+      await stampDownloaded(supabase, appData.id)
       // Resilient fallback: deliver generated complete dossier HTML
       const dossierHtml = generateCompleteDossierPack(appData)
       const sanitizedCountry = (appData.destination_country || "Schengen").replace(/\s+/g, "_")
@@ -108,6 +126,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
+    await stampDownloaded(supabase, appData.id)
     // Redirect user to the secure signed URL
     return NextResponse.redirect(data.signedUrl)
   } catch (error) {

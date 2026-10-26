@@ -1,5 +1,5 @@
 import { Check } from "lucide-react"
-import { APPLICATION_STEPS, getStepIndex, type StepKey } from "@/lib/application-status"
+import { APPLICATION_STEPS, getStepIndex, type CustomerProgress, type StepKey } from "@/lib/application-status"
 import { customerText, type CustomerKey } from "@/lib/translations/customer"
 import { cn } from "@/lib/utils"
 
@@ -9,13 +9,13 @@ const STEP_COPY: Record<StepKey, { label: CustomerKey; hint: CustomerKey }> = {
   review: { label: "step.review", hint: "step.reviewHint" },
   preparation: { label: "step.preparation", hint: "step.preparationHint" },
   ready: { label: "step.ready", hint: "step.readyHint" },
+  appointment: { label: "step.appointment", hint: "step.appointmentHint" },
 }
 
-export function ProgressTracker({ stage, arabic }: { stage: StepKey; arabic: boolean }) {
+export function ProgressTracker({ progress, arabic }: { progress: CustomerProgress; arabic: boolean }) {
   const locale = arabic ? "ar" : "en"
-  const currentIndex = getStepIndex(stage)
-  // "Ready" is a finished state, so show it as complete rather than in progress
-  const isFinished = stage === "ready"
+  const currentIndex = getStepIndex(progress.key)
+  const isFinished = progress.finished
 
   return (
     <ol className="flex flex-col gap-4 md:flex-row md:gap-2" aria-label={customerText(locale, "step.progress")}>
