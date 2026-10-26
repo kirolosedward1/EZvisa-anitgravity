@@ -19,6 +19,7 @@ import {
 } from "lucide-react"
 import { LocaleLink } from "@/components/locale-link"
 import { useSiteLocale } from "@/components/locale-provider"
+import { dirhamNoun } from "@/lib/currency"
 import { countryNameAr } from "@/lib/countries"
 
 export function BankBalanceCalculatorClient() {
@@ -192,7 +193,7 @@ export function BankBalanceCalculatorClient() {
               <div className="text-4xl font-semibold tracking-tight text-foreground">
                 {arabic ? (
                   <bdi dir="ltr">
-                    {digits(funds.totalAed)} <span className="text-xl font-semibold text-muted-foreground">درهم</span>
+                    {digits(funds.totalAed)} <span className="text-xl font-semibold text-muted-foreground">{dirhamNoun(funds.totalAed)}</span>
                   </bdi>
                 ) : (
                   <>
@@ -218,7 +219,7 @@ export function BankBalanceCalculatorClient() {
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-foreground">{t("Recommended Safety Buffer (+30%)", "هامش إضافي مقترح (+30%)")}</span>
                 <span className="font-semibold text-primary">
-                  {arabic ? <bdi dir="ltr">{digits(funds.recommendedBufferAed)} درهم</bdi> : `${digits(funds.recommendedBufferAed)} AED`}
+                  {arabic ? <bdi dir="ltr">{digits(funds.recommendedBufferAed)} {dirhamNoun(funds.recommendedBufferAed)}</bdi> : `${digits(funds.recommendedBufferAed)} AED`}
                 </span>
               </div>
               <p className="text-[11px] text-muted-foreground">

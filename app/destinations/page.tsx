@@ -34,7 +34,7 @@ export function generateMetadata(): Promise<Metadata> {
     },
     {
       title: "وجهات شنغن وقوائم المستندات",
-      description: "29 وجهة شنغن للمقيمين في الإمارات، مع قائمة المستندات لكل دولة. الرسم 249 درهم.",
+      description: "29 وجهة شنغن للمقيمين في الإمارات، مع قائمة المستندات لكل دولة. الرسم 249 درهمًا.",
       path: "/ar/destinations",
     },
   )
@@ -57,7 +57,7 @@ export default function DestinationsPage() {
           description={
             <LangText
               en="Visa requirements, visa centres and embassy fees for all 29 Schengen countries. Our service fee is 249 AED for any destination."
-              ar="متطلبات التأشيرة ومراكز التأشيرات ورسوم السفارة لدول شنغن الـ29. رسوم خدمتنا 249 درهم لأي وجهة."
+              ar="متطلبات التأشيرة ومراكز التأشيرات ورسوم السفارة لدول شنغن الـ29. رسوم خدمتنا 249 درهمًا لأي وجهة."
             />
           }
           randomizeBackground={true}

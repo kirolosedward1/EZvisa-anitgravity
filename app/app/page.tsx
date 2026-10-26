@@ -29,7 +29,7 @@ const TITLE = "EZvisa App – Schengen visa from your phone"
 const DESCRIPTION = `Apply for your Schengen visa, pay ${PRICE_LABEL} when it's ready, upload your documents and follow the real status from the EZvisa iPhone app. Same account as ezvisa.net. Android coming soon.`
 const TITLE_AR = "تطبيق إيزي فيزا لتأشيرة شنغن"
 const DESCRIPTION_AR =
-  "قدّم لطلب تأشيرة شنغن، وادفع 249 درهم عندما يكون الملف جاهزًا، وارفع مستنداتك وتابع الحالة من تطبيق إيزي فيزا لآيفون. الحساب نفسه على ezvisa.net. أندرويد قريبًا."
+  "قدّم لطلب تأشيرة شنغن، وادفع 249 درهمًا عندما يكون الملف جاهزًا، وارفع مستنداتك وتابع الحالة من تطبيق إيزي فيزا لآيفون. الحساب نفسه على ezvisa.net. أندرويد قريبًا."
 
 export async function generateMetadata(): Promise<Metadata> {
   const english: Metadata = {
