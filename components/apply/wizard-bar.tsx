@@ -52,7 +52,7 @@ export function WizardBar({
             type={continueType}
             onClick={onContinue}
             disabled={disabled || loading}
-            className="min-w-0 flex-1 overflow-hidden px-3 text-center leading-tight"
+            className="min-w-0 flex-1 overflow-hidden px-6 text-center leading-tight"
           >
             {loading ? (
               <span className="inline-flex max-w-full items-center justify-center gap-2">

@@ -7,6 +7,7 @@ import { Image } from "@/components/image"
 import { ReadyLine } from "@/components/ready-line"
 import { APPLICATION_READY } from "@/lib/copy"
 import { LangText } from "@/components/lang-text"
+import { Button } from "@/components/ui/button"
 import { LocaleLink } from "@/components/locale-link"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -72,13 +73,12 @@ export function ComparisonSection() {
               ar="يمكنك التقدّم لتأشيرة شنغن بنفسك. هذا ما يتغيّر عندما يجهّز مختص الملف معك."
             />
           </p>
-          <LocaleLink
-            href="/apply"
-            className="group mt-2 inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <LangText en="Start your application now" ar="ابدأ طلبك الآن" />
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-          </LocaleLink>
+          <Button asChild className="mt-2">
+            <LocaleLink href="/apply">
+              <span><LangText en="Start your application now" ar="ابدأ طلبك الآن" /></span>
+              <ArrowRight aria-hidden="true" />
+            </LocaleLink>
+          </Button>
         </div>
 
         <motion.div
