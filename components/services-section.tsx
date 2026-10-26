@@ -8,6 +8,7 @@ import { ArrowRight, BadgeCheck, Expand, FileText, Hotel, Mail, Map, Plane, Shie
 import type { LucideIcon } from "lucide-react"
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
@@ -226,13 +227,12 @@ export function ServicesSection() {
               </p>
             </div>
           </div>
-          <LocaleLink
-            href="/apply"
-            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            <LangText en="Start your application" ar="ابدأ طلبك" />
-            <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-          </LocaleLink>
+          <Button asChild className="shrink-0">
+            <LocaleLink href="/apply">
+              <span><LangText en="Start your application" ar="ابدأ طلبك" /></span>
+              <ArrowRight aria-hidden="true" />
+            </LocaleLink>
+          </Button>
         </div>
       </div>
 
@@ -252,14 +252,12 @@ export function ServicesSection() {
               </div>
               <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-muted-foreground">{current.extra ? <LangText en="Optional extra, or bring your own" ar="إضافة اختيارية، أو أحضر وثيقتك" /> : <LangText en="Included in every application" ar="مشمول في كل طلب" />}</span>
-                <LocaleLink
-                  href="/apply"
-                  onClick={() => setExpanded(false)}
-                  className="inline-flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  <LangText en="Start your application" ar="ابدأ طلبك" />
-                  <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-                </LocaleLink>
+                <Button asChild className="shrink-0">
+                  <LocaleLink href="/apply" onClick={() => setExpanded(false)}>
+                    <span><LangText en="Start your application" ar="ابدأ طلبك" /></span>
+                    <ArrowRight aria-hidden="true" />
+                  </LocaleLink>
+                </Button>
               </div>
             </div>
           </div>
