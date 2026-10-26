@@ -24,11 +24,16 @@ function setToolsButtonVisible(visible: boolean) {
 }
 
 /** The blue gear is Expo's dev-menu tools button. It floats above modals, so hide it while a sheet is open.
- *  Release JS never shows it (the native button exists only in dev builds; this also covers a dev client loading release JS). */
+ *  Release JS never shows it (the native button exists only in dev builds; this also covers a dev client loading release JS).
+ *  The native hide survives a process kill, and the cleanup below never runs in that case. A cold start has no sheet
+ *  open, so show the gear as soon as this module loads — dev only, and before any screen paints. */
+if (__DEV__) setToolsButtonVisible(true);
 function useSheetToolsButton(active: boolean) {
   useEffect(() => {
     if (!__DEV__) { setToolsButtonVisible(false); return; }
-    if (!active) return;
+    // No sheet is covering the screen. toolsDepth stays 0 across a kill, so this also brings the gear back
+    // when the next screen mounts a closed sheet and the module-level restore above already ran.
+    if (!active) { if (toolsDepth === 0) setToolsButtonVisible(true); return; }
     toolsDepth += 1;
     setToolsButtonVisible(false);
     return () => {

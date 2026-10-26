@@ -11,12 +11,13 @@ import { select } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 import { SCHENGEN, iso, type WizardForm } from "../../lib/wizard";
 import type { Opt } from "../../lib/questions";
-import { Note } from "./fields";
+import { Note, formatListDate } from "./fields";
 
 const parse = (s: string) => (s ? new Date(s + "T12:00:00") : undefined);
+/** Saved-traveller rows and the sheet's date fields share this. */
 export const useFmtDate = () => {
   const { lang } = useT();
-  return (s: string) => (s ? parse(s)!.toLocaleDateString(lang === "ar" ? "ar" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
+  return (s: string) => formatListDate(s, lang);
 };
 
 /** One answer row: white with a hairline; selected = thin blue outline, soft blue tint and a blue check. */
