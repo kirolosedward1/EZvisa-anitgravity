@@ -10,12 +10,13 @@ import { CountrySheet } from "../CountryPicker";
 import { useColors, useIsDark, S, R, T, ICON } from "../../lib/theme";
 import { useT, type Lang } from "../../lib/i18n";
 import { select } from "../../lib/haptics";
+import { formatListDate } from "../../lib/dates";
 
 const H = 56;
 export const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const parse = (s: string) => (s ? new Date(s + "T12:00:00") : undefined);
 /** Day, long month, year — the saved-traveller list (`useFmtDate`). Arabic keeps Western digits (`12 مايو 1990`). */
-export const formatListDate = (s: string, lang: Lang) => (s ? parse(s)!.toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "long", year: "numeric" }) : "");
+export { formatListDate };
 export const fmtShort = (s: string, lang: Lang = "en") => (lang === "ar" ? formatListDate(s, lang) : s ? parse(s)!.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "");
 const ord = (n: number) => (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th");
 /** English stays date-fns "PPP" ("May 12th, 1990"). Arabic uses the list formatter. */
