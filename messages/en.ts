@@ -83,19 +83,6 @@ export const en = {
   "explore.viewAll": "View all countries",
   "explore.imageAlt": "{country} destination",
 
-  "contactHome.eyebrow": "Ready when you are",
-  "contactHome.headingLead": "Start your Schengen visa application",
-  "contactHome.headingAccent": "today.",
-  "contactHome.intro": "Join thousands of travelers who trusted us with their Schengen visa applications.",
-  "contactHome.start": "Start application",
-  "contactHome.whatsapp": "Chat on WhatsApp",
-  "contactHome.whatYouGet": "What you get",
-  "contactHome.benefit1": "Quick document verification",
-  "contactHome.benefit2": "Expert guidance included",
-  "contactHome.benefit3": "Checked by a visa specialist",
-  "contactHome.benefit4": "Full refund before we start",
-  "contactHome.startingAt": "Starting at",
-
   "pricing.description": "One-time payment • No hidden fees • Full support",
   "pricing.popular": "Most Popular Choice",
   "pricing.includedTitle": "What's Included",
@@ -626,6 +613,8 @@ export const en = {
   "dest.ctaTitle": "Ready to secure your {name} visa?",
   "dest.ctaSecure": "Secure payment. Full refund if you cancel before we start.",
   "dest.ctaDocs": "View Document Checklists",
+  "dest.closeTitle": "Ready to apply for {name}?",
+  "dest.closeBody": "From {price}, documents ready in 1–2 days",
 
   "news.heroBody": "Expert visa guidance, travel tips, and the latest updates on Schengen visa applications.",
   "news.empty": "No posts found in this category.",

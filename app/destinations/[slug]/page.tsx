@@ -7,15 +7,18 @@ import { InnerHero } from "@/components/inner-hero"
 import { CountryFacts } from "@/components/documents/country-facts"
 import { DocumentSplit } from "@/components/documents/document-split"
 import { AfterPaymentTimeline } from "@/components/after-payment-timeline"
-import { ContactSection } from "@/components/contact-section"
+import { LatestGuides } from "@/components/latest-guides"
 import { getProviderForDestination } from "@/lib/visa-rules"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { countryNameAr } from "@/lib/countries"
 import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { requestLocale } from "@/lib/request-locale"
+import { Button } from "@/components/ui/button"
+import { DigitRanges } from "@/components/digit-ranges"
 import { ArrowRight } from "lucide-react"
 import { LocaleLink } from "@/components/locale-link"
+import { message } from "@/messages"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 
@@ -223,7 +226,28 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           </div>
         </section>
 
-        <ContactSection />
+        <LatestGuides />
+
+        <section className="pb-16 md:pb-20">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="flex flex-col gap-4 rounded-lg border border-[#E5E7EB] bg-card p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex min-w-0 flex-col gap-1">
+                <p className="text-[20px] font-semibold leading-snug text-foreground">
+                  {message(arabic ? "ar" : "en", "dest.closeTitle", { name: place })}
+                </p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <DigitRanges text={message(arabic ? "ar" : "en", "dest.closeBody", { price })} />
+                </p>
+              </div>
+              <Button asChild className="w-full shrink-0 md:w-auto">
+                <LocaleLink href={applyHref}>
+                  <span>{message(arabic ? "ar" : "en", "services.start")}</span>
+                  <ArrowRight aria-hidden="true" />
+                </LocaleLink>
+              </Button>
+            </div>
+          </div>
+        </section>
       </div>
       <Footer />
     </>

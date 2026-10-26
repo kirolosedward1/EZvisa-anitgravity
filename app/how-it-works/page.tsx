@@ -8,7 +8,7 @@ import { InnerHero } from "@/components/inner-hero"
 import { HowItWorksSimple } from "@/components/how-it-works-simple"
 import { AfterPaymentTimeline } from "@/components/after-payment-timeline"
 import { ServicesSection } from "@/components/services-section"
-import { ContactSection } from "@/components/contact-section"
+import { LatestGuides } from "@/components/latest-guides"
 import { formatAedLabel } from "@/lib/currency"
 import { requestLocale } from "@/lib/request-locale"
 import { ltr } from "@/lib/bidi"
@@ -82,7 +82,7 @@ export default async function HowItWorksPage() {
         <HowItWorksSimple standalone />
         <AfterPaymentTimeline />
         <ServicesSection />
-        <ContactSection />
+        <LatestGuides />
       </div>
       <Footer />
     </>

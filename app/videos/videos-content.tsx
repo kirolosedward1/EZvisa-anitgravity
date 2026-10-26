@@ -1,12 +1,11 @@
 'use client'
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { Play, Clock } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { InnerHero } from "@/components/inner-hero"
-import { ContactSection } from "@/components/contact-section"
 import { useSiteLocale } from "@/components/locale-provider"
 
 const videos = [
@@ -23,7 +22,7 @@ const videos = [
   },
 ]
 
-export default function VideosContent() {
+export default function VideosContent({ children }: { children?: ReactNode }) {
   const arabic = useSiteLocale() === "ar"
   const [selectedVideo, setSelectedVideo] = useState<typeof videos[0] | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -102,7 +101,7 @@ export default function VideosContent() {
           </div>
         </section>
 
-        <ContactSection />
+        {children}
       </div>
       <Footer />
 

@@ -108,3 +108,8 @@ export function NewsReadTime({ value }: { value: string }) {
   const n = value.match(/\d+/)?.[0] ?? value
   return <Msg id="news.readTime" values={{ n }} />
 }
+
+/** True when this guide has an Arabic title, excerpt, and category in the message catalogs. */
+export function hasArabicGuideCopy(slug: string, category: string) {
+  return Boolean(POST[slug] && CATEGORY[category])
+}

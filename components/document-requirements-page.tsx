@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { ArrowRight, Check, ChevronDown } from "lucide-react"
@@ -17,10 +17,9 @@ import { InnerHero } from "@/components/inner-hero"
 import { FixedCTAButton } from "@/components/fixed-cta-button"
 import { DocumentSplit } from "@/components/documents/document-split"
 import { CountryFacts } from "@/components/documents/country-facts"
-import { ContactSection } from "@/components/contact-section"
-
 interface DocumentRequirementsPageProps {
   initialCountry: string
+  children?: ReactNode
 }
 
 // Documents that help in particular situations, on top of the core file.
@@ -32,7 +31,7 @@ const SITUATIONAL = [
   { title: "Someone else pays for the trip", titleAr: "شخص آخر يتحمّل تكاليف الرحلة", body: "A sponsorship letter with the sponsor's passport, residence visa and bank statements.", bodyAr: "خطاب كفالة مع جواز الكفيل وتأشيرة إقامته وكشوف حسابه." },
 ]
 
-export function DocumentRequirementsPage({ initialCountry }: DocumentRequirementsPageProps) {
+export function DocumentRequirementsPage({ initialCountry, children }: DocumentRequirementsPageProps) {
   const arabic = useSiteLocale() === "ar"
   const router = useRouter()
   const localize = useLocalizedHref()
@@ -179,7 +178,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
           </section>
         )}
 
-        <ContactSection />
+        {children}
       </div>
       <Footer />
       <FixedCTAButton country={country} />
