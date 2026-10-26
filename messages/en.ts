@@ -613,6 +613,8 @@ export const en = {
   "dest.ctaTitle": "Ready to secure your {name} visa?",
   "dest.ctaSecure": "Secure payment. Full refund if you cancel before we start.",
   "dest.ctaDocs": "View Document Checklists",
+  "dest.closeTitle": "Ready to apply for {name}?",
+  "dest.closeBody": "From {price}, documents ready in 1–2 days",
 
   "news.heroBody": "Expert visa guidance, travel tips, and the latest updates on Schengen visa applications.",
   "news.empty": "No posts found in this category.",
