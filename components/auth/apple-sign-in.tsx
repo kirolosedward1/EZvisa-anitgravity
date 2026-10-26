@@ -9,6 +9,7 @@ import { Loader2 } from "lucide-react"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { authCallbackUrl } from "@/lib/auth/redirect"
 import { APPLE_SIGN_IN_LABEL } from "@/lib/auth/apple-profile"
+import { appleSignInEnabled } from "@/lib/auth/apple-signin-flag"
 import { NOT_SET_UP, enabledProviders, socialMessage } from "@/lib/auth/providers"
 import { authMessage, classifyAuthError, isNetworkError } from "@/lib/auth/errors"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -40,21 +41,26 @@ function useAppleColor(): "black" | "white" {
   return color
 }
 
-/**
- * Same height (h-12 / 48px), corner radius (rounded-xl) and width as the Google button.
- * HIG colors are literal black and white, so they are set inline rather than with bg-black / text-white tokens.
- */
-export function AppleSignInButton({
-  next = "/dashboard",
-  label,
-  onError,
-}: {
+type AppleSignInButtonProps = {
   next?: string
   /** Visible label. Defaults to "Sign in with Apple" / «تسجيل الدخول باستخدام Apple». */
   label?: string
   /** When given, errors are reported to the page instead of under the button. */
   onError?: (message: string) => void
-}) {
+}
+
+export function AppleSignInButton(props: AppleSignInButtonProps) {
+  // Off by default, including the "isn't set up yet" line that this button would show on click.
+  if (!appleSignInEnabled()) return null
+  return <AppleSignInButtonReady {...props} />
+}
+
+/** Same corner radius (rounded-xl) and width as the Google button. HIG black and white are set inline. */
+function AppleSignInButtonReady({
+  next = "/dashboard",
+  label,
+  onError,
+}: AppleSignInButtonProps) {
   const locale = useSiteLocale()
   const text = label ?? APPLE_SIGN_IN_LABEL[locale]
   const color = useAppleColor()
