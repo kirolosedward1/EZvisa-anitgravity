@@ -17,13 +17,10 @@ import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { SwipeToDiscard, SwipeLock, SwipeActive } from "../../../components/SwipeToDiscard";
 import { useContext } from "react";
 import { onTabScroll } from "../../../lib/tabBarScroll";
-
-const fmt = (s?: string | null) => (s ? new Date(s + "T12:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
-/** "13 Jan – 20 Jan"; one date when there is no return date or it is the same day. */
-const range = (a?: string | null, b?: string | null) => (!a ? "" : !b || b.slice(0, 10) === a.slice(0, 10) ? fmt(a) : `${fmt(a)} – ${fmt(b)}`);
+import { formatTripRange } from "../../../lib/dates";
 
 function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
-  const c = useColors(); const dark = useIsDark(); const { t } = useT(); const name = a.countries?.name ?? "Application"; const steps = buildTimeline(a); const swiping = useContext(SwipeActive);
+  const c = useColors(); const dark = useIsDark(); const { t, lang } = useT(); const name = a.countries?.name ?? "Application"; const steps = buildTimeline(a); const swiping = useContext(SwipeActive);
   const act = nextAction(a);
   const people = a.applicants.map((p) => p.first_name).filter(Boolean).join(` ${t("and")} `);
   return (
@@ -38,7 +35,7 @@ function AppCard({ a, onDiscard }: { a: Application; onDiscard?: () => void }) {
         <Flag country={name} size={40} />
         <View style={{ flex: 1 }}>
           <Text variant="headline" numberOfLines={1}>{[t(name), a.travel_purpose && t(a.travel_purpose)].filter(Boolean).join(" · ")}</Text>
-          <Text variant="footnote" tone="secondary" numberOfLines={1} tabular>{[people, ltr(range(a.entry_date, a.exit_date))].filter(Boolean).join(" · ")}</Text>
+          <Text variant="footnote" tone="secondary" numberOfLines={1} tabular>{[people, ltr(formatTripRange(a.entry_date, a.exit_date, lang))].filter(Boolean).join(" · ")}</Text>
         </View>
         {onDiscard && swiping ? (
           // The trash shows once the row is swiped; at rest the row has its chevron. Discard is a swipe, a long

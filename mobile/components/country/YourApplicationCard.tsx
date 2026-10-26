@@ -14,10 +14,10 @@ import { useT } from "../../lib/i18n";
 import { S, R, ICON, useColors, useIsDark, card, PRESS } from "../../lib/theme";
 import { Icon, PressScale, ProgressSegments, Text } from "../ui";
 import { GroupHeader } from "./Row";
+import { formatDay } from "../../lib/dates";
 
 const FINISHED = ["completed", "rejected", "cancelled"];
-const fmtDay = (s: string, lang: string) => new Date(s.slice(0, 10) + "T12:00:00").toLocaleDateString(lang === "ar" ? "ar" : undefined, { day: "numeric", month: "short" });
-export const tripDates = (a: Pick<Application, "entry_date" | "exit_date">, lang: string) => (a.entry_date ? [fmtDay(a.entry_date, lang), a.exit_date && fmtDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
+export const tripDates = (a: Pick<Application, "entry_date" | "exit_date">, lang: string) => (a.entry_date ? [formatDay(a.entry_date, lang), a.exit_date && formatDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
 
 function Shell({ onPress, label, children, testID }: { onPress: () => void; label: string; children: ReactNode; testID: string }) {
   const c = useColors(); const dark = useIsDark(); const { t, rtl } = useT();

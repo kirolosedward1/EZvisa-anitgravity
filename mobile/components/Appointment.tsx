@@ -5,6 +5,7 @@ import { useColors } from "../lib/theme";
 import { useT } from "../lib/i18n";
 import { tap, success } from "../lib/haptics";
 import { appointmentOf, addToCalendar, directionsUrl } from "../lib/appointment";
+import { formatAppointment } from "../lib/dates";
 import type { Application } from "../lib/data";
 
 export { appointmentOf, type Appt } from "../lib/appointment";
@@ -12,7 +13,7 @@ export { appointmentOf, type Appt } from "../lib/appointment";
 export function AppointmentCard({ a }: { a: Application }) {
   const c = useColors(); const { t, lang } = useT();
   const ap = appointmentOf(a); if (!ap) return null;
-  const when = new Date(ap.at).toLocaleString(lang === "ar" ? "ar" : undefined, { weekday: "short", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+  const when = formatAppointment(ap.at, lang);
   const maps = directionsUrl(ap);
   return (
     <View testID="appointment-card">

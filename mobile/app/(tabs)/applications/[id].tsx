@@ -21,21 +21,14 @@ import { askDiscard, discardApplication, isAbandoned } from "../../../lib/discar
 import { Pressable } from "react-native";
 import { Icon, Chevron } from "../../../components/ui";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from "react-native-reanimated";
+import { formatDetailDate, formatDetailRange } from "../../../lib/dates";
 
-let LOC: string | undefined;
-const fmtD = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(LOC, { day: "numeric", month: "short", year: "numeric" }) : "—");
-/** "Jan 13 – Jan 20, 2027": the year once when both dates share it, so the range fits on one row. */
-const fmtRange = (a: string, b?: string | null) => {
-  if (!b || b.slice(0, 10) === a.slice(0, 10)) return fmtD(a);
-  const x = new Date(a.slice(0, 10) + "T12:00:00"), y = new Date(b.slice(0, 10) + "T12:00:00");
-  return x.getFullYear() === y.getFullYear() ? `${x.toLocaleDateString(LOC, { day: "numeric", month: "short" })} – ${fmtD(b)}` : `${fmtD(a)} – ${fmtD(b)}`;
-};
 const EDITABLE = UPLOAD_STATUSES;
 const REFRESH_MS = 30_000;
 
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const c = useColors(); const pb = useTabInset(); const { t, lang } = useT(); LOC = lang === "ar" ? "ar" : undefined;
+  const c = useColors(); const pb = useTabInset(); const { t, lang } = useT();
   const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [upErr, setUpErr] = useState<string | null>(null);
@@ -144,7 +137,7 @@ export default function ApplicationDetail() {
             <Flag country={name} size={56} />
             <View style={{ flex: 1 }}>
               <Text variant="title2" accessibilityRole="header" numberOfLines={1}>{[t(name), a.travel_purpose && t(a.travel_purpose)].filter(Boolean).join(" · ")}</Text>
-              <Text variant="subhead" tone="secondary" numberOfLines={1} tabular>{[a.full_name, a.entry_date && fmtRange(a.entry_date, a.exit_date)].filter(Boolean).join(" · ")}</Text>
+              <Text variant="subhead" tone="secondary" numberOfLines={1} tabular>{[a.full_name, a.entry_date && formatDetailRange(a.entry_date, a.exit_date, lang)].filter(Boolean).join(" · ")}</Text>
             </View>
           </View>
         </Surface>
@@ -172,8 +165,8 @@ export default function ApplicationDetail() {
       )}
       <ListGroup header={t("Trip")} inset={16}>
         <ListRow title={t("Traveller")} value={a.full_name} />
-        {!!a.entry_date && <ListRow title={t("Dates")} value={fmtRange(a.entry_date, a.exit_date)} />}
-        {paid && <ListRow title={t("Paid")} value={fmtD(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null)} />}
+        {!!a.entry_date && <ListRow title={t("Dates")} value={formatDetailRange(a.entry_date, a.exit_date, lang)} />}
+        {paid && <ListRow title={t("Paid")} value={formatDetailDate(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null, lang)} />}
         {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
         {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
         {a.status !== "cancelled" && (paid
@@ -213,7 +206,7 @@ export default function ApplicationDetail() {
       </ListGroup>}
       <InlineError text={upErr} />
       <ListGroup header={t("Payments")} inset={58}>
-        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : fmtD(p.created_at)} value={t(STATUS_LABEL[p.status] ?? p.status)} onPress={paid ? () => router.push(`/receipt/${a.id}`) : undefined} a11yHint={paid ? t("Payment receipt") : undefined} />)}
+        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : formatDetailDate(p.created_at, lang)} value={t(STATUS_LABEL[p.status] ?? p.status)} onPress={paid ? () => router.push(`/receipt/${a.id}`) : undefined} a11yHint={paid ? t("Payment receipt") : undefined} />)}
       </ListGroup>
       <ListGroup header={t("Support")} footer={t("Your reference {r} is added to the message.", { r: a.reference })} inset={58}>
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />

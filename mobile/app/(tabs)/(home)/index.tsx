@@ -30,9 +30,9 @@ import { useAvatar } from "../../../lib/avatar";
 import { whatsapp } from "../../../lib/api";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 import { Explore, FaqSection } from "../../../components/home/Sections";
+import { formatTripRange } from "../../../lib/dates";
 
-const fmtDay = (s: string, lang: string) => new Date(s.slice(0, 10) + "T12:00:00").toLocaleDateString(lang === "ar" ? "ar" : undefined, { day: "numeric", month: "short" });
-const tripDates = (a: Application, lang: string) => (a.entry_date ? [fmtDay(a.entry_date, lang), a.exit_date && a.exit_date.slice(0, 10) !== a.entry_date.slice(0, 10) && fmtDay(a.exit_date, lang)].filter(Boolean).join(" – ") : "");
+const tripDates = (a: Application, lang: string) => formatTripRange(a.entry_date, a.exit_date, lang);
 const STEP_LABEL: Record<string, string> = { personal: "Personal", spouse: "Spouse", employment: "Employment", "trip-details": "Trip" };
 const SERVER_STEP: Record<string, string> = { ...STEP_LABEL, payment: "Review" };
 const draftStep = (d: LocalDraft) => { const q = d.page.startsWith("q:") ? Q_BY_ID[d.page.slice(2)] : null; return q ? STEP_LABEL[q.step] ?? q.step : "Review"; };
@@ -233,7 +233,7 @@ export default function Home() {
   useResumePayment();
   const scroll = useRef<ScrollViewInstance>(null); const apptY = useRef<number | null>(null);
   const name = (session?.user.user_metadata?.full_name as string | undefined)?.split(" ")[0];
-  const today = new Date().toLocaleDateString(lang === "ar" ? "ar" : undefined, { weekday: "long", day: "numeric", month: "long" });
+  const today = new Date().toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : undefined, { weekday: "long", day: "numeric", month: "long" });
   const items = useItems(session ? apps : null);
   const server = session ? apps ?? [] : [];
 

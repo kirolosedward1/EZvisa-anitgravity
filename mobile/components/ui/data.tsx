@@ -2,7 +2,7 @@ import { useState } from "react";
 import { nextAction } from "../../lib/nextStep";
 import { stage } from "../../lib/stage";
 import React, { memo, useEffect } from "react";
-import { View, Pressable, Image, StyleProp, ViewStyle } from "react-native";
+import { View, Pressable, Image, Platform, StyleProp, ViewStyle } from "react-native";
 import { SvgXml } from "react-native-svg";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, withTiming, useReducedMotion } from "react-native-reanimated";
 import { router } from "expo-router";
@@ -11,6 +11,7 @@ import { FLAG_SVG } from "../../assets/flags";
 import { STATUS_LABEL, type Application } from "../../lib/data";
 import { buildTimeline, type Step } from "../../lib/timeline";
 import { useT, ltr } from "../../lib/i18n";
+import { formatDay, formatTimelineStamp } from "../../lib/dates";
 import { tap, success as hSuccess } from "../../lib/haptics";
 import { Text } from "./Text";
 import { Icon, PressScale, Chevron } from "./core";
@@ -20,9 +21,13 @@ import { Icon, PressScale, Chevron } from "./core";
 export const Flag = memo(function Flag({ country, size = 28 }: { country?: string | null; size?: number }) {
   const c = useColors();
   const xml = country ? FLAG_SVG[country] : undefined;
+  // A flag is a picture. Pin the view to LTR (and keep it from being flattened into an RTL parent)
+  // so Arabic does not mirror the artwork — France and Italy keep red on the right. Chevrons still flip.
   return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", backgroundColor: c.fill }}>
-      {xml ? <SvgXml xml={xml} width={size} height={size} /> : country === "Other" ? (
+    <View collapsable={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
+      {...(Platform.OS === "web" ? { dir: "ltr" as const } : {})}
+      style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", backgroundColor: c.fill, direction: "ltr" }}>
+      {xml ? <SvgXml xml={xml} width={size} height={size} style={{ direction: "ltr" }} /> : country === "Other" ? (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Icon name="globe" size={size * 0.55} color={c.secondaryLabel} /></View>
       ) : (
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><Text variant="caption" tone="secondary">{(country ?? "?").slice(0, 2).toUpperCase()}</Text></View>
@@ -106,8 +111,6 @@ export function MiniProgress({ status, payment }: { status: string; payment?: st
   );
 }
 
-const fmtDT = (s: string, lang?: string) => new Date(s).toLocaleString(lang === "ar" ? "ar" : undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-const fmtAppt = (s: string, lang?: string) => new Date(s).toLocaleString(lang === "ar" ? "ar" : undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 /** Five-step status timeline (lib/timeline.ts). A step shows as done only when the row says so, and a time only when
  *  the row has a real one; there is no placeholder or estimated date. */
 export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
@@ -120,7 +123,7 @@ export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
     <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} testID="timeline">
       {steps.map((s, i) => {
         const last = i === steps.length - 1; const col = tone(s.state, s.key); const filled = s.state === "done" || s.state === "attention" || s.state === "failed";
-        const when = s.at ? (s.scheduled ? fmtAppt(s.at, lang) : fmtDT(s.at, lang)) : null;
+        const when = s.at ? formatTimelineStamp(s.at, lang, s.scheduled) : null;
         const reached = s.state !== "todo";
         const stateWord = s.state === "done" ? t("done") : s.state === "current" ? t("in progress") : s.state === "attention" ? t("needs attention") : s.state === "todo" ? t("not yet") : "";
         return (
@@ -166,8 +169,8 @@ export function SavedCheck({ tone = "green" }: { tone?: "green" | "accent" }) {
   return <Animated.View testID="saved-check" style={[{ width: 22, height: 22, borderRadius: R.round, backgroundColor: col, alignItems: "center", justifyContent: "center" }, a]} accessibilityElementsHidden><Icon name="checkmark" size={12} color={c.onSuccess} weight="bold" /></Animated.View>;
 }
 
-const fmtShort = (s?: string | null) => (s ? new Date(s.length === 10 ? s + "T12:00:00" : s).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "");
 export function ApplicationRow({ a }: { a: Application }) {
+  const { lang } = useT();
   const name = a.countries?.name ?? "Application";
   return (
     <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${name}, ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}`}
@@ -175,7 +178,7 @@ export function ApplicationRow({ a }: { a: Application }) {
       <Flag country={name} size={40} />
       <View style={{ flex: 1, gap: S.xxs }}>
         <Text variant="headline" numberOfLines={1}>{name}</Text>
-        <Text variant="subhead" tone="secondary" numberOfLines={1} tabular>{[ltr(a.reference), fmtShort(a.entry_date)].filter(Boolean).join(" · ")}</Text>
+        <Text variant="subhead" tone="secondary" numberOfLines={1} tabular>{[ltr(a.reference), ltr(formatDay(a.entry_date, lang))].filter(Boolean).join(" · ")}</Text>
       </View>
       <StatusPill v={a.status} a={a} />
       <ChevronR />
