@@ -3,6 +3,7 @@
 import type { ReactNode } from "react"
 import { ChevronLeft, Loader2 } from "lucide-react"
 import { LangText } from "@/components/lang-text"
+import { Button } from "@/components/ui/button"
 
 type WizardBarProps = {
   onBack?: () => void
@@ -47,11 +48,11 @@ export function WizardBar({
               </span>
             </button>
           ) : null}
-          <button
+          <Button
             type={continueType}
             onClick={onContinue}
             disabled={disabled || loading}
-            className="flex h-12 min-w-0 flex-1 items-center justify-center overflow-hidden rounded-[10px] bg-[#0436DC] px-3 text-center text-[15px] font-semibold leading-tight text-white disabled:opacity-50"
+            className="min-w-0 flex-1 overflow-hidden px-3 text-center leading-tight"
           >
             {loading ? (
               <span className="inline-flex max-w-full items-center justify-center gap-2">
@@ -65,7 +66,7 @@ export function WizardBar({
                 <LangText en={continueLabel} ar={continueLabelAr} />
               </span>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

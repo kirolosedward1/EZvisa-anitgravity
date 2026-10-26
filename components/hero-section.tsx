@@ -326,7 +326,7 @@ export function HeroSection() {
                         asChild
                       >
                         <LocaleLink href={handleGetStarted()}>
-                          <LangText en="Get started" ar="ابدأ" />
+                          <span><LangText en="Get started" ar="ابدأ" /></span>
                           <ArrowRight aria-hidden="true" />
                         </LocaleLink>
                       </Button>

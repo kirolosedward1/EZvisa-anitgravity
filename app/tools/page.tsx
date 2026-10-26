@@ -3,6 +3,8 @@ import { LocaleLink } from "@/components/locale-link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { Button } from "@/components/ui/button"
+import { formatAedLabel } from "@/lib/currency"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { requestLocale } from "@/lib/request-locale"
 import { withArabicMeta } from "@/lib/page-meta"
 import {
@@ -183,8 +185,8 @@ export default async function ToolsIndexPage() {
                   <div className="relative z-10 pt-2">
                     <Button asChild className="w-full">
                       <LocaleLink href={tool.href} className="flex items-center justify-center gap-2">
-                        {tool.cta}
-                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        <span>{tool.cta}</span>
+                        <ArrowRight aria-hidden="true" />
                       </LocaleLink>
                     </Button>
                   </div>
@@ -215,12 +217,22 @@ export default async function ToolsIndexPage() {
                 )}
               </p>
 
-              <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Button asChild size="lg" className="w-full sm:w-auto">
-                  <LocaleLink href="/apply">
-                    {t("Start Your Application • From 249 AED", "ابدأ طلبك · 249 درهم")}
-                  </LocaleLink>
-                </Button>
+              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
+                <div className="flex w-full flex-col items-center gap-2 sm:w-auto sm:items-start">
+                  <Button asChild size="lg" className="w-full sm:w-auto">
+                    <LocaleLink href="/apply">
+                      <span className="sm:hidden">{t("Start your application", "ابدأ طلبك")}</span>
+                      <span className="hidden sm:inline">
+                        {arabic
+                          ? `ابدأ طلبك · ${formatAedLabel(PRICE_AED, "ar")}`
+                          : `Start Your Application • From ${formatAedLabel(PRICE_AED, "en")}`}
+                      </span>
+                    </LocaleLink>
+                  </Button>
+                  <p className="text-center text-xs text-white/75 sm:hidden">
+                    {arabic ? `من ${formatAedLabel(PRICE_AED, "ar")}` : `From ${formatAedLabel(PRICE_AED, "en")}`}
+                  </p>
+                </div>
 
                 <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6 rounded-full border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-white font-medium">
                   <LocaleLink href="/how-it-works">

@@ -441,8 +441,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   <div className="hidden sm:block">
                     <Button variant="default" asChild>
                       <LocaleLink href="/apply" className="flex items-center gap-2">
-                        <Rocket className="h-4 w-4" />
-                        <LangText en="Get Started" ar="ابدأ الآن" />
+                        <Rocket className="size-4" aria-hidden="true" />
+                        <span><LangText en="Get Started" ar="ابدأ الآن" /></span>
                       </LocaleLink>
                     </Button>
                   </div>

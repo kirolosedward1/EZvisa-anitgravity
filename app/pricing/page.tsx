@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight, Check, Minus } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
@@ -134,13 +135,12 @@ export default async function PricingPage() {
               </ul>
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-5">
-                <LocaleLink
-                  href="/apply"
-                  className="group inline-flex h-12 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  {pick("Start your application", "ابدأ طلبك")}
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-                </LocaleLink>
+                <Button asChild className="shrink-0">
+                  <LocaleLink href="/apply">
+                    <span>{pick("Start your application", "ابدأ طلبك")}</span>
+                    <ArrowRight aria-hidden="true" />
+                  </LocaleLink>
+                </Button>
                 <p className="text-sm text-muted-foreground">{pick("Your file is ready 1–2 days after you upload your documents.", <>يصبح ملفك جاهزًا خلال <bdi dir="ltr">1–2</bdi> يوم من رفع مستنداتك.</>)}</p>
               </div>
             </div>
