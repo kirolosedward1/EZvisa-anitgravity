@@ -139,7 +139,7 @@ export default function ApplicationDetail() {
             <Flag country={name} size={56} />
             <View style={{ flex: 1 }}>
               <Text variant="title2" accessibilityRole="header" numberOfLines={1}>{[t(name), a.travel_purpose && t(a.travel_purpose)].filter(Boolean).join(" · ")}</Text>
-              <Text variant="subhead" tone="secondary" tabular>{[a.full_name, a.entry_date && ltr(formatDetailRange(a.entry_date, a.exit_date, lang))].filter(Boolean).join(" · ")}</Text>
+              <Text variant="subhead" tone="secondary" tabular style={lang === "ar" ? { writingDirection: "rtl", textAlign: "right" } : undefined}>{[lang === "ar" ? a.full_name && ltr(a.full_name) : a.full_name, a.entry_date && ltr(formatDetailRange(a.entry_date, a.exit_date, lang))].filter(Boolean).join(" · ")}</Text>
             </View>
           </View>
         </Surface>
