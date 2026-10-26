@@ -450,13 +450,17 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   <AnimatePresence>
                     {showGetStarted && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.9, width: 0 }}
-                        animate={{ opacity: 1, scale: 1, width: "auto" }}
-                        exit={{ opacity: 0, scale: 0.9, width: 0 }}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
                         transition={{ duration: 0.2 }}
-                        className="shrink-0 overflow-hidden sm:hidden"
+                        className="shrink-0 sm:hidden"
                       >
-                        <Button variant="default" asChild className="relative h-10 w-10 min-h-10 min-w-10 p-0">
+                        <Button
+                          variant="default"
+                          asChild
+                          className="relative h-10 w-10 min-h-10 min-w-10 p-0 before:absolute before:-inset-[2px] before:content-[''] [&>svg]:!size-5 [&>svg]:!rounded-none [&>svg]:!bg-transparent [&>svg]:!p-0 [&>svg]:!text-primary-foreground"
+                        >
                           <LocaleLink href="/apply">
                             <span className="sr-only"><LangText en="Get Started" ar="ابدأ الآن" /></span>
                             <ArrowRight aria-hidden="true" />
