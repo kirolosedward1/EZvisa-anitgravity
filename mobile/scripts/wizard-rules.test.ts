@@ -27,7 +27,7 @@ test("before payment: the website's destination and traveller steps, in its orde
 test("saved travellers: \"Who is travelling?\" opens the traveller step when signed in with saved travellers", () => {
   setAccountEmail("me@example.com"); setTravellers([{ id: "t1", relationship: "self", firstName: "A", lastName: "B" }]);
   try {
-    assert.deepEqual(ids(form()).slice(0, 4), ["destination", "nationality", "traveller", "name"]);
+    assert.deepEqual(ids(form()).slice(0, 4), ["destination", "traveller", "nationality", "name"]);
     setTravellers([]);
     assert.ok(!ids(form()).includes("traveller"), "no saved travellers: no question");
   } finally { setAccountEmail(null); setTravellers([]); }

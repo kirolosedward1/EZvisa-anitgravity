@@ -5,8 +5,8 @@ import { useCallback, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { Stack, router, useFocusEffect } from "expo-router";
 import { Globi } from "../../../components/mascot/Globi";
-import { ListGroup, ListRow, EmptyState, Button, Text, Flag, Sheet, InlineError, SegmentedControl, SkeletonRows, useTabInset } from "../../../components/ui";
-import { FormField, Input, CountryField, DateField, SelectField } from "../../../components/wizard/fields";
+import { ListGroup, ListRow, EmptyState, Button, Flag, Sheet, InlineError, SegmentedControl, SkeletonRows, useTabInset } from "../../../components/ui";
+import { FormField, CountryField, DateField, SelectField, Input } from "../../../components/wizard/fields";
 import { useFmtDate } from "../../../components/wizard/answers";
 import { useColors, S } from "../../../lib/theme";
 import { useAuth } from "../../../lib/auth";
@@ -74,12 +74,12 @@ export default function SavedTravellers() {
 
       <Sheet visible={!!edit} onClose={() => { if (!busy) setEdit(null); }} title={edit?.id ? t("Edit traveller") : t("Add traveller")} closeLabel={t("Close")} testID="traveller-sheet">
         {!!edit && (
-          <View style={{ gap: S.md }}>
+          <View style={{ gap: S.md, width: "100%", alignSelf: "stretch" }}>
             <FormField label={t("First Name")}>
-              <Input value={edit.d.firstName} onChangeText={set("firstName")} placeholder={t("Enter first name")} accessibilityLabel={t("First Name")} autoCapitalize="words" autoCorrect={false} textContentType="givenName" />
+              <Input value={edit.d.firstName} onChangeText={set("firstName")} autoCapitalize="words" autoCorrect={false} textContentType="givenName" accessibilityLabel={t("First Name")} placeholder={t("Enter first name")} />
             </FormField>
             <FormField label={t("Last Name")}>
-              <Input value={edit.d.lastName} onChangeText={set("lastName")} placeholder={t("Enter last name")} accessibilityLabel={t("Last Name")} autoCapitalize="words" autoCorrect={false} textContentType="familyName" />
+              <Input value={edit.d.lastName} onChangeText={set("lastName")} autoCapitalize="words" autoCorrect={false} textContentType="familyName" accessibilityLabel={t("Last Name")} placeholder={t("Enter last name")} />
             </FormField>
             <FormField label={t("Who is this?")}>
               <SegmentedControl label={t("Who is this?")} value={edit.d.relationship} onChange={(v) => set("relationship")(v as TravellerRelationship)} options={RELATION.filter((r) => TRAVELLER_RELATIONSHIPS.includes(r.value)).map((r) => ({ value: r.value, label: t(r.label) }))} />
@@ -91,7 +91,7 @@ export default function SavedTravellers() {
               <DateField label={t("Date of Birth")} value={edit.d.dateOfBirth} onChange={set("dateOfBirth")} max={iso(new Date())} placeholder={t("Select date of birth")} />
             </FormField>
             <FormField label={t("Passport Number")}>
-              <Input value={edit.d.passportNumber} onChangeText={(v) => set("passportNumber")(v.toUpperCase())} accessibilityLabel={t("Passport Number")} autoCapitalize="characters" autoCorrect={false} spellCheck={false} placeholder="e.g. A1234567" />
+              <Input value={edit.d.passportNumber} onChangeText={(v) => set("passportNumber")(v.toUpperCase())} autoCapitalize="characters" autoCorrect={false} spellCheck={false} placeholder={t("e.g. A1234567")} accessibilityLabel={t("Passport Number")} />
             </FormField>
             <FormField label={t("Passport Expiry Date")}>
               <DateField label={t("Passport Expiry Date")} value={edit.d.passportExpiry} onChange={set("passportExpiry")} placeholder={t("Select expiry date")} />
