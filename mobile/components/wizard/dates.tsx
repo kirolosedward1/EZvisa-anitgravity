@@ -6,13 +6,13 @@ import { ScrollView, View, Pressable, I18nManager } from "react-native";
 import { Text, Icon } from "../ui";
 import { useT } from "../../lib/i18n";
 import { select } from "../../lib/haptics";
-import { S, R, useColors, useIsDark } from "../../lib/theme";
+import { S, R, useColors } from "../../lib/theme";
 import { earliestDeparture, iso, type WizardForm } from "../../lib/wizard";
 
 /** Calendar palette from the theme tokens, so the picker follows dark mode like the rest of the wizard. */
 function usePalette() {
-  const c = useColors(); const dark = useIsDark();
-  return { BLUE: c.accentFill, FILL: c.accentSoft, PAST: c.tertiaryLabel, TRACK: c.fill, BORDER: c.border, INK: c.label, WHITE: c.surface, SOFT: dark ? c.fillSubtle : "#F2F5FF", ON: c.onAccent };
+  const c = useColors();
+  return { BLUE: c.accentFill, FILL: c.accentMuted, PAST: c.textDisabled, TRACK: c.fill, BORDER: c.border, INK: c.label, WHITE: c.surface, SOFT: c.accentSoft, ON: c.onAccent, SHADOW: c.shadow };
 }
 const DAY = 86400000;
 const parse = (s?: string) => (s ? (([y, m, d]) => new Date(y, m - 1, d))(s.split("-").map(Number)) : undefined);
@@ -55,7 +55,7 @@ export function DatesAnswer({ f, patch }: { f: WizardForm; patch: (p: Partial<Wi
   React.useEffect(() => { if (!f.datesFlexible) patch({ datesFlexible: "no" }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const seg = (on: boolean, label: string, v: "no" | "yes") => (
     <Pressable key={v} onPress={() => { select(); patch({ datesFlexible: v }); }} accessibilityRole="tab" accessibilityState={{ selected: on }} aria-selected={on} accessibilityLabel={label}
-      style={{ flex: 1, minHeight: 36, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: on ? P.WHITE : "transparent", ...(on ? { shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null) }}>
+      style={{ flex: 1, minHeight: 36, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: on ? P.WHITE : "transparent", ...(on ? { shadowColor: P.SHADOW, shadowOpacity: 0.08, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null) }}>
       <Text variant="subhead" weight="600" color={on ? P.BLUE : P.INK}>{label}</Text>
     </Pressable>
   );

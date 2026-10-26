@@ -672,6 +672,12 @@ export const AR: Record<string, string> = {
   "Cooking class for a local dish": "درس طبخ لطبق محلي",
   "Botanical garden visit in {city}": "زيارة حديقة نباتية في {city}",
   "Your trip plan unlocks after payment": "تُفتح خطة رحلتك بعد الدفع",
+  // ---- HIG review (2026-10-24): accessibility labels, regrouped application page, country glance ----
+  "Section index": "فهرس الأقسام", "Notifications, {n} unread": "الإشعارات، {n} غير مقروءة", "Unread": "غير مقروء",
+  "Notifications are off for EZvisa. Turn them on in Settings.": "الإشعارات متوقفة لتطبيق EZvisa. فعّلها من الإعدادات.",
+  "Payments": "المدفوعات", "Your reference {r} is added to the message.": "يُضاف رقمك المرجعي {r} إلى الرسالة.",
+  "We prepare your file and a visa specialist checks your documents.": "نحن نُعدّ ملفك ويراجع مختص التأشيرات مستنداتك.",
+  "Select {label}": "اختر {label}", "Select": "اختر", "Tip: {text}": "نصيحة: {text}", "Close date picker": "إغلاق منتقي التاريخ",
   // ---- saved travellers (wizard question, Continue application spouse picker, Account → Saved travellers) ----
   "Who is travelling?": "من المسافر؟",
   "Someone else": "شخص آخر",

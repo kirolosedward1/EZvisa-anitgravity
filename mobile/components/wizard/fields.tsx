@@ -122,7 +122,7 @@ export function CountryField({ label, value, names, placeholder, searchPlacehold
 
 /** Date input: iOS sheet with the inline calendar, Android dialog, web <input type=date>. */
 export function DateField({ label, value, onChange, min, max, placeholder = "Select date", error, disabled }: { label: string; value: string; onChange: (v: string) => void; min?: string; max?: string; placeholder?: string; error?: boolean; disabled?: boolean }) {
-  const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const { lang, rtl } = useT();
+  const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const { t, lang, rtl } = useT();
   const [open, setOpen] = useState(false);
   const minD = min ? parse(min) : undefined, maxD = max ? parse(max) : undefined;
   const now = new Date();
@@ -152,7 +152,7 @@ export function DateField({ label, value, onChange, min, max, placeholder = "Sel
       {Platform.OS === "android" && open && <DateTimePicker value={initial} mode="date" minimumDate={minD} maximumDate={maxD} onChange={(e, d) => { setOpen(false); if (e.type === "set" && d) onChange(iso(d)); }} />}
       {Platform.OS === "ios" && (
         <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-          <Pressable style={{ flex: 1, backgroundColor: c.overlay }} onPress={() => setOpen(false)} accessibilityLabel="Close date picker" accessibilityRole="button" />
+          <Pressable style={{ flex: 1, backgroundColor: c.overlay }} onPress={() => setOpen(false)} accessibilityLabel={t("Close date picker")} accessibilityRole="button" />
           <View style={{ backgroundColor: c.bg, borderTopStartRadius: R.sheet, borderTopEndRadius: R.sheet, paddingBottom: insets.bottom + S.sm, paddingHorizontal: S.md }}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: 52 }}>
               <Pressable onPress={() => setOpen(false)} accessibilityRole="button" style={{ minHeight: 44, minWidth: 44, justifyContent: "center" }}><Text variant="body" tone="secondary">Cancel</Text></Pressable>

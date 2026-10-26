@@ -1,18 +1,19 @@
 // Building blocks for the one-question-per-screen application flow.
 import { useEffect, useState } from "react";
 import { Platform, Pressable, StyleSheet, Switch, TextInput, View, useWindowDimensions } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, useReducedMotion } from "react-native-reanimated";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useColors, useIsDark, S, R, T, ICON, curve, SPRING, elevation } from "../lib/theme";
 import { Icon, IconName, PressScale, Text, Flag, InlineError, Glass } from "./ui";
 import { select } from "../lib/haptics";
+import { useT } from "../lib/i18n";
 // Haptics: selection tick on choices/toggles only; CircleButton (back, close, help) is navigation and stays silent.
 
 export function FlowProgress({ value }: { value: number }) {
-  const c = useColors(); const w = useSharedValue(value);
-  useEffect(() => { w.value = withSpring(value, SPRING.enter); }, [value]);
+  const c = useColors(); const w = useSharedValue(value); const reduce = useReducedMotion();
+  useEffect(() => { w.value = reduce ? value : withSpring(value, SPRING.enter); }, [value, reduce]);
   const a = useAnimatedStyle(() => ({ width: `${Math.max(0.04, w.value) * 100}%` as any }));
-  return <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }} style={{ height: 4, borderRadius: R.xs, backgroundColor: c.card, overflow: "hidden" }}><Animated.View style={[{ height: 4, borderRadius: R.xs, backgroundColor: c.tint }, a]} /></View>;
+  return <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }} style={{ height: 4, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: 4, borderRadius: R.xs, backgroundColor: c.tint }, a]} /></View>;
 }
 
 export function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
@@ -90,24 +91,24 @@ export const fmtDate = (s: string, year = true) => (s ? parse(s)!.toLocaleDateSt
 
 /** Large date card: native compact picker (iOS), dialog (Android), <input type=date> (web). */
 export function DateCard({ label, value, onChange, min, max, error, icon }: { label: string; value: string; onChange: (v: string) => void; min?: Date; max?: Date; error?: string; icon?: IconName }) {
-  const c = useColors(); const dark = useIsDark();
+  const c = useColors(); const dark = useIsDark(); const { t } = useT();
   const [open, setOpen] = useState(false);
   const now = new Date();
   const current = parse(value) ?? (max && max < now ? max : min && min > now ? min : now);
   const head = (
     <View style={{ flex: 1, gap: S.xxs }}>
       <Text variant="footnote" tone={error ? "red" : "secondary"} weight="500">{error ?? label}</Text>
-      {Platform.OS !== "ios" && <Text variant="title3" color={value ? undefined : c.tertiaryLabel}>{value ? fmtDate(value) : "Select date"}</Text>}
+      {Platform.OS !== "ios" && <Text variant="title3" color={value ? undefined : c.tertiaryLabel}>{value ? fmtDate(value) : t("Select date")}</Text>}
     </View>
   );
   return (
-    <PressScale onPress={() => { if (Platform.OS === "android") { select(); setOpen(true); } }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmtDate(value) : "not set"}`}
+    <PressScale onPress={() => { if (Platform.OS === "android") { select(); setOpen(true); } }} accessibilityRole="button" accessibilityLabel={`${label}, ${value ? fmtDate(value) : t("Not set")}`}
       style={[{ minHeight: 84, borderRadius: R.card, backgroundColor: c.card, paddingHorizontal: S.lg, paddingVertical: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }, curve]}>
       {!!icon && <Icon name={icon} size={22} color={c.tint} />}
       {head}
       {Platform.OS === "ios" && !value && (
-        <PressScale onPress={() => { select(); onChange(iso(current)); }} accessibilityRole="button" accessibilityLabel={`Select ${label}`} style={{ paddingHorizontal: S.sm, minHeight: 44, borderRadius: R.md, backgroundColor: c.surface2, justifyContent: "center" }}>
-          <Text variant="body" color={c.tint}>Select</Text>
+        <PressScale onPress={() => { select(); onChange(iso(current)); }} accessibilityRole="button" accessibilityLabel={t("Select {label}", { label })} style={{ paddingHorizontal: S.sm, minHeight: 44, borderRadius: R.md, backgroundColor: c.surface2, justifyContent: "center" }}>
+          <Text variant="body" color={c.tint}>{t("Select")}</Text>
         </PressScale>
       )}
       {Platform.OS === "ios" && !!value && <DateTimePicker value={current} mode="date" display="compact" minimumDate={min} maximumDate={max} accentColor={c.tint} themeVariant={dark ? "dark" : "light"} onChange={(_, d) => d && onChange(iso(d))} />}
@@ -123,9 +124,9 @@ export function DateCard({ label, value, onChange, min, max, error, icon }: { la
 
 /** Web-style step indicator: one segment per visible step, the current one fills by sub-page progress. */
 export function StepProgress({ count, index, fraction }: { count: number; index: number; fraction: number }) {
-  const c = useColors();
+  const { t } = useT();
   return (
-    <View accessibilityRole="progressbar" accessibilityLabel={`Step ${index + 1} of ${count}`} style={{ flexDirection: "row", gap: S.xs }}>
+    <View accessibilityRole="progressbar" accessibilityLabel={t("Step {i} of {n}", { i: index + 1, n: count })} style={{ flexDirection: "row", gap: S.xs }}>
       {Array.from({ length: count }, (_, i) => (
         <View key={i} style={{ flex: 1 }}><FlowProgress value={i < index ? 1 : i > index ? 0.0001 : Math.max(0.08, fraction)} /></View>
       ))}
@@ -139,11 +140,12 @@ export function QLabel({ children, first }: { children: string; first?: boolean 
 
 /** Yes / No pair (the web's toggle buttons). */
 export function YesNo({ value, onChange, error, label }: { value: string; onChange: (v: "yes" | "no") => void; error?: string; label: string }) {
+  const { t } = useT();
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={{ gap: S.xs }}>
       <View style={{ flexDirection: "row", gap: S.sm }}>
-        <View style={{ flex: 1 }}><ChoiceRow label="Yes" selected={value === "yes"} onPress={() => onChange("yes")} /></View>
-        <View style={{ flex: 1 }}><ChoiceRow label="No" selected={value === "no"} onPress={() => onChange("no")} /></View>
+        <View style={{ flex: 1 }}><ChoiceRow label={t("Yes")} selected={value === "yes"} onPress={() => onChange("yes")} /></View>
+        <View style={{ flex: 1 }}><ChoiceRow label={t("No")} selected={value === "no"} onPress={() => onChange("no")} /></View>
       </View>
       {!!error && <InlineError text={error} />}
     </View>
@@ -173,9 +175,9 @@ export function Area({ value, onChangeText, placeholder }: { value: string; onCh
 
 /** Short in-field tip. */
 export function Tip({ children }: { children: string }) {
-  const c = useColors();
+  const c = useColors(); const { t } = useT();
   return (
-    <View style={{ flexDirection: "row", gap: S.xs, alignItems: "flex-start", marginHorizontal: S.xxs, marginTop: S.xxs }} accessible accessibilityLabel={`Tip: ${children}`}>
+    <View style={{ flexDirection: "row", gap: S.xs, alignItems: "flex-start", marginHorizontal: S.xxs, marginTop: S.xxs }} accessible accessibilityLabel={t("Tip: {text}", { text: children })}>
       <Icon name="lightbulb.fill" size={14} color={c.orange} />
       <Text variant="footnote" tone="secondary" style={{ flex: 1 }}>{children}</Text>
     </View>
