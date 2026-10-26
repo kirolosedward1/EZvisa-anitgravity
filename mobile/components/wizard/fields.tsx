@@ -38,9 +38,13 @@ export function FormField({ label, error, children }: { label: string; error?: s
 
 export function Input({ error, style, ...p }: TextInputProps & { error?: boolean }) {
   const c = useColors();
+  // A bare TextInput's intrinsic width expands a sheet past the right inset. A row + flex:1
+  // locks the bordered box to the field column, the same width as the selects and date fields.
   return (
-    <TextInput placeholderTextColor={c.secondaryLabel} {...p}
-      style={[T.body, boxStyle(c, error), { color: c.label, paddingVertical: S.sm }, Platform.OS === "web" && ({ outlineStyle: "none" } as any), style]} />
+    <View style={{ flexDirection: "row", alignSelf: "stretch", width: "100%" }}>
+      <TextInput placeholderTextColor={c.secondaryLabel} {...p}
+        style={[T.body, boxStyle(c, error), { color: c.label, paddingVertical: S.sm, flex: 1 }, Platform.OS === "web" && ({ outlineStyle: "none" } as any), style]} />
+    </View>
   );
 }
 export function TextArea({ error, rows = 3, ...p }: TextInputProps & { error?: boolean; rows?: number }) {
