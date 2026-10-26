@@ -181,7 +181,7 @@ export default async function ToolsIndexPage() {
                   </div>
 
                   <div className="relative z-10 pt-2">
-                    <Button asChild className="w-full rounded-full shadow-sm text-sm font-semibold">
+                    <Button asChild className="w-full">
                       <LocaleLink href={tool.href} className="flex items-center justify-center gap-2">
                         {tool.cta}
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -216,7 +216,7 @@ export default async function ToolsIndexPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center gap-4">
-                <Button asChild size="lg" className="w-full sm:w-auto h-12 px-8 rounded-full bg-primary hover:bg-primary/90 text-white font-semibold">
+                <Button asChild size="lg" className="w-full sm:w-auto">
                   <LocaleLink href="/apply">
                     {t("Start Your Application • From 249 AED", "ابدأ طلبك · 249 درهم")}
                   </LocaleLink>

@@ -89,7 +89,7 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
               <span>Statements must be stamped by your UAE bank with clear monthly salary credits.</span>
             </p>
 
-            <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-white font-semibold text-xs rounded-xl shadow-xs">
+            <Button asChild size="sm">
               <LocaleLink href={`/tools/bank-balance-calculator?country=${encodeURIComponent(country)}`}>
                 Calculate Your Exact Trip Balance
                 <ArrowRight className="w-3.5 h-3.5 ml-1.5" />

@@ -257,7 +257,7 @@ function LoginForm({
                 </button>
               </div>
             </div>
-            <Button type="submit" className="mt-1 h-12 w-full rounded-xl text-sm font-semibold" disabled={!!busy}>
+            <Button type="submit" className="mt-1 w-full" disabled={!!busy}>
               {busy === "password" ? (<><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("Signing in…", "جارٍ تسجيل الدخول…")}</>) : t("Sign in", "تسجيل الدخول")}
             </Button>
           </form>
@@ -290,7 +290,7 @@ function LoginForm({
                 {t("Use the email from your application. We'll send a one-time sign-in link, no password needed.", "استخدم البريد الذي قدّمت به الطلب. سنرسل رابط دخول لمرة واحدة، من دون كلمة مرور.")}
               </p>
             </div>
-            <Button type="submit" className="mt-1 h-12 w-full rounded-xl text-sm font-semibold" disabled={!!busy}>
+            <Button type="submit" className="mt-1 w-full" disabled={!!busy}>
               {busy === "link" ? (<><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("Sending link…", "جارٍ إرسال الرابط…")}</>) : t("Email me a sign-in link", "أرسل لي رابط الدخول")}
             </Button>
           </form>

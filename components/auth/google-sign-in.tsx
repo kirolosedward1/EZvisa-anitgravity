@@ -75,7 +75,7 @@ export function GoogleSignInButton({
         type="button"
         variant="outline"
         className={cn(
-          "h-auto min-h-12 w-full min-w-0 max-w-full gap-3 whitespace-normal rounded-xl border-border bg-background px-3 text-center text-sm font-semibold leading-tight text-balance text-foreground shadow-xs hover:border-primary/30 hover:bg-primary/5 hover:text-foreground",
+          "w-full min-w-0 max-w-full gap-3 whitespace-normal text-center text-balance",
           className,
         )}
         onClick={signIn}

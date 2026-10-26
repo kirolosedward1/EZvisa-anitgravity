@@ -321,12 +321,13 @@ export function HeroSection() {
                       className="w-full md:w-auto"
                     >
                       <Button
-                        className="w-full md:w-auto h-14 py-4 px-8 text-base font-semibold rounded-2xl shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all bg-primary hover:bg-primary/95 text-white cursor-pointer"
+                        className="w-full md:w-auto"
                         disabled={!fromCountry || !toCountry}
                         asChild
                       >
                         <LocaleLink href={handleGetStarted()}>
-                          <LangText en="Get started" ar="ابدأ" /> <ArrowRight className="ml-2 h-5 w-5" />
+                          <LangText en="Get started" ar="ابدأ" />
+                          <ArrowRight aria-hidden="true" />
                         </LocaleLink>
                       </Button>
                     </motion.div>

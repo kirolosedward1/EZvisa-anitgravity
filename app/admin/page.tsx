@@ -217,7 +217,7 @@ export default function AdminPage() {
                 {actionError}
               </p>
             )}
-            <Button type="submit" className="w-full h-12 font-semibold bg-blue-600 hover:bg-blue-500 text-white">
+            <Button type="submit" className="w-full">
               Authenticate
             </Button>
           </form>
@@ -435,7 +435,6 @@ export default function AdminPage() {
                             <Button
                               size="sm"
                               onClick={() => handleStatusUpdate(c, "reviewing")}
-                              className="h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
                             >
                               Review
                             </Button>

@@ -2,7 +2,7 @@
 
 // Sign in with Apple. The glyph is Apple's logo-only artwork, copied verbatim from the large logo in
 // appleid.cdn-apple.com/.../appleid.auth.js (viewBox "9 0 21 44"). It is not redrawn. The label uses the
-// site font at the same size and weight as Continue with Google (text-sm / font-semibold, 14px / 600).
+// site font at the same size and weight as Continue with Google (15px / medium).
 // Black on a light page, white when <html> has .dark. The click is Supabase OAuth back through /auth/callback.
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
@@ -55,7 +55,7 @@ export function AppleSignInButton(props: AppleSignInButtonProps) {
   return <AppleSignInButtonReady {...props} />
 }
 
-/** Same corner radius (rounded-xl) and width as the Google button. HIG black and white are set inline. */
+/** Same pill radius, height and width as the Google button. HIG black and white are set inline. */
 function AppleSignInButtonReady({
   next = "/dashboard",
   label,
@@ -105,7 +105,7 @@ function AppleSignInButtonReady({
       <button
         type="button"
         className={cn(
-          "inline-flex h-12 w-full items-center justify-center gap-3 whitespace-nowrap rounded-xl px-3 text-sm font-semibold leading-none outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-wait",
+          "inline-flex h-12 min-h-12 w-full items-center justify-center gap-3 whitespace-nowrap rounded-full px-6 text-[15px] font-medium leading-normal outline-none transition-[transform,opacity] duration-150 focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:scale-[0.98] disabled:cursor-wait",
           loading && "opacity-70",
         )}
         style={{ backgroundColor: fill, color: ink }}
