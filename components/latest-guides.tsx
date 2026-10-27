@@ -9,8 +9,8 @@ import { latestGuides } from "@/lib/guides"
 import { requestLocale } from "@/lib/request-locale"
 import { cn } from "@/lib/utils"
 
-const linkFocus =
-  "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+const card =
+  "group flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm outline-none transition-[translate,box-shadow] duration-200 ease-out motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-md motion-reduce:transition-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 
 const imageZoom =
   "object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:ease-out group-hover:scale-105 group-focus-visible:scale-105 motion-reduce:transition-none"
@@ -22,6 +22,7 @@ export async function LatestGuides() {
   if (posts.length === 0) return null
 
   const [featured, ...rest] = posts
+  const paired = rest.length === 2
 
   return (
     <section className="bg-background py-16 md:py-24" aria-labelledby="visa-guides-heading">
@@ -32,41 +33,59 @@ export async function LatestGuides() {
           </h2>
           <LocaleLink
             href="/news"
-            className={cn(
-              "inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-border bg-background px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary",
-              linkFocus,
-            )}
+            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-border bg-background px-4 text-sm font-medium text-foreground outline-none transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <LangText en="All guides" ar="كل الأدلة" />
             <ArrowRight className="size-4" aria-hidden="true" />
           </LocaleLink>
         </div>
 
-        <div className={cn("grid grid-cols-1 items-start gap-8 lg:gap-10", rest.length > 0 && "lg:grid-cols-5")}>
-          <FeaturedGuide post={featured} locale={locale} wide={rest.length > 0} />
-          {rest.length > 0 && (
-            <ul className="flex min-w-0 flex-col border-t border-border lg:col-span-2 lg:border-s lg:border-t-0 lg:ps-10">
-              {rest.map((post, index) => (
-                <li key={post.slug} className="min-w-0">
-                  <CompactGuide post={post} locale={locale} divided={index > 0} first={index === 0} />
-                </li>
-              ))}
-            </ul>
+        <ul
+          className={cn(
+            "grid grid-cols-1 items-stretch gap-4",
+            rest.length > 0 && "lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:gap-5",
+            paired && "lg:grid-rows-2",
           )}
-        </div>
+        >
+          <li className={cn("min-w-0", paired && "lg:row-span-2")}>
+            <FeaturedGuide post={featured} locale={locale} />
+          </li>
+          {rest.map((post) => (
+            <li key={post.slug} className="min-w-0">
+              <CompactGuide post={post} locale={locale} />
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   )
 }
 
-function FeaturedGuide({ post, locale, wide }: { post: BlogPost; locale: DisplayLocale; wide: boolean }) {
+function CategoryPill({ category }: { category: string }) {
+  return (
+    <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+      <NewsCategory category={category} />
+    </span>
+  )
+}
+
+function GuideMeta({ publishedAt, readTime }: { publishedAt: string; readTime: string }) {
+  return (
+    <p className="text-sm leading-normal text-muted-foreground">
+      <time dateTime={publishedAt}>
+        <NewsDate iso={publishedAt} />
+      </time>
+      <span aria-hidden="true"> · </span>
+      <NewsReadTime value={readTime} />
+    </p>
+  )
+}
+
+function FeaturedGuide({ post, locale }: { post: BlogPost; locale: DisplayLocale }) {
   const alt = newsTitleText(locale, post.slug, post.title)
   return (
-    <LocaleLink
-      href={`/news/${post.slug}`}
-      className={cn("group flex min-w-0 flex-col gap-5 rounded-xl", wide && "lg:col-span-3", linkFocus)}
-    >
-      <div className="relative aspect-[3/2] overflow-hidden rounded-xl bg-muted ring-1 ring-border">
+    <LocaleLink href={`/news/${post.slug}`} className={card}>
+      <div className="relative aspect-[3/2] shrink-0 grow overflow-hidden bg-muted">
         <Image
           src={post.featuredImage}
           alt={alt}
@@ -75,68 +94,45 @@ function FeaturedGuide({ post, locale, wide }: { post: BlogPost; locale: Display
           className={imageZoom}
         />
       </div>
-      <div className="flex min-w-0 flex-col gap-3">
-        <p className="text-sm leading-normal text-muted-foreground">
-          <span className="font-medium text-primary">
-            <NewsCategory category={post.category} />
-          </span>
-          <span aria-hidden="true"> · </span>
-          <time dateTime={post.publishedAt}>
-            <NewsDate iso={post.publishedAt} />
-          </time>
-        </p>
-        <h3 className="text-balance break-words text-foreground underline-offset-4 group-hover:underline group-focus-visible:underline !text-xl !leading-snug md:!text-2xl">
+      <div className="flex flex-col gap-3 p-5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <CategoryPill category={post.category} />
+          <GuideMeta publishedAt={post.publishedAt} readTime={post.readTime} />
+        </div>
+        <h3 className="break-words text-foreground !text-xl !leading-snug md:!text-2xl">
           <NewsTitle slug={post.slug} fallback={post.title} />
         </h3>
-        <p className="max-w-2xl text-pretty text-base leading-relaxed text-muted-foreground">
+        <p className="text-base leading-relaxed text-muted-foreground">
           <NewsExcerpt slug={post.slug} fallback={post.excerpt} />
+        </p>
+        <p className="mt-auto inline-flex items-center gap-1.5 pt-1 text-sm font-medium text-primary">
+          <LangText en="Read guide" ar="اقرأ الدليل" />
+          <ArrowRight className="size-4" aria-hidden="true" />
         </p>
       </div>
     </LocaleLink>
   )
 }
 
-function CompactGuide({
-  post,
-  locale,
-  divided,
-  first,
-}: {
-  post: BlogPost
-  locale: DisplayLocale
-  divided: boolean
-  first: boolean
-}) {
+function CompactGuide({ post, locale }: { post: BlogPost; locale: DisplayLocale }) {
   const alt = newsTitleText(locale, post.slug, post.title)
   return (
-    <LocaleLink
-      href={`/news/${post.slug}`}
-      className={cn(
-        "group flex min-h-11 items-start gap-4 rounded-lg py-5 lg:py-6",
-        first && "lg:pt-0",
-        divided && "border-t border-border",
-        linkFocus,
-      )}
-    >
-      <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted ring-1 ring-border sm:size-28">
+    <LocaleLink href={`/news/${post.slug}`} className={card}>
+      <div className="relative aspect-[3/2] w-full shrink-0 grow overflow-hidden bg-muted">
         <Image
           src={post.featuredImage}
           alt={alt}
           fill
-          sizes="(min-width: 640px) 112px, 96px"
+          sizes="(min-width: 1024px) 420px, 100vw"
           className={imageZoom}
         />
       </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
-        <p className="text-sm font-medium leading-normal text-primary">
-          <NewsCategory category={post.category} />
-        </p>
-        <h3 className="text-balance break-words text-foreground underline-offset-4 group-hover:underline group-focus-visible:underline !text-base !leading-snug lg:!text-lg">
+      <div className="flex flex-col gap-2 p-5">
+        <CategoryPill category={post.category} />
+        <h3 className="break-words text-foreground !text-base !leading-snug lg:!text-lg">
           <NewsTitle slug={post.slug} fallback={post.title} />
         </h3>
-        <p className="text-sm leading-normal text-muted-foreground">
-          <NewsReadTime value={post.readTime} />
-        </p>
+        <GuideMeta publishedAt={post.publishedAt} readTime={post.readTime} />
       </div>
     </LocaleLink>
   )
