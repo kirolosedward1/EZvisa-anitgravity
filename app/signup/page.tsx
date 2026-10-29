@@ -1,7 +1,7 @@
 "use client"
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
 
-import { useState, Suspense } from "react"
+import { useRef, useState, Suspense } from "react"
 import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -14,7 +14,10 @@ import { SocialSignIn } from "@/components/auth/social-sign-in"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
-import { authCallbackUrl } from "@/lib/auth/redirect"
+import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
+import { AccountDetailsFields } from "@/components/auth/account-details-fields"
+import { CompleteAccountProfile } from "@/components/auth/complete-account-profile"
+import { accountDetails, accountDetailsError } from "@/lib/auth/account-details"
 import { translations } from "@/lib/translations"
 import { authFormErrorText } from "@/lib/translations/auth-form"
 
@@ -25,14 +28,17 @@ function SignupForm() {
   const searchParams = useSearchParams()
   const localize = useLocalizedHref()
   const rawNext = searchParams.get("next") || "/dashboard"
-  const safe = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const safe = safeNext(rawNext)
   const next = localize(safe)
 
   const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
+  const [birthdate, setBirthdate] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const inFlight = useRef(false)
 
   const supabase = createBrowserClient()
   const cooldown = useCooldown()
@@ -51,6 +57,12 @@ function SignupForm() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (inFlight.current) return
+    const details = accountDetails(name, birthdate)
+    if (details.error) {
+      setError(accountDetailsError(locale, details.error))
+      return
+    }
     const clean = email.trim()
     if (!EMAIL_RE.test(clean)) {
       setError(copy.errors["invalid-email"])
@@ -61,23 +73,26 @@ function SignupForm() {
       return
     }
     setIsLoading(true)
+    inFlight.current = true
     setError("")
 
-    const { error } = await supabase.auth.signUp({
-      email: clean,
-      password,
-      options: {
-        emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }),
-      },
-    })
-
-    if (error) {
-      setError(authFormErrorText(locale, error))
-      setIsLoading(false)
-    } else {
+    try {
+      const { error: signupError } = await supabase.auth.signUp({
+        email: clean,
+        password,
+        options: {
+          data: details.data,
+          emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }),
+        },
+      })
+      if (signupError) throw signupError
       setSuccess(true)
-      setIsLoading(false)
       cooldown.start()
+    } catch (cause) {
+      setError(authFormErrorText(locale, cause))
+    } finally {
+      inFlight.current = false
+      setIsLoading(false)
     }
   }
 
@@ -106,7 +121,7 @@ function SignupForm() {
 
       <div className="flex flex-col gap-5">
         <SocialSignIn
-          next={next}
+          next={localize(`/signup?profile=complete&next=${encodeURIComponent(next)}`)}
           appleLabel={copy.signUpApple}
           googleLabel={copy.signUpGoogle}
           linkingNote={copy.sameEmailFirst}
@@ -123,6 +138,7 @@ function SignupForm() {
         )}
 
         <div className="space-y-4">
+          <AccountDetailsFields name={name} birthdate={birthdate} onName={value => { setName(value); setError("") }} onBirthdate={value => { setBirthdate(value); setError("") }} />
           <div className="space-y-2">
             <Label htmlFor="email">{copy.emailLabel}</Label>
             <Input
@@ -176,11 +192,20 @@ function SignupForm() {
   )
 }
 
+function SignupContent() {
+  const searchParams = useSearchParams()
+  const localize = useLocalizedHref()
+  if (searchParams.get("profile") === "complete") {
+    return <CompleteAccountProfile next={localize(safeNext(searchParams.get("next")))} />
+  }
+  return <SignupForm />
+}
+
 export default function SignupPage() {
   return (
     <AuthSplitLayout variant="signup">
       <Suspense fallback={<div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" /></div>}>
-        <SignupForm />
+        <SignupContent />
       </Suspense>
     </AuthSplitLayout>
   )

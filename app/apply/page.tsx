@@ -17,6 +17,7 @@ import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { applePersonName } from "@/lib/auth/apple-profile"
+import { accountBirthDate } from "@/lib/auth/account-details"
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { fetchAccountNationality, readRememberedNationality, rememberNationality } from "@/lib/remembered-nationality"
 import { TRAVELLER_NONE, applyTravellerToWebForm, isFreshTravellerForm, markTravellerUsed, useTravellers } from "@/lib/travellers-client"
@@ -483,6 +484,7 @@ function ApplyPageContent() {
             email: prev.email || user.email || "",
             firstName: prev.firstName || person?.first || "",
             lastName: prev.lastName || person?.last || "",
+            dateOfBirth: prev.dateOfBirth || (prev.travellerId !== TRAVELLER_NONE && ((!prev.firstName && !prev.lastName) || (prev.firstName === person?.first && prev.lastName === person?.last)) ? accountBirthDate(user.user_metadata?.date_of_birth) : ""),
             phone: prev.phone || (user.user_metadata?.phone || ""),
           }))
         }
