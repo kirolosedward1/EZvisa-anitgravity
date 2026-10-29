@@ -31,10 +31,6 @@ const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip
 const ACCOUNT_NAV = [
   { href: "/dashboard", en: "My applications", ar: "طلباتي" },
   { href: "/apply", en: "New application", ar: "طلب جديد" },
-  { href: "/destinations", en: "Destinations", ar: "الوجهات" },
-  { href: "/documents", en: "Required documents", ar: "المستندات المطلوبة" },
-  { href: "/news", en: "Blog", ar: "المدونة" },
-  { href: "/videos", en: "Videos", ar: "الفيديوهات" },
   { href: "/contact", en: "Help", ar: "المساعدة" },
 ]
 
