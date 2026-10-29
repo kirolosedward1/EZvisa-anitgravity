@@ -1095,6 +1095,35 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 .ez-catalog-empty { padding-block: 60px; text-align: center; }
 .ez-catalog-empty p { margin-block: 15px; }
 .ez-catalog-empty button { color: var(--ez-blue); text-decoration: underline; padding: 12px; }
+/* Visa essentials: one quiet strip, with a consistent reading order in every column. */
+.ez-country-facts { border-block: 1px solid var(--border); background: #f8faff; }
+.ez-country-facts-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); max-width: 1200px; margin-inline: auto; padding: 36px 24px; }
+.ez-country-fact { min-width: 0; padding-inline: 28px; border-inline-start: 1px solid var(--border); }
+.ez-country-fact:first-child { padding-inline-start: 0; border-inline-start: 0; }
+.ez-country-fact:last-child { padding-inline-end: 0; }
+.ez-country-fact-label { display: flex; align-items: center; gap: 10px; min-height: 32px; color: var(--muted-foreground); font-size: 13px; font-weight: 500; line-height: 1.4; }
+.ez-country-fact-label svg { width: 26px; height: 26px; flex-shrink: 0; color: var(--primary); }
+.ez-country-fact-value { display: flex; align-items: center; min-height: 54px; margin: 10px 0 4px; color: var(--foreground); font-size: 22px; font-weight: 500; line-height: 1.25; letter-spacing: -.025em; font-variant-numeric: tabular-nums; }
+.ez-country-fact-note { margin: 0; max-width: 30ch; color: var(--muted-foreground); font-size: 13px; line-height: 1.65; text-wrap: pretty; }
+:lang(ar) .ez-country-fact-value { letter-spacing: 0; line-height: 1.5; }
+@media (max-width: 1023px) {
+  .ez-country-facts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 8px 24px; }
+  .ez-country-fact { padding: 24px; }
+  .ez-country-fact:nth-child(odd) { padding-inline-start: 0; border-inline-start: 0; }
+  .ez-country-fact:nth-child(even) { padding-inline-end: 0; }
+  .ez-country-fact:nth-child(n+3) { border-top: 1px solid var(--border); }
+}
+@media (max-width: 479px) {
+  .ez-country-facts-grid { grid-template-columns: 1fr; padding: 8px 20px; }
+  .ez-country-facts .ez-country-fact { position: relative; padding: 20px 0 20px 40px; border-inline-start: 0; }
+  [dir="rtl"] .ez-country-fact { padding: 20px 40px 20px 0; }
+  .ez-country-fact + .ez-country-fact { border-top: 1px solid var(--border); }
+  .ez-country-fact-label { min-height: auto; }
+  .ez-country-fact-label svg { position: absolute; inset-inline-start: 0; top: 22px; }
+  .ez-country-fact-value { min-height: 0; margin-block: 7px 6px; font-size: 22px; }
+  .ez-country-fact-note { max-width: none; }
+}
+
 .ez-timeline { background: var(--ez-sky); }
 .ez-timeline ol { background: transparent; border: 0; border-radius: 0; }
 .ez-timeline ol>li { padding-inline: 0; padding-block: 28px; }
