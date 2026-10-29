@@ -30,10 +30,11 @@ export function Globi({ pose, className = "" }: { pose: GlobiPose; className?: s
   </div>
 }
 
-export type GlobiMoment = "destination" | "traveller" | "review" | "trip" | "passport" | "spouse" | "employment"
+export type GlobiMoment = "insurance" | "destination" | "traveller" | "review" | "trip" | "passport" | "spouse" | "employment"
 const guidance: Record<GlobiMoment, {pose: GlobiPose; title: string; ar: string; tip: string; tipAr: string}> = {
   destination: {pose:"destination",title:"A little closer to Europe.",ar:"خطوة أقرب إلى أوروبا.",tip:"Visiting more than one country? Choose the one where you’ll spend the most nights.",tipAr:"تزور أكثر من دولة؟ اختر الدولة التي ستقضي فيها أكبر عدد من الليالي."},
   traveller: {pose:"passport",title:"Let’s get the details right.",ar:"لنتأكد من بياناتك.",tip:"Enter your name exactly as it appears on your passport. You can review everything before paying.",tipAr:"اكتب اسمك كما يظهر في جواز سفرك تمامًا. يمكنك مراجعة كل البيانات قبل الدفع."},
+  insurance: {pose:"shield",title:"Choose what works for your trip.",ar:"اختر ما يناسب رحلتك.",tip:"Ask us for a separate insurance quote, or provide your own policy. Your service fee stays the same.",tipAr:"اطلب عرض سعر منفصلًا للتأمين أو وفّر وثيقتك بنفسك. رسوم الخدمة تبقى كما هي."},
   review: {pose:"shield",title:"Everything clear before you pay.",ar:"كل التفاصيل واضحة قبل الدفع.",tip:"Your service fee covers preparing your visa file. Embassy fees and travel insurance are separate.",tipAr:"تغطي رسوم الخدمة تجهيز ملف التأشيرة. رسوم السفارة وتأمين السفر منفصلان."},
   trip: {pose:"calendar",title:"Let’s put your trip together.",ar:"لنرتّب تفاصيل رحلتك.",tip:"Add your travel plans. We’ll use them to prepare a consistent itinerary and reservations.",tipAr:"أضف خطط سفرك لنجهّز برنامج رحلة وحجوزات متناسقة."},
   passport: {pose:"passport",title:"Keep your passport handy.",ar:"احتفظ بجواز سفرك بجانبك.",tip:"Copy the details carefully from your passport so your application matches your travel document.",tipAr:"انقل بيانات جواز سفرك بعناية لتطابق مستندات طلبك."},

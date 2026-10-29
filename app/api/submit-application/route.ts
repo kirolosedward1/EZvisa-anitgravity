@@ -1,3 +1,4 @@
+import { insurancePreference } from "@/lib/insurance"
 import { NextResponse } from "next/server"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { createServerClient } from "@/lib/supabase/server"
@@ -151,6 +152,9 @@ export async function POST(request: Request) {
 
     // Server-side required fields: the wizard can be deep-linked to ?step=payment, so the client checks alone are
     // not enough (rows were saved with an empty name/email or a destination outside the Schengen list).
+    if (formData.insurancePreference !== undefined && !insurancePreference(formData.insurancePreference)) {
+      return NextResponse.json({ success: false, message: "Choose an insurance option." }, { status: 400 })
+    }
     const destination = canonicalSchengenCountry(formData.destination)
     if (!destination) {
       return NextResponse.json({ success: false, message: "Choose a Schengen destination." }, { status: 400 })
@@ -372,6 +376,7 @@ export async function POST(request: Request) {
       application_status: "submitted",
       additional_notes: JSON.stringify({
         // (replace: the earlier notes are merged again from a fresh read just before the update, see below)
+        ...(insurancePreference(formData.insurancePreference) ? { insurancePreference: insurancePreference(formData.insurancePreference) } : {}),
         maritalStatus: formData.maritalStatus,
         employmentStatus: formData.employmentStatus,
         jobTitle: sanitizedData.jobTitle,

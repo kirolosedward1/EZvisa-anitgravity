@@ -1,11 +1,12 @@
-// Steps asked BEFORE payment, like the EZvisa app: 1 destination (nationality + country), 2 traveller, 4 review and
-// pay. Trip details, spouse details, passport and employment are asked after payment on /continue/[id].
+// Website steps BEFORE payment: 1 destination, 2 traveller, 5 insurance preference, 4 review and pay.
+// Insurance is an optional website add-on preference; it does not change the shared mobile price contract. Trip details, spouse details, passport and employment are asked after payment on /continue/[id].
 // Number 3 (spouse) is kept free so old links and saved progress keep their meaning.
-export type WizardStep = "destination" | "personal" | "payment"
+export type WizardStep = "destination" | "personal" | "insurance" | "payment"
 
 export const STEP_TO_NUMBER: Record<WizardStep, number> = {
   destination: 1,
   personal: 2,
+  insurance: 5, // Separate number preserves historical step 3 and payment deep links.
   payment: 4,
 }
 
@@ -13,6 +14,7 @@ export const NUMBER_TO_STEP: Record<number, WizardStep> = {
   1: "destination",
   2: "personal",
   4: "payment",
+  5: "insurance",
 }
 
 /** Slugs from earlier versions of the wizard, mapped to the step that now holds their first question. */

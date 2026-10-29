@@ -1606,3 +1606,6 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 
 /* Borderless account action; keyboard focus uses an underline and the blue fill. */
 .ez-account-signup:focus-visible { outline: none; text-decoration: underline; text-underline-offset: 4px; }
+
+/* Four pre-payment stages: wrap the final label on compact screens. */
+@media(max-width:479px) { .ez-wizard-progress ol { gap:8px; } .ez-wizard-progress li { gap:6px; min-width:0; } .ez-wizard-progress li>span:last-child { white-space:normal; line-height:1.3; font-size:11px; } }

@@ -26,6 +26,10 @@ const en = {
   "status.upload": "Upload documents",
   "status.action": "Action required",
 
+  "step.insurance": "Insurance",
+  "step.insuranceHint": "Preference not recorded",
+  "step.insuranceQuote": "Separate quote requested",
+  "step.insuranceOwn": "Providing your own",
   "step.payment": "Payment",
   "step.paymentHint": "Secure your file",
   "step.documents": "Documents",
@@ -240,6 +244,10 @@ const ar = {
   "status.upload": "ارفع المستندات",
   "status.action": "إجراء مطلوب",
 
+  "step.insurance": "التأمين",
+  "step.insuranceHint": "لم يُسجّل الاختيار",
+  "step.insuranceQuote": "طلب عرض سعر منفصل",
+  "step.insuranceOwn": "ستوفّر التأمين بنفسك",
   "step.payment": "الدفع",
   "step.paymentHint": "ثبّت ملفك",
   "step.documents": "المستندات",

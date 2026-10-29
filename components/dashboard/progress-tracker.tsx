@@ -1,9 +1,11 @@
 import { Check } from "lucide-react"
-import { APPLICATION_STEPS, getStepIndex, type CustomerProgress, type StepKey } from "@/lib/application-status"
+import { APPLICATION_STEPS, type CustomerProgress, type StepKey } from "@/lib/application-status"
 import { customerText, type CustomerKey } from "@/lib/translations/customer"
+import type { InsurancePreference } from "@/lib/insurance"
 import { cn } from "@/lib/utils"
 
-const STEP_COPY: Record<StepKey, { label: CustomerKey; hint: CustomerKey }> = {
+const STEP_COPY: Record<StepKey | "insurance", { label: CustomerKey; hint: CustomerKey }> = {
+  insurance: { label: "step.insurance", hint: "step.insuranceHint" },
   payment: { label: "step.payment", hint: "step.paymentHint" },
   documents: { label: "step.documents", hint: "step.documentsHint" },
   review: { label: "step.review", hint: "step.reviewHint" },
@@ -12,17 +14,19 @@ const STEP_COPY: Record<StepKey, { label: CustomerKey; hint: CustomerKey }> = {
   appointment: { label: "step.appointment", hint: "step.appointmentHint" },
 }
 
-export function ProgressTracker({ progress, arabic }: { progress: CustomerProgress; arabic: boolean }) {
+const TRACKER_STEPS = [{ key: "insurance" as const }, ...APPLICATION_STEPS]
+
+export function ProgressTracker({ progress, arabic, insurance }: { progress: CustomerProgress; arabic: boolean; insurance?: InsurancePreference }) {
   const locale = arabic ? "ar" : "en"
-  const currentIndex = getStepIndex(progress.key)
+  const currentIndex = TRACKER_STEPS.findIndex(step => step.key === progress.key)
   const isFinished = progress.finished
 
   return (
     <ol className="flex flex-col gap-4 md:flex-row md:gap-2" aria-label={customerText(locale, "step.progress")}>
-      {APPLICATION_STEPS.map((step, index) => {
-        const isDone = index < currentIndex || (isFinished && index === currentIndex)
+      {TRACKER_STEPS.map((step, index) => {
+        const isDone = step.key === "insurance" ? !!insurance : index < currentIndex || (isFinished && index === currentIndex)
         const isCurrent = index === currentIndex && !isFinished
-        const isLast = index === APPLICATION_STEPS.length - 1
+        const isLast = index === TRACKER_STEPS.length - 1
 
         return (
           <li
@@ -35,7 +39,7 @@ export function ProgressTracker({ progress, arabic }: { progress: CustomerProgre
                 aria-hidden="true"
                 className={cn(
                   "absolute start-3.5 top-8 -bottom-4 w-0.5 rounded-full md:bottom-auto md:start-[calc(50%+1.25rem)] md:top-3.5 md:h-0.5 md:w-[calc(100%-2.5rem)]",
-                  index < currentIndex ? "bg-primary" : "bg-border",
+                  isDone ? "bg-primary" : "bg-border",
                 )}
               />
             )}
@@ -55,7 +59,7 @@ export function ProgressTracker({ progress, arabic }: { progress: CustomerProgre
                 {isDone && <span className="sr-only"> ({customerText(locale, "step.completed")})</span>}
                 {isCurrent && <span className="sr-only"> ({customerText(locale, "step.current")})</span>}
               </span>
-              <span className="text-xs text-muted-foreground md:max-w-32">{customerText(locale, STEP_COPY[step.key].hint)}</span>
+              <span className="text-xs text-muted-foreground md:max-w-32">{customerText(locale, step.key === "insurance" ? insurance === "quote" ? "step.insuranceQuote" : insurance === "own" ? "step.insuranceOwn" : "step.insuranceHint" : STEP_COPY[step.key].hint)}</span>
             </span>
           </li>
         )

@@ -12,6 +12,7 @@ import { ArabicDate } from "@/components/arabic-date"
 import { destinations } from "@/lib/destinations"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 import { customerText } from "@/lib/translations/customer"
+import { applicationInsurance } from "@/lib/insurance"
 import { customerProgress, type Stage } from "@/lib/application-status"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import type { ReactNode } from "react"
@@ -84,7 +85,7 @@ export function ApplicationOverview({
 
         <NextStepCard app={app} stage={stage} />
 
-        {progress && <ProgressTracker progress={progress} arabic={arabic} />}
+        {progress && <ProgressTracker progress={progress} arabic={arabic} insurance={applicationInsurance(app.additional_notes)} />}
       </div>
     </DashboardCard>
   )

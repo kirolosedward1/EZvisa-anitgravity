@@ -1,6 +1,8 @@
 // Shared form data types for the visa application wizard
 
 export interface FormData {
+  /** Optional insurance quote / own-policy selection; excluded from the service fee. */
+  insurancePreference?: "quote" | "own"
   // Nationality Step
   nationality: string
   destination: string
