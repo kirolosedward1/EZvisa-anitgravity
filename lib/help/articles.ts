@@ -25,7 +25,7 @@ export type HelpArticle = {
 
 const SPOUSE = priceAed("yes")
 const UPLOAD_MB = Math.round(MAX_UPLOAD_BYTES / (1024 * 1024))
-const EMAIL = "info@ezvisa.net"
+const EMAIL = "hello@ezvisa.net"
 
 export const HELP_TOPICS: HelpTopic[] = [
   {

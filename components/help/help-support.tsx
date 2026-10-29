@@ -3,7 +3,7 @@ import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { LocaleLink } from "@/components/locale-link"
 import { getWhatsAppUrl } from "@/lib/contact"
 
-const EMAIL = "info@ezvisa.net"
+const EMAIL = "hello@ezvisa.net"
 
 /** "Still need help?" strip at the end of every help page: WhatsApp, email and the contact page. No hours promised. */
 export function HelpSupport({ arabic, context }: { arabic: boolean; context?: string }) {
