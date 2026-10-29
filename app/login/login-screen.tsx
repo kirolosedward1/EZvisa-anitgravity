@@ -4,7 +4,7 @@
 import { useRef, useState } from "react"
 import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { useRouter } from "next/navigation"
-import { ChevronDown, Eye, EyeOff, Loader2, Lock, Mail, PlayCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react"
 
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
 import { SocialSignIn } from "@/components/auth/social-sign-in"
-import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { classifyAuthError, EMAIL_RE, type AuthIssue } from "@/lib/auth/errors"
 import { issueFromClientMessage, loginErrorText, loginInfoText, noticeFromQuery, type LoginErrorCode } from "@/lib/auth/login-notice"
@@ -308,18 +307,6 @@ function LoginForm({
         </LocaleLink>
       </p>
 
-      <details className="group rounded-2xl border border-border/70 bg-background">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
-          <span className="flex items-center gap-2">
-            <PlayCircle className="size-4 text-primary" aria-hidden="true" />
-            {t("Explore with a demo account", "جرّب بحساب تجريبي")}
-          </span>
-          <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
-        </summary>
-        <div className="px-2 pb-2">
-          <DemoLoginButtons next={next} />
-        </div>
-      </details>
     </div>
   )
 }
