@@ -14,7 +14,7 @@ const STEP_COPY: Record<StepKey | "insurance", { label: CustomerKey; hint: Custo
   appointment: { label: "step.appointment", hint: "step.appointmentHint" },
 }
 
-const TRACKER_STEPS = [APPLICATION_STEPS[0], { key: "insurance" as const }, ...APPLICATION_STEPS.slice(1)]
+const TRACKER_STEPS = [...APPLICATION_STEPS.slice(0, 4), { key: "insurance" as const }, ...APPLICATION_STEPS.slice(4)]
 
 export function ProgressTracker({ progress, arabic, insurance, showInsurance = false }: { progress: CustomerProgress; arabic: boolean; insurance?: InsurancePreference; showInsurance?: boolean }) {
   const locale = arabic ? "ar" : "en"

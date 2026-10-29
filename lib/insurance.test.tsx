@@ -27,10 +27,11 @@ test("retired insurance links resume at payment without changing payment/spouse 
   assert.equal(getStepSlug(3), "destination")
 })
 
-test("dashboard puts Insurance after Payment without marking a legacy policy complete", () => {
+test("dashboard puts Insurance after Preparation and before Ready without marking a legacy policy complete", () => {
   const html = renderToStaticMarkup(createElement(ProgressTracker, { progress: { key: "payment", finished: false }, arabic: false, showInsurance: true }))
-  assert.ok(html.indexOf("Payment") < html.indexOf("Insurance"))
-  const insurance = html.match(/<li\b[^>]*>[\s\S]*?<\/li>/g)?.[1] || ""
+  assert.ok(html.indexOf("Preparation") < html.indexOf("Insurance"))
+  assert.ok(html.indexOf("Insurance") < html.indexOf("Ready"))
+  const insurance = html.match(/<li\b[^>]*>[\s\S]*?<\/li>/g)?.[4] || ""
   assert.match(insurance, /Preference not recorded/)
   assert.doesNotMatch(insurance, /completed/)
   assert.equal((html.match(/aria-current="step"/g) || []).length, 1)

@@ -14,7 +14,7 @@ Read [AGENTS.md](AGENTS.md), then [DESIGN.md](DESIGN.md) before editing. The des
 
 - Tracking-page intro now checks `getSessionUser()`: authenticated visitors see “View all your applications” linked to `/dashboard`, while guests see Sign in. English and Arabic are paired. The token still exposes one case only; this does not broaden application access.
 
-- Insurance is **after Payment, in the dashboard only**. Wizard: Destination → Traveller → Review & pay. Retired insurance deep links and saved step 5 resolve to review.
+- Insurance is **after Preparation and before Ready, in the dashboard only**. Wizard: Destination → Traveller → Review & pay. Retired insurance deep links and saved step 5 resolve to review.
 - Paid dashboard applications offer “Buy insurance through EZvisa” (separate quote) and “I’ll provide my own.” A preference never purchases a policy, confirms cover or changes the visa service fee.
 - `components/dashboard/insurance-card.tsx` submits to `POST /api/insurance`. The route verifies the signed-in owner and paid status, changes only `additional_notes.insurancePreference`, preserves other notes, and uses a compare-before-write condition to prevent concurrent overwrites. The tightly scoped server write also supports paid cases already marked ready. No new database schema was needed.
 - Public token tracking does not show the dashboard-only Insurance step. Demo choices never write real data or submit a quote.
