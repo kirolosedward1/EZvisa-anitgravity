@@ -15,7 +15,7 @@ import { withArabicMeta } from "@/lib/page-meta"
 export async function generateMetadata(): Promise<Metadata> {
   return withArabicMeta(
     {
-      title: "Contact EZvisa | WhatsApp, Email and Phone",
+      title: "Contact Us: WhatsApp, Email and Phone",
       description:
         "Ask a visa specialist about your Schengen visa before you pay, or about an application you've started. WhatsApp +971 54 710 9533 or email info@ezvisa.net.",
       keywords: ["contact EZvisa", "Schengen visa help Dubai", "visa support WhatsApp UAE"],

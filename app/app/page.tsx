@@ -20,7 +20,7 @@ import { StoreBadges } from "@/components/app/store-badges"
 import { Walkthrough } from "@/components/app/walkthrough"
 import { requestLocale } from "@/lib/request-locale"
 import { translations } from "@/lib/translations"
-import { generateBreadcrumbSchema, generateFAQSchema, generateStructuredData } from "@/lib/seo"
+import { OG_LOCALE, generateBreadcrumbSchema, generateFAQSchema, generateStructuredData, localeAlternates } from "@/lib/seo"
 import { getWhatsAppUrl } from "@/lib/whatsapp"
 import { cn } from "@/lib/utils"
 import hero from "@/components/app/app-hero.module.css"
@@ -37,14 +37,15 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { absolute: TITLE },
     description: DESCRIPTION,
     keywords: ["EZvisa app", "Schengen visa app", "visa application app UAE", "track visa application", "iPhone visa app"],
-    alternates: { canonical: PAGE_URL },
+    alternates: localeAlternates("/app", false),
     openGraph: {
       title: TITLE,
       description: DESCRIPTION,
       url: PAGE_URL,
       siteName: "EZvisa",
       type: "website",
-      locale: "en_US",
+      locale: OG_LOCALE.en,
+      alternateLocale: OG_LOCALE.ar,
       images: [{ url: "/app/og.png", width: 1200, height: 630, alt: "The EZvisa app shown on an iPhone" }],
     },
     twitter: {
@@ -59,14 +60,15 @@ export async function generateMetadata(): Promise<Metadata> {
     ...english,
     title: TITLE_AR,
     description: DESCRIPTION_AR,
-    alternates: { canonical: "https://www.ezvisa.net/ar/app" },
+    alternates: localeAlternates("/app", true),
     openGraph: {
       title: TITLE_AR,
       description: DESCRIPTION_AR,
       url: "https://www.ezvisa.net/ar/app",
       siteName: "EZvisa",
       type: "website",
-      locale: "ar",
+      locale: OG_LOCALE.ar,
+      alternateLocale: OG_LOCALE.en,
       images: [{ url: "/app/og.png", width: 1200, height: 630, alt: "تطبيق إيزي فيزا على آيفون" }],
     },
     twitter: {

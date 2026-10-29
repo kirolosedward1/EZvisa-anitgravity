@@ -19,6 +19,7 @@ import { LocaleLink } from "@/components/locale-link"
 import { message } from "@/messages"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
+import { OG_LOCALE, SITE_URL, generateStructuredData, localeAlternates } from "@/lib/seo"
 
 export async function generateStaticParams() {
   return destinations.map((dest) => ({
@@ -59,20 +60,19 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
           `VFS ${destination.name} appointment Dubai`,
           `EZvisa ${destination.name}`,
         ],
-    alternates: {
-      canonical: `https://www.ezvisa.net${path}`,
-    },
+    alternates: localeAlternates(`/destinations/${slug}`, arabic),
     openGraph: {
       title,
       description,
       url: `https://www.ezvisa.net${path}`,
+      siteName: "EZvisa",
       type: "website",
-      locale: arabic ? "ar" : "en_US",
+      locale: OG_LOCALE[arabic ? "ar" : "en"],
+      alternateLocale: OG_LOCALE[arabic ? "en" : "ar"],
       images: [
         {
+          // Country photos are 1200px wide with varying heights, so no fixed size is declared.
           url: destination.image,
-          width: 1200,
-          height: 630,
           alt: arabic ? `تأشيرة شنغن إلى ${nameAr} من الإمارات` : `${destination.name} Schengen Visa UAE`,
         },
       ],
@@ -149,8 +149,43 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
         },
       ]
 
+  const pageUrl = `${SITE_URL}${arabic ? "/ar" : ""}/destinations/${slug}`
+  const jsonLd = generateStructuredData(
+    {
+      "@type": "Service",
+      "@id": `${pageUrl}#service`,
+      name: arabic ? `تجهيز طلب تأشيرة شنغن إلى ${nameAr}` : `${name} Schengen visa application service`,
+      serviceType: "Visa Application Assistance",
+      description: arabic
+        ? `نجهّز طلب تأشيرة ${nameAr} للمقيمين في الإمارات: نموذج الطلب وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق.`
+        : `We prepare your ${name} visa application for UAE residents: the application form, cover letter, itinerary, and flight and hotel reservations.`,
+      url: pageUrl,
+      image: `${SITE_URL}${destination.image}`,
+      inLanguage: arabic ? "ar" : "en",
+      provider: { "@id": `${SITE_URL}/#organization` },
+      areaServed: { "@type": "Country", name: "United Arab Emirates" },
+      audience: { "@type": "Audience", audienceType: arabic ? "المقيمون في الإمارات" : "UAE residents" },
+      offers: {
+        "@type": "Offer",
+        price: String(PRICE_AED),
+        priceCurrency: "AED",
+        availability: "https://schema.org/InStock",
+        url: `${SITE_URL}${arabic ? "/ar" : ""}${applyHref}`,
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: arabic ? "الرئيسية" : "Home", item: `${SITE_URL}${arabic ? "/ar" : "/"}` },
+        { "@type": "ListItem", position: 2, name: arabic ? "الوجهات" : "Destinations", item: `${SITE_URL}${arabic ? "/ar" : ""}/destinations` },
+        { "@type": "ListItem", position: 3, name: place, item: pageUrl },
+      ],
+    },
+  )
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-background">

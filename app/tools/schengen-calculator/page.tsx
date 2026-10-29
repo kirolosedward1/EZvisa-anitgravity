@@ -6,6 +6,7 @@ import { Footer } from "@/components/footer"
 import { Msg } from "@/components/msg"
 import { SchengenCalculatorClient } from "@/components/tools/schengen-calculator-client"
 import { message, type Locale } from "@/messages"
+import { OG_LOCALE, defaultOgImage, localeAlternates } from "@/lib/seo"
 
 async function pageLocale(): Promise<Locale> {
   const arabic = (await headers()).get("x-ez-locale") === "ar"
@@ -17,14 +18,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: message(locale, "calc.metaTitle"),
     description: message(locale, "calc.metaDescription"),
-    alternates: {
-      canonical: "https://www.ezvisa.net/tools/schengen-calculator",
-    },
+    alternates: localeAlternates("/tools/schengen-calculator", locale === "ar"),
     openGraph: {
       title: message(locale, "calc.ogTitle"),
       description: message(locale, "calc.ogDescription"),
-      url: "https://www.ezvisa.net/tools/schengen-calculator",
+      url: `https://www.ezvisa.net${locale === "ar" ? "/ar" : ""}/tools/schengen-calculator`,
+      siteName: "EZvisa",
       type: "website",
+      locale: OG_LOCALE[locale],
+      alternateLocale: OG_LOCALE[locale === "ar" ? "en" : "ar"],
+      images: [defaultOgImage(locale === "ar")],
     },
   }
 }

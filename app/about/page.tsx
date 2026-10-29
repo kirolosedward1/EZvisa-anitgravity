@@ -16,7 +16,7 @@ import { PRICE_AED } from "@/lib/shared/wizard-contract"
 export async function generateMetadata(): Promise<Metadata> {
   return withArabicMeta(
     {
-      title: "About EZvisa | Schengen Visa Specialists for UAE Residents",
+      title: "About Us: Schengen Visa Specialists for UAE Residents",
       description:
         "EZvisa prepares Schengen visa applications for people living in the UAE: the application form, cover letter, itinerary and reservations, checked by a visa specialist.",
       keywords: ["about EZvisa", "Schengen visa specialists UAE", "visa application service Dubai"],

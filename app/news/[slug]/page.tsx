@@ -13,6 +13,7 @@ import { NewsTag, newsExcerptText, newsTitleText } from "@/components/blog/news-
 import { ARABIC_POSTS } from "@/lib/blog-ar"
 import { requestLocale } from "@/lib/request-locale"
 import { withArabicMeta } from "@/lib/page-meta"
+import { ORGANIZATION_LOGO, SITE_URL, generateStructuredData } from "@/lib/seo"
 import { TableOfContents } from "@/components/blog/table-of-contents"
 import { StartApplicationBox } from "@/components/start-application-box"
 import { notFound } from "next/navigation"
@@ -74,6 +75,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title: arTitle,
       description: arDescription,
       path: `/ar/news/${slug}`,
+      translated: slug in ARABIC_POSTS,
     },
   )
 }
@@ -89,31 +91,35 @@ export default async function Page({ params }: { params: Promise<{ slug: string 
   const locale = await requestLocale()
   const content = locale === "ar" ? ARABIC_POSTS[slug]?.content ?? post.content : post.content
 
-  const articleJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.title,
-    description: post.excerpt,
-    image: post.featuredImage,
-    datePublished: post.publishedAt,
-    dateModified: post.publishedAt,
-    author: {
-      "@type": "Person",
-      name: post.author,
+  const arabicBody = locale === "ar" && slug in ARABIC_POSTS
+  const articleUrl = `${SITE_URL}${arabicBody ? "/ar" : ""}/news/${slug}`
+  // "EZvisa Team" is the company, not a person: credit it as the Organization.
+  const teamAuthor = post.author === "EZvisa Team"
+  const articleJsonLd = generateStructuredData(
+    {
+      "@type": "Article",
+      "@id": `${articleUrl}#article`,
+      headline: arabicBody ? newsTitleText("ar", slug, post.title) : post.title,
+      description: arabicBody ? newsExcerptText("ar", slug, post.excerpt) : post.excerpt,
+      image: post.featuredImage.startsWith("http") ? post.featuredImage : `${SITE_URL}${post.featuredImage}`,
+      datePublished: post.publishedAt,
+      dateModified: post.publishedAt,
+      inLanguage: arabicBody ? "ar" : "en",
+      author: teamAuthor
+        ? { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "EZvisa", url: `${SITE_URL}/about` }
+        : { "@type": "Person", name: post.author },
+      publisher: { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: "EZvisa", logo: ORGANIZATION_LOGO },
+      mainEntityOfPage: { "@type": "WebPage", "@id": articleUrl },
     },
-    publisher: {
-      "@type": "Organization",
-      name: "EZvisa",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://www.ezvisa.net/images/logo-main.png",
-      },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: locale === "ar" ? "الرئيسية" : "Home", item: `${SITE_URL}${locale === "ar" ? "/ar" : "/"}` },
+        { "@type": "ListItem", position: 2, name: locale === "ar" ? "المدونة" : "Blog", item: `${SITE_URL}${locale === "ar" ? "/ar" : ""}/news` },
+        { "@type": "ListItem", position: 3, name: arabicBody ? newsTitleText("ar", slug, post.title) : post.title, item: articleUrl },
+      ],
     },
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `https://www.ezvisa.net/news/${slug}`,
-    },
-  }
+  )
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
