@@ -878,9 +878,9 @@ html[dir="rtl"] .ez-welcome h1,html[dir="rtl"] .ez-inner-copy h1 { font-family: 
 .ez-journey-note>svg { color: var(--ez-blue); }
 .ez-journey-origin { display: inline-flex; align-items: center; gap: 10px; }
 .ez-journey-origin>span { display: flex; flex-shrink: 0; }
-.ez-journey-note>a { display: flex; align-items: center; gap: 10px; font-size: 21px; font-weight: 500; line-height: 1.2; }
+.ez-journey-note>a { display: flex; align-items: center; gap: 10px; }
+.ez-journey-origin,.ez-journey-note>a { font-size: 21px; font-weight: 500; line-height: 1.2; }
 .ez-journey-flag { display: flex; flex-shrink: 0; }
-.ez-journey-caption { display: block; font-size: 11px; color: var(--muted-foreground); margin-top: 4px; font-weight: 400; }
 .ez-destinations { padding-block: 90px 105px; }
 .ez-destinations h2 em { color: var(--ez-blue); font-weight: 400; }
 .ez-destination-grid { gap: 32px; }
@@ -920,8 +920,7 @@ html[dir="rtl"] .ez-globi-intro { transform: rotate(6deg); }
   .ez-globi-intro { top: 24px; inset-inline-start: 0; font-size: 17px; max-width: 105px; }
   .ez-globi-intro span:last-child { font-size: 12px; }
   .ez-journey-note { margin-top: -21px; min-height: 36px; gap: 12px; font-size: 12px; }
-  .ez-journey-note>a { font-size: 17px; }
-  .ez-journey-caption { display: none; }
+  .ez-journey-origin,.ez-journey-note>a { font-size: 17px; }
   .ez-destinations { padding-block: 65px 75px; }
   .ez-destination-grid { gap: 34px 22px; }
   .ez-process { display: block; padding: 60px 20px; }

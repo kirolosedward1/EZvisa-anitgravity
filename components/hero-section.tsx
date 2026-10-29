@@ -71,13 +71,12 @@ export function HeroSection() {
           <div className="ez-globi-intro"><span>{t("Hi, I’m Globi.", "مرحبًا، أنا غلوبي.")}</span><span>{t("Let’s get you going.", "لنبدأ رحلتك.")}</span></div>
           <Globi pose="welcome" />
           <div className="ez-journey-note" aria-live="polite">
-            <span className="ez-journey-origin"><span aria-hidden="true"><CountryFlag iso="AE" className="size-7" /></span>{t("From the UAE", "من الإمارات")}</span><ArrowRight size={22} aria-hidden="true" className="rtl:rotate-180" />
+            <span className="ez-journey-origin"><span aria-hidden="true"><CountryFlag iso="AE" className="size-7" /></span>{t("UAE", "الإمارات")}</span><ArrowRight size={22} aria-hidden="true" className="rtl:rotate-180" />
             {selectedCountry ? (
               <LocaleLink href={`/destinations/${selectedCountry.slug}`}>
                 <span aria-hidden="true" className="ez-journey-flag"><CountryFlag iso={SCHENGEN_META[selectedCountry.name]?.iso} className="size-7" /></span>
                 <span className="ez-journey-country">
                   {arabic ? countryNameAr(destination) : destination}
-                  <span className="ez-journey-caption">{t("Explore your destination", "اكتشف وجهتك")}</span>
                 </span>
               </LocaleLink>
             ) : <span>{t("To your next adventure", "إلى مغامرتك القادمة")}</span>}
