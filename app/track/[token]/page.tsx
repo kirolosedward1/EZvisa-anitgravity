@@ -5,7 +5,8 @@ import { Footer } from "@/components/footer"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { ApplicationView } from "@/components/dashboard/application-view"
 import { SupportApplication } from "@/components/support-application"
-import { getApplicationByToken } from "@/lib/applications"
+import { LangText } from "@/components/lang-text"
+import { getApplicationByToken, getSessionUser } from "@/lib/applications"
 import { isDemoToken, getDemoRelatedApplications } from "@/lib/demo-data"
 import { getStatusLabel } from "@/lib/application-status"
 import type { VisaApplication } from "@/lib/types/visa-application"
@@ -27,7 +28,7 @@ async function getTrackingData(token: string) {
 
 export default async function TrackPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
-  const data = await getTrackingData(token)
+  const [data, viewer] = await Promise.all([getTrackingData(token), getSessionUser()])
   if (!data || !data.mainApp) notFound()
 
   const { mainApp, relatedApps } = data
@@ -42,11 +43,19 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
           title={`Your ${country} visa application`}
           description={
             <>
-              The same application is in the EZvisa app.{" "}
-              <LocaleLink href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
-                Sign in
-              </LocaleLink>{" "}
-              to see all your applications in one place.
+              <LangText en="The same application is in the EZvisa app." ar="يمكنك متابعة الطلب نفسه في تطبيق EZvisa." />{" "}
+              {viewer ? (
+                <LocaleLink href="/dashboard" className="font-medium text-primary hover:underline">
+                  <LangText en="View all your applications" ar="عرض جميع طلباتك" />
+                </LocaleLink>
+              ) : (
+                <>
+                  <LocaleLink href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
+                    <LangText en="Sign in" ar="سجّل الدخول" />
+                  </LocaleLink>{" "}
+                  <LangText en="to see all your applications in one place." ar="لرؤية جميع طلباتك في مكان واحد." />
+                </>
+              )}
             </>
           }
         />
