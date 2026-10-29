@@ -16,15 +16,16 @@ function G({ size = ICON.md + 1 }: { size?: number }) {
   );
 }
 
-export function GoogleButton({ onPress, loading }: { onPress: () => void; loading?: boolean }) {
+/** Google sign-in. `compact` = the canvas Welcome button: 44 pt, 14 pt corners, label "Google", sits beside Apple. */
+export function GoogleButton({ onPress, loading, compact }: { onPress: () => void; loading?: boolean; compact?: boolean }) {
   const g = useIsDark() ? GOOGLE.dark : GOOGLE.light; const { t } = useT();
   return (
-    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel={t("Continue with Google")} accessibilityState={{ busy: !!loading }}
-      style={{ minHeight: SIZE.buttonL, borderRadius: R.round, borderWidth: 1, borderColor: g.border, backgroundColor: g.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: S.xl }}>
+    <PressScale onPress={onPress} disabled={loading} accessibilityRole="button" accessibilityLabel={t("Continue with Google")} accessibilityState={{ busy: !!loading }} testID="google-button"
+      style={{ minHeight: compact ? SIZE.buttonM : SIZE.buttonL, borderRadius: R.button, borderWidth: 1, borderColor: g.border === "transparent" ? "#E9E9EC" : g.border, backgroundColor: compact ? "#FFFFFF" : g.bg, alignItems: "center", justifyContent: "center", paddingHorizontal: compact ? S.md : S.xl, flex: compact ? 1 : undefined }}>
       {loading ? <ActivityIndicator color={g.text} /> : (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: compact ? 10 : S.sm }}>
           <G />
-          <Text variant="headline" weight="500" color={g.text}>{t("Continue with Google")}</Text>
+          <Text variant={compact ? "optionSm" : "headline"} weight={compact ? "600" : "500"} color={compact ? "#111114" : g.text} numberOfLines={1}>{compact ? "Google" : t("Continue with Google")}</Text>
         </View>
       )}
     </PressScale>

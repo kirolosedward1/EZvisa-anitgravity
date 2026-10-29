@@ -255,3 +255,12 @@ export function displayValue(q: Question, f: WizardForm, t: (s: string) => strin
     default: return String(v ?? "");
   }
 }
+
+/** How many of the questions before payment are answered (canvas: "Three answers are saved."). */
+export const answeredCount = (f: WizardForm) => activeQuestions(f).filter((q) => isAnswered(q, f)).length;
+/** Where a draft stands before payment: question `i` of `n` (canvas: "Details 3 of 7"); Review counts as the end. */
+export function draftPosition(f: WizardForm, page: string) {
+  const qs = activeQuestions(f); const n = qs.length;
+  const at = page.startsWith("q:") ? qs.findIndex((q) => q.id === page.slice(2)) : -1;
+  return { i: at >= 0 ? at + 1 : n, n };
+}

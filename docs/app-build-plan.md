@@ -445,3 +445,19 @@ that `mobile-app` had already removed; they are rewritten with the wizard in Pha
 - No iOS simulator and no macOS: screenshots are Expo web frames; HEVC-alpha encoding and ActivityKit builds need a Mac.
 - Network policy blocks `*.supabase.co`, `api.expo.dev` and `www.ezvisa.net` from cloud sessions (per `mobile/HANDOFF.md`),
   so live sign-in, upload and payment paths are exercised against the mocked Supabase scripts only. Payments stay in test mode.
+
+## 7b. Phase 2 · delivered (29 Oct)
+
+| Item | Where |
+|---|---|
+| Welcome as drawn: logo, Globi 236, title, "Start my application" (guest straight into the wizard), Apple and Google side by side (only when the provider is on), "I already have an account". No onboarding, no sign-up button | `mobile/app/welcome.tsx`, `components/GoogleButton.tsx` |
+| Sign in, Create account, Forgot, Magic link, Reset: Globi beside a bubble title, labelled 52 pt fields, "Forgot password?", "Email me a sign-in link", "Continue without an account"; "Check your email" hero with Globi | `components/auth/AuthShell.tsx`, `components/AuthForm.tsx`, `app/auth/*` |
+| Face ID lock: blurred app behind a canvas veil, Globi with the Face ID badge, Unlock and Use passcode | `lib/lock.tsx` (`LockScreen`) |
+| Guest drafts: already saved on the phone with no owner and uploaded to the account on the first sign-in (with the existing conflict prompt); no change needed | `lib/form.tsx` |
+| Home: page title and avatar (unread dot), one hero card (active application with Globi, reference, next action, progress, button / "Pick up where you left off?" draft with the stopped question and progress / "No application yet"), other applications as rows, three popular countries; offline (Globi waits, queued uploads with Cancel, actions paused, "from HH:MM"), loading skeleton, error view | `app/(tabs)/(home)/index.tsx`, `components/home/PopularTiles.tsx`, `components/ui/feedback.tsx` (`ErrorView`), `components/NetworkBanner.tsx` |
+| Tab bar: flat white pill, four tabs, selected brand blue (no glass, no centre button); `expo-glass-effect` and the Glass component removed | `components/nav/TabBar.tsx` |
+| Countries: title, search (Home search opens it with the query), data-backed chips (All 29, Popular, VFS Global, TLScontact, BLS; the canvas's "Fastest appointments" and "Beach" have no data), Globi tip, tinted tiles with flag and "Stay up to 90 days" | `app/(tabs)/(countries)/countries.tsx` |
+| Country: fact tiles (Stay 90 days, Embassy fee from `config/pricing.ts`, Decision ~15 days), Globi tip with the visa centre, "From 249 AED" beside Apply | `components/country/GlanceList.tsx`, `CountryFooter.tsx` |
+| Applications: "+", Active / Past, "Needs you" and "With the team" rows with pills (Continue, Upload, Pay, Ready), phone drafts included, the website tip; guest view with phone drafts, Sign in and Create account | `app/(tabs)/applications/index.tsx` |
+| Discard confirm: the canvas action sheet (Globi, "Discard the Spain draft?", answers saved, nothing refunded, Keep it) for swipe, long press and the detail trash; the swipe now asks once and slides back | `components/DiscardHost.tsx`, `lib/discard.ts`, `components/SwipeToDiscard.tsx` |
+| Section headers 13/600 sentence case, grouped lists on the 20 pt gutter; Arabic for every new string | `components/ui/core.tsx`, `lib/ar.ts` |

@@ -1,7 +1,7 @@
 // Toast ("Saved" pill, canvas AutoSave.dc.html) and the sheet scaffolds (Resume, Draft conflict, Delete account,
 // Globi explainer, What happens on the day, Discard confirm).
 import React, { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, Modal, Pressable, StyleSheet, View } from "react-native";
+import { AccessibilityInfo, Modal, Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutUp } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors, S, R, DUR, curve } from "../../lib/theme";
@@ -10,7 +10,7 @@ import { useT } from "../../lib/i18n";
 import { Text } from "./Text";
 import { Icon, type IconName } from "./core";
 import { Sheet } from "./layout";
-import { Bubble } from "./canvas";
+import { Bubble, PrimaryButton, SecondaryButton } from "./canvas";
 import { GlobiPose, type GlobiPose as Pose } from "../globi/GlobiPose";
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -120,5 +120,31 @@ export function ActionSheet({ visible, onClose, pose = "thinking", title, messag
         </Pressable>
       </View>
     </Modal>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// Error state (canvas ErrorState.dc.html)
+// ---------------------------------------------------------------------------------------------------------------
+
+/** "Couldn't load …": Globi puzzled, the reassurance, Try again, Ask on WhatsApp, and a small diagnostic line
+ *  (reference · reason · time) that support can read back. Inline: no own scroll view. */
+export function ErrorView({ title, message, diagnostic, onRetry, onWhatsApp, retryLabel = "Try again", compact }: {
+  title: string; message?: string; diagnostic?: string; onRetry?: () => void; onWhatsApp?: () => void; retryLabel?: string; compact?: boolean;
+}) {
+  const c = useColors(); const { t } = useT();
+  return (
+    <View style={{ alignItems: "center", gap: compact ? S.md : 22, paddingHorizontal: compact ? 0 : S.xxl, paddingVertical: compact ? S.md : S.xl }} testID="error-view" accessibilityLiveRegion="polite">
+      <GlobiPose pose="puzzled" size={compact ? 96 : 142} />
+      <View style={{ gap: S.xs, alignItems: "center" }}>
+        <Text variant="resultTitle" center accessibilityRole="header" style={{ fontSize: 22 }}>{title}</Text>
+        {!!message && <Text variant="body" tone="secondary" center>{message}</Text>}
+      </View>
+      <View style={{ alignSelf: "stretch", gap: 10 }}>
+        {onRetry && <PrimaryButton title={t(retryLabel)} onPress={onRetry} testID="error-retry" />}
+        {onWhatsApp && <SecondaryButton title={t("Ask on WhatsApp")} whatsapp onPress={onWhatsApp} />}
+      </View>
+      {!!diagnostic && <Text variant="footnote" center style={{ color: c.textTertiary, fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace" }} selectable>{diagnostic}</Text>}
+    </View>
   );
 }

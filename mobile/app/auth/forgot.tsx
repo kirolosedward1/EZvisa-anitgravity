@@ -30,7 +30,7 @@ export default function Forgot() {
     finally { inFlight.current = false; setBusy(false); }
   };
   return (
-    <AuthShell nav="back" title={sent ? t("Check your email") : t("Reset password")} subtitle={sent ? undefined : t("We'll email you a link to choose a new one.")} testID="auth-forgot">
+    <AuthShell nav="back" pose="lock" bare={sent} title={t("Reset password")} testID="auth-forgot">
       {sent ? (
         <>
           <EmailSent email={email} note={t("If there's an account for this email, the link is on its way. Open it on this phone.")} onResend={send} resending={busy} left={cool.left} onChangeEmail={() => { setSent(false); setErr(null); }} />

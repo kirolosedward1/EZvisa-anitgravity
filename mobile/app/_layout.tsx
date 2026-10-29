@@ -16,6 +16,7 @@ import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NetworkBanner } from "../components/NetworkBanner";
 import { ToastHost } from "../components/ui/feedback";
+import { DiscardHost } from "../components/DiscardHost";
 import { BootOverlay } from "../components/Boot";
 import { LockGate } from "../lib/lock";
 import { startUploadQueue } from "../lib/uploads";
@@ -98,6 +99,7 @@ function Themed() {
           <StatusBackdrop />
           <NotificationRouter />
           <ToastHost />
+          <DiscardHost />
           <NetworkBanner />
           <LockGate />
           <Boot />

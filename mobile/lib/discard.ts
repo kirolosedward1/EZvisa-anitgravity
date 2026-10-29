@@ -44,8 +44,17 @@ export async function discardApplication(a: Application) {
   try { await cancelApplication(a.id); } catch {}
 }
 
-/** One destructive confirmation (the trash button and long-press). Swipe-to-discard needs none: the swipe is the intent. */
-export function askDiscard(onDiscard: () => void, t: (s: string) => string = (s) => s) {
+/** What the confirmation names (canvas DiscardConfirm: "Discard the Spain draft?", "Three answers are saved."). */
+export type DiscardInfo = { country?: string; answers?: number; draft?: boolean };
+type DiscardRequest = { run: () => void; info: DiscardInfo };
+let host: ((r: DiscardRequest) => void) | null = null;
+/** components/DiscardHost.tsx registers itself here (mounted once in app/_layout.tsx). */
+export function setDiscardHost(h: ((r: DiscardRequest) => void) | null) { host = h; }
+
+/** One destructive confirmation, for the swipe action, the long press and the detail screen's trash button. With the
+ *  host mounted it is the canvas action sheet (Globi, what is saved, nothing is refunded); otherwise the system alert. */
+export function askDiscard(onDiscard: () => void, t: (s: string) => string = (s) => s, info: DiscardInfo = {}) {
+  if (host) { host({ run: onDiscard, info }); return; }
   if (Platform.OS === "web") { if (typeof window !== "undefined" && window.confirm(t("Discard this application?"))) onDiscard(); return; }
   Alert.alert(t("Discard this application?"), t("It will be removed from your list."), [{ text: t("Cancel"), style: "cancel" }, { text: t("Discard"), style: "destructive", onPress: onDiscard }]);
 }

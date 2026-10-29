@@ -5,10 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
 import { router } from "expo-router";
 import * as AppleAuthentication from "expo-apple-authentication";
-import { Button, Text, InlineError } from "./ui";
+import { Button, Text, InlineError, PressScale } from "./ui";
 import { GoogleButton } from "./GoogleButton";
 import { EmailField, PasswordField, TextLink, EmailSent, useCooldown, isOffline } from "./auth/AuthShell";
-import { useColors, S } from "../lib/theme";
+import { useColors, S, R, SIZE } from "../lib/theme";
+import { useAuth } from "../lib/auth";
 import { supabase } from "../lib/supabase";
 import { signInWithGoogle, googleEnabled } from "../lib/google";
 import { appleEnabled, signInWithApple } from "../lib/apple";
@@ -20,8 +21,8 @@ export { Field } from "./auth/AuthShell";
 
 type Busy = "" | "pw" | "google" | "apple" | "resend";
 
-export function AuthForm({ mode, onMode, initialEmail }: { mode: "signin" | "signup"; onMode: (m: "signin" | "signup") => void; initialEmail?: string }) {
-  const c = useColors(); const { t } = useT();
+export function AuthForm({ mode, onMode, initialEmail, onGuest }: { mode: "signin" | "signup"; onMode: (m: "signin" | "signup") => void; initialEmail?: string; /** Shown on sign-in: start the wizard as a guest. */ onGuest?: () => void }) {
+  const c = useColors(); const { t } = useT(); const { session } = useAuth();
   const [mail, setMail] = useState(initialEmail ?? ""); const [pw, setPw] = useState("");
   const [busy, setBusy] = useState<Busy>(""); const inFlight = useRef(false); // a ref, so a double tap can't send twice
   const [err, setErr] = useState<string | null>(null); const [issue, setIssue] = useState<AuthIssue | null>(null);
@@ -89,31 +90,41 @@ export function AuthForm({ mode, onMode, initialEmail }: { mode: "signin" | "sig
       <View style={{ flex: 1, height: 1, backgroundColor: c.card }} /><Text variant="footnote" tone="secondary">{t("or")}</Text><View style={{ flex: 1, height: 1, backgroundColor: c.card }} />
     </View>
   );
+  // Canvas SignIn / SignUp: optional Apple and Google, then email and password, the primary action, the email link
+  // (sign in), and the footer links. "Continue without an account" goes straight into the wizard as a guest.
   return (
-    <View style={{ gap: S.sm }}>
+    <View style={{ gap: 14 }}>
       {apple && (
-        <AppleAuthentication.AppleAuthenticationButton buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE} cornerRadius={28}
+        <AppleAuthentication.AppleAuthenticationButton buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE} cornerRadius={R.button}
           buttonStyle={c.label === "#FFFFFF" ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
-          style={{ height: 56, width: "100%" }} onPress={onApple} />
+          style={{ height: SIZE.buttonL, width: "100%" }} onPress={onApple} />
       )}
       {google && <GoogleButton onPress={onGoogle} loading={busy === "google"} />}
       {(google || apple) && divider}
       <EmailField value={mail} onChangeText={(v) => { setMail(v); setErr(null); }} />
-      <PasswordField isNew={mode === "signup"} value={pw} onChangeText={(v) => { setPw(v); setErr(null); }} onSubmitEditing={submit} returnKeyType="go" />
-      {mode === "signup" && !err && <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.xs }}>{t("At least 8 characters.")}</Text>}
+      <View style={{ gap: 6 }}>
+        <PasswordField isNew={mode === "signup"} value={pw} onChangeText={(v) => { setPw(v); setErr(null); }} onSubmitEditing={submit} returnKeyType="go" />
+        {mode === "signup" && !err && <Text variant="footnote" tone="secondary" style={{ paddingHorizontal: S.xxs }}>{t("At least 8 characters.")}</Text>}
+      </View>
+      {mode === "signin" && (
+        <PressScale onPress={() => router.push({ pathname: "/auth/forgot", params: email ? { email } : {} })} accessibilityRole="button" testID="forgot-link"
+          style={{ alignSelf: "flex-start", minHeight: 32, justifyContent: "center", paddingHorizontal: S.xxs }}>
+          <Text variant="callout" weight="600" tone="accent">{t("Forgot password?")}</Text>
+        </PressScale>
+      )}
       <InlineError text={err} />
       {issue === "unconfirmed" && <TextLink title={t("Send the confirmation link again")} tone="tint" onPress={resend} testID="resend-confirm" />}
       {issue === "exists" && mode === "signup" && <TextLink title={t("Sign in instead")} tone="tint" onPress={() => { setErr(null); setIssue(null); onMode("signin"); }} />}
-      <View style={{ marginTop: S.xs }}>
+      <View style={{ gap: 10, marginTop: 6 }}>
         <Button title={mode === "signin" ? t("Sign in") : t("Create account")} loading={busy === "pw"} disabled={!!busy && busy !== "pw"} onPress={submit} />
+        {mode === "signin"
+          ? <Button title={t("Email me a sign-in link")} variant="secondary" disabled={!!busy} onPress={() => router.push({ pathname: "/auth/magic-link", params: email ? { email } : {} })} />
+          : <Text variant="footnote" tone="secondary" center style={{ paddingHorizontal: S.sm }}>{t("We'll email a confirmation link. Open it on this phone and you're signed in.")}</Text>}
       </View>
-      {mode === "signin" && (<>
-        <Button title={t("Email me a sign-in link")} variant="secondary" disabled={!!busy} onPress={() => router.push({ pathname: "/auth/magic-link", params: email ? { email } : {} })} />
-        <TextLink title={t("Forgot password?")} onPress={() => router.push({ pathname: "/auth/forgot", params: email ? { email } : {} })} testID="forgot-link" />
-      </>)}
-      <View style={{ marginTop: S.xs }}>
+      <View style={{ marginTop: S.lg, gap: 4 }}>
         <TextLink title={mode === "signin" ? t("New here? Create account") : t("Have an account? Sign in")} tone="tint"
           onPress={() => { setErr(null); setIssue(null); onMode(mode === "signin" ? "signup" : "signin"); }} testID="mode-toggle" />
+        {mode === "signin" && !session && onGuest && <TextLink title={t("Continue without an account")} onPress={onGuest} testID="continue-guest" />}
       </View>
     </View>
   );

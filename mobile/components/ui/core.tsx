@@ -67,9 +67,10 @@ export function Surface({ children, style, level = 1 }: { children: React.ReactN
 
 export function SectionHeader({ title, action, onAction }: { title: string; action?: string; onAction?: () => void }) {
   return (
-    <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginHorizontal: S.lg, marginBottom: S.sm, minHeight: S.xl }}>
-      <Text variant="overline" tone="secondary" accessibilityRole="header" style={{ flexShrink: 1 }}>{title}</Text>
-      {!!action && <PressScale onPress={() => { tap(); onAction?.(); }} hitSlop={12} accessibilityRole="button"><Text variant="subhead" tone="accent" weight="600">{action}</Text></PressScale>}
+    <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", marginHorizontal: S.gutter + S.xxs, marginBottom: S.xs, minHeight: S.lg }}>
+      {/* Canvas section header: 13/600 grey, sentence case (no capitals). */}
+      <Text variant="note" weight="600" tone="secondary" accessibilityRole="header" style={{ flexShrink: 1 }}>{title}</Text>
+      {!!action && <PressScale onPress={() => { tap(); onAction?.(); }} hitSlop={12} accessibilityRole="button"><Text variant="note" tone="accent" weight="600">{action}</Text></PressScale>}
     </View>
   );
 }
@@ -80,14 +81,14 @@ export function ListGroup({ header, footer, action, onAction, children, inset = 
   const items = React.Children.toArray(children).filter(Boolean);
   if (!items.length) return null;
   return (
-    <View style={[{ marginBottom: S.xxl }, style]}>
+    <View style={[{ marginBottom: S.lg }, style]}>
       {!!header && <SectionHeader title={header} action={action} onAction={onAction} />}
-      <Surface level={0} style={{ marginHorizontal: S.md, overflow: "hidden" }}>
+      <Surface level={0} style={{ marginHorizontal: S.gutter, overflow: "hidden" }}>
         {items.map((ch, i) => (
           <View key={i}>{ch}{i < items.length - 1 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginStart: inset }} />}</View>
         ))}
       </Surface>
-      {!!footer && <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.lg, marginTop: S.xs }}>{footer}</Text>}
+      {!!footer && <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.gutter + S.xxs, marginTop: 6 }}>{footer}</Text>}
     </View>
   );
 }
@@ -247,12 +248,12 @@ export function Shake({ on, children, style }: { on: unknown; children: React.Re
 }
 
 /** Round header button (back, help, close): a 36 pt white circle with a hairline (canvas) inside a 44 pt target. */
-export function HeaderIconButton({ icon, onPress, label, dot, testID, tint }: { icon: IconName; onPress: () => void; label: string; dot?: boolean; testID?: string; tint?: string }) {
+export function HeaderIconButton({ icon, onPress, label, dot, testID, tint, filled }: { icon: IconName; onPress: () => void; label: string; dot?: boolean; testID?: string; tint?: string; /** brand-blue circle (Applications "+") */ filled?: boolean }) {
   const c = useColors(); const dark = useIsDark();
   return (
     <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} testID={testID} style={{ width: HIT, height: HIT, alignItems: "center", justifyContent: "center" }}>
-      <View style={{ width: HEADER_BUTTON, height: HEADER_BUTTON, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: dark ? c.surface : c.surfaceRaised, borderWidth: 1, borderColor: c.border }}>
-        <Icon name={icon} size={ICON.md} color={tint ?? c.label} weight="medium" />
+      <View style={{ width: HEADER_BUTTON, height: HEADER_BUTTON, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: filled ? c.primaryFill : dark ? c.surface : c.surfaceRaised, borderWidth: filled ? 0 : 1, borderColor: c.border }}>
+        <Icon name={icon} size={ICON.md} color={tint ?? (filled ? c.onPrimary : c.label)} weight={filled ? "semibold" : "medium"} />
       </View>
       {dot && <View style={{ position: "absolute", top: S.xs, end: S.xs, width: 8, height: 8, borderRadius: R.round, backgroundColor: c.red, borderWidth: 1.5, borderColor: c.bg }} />}
     </PressScale>

@@ -10,6 +10,7 @@ import {
 } from "../../components/ui";
 import { GlobiPose, GLOBI_POSES } from "../../components/globi/GlobiPose";
 import { useColors, S } from "../../lib/theme";
+import { LockScreen } from "../../lib/lock";
 
 export default function Gallery() {
   if (!__DEV__) return <Redirect href="/" />;
@@ -26,7 +27,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function GalleryBody() {
-  const c = useColors(); const i = useSafeAreaInsets(); const q = useLocalSearchParams<{ sheet?: string; action?: string; toast?: string; only?: string }>();
+  const c = useColors(); const i = useSafeAreaInsets(); const q = useLocalSearchParams<{ sheet?: string; action?: string; toast?: string; only?: string; lock?: string }>();
   const [yes, setYes] = useState("yes"); const [grid, setGrid] = useState("pk"); const [purpose, setPurpose] = useState("tourism");
   const [faceId, setFaceId] = useState(true); const [sheet, setSheet] = useState(q.sheet === "1"); const [action, setAction] = useState(q.action === "1");
   useEffect(() => { if (q.toast === "1") { const t = setTimeout(() => showSaved(), 600); return () => clearTimeout(t); } }, [q.toast]);
@@ -111,6 +112,7 @@ function GalleryBody() {
         </View>}
       </ScrollView>
 
+      {q.lock === "1" && <LockScreen label="Face ID" onUnlock={() => {}} />}
       <SheetScaffold visible={sheet} onClose={() => setSheet(false)} pose="documents" globiSize={96} bubble title="Why I ask about your job"
         actions={<View style={{ flexDirection: "row", gap: 10 }}>
           <View style={{ flex: 1 }}><SecondaryButton title="Ask the team" whatsapp onPress={() => {}} /></View>
