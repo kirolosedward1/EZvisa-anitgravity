@@ -3,12 +3,12 @@
 import { CompleteAccountProfile } from "@/components/auth/complete-account-profile"
 import { hasAdultConfirmation } from "@/lib/auth/account-details"
 import { useRef, useState } from "react"
-import { Check, Eye, EyeOff, Loader2, UserRound } from "lucide-react"
+import { Eye, EyeOff, Loader2, UserRound } from "lucide-react"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useViewer } from "@/components/user-menu"
+import { useViewer, ViewerAvatar } from "@/components/user-menu"
 import { useSiteLocale } from "@/components/locale-provider"
 import { LocaleLink } from "@/components/locale-link"
 import { TravellerSelect } from "@/components/apply/traveller-select"
@@ -96,9 +96,10 @@ export function WizardAccount({ travellers, loaded, error, refresh, value, onCho
 
   return <Dialog open={open} onOpenChange={next => { setOpen(next); if (next) setChoice(value) }}>
     <DialogTrigger asChild>
-      <button type="button" disabled={!ready} aria-label={t(viewer ? "Account and saved travellers" : "Sign in to your account", viewer ? "الحساب والمسافرون المحفوظون" : "تسجيل الدخول إلى حسابك")} className="relative flex size-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50">
-        <UserRound size={19} aria-hidden="true" />
-        {viewer ? <span className="absolute -end-0.5 -top-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-white"><Check size={10} aria-hidden="true" /></span> : null}
+      <button type="button" disabled={!ready} aria-label={t(viewer ? "Account and saved travellers" : "Sign in to your account", viewer ? "الحساب والمسافرون المحفوظون" : "تسجيل الدخول إلى حسابك")} className={viewer
+        ? "relative flex size-10 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground shadow-sm transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+        : "relative flex size-10 shrink-0 items-center justify-center rounded-full border border-border text-foreground transition-colors hover:bg-secondary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"}>
+        {viewer ? <ViewerAvatar viewer={viewer} className="size-full text-sm font-semibold" /> : <UserRound size={19} aria-hidden="true" />}
       </button>
     </DialogTrigger>
     <DialogContent dir={arabic ? "rtl" : "ltr"} className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl p-6 sm:max-w-[440px] sm:p-8">

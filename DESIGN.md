@@ -27,7 +27,7 @@ Triips was a reference for inspiration, not a template to copy. Preserve the web
 | Brand | Keep the original blue. |
 | Homepage heading | Exactly **“Your Schengen visa, made simple.”** Keep its reduced size. |
 | Globi | Leads the homepage and wizard. Use supplied videos, with visually transparent backgrounds, autoplay, muted, inline and looping. No visible pause icons. |
-| Navigation | Public header includes Blog and Videos. Hide language switcher and Travel tools. Signed-in header contains only **My applications**, **New application**, **Help**, plus account and WhatsApp controls. |
+| Navigation | Public header includes Blog and Videos. Hide language switcher and Travel tools. Signed-in header contains only **My applications**, **New application**, **Help**, plus account and WhatsApp controls. Below 1024px signed-in visitors get a menu button; its drawer shows their photo, name and email, those three links, Account settings and Sign out. Drawers close on Escape, on navigation and when the screen widens, open from the inline end (left in Arabic), and hide the cookie notice while open. |
 | Active state | Account links use a blue-text pale-blue pill, with **no underline**. Dropdown links use a pale-blue hover/keyboard-focus fill without an outer border or outline. Public links use their existing underline treatment. Do not combine both styles. |
 | Homepage starter | Searchable nationality/destination fields with flags; small Start application button beside fields when space permits. No price inside this box. Button corners match fields: 6px. |
 | Nationalities | Short list of common UAE resident nationalities plus **Show all nationalities**. Do not delete valid nationalities to shorten the list. |
@@ -42,7 +42,7 @@ Triips was a reference for inspiration, not a template to copy. Preserve the web
 | Insurance | Dashboard-only step named **Insurance**, after Preparation and before Ready, offers an EZvisa purchase/quote option and an own-policy option. Quote separately; do not add an invented premium to the service fee. |
 | Account creation | Name and birthdate; minimum age 18; explicit unchecked 18+ declaration. Do not expose “Explore demo accounts” on login/signup. |
 | Social login | Use name, email and avatar when supplied. Never invent age/DOB. Ask for missing required details in the completion flow. |
-| Resume | Show a dismissible saved-application box with destination flag and Continue application. Dismissal must not erase answers. |
+| Resume | Show a dismissible saved-application box with destination flag and Continue application. Dismissal must not erase answers. The floating box sits in the bottom corner (24px, 12px on phones): the chat bubble is hidden, so it no longer reserves space for it. |
 
 ## Tokens and typography
 
@@ -121,7 +121,7 @@ Desktop: full-height pale-blue Globi companion on the left, focused white form o
 
 Progress uses numbered circles joined by a line, completed checks, and `aria-current="step"`. Globi pose and helper copy respond to the current task. Mobile stacks the companion compactly and keeps actions reachable. Summary expands rather than taking over the page.
 
-Use dropdowns for emirate selection. Keep nationality/destination flags. The user icon beside Need help opens in-place sign-in and profile completion; signing in must preserve the draft and enable saved-traveller selection. Choosing a traveller must not silently replace the selected trip.
+Use dropdowns for emirate selection. Keep nationality/destination flags. The account button beside Need help shows the customer's photo (initials while it loads) once signed in and a person icon when signed out; it opens in-place sign-in and profile completion; signing in must preserve the draft and enable saved-traveller selection. Choosing a traveller must not silently replace the selected trip.
 
 The website wizard order is **Destination → Traveller → Review & pay**. Insurance is not collected in the wizard or checkout. Show its choice card only on the dashboard of a paid application, and place it after Preparation and before Ready in that dashboard’s lifecycle tracker. Save the insurance preference in `additional_notes.insurancePreference` as `quote` or `own`; preserve it when continuing an application. A quote request is a preference, not a purchased policy. Existing applications without a choice display “Preference not recorded”; do not infer cover from payment. POST `/api/insurance` verifies the signed-in owner and paid status, preserves the other notes, and refuses conflicting concurrent changes. Native/legacy clients may omit this optional field. This web-only add-on leaves the shared mobile service-price contract unchanged.
 

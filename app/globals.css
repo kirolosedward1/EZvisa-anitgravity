@@ -1534,6 +1534,7 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 
 /* Cookie notice and preferences: compact, non-modal, above any wizard actions. */
 .ez-cookie { --cookie-gap:24px; position:fixed; z-index:1000; inset-inline-start:24px; bottom:calc(var(--cookie-offset,0px) + var(--cookie-gap) + env(safe-area-inset-bottom,0px)); width:420px; max-width:calc(100% - 48px); max-height:min(660px,calc(100dvh - var(--cookie-offset,0px) - 48px - env(safe-area-inset-bottom,0px))); display:flex; flex-direction:column; background:#fff; color:var(--ez-ink,#102347); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 48px rgb(16 35 71 / .14); overflow:hidden; }
+.ez-menu-open .ez-cookie { display:none; }
 .ez-cookie-header { padding:24px 24px 20px; flex-shrink:0; }
 .ez-cookie-title-row { display:flex; align-items:center; gap:10px; }
 .ez-cookie-icon { width:22px; height:22px; flex-shrink:0; color:var(--ez-blue,#0436dc); }
@@ -1588,10 +1589,11 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 .ez-resume-action { display:flex; align-items:center; justify-content:center; gap:12px; min-height:44px; background:#0436dc; color:#fff; border-radius:999px; font-size:14px; font-weight:500; padding:10px 18px; margin-top:16px; transition:background-color 160ms ease-out; }
 .ez-resume-action:hover { background:#002cc1; }
 .ez-resume-box :is(a,button):focus-visible { outline:2px solid #0436dc; outline-offset:3px; }
-.ez-resume-floating { position:fixed; z-index:45; inset-inline-end:24px; bottom:100px; width:360px; max-width:calc(100% - 48px); box-shadow:0 10px 40px rgb(16 35 71 / .12); }
+/* The chat bubble is hidden (lib/chat-routes.ts), so the reminder sits in the corner. */
+.ez-resume-floating { position:fixed; z-index:45; inset-inline-end:24px; bottom:calc(24px + env(safe-area-inset-bottom,0px)); width:360px; max-width:calc(100% - 48px); box-shadow:0 10px 40px rgb(16 35 71 / .12); }
 .ez-resume-dismiss { width:32px; height:44px; display:flex; align-items:center; justify-content:center; flex-shrink:0; align-self:start; color:#52617a; margin-inline-end:-8px; margin-top:-8px; border-radius:6px; cursor:pointer; }
 .ez-resume-dismiss:hover { color:#0436dc; background:#edf4ff; }
-@media(max-width:767px) { .ez-resume-inline { order:3; align-self:stretch; margin:12px 0 18px; } .ez-welcome .ez-application-wrap { order:4; } .ez-resume-box { padding:18px; } .ez-resume-floating { inset-inline-end:12px; bottom:92px; width:360px; max-width:calc(100% - 24px); } }
+@media(max-width:767px) { .ez-resume-inline { order:3; align-self:stretch; margin:12px 0 18px; } .ez-welcome .ez-application-wrap { order:4; } .ez-resume-box { padding:18px; } .ez-resume-floating { inset-inline-end:12px; bottom:calc(12px + env(safe-area-inset-bottom,0px)); width:360px; max-width:calc(100% - 24px); } }
 @media(prefers-reduced-motion:reduce) { .ez-resume-action { transition:none; } }
 
 /* Real travel photography supports informational sections without competing with Globi. */

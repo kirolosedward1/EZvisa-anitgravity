@@ -48,6 +48,12 @@ function initialsOf(viewer: NonNullable<Viewer>): string {
   return ((parts[0]?.[0] ?? "") + (parts.length > 1 && viewer.name ? parts[1][0] : "")).toUpperCase() || "E"
 }
 
+/** The signed-in customer's photo, with their initials underneath until it loads (header, wizard, mobile menu). */
+export function ViewerAvatar({ viewer, className }: { viewer: NonNullable<Viewer>; className?: string }) {
+  const photo = useAvatarUrl(viewer.user)
+  return <AvatarPhoto src={photo} initials={initialsOf(viewer)} className={className} />
+}
+
 function MenuLink({ href, icon: Icon, en, ar }: { href: string; icon: LucideIcon; en: string; ar: string }) {
   return (
     <DropdownMenuItem asChild className="ez-account-menu-link cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">

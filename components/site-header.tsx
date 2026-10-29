@@ -13,7 +13,8 @@ import { destinations } from "@/lib/destinations"
 import { SCHENGEN_META } from "@/lib/countries"
 import { LangText } from "@/components/lang-text"
 import { CountryFlag } from "@/components/country-flag"
-import { UserMenu, useViewer } from "@/components/user-menu"
+import { UserMenu, useViewer, ViewerAvatar } from "@/components/user-menu"
+import { signOutAction } from "@/lib/route-path"
 import { cn } from "@/lib/utils"
 import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 import { HOMEPAGE_NATIONALITIES } from "@/lib/shared/wizard-contract"
@@ -103,6 +104,31 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
   }
 
   const whatsappLink = getWhatsAppUrl(getWhatsAppMessage(), arabic)
+
+  // The drawer closes when the page changes, on Escape, and when the screen grows past the layout that has no drawer.
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!isMenuOpen) return
+    // The cookie notice sits above everything; step it aside while the menu covers the page.
+    document.documentElement.classList.add("ez-menu-open")
+    const breakpoint = isFull ? 1280 : 1024
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsMenuOpen(false)
+    }
+    const onResize = () => {
+      if (window.innerWidth >= breakpoint) setIsMenuOpen(false)
+    }
+    window.addEventListener("keydown", onKey)
+    window.addEventListener("resize", onResize)
+    return () => {
+      document.documentElement.classList.remove("ez-menu-open")
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("resize", onResize)
+    }
+  }, [isMenuOpen, isFull])
 
   useEffect(() => {
     if (isMenuOpen) {
@@ -470,10 +496,12 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
                 </>
               )}
 
-              {isFull && (
+              {(isFull || (isAccount && !hideNavigation)) && (
               <button
+                type="button"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`xl:hidden h-10 w-10 shrink-0 rounded-full transition-colors flex items-center justify-center border ${
+                aria-expanded={isMenuOpen}
+                className={`${isFull ? "xl:hidden" : "lg:hidden"} h-10 w-10 shrink-0 rounded-full transition-colors flex items-center justify-center border ${
                   isMenuOpen ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border hover:bg-secondary"
                 }`}
                 aria-label="Toggle menu / القائمة"
@@ -487,7 +515,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
       </header>
 
       <AnimatePresence>
-        {isMenuOpen && isFull && (
+        {isMenuOpen && (isFull || isAccount) && (
           <>
             <motion.div
               initial={{ opacity: 0 }}
@@ -499,11 +527,15 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
             />
 
             <motion.div
-              initial={{ x: "100%" }}
+              role="dialog"
+              aria-modal="true"
+              aria-label={arabic ? "القائمة" : "Menu"}
+              // Slides in from the inline end: the right in English, the left in Arabic.
+              initial={{ x: arabic ? "-100%" : "100%" }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              exit={{ x: arabic ? "-100%" : "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-[85vw] max-w-sm bg-background border-l border-border/50 shadow-2xl z-50 flex flex-col"
+              className="fixed top-0 end-0 bottom-0 w-[85vw] max-w-sm bg-background border-s border-border/50 shadow-2xl z-50 flex flex-col"
             >
               <div className="flex items-center justify-between px-6 py-5 border-b border-border/50">
                 <span className="text-base font-medium text-foreground"><LangText en="Menu" ar="القائمة" /></span>
@@ -517,6 +549,51 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
                 </button>
               </div>
 
+              {isAccount ? (
+                <nav className="flex flex-1 flex-col gap-6 overflow-y-auto p-6" aria-label="Account">
+                  {viewer && (
+                    <LocaleLink
+                      href={viewer.demo ? "/dashboard" : "/account"}
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-2xl bg-secondary/60 p-4 transition-colors hover:bg-secondary"
+                    >
+                      <ViewerAvatar viewer={viewer} className="size-12 shrink-0 bg-primary text-base font-semibold text-primary-foreground" />
+                      <span className="flex min-w-0 flex-col">
+                        <span className="truncate font-semibold text-foreground">{viewer.name || <LangText en="Signed in" ar="مسجّل الدخول" />}</span>
+                        <span className="truncate text-sm text-muted-foreground">
+                          {viewer.demo ? <LangText en="Demo sandbox" ar="حساب تجريبي" /> : <bdi dir="ltr">{viewer.email}</bdi>}
+                        </span>
+                      </span>
+                    </LocaleLink>
+                  )}
+                  <div className="flex flex-col gap-1">
+                    {[...ACCOUNT_NAV, ...(viewer && !viewer.demo ? [{ href: "/account", en: "Account settings", ar: "إعدادات الحساب" }] : [])].map((item) => {
+                      const active = item.href === "/dashboard" ? matches(path, ["/dashboard", "/track", "/continue"]) : matches(path, [item.href])
+                      return (
+                        <LocaleLink
+                          key={item.href}
+                          href={item.href}
+                          aria-current={active ? "page" : undefined}
+                          onClick={() => setIsMenuOpen(false)}
+                          className={cn(
+                            "ez-account-nav-link site-menu-item block rounded-2xl px-4 py-3.5 transition-colors",
+                            active ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary hover:text-foreground",
+                          )}
+                        >
+                          <LangText en={item.en} ar={item.ar} />
+                        </LocaleLink>
+                      )
+                    })}
+                  </div>
+                  {viewer && (
+                    <form action={signOutAction(arabic)} method="POST" className="mt-auto border-t border-border/70 pt-4">
+                      <button type="submit" className="site-menu-item w-full rounded-2xl px-4 py-3.5 text-start text-destructive transition-colors hover:bg-destructive/5">
+                        {viewer.demo ? <LangText en="Exit demo" ar="الخروج من العرض التجريبي" /> : <LangText en="Sign out" ar="تسجيل الخروج" />}
+                      </button>
+                    </form>
+                  )}
+                </nav>
+              ) : (
               <nav className="flex-1 p-6 overflow-y-auto">
                 <div className="flex flex-col gap-1">
                   {navItems.map((item, index) => (
@@ -644,6 +721,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
                   </div>
                 </motion.div>
               </nav>
+              )}
             </motion.div>
           </>
         )}
