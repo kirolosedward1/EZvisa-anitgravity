@@ -28,7 +28,7 @@ Triips was a reference for inspiration, not a template to copy. Preserve the web
 | Homepage heading | Exactly **“Your Schengen visa, made simple.”** Keep its reduced size. |
 | Globi | Leads the homepage and wizard. Use supplied videos, with visually transparent backgrounds, autoplay, muted, inline and looping. No visible pause icons. |
 | Navigation | Public header includes Blog and Videos. Hide language switcher and Travel tools. Signed-in header contains only **My applications**, **New application**, **Help**, plus account and WhatsApp controls. |
-| Active state | Account links use a blue-text pale-blue pill, with **no underline**. Public links use their existing underline treatment. Do not combine both styles. |
+| Active state | Account links use a blue-text pale-blue pill, with **no underline**. Dropdown links use a pale-blue hover/keyboard-focus fill without an outer border or outline. Public links use their existing underline treatment. Do not combine both styles. |
 | Homepage starter | Searchable nationality/destination fields with flags; small Start application button beside fields when space permits. No price inside this box. Button corners match fields: 6px. |
 | Nationalities | Short list of common UAE resident nationalities plus **Show all nationalities**. Do not delete valid nationalities to shorten the list. |
 | Journey under Globi | UAE flag + **UAE**, arrow, selected country flag + country name. Country names share typography. No “From the” or “Explore your destination” subtitle. |
@@ -39,7 +39,7 @@ Triips was a reference for inspiration, not a template to copy. Preserve the web
 | Support | Always use the shared WhatsApp icon. Do not claim support hours. Chat plugin is hidden for now. |
 | Payment copy | Say **payment gateway**, not the provider's brand. Internal integration identifiers are technical details, not UI copy. |
 | Passport | Collect passport number after payment in the continuation flow. Do not reintroduce the pre-payment requirement. |
-| Insurance | Step named **Insurance** before Payment offers an EZvisa purchase/quote option and an own-policy option. Quote separately; do not add an invented premium to the service fee. |
+| Insurance | Dashboard-only step named **Insurance**, after Payment, offers an EZvisa purchase/quote option and an own-policy option. Quote separately; do not add an invented premium to the service fee. |
 | Account creation | Name and birthdate; minimum age 18; explicit unchecked 18+ declaration. Do not expose “Explore demo accounts” on login/signup. |
 | Social login | Use name, email and avatar when supplied. Never invent age/DOB. Ask for missing required details in the completion flow. |
 | Resume | Show a dismissible saved-application box with destination flag and Continue application. Dismissal must not erase answers. |
@@ -123,7 +123,7 @@ Progress uses numbered circles joined by a line, completed checks, and `aria-cur
 
 Use dropdowns for emirate selection. Keep nationality/destination flags. The user icon beside Need help opens in-place sign-in and profile completion; signing in must preserve the draft and enable saved-traveller selection. Choosing a traveller must not silently replace the selected trip.
 
-The website wizard order is **Destination → Traveller → Insurance → Review & pay**. Save the insurance preference in `additional_notes.insurancePreference` as `quote` or `own`; preserve it when continuing an application. A quote request is a preference, not a purchased policy. Existing applications without a choice display “Preference not recorded”; do not infer cover from payment. Native/legacy clients may omit this optional field. This web-only add-on leaves the shared mobile service-price contract unchanged.
+The website wizard order is **Destination → Traveller → Review & pay**. Insurance is not collected in the wizard or checkout. Show its choice card only on the dashboard of a paid application, and place it after Payment in that dashboard’s lifecycle tracker. Save the insurance preference in `additional_notes.insurancePreference` as `quote` or `own`; preserve it when continuing an application. A quote request is a preference, not a purchased policy. Existing applications without a choice display “Preference not recorded”; do not infer cover from payment. POST `/api/insurance` verifies the signed-in owner and paid status, preserves the other notes, and refuses conflicting concurrent changes. Native/legacy clients may omit this optional field. This web-only add-on leaves the shared mobile service-price contract unchanged.
 
 Separate the **wizard stepper** from the **application lifecycle tracker**. They represent different things and need distinct state mappings. Do not mark insurance purchased just because a quote was requested or payment for the visa service succeeded.
 

@@ -1,12 +1,11 @@
-// Website steps BEFORE payment: 1 destination, 2 traveller, 5 insurance preference, 4 review and pay.
-// Insurance is an optional website add-on preference; it does not change the shared mobile price contract. Trip details, spouse details, passport and employment are asked after payment on /continue/[id].
+// Website steps BEFORE payment: 1 destination, 2 traveller, 4 review and pay.
+// Insurance is arranged in the dashboard after payment. Trip details, spouse details, passport and employment are asked after payment on /continue/[id].
 // Number 3 (spouse) is kept free so old links and saved progress keep their meaning.
-export type WizardStep = "destination" | "personal" | "insurance" | "payment"
+export type WizardStep = "destination" | "personal" | "payment"
 
 export const STEP_TO_NUMBER: Record<WizardStep, number> = {
   destination: 1,
   personal: 2,
-  insurance: 5, // Separate number preserves historical step 3 and payment deep links.
   payment: 4,
 }
 
@@ -14,13 +13,14 @@ export const NUMBER_TO_STEP: Record<number, WizardStep> = {
   1: "destination",
   2: "personal",
   4: "payment",
-  5: "insurance",
+  5: "payment", // Retired insurance step: resume at review without losing the draft.
 }
 
 /** Slugs from earlier versions of the wizard, mapped to the step that now holds their first question. */
 const LEGACY_STEPS: Record<string, WizardStep> = {
   "trip-details": "destination",
   spouse: "personal",
+  insurance: "payment",
 }
 
 export function getStepSlug(stepNumber: number): WizardStep {

@@ -18,16 +18,14 @@ import type { FormData } from "@/lib/form-types"
 const STAGES = [
   { id: "destination", en: "Destination", ar: "الوجهة" },
   { id: "traveller", en: "Traveller", ar: "المسافر" },
-  { id: "insurance", en: "Insurance", ar: "التأمين" },
   { id: "review", en: "Review & pay", ar: "المراجعة والدفع" },
 ] as const
 
 export type WizardStage = (typeof STAGES)[number]["id"]
 
-/** 1 destination, 2 traveller, 5 insurance, 4 review and pay; retained IDs preserve old links. */
+/** 1 destination, 2 traveller, 4 review and pay; retained IDs preserve old links. */
 export function stageForStep(step: number): WizardStage {
   if (step <= 1) return "destination"
-  if (step === 5) return "insurance"
   if (step >= 4) return "review"
   return "traveller"
 }

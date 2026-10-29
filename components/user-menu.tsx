@@ -50,7 +50,7 @@ function initialsOf(viewer: NonNullable<Viewer>): string {
 
 function MenuLink({ href, icon: Icon, en, ar }: { href: string; icon: LucideIcon; en: string; ar: string }) {
   return (
-    <DropdownMenuItem asChild className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
+    <DropdownMenuItem asChild className="ez-account-menu-link cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
       <LocaleLink href={href}>
         <Icon className="size-4 text-current" aria-hidden="true" />
         <LangText en={en} ar={ar} />
@@ -143,7 +143,7 @@ export function UserMenu() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator className="my-1.5" />
             <form action={signOut} method="POST">
-              <DropdownMenuItem asChild className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive focus:text-destructive">
+              <DropdownMenuItem asChild className="ez-account-menu-link cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive focus:text-destructive">
                 <button type="submit" className="w-full">
                   <LogOut className="size-4 text-current" aria-hidden="true" />
                   {viewer.demo ? <LangText en="Exit demo" ar="الخروج من العرض التجريبي" /> : <LangText en="Sign out" ar="تسجيل الخروج" />}

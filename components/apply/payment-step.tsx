@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, type ReactNode } from "react"
 import { LangText } from "@/components/lang-text"
-import { insurancePreference } from "@/lib/insurance"
 import { useSiteLocale } from "@/components/locale-provider"
 import { Msg } from "@/components/msg"
 import type { MessageKey } from "@/messages"
@@ -124,7 +123,6 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
   const shownError = submitError || paymentError
 
   const handlePayment = async () => {
-    if (!insurancePreference(formData.insurancePreference)) { onBack(); return }
     if (inFlightRef.current) return
     const saved = readSavedCheckout()
     const remembered = applicationId
@@ -304,10 +302,6 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
         <Msg id={withSpouse ? "review.travellersWithSpouse" : "review.travellersSolo"} />
       </ReviewRow>
 
-      <ReviewRow label="Insurance" labelAr="التأمين" onEdit={onBack}>
-        {formData.insurancePreference === "quote" ? <LangText en="Separate quote requested — not included in this payment" ar="طلب عرض سعر منفصل — غير مشمول في هذه الدفعة" /> : <LangText en="I’ll provide my own" ar="سأوفّر التأمين بنفسي" />}
-      </ReviewRow>
-
       <div className="flex items-center justify-between border-t border-[#E3E7EF] py-[18px] text-[16px] font-semibold text-[#0A0F1F]">
         <span>
           <LangText en="Total" ar="المجموع" />
@@ -362,7 +356,6 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
             ادفع <bdi dir="ltr">{paymentAmount}</bdi> {dirhamNoun(paymentAmount)}
           </>
         }
-        disabled={!insurancePreference(formData.insurancePreference)}
         loadingLabel="Opening the payment gateway…"
         loadingLabelAr="جارٍ فتح بوابة الدفع…"
       />

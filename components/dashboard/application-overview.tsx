@@ -13,7 +13,8 @@ import { destinations } from "@/lib/destinations"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 import { customerText } from "@/lib/translations/customer"
 import { applicationInsurance } from "@/lib/insurance"
-import { customerProgress, type Stage } from "@/lib/application-status"
+import { InsuranceCard } from "@/components/dashboard/insurance-card"
+import { customerProgress, isPaid, type Stage } from "@/lib/application-status"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import type { ReactNode } from "react"
 
@@ -43,11 +44,13 @@ export function ApplicationOverview({
   stage,
   arabic,
   showHelp = false,
+  showInsurance = false,
 }: {
   app: VisaApplication
   stage: Stage
   arabic: boolean
   showHelp?: boolean
+  showInsurance?: boolean
 }) {
   const locale = arabic ? "ar" : "en"
   const countryEn = app.destination_country || "Schengen"
@@ -85,7 +88,8 @@ export function ApplicationOverview({
 
         <NextStepCard app={app} stage={stage} />
 
-        {progress && <ProgressTracker progress={progress} arabic={arabic} insurance={applicationInsurance(app.additional_notes)} />}
+        {progress && <ProgressTracker progress={progress} arabic={arabic} insurance={applicationInsurance(app.additional_notes)} showInsurance={showInsurance} />}
+        {showInsurance && app.id && isPaid(app) && progress && <InsuranceCard key={app.id} applicationId={app.id} initialValue={applicationInsurance(app.additional_notes)} arabic={arabic} />}
       </div>
     </DashboardCard>
   )

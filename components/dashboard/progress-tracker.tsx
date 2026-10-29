@@ -14,19 +14,20 @@ const STEP_COPY: Record<StepKey | "insurance", { label: CustomerKey; hint: Custo
   appointment: { label: "step.appointment", hint: "step.appointmentHint" },
 }
 
-const TRACKER_STEPS = [{ key: "insurance" as const }, ...APPLICATION_STEPS]
+const TRACKER_STEPS = [APPLICATION_STEPS[0], { key: "insurance" as const }, ...APPLICATION_STEPS.slice(1)]
 
-export function ProgressTracker({ progress, arabic, insurance }: { progress: CustomerProgress; arabic: boolean; insurance?: InsurancePreference }) {
+export function ProgressTracker({ progress, arabic, insurance, showInsurance = false }: { progress: CustomerProgress; arabic: boolean; insurance?: InsurancePreference; showInsurance?: boolean }) {
   const locale = arabic ? "ar" : "en"
-  const currentIndex = TRACKER_STEPS.findIndex(step => step.key === progress.key)
+  const steps = showInsurance ? TRACKER_STEPS : APPLICATION_STEPS
+  const currentIndex = steps.findIndex(step => step.key === progress.key)
   const isFinished = progress.finished
 
   return (
     <ol className="flex flex-col gap-4 md:flex-row md:gap-2" aria-label={customerText(locale, "step.progress")}>
-      {TRACKER_STEPS.map((step, index) => {
+      {steps.map((step, index) => {
         const isDone = step.key === "insurance" ? !!insurance : index < currentIndex || (isFinished && index === currentIndex)
         const isCurrent = index === currentIndex && !isFinished
-        const isLast = index === TRACKER_STEPS.length - 1
+        const isLast = index === steps.length - 1
 
         return (
           <li

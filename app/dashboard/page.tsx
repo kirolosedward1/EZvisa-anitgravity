@@ -204,6 +204,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             relatedApps={relatedApps}
             hrefFor={(app) => `/dashboard?id=${app.id}`}
             showTrackingLink
+            showInsurance
             allowDiscard={!isDemo}
           />
         </div>

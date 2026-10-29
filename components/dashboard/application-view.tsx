@@ -17,12 +17,14 @@ export async function ApplicationView({
   hrefFor,
   showTrackingLink,
   allowDiscard,
+  showInsurance = false,
 }: {
   app: VisaApplication
   relatedApps: VisaApplication[]
   hrefFor: (app: VisaApplication) => string
   showTrackingLink?: boolean
   allowDiscard?: boolean
+  showInsurance?: boolean
 }) {
   const stage = getStage(app)
   const arabic = (await requestLocale()) === "ar"
@@ -36,7 +38,7 @@ export async function ApplicationView({
 
       <div className="ez-case-layout">
         <div className="ez-case-main">
-          <ApplicationOverview app={app} stage={stage} arabic={arabic} showHelp={showHelp} />
+          <ApplicationOverview app={app} stage={stage} arabic={arabic} showHelp={showHelp} showInsurance={showInsurance} />
           <DocumentChecklist app={app} arabic={arabic} />
         </div>
         <aside className="ez-case-sidebar" aria-label={customerText(locale, "case.aside")}>

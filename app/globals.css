@@ -1609,3 +1609,7 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 
 /* Four pre-payment stages: wrap the final label on compact screens. */
 @media(max-width:479px) { .ez-wizard-progress ol { gap:8px; } .ez-wizard-progress li { gap:6px; min-width:0; } .ez-wizard-progress li>span:last-child { white-space:normal; line-height:1.3; font-size:11px; } }
+
+/* Account-menu keyboard focus uses the same clear fill as hover, without an outer border. */
+.ez-account-menu-link:focus,
+.ez-account-menu-link:focus-visible { outline: none; box-shadow: none; background: var(--ez-sky); color: var(--ez-blue); }

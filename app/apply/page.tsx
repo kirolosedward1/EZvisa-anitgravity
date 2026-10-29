@@ -4,8 +4,6 @@ import { DEFAULT_RESIDENCE, coerceResidence } from "@/lib/residence"
 import { useState, Suspense, useCallback, useEffect, useRef } from "react"
 import { NationalityStep } from "@/components/apply/nationality-step"
 import { DestinationStep } from "@/components/apply/destination-step"
-import { InsuranceStep } from "@/components/apply/insurance-step"
-import { insurancePreference } from "@/lib/insurance"
 import { PaymentStep } from "@/components/apply/payment-step"
 import { WizardShell } from "@/components/apply/wizard-shell"
 import { WizardAccount } from "@/components/apply/wizard-account"
@@ -315,22 +313,15 @@ function ApplyPageContent() {
 
   const handleNext = useCallback(() => {
     trackEvent("application_step_completed", { step: currentStep, destination: formData.destination })
-    // Insurance is a separate quote preference; the service checkout total stays unchanged.
-    const nextStep = currentStep <= 1 ? 2 : currentStep === 2 ? 5 : 4
+    const nextStep = currentStep <= 1 ? 2 : 4
     setDirection(1)
     setCurrentStep(nextStep)
     scrollToWizardTop()
   }, [currentStep, formData.destination, scrollToWizardTop])
 
-  useEffect(() => {
-    if (isInitialized && !showResumeModal && currentStep === 4 && !insurancePreference(formData.insurancePreference)) {
-      setCurrentStep(5)
-    }
-  }, [isInitialized, showResumeModal, currentStep, formData.insurancePreference])
-
   const handleBack = useCallback(() => {
     setDirection(-1)
-    setCurrentStep((prevStep) => prevStep === 4 ? 5 : prevStep === 5 ? 2 : 1)
+    setCurrentStep((prevStep) => prevStep >= 4 ? 2 : 1)
     scrollToWizardTop()
   }, [scrollToWizardTop])
 
@@ -570,8 +561,6 @@ function ApplyPageContent() {
             isLoading={isTransitioning}
           />
         )
-      case "insurance":
-        return <InsuranceStep formData={formData} updateFormData={updateFormData} onNext={handleNext} onBack={handleBack} />
       case "payment":
         return (
           <PaymentStep
