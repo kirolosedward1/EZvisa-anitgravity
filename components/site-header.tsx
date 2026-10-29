@@ -32,7 +32,7 @@ const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip
 const ACCOUNT_NAV = [
   { href: "/dashboard", en: "My applications", ar: "طلباتي" },
   { href: "/apply", en: "New application", ar: "طلب جديد" },
-  { href: "/contact", en: "Help", ar: "المساعدة" },
+  { href: "/help", en: "Help", ar: "المساعدة" },
 ]
 
 const matches = (path: string, prefixes: string[]) => prefixes.some((p) => path === p || path.startsWith(`${p}/`))
@@ -252,6 +252,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
     { label: "Pricing", ar: "الأسعار", id: "/pricing", type: "link" },
     { label: "Blog", ar: "المدونة", id: "/news", type: "link" },
     { label: "Videos", ar: "الفيديوهات", id: "/videos", type: "link" },
+    { label: "Help", ar: "المساعدة", id: "/help", type: "link" },
   ]
 
   // Task pages keep help and optional in-place account access beside the logo.

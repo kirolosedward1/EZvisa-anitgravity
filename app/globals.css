@@ -210,6 +210,11 @@
   transform: scaleX(-1);
 }
 
+/* These icons are already mirrored above; `rtl:rotate-180` on top of the mirror flips them upside down instead. */
+[dir="rtl"] :is(.lucide-chevron-right, .lucide-chevron-left, .lucide-arrow-right, .lucide-arrow-left, .lucide-move-right, .lucide-send).rtl\:rotate-180 {
+  rotate: none;
+}
+
 .ltr-isolate {
   direction: ltr;
   unicode-bidi: isolate;

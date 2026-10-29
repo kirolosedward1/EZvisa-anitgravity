@@ -26,7 +26,7 @@ interface InnerHeroProps {
 const pagePoses: Record<string, GlobiPose> = {
   "/about": "welcome", "/contact": "companion", "/pricing": "shield",
   "/how-it-works": "checklist", "/destinations": "destination",
-  "/documents": "documents", "/tools": "calendar", "/videos": "documents",
+  "/documents": "documents", "/tools": "calendar", "/videos": "documents", "/help": "companion",
 }
 
 /** Country photography stays specific; informational pages have a purposeful Globi pose. */
@@ -35,8 +35,8 @@ export function InnerHero({ title, description, backgroundImage, variant, globiP
   const country = destinations.find(destination => destination.image === backgroundImage)?.name
   const pose = variant === "plain" ? undefined : globiPose ?? pagePoses[pathname]
   const photo = variant === "plain" ? undefined : backgroundImage
-  const parent = pathname.startsWith("/documents/") ? "/documents" : pathname.startsWith("/destinations/") ? "/destinations" : pathname.startsWith("/tools/") ? "/tools" : "/"
-  const parentLabel = parent === "/documents" ? ["All document guides", "كل أدلة المستندات"] : parent === "/destinations" ? ["All destinations", "كل الوجهات"] : parent === "/tools" ? ["All travel tools", "كل أدوات السفر"] : ["Home", "الرئيسية"]
+  const parent = pathname.startsWith("/documents/") ? "/documents" : pathname.startsWith("/destinations/") ? "/destinations" : pathname.startsWith("/tools/") ? "/tools" : pathname.startsWith("/help/") ? "/help" : "/"
+  const parentLabel = parent === "/documents" ? ["All document guides", "كل أدلة المستندات"] : parent === "/destinations" ? ["All destinations", "كل الوجهات"] : parent === "/tools" ? ["All travel tools", "كل أدوات السفر"] : parent === "/help" ? ["Help center", "مركز المساعدة"] : ["Home", "الرئيسية"]
   return (
     <section className={`ez-inner-hero ${className}`}>
       <div className={`ez-inner-panel${photo ? " ez-inner-with-photo" : pose ? " ez-inner-with-globi" : " ez-inner-plain"}`}>

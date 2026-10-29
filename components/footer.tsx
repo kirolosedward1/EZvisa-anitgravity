@@ -90,6 +90,7 @@ const footerSections = [
     links: [
       { href: "/news", label: "Journal", labelAr: "المجلة" },
       { href: "/videos", label: "Videos", labelAr: "الفيديوهات" },
+      { href: "/help", label: "Help center", labelAr: "مركز المساعدة" },
       { href: "/#faq", label: "FAQ", labelAr: "الأسئلة الشائعة" },
       { href: "/refund-policy", label: "Refund policy", labelAr: "سياسة الاسترداد" },
     ],
@@ -126,7 +127,8 @@ function AccountFooter({ className }: { className?: string }) {
   // On an application page the message names the case, its status and the page (lib/support-context.ts).
   const supportCase = useSupportCase()
   const links = [
-    { href: "/contact", en: "Help", ar: "المساعدة" },
+    { href: "/help", en: "Help center", ar: "مركز المساعدة" },
+    { href: "/contact", en: "Contact", ar: "اتصل بنا" },
     { href: "/privacy-policy", en: "Privacy", ar: "الخصوصية" },
     { href: "/terms-of-service", en: "Terms", ar: "الشروط" },
     { href: "/refund-policy", en: "Refunds", ar: "الاسترداد" },

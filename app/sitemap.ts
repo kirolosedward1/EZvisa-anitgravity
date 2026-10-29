@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next"
 import { SCHENGEN_COUNTRIES } from "@/lib/countries"
 import { getAllPostsForBuild } from "@/lib/blog"
+import { HELP_ARTICLES, HELP_TOPICS, helpArticleHref } from "@/lib/help/articles"
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://www.ezvisa.net"
@@ -161,5 +162,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }))
 
-  return [...staticPages, ...countryPages, ...destinationLandingPages, ...blogPosts]
+  const helpPages = [
+    { url: `${baseUrl}/help`, lastModified: currentDate, changeFrequency: "monthly" as const, priority: 0.7 },
+    ...HELP_TOPICS.map((topic) => ({ url: `${baseUrl}/help/${topic.slug}`, lastModified: currentDate, changeFrequency: "monthly" as const, priority: 0.5 })),
+    ...HELP_ARTICLES.map((article) => ({ url: `${baseUrl}${helpArticleHref(article)}`, lastModified: currentDate, changeFrequency: "monthly" as const, priority: 0.5 })),
+  ]
+
+  return [...staticPages, ...countryPages, ...destinationLandingPages, ...blogPosts, ...helpPages]
 }

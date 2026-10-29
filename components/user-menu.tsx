@@ -145,7 +145,7 @@ export function UserMenu() {
             <DropdownMenuSeparator className="my-1.5" />
             <DropdownMenuGroup>
               <MenuLink href="/app" icon={Smartphone} en="Get the app" ar="حمّل التطبيق" />
-              <MenuLink href="/contact" icon={LifeBuoy} en="Help & support" ar="المساعدة والدعم" />
+              <MenuLink href="/help" icon={LifeBuoy} en="Help center" ar="مركز المساعدة" />
             </DropdownMenuGroup>
             <DropdownMenuSeparator className="my-1.5" />
             <form action={signOut} method="POST">
@@ -184,7 +184,7 @@ export function UserMenu() {
               <MenuLink href="/apply" icon={PlusCircle} en="Start an application" ar="ابدأ طلبًا" />
               <MenuLink href="/dashboard" icon={LayoutDashboard} en="Track my application" ar="تتبّع طلبي" />
               <MenuLink href="/app" icon={Smartphone} en="Get the app" ar="حمّل التطبيق" />
-              <MenuLink href="/contact" icon={LifeBuoy} en="Help & support" ar="المساعدة والدعم" />
+              <MenuLink href="/help" icon={LifeBuoy} en="Help center" ar="مركز المساعدة" />
             </DropdownMenuGroup>
           </>
         )}
