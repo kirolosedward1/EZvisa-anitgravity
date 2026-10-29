@@ -228,7 +228,6 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
     { label: "Destinations", ar: "الوجهات", id: "/destinations", type: "link" },
     { label: "Documents", ar: "المستندات", id: "/documents", type: "link" },
     { label: "Pricing", ar: "الأسعار", id: "/pricing", type: "link" },
-    { label: "Travel tools", ar: "أدوات السفر", id: "/tools", type: "link" },
     { label: "Blog", ar: "المدونة", id: "/news", type: "link" },
     { label: "Videos", ar: "الفيديوهات", id: "/videos", type: "link" },
   ]
