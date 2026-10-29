@@ -150,7 +150,7 @@ export default function ApplicationDetail() {
         <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
           {ziina === "completed" || ziina === "pending"
             ? <ListRow icon="clock.fill" iconColor={c.tint} title={ziina === "completed" ? t("Payment received") : t("Payment processing")} subtitle={t("Updating your application…")} onPress={() => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } })} />
-            : <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : due != null ? t(PAY_AED, { amount: formatPayAmount(due) }) : t("Pay securely")} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />}
+            : <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : due != null ? t(PAY_AED, { amount: formatPayAmount(due) }) : t("Pay securely")} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay through the payment gateway")} onPress={paying ? undefined : pay} />}
         </ListGroup>
       )}
       {needsContinue(a) && (

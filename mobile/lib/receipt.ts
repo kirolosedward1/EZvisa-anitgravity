@@ -30,7 +30,7 @@ export async function receiptData(a: Application, name: string, mail: string, la
   const rows: [string, string][] = [
     [L("Receipt number"), a.reference], [L("Destination"), L(a.countries?.name ?? a.destination_country ?? "")],
     [L("Customer"), name], [L("Email"), mail], [L("Amount paid"), amt != null ? `${Number(amt).toFixed(2)} ${a.currency || "AED"}` : ""],
-    [L("Payment method"), L("Paid via Ziina")], [L("Ziina payment ID"), a.payment_id ?? ""], [L("Date"), at ? new Date(at).toLocaleDateString(lang === "ar" ? "ar-AE" : "en-GB") : ""],
+    [L("Payment method"), L("Paid through the payment gateway")], [L("Payment reference"), a.payment_id ?? ""], [L("Date"), at ? new Date(at).toLocaleDateString(lang === "ar" ? "ar-AE" : "en-GB") : ""],
   ];
   return { title: L("Payment receipt"), rows: rows.filter(([, v]) => !!v), footer: L("Embassy and VFS fees are not included and are paid at the appointment."), reference: a.reference };
 }

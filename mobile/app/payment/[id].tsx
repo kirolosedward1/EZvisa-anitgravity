@@ -11,7 +11,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button, Icon, Text, type IconName } from "../../components/ui";
 import { PaymentMark } from "../../components/payment/PaymentMark";
-import { Globi, type GlobiPose, type GlobiMood } from "../../components/mascot/Globi";
+import { GlobiPose, type GlobiPose as Pose } from "../../components/globi/GlobiPose";
 import { PaymentStallActions, devPaymentPreview, paymentPhrase, paymentWaitPhase, usePaymentWaitClock, PAYMENT_SLOW_MS, PAYMENT_STALL_MS } from "../../components/payment/PaymentWait";
 import { useColors, S } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
@@ -168,16 +168,14 @@ export default function PaymentResult() {
   };
   const v = V[state];
   // Globi reacts to the outcome (the mark below still carries the state for VoiceOver and the animation).
-  const GLOBI: Record<State, [GlobiPose, GlobiMood]> = {
-    checking: ["think", "think"], paid: ["celebrate", "excited"], confirming: ["celebrate", "happy"], pending: ["phone", "calm"],
-    failed: ["heart", "calm"], cancelled: ["idle", "calm"], offline: ["sleep", "sleepy"],
-  };
+  // Canvas: PaymentChecking / Pending / Stalled = thinking, Payment received = celebrate, Failed = puzzled, Cancelled and Offline = waiting.
+  const GLOBI: Record<State, Pose> = { checking: "thinking", paid: "celebrate", confirming: "celebrate", pending: "thinking", failed: "puzzled", cancelled: "waiting", offline: "waiting" };
   // The 20s stall stays up through the verifier's "not confirmed yet" state. Quiet polling still promotes that to paid,
   // and the same mark morphs into the check — the screen does not swap to a different result view underneath the user.
   const phase = state === "checking" ? paymentWaitPhase(elapsed) : null;
   const stalled = phase === "stalled" || (state === "pending" && elapsed >= PAYMENT_STALL_MS);
   const title = stalled ? pt("Still confirming your payment") : v.title;
-  const body = stalled ? pt("We'll keep checking in the background.") : phase === "slow" ? pt("Still confirming with Ziina…") : v.body;
+  const body = stalled ? pt("We'll keep checking in the background.") : phase === "slow" ? pt("Still confirming with the payment gateway…") : v.body;
   const mark = state === "failed" ? "failure" as const : state === "paid" || state === "confirming" ? "success" as const : state === "checking" || stalled ? "checking" as const : null;
   const leave = () => router.replace(session ? `/applications/${id}` : "/", { withAnchor: true });
   const retryCheck = () => { if (previewRef.current) { setAttempt((n) => n + 1); show("checking"); return; } verify(); };
@@ -185,7 +183,7 @@ export default function PaymentResult() {
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: Platform.OS === "ios" ? S.lg : insets.top + S.lg }} testID="payment-result">
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.md, padding: S.xl }}>
-        <Globi pose={GLOBI[state][0]} mood={GLOBI[state][1]} size={132} animate={!stalled} />
+        <GlobiPose pose={stalled ? "thinking" : GLOBI[state]} size={state === "paid" || state === "confirming" ? 177 : 165} />
         {mark ? <PaymentMark mode={mark} paused={stalled} label={title} /> : v.icon ? <Icon name={v.icon} size={40} color={v.color} /> : null}
         <View accessibilityLiveRegion="polite" style={{ alignItems: "center", gap: S.md }}>
           <Text variant="title1" center accessibilityRole="header" testID="payment-state">{title}</Text>

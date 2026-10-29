@@ -4,19 +4,17 @@ import React, { useRef, useState } from "react";
 import { ScrollView, View, Platform, TextInput, I18nManager, type TextInputInstance } from "react-native";
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Text, Shake, PressScale } from "../ui";
+import { Button, Text, Shake, PressScale, QuestionHeader, Chip } from "../ui";
 import { PhoneField } from "../CountryPicker";
 import { Checkbox, Note } from "./fields";
 import { DatesAnswer, DatesSummary } from "./dates";
 import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries } from "./answers";
 import { TravellerRows } from "./travellers";
-import { MascotHeader } from "../mascot/MascotHeader";
-import { promptFor } from "../mascot/prompts";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { select, tap } from "../../lib/haptics";
 import { OTHER_NATIONALITY, tripDays, iso as isoLocal, type WizardForm } from "../../lib/wizard";
-import { type Question, questionErrors, firstError, isAnswered, getAccountEmail, getTravellers } from "../../lib/questions";
+import { type Question, questionErrors, firstError, isAnswered, getAccountEmail, getTravellers, askOf } from "../../lib/questions";
 
 type Props = {
   q: Question; f: WizardForm; patch: (x: Partial<WizardForm>) => void;
@@ -34,14 +32,16 @@ type Props = {
   doneLabel?: string;
   /** This screen's error rule (default firstError; Continue application keeps a saved departure date valid). */
   errorOf?: (q: Question, f: WizardForm) => string | undefined;
+  /** Tapping Globi (opens the "why I ask" sheet). Without it Globi is decorative. */
+  onGlobiPress?: () => void;
   children?: React.ReactNode;
 };
 
 /** White field with a hairline; blue while typing, red on an error. */
 const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean, focused = false) =>
-  [T.title3, { color: c.label, minHeight: 52, borderRadius: R.lg, backgroundColor: c.surface, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: err || focused ? 1.5 : 1, borderColor: err ? c.red : focused ? c.accent : c.border, textAlign: rtl ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)] as any;
+  [T.title3, { color: c.label, minHeight: 52, borderRadius: R.input, backgroundColor: c.surface, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: err || focused ? 1.5 : 1, borderColor: err ? c.red : focused ? c.accent : c.border, textAlign: rtl ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)] as any;
 
-export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, children }: Props) {
+export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, onGlobiPress, children }: Props) {
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
   const inputRef = useRef<TextInputInstance>(null); const input2Ref = useRef<TextInputInstance>(null);
   // Lift the screen (and its Continue bar) above the iOS keyboard; S.md between button and keyboard.
@@ -56,20 +56,21 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
   const note = q.note?.(f);
   const answered = isAnswered(q, f);
   const days = q.id === "travelEndDate" ? tripDays(f) : 0;
-  const label = q.kind === "contact" && account ? "Phone Number" : q.label;
 
-  // Globi asks the question in his own words; the formal label stays as the caption and the accessible header.
-  const mascot = !(allMode && q.allNames) && !!promptFor(q.id).say;
+  // The question is the screen title, inside Globi's speech bubble (canvas). No description line under it: the
+  // website's field label stays only as the accessible name of the answer controls.
+  const other = !!(allMode && q.allNames);
+  const question = other ? t(OTHER_NATIONALITY) : t(askOf(q, f), { country: f.destination ? t(f.destination) : "" });
+  const chipRow = (!q.required || chips) ? (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: S.xs }}>
+      {!q.required && <Chip label={t("Optional")} tone="neutral" />}
+      {chips}
+    </View>
+  ) : undefined;
   const title = (
-    <View style={{ gap: S.xs }}>
-      {mascot && <View style={{ marginBottom: S.xxs }}><MascotHeader questionId={q.id} f={f} /></View>}
-      {(!q.required || chips) && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
-        {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
-        {chips}
-      </View>}
-      <Text ref={titleRef} variant={mascot ? "subhead" : "title1"} tone={mascot ? "secondary" : "label"} weight={mascot ? "600" : undefined} accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(label)}</Text>
+    <View style={{ gap: S.sm }}>
+      <QuestionHeader question={question} pose={other ? "magnify" : q.pose} chip={chipRow} titleRef={titleRef} onGlobiPress={onGlobiPress} />
       {belowTitle}
-      {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
   );
   const errBox = e ? <Shake on={`${e}|${errTick}`}><View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View></Shake> : null;

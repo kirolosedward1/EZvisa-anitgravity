@@ -3,28 +3,29 @@
 import { Modal, View, AccessibilityInfo } from "react-native";
 import { useEffect, useRef } from "react";
 import { router } from "expo-router";
-import { Text, Icon, Button, PressScale } from "../ui";
+import { Text, Icon, Button, PressScale, showSaved } from "../ui";
 import { useColors, S, R, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { useForm, type SyncStatus } from "../../lib/form";
 import { medium } from "../../lib/haptics";
 
-/** Small status line in the wizard header. Tap retries when a save failed. */
+/** Autosave status (canvas AutoSave.dc.html): a 1.5 s "Saved" pill when the server confirms, no timestamps. Saves are
+ *  optimistic, so "Saving…" and "saved on this phone" show nothing; only a problem stays on screen (tap retries). */
 export function SyncIndicator({ hasAnswers }: { hasAnswers: boolean }) {
-  const c = useColors(); const { t } = useT(); const { sync, savedAt, retrySync, syncError } = useForm();
+  const c = useColors(); const { t } = useT(); const { sync, retrySync, syncError } = useForm();
   const prev = useRef<SyncStatus>(sync);
-  // VoiceOver hears the change once, when a save lands or fails (not every "Saving…").
+  // The pill appears once per confirmed save; VoiceOver hears problems once (the toast announces "Saved" itself).
   useEffect(() => {
-    if (prev.current !== sync && (sync === "saved" || sync === "error" || sync === "offline")) AccessibilityInfo.announceForAccessibility(label(sync, t));
+    if (prev.current !== sync && sync === "saved" && hasAnswers) showSaved();
+    if (prev.current !== sync && (sync === "error" || sync === "offline")) AccessibilityInfo.announceForAccessibility(label(sync, t));
     prev.current = sync;
   }, [sync]);
-  if (!hasAnswers || (sync === "local" && !savedAt) || sync === "conflict") return null;
-  const bad = sync === "retrying" || sync === "offline" || sync === "error";
-  const color = bad ? c.orange : c.secondaryLabel;
-  const icon = sync === "saved" ? "checkmark.circle.fill" : sync === "saving" ? "arrow.clockwise" : sync === "local" ? "checkmark" : sync === "offline" ? "wifi.slash" : "exclamationmark.circle.fill";
+  if (!hasAnswers || sync === "local" || sync === "saving" || sync === "saved" || sync === "conflict") return null;
+  const color = c.orange;
+  const icon = sync === "offline" ? "wifi.slash" : "exclamationmark.circle.fill";
   const body = (
     <View style={{ flexDirection: "row", alignItems: "center", gap: S.xxs }}>
-      <Icon name={icon} size={12} color={sync === "saved" ? c.green : color} weight="semibold" />
+      <Icon name={icon} size={12} color={color} weight="semibold" />
       <Text variant="caption" weight="500" color={color} numberOfLines={1} testID="saved-indicator">{label(sync, t)}</Text>
     </View>
   );

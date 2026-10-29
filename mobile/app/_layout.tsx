@@ -15,6 +15,7 @@ import { View, Platform } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NetworkBanner } from "../components/NetworkBanner";
+import { ToastHost } from "../components/ui/feedback";
 import { BootOverlay } from "../components/Boot";
 import { LockGate } from "../lib/lock";
 import { startUploadQueue } from "../lib/uploads";
@@ -59,6 +60,8 @@ function Routes() {
       <Stack.Screen name="auth" options={{ presentation: "modal" }} />
       <Stack.Screen name="payment-return" />
       <Stack.Screen name="payment/[id]" options={{ presentation: "modal", gestureEnabled: false }} />
+      {/* Development only (redirects to Home in release builds): the canvas component gallery. */}
+      <Stack.Screen name="dev/gallery" />
     </Stack>
   );
 }
@@ -94,6 +97,7 @@ function Themed() {
           <Routes />
           <StatusBackdrop />
           <NotificationRouter />
+          <ToastHost />
           <NetworkBanner />
           <LockGate />
           <Boot />

@@ -31,7 +31,7 @@ export function useStackOptions() {
     headerLargeTitleShadowVisible: false,
     headerTintColor: c.tint,
     headerTitleStyle: { color: c.label, fontWeight: "600" as const },
-    headerLargeTitleStyle: { color: c.label, fontWeight: "700" as const },
+    headerLargeTitleStyle: { color: c.label, fontWeight: "600" as const },
     headerStyle: isIOS ? undefined : { backgroundColor: c.bg },
     contentStyle: { backgroundColor: c.bg },
     headerBackButtonDisplayMode: "minimal" as const,

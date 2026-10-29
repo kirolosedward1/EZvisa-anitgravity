@@ -27,7 +27,7 @@ export function paymentWaitPhase(elapsedMs: number): "checking" | "slow" | "stal
 
 // New strings live here so this change doesn't touch the shared Arabic catalogue.
 const AR: Record<string, string> = {
-  "Still confirming with Ziina…": "ما زلنا نؤكد الدفع مع \u2068Ziina\u2069…",
+  "Still confirming with the payment gateway…": "ما زلنا نؤكد الدفع مع بوابة الدفع…",
   "Still confirming your payment": "ما زلنا نؤكد دفعك",
   "We'll keep checking in the background.": "سنواصل التحقق في الخلفية.",
   "Go to my application": "الانتقال إلى طلبي",

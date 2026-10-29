@@ -1,11 +1,10 @@
 // Branded loading. The native splash (expo-splash-screen) stays up only while the real startup work runs: saved
 // appearance + language, the Supabase session, the saved wizard draft and the onboarding flag. Then the JS splash, the
-// small full logo on a very light gradient, fades and scales away. It stays at least MIN_SPLASH_MS so the logo doesn't
+// small full logo on the flat canvas colour, fades and scales away. It stays at least MIN_SPLASH_MS so the logo doesn't
 // flash; with Reduce Motion there is no minimum.
 import { useEffect, useRef, useState } from "react";
-import { Image, StyleSheet } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
-import { LinearGradient } from "expo-linear-gradient";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, runOnJS, useReducedMotion } from "react-native-reanimated";
 import { useColors, useIsDark } from "../lib/theme";
 import { markReady } from "../lib/perf";
@@ -43,7 +42,7 @@ export function BootOverlay({ ready }: { ready: boolean }) {
     <Animated.View pointerEvents={ready ? "none" : "auto"} style={[StyleSheet.absoluteFill, { backgroundColor: c.bg, alignItems: "center", justifyContent: "center", zIndex: 1000 }, a]}
       accessible accessibilityLabel={`EZvisa, ${t("Loading")}`} accessibilityRole="progressbar" testID="boot-overlay">
       {/* Very light: the page colour at the top, the card grey at the bottom. */}
-      <LinearGradient colors={[c.bg, c.card]} start={{ x: 0.5, y: 0 }} end={{ x: 0.5, y: 1 }} style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: c.bg }]} />
       <Animated.View style={m}>
         {/* The full logo (mark + "EZvisa"), kept small: 150 pt wide at the file's 873:216 ratio. */}
         <Image source={dark ? require("../assets/logo-dark.png") : require("../assets/logo.png")} style={{ width: LOGO_W, height: Math.round(LOGO_W * 216 / 873) }} resizeMode="contain" />

@@ -4,14 +4,12 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withRepeat, wit
 import { SymbolView, SFSymbol } from "expo-symbols";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors, useIsDark, useContentScale, useLargeText, T, S, R, HIT, ICON, SIZE, curve, elevation, card, SPRING, PRESS, DUR, TAB_BAR_HEIGHT, type Level } from "../../lib/theme";
-import { LinearGradient } from "expo-linear-gradient";
+import { useColors, useIsDark, useContentScale, useLargeText, T, S, R, HIT, ICON, SIZE, HEADER_BUTTON, curve, elevation, card, SPRING, PRESS, DUR, TAB_BAR_HEIGHT, type Level } from "../../lib/theme";
 import { Image } from "expo-image";
 import { useShake } from "../../lib/motion";
 import { tap, select } from "../../lib/haptics";
 import { Text } from "./Text";
 import { useT } from "../../lib/i18n";
-import { Glass } from "./Glass";
 
 const ION: Record<string, string> = { "chevron.up.chevron.down": "chevron-expand", "lightbulb.fill": "bulb", "wifi.slash": "cloud-offline", "alarm.fill": "alarm", "arrow.up.circle.fill": "cloud-upload", "exclamationmark.circle.fill": "alert-circle", "exclamationmark": "alert", "calendar.badge.plus": "calendar", "house.fill": "home", "globe.europe.africa.fill": "earth", "doc.text.fill": "document-text", "person.crop.circle.fill": "person-circle", "bubble.left.and.bubble.right.fill": "chatbubbles", "chevron.right": "chevron-forward", "checkmark": "checkmark", "checkmark.circle.fill": "checkmark-circle", "airplane": "airplane", "bed.double.fill": "bed", "envelope.fill": "mail", "phone.fill": "call", "calendar": "calendar", "creditcard.fill": "card", "clock.fill": "time", "shield.checkered": "shield-checkmark", "doc.on.doc.fill": "documents", "list.bullet.clipboard.fill": "clipboard", "pencil.and.list.clipboard": "create", "map.fill": "map", "magnifyingglass": "search", "arrow.up.right.square": "share-outline", "exclamationmark.triangle.fill": "warning", "tray": "file-tray-outline", "person.badge.key.fill": "key", "wand.and.stars": "sparkles", "safari.fill": "compass", "questionmark.circle.fill": "help-circle", "questionmark.circle": "help-circle-outline", "lock.fill": "lock-closed", "sparkles": "sparkles", "person.fill": "person", "briefcase.fill": "briefcase", "eurosign.circle.fill": "cash", "star.fill": "star", "bolt.fill": "flash", "arrow.right": "arrow-forward", "logo.whatsapp": "logo-whatsapp", "bell.fill": "notifications", "sun.max.fill": "sunny", "moon.stars.fill": "moon", "cloud.sun.fill": "partly-sunny", "cloud.moon.fill": "cloudy-night", "cloud.fill": "cloud", "cloud.fog.fill": "cloud", "cloud.drizzle.fill": "rainy", "cloud.rain.fill": "rainy", "cloud.snow.fill": "snow", "cloud.heavyrain.fill": "rainy", "cloud.bolt.rain.fill": "thunderstorm", "plus": "add", "minus": "remove", "arrow.clockwise": "refresh", "chevron.down": "chevron-down", "chevron.up": "chevron-up", "xmark": "close", "rectangle.portrait.and.arrow.right": "log-out-outline", "house": "home-outline", "globe.europe.africa": "earth-outline", "doc.text": "document-text-outline", "person.crop.circle": "person-circle-outline", "bell": "notifications-outline", "bell.slash": "notifications-off-outline", "eye": "eye-outline", "eye.slash": "eye-off-outline", "doc.fill": "document", "paperplane.fill": "paper-plane", "info.circle": "information-circle-outline", "arrow.up.doc.fill": "cloud-upload", "circle": "ellipse-outline", "checkmark.seal.fill": "checkmark-done-circle", "xmark.circle.fill": "close-circle", "hourglass": "hourglass-outline", "airplane.departure": "airplane", "airplane.arrival": "airplane", "person.2.fill": "people", "chevron.left": "chevron-back", "cross.case.fill": "medkit", "graduationcap.fill": "school", "ellipsis.circle.fill": "ellipsis-horizontal-circle", "building.2.fill": "business", "laptopcomputer": "laptop", "leaf.fill": "leaf", "person.crop.circle.badge.plus": "person-add", "person.text.rectangle": "id-card", "camera.fill": "camera", "building.columns.fill": "business", "fork.knife": "restaurant", "bag.fill": "bag-handle", "square.and.arrow.up": "share-outline", "pencil": "pencil", "trash": "trash-outline", "faceid": "scan", "photo.on.rectangle": "images", "doc.viewfinder": "scan-outline", "clock": "time-outline", "dollarsign.circle": "cash-outline", "powerplug.fill": "flash-outline", "phone.badge.waveform.fill": "call", "globe": "globe-outline", "arrow.counterclockwise": "refresh", "character.bubble": "language", "applelogo": "logo-apple", "lock.shield.fill": "shield", "creditcard": "card-outline", "airplane.circle.fill": "airplane", "list.bullet": "list", "square.grid.2x2": "grid-outline" };
 export type IconName = SFSymbol | "logo.whatsapp";
@@ -41,19 +39,20 @@ export function PressScale({ scaleTo = PRESS.scale, lift, style: style0, childre
 
 export function Button({ title, onPress, variant = "primary", size = "L", loading, disabled, icon, color, a11yLabel }: { title: string; onPress: () => void; variant?: "primary" | "secondary" | "plain" | "destructive"; size?: "L" | "M"; loading?: boolean; disabled?: boolean; icon?: IconName; color?: string; a11yLabel?: string }) {
   const c = useColors(); const dark = useIsDark();
-  // Primary: brand-blue pill (a `color` keeps a coloured one, e.g. WhatsApp). Secondary: outlined. Plain: a blue text link.
+  // Canvas: 52 pt, 14 pt corners, flat (no glow). Primary: brand blue (a `color` keeps a coloured one). Secondary: white,
+  // hairline. Plain: a text button. Destructive: red text.
   const bg = variant === "primary" ? (color ?? c.primaryFill) : variant === "secondary" ? c.surface : "transparent";
   const fg = variant === "primary" ? (color ? "#fff" : c.onPrimary) : variant === "destructive" ? c.red : variant === "secondary" ? c.label : (color ?? c.tint);
   const off = disabled || loading; const [down, setDown] = useState(false);
   const fill = variant === "primary" && !color && down ? c.primaryPressed : bg;
   return (
     <PressScale onPress={() => { tap(); onPress(); }} onPressIn={() => setDown(true)} onPressOut={() => setDown(false)} scaleTo={0.98} disabled={off} accessibilityRole="button" accessibilityLabel={a11yLabel ?? title} accessibilityState={{ disabled: !!disabled, busy: !!loading }}
-      style={[{ minHeight: size === "L" ? 48 : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: fill, opacity: disabled ? 0.4 : 1 },
-        variant === "secondary" && { borderWidth: 1, borderColor: c.border }, variant === "primary" && !color && !off && !dark && ({ boxShadow: "0px 6px 16px rgba(4,54,220,0.22)" } as ViewStyle), curve]}>
+      style={[{ minHeight: size === "L" ? SIZE.buttonL : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: fill, opacity: disabled ? PRESS.disabled : 1 },
+        variant === "secondary" && { borderWidth: 1, borderColor: c.border, backgroundColor: dark ? c.surface : c.surfaceRaised }, curve]}>
       {loading ? <ActivityIndicator color={fg} /> : (
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
           {!!icon && <Icon name={icon} size={ICON.md} color={fg} weight="semibold" />}
-          <Text variant="headline" weight="600" color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>
+          <Text variant={size === "L" ? "button" : "headline"} color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>
         </View>
       )}
     </PressScale>
@@ -200,17 +199,13 @@ export function ChipGroup({ options, value, onChange, label }: { options: { valu
   );
 }
 
-/** Skeleton block with a soft travelling shimmer (static when Reduce Motion is on). Compose these to mirror the real layout. */
+/** Skeleton block (canvas Loading.dc.html): a flat neutral block that breathes gently (no gradient; still with Reduce
+ *  Motion). Compose these to mirror the real layout of every list and card while it loads. */
 export function Skeleton({ w = "100%", h = 16, r = R.sm, style }: { w?: number | `${number}%`; h?: number; r?: number; style?: StyleProp<ViewStyle> }) {
-  const c = useColors(); const dark = useIsDark(); const reduce = useReducedMotion(); const x = useSharedValue(-1);
-  useEffect(() => { if (!reduce) x.value = withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.quad) }), -1, false); }, [reduce]);
-  const a = useAnimatedStyle(() => ({ transform: [{ translateX: `${x.value * 100}%` as any }] }));
-  const hi = dark ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.65)";
-  return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: w, height: h, borderRadius: r, backgroundColor: c.fill, overflow: "hidden" }, curve, style]}>
-      {!reduce && <Animated.View style={[StyleSheet.absoluteFill, a]}><LinearGradient colors={["transparent", hi, "transparent"]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} /></Animated.View>}
-    </View>
-  );
+  const c = useColors(); const reduce = useReducedMotion(); const x = useSharedValue(0);
+  useEffect(() => { if (!reduce) x.value = withRepeat(withTiming(1, { duration: DUR.shimmer / 2, easing: Easing.inOut(Easing.quad) }), -1, true); }, [reduce]);
+  const a = useAnimatedStyle(() => ({ opacity: reduce ? 1 : 1 - 0.45 * x.value }));
+  return <Animated.View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={[{ width: w, height: h, borderRadius: r, backgroundColor: c.fill }, curve, style, a]} />;
 }
 export function SkeletonRows({ n = 3, leading = 40 }: { n?: number; leading?: number }) {
   const { t } = useT();
@@ -251,28 +246,26 @@ export function Shake({ on, children, style }: { on: unknown; children: React.Re
   return <Animated.View style={[style, a]}>{children}</Animated.View>;
 }
 
-export function HeaderIconButton({ icon, onPress, label, dot, testID }: { icon: IconName; onPress: () => void; label: string; dot?: boolean; testID?: string }) {
+/** Round header button (back, help, close): a 36 pt white circle with a hairline (canvas) inside a 44 pt target. */
+export function HeaderIconButton({ icon, onPress, label, dot, testID, tint }: { icon: IconName; onPress: () => void; label: string; dot?: boolean; testID?: string; tint?: string }) {
   const c = useColors(); const dark = useIsDark();
   return (
-    <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} hitSlop={4} testID={testID} style={[{ width: HIT, height: HIT, borderRadius: R.round, alignItems: "center", justifyContent: "center" }, elevation(1, dark)]}>
-      <Glass radius={R.round} style={StyleSheet.absoluteFill} />
-      <Icon name={icon} size={ICON.md} color={c.label} weight="medium" />
+    <PressScale onPress={() => { tap(); onPress(); }} accessibilityRole="button" accessibilityLabel={label} testID={testID} style={{ width: HIT, height: HIT, alignItems: "center", justifyContent: "center" }}>
+      <View style={{ width: HEADER_BUTTON, height: HEADER_BUTTON, borderRadius: R.round, alignItems: "center", justifyContent: "center", backgroundColor: dark ? c.surface : c.surfaceRaised, borderWidth: 1, borderColor: c.border }}>
+        <Icon name={icon} size={ICON.md} color={tint ?? c.label} weight="medium" />
+      </View>
       {dot && <View style={{ position: "absolute", top: S.xs, end: S.xs, width: 8, height: 8, borderRadius: R.round, backgroundColor: c.red, borderWidth: 1.5, borderColor: c.bg }} />}
     </PressScale>
   );
 }
 
-/** Bottom-pinned primary action with a soft backdrop. */
-export function StickyCTA({ children, bottom }: { children: React.ReactNode; bottom?: number }) {
-  const c = useColors(); const dark = useIsDark(); const i = useSafeAreaInsets();
-  // Floating glass dock: the page scrolls underneath, a soft fade keeps the buttons legible over content.
+/** Bottom-pinned actions (canvas sticky footer): canvas background with a hairline on top, buttons in the gutter. */
+export function StickyCTA({ children, bottom, caption }: { children: React.ReactNode; bottom?: number; caption?: string }) {
+  const c = useColors(); const i = useSafeAreaInsets();
   return (
-    <View style={{ paddingHorizontal: S.md, paddingBottom: bottom ?? Math.max(i.bottom, S.md) }}>
-      <LinearGradient pointerEvents="none" colors={[c.bg + "00", c.bg]} style={{ position: "absolute", left: 0, right: 0, top: -S.x3, height: S.x3 }} />
-      <View style={[{ borderRadius: R.sheet, position: "relative" }, elevation(3, dark)]}>
-        <Glass radius={R.sheet} strong style={StyleSheet.absoluteFill} />
-        <View style={{ padding: S.xs + 2, gap: S.xs }}>{children}</View>
-      </View>
+    <View style={{ paddingHorizontal: S.gutter, paddingTop: S.sm, paddingBottom: bottom ?? Math.max(i.bottom, S.md), gap: S.xs, backgroundColor: c.background, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border }}>
+      {children}
+      {!!caption && <Text variant="footnote" tone="secondary" center>{caption}</Text>}
     </View>
   );
 }

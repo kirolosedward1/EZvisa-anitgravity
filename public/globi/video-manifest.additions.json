@@ -1,0 +1,69 @@
+{
+  "extends": "video-manifest.json",
+  "batch": "globi-batch2",
+  "receivedOn": "2026-10-29",
+  "processing": "Same pipeline as batch 1: transparent VP9 WebM, 1440x1440, 24 fps, 5 s. Stills are the first frame, 640x640 WebP with alpha.",
+  "playback": "autoplay, muted, loop, playsInline; pause when outside viewport; user pause control",
+  "assets": [
+    {
+      "pose": "thinking",
+      "file": "thinking.webm",
+      "still": "thinking.webp",
+      "sourceCreation": "3799949032"
+    },
+    {
+      "pose": "phone",
+      "file": "phone.webm",
+      "still": "phone.webp",
+      "sourceCreation": "3799949833"
+    },
+    {
+      "pose": "writing",
+      "file": "writing.webm",
+      "still": "writing.webp",
+      "sourceCreation": "3799950870"
+    },
+    {
+      "pose": "wallet",
+      "file": "wallet.webm",
+      "still": "wallet.webp",
+      "sourceCreation": "3799951404"
+    },
+    {
+      "pose": "lock",
+      "file": "lock.webm",
+      "still": "lock.webp",
+      "sourceCreation": "3799952338"
+    },
+    {
+      "pose": "plane",
+      "file": "plane.webm",
+      "still": "plane.webp",
+      "sourceCreation": "3799970658"
+    },
+    {
+      "pose": "hotel",
+      "file": "hotel.webm",
+      "still": "hotel.webp",
+      "sourceCreation": "3799971465"
+    },
+    {
+      "pose": "stamp",
+      "file": "stamp.webm",
+      "still": "stamp.webp",
+      "sourceCreation": "3799972642"
+    },
+    {
+      "pose": "puzzled",
+      "file": "puzzled.webm",
+      "still": "puzzled.webp",
+      "sourceCreation": "3799973088"
+    },
+    {
+      "pose": "magnify",
+      "file": "magnify.webm",
+      "still": "magnify.webp",
+      "sourceCreation": "3799998955"
+    }
+  ]
+}

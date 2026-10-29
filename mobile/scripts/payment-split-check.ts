@@ -12,7 +12,7 @@ const ids = (f: WizardForm, phase: "pre" | "post") => activeQuestions(f, phase).
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 setAccountEmail(null);
-ok(same(ids(emptyForm, "pre"), ["destination", "nationality", "name", "passportNumber", "contact", "travellingWith", "dateOfBirth", "cityOfResidence"]),
+ok(same(ids(emptyForm, "pre"), ["destination", "nationality", "name", "contact", "travellingWith", "dateOfBirth", "cityOfResidence"]),
   "pre: the website's order (destination step, then who is travelling)");
 ok(same([...new Set(activeQuestions(emptyForm, "pre").map((q) => q.step))], ["destination", "personal"]), "pre: two steps before Review & pay");
 ok(!ids(emptyForm, "pre").includes("countryOfResidence") && emptyForm.countryOfResidence === "United Arab Emirates", "residence is UAE without a screen");
@@ -21,7 +21,8 @@ const pre: WizardForm = { ...emptyForm, destination: "France", nationality: "Ind
   email: "ab@example.com", phoneLocal: "501234567", phone: "+971501234567", dateOfBirth: "1990-01-01", passportNumber: "N1234567", spouseAccompanying: "no" };
 ok(Object.keys(validatePersonal(pre)).length === 0 && Object.keys(validateStep("destination", pre)).length === 0 && !firstInvalid(pre),
   "pre: complete without trip, spouse or employment answers");
-ok(!!validatePersonal({ ...pre, passportNumber: "" }).passportNumber, "pre: passport number is required (website rule)");
+ok(!validatePersonal({ ...pre, passportNumber: "" }).passportNumber && !ids(emptyForm, "pre").includes("passportNumber"),
+  "pre: passport number is neither asked nor required before payment (website traveller step; asked after payment)");
 ok(!!validatePersonal({ ...pre, cityOfResidence: "" }).cityOfResidence, "pre: the emirate is required");
 ok(validatePersonal({ ...pre, dateOfBirth: "2015-01-01" }).dateOfBirth === "The main applicant must be 18 or older.", "pre: 18+ with the website's message");
 

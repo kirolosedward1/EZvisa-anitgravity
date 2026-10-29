@@ -107,7 +107,7 @@ function Fixed({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>) =>
             const cells: (string | null)[] = [...Array(lead).fill(null), ...Array.from({ length: dim }, (_, i) => iso(new Date(m.getFullYear(), m.getMonth(), i + 1)))];
             return (
               <View key={m.toISOString()} style={{ paddingTop: S.md }}>
-                <Text variant="headline" weight="700" style={{ paddingHorizontal: S.sm, marginBottom: S.xs, textAlign: I18nManager.isRTL ? "right" : "left" }}>{m.toLocaleDateString(loc, { month: "long", year: "numeric" })}</Text>
+                <Text variant="headline" weight="600" style={{ paddingHorizontal: S.sm, marginBottom: S.xs, textAlign: I18nManager.isRTL ? "right" : "left" }}>{m.toLocaleDateString(loc, { month: "long", year: "numeric" })}</Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
                   {cells.map((d, i) => {
                     if (!d) return <View key={`e${i}`} style={{ width: cell, height: 44 }} />;
@@ -119,7 +119,7 @@ function Fixed({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>) =>
                         style={{ width: cell, height: 44, alignItems: "center", justifyContent: "center" }}>
                         {band && <View style={{ position: "absolute", top: 4, bottom: 4, start: isS ? cell / 2 : 0, end: isE ? cell / 2 : 0, backgroundColor: P.FILL }} />}
                         <View style={{ width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: edge ? P.BLUE : "transparent", borderWidth: d === todayS && !edge ? 1 : 0, borderColor: P.BLUE }}>
-                          <Text variant="subhead" weight={edge ? "700" : "500"} color={edge ? P.ON : past ? P.PAST : P.INK}>{parse(d)!.getDate()}</Text>
+                          <Text variant="subhead" weight={edge ? "600" : "500"} color={edge ? P.ON : past ? P.PAST : P.INK}>{parse(d)!.getDate()}</Text>
                         </View>
                       </Pressable>
                     );
@@ -164,7 +164,7 @@ function Flexible({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>)
         <Text variant="body" weight="600">{t("Stay length")}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
           <Pressable onPress={() => step(-1)} accessibilityRole="button" accessibilityLabel={t("Fewer days")} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: P.BORDER, alignItems: "center", justifyContent: "center" }}><Text variant="headline" color={P.BLUE}>−</Text></Pressable>
-          <Text variant="body" weight="700" style={{ minWidth: 64, textAlign: "center" }} accessibilityLiveRegion="polite">{t("{n} days", { n: stay })}</Text>
+          <Text variant="body" weight="600" style={{ minWidth: 64, textAlign: "center" }} accessibilityLiveRegion="polite">{t("{n} days", { n: stay })}</Text>
           <Pressable onPress={() => step(1)} accessibilityRole="button" accessibilityLabel={t("More days")} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: P.BORDER, alignItems: "center", justifyContent: "center" }}><Text variant="headline" color={P.BLUE}>+</Text></Pressable>
         </View>
       </View>

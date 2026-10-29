@@ -4,7 +4,7 @@ import { Platform, Pressable, StyleSheet, Switch, TextInput, View, useWindowDime
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, useReducedMotion } from "react-native-reanimated";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useColors, useIsDark, S, R, T, ICON, curve, SPRING, elevation } from "../lib/theme";
-import { Icon, IconName, PressScale, Text, Flag, InlineError, Glass } from "./ui";
+import { Icon, IconName, PressScale, Text, Flag, InlineError, HeaderIconButton } from "./ui";
 import { select } from "../lib/haptics";
 import { useT } from "../lib/i18n";
 // Haptics: selection tick on choices/toggles only; CircleButton (back, close, help) is navigation and stays silent.
@@ -16,14 +16,9 @@ export function FlowProgress({ value }: { value: number }) {
   return <View accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(value * 100) }} style={{ height: 4, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><Animated.View style={[{ height: 4, borderRadius: R.xs, backgroundColor: c.tint }, a]} /></View>;
 }
 
+/** Round back / close / help button: the canvas 36 pt white circle with a hairline (same as HeaderIconButton). */
 export function CircleButton({ icon, label, onPress }: { icon: IconName; label: string; onPress: () => void }) {
-  const c = useColors(); const dark = useIsDark();
-  return (
-    <PressScale onPress={onPress} accessibilityRole="button" accessibilityLabel={label} hitSlop={S.xxs} style={[{ width: 40, height: 40, borderRadius: R.round, alignItems: "center", justifyContent: "center" }, elevation(1, dark)]}>
-      <Glass radius={R.round} style={StyleSheet.absoluteFill} />
-      <Icon name={icon} size={ICON.sm + 1} color={c.label} weight="semibold" />
-    </PressScale>
-  );
+  return <HeaderIconButton icon={icon} label={label} onPress={onPress} />;
 }
 
 export type FlowStep = { key: string; label: string; icon: IconName };

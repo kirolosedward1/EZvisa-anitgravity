@@ -7,7 +7,7 @@ import { View, Platform, AccessibilityInfo, I18nManager } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text, Skeleton, InlineError, EmptyState, Button, type IconName } from "../../components/ui";
+import { Text, Skeleton, InlineError, EmptyState, Button, showSaved, type IconName } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { CircleButton, StepIndicator, type FlowStep } from "../../components/flow";
 import { QuestionView } from "../../components/wizard/QuestionView";
@@ -84,6 +84,7 @@ export default function ContinueApplication() {
       const r = await saveAfterPayment(id!, nf);
       if (!r.synced) throw new Error(t("Your application is already in review, so it can't be changed here. Please message us on WhatsApp."));
       rememberTravellersAfterPayment(nf); // paid case: passport details + spouse become saved travellers (never throws)
+      showSaved(); // the server confirmed: 1.5 s "Saved" pill
     });
     saving.current = run;
     return run;

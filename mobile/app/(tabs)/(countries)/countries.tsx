@@ -2,12 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, View, useWindowDimensions, type ScrollViewInstance } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COUNTRY_LIST, POPULAR, toSlug } from "../../../lib/countries";
 import { centreFor } from "../../../lib/visaCentres";
-import { Globi } from "../../../components/mascot/Globi";
+import { GlobiPose } from "../../../components/globi/GlobiPose";
 import { EmptyState, Flag, Icon, ListGroup, ListRow, PressScale, SearchField, Text, useTabInset } from "../../../components/ui";
 import { useColors, useLargeText, S, R, HIT, ICON, curve } from "../../../lib/theme";
 import { PHOTOS } from "../../../lib/photos";
@@ -33,7 +32,8 @@ export function Card({ name, w, ratio = 1.3 }: { name: string; w: number; ratio?
     <PressScale onPress={() => { select(); router.push(`/country/${slug}`); }} accessibilityRole="button" accessibilityLabel={t(name)} testID="country-card"
       style={[{ width: w, height: Math.round(w * ratio), borderRadius: R.card, overflow: "hidden", backgroundColor: c.card }, curve]}>
       <Image source={PHOTOS[slug]} style={StyleSheet.absoluteFill} contentFit="cover" cachePolicy="memory" accessibilityIgnoresInvertColors />
-      <LinearGradient colors={["transparent", "rgba(0,0,0,0.45)", "rgba(0,0,0,0.8)"]} locations={[0.45, 0.72, 1]} style={StyleSheet.absoluteFill} />
+      {/* Flat scrim behind the name (no gradients anywhere, canvas rule). */}
+      <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "45%", backgroundColor: "rgba(0,0,0,0.5)" }} />
       <View style={{ flex: 1, justifyContent: "flex-end", padding: S.md }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
           <Flag country={name} size={24} />
@@ -102,7 +102,7 @@ export default function Countries() {
         </View>
         <View onLayout={(e) => { wrapY.current = e.nativeEvent.layout.y; }} style={{ marginHorizontal: -S.gutter, paddingEnd: !t && !rtl && !grid ? S.xs : 0, marginTop: S.lg }}>
           {t ? (
-            !results.length ? <EmptyState icon="magnifyingglass" mascot={<Globi pose="magnify" mood="think" size={120} />} title={tr("No results")} />
+            !results.length ? <EmptyState icon="magnifyingglass" mascot={<GlobiPose pose="magnify" size={120} />} title={tr("No results")} />
               : grid ? <Grid names={results} w={cardW} ratio={ratio} /> : <ListGroup inset={INSET}>{results.map((n) => <Row key={n} name={n} />)}</ListGroup>
           ) : grid ? (<>
             <Text variant="title3" accessibilityRole="header" style={{ marginHorizontal: S.gutter, marginBottom: S.sm }}>{tr("Popular")}</Text>

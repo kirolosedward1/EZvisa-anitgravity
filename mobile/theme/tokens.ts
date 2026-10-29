@@ -14,15 +14,18 @@ export const space = S;
 
 // ---- Radius: one scale + roles ----
 export const R = {
-  xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, sheet: 32, round: 999,
-  /* roles */ chip: 8, input: 16, tile: 20, card: 24, button: 999,
+  xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, sheet: 24, round: 999,
+  /* roles (canvas): cards and tiles 16, buttons and inputs 14, speech bubbles 18 with a 6 pt tail corner */
+  chip: 8, input: 14, tile: 16, card: 16, button: 14, bubble: 18, bubbleTail: 6,
 } as const;
 
 // ---- Sizes ----
 /** Minimum hit target (Apple HIG). */
 export const HIT = 44;
 /** Control heights. */
-export const SIZE = { buttonL: 56, buttonM: HIT, input: 56, row: 52, rowTall: 64, iconTile: 32, dot: 8, grabberW: 36, grabberH: 5, sheetDismiss: 96 } as const;
+export const SIZE = { buttonL: 52, buttonM: HIT, input: 52, row: 52, rowTall: 64, iconTile: 32, dot: 8, grabberW: 36, grabberH: 5, sheetDismiss: 96 } as const;
+/** Round header buttons (back, help, close): 36 pt visible circle inside a 44 pt target. */
+export const HEADER_BUTTON = 36;
 /** Icon sizes (SF Symbols / Ionicons), same weights everywhere. */
 export const ICON = { xs: 11, sm: 13, md: 17, lg: 22, xl: 28, hero: 40 } as const;
 /** Flag / avatar diameters. */

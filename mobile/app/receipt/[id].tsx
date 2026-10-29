@@ -47,14 +47,14 @@ export default function ReceiptScreen() {
           <View style={{ alignItems: "flex-start" }}><Image source={LOGO} style={{ width: LOGO_W, height: LOGO_H }} contentFit="contain" accessibilityLabel="EZvisa" /></View>
           <View style={{ gap: S.xs, marginTop: S.lg - S.lg }}>
             <StatusPill v={a.status} a={a} />
-            <Text style={{ fontSize: 34, lineHeight: 41, fontWeight: "700", color: c.label }} testID="receipt-amount">{ltr(info!.amount)}</Text>
+            <Text style={{ fontSize: 30, lineHeight: 36, fontWeight: "600", color: c.label }} testID="receipt-amount">{ltr(info!.amount)}</Text>
             <Text variant="subhead" tone="secondary">{info!.date}</Text>
           </View>
           <View style={[card(c, dark, 1), { borderRadius: R.card, overflow: "hidden" }]}>
             {row("Receipt no.", ltr(a.reference))}
             {row("Destination", <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs, flexShrink: 1 }}><Flag country={info!.destination} size={20} /><Text variant="body" numberOfLines={1}>{t(info!.destination)}</Text></View>)}
             {row("Service", t("Schengen visa application service"))}
-            {row("Payment", t("Paid via Ziina"))}
+            {row("Payment", t("Paid through the payment gateway"))}
             {row("Paid on", info!.date, true)}
           </View>
           <View style={[card(c, dark, 1), { borderRadius: R.card, overflow: "hidden" }]}>

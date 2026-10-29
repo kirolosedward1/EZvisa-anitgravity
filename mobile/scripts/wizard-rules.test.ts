@@ -16,7 +16,7 @@ const postIds = (f: WizardForm) => activeQuestions(f, "post").map((q) => q.id);
 
 test("before payment: the website's destination and traveller steps, in its order", () => {
   assert.deepEqual(ids(form()), [
-    "destination", "nationality", "name", "passportNumber", "contact", "travellingWith", "dateOfBirth", "cityOfResidence",
+    "destination", "nationality", "name", "contact", "travellingWith", "dateOfBirth", "cityOfResidence",
   ]);
   // After payment, passport validity comes before the number (only asked when the number is still missing).
   const post = postIds(form({ hasValidPassport: "yes" }));
@@ -70,8 +70,9 @@ test("after payment, the passport number is hidden for 'no', which clears it", (
   assert.deepEqual(Q_BY_ID.hasValidPassport.onPick!("no", form({ hasValidPassport: "yes", passportNumber: "A1" })), { passportNumber: "" });
   assert.equal(validatePassport(form({ hasValidPassport: "no" })).passportNumber, undefined);
   assert.equal(validatePassport(form({ hasValidPassport: "yes" })).passportNumber, "Enter your passport number.");
-  // Before payment the number is required, as on the website's traveller step.
-  assert.equal(validatePersonal(form()).passportNumber, "Enter your passport number.");
+  // Before payment the number is not asked or required, as on the website's traveller step (contract validatePersonal).
+  assert.equal(validatePersonal(form()).passportNumber, undefined);
+  assert.ok(!ids(form()).includes("passportNumber"));
 });
 
 test("nationality: UAE resident list, every named country visa-required, UAE itself excluded", () => {
@@ -145,12 +146,12 @@ test("progress: destination, traveller, then review & pay", () => {
   assert.deepEqual(pm.steps, ["destination", "personal", "payment"]);
   assert.equal(ps.segs[0].count, 2);
   assert.equal(ps.segs[1].count, activeQuestions(single).filter((q) => q.step === "personal").length);
-  assert.equal(ps.segs[1].count, 6);
-  assert.equal(pm.segs[1].count, 6, "the spouse travelling adds no screen before payment");
+  assert.equal(ps.segs[1].count, 5); // name, contact, travelling with, date of birth, emirate (passport number is after payment)
+  assert.equal(pm.segs[1].count, 5, "the spouse travelling adds no screen before payment");
   assert.equal(ps.segs[2].count, 1);
   assert.equal(ps.segs[0].fill, 0);
   const last = progressOf(single, "q:cityOfResidence");
-  assert.equal(last.segs[1].index, 6); assert.ok(last.segs[1].fill < 1);
+  assert.equal(last.segs[1].index, 5); assert.ok(last.segs[1].fill < 1);
   assert.equal(progressOf(single, "review").segs[0].fill, 1);
   assert.equal(progressOf(single, "review").segs.at(-1)!.fill, 1);
 });
