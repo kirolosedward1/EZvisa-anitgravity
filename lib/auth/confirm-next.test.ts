@@ -1,6 +1,7 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
 import { AUTH_MESSAGE } from "./errors.ts"
+import { POPUP_DONE_PATH, isPopupLanding } from "./popup.ts"
 import {
   APP_AUTH_CALLBACK,
   ARABIC_ACCOUNT_LANDING,
@@ -367,4 +368,13 @@ test("the expired-link copy matches the auth message and has an Arabic translati
     translations.ar.auth.linkExpired,
     "انتهت صلاحية هذا الرابط أو سبق استخدامه. اطلب رابطًا جديدًا.",
   )
+})
+
+test("popup sign-in lands on the popup page in both languages", () => {
+  assert.equal(callbackLanding(POPUP_DONE_PATH, "signup"), POPUP_DONE_PATH)
+  assert.equal(callbackLanding(POPUP_DONE_PATH, "signup", { locale: "ar" }), `/ar${POPUP_DONE_PATH}`)
+  assert.equal(isPopupLanding(callbackLanding(POPUP_DONE_PATH, "signup", { locale: "ar" })), true)
+  assert.equal(isPopupLanding(`${POPUP_DONE_PATH}?x=1`), true)
+  assert.equal(isPopupLanding("/auth/popup-done-evil"), false)
+  assert.equal(isPopupLanding("/apply?next=/auth/popup-done"), false)
 })

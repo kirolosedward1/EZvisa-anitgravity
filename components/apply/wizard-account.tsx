@@ -1,6 +1,7 @@
 "use client"
 
 import { CompleteAccountProfile } from "@/components/auth/complete-account-profile"
+import { GoogleSignInPopupButton } from "@/components/auth/google-popup-sign-in"
 import { hasAdultConfirmation } from "@/lib/auth/account-details"
 import { useRef, useState } from "react"
 import { Eye, EyeOff, Loader2, UserRound } from "lucide-react"
@@ -50,6 +51,12 @@ function WizardSignIn() {
   }
 
   return <>
+    <GoogleSignInPopupButton arabic={locale === "ar"} fallbackNext={locale === "ar" ? "/ar/apply?resume=1" : "/apply?resume=1"} />
+    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+      <span className="h-px flex-1 bg-border" aria-hidden="true" />
+      {t("or with email", "أو بالبريد الإلكتروني")}
+      <span className="h-px flex-1 bg-border" aria-hidden="true" />
+    </div>
     <form onSubmit={signIn} noValidate className="flex flex-col gap-5">
       <div className="space-y-2">
         <Label htmlFor="wizard-sign-in-email">{t("Email", "البريد الإلكتروني")}</Label>

@@ -7,6 +7,7 @@ import { callbackFailureTarget, callbackLanding, isArabicPath } from "@/lib/auth
 import type { User } from "@supabase/supabase-js"
 import { socialMetadataPatch } from "@/lib/auth/social-profile"
 import { hasAdultConfirmation, profileCompletionPath } from "@/lib/auth/account-details"
+import { isPopupLanding } from "@/lib/auth/popup"
 
 /**
  * OAuth and older email links land here with ?code= or ?token_hash=.
@@ -78,7 +79,8 @@ export async function handleAuthCallback(request: Request): Promise<NextResponse
   }
 
   const landing = callbackLanding(next, recovery ? "recovery" : type, opts)
-  if (!recovery && !landing.startsWith("ezvisa:") && authenticatedUser && !hasAdultConfirmation(authenticatedUser)) {
+  // A popup sign-in closes straight away; the page that opened it asks for the missing details itself.
+  if (!recovery && !landing.startsWith("ezvisa:") && !isPopupLanding(landing) && authenticatedUser && !hasAdultConfirmation(authenticatedUser)) {
     return send(profileCompletionPath(landing))
   }
   return send(landing)

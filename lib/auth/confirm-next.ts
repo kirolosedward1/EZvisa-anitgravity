@@ -334,6 +334,7 @@ const PAGES = new Set([
   "/app-return",
   "/apply",
   "/apply/thank-you",
+  "/auth/popup-done",
   "/contact",
   "/cookie-policy",
   "/dashboard",
