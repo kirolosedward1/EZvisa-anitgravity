@@ -6,7 +6,9 @@ import { createServerClient } from "@/lib/supabase/server"
 import { listApplicationsFor, trackPath } from "@/lib/applications"
 import { getStatusLabel, isPaid } from "@/lib/application-status"
 import { referenceOf } from "@/lib/shared/wizard-contract"
+import { isAppleRelayEmail, metadataFullName } from "@/lib/auth/apple-profile"
 
+import { accountBirthDate } from "@/lib/auth/account-details"
 import type { Metadata } from "next"
 import { withArabicMeta } from "@/lib/page-meta"
 
@@ -36,8 +38,10 @@ export default async function AccountPage() {
   const profile: AccountProfile = {
     id: user.id,
     email: user.email,
-    name: str(meta.full_name) || [str(meta.first_name), str(meta.last_name)].filter(Boolean).join(" "),
+    name: metadataFullName(meta, user.email) || [str(meta.first_name), str(meta.last_name)].filter(Boolean).join(" "),
+    privateRelay: isAppleRelayEmail(user.email),
     phone: str(meta.phone),
+    birthdate: accountBirthDate(meta.date_of_birth),
     citizenship: str(meta.citizenship) || str(meta.nationality),
     providers,
     createdAt: user.created_at ?? null,
@@ -59,7 +63,7 @@ export default async function AccountPage() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
+      <main id="main-content" className="ez-customer-page bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
         <AccountView profile={profile} applications={applications} />
       </main>
       <Footer />

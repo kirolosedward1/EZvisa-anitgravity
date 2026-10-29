@@ -5,10 +5,8 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
-import { HowItWorksSimple } from "@/components/how-it-works-simple"
 import { AfterPaymentTimeline } from "@/components/after-payment-timeline"
 import { ServicesSection } from "@/components/services-section"
-import { ContactSection } from "@/components/contact-section"
 import { formatAedLabel } from "@/lib/currency"
 import { requestLocale } from "@/lib/request-locale"
 import { ltr } from "@/lib/bidi"
@@ -58,8 +56,8 @@ export default async function HowItWorksPage() {
           title={arabic ? "كيف تعمل إيزي فيزا" : "How EZvisa works"}
           description={
             arabic
-              ? `أجب عن بعض الأسئلة عن رحلتك وادفع ${price}. بعدها يجهّز مختص التأشيرات نموذج الطلب وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق خلال يوم إلى يومين.`
-              : `Answer a few questions about your trip and pay ${price}. A visa specialist then prepares your application form, cover letter, itinerary, and flight and hotel reservations within 1–2 days.`
+              ? `أجب عن بعض الأسئلة عن رحلتك وادفع ${price}. ارفع مستنداتك عندما تكون جاهزًا. نجهّز مستندات طلبك الخمسة خلال يوم إلى يومين بعد استلام بياناتك ومستنداتك كاملة.`
+              : `Answer a few questions about your trip and pay ${price}. Upload your documents when you’re ready. We prepare your five application documents within 1–2 days of receiving complete details and uploads.`
           }
         >
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -79,10 +77,8 @@ export default async function HowItWorksPage() {
           </div>
         </InnerHero>
 
-        <HowItWorksSimple standalone />
         <AfterPaymentTimeline />
         <ServicesSection />
-        <ContactSection />
       </div>
       <Footer />
     </>

@@ -1,12 +1,11 @@
 'use client'
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { Play, Clock } from "lucide-react"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { InnerHero } from "@/components/inner-hero"
-import { ContactSection } from "@/components/contact-section"
 import { useSiteLocale } from "@/components/locale-provider"
 
 const videos = [
@@ -23,7 +22,7 @@ const videos = [
   },
 ]
 
-export default function VideosContent() {
+export default function VideosContent({ children }: { children?: ReactNode }) {
   const arabic = useSiteLocale() === "ar"
   const [selectedVideo, setSelectedVideo] = useState<typeof videos[0] | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -57,16 +56,16 @@ export default function VideosContent() {
         {/* Videos Grid Section */}
         <section className="pb-20 md:pb-24">
           <div className="container mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 lg:grid-cols-4">
+            <div className="ez-video-library">
               {videos.map((video) => (
                 <button
                   type="button"
                   key={video.id}
                   onClick={() => handleVideoClick(video)}
-                  className="group relative cursor-pointer overflow-hidden rounded-3xl border border-border/70 bg-card text-start transition-colors hover:border-primary/40"
+                  className="ez-video-feature group relative cursor-pointer text-start"
                 >
                   {/* Video Thumbnail with 9:16 aspect ratio */}
-                  <div className="relative aspect-[9/16] overflow-hidden bg-secondary">
+                  <div className="ez-video-thumbnail relative overflow-hidden bg-secondary">
                     {/* Thumbnail Image */}
                     <img 
                       src={video.thumbnail || "/placeholder.svg"} 
@@ -102,7 +101,7 @@ export default function VideosContent() {
           </div>
         </section>
 
-        <ContactSection />
+        {children}
       </div>
       <Footer />
 

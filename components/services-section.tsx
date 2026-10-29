@@ -8,6 +8,7 @@ import { ArrowRight, BadgeCheck, Expand, FileText, Hotel, Mail, Map, Plane, Shie
 import type { LucideIcon } from "lucide-react"
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
@@ -80,11 +81,8 @@ function SamplePreview({ service, onExpand }: { service: Service; onExpand: () =
       className="relative flex aspect-[5/6] items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-secondary sm:aspect-[4/3]"
     >
       {/* Soft brand glow behind the paper */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_45%,color-mix(in_oklch,var(--primary)_12%,transparent),transparent)]" />
 
       {/* Two sheets behind, for depth */}
-      <div aria-hidden="true" className="absolute h-[78%] aspect-[1/1.38] translate-x-6 rotate-[5deg] rounded-lg bg-background/70 shadow-sm ring-1 ring-border/60" />
-      <div aria-hidden="true" className="absolute h-[78%] aspect-[1/1.38] -translate-x-5 -rotate-[3deg] rounded-lg bg-background/85 shadow-sm ring-1 ring-border/60" />
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.button
@@ -143,10 +141,9 @@ export function ServicesSection() {
   return (
     <section id="services" className="relative overflow-hidden bg-background py-20 sm:py-28">
       <div className="container relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><LangText en="What's included" ar="ما يشمله الملف" /></span>
+        <div data-site-reveal="rise" className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight text-foreground text-balance sm:text-4xl md:text-5xl">
-            <LangText en="Every document your embassy file needs" ar="كل مستند يحتاجه ملف السفارة" />
+            <LangText en="Your file, taken care of" ar="كل مستند يحتاجه ملف السفارة" />
           </h2>
           <p className="text-base leading-relaxed text-muted-foreground text-pretty">
             <LangText
@@ -181,21 +178,25 @@ export function ServicesSection() {
                   onClick={() => setActive(index)}
                   onKeyDown={(e) => onKey(e, index)}
                   className={cn(
-                    "group flex shrink-0 items-center gap-3 rounded-2xl border text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                    "px-3.5 py-2.5 lg:w-full lg:gap-4 lg:px-4 lg:py-3.5",
+                    "group flex shrink-0 items-start gap-4 rounded-2xl border text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    "px-3.5 py-2.5 lg:w-full lg:px-4 lg:py-3.5",
                     selected ? "border-border bg-card shadow-sm" : "border-transparent hover:bg-secondary",
                   )}
                 >
                   <span
                     className={cn(
-                      "flex size-8 shrink-0 items-center justify-center rounded-xl transition-colors lg:size-10",
-                      selected ? "bg-primary text-primary-foreground" : "bg-primary/10 text-primary",
+                      "flex h-5 w-7 shrink-0 items-center lg:h-6",
+                      selected ? "text-primary" : "text-[#6B7280]",
                     )}
                   >
-                    <Icon className="size-4 lg:size-5" aria-hidden="true" />
+                    <Icon
+                      className={cn("size-7", Icon === Plane && "rtl:-scale-x-100")}
+                      strokeWidth={1.5}
+                      aria-hidden="true"
+                    />
                   </span>
                   <span className="flex min-w-0 flex-col">
-                    <span className={cn("flex items-center gap-2 whitespace-nowrap text-sm font-semibold lg:text-base", selected ? "text-foreground" : "text-foreground/80")}>
+                    <span className={cn("flex items-center gap-2 whitespace-nowrap text-sm font-semibold leading-5 lg:text-base lg:leading-6", selected ? "text-foreground" : "text-foreground/80")}>
                       {text(service.title)}
                       {service.extra ? <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"><LangText en="Extra" ar="إضافة" /></span> : null}
                     </span>
@@ -226,13 +227,12 @@ export function ServicesSection() {
               </p>
             </div>
           </div>
-          <LocaleLink
-            href="/apply"
-            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-          >
-            <LangText en="Start your application" ar="ابدأ طلبك" />
-            <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-          </LocaleLink>
+          <Button asChild className="shrink-0">
+            <LocaleLink href="/apply">
+              <span><LangText en="Start your application" ar="ابدأ طلبك" /></span>
+              <ArrowRight aria-hidden="true" />
+            </LocaleLink>
+          </Button>
         </div>
       </div>
 
@@ -252,14 +252,12 @@ export function ServicesSection() {
               </div>
               <div className="flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-muted-foreground">{current.extra ? <LangText en="Optional extra, or bring your own" ar="إضافة اختيارية، أو أحضر وثيقتك" /> : <LangText en="Included in every application" ar="مشمول في كل طلب" />}</span>
-                <LocaleLink
-                  href="/apply"
-                  onClick={() => setExpanded(false)}
-                  className="inline-flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  <LangText en="Start your application" ar="ابدأ طلبك" />
-                  <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-                </LocaleLink>
+                <Button asChild className="shrink-0">
+                  <LocaleLink href="/apply" onClick={() => setExpanded(false)}>
+                    <span><LangText en="Start your application" ar="ابدأ طلبك" /></span>
+                    <ArrowRight aria-hidden="true" />
+                  </LocaleLink>
+                </Button>
               </div>
             </div>
           </div>

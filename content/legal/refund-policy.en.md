@@ -21,7 +21,7 @@ A **duplicate payment** for the same application is always refunded in full.
 - Refusals or delays caused by incomplete, inaccurate or non-genuine information or documents you provided.
 
 #### 5. How to request a refund
-Send your request with your application reference number to {{EMAIL}} or WhatsApp +971 54 710 9533 (9:00 am – 6:00 pm UAE time). We will respond within 3 business days. Approved refunds are issued to the original payment method via Ziina within 7 business days of approval; the time for funds to appear depends on your bank or card issuer.
+Send your request with your application reference number to {{EMAIL}} or WhatsApp +971 54 710 9533. We will respond within 3 business days. Approved refunds are issued to the original payment method via the payment gateway within 7 business days of approval; the time for funds to appear depends on your bank or card issuer.
 
 #### 6. Your statutory rights
 Nothing in this policy limits any rights you have under UAE Federal Law No. 15 of 2020 on Consumer Protection or other mandatory law.

@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { TravelPhoto } from "@/components/travel-photo"
+import { useEffect, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { ArrowRight, Check, ChevronDown } from "lucide-react"
@@ -17,10 +18,9 @@ import { InnerHero } from "@/components/inner-hero"
 import { FixedCTAButton } from "@/components/fixed-cta-button"
 import { DocumentSplit } from "@/components/documents/document-split"
 import { CountryFacts } from "@/components/documents/country-facts"
-import { ContactSection } from "@/components/contact-section"
-
 interface DocumentRequirementsPageProps {
   initialCountry: string
+  children?: ReactNode
 }
 
 // Documents that help in particular situations, on top of the core file.
@@ -28,11 +28,11 @@ const SITUATIONAL = [
   { title: "Previous Schengen visas", titleAr: "تأشيرات شنغن السابقة", body: "Copies of any Schengen visas you've held before.", bodyAr: "نسخ من أي تأشيرات شنغن حصلت عليها سابقًا." },
   { title: "Travelling with your spouse", titleAr: "السفر مع الزوج أو الزوجة", body: "Marriage certificate, attested and translated into English if needed.", bodyAr: "عقد الزواج، مصدّق ومترجَم إلى الإنجليزية إذا لزم." },
   { title: "Travelling with children", titleAr: "السفر مع الأطفال", body: "Birth certificates, and a consent letter from a parent who isn't travelling.", bodyAr: "شهادات الميلاد، وخطاب موافقة من الوالد الذي لا يسافر." },
-  { title: "Self-employed or a business owner", titleAr: "عمل حر أو صاحب عمل", body: "Trade licence and company bank statements instead of a salary certificate.", bodyAr: "الرخصة التجارية وكشوف حساب الشركة بدل شهادة الراتب." },
+  { title: "Self-employed or a business owner", titleAr: "عمل حر أو صاحب عمل", body: "Trade licence and business evidence, plus personal financial documents where required by the destination.", bodyAr: "الرخصة التجارية وأدلة النشاط، والمستندات المالية الشخصية عند طلبها من الوجهة." },
   { title: "Someone else pays for the trip", titleAr: "شخص آخر يتحمّل تكاليف الرحلة", body: "A sponsorship letter with the sponsor's passport, residence visa and bank statements.", bodyAr: "خطاب كفالة مع جواز الكفيل وتأشيرة إقامته وكشوف حسابه." },
 ]
 
-export function DocumentRequirementsPage({ initialCountry }: DocumentRequirementsPageProps) {
+export function DocumentRequirementsPage({ initialCountry, children }: DocumentRequirementsPageProps) {
   const arabic = useSiteLocale() === "ar"
   const router = useRouter()
   const localize = useLocalizedHref()
@@ -132,8 +132,8 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
               <h2 className="text-balance text-foreground">{arabic ? "المستندات المطلوبة" : "Required documents"}</h2>
               <p className="text-base leading-relaxed text-muted-foreground">
                 {arabic
-                  ? `تطلب ${place} المستندات الأساسية نفسها كبقية دول شنغن. تقدّم أنت المستندات في القائمة الأولى، ونجهّز نحن ما في القائمة الثانية.`
-                  : `${country} asks for the same core documents as other Schengen countries. You provide the documents in the first list, and we prepare the ones in the second.`}
+                  ? `ابدأ بهذا الملف الأساسي، ثم راجع قائمة ${place} الرسمية الحالية لأي متطلبات إضافية. تقدّم أنت الأدلة الشخصية ونجهّز نحن مستندات السفر.`
+                  : `Start with this core file, then check ${country}’s current official checklist for any additional requirements. You provide your personal evidence; we prepare the travel documents.`}
               </p>
             </div>
             <DocumentSplit country={country} />
@@ -150,6 +150,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
                   ? "قد تحتاج حسب ظروفك إلى بعض المستندات التالية. سنؤكد لك ما ينطبق عليك بعد مراجعة طلبك."
                   : "Depending on your circumstances, you may also need some of the following. We'll confirm which apply to you after reviewing your application."}
               </p>
+              <TravelPhoto photo="connected" arabic={arabic} className="ez-documents-photo" />
             </div>
             <ul className="flex flex-col">
               {SITUATIONAL.map((item) => (
@@ -179,7 +180,7 @@ export function DocumentRequirementsPage({ initialCountry }: DocumentRequirement
           </section>
         )}
 
-        <ContactSection />
+        {children}
       </div>
       <Footer />
       <FixedCTAButton country={country} />

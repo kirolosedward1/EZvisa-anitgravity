@@ -1,4 +1,6 @@
 {
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm run build",
   "crons": [
     { "path": "/api/cron/reconcile-payments", "schedule": "17 3 * * *" }
   ]

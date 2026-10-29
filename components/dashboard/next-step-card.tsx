@@ -1,9 +1,10 @@
+import { Globi, type GlobiPose } from "@/components/globi/globi"
 import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight, Download, Printer, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PayNowButton } from "@/components/dashboard/pay-now-button"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
-import { detailsMissing, getDocumentProgress, isPaid, REQUIRED_DOCUMENTS, type Stage } from "@/lib/application-status"
+import { customerProgress, detailsMissing, getDocumentProgress, isPaid, REQUIRED_DOCUMENTS, type Stage } from "@/lib/application-status"
 import { requestLocale } from "@/lib/request-locale"
 import { customerText, type CustomerKey } from "@/lib/translations/customer"
 import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
@@ -44,7 +45,7 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
             docs: missing.map((doc) => (arabic ? t(docLabel[doc.key]) : doc.label.toLowerCase())).join(arabic ? "، " : ", "),
           }),
           actions: (
-            <Button asChild className="rounded-full px-5">
+            <Button asChild>
               <LocaleLink href={`/track/${token}/upload?type=${missing[0]?.uploadType ?? ""}`}>
                 <Upload />
                 {t("status.upload")}
@@ -64,19 +65,34 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
           body: t("next.prepBody"),
           actions: null,
         }
-      case "ready":
+      case "ready": {
+        const progress = customerProgress(app)
+        if (progress.key === "appointment" && !progress.finished && app.id) {
+          return {
+            title: t("next.appointmentTitle"),
+            body: t("next.appointmentBody"),
+            actions: (
+              <Button asChild>
+                <LocaleLink href={`/appointment/${app.id}`}>
+                  {t("appt.add")}
+                  <ArrowRight />
+                </LocaleLink>
+              </Button>
+            ),
+          }
+        }
         return {
           title: t("next.readyTitle"),
           body: t("next.readyBody"),
           actions: (
             <>
-              <Button asChild className="rounded-full px-5">
+              <Button asChild>
                 <LocaleLink href={`/track/${token}/dossier`}>
                   <Printer />
                   {t("next.viewPrint")}
                 </LocaleLink>
               </Button>
-              <Button asChild variant="outline" className="rounded-full px-5">
+              <Button asChild variant="outline">
                 <a href={`/api/download-document?token=${token}`}>
                   <Download />
                   {t("next.download")}
@@ -85,6 +101,7 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
             </>
           ),
         }
+      }
       case "cancelled":
         return {
           title: t("next.cancelledTitle"),
@@ -96,7 +113,7 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
           title: t("next.rejectedTitle"),
           body: t("next.rejectedBody"),
           actions: (
-            <Button asChild className="rounded-full px-5">
+            <Button asChild>
               <a href={getCaseTrackingWhatsAppUrl(app.id || token, app.destination_country, arabic)} target="_blank" rel="noopener noreferrer">
                 <WhatsAppIcon className="size-4" />
                 {t("next.talk")}
@@ -114,7 +131,7 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
     content.title = t("next.finishTitle")
     content.body = t("next.finishBody")
     content.actions = (
-      <Button asChild className="rounded-full px-5">
+      <Button asChild>
         <LocaleLink href={`/continue/${app.id}`}>
           {t("next.continue")}
           <ArrowRight className="rtl:rotate-180" />
@@ -123,13 +140,19 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
     )
   }
 
+  const pose: GlobiPose = stage === "ready" ? "checklist" : stage === "payment" ? "shield" : stage === "documents" ? "documents" : "waiting"
+  const showCharacter = stage !== "cancelled" && stage !== "rejected"
   return (
-    <div id={stage === "payment" ? "pay" : undefined} className="flex flex-col gap-4 border-t border-border/70 pt-6">
+    <div id={stage === "payment" ? "pay" : undefined} className="ez-next-step">
+      {showCharacter && <Globi pose={pose} className="ez-next-globi" />}
+      <div className="ez-next-content">
+
       <div className="flex max-w-xl flex-col gap-1">
-        <h3 className="panel-title panel-title-lg text-foreground">{content.title}</h3>
+        <h3 className="text-foreground">{content.title}</h3>
         <p className="text-sm leading-relaxed text-muted-foreground">{content.body}</p>
       </div>
-      {content.actions && <div className="flex flex-wrap items-center gap-2">{content.actions}</div>}
+      {content.actions && <div className="mt-4 flex flex-wrap items-center gap-2">{content.actions}</div>}
+      </div>
     </div>
   )
 }

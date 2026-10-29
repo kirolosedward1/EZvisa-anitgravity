@@ -1,3 +1,4 @@
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { LangText } from "@/components/lang-text"
 import { LegalMarkdown } from "@/components/legal/markdown"
 import { LEGAL_MD } from "@/lib/legal/content.generated"
@@ -29,11 +30,11 @@ export function CompanyFooterBlock() {
       <LangText
         en={<>
           <span className="block"><span className="font-medium text-[#0A0F1F]/80">EZvisa</span> is a trade name of {c.COMPANY_LEGAL_NAME}, a private company registered in the United Arab Emirates. Trade Licence No. {c.TRADE_LICENCE_NO}, issued by {c.ISSUING_AUTHORITY}. Registered address: {c.REGISTERED_ADDRESS}</span>
-          <span className="block">Email: {c.EMAIL} · WhatsApp/Phone: <a href={c.WHATSAPP_URL} dir="ltr" className="underline">{c.PHONE_DISPLAY}</a> · Support hours: {c.SUPPORT_HOURS_EN}</span>
+          <span className="block">Email: {c.EMAIL} · <WhatsAppIcon className="inline-block size-4 align-text-bottom" /> WhatsApp/Phone: <a href={c.WHATSAPP_URL} dir="ltr" className="underline">{c.PHONE_DISPLAY}</a></span>
         </>}
         ar={<>
           <span className="block"><span className="font-medium text-[#0A0F1F]/80">إيزي فيزا</span> اسم تجاري لـ {c.COMPANY_LEGAL_NAME}، شركة خاصة مسجّلة في دولة الإمارات العربية المتحدة. رخصة تجارية رقم {c.TRADE_LICENCE_NO}، صادرة عن {c.ISSUING_AUTHORITY}. العنوان المسجّل: {c.REGISTERED_ADDRESS}</span>
-          <span className="block">البريد الإلكتروني: {c.EMAIL} · واتساب/هاتف: <a href={whatsAppUrl(undefined, true)} dir="ltr" className="underline">{c.PHONE_DISPLAY}</a> · ساعات الدعم: {c.SUPPORT_HOURS_AR}</span>
+          <span className="block">البريد الإلكتروني: {c.EMAIL} · <WhatsAppIcon className="inline-block size-4 align-text-bottom" /> واتساب/هاتف: <a href={whatsAppUrl(undefined, true)} dir="ltr" className="underline">{c.PHONE_DISPLAY}</a></span>
         </>}
       />
     </div>

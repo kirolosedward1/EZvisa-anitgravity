@@ -25,14 +25,31 @@ export const PRICES = {
 export type DisplayLocale = "en" | "ar"
 
 /**
+ * Counted noun after an AED amount. Last two digits 11–99 (249, 498) take
+ * accusative singular درهمًا. Every other amount stays درهم.
+ */
+export function dirhamNoun(amount: number): "درهم" | "درهمًا" {
+  if (!Number.isFinite(amount)) return "درهم"
+  const lastTwo = Math.abs(Math.trunc(amount)) % 100
+  return lastTwo >= 11 && lastTwo <= 99 ? "درهمًا" : "درهم"
+}
+
+function dirhamNounForDigits(digits: string): "درهم" | "درهمًا" {
+  return dirhamNoun(Number(digits.replace(/,/g, "")))
+}
+
+/**
  * The one price label for marketing blocks.
  * English keeps the code after the amount (`249 AED`, `1000+ AED`).
- * Arabic uses درهم and puts the plus on the left of the digits (`249 درهم`, `+1000 درهم`),
+ * Arabic puts the plus on the left of the digits (`249 درهمًا`, `+1000 درهم`),
  * which is the order the bidi algorithm keeps when the number is an LTR run.
  */
 export function formatAedLabel(amount: number, locale: DisplayLocale, plus = false): string {
   const digits = String(amount)
-  if (locale === "ar") return plus ? `+${digits} درهم` : `${digits} درهم`
+  if (locale === "ar") {
+    const noun = dirhamNoun(amount)
+    return plus ? `+${digits} ${noun}` : `${digits} ${noun}`
+  }
   return plus ? `${digits}+ AED` : `${digits} AED`
 }
 
@@ -40,8 +57,8 @@ export function formatAedLabel(amount: number, locale: DisplayLocale, plus = fal
 export function localizePriceText(text: string, locale: DisplayLocale): string {
   if (locale !== "ar") return text
   return text
-    .replace(/(\d[\d,]*)\+\s*AED/g, (_, digits: string) => `+${digits.replace(/,/g, "")} درهم`)
-    .replace(/(\d[\d,]*)\s*AED/g, (_, digits: string) => `${digits} درهم`)
+    .replace(/(\d[\d,]*)\+\s*AED/g, (_, digits: string) => `+${digits.replace(/,/g, "")} ${dirhamNounForDigits(digits)}`)
+    .replace(/(\d[\d,]*)\s*AED/g, (_, digits: string) => `${digits} ${dirhamNounForDigits(digits)}`)
 }
 
 export function formatPrice(amountAED: number, currency: Currency, locale: DisplayLocale = "en"): string {

@@ -1,3 +1,4 @@
+import { InnerHero } from "@/components/inner-hero"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -9,13 +10,13 @@ export function generateMetadata(): Promise<Metadata> {
   return withArabicMeta(
     {
       title: "Schengen Visa Bank Balance Calculator",
-      description: "Calculate the exact minimum bank balance required for your Schengen visa application from Dubai & Abu Dhabi. Country-specific consular requirements in AED.",
+      description: "Estimate travel funds for a Schengen trip from the UAE, with indicative AED conversions and country guidance.",
       alternates: {
         canonical: "https://www.ezvisa.net/tools/bank-balance-calculator",
       },
       openGraph: {
         title: "Schengen Visa Bank Balance Calculator | EZvisa",
-        description: "Check official daily subsistence rates and required bank closing balances in AED for Spain, France, Italy, Germany, and Switzerland.",
+        description: "Plan your trip budget with reference amounts and indicative AED conversions.",
         url: "https://www.ezvisa.net/tools/bank-balance-calculator",
         type: "website",
       },
@@ -39,7 +40,7 @@ export default async function BankBalanceCalculatorPage() {
     operatingSystem: "All",
     description: arabic
       ? "احسب الحد الأدنى للرصيد البنكي الذي تطلبه السفارات الأوروبية من المقيمين في الإمارات."
-      : "Calculate statutory minimum bank balances required by European embassies for UAE residents.",
+      : "Estimate travel funds using destination guidance and planning assumptions.",
     offers: {
       "@type": "Offer",
       price: "0",
@@ -52,24 +53,9 @@ export default async function BankBalanceCalculatorPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteHeader forceBackground={true} />
 
-      <main className="flex-1 py-12 md:py-16">
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-2 block">
-              {arabic ? "حاسبة الملاءة المالية" : "Financial Readiness Utility"}
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight">
-              {arabic ? "حاسبة الرصيد البنكي لتأشيرة شنغن" : "Schengen Visa Bank Balance Calculator"}
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">
-              {arabic
-                ? "اعرف الرصيد الختامي الذي يحتاج كشف حسابك في الإمارات إلى إظهاره، وفق المعدل اليومي المعتمد لكل دولة."
-                : "Find out the exact closing balance your UAE bank statement needs to show for your European visa application, tailored to each country's legal daily subsistence requirements."}
-            </p>
-          </div>
-
-          <BankBalanceCalculatorClient />
-        </div>
+      <main className="ez-tool-page flex-1">
+        <InnerHero variant="plain" title={arabic ? "قدّر ميزانية رحلتك" : "Estimate your travel funds"} description={arabic ? "قدّر مصاريف رحلتك بالدرهم. الأرقام إرشادية، وأسعار الصرف تقريبية، وتختلف الأدلة المالية المطلوبة حسب حالتك." : "Plan your travel funds in AED. Figures are a guide, exchange rates are indicative, and the financial evidence required depends on your circumstances."} />
+        <div className="container max-w-5xl mx-auto px-6"><BankBalanceCalculatorClient /></div>
       </main>
 
       <Footer />

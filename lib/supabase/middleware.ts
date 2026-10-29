@@ -3,6 +3,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 import { supabaseServerEnv } from "@/lib/supabase/server"
+import { hasAdultConfirmation, profileCompletionPath } from "@/lib/auth/account-details"
 
 /**
  * Refreshes the Supabase session cookies. Server Components cannot write cookies, so without this a refreshed
@@ -33,12 +34,14 @@ export async function updateSession(
     },
   })
 
+  let completion: string | null = null
   try {
-    await supabase.auth.getUser()
+    const { data } = await supabase.auth.getUser()
+    if (data.user && !hasAdultConfirmation(data.user)) completion = profileCompletionPath(request.nextUrl.pathname + request.nextUrl.search)
   } catch {
     // Network trouble: serve the page; it handles a missing user.
   }
-  const response = makeResponse(request)
+  const response = completion ? NextResponse.redirect(new URL(completion, request.url)) : makeResponse(request)
   refreshed.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
   return response
 }

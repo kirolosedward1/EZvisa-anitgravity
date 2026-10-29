@@ -1,18 +1,16 @@
 "use client"
-
 import { useEffect, useRef, useState, type ReactNode } from "react"
-import { Image } from "@/components/image"
-import { LocaleLink } from "@/components/locale-link"
-import { motion, useReducedMotion, useScroll, useSpring } from "framer-motion"
-import { ArrowRight, Check, ChevronDown, Lock, Plane } from "lucide-react"
+import { useReducedMotion } from "framer-motion"
+import { ArrowRight, Check, ChevronDown, LockKeyhole, Plane } from "lucide-react"
 import { CountryFlag } from "@/components/country-flag"
-import { LangText } from "@/components/lang-text"
+import Image from "next/image"
 import { PaymentMarks } from "@/components/payment-marks"
+import { LocaleLink } from "@/components/locale-link"
+import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { formatAedLabel, type DisplayLocale } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
-import { cn } from "@/lib/utils"
 
 function stepsFor(locale: DisplayLocale): { number: string; title: string; description: ReactNode }[] {
   const price = formatAedLabel(PRICE_AED, locale)
@@ -33,7 +31,7 @@ function stepsFor(locale: DisplayLocale): { number: string; title: string; descr
         title: "نجهّز ملفك",
         description: (
           <>
-            يملأ مختص التأشيرات نموذج الطلب ويعدّ خطاب التغطية وبرنامج الرحلة يومًا بيوم وحجوزات الطيران والفندق خلال <bdi dir="ltr">1–2</bdi> يوم.
+            يملأ مختص التأشيرات نموذج الطلب ويعدّ خطاب التغطية وبرنامج الرحلة يومًا بيوم وحجوزات الطيران والفندق خلال <bdi dir="ltr">1–2</bdi> يوم من استلام بياناتك ومستنداتك كاملة.
           </>
         ),
       },
@@ -58,7 +56,7 @@ function stepsFor(locale: DisplayLocale): { number: string; title: string; descr
     {
       number: "3",
       title: "We prepare your file",
-      description: "A visa specialist fills in your application form and prepares your cover letter, day-by-day itinerary, and flight and hotel reservations within 1–2 days.",
+      description: "A visa specialist fills in your application form and prepares your cover letter, day-by-day itinerary, and flight and hotel reservations within 1–2 days of receiving your complete details and documents.",
     },
     {
       number: "4",
@@ -68,226 +66,139 @@ function stepsFor(locale: DisplayLocale): { number: string; title: string; descr
   ]
 }
 
-/* ---- One small illustration per step, built from the product's own parts ---- */
-
-function Picker({ label, iso, value }: { label: string; iso: string; value: string }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
-      <span className="flex h-12 items-center gap-3 rounded-xl border border-border bg-background px-3.5 text-sm font-medium text-foreground shadow-xs">
-        <CountryFlag iso={iso} className="size-5" />
-        <bdi>{value}</bdi>
-        <ChevronDown className="ms-auto size-4 text-muted-foreground" aria-hidden="true" />
-      </span>
-    </div>
-  )
-}
-
-function PlansVisual() {
-  return (
-    <div className="w-[78%] rounded-2xl border border-border/70 bg-card p-5 shadow-xl">
-      <p className="text-base font-semibold text-foreground">
-        <LangText en="Where are you going?" ar="إلى أين تسافر؟" />
-      </p>
-      <div className="mt-4 flex flex-col gap-3">
-        <Picker label={useSiteLocale() === "ar" ? "جنسيتك" : "Your nationality"} iso="EG" value={useSiteLocale() === "ar" ? "مصر" : "Egypt"} />
-        <Picker label={useSiteLocale() === "ar" ? "دولة الوجهة" : "Destination country"} iso="FR" value={useSiteLocale() === "ar" ? "فرنسا" : "France"} />
-      </div>
-      <span className="mt-5 flex h-11 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-        <LangText en="Continue" ar="متابعة" />
-      </span>
-    </div>
-  )
-}
-
-function PayVisual() {
+export function HowItWorksSimple({ standalone = false }: { standalone?: boolean } = {}) {
   const locale = useSiteLocale()
-  const price = formatAedLabel(PRICE_AED, locale)
-  return (
-    <div className="w-[78%] rounded-2xl border border-border/70 bg-card p-5 shadow-xl">
-      <div className="flex items-center gap-3">
-        <CountryFlag iso="FR" className="size-8" />
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-foreground">
-            <LangText en="France · Schengen visa" ar="فرنسا · تأشيرة شنغن" />
-          </span>
-          <span className="text-xs text-muted-foreground">
-            <LangText en="1 applicant" ar="مسافر واحد" />
-          </span>
-        </div>
-      </div>
-      <dl className="mt-5 flex flex-col gap-2 border-y border-border py-4 text-sm">
-        <div className="flex justify-between"><dt className="text-muted-foreground"><LangText en="Service fee" ar="رسوم الخدمة" /></dt><dd dir="ltr" className="tabular-nums text-foreground">{price}</dd></div>
-        <div className="flex justify-between"><dt className="text-muted-foreground"><LangText en="Embassy fee" ar="رسوم السفارة" /></dt><dd className="text-muted-foreground"><LangText en="At your appointment" ar="عند موعدك" /></dd></div>
-        <div className="flex justify-between pt-1 text-base font-semibold"><dt className="text-foreground"><LangText en="Total" ar="المجموع" /></dt><dd dir="ltr" className="tabular-nums text-foreground">{price}</dd></div>
-      </dl>
-      <span className="mt-4 flex h-11 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
-        <Lock className="size-4" aria-hidden="true" />
-        <LangText en={`Pay ${price}`} ar={`ادفع ${price}`} />
-      </span>
-      <div className="mt-4 scale-90">
-        <PaymentMarks />
-      </div>
-    </div>
-  )
-}
-
-function FileVisual() {
-  const sheets = [
-    { src: "/images/documents/itinerary.png", className: "-translate-x-[30%] -rotate-[6deg]" },
-    { src: "/images/documents/flight-reservation.png", className: "translate-x-[30%] rotate-[6deg]" },
-    { src: "/images/documents/cover-letter.png", className: "-translate-y-1" },
-  ]
-  return (
-    <div className="relative h-[62%] aspect-[1/1.38]">
-      {sheets.map((sheet) => (
-        <div key={sheet.src} className={cn("absolute inset-0 overflow-hidden rounded-lg bg-background shadow-xl ring-1 ring-border/70", sheet.className)}>
-          <Image src={sheet.src} alt="" fill sizes="260px" className="object-cover object-top" />
-        </div>
-      ))}
-      <span className="absolute -bottom-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-background px-3 py-1.5 text-xs font-medium text-foreground shadow-md ring-1 ring-border/70">
-        <Check className="size-3.5 text-success" strokeWidth={3} aria-hidden="true" />
-        <LangText en="Checked by a visa expert" ar="راجعه خبير تأشيرات" />
-      </span>
-    </div>
-  )
-}
-
-function TravelVisual() {
-  return (
-    <div className="absolute inset-0">
-      <Image src="/images/countries/france.jpg" alt="" fill sizes="(max-width: 1024px) 100vw, 480px" className="object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1F]/60 via-transparent to-transparent" />
-      <div className="absolute inset-x-6 bottom-6 flex items-center gap-4 rounded-2xl bg-card p-4 shadow-xl">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
-          <Check className="size-5" strokeWidth={3} aria-hidden="true" />
-        </span>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-sm font-semibold text-foreground"><LangText en="Your visa file is ready" ar="ملف تأشيرتك جاهز" /></span>
-          <span className="truncate text-xs text-muted-foreground"><LangText en="France · appointment-day guide included" ar="فرنسا · دليل يوم الموعد مشمول" /></span>
-        </div>
-        <Plane className="size-5 shrink-0 text-primary" aria-hidden="true" />
-      </div>
-    </div>
-  )
-}
-
-const VISUALS = [PlansVisual, PayVisual, FileVisual, TravelVisual]
-
-/** `standalone`: on the How it works page itself, so the section drops its pill and its link to that page. */
-export function HowItWorksSimple({ standalone = false }: { standalone?: boolean }) {
+  const arabic = locale === "ar"
   const [active, setActive] = useState(0)
-  const steps = stepsFor(useSiteLocale())
-  const items = useRef<(HTMLLIElement | null)[]>([])
-  const reduced = useReducedMotion()
+  const reducedMotion = useReducedMotion()
+  const stepRefs = useRef<(HTMLLIElement | null)[]>([])
 
-  // The step crossing the middle of the screen is the active one.
+  const previewRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
+  const scrollSelection = useRef<{ top: number; until: number } | null>(null)
+
+  const previewCentre = () => {
+    const top = stageRef.current ? parseFloat(getComputedStyle(stageRef.current).top) : 96
+    return top + (previewRef.current?.clientHeight ?? 480) / 2
+  }
+
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActive(Number((entry.target as HTMLElement).dataset.index))
-        }
-      },
-      { rootMargin: "-45% 0px -45% 0px" },
-    )
-    items.current.forEach((el) => el && observer.observe(el))
-    return () => observer.disconnect()
+    const desktop = window.matchMedia("(min-width: 768px)")
+    let frame = 0
+    const sync = () => {
+      frame = 0
+      if (!desktop.matches) return
+      // Keep a clicked step selected until its smooth scroll arrives. Otherwise
+      // intermediate scroll events would briefly undo the visitor's selection.
+      const selection = scrollSelection.current
+      if (selection) {
+        if (Math.abs(window.scrollY - selection.top) < 2) scrollSelection.current = null
+        else if (performance.now() < selection.until) return
+        else scrollSelection.current = null
+      }
+      const target = previewCentre()
+      const distances = stepRefs.current.map(step => {
+        if (!step) return Infinity
+        const rect = step.getBoundingClientRect()
+        return Math.abs(rect.top + rect.height / 2 - target)
+      })
+      const nearest = distances.indexOf(Math.min(...distances))
+      // A small dead zone prevents trackpad bounce at a step boundary from
+      // repeatedly swapping the same two illustrations.
+      setActive(current => distances[nearest] + 28 < distances[current] ? nearest : current)
+    }
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(sync) }
+    const interrupt = () => { scrollSelection.current = null; schedule() }
+    const onKey = (event: KeyboardEvent) => {
+      if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) interrupt()
+    }
+    schedule()
+    window.addEventListener("scroll", schedule, { passive: true })
+    window.addEventListener("resize", interrupt)
+    window.addEventListener("wheel", interrupt, { passive: true })
+    window.addEventListener("touchstart", interrupt, { passive: true })
+    window.addEventListener("keydown", onKey)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener("scroll", schedule)
+      window.removeEventListener("resize", interrupt)
+      window.removeEventListener("wheel", interrupt)
+      window.removeEventListener("touchstart", interrupt)
+      window.removeEventListener("keydown", onKey)
+    }
   }, [])
 
-  // Fills the line beside the step numbers as the list scrolls past the middle of the screen.
-  const listRef = useRef<HTMLOListElement>(null)
-  const { scrollYProgress } = useScroll({ target: listRef, offset: ["start center", "end center"] })
-  const fill = useSpring(scrollYProgress, { stiffness: 60, damping: 24, mass: 0.6 })
+  const selectStep = (index: number) => {
+    setActive(index)
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      const rect = stepRefs.current[index]?.getBoundingClientRect()
+      if (rect) {
+        const top = Math.max(0, Math.min(
+          document.documentElement.scrollHeight - window.innerHeight,
+          window.scrollY + rect.top + rect.height / 2 - previewCentre(),
+        ))
+        scrollSelection.current = { top, until: performance.now() + 1800 }
+        window.scrollTo({ top, behavior: reducedMotion ? "instant" : "smooth" })
+      }
+    }
+  }
+  const steps = stepsFor(locale)
+  const t = (en: string, ar: string) => arabic ? ar : en
+  const price = formatAedLabel(PRICE_AED, locale)
 
   return (
-    <section id="how-it-works" className="bg-background py-20 md:py-28">
-      <div className="container mx-auto flex max-w-6xl flex-col gap-10 px-4 sm:px-6 lg:gap-6">
-        <div className="flex flex-col items-start gap-5">
-          {!standalone && <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><LangText en="How it works" ar="كيف تعمل" /></span>}
-          <h2 className="max-w-2xl text-balance text-foreground"><LangText en="Four steps to your visa appointment" ar="أربع خطوات حتى موعد التأشيرة" /></h2>
-          {!standalone && <LocaleLink
-            href="/how-it-works"
-            className="group inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
-          >
-            <LangText en="See full process" ar="اعرض الخطوات كاملة" />
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-          </LocaleLink>}
-        </div>
-
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-20">
-        {/* Desktop: the illustration for the step in view. Its column is as tall as the list, so it stays pinned
-            in the middle of the screen through all four steps. */}
-        <div aria-hidden="true" className="hidden lg:block">
-          <div className="sticky top-[calc(50vh-15rem)] flex aspect-square max-h-[30rem] w-full items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-secondary">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_45%,color-mix(in_oklch,var(--primary)_12%,transparent),transparent)]" />
-            {VISUALS.map((Visual, index) => {
-              const offset = index - active
-              return (
-                <motion.div
-                  key={index}
-                  initial={false}
-                  animate={{
-                    opacity: offset === 0 ? 1 : 0,
-                    y: reduced || offset === 0 ? 0 : offset > 0 ? 32 : -32,
-                    scale: reduced || offset === 0 ? 1 : 0.97,
-                  }}
-                  // The old picture fades out first, the new one settles in after it: unhurried, never two at once.
-                  transition={offset === 0 ? { duration: 0.8, delay: 0.25, ease: [0.22, 1, 0.36, 1] } : { duration: 0.4, ease: [0.4, 0, 1, 1] }}
-                  className="absolute inset-0 flex items-center justify-center"
-                  style={{ pointerEvents: "none", zIndex: offset === 0 ? 1 : 0 }}
-                >
-                  <Visual />
-                </motion.div>
-              )
-            })}
-            <div className="absolute left-5 top-5 z-10 flex gap-1.5">
-              {steps.map((step, index) => (
-                <span key={step.number} className={cn("h-1 rounded-full transition-all duration-700 ease-out", index === active ? "w-6 bg-primary" : "w-2 bg-border")} />
-              ))}
-            </div>
+    <section id="how-it-works" className={`ez-walkthrough${standalone ? " ez-walkthrough-standalone" : ""}`} aria-labelledby="walkthrough-title">
+      <div data-site-reveal="rise" className="ez-walkthrough-heading">
+        <h2 id="walkthrough-title">{t("Four steps to your", "أربع خطوات إلى")}<br /><em>{t("visa appointment.", "موعد تأشيرتك.")}</em></h2>
+        <LocaleLink className="ez-destination-link" href="/how-it-works">{t("See the full process", "اطّلع على الخطوات كاملة")}<ArrowRight size={18} className="rtl:rotate-180" /></LocaleLink>
+      </div>
+      <div className="ez-walkthrough-layout">
+        <div className="ez-walkthrough-stage" ref={stageRef}>
+          <div className="ez-walkthrough-mobile-choices" aria-label={t("Preview each step", "عاين كل خطوة")}>{[["Plans", "الخطط"], ["Payment", "الدفع"], ["Your file", "ملفك"], ["Appointment", "الموعد"]].map(([en, ar], index) => <button key={en} type="button" aria-pressed={active === index} aria-controls="walkthrough-preview" onClick={() => selectStep(index)}><span>{index + 1}</span>{t(en, ar)}</button>)}</div>
+          <div ref={previewRef} id="walkthrough-preview" className="ez-walkthrough-preview" role="img" aria-label={t(`Step ${active + 1}: ${steps[active].title}. Illustrative application preview.`, `الخطوة ${active + 1}: ${steps[active].title}. معاينة توضيحية للطلب.`)} data-step={active}>
+            <div className="ez-walkthrough-progress" aria-hidden="true">{steps.map((step, index) => <span key={step.number} data-complete={index <= active} />)}</div>
+            {[0, 1, 2, 3].map(scene => (
+              <div className="ez-walkthrough-scene" key={scene} aria-hidden="true" data-visible={active === scene}>
+                {scene === 0 && <div className="ez-walkthrough-paper">
+                  <h3>{t("Where are you going?", "إلى أين تسافر؟")}</h3>
+                  <div className="ez-walkthrough-field"><span>{t("Passport nationality", "جنسية جواز السفر")}</span><div><CountryFlag iso="EG" /><strong>{t("Egypt", "مصر")}</strong><ChevronDown size={16} /></div></div>
+                  <div className="ez-walkthrough-field"><span>{t("Destination country", "بلد الوجهة")}</span><div><CountryFlag iso="FR" /><strong>{t("France", "فرنسا")}</strong><ChevronDown size={16} /></div></div>
+                  <div className="ez-walkthrough-demo-button">{t("Continue", "متابعة")}<ArrowRight size={17} className="rtl:rotate-180" /></div>
+                </div>}
+                {scene === 1 && <div className="ez-walkthrough-paper">
+                  <div className="ez-walkthrough-trip"><CountryFlag iso="FR" /><div><strong>{t("France · Schengen visa", "فرنسا · تأشيرة شنغن")}</strong><small>{t("1 applicant", "متقدم واحد")}</small></div></div>
+                  <dl className="ez-walkthrough-receipt">
+                    <div><dt>{t("Service fee", "رسوم الخدمة")}</dt><dd>{price}</dd></div>
+                    <div><dt>{t("Embassy fee", "رسوم السفارة")}</dt><dd>{t("At your appointment", "في موعدك")}</dd></div>
+                    <div><dt>{t("Total", "الإجمالي")}</dt><dd>{price}</dd></div>
+                  </dl>
+                  <div className="ez-walkthrough-demo-button"><LockKeyhole size={16} />{t(`Pay ${price}`, `ادفع ${price}`)}</div>
+                  <div className="ez-walkthrough-payment-logos"><PaymentMarks /></div>
+                </div>}
+                {scene === 2 && <div className="ez-walkthrough-file-scene">
+                  <div className="ez-walkthrough-file-stack">
+                    {[["itinerary", "Travel itinerary", "برنامج الرحلة"], ["application-form", "Application form", "نموذج الطلب"], ["cover-letter", "Cover letter", "خطاب التغطية"]].map(([file, en, ar]) => <div key={file} className={`ez-walkthrough-sheet ez-walkthrough-sheet-${file}`}><span>{t(en, ar)}</span><Image src={`/images/documents/${file}.png`} alt="" loading="eager" width={420} height={594} sizes="230px" /></div>)}
+                  </div>
+                  <div className="ez-walkthrough-checked"><Check size={17} />{t("Checked by a visa specialist", "راجعه مختص تأشيرات")}</div>
+                </div>}
+                {scene === 3 && <div className="ez-walkthrough-ready">
+                  <Image src="/images/countries/france.jpg" alt="" loading="eager" fill sizes="(max-width: 767px) 100vw, 560px" />
+                  <div className="ez-walkthrough-ready-message"><span className="ez-walkthrough-ready-check"><Check size={22} /></span><div><strong>{t("Your visa file is ready", "ملف تأشيرتك جاهز")}</strong><small>{t("France · Appointment-day guide included", "فرنسا · يتضمن دليل يوم الموعد")}</small></div><Plane size={21} /></div>
+                </div>}
+              </div>
+            ))}
           </div>
+          <p className="ez-walkthrough-caption">{t("An example journey, from your first answer to your prepared file.", "مثال لرحلتك، من أول إجابة حتى تجهيز ملفك.")}</p>
         </div>
-
-        <ol ref={listRef} className="relative flex flex-col">
-          {/* Track and fill, centred on the 40px number circles */}
-          <span aria-hidden="true" className="absolute bottom-12 start-5 top-12 w-px -translate-x-1/2 bg-border rtl:translate-x-1/2 lg:bottom-[30vh] lg:top-[30vh]" />
-          <motion.span
-            aria-hidden="true"
-            className="absolute bottom-12 start-5 top-12 w-px origin-top -translate-x-1/2 bg-primary rtl:translate-x-1/2 lg:bottom-[30vh] lg:top-[30vh]"
-            style={{ scaleY: reduced ? scrollYProgress : fill }}
-          />
-          {steps.map((step, index) => {
-            const isActive = index === active
-            return (
-              <li
-                key={step.number}
-                ref={(el) => {
-                  items.current[index] = el
-                }}
-                data-index={index}
-                className="relative grid grid-cols-[auto_minmax(0,1fr)] gap-5 py-8 sm:gap-8 lg:min-h-[60vh] lg:content-center lg:py-0"
-              >
-                <span
-                  className={cn(
-                    "relative z-10 flex size-10 items-center justify-center rounded-full border text-sm font-semibold tabular-nums transition-[background-color,border-color,color,box-shadow] duration-700",
-                    isActive
-                      ? "border-primary bg-primary text-primary-foreground shadow-[0_0_0_6px_color-mix(in_oklch,var(--primary)_14%,transparent)]"
-                      : index < active
-                        ? "border-primary bg-background text-primary"
-                        : "border-border bg-background text-foreground",
-                  )}
-                >
-                  {step.number}
-                </span>
-                <div className="flex flex-col gap-2 pt-1.5">
-                  <h3 className={cn("text-foreground transition-opacity duration-700", isActive ? "opacity-100" : "opacity-60 lg:opacity-45")}>{step.title}</h3>
-                  <p className="max-w-lg text-base leading-relaxed text-muted-foreground">{step.description}</p>
-                </div>
-              </li>
-            )
-          })}
-        </ol>
+        <div className="ez-walkthrough-steps">
+          <ol>{steps.map((step, index) => <li key={step.number} ref={(node) => { stepRefs.current[index] = node }} data-active={active === index} data-complete={index < active}>
+            <button type="button" aria-pressed={active === index} aria-controls="walkthrough-preview" onClick={() => selectStep(index)}>
+              <span className="ez-walkthrough-number" aria-hidden="true">{step.number}</span>
+              <span><span className="ez-walkthrough-step-title">{step.title}</span><span className="ez-walkthrough-step-copy">{step.description}</span></span>
+            </button>
+          </li>)}</ol>
+          <LocaleLink href="/apply" className="ez-walkthrough-cta"><LangText en="Start your application" ar="ابدأ طلبك" /><ArrowRight size={19} className="rtl:rotate-180" /></LocaleLink>
+          <p className="ez-walkthrough-note">{t("Document preparation, with a specialist by your side. Appointment booking and the visa decision remain separate.", "تجهيز مستنداتك بمساعدة مختص. حجز الموعد وقرار التأشيرة منفصلان عن خدمتنا.")}</p>
         </div>
       </div>
     </section>

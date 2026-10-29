@@ -7,7 +7,7 @@ import { countryNameAr } from "@/lib/countries"
 
 const YOU_AR: Record<string, { title: string; note: string }> = {
   passportCopy: { title: "صفحة بيانات الجواز", note: "نسخة ملونة واضحة" },
-  residencyCopy: { title: "تأشيرة الإقامة في الإمارات / الهوية الإماراتية", note: "سارية 3 أشهر على الأقل بعد العودة" },
+  residencyCopy: { title: "تأشيرة الإقامة في الإمارات / الهوية الإماراتية", note: "تحقق من مدة صلاحية الإقامة المطلوبة لوجهتك" },
   photo: { title: "صورة شخصية", note: "خلفية بيضاء" },
   bankStatement: { title: "كشف حساب بنكي", note: "آخر 3 إلى 6 أشهر، مختوم" },
   nocCertificate: { title: "شهادة راتب أو عدم ممانعة", note: "من صاحب العمل، إذا كنت موظفًا" },
@@ -38,7 +38,7 @@ export function DocumentSplit({ country }: { country?: string }) {
         r.document_type === "nocCertificate"
           ? "From your employer, if you're employed"
           : r.document_type === "residencyCopy"
-            ? "Valid for at least 3 months after you return"
+            ? "Check the destination’s residence-validity requirement"
             : r.description
       const title = r.document_type === "nocCertificate" ? "Salary certificate or NOC" : r.title
       const ar = YOU_AR[r.document_type]
@@ -60,7 +60,7 @@ export function DocumentSplit({ country }: { country?: string }) {
   const countryAr = country ? countryNameAr(country) : ""
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <div className="ez-document-split grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div className="flex flex-col gap-5 rounded-3xl border border-border/70 bg-card p-6 sm:p-8">
         <div className="flex flex-col gap-1">
           <h2 className="panel-title panel-title-lg text-foreground">{arabic ? "ما تحضره" : "You provide"}</h2>
@@ -72,7 +72,7 @@ export function DocumentSplit({ country }: { country?: string }) {
           {youProvide.map((item) => (
             <li key={item.title} className="flex items-center gap-3.5 border-t border-border/70 py-3.5 first:border-0 first:pt-0 last:pb-0">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-foreground">
-                <item.icon className="size-4" aria-hidden="true" />
+                <item.icon className="size-7" strokeWidth={1.65} aria-hidden="true" />
               </span>
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">{item.title}</span>
@@ -89,10 +89,10 @@ export function DocumentSplit({ country }: { country?: string }) {
           <p className="text-sm text-muted-foreground">
             {arabic ? (
               <>
-                مشمول في الرسم{countryAr ? ` لطلب ${countryAr}` : ""}. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم.
+                مشمول في الرسم{countryAr ? ` لطلب ${countryAr}` : ""}. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم بعد اكتمال البيانات والمستندات.
               </>
             ) : (
-              <>Included in the fee{country ? ` for your ${country} application` : ""}. Ready in 1–2 days.</>
+              <>Included in the fee{country ? ` for your ${country} application` : ""}. Prepared in 1–2 days after complete details and uploads.</>
             )}
           </p>
         </div>
@@ -100,7 +100,7 @@ export function DocumentSplit({ country }: { country?: string }) {
           {WE_PREPARE.map((item) => (
             <li key={item.title} className="flex items-center gap-3.5 border-t border-primary/10 py-3.5 first:border-0 first:pt-0 last:pb-0">
               <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <item.icon className="size-4" aria-hidden="true" />
+                <item.icon className="size-7" strokeWidth={1.65} aria-hidden="true" />
               </span>
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">{arabic ? item.titleAr : item.title}</span>

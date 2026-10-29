@@ -5,6 +5,7 @@ import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashb
 import { CopyButton } from "@/components/dashboard/copy-button"
 import { StatusBadge } from "@/components/dashboard/status-badge"
 import { DirhamAmount } from "@/components/aed-amount"
+import { VisaCentrePlace } from "@/components/visa-centre-place"
 import { getReference, isPaid, type Stage } from "@/lib/application-status"
 import { ArabicDate } from "@/components/arabic-date"
 import { PRICE_AED, referenceOf } from "@/lib/shared/wizard-contract"
@@ -86,6 +87,13 @@ export function CaseSummary({
           </dd>
         </div>
       </dl>
+
+      {app.appointment_centre || app.appointment_address ? (
+        <div className="border-t border-border/60 px-6 py-4">
+          <p className="mb-1 text-sm text-muted-foreground">{customerText(locale, "appt.centre")}</p>
+          <VisaCentrePlace centre={app.appointment_centre} address={app.appointment_address} locale={locale} />
+        </div>
+      ) : null}
 
       {allowDiscard && app.id && isDiscardable(app) && <DiscardButton applicationId={app.id} />}
 

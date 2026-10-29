@@ -1,5 +1,6 @@
 import { Image } from "@/components/image"
 import { LocaleLink } from "@/components/locale-link"
+import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
 import { PreparationLine, ReadyLine } from "@/components/ready-line"
 import { CountryFlag } from "@/components/country-flag"
@@ -29,13 +30,12 @@ export function ExploreCountries() {
               <PreparationLine />
             </p>
           </div>
-          <LocaleLink
-            href="/destinations"
-            className="group inline-flex shrink-0 items-center gap-2 self-start rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:self-auto"
-          >
-            <LangText en="View all countries" ar="عرض كل الدول" />
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
-          </LocaleLink>
+          <Button asChild className="shrink-0 self-start md:self-auto">
+            <LocaleLink href="/destinations">
+              <span><LangText en="View all countries" ar="عرض كل الدول" /></span>
+              <ArrowRight aria-hidden="true" />
+            </LocaleLink>
+          </Button>
         </div>
 
         <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">

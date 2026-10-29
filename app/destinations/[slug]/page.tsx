@@ -7,15 +7,16 @@ import { InnerHero } from "@/components/inner-hero"
 import { CountryFacts } from "@/components/documents/country-facts"
 import { DocumentSplit } from "@/components/documents/document-split"
 import { AfterPaymentTimeline } from "@/components/after-payment-timeline"
-import { ContactSection } from "@/components/contact-section"
-import { getProviderForDestination } from "@/lib/visa-rules"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { countryNameAr } from "@/lib/countries"
 import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { requestLocale } from "@/lib/request-locale"
+import { Button } from "@/components/ui/button"
+import { DigitRanges } from "@/components/digit-ranges"
 import { ArrowRight } from "lucide-react"
 import { LocaleLink } from "@/components/locale-link"
+import { message } from "@/messages"
 import { notFound } from "next/navigation"
 import type { Metadata } from "next"
 
@@ -90,8 +91,6 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
   const arabic = (await requestLocale()) === "ar"
   const name = destination.name
   const nameAr = countryNameAr(name)
-  const centre = getProviderForDestination(slug).replace(/ Center$/, "")
-  const centreAr = ltr(centre)
   const price = formatAedLabel(PRICE_AED, arabic ? "ar" : "en")
   const applyHref = `/apply?to=${encodeURIComponent(name)}`
   const place = arabic ? nameAr : name
@@ -100,15 +99,15 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
     ? [
         {
           question: `هل أحتاج إلى تأشيرة لـ${place} إذا كنت أعيش في الإمارات؟`,
-          answer: `الأمر يعتمد على جوازك لا على إقامتك. يحتاج حاملو الجوازات الهندية والباكستانية والمصرية والأردنية والفلبينية وكثير من الجوازات الأخرى إلى تأشيرة شنغن لـ${place}، حتى مع إقامة إماراتية أو إقامة ذهبية. مواطنو الإمارات لا يحتاجون إليها للإقامة حتى 90 يومًا.`,
+          answer: `الأمر يعتمد على جوازك لا على إقامتك. يحتاج حاملو الجوازات الهندية والباكستانية والمصرية والأردنية والفلبينية وكثير من الجوازات الأخرى إلى تأشيرة شنغن لـ${place}، حتى مع إقامة إماراتية أو إقامة ذهبية. يُعفى مواطنو الإمارات عادة للإقامات القصيرة حتى 90 يومًا خلال أي 180 يومًا، مع مراعاة شروط الدخول.`,
         },
         {
           question: `أين أقدّم لطلب تأشيرة ${place} في الإمارات؟`,
-          answer: `تتولى ${centreAr} طلبات تأشيرة ${place}، ولها مراكز في دبي وأبوظبي. تحجز موعدك على موقعهم، وفي الموعد تقدّم ملفك وتدفع رسوم السفارة وتسجّل بصماتك.`,
+          answer: `ابدأ بالتعليمات الرسمية لسفارة أو قنصلية ${place} للمقيمين في الإمارات. تحدد الجهة المعتمدة واختصاص المركز وطريقة الحجز. تحقق من العنوان وتعليمات الدفع والبصمات لموعدك.`,
         },
         {
           question: `هل أستطيع زيارة دول أخرى بتأشيرة ${place}؟`,
-          answer: `نعم. تأشيرة شنغن من ${place} تتيح السفر إلى 29 دولة شنغن كلها. يجب أن تكون ${place} وجهتك الرئيسية (حيث تقضي أكثر الليالي)، أو أول دخول إذا تساوت الليالي.`,
+          answer: `تتيح تأشيرة شنغن الموحدة عادة التنقل داخل المنطقة وفق صلاحيتها الإقليمية وعدد مرات الدخول والإقامة المسموحة. قدّم إلى ${place} إذا كانت وجهتك الرئيسية بحسب الغرض أو المدة، أو دولة أول دخول عبر الحدود الخارجية عند تعذر تحديد وجهة رئيسية.`,
         },
         {
           question: `متى أقدّم لطلب تأشيرة ${place}؟`,
@@ -126,15 +125,15 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
     : [
         {
           question: `Do I need a visa for ${name} if I live in the UAE?`,
-          answer: `It depends on your passport, not your residence. Holders of Indian, Pakistani, Egyptian, Jordanian, Filipino and many other passports need a Schengen visa for ${name}, even with a UAE residence visa or Golden Visa. UAE citizens don't need one for stays of up to 90 days.`,
+          answer: `It depends on your passport, not your residence. Holders of Indian, Pakistani, Egyptian, Jordanian, Filipino and many other passports need a Schengen visa for ${name}, even with a UAE residence visa or Golden Visa. UAE citizens are generally visa-exempt for short stays of up to 90 days in any 180-day period, subject to entry conditions.`,
         },
         {
           question: `Where do I apply for a ${name} visa in the UAE?`,
-          answer: `${name} visa applications are handled by ${centre}, which has centres in Dubai and Abu Dhabi. You book your appointment on their website. At the appointment, you submit your file, pay the embassy fee and give your fingerprints.`,
+          answer: `Start with ${name}’s official embassy or consulate instructions for UAE residents. These identify the authorised centre, its jurisdiction and the booking route. Confirm the address, payment and biometrics instructions for your appointment.`,
         },
         {
           question: `Can I visit other countries on a ${name} visa?`,
-          answer: `Yes. A Schengen visa from ${name} lets you travel across all 29 Schengen countries. ${name} has to be your main destination (where you spend the most nights), or your first entry if the nights are split evenly.`,
+          answer: `A uniform Schengen visa generally allows travel within the area, subject to its territorial validity, entries and permitted stay. Apply to ${name} when it is your main destination by purpose or length of stay, or your first external-border entry when no main destination can be identified.`,
         },
         {
           question: `When should I apply for my ${name} visa?`,
@@ -165,7 +164,7 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
                 <bdi dir="ltr">1–2</bdi> يوم مقابل <bdi dir="ltr">{price}</bdi>.
               </>
             ) : (
-              `We prepare your complete ${name} visa application: the application form, cover letter, itinerary, and flight and hotel reservations. Ready in 1–2 days for ${PRICE_AED} AED.`
+              `We prepare your complete ${name} visa application: the application form, cover letter, itinerary, and flight and hotel reservations. Prepared in 1–2 days after complete details and uploads, for ${PRICE_AED} AED.`
             )
           }
           backgroundImage={destination.image}
@@ -223,7 +222,27 @@ export default async function DestinationPage({ params }: { params: Promise<{ sl
           </div>
         </section>
 
-        <ContactSection />
+
+        <section className="pb-16 md:pb-20">
+          <div className="container mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="flex flex-col gap-4 rounded-lg border border-[#E5E7EB] bg-card p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex min-w-0 flex-col gap-1">
+                <p className="text-[20px] font-semibold leading-snug text-foreground">
+                  {message(arabic ? "ar" : "en", "dest.closeTitle", { name: place })}
+                </p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  <DigitRanges text={message(arabic ? "ar" : "en", "dest.closeBody", { price })} />
+                </p>
+              </div>
+              <Button asChild className="w-full shrink-0 md:w-auto">
+                <LocaleLink href={applyHref}>
+                  <span>{message(arabic ? "ar" : "en", "services.start")}</span>
+                  <ArrowRight aria-hidden="true" />
+                </LocaleLink>
+              </Button>
+            </div>
+          </div>
+        </section>
       </div>
       <Footer />
     </>

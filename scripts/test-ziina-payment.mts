@@ -12,7 +12,10 @@ const APP = "11111111-2222-4333-8444-555555555555"
 const rows: Record<string, any>[] = []
 const intents: Record<string, any> = {}
 let created = 0
+let dbUnavailable = false
+let providerFailure = false
 const reset = (row: Record<string, any> = {}) => {
+  dbUnavailable = false; providerFailure = false
   rows.length = 0; created = 0; for (const k in intents) delete intents[k]
   rows.push({ id: APP, email: "t@example.com", full_name: "T U", payment_id: null, payment_status: "pending", payment_amount: null, application_status: "submitted", additional_notes: "{}", ...row })
 }
@@ -21,6 +24,7 @@ const reset = (row: Record<string, any> = {}) => {
 const match = (u: URL) => (r: Record<string, any>) => [...u.searchParams].every(([k, v]) => {
   if (v.startsWith("eq.")) return String(r[k]) === v.slice(3)
   if (v.startsWith("gte.")) return String(r[k] ?? "") >= v.slice(4)
+  if (v === "is.null") return r[k] == null
   if (v === "not.is.null") return r[k] != null
   if (v.startsWith("not.in.(")) return !v.slice(8, -1).split(",").includes(String(r[k]))
   return true
@@ -31,6 +35,7 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
   const method = (init.method ?? "GET").toUpperCase()
   if (u.hostname === "api-v2.ziina.com") {
     if (method === "POST") {
+      if (providerFailure) return json({ error: "provider unavailable" }, 503)
       const b = JSON.parse(init.body); const id = `pi_${++created}`
       intents[id] = { id, status: "requires_payment_instrument", amount: b.amount, currency_code: b.currency_code, redirect_url: `https://pay.ziina.com/${id}`, success_url: b.success_url, cancel_url: b.cancel_url, failure_url: b.failure_url, _test: b.test }
       return json(intents[id])
@@ -39,17 +44,19 @@ globalThis.fetch = (async (input: any, init: any = {}) => {
     return intents[id] ? json(intents[id]) : json({ error: "not found" }, 404)
   }
   if (u.hostname === "fake.supabase.co") {
+    if (dbUnavailable) return json({ code: "unavailable" }, 503)
     const hit = rows.filter(match(u))
     if (method === "PATCH") { const patch = JSON.parse(init.body); hit.forEach((r) => Object.assign(r, patch)) }
     const accept = new Headers(init.headers).get("accept") ?? ""
-    if (accept.includes("vnd.pgrst.object")) return hit.length ? json(hit[0]) : json({ code: "PGRST116", message: "0 rows" }, 406)
-    return json(hit)
+    if (accept.includes("vnd.pgrst.object")) return hit.length ? json(structuredClone(hit[0])) : json({ code: "PGRST116", message: "0 rows" }, 406)
+    return json(structuredClone(hit))
   }
   throw new Error(`unexpected fetch ${u}`)
 }) as typeof fetch
 
 const { POST: createPayment } = await import("../app/api/create-payment/route")
 const { GET: checkPayment } = await import("../app/api/check-payment/route")
+const { OPTIONS: paymentOptions } = await import("../app/api/create-payment/route")
 const { POST: webhook } = await import("../app/api/webhooks/ziina/route")
 // Each request gets its own client IP so the (in-memory) rate limiter doesn't interfere; it is tested on its own below.
 let ip = 0
@@ -66,14 +73,29 @@ assert.equal(r.status, 200); assert.equal(j.amount, 24900); assert.equal(rows[0]
 reset({ additional_notes: JSON.stringify({ wizard: { spouseAccompanying: "yes" } }) }); j = await (await pay()).json(); assert.equal(j.amount, 49800)
 console.log("ok  price is server-computed (249 / 498 AED), client amount ignored")
 
-// 2. Double tap / retry reuses the open intent: one Ziina intent, payment_id unchanged.
-reset(); const [a, b] = await Promise.all([pay(), pay()]); await pay()
-const ids = new Set([(await a.json()).id, (await b.json()).id])
-console.log(`    concurrent taps created ${created} intent(s); sequential retry reused: ${rows[0].payment_id}`)
-const seqCreated = created
-reset(); await pay(); const again: any = await (await pay()).json()
+// 2. Concurrent requests serialize through the database, without relying on Redis.
+reset(); const [a, b] = await Promise.all([pay(), pay()]);
+assert.deepEqual([a.status, b.status].sort(), [200, 423])
+assert.equal(created, 1)
+const again: any = await (await pay()).json()
 assert.equal(created, 1); assert.equal(again.id, "pi_1"); assert.equal(again.reused, true)
-console.log("ok  retry reuses the open payment (1 intent)", seqCreated > 1 ? "(simultaneous server calls can still race: guarded in the app)" : "", [...ids].join(","))
+assert.equal(JSON.parse(rows[0].additional_notes).paymentCreationLock, undefined)
+console.log("ok  concurrent checkout creates one intent; retry reuses it and releases its lock")
+
+reset({ additional_notes: JSON.stringify({ wizard: { spouseAccompanying: "yes" }, paymentCreationLock: { token: "crashed", expiresAt: Date.now() - 1 } }) })
+assert.equal((await pay()).status, 200)
+assert.equal(created, 1)
+assert.equal(JSON.parse(rows[0].additional_notes).wizard.spouseAccompanying, "yes")
+console.log("ok  expired checkout lock recovers and preserves application answers")
+
+reset(); dbUnavailable = true
+assert.equal((await pay()).status, 503); assert.equal(created, 0)
+reset(); providerFailure = true
+assert.equal((await pay()).status, 502)
+assert.equal(JSON.parse(rows[0].additional_notes).paymentCreationLock, undefined)
+providerFailure = false
+assert.equal((await pay()).status, 200); assert.equal(created, 1)
+console.log("ok  database failure cannot create a checkout; provider failure releases the lock for retry")
 
 // 3. Forged webhook (no secret configured) cannot mark paid: status is re-fetched from Ziina.
 reset(); await pay()
@@ -137,5 +159,15 @@ console.log("ok  legacy check-payment?id= returns only {id,status}")
   delete process.env.ZIINA_TEST_MODE
   const live: any = await (await pay()).json(); assert.equal(live.id, "pi_3"); assert.equal(intents.pi_3._test, false); assert.ok(!String(intents.pi_3.success_url).includes("zmode"))
   console.log("ok  test mode: live checkout not reopened (new test intent, zmode=test), test checkout reused in test mode, not after switching back") }
+
+// Both owned website hosts can check out; lookalike domains cannot.
+for (const origin of ["https://www.ezvisa.net", "https://new.ezvisa.net"]) {
+  const preflight = await paymentOptions(req(`${origin}/api/create-payment`, undefined, { origin }))
+  assert.equal(preflight.status, 204)
+  assert.equal(preflight.headers.get("Access-Control-Allow-Origin"), origin)
+}
+const denied = await createPayment(req("https://new.ezvisa.net/api/create-payment", { applicationId: APP }, { origin: "https://new.ezvisa.net.evil.example" }))
+assert.equal(denied.status, 403)
+console.log("ok  main/new checkout origins accepted; lookalike origin rejected")
 
 console.log("ALL PASSED")

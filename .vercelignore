@@ -1,0 +1,16 @@
+node_modules
+.next
+.env*
+.git
+.DS_Store
+.agents
+.claude
+.cursor
+.design-review
+.impeccable
+.taste-skill
+.vscode
+scratch
+scratch-*
+images-downloaded
+*.tsbuildinfo

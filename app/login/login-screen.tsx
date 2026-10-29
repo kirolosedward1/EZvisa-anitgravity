@@ -4,7 +4,7 @@
 import { useRef, useState } from "react"
 import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { useRouter } from "next/navigation"
-import { ChevronDown, Eye, EyeOff, Loader2, Lock, Mail, PlayCircle } from "lucide-react"
+import { Eye, EyeOff, Loader2, Lock, Mail } from "lucide-react"
 
 import { createBrowserClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -12,11 +12,12 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
-import { GoogleSignInButton } from "@/components/auth/google-sign-in"
-import { DemoLoginButtons } from "@/components/auth/demo-login-buttons"
+import { SocialSignIn } from "@/components/auth/social-sign-in"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { classifyAuthError, EMAIL_RE, type AuthIssue } from "@/lib/auth/errors"
 import { issueFromClientMessage, loginErrorText, loginInfoText, noticeFromQuery, type LoginErrorCode } from "@/lib/auth/login-notice"
+import { socialSignInError } from "@/lib/translations/auth-form"
+import { translations } from "@/lib/translations"
 import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
 import { cn } from "@/lib/utils"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -45,7 +46,9 @@ function LoginForm({
   errorCode: string | null
   email: string | null
 }) {
-  const arabic = useSiteLocale() === "ar"
+  const locale = useSiteLocale()
+  const arabic = locale === "ar"
+  const copy = translations[locale].authForm
   const t = (en: string, ar: string) => (arabic ? ar : en)
   const sayError = (code: LoginErrorCode) => t(loginErrorText("en", code), loginErrorText("ar", code))
   const router = useRouter()
@@ -130,6 +133,20 @@ function LoginForm({
     setLinkSent(false)
   }
 
+  const onSocialError = (message: string) => {
+    const friendly = socialSignInError(arabic ? "ar" : "en", message)
+    if (friendly) {
+      setIssue("disabled")
+      setError(friendly)
+      setInfo("")
+      return
+    }
+    const k = issueFromClientMessage(message)
+    setIssue(k)
+    setError(sayError(k))
+    setInfo("")
+  }
+
   return (
     <div className="flex flex-col gap-7">
       <div className="flex flex-col gap-2">
@@ -140,13 +157,15 @@ function LoginForm({
       </div>
 
       <div className="flex flex-col gap-5">
-        <GoogleSignInButton next={next} label={t("Continue with Google", "المتابعة عبر Google")} onError={(m) => { const k = issueFromClientMessage(m); setIssue(k); setError(sayError(k)); setInfo("") }} />
-
-        <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-          <span className="h-px flex-1 bg-border" />
-          {t("or sign in with email", "أو سجّل الدخول بالبريد")}
-          <span className="h-px flex-1 bg-border" />
-        </div>
+        <SocialSignIn
+          next={next}
+          appleLabel={copy.signInApple}
+          googleLabel={copy.signInGoogle}
+          linkingNote={copy.sameEmailFirst}
+          divider={copy.orDivider}
+          onAppleError={onSocialError}
+          onGoogleError={onSocialError}
+        />
 
         <div className="grid grid-cols-2 rounded-xl bg-secondary p-1 text-sm font-medium" role="tablist" aria-label={t("Sign-in method", "طريقة تسجيل الدخول")}>
           {(["password", "link"] as Mode[]).map((m) => (
@@ -237,7 +256,7 @@ function LoginForm({
                 </button>
               </div>
             </div>
-            <Button type="submit" className="mt-1 h-12 w-full rounded-xl text-sm font-semibold" disabled={!!busy}>
+            <Button type="submit" className="mt-1 w-full" disabled={!!busy}>
               {busy === "password" ? (<><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("Signing in…", "جارٍ تسجيل الدخول…")}</>) : t("Sign in", "تسجيل الدخول")}
             </Button>
           </form>
@@ -270,7 +289,7 @@ function LoginForm({
                 {t("Use the email from your application. We'll send a one-time sign-in link, no password needed.", "استخدم البريد الذي قدّمت به الطلب. سنرسل رابط دخول لمرة واحدة، من دون كلمة مرور.")}
               </p>
             </div>
-            <Button type="submit" className="mt-1 h-12 w-full rounded-xl text-sm font-semibold" disabled={!!busy}>
+            <Button type="submit" className="mt-1 w-full" disabled={!!busy}>
               {busy === "link" ? (<><Loader2 className="size-4 animate-spin" aria-hidden="true" />{t("Sending link…", "جارٍ إرسال الرابط…")}</>) : t("Email me a sign-in link", "أرسل لي رابط الدخول")}
             </Button>
           </form>
@@ -288,18 +307,6 @@ function LoginForm({
         </LocaleLink>
       </p>
 
-      <details className="group rounded-2xl border border-border/70 bg-background">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-foreground [&::-webkit-details-marker]:hidden">
-          <span className="flex items-center gap-2">
-            <PlayCircle className="size-4 text-primary" aria-hidden="true" />
-            {t("Explore with a demo account", "جرّب بحساب تجريبي")}
-          </span>
-          <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
-        </summary>
-        <div className="px-2 pb-2">
-          <DemoLoginButtons next={next} />
-        </div>
-      </details>
     </div>
   )
 }

@@ -1,37 +1,35 @@
 "use client"
 
+import { ArrowUpRight } from "lucide-react"
 import { LocaleLink } from "@/components/locale-link"
-import { ArrowRight } from "lucide-react"
 import { destinations } from "@/lib/destinations"
-import { DestinationCard } from "@/components/destinations-catalog"
 import { LangText } from "@/components/lang-text"
+import { countryNameAr } from "@/lib/countries"
+import { useSiteLocale } from "@/components/locale-provider"
 
-/** The five most requested countries, with the same photo card as /destinations. */
+const descriptions: Record<string, [string, string]> = {
+  france: ["Paris, Provence & everything between", "باريس وبروفانس وما بينهما"],
+  italy: ["A little art. A little dolce vita.", "الفن ومتعة الحياة الإيطالية"],
+  switzerland: ["Fresh air. A different perspective.", "هواء نقي وآفاق جديدة"],
+  spain: ["Take the long way home", "استمتع بكل محطة في الطريق"],
+}
+
 export function PopularDestinations() {
-  const popular = destinations.filter((d) => d.popular).slice(0, 5)
-
+  const arabic = useSiteLocale() === "ar"
+  const popular = ["france", "italy", "switzerland", "spain"].map(slug => destinations.find(d => d.slug === slug)!)
   return (
-    <section className="bg-background py-16 md:py-24">
-      <div className="container mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mb-10 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-          <div className="flex flex-col items-start gap-3">
-            <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><LangText en="Top Travel Spots" ar="أبرز الوجهات" /></span>
-            <h2 className="text-foreground"><LangText en="Popular Destinations" ar="وجهات شائعة" /></h2>
-          </div>
-          <LocaleLink
-            href="/destinations"
-            className="group inline-flex items-center gap-2 self-start rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary md:self-auto"
-          >
-            <LangText en="View All Destinations" ar="عرض كل الوجهات" />
-            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 rtl:rotate-180" aria-hidden="true" />
+    <section className="ez-destinations">
+      <div data-site-reveal="rise" className="ez-section-heading">
+        <h2><LangText en="Same passport." ar="جوازك نفسه." /><br /><em><LangText en="A whole new story." ar="وحكاية جديدة." /></em></h2>
+        <div><p><LangText en="One visa. 29 countries to explore." ar="تأشيرة واحدة. 29 دولة لتستكشفها." /></p><LocaleLink href="/destinations" className="ez-text-link"><LangText en="Explore all destinations" ar="استكشف كل الوجهات" /></LocaleLink></div>
+      </div>
+      <div data-site-stagger className="ez-destination-grid">
+        {popular.map(country => (
+          <LocaleLink key={country.id} href={`/destinations/${country.slug}`} data-site-reveal="rise" className="ez-destination-card">
+            <div className="ez-destination-image"><img src={country.image} alt={arabic ? countryNameAr(country.name) : country.name} loading="lazy" /></div>
+            <div className="ez-destination-info"><div className="ez-destination-name"><h3>{arabic ? countryNameAr(country.name) : country.name}</h3><ArrowUpRight size={22} aria-hidden="true" /></div><p>{descriptions[country.slug][arabic ? 1 : 0]}</p></div>
           </LocaleLink>
-        </div>
-
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
-          {popular.map((country) => (
-            <DestinationCard key={country.id} country={country} compact />
-          ))}
-        </div>
+        ))}
       </div>
     </section>
   )

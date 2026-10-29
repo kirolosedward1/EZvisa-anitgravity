@@ -1,64 +1,17 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 import { ChevronDown } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { DigitRanges } from "@/components/digit-ranges"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
 import { Msg } from "@/components/msg"
-import { Image } from "@/components/image"
+import { Globi } from "@/components/globi/globi"
 import { useSiteLocale } from "@/components/locale-provider"
-
-const FAQ_VIDEO = "https://videos.pexels.com/video-files/27497252/12153786_1440_2560_30fps.mp4"
-
-/**
- * The Eiffel Tower clip beside the FAQ. A remote autoplay <video> in the server HTML crashed WebKit while it parsed
- * the home document, so the page ships a still and the <video> element is only created after hydration, once the
- * column is near the viewport. Reduced-motion visitors keep the still.
- */
-function FaqVideo({ alt }: { alt: string }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [play, setPlay] = useState(false)
-  const [ready, setReady] = useState(false)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setPlay(true)
-          observer.disconnect()
-        }
-      },
-      { rootMargin: "200px" },
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-
-  return (
-    <div ref={ref} className="absolute inset-0">
-      <Image src="/images/eiffel-tower-view.jpg" alt={alt} fill sizes="384px" className="object-cover" />
-      {play && (
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="auto"
-          aria-hidden="true"
-          onCanPlay={() => setReady(true)}
-          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${ready ? "opacity-100" : "opacity-0"}`}
-          src={FAQ_VIDEO}
-        />
-      )}
-    </div>
-  )
-}
 
 export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  const reducedMotion = useReducedMotion()
   const arabic = useSiteLocale() === "ar"
   const faqs = arabic ? FAQ_AR : FAQ_EN
 
@@ -69,11 +22,7 @@ export function FAQSection() {
   return (
     <section id="faq" className="py-12 md:py-16 lg:py-20">
       <div className="container mx-auto px-4 md:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.6 }}
+        <div data-site-reveal="rise"
           className="text-center mb-10 md:mb-12 lg:mb-16"
         >
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold mb-3 md:mb-4 leading-tight tracking-tight">
@@ -82,22 +31,21 @@ export function FAQSection() {
           <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
             <Msg id="faq.intro" />
           </p>
-        </motion.div>
+        </div>
 
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 lg:gap-16">
           {/* Left Column - FAQ Questions (takes 7 columns on desktop) */}
-          <div className="lg:col-span-7 space-y-2">
+          <div className="lg:col-span-7 space-y-2 order-2 lg:order-1">
             {faqs.map((faq, index) => (
-              <motion.div
+              <div
                 key={index}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
+                data-site-reveal="fade"
                 className="border-b border-border/40"
               >
                 <button
                   onClick={() => toggleFAQ(index)}
+                  aria-expanded={openIndex === index}
+                  aria-controls={`faq-answer-${index}`}
                   className="w-full py-4 md:py-5 text-start flex items-start justify-between gap-3 md:gap-4 hover:text-primary transition-colors group min-h-[56px]"
                 >
                   <span className="font-medium text-sm md:text-base lg:text-lg leading-relaxed pe-2 md:pe-4 text-start">{faq.question}</span>
@@ -113,8 +61,9 @@ export function FAQSection() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      transition={{ duration: reducedMotion ? 0 : 0.25, ease: "easeInOut" }}
                       className="overflow-hidden"
+                      id={`faq-answer-${index}`}
                     >
                       <div className="pb-4 md:pb-6 pe-8 md:pe-12 text-start">
                         <p className="text-sm md:text-base text-muted-foreground leading-relaxed"><DigitRanges text={faq.answer} /></p>
@@ -122,23 +71,14 @@ export function FAQSection() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </div>
             ))}
           </div>
 
-          {/* Right Column - Video (takes 5 columns on desktop) */}
-          <div className="hidden lg:block lg:col-span-5">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="lg:sticky lg:top-24"
-            >
-              <div className="relative aspect-[3/4] w-full max-w-sm mx-auto overflow-hidden rounded-2xl shadow-xl ring-1 ring-border/50">
-                <FaqVideo alt={arabic ? "برج إيفل في باريس" : "The Eiffel Tower in Paris"} />
-              </div>
-            </motion.div>
+          <div data-site-reveal="fade" className="ez-faq-globi order-1 lg:order-2 lg:col-span-5">
+            <div className="lg:sticky lg:top-24">
+              <Globi pose="documents" />
+            </div>
           </div>
         </div>
       </div>

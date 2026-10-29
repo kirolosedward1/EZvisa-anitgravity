@@ -1,4 +1,5 @@
 import type { ReactNode } from "react"
+import { dirhamNoun } from "@/lib/currency"
 
 /** Western digits, no trailing .00. */
 export function amountDigits(amount: number): string {
@@ -7,22 +8,22 @@ export function amountDigits(amount: number): string {
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2)
 }
 
-/** «249 درهم» with only the digits isolated, the same bdi the wizard uses for amounts. */
+/** «249 درهمًا» with only the digits isolated, the same bdi the wizard uses for amounts. */
 export function DirhamAmount({ amount }: { amount: number }): ReactNode {
   return (
     <>
-      <bdi dir="ltr">{amountDigits(amount)}</bdi> درهم
+      <bdi dir="ltr">{amountDigits(amount)}</bdi> {dirhamNoun(amount)}
     </>
   )
 }
 
-/** «ادفع 249 درهم». English stays «Pay 249 AED». */
+/** «ادفع 249 درهمًا». English stays «Pay 249 AED». */
 export function payLabel(amount: number, arabic: boolean): ReactNode {
   const digits = amountDigits(amount)
   if (!arabic) return `Pay ${digits} AED`
   return (
     <>
-      ادفع <bdi dir="ltr">{digits}</bdi> درهم
+      ادفع <bdi dir="ltr">{digits}</bdi> {dirhamNoun(amount)}
     </>
   )
 }

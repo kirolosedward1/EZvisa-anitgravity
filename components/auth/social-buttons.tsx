@@ -1,7 +1,7 @@
 "use client"
 
-// Google (always) and Apple (when enabled on the project) sign-in through Supabase OAuth (PKCE). The round trip
-// returns to /auth/callback, which signs the user in and continues to `next`. See lib/auth/providers.ts.
+// Google sign-in through Supabase OAuth (PKCE). The round trip returns to /auth/callback. Apple lives in
+// components/auth/apple-sign-in.tsx. See lib/auth/providers.ts.
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -21,15 +21,7 @@ function GoogleMark({ className }: { className?: string }) {
   )
 }
 
-function AppleMark({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M16.37 12.78c.02 2.6 2.28 3.46 2.3 3.47-.02.06-.36 1.24-1.19 2.45-.72 1.05-1.46 2.09-2.63 2.11-1.15.02-1.52-.68-2.84-.68-1.31 0-1.72.66-2.81.7-1.13.04-1.99-1.13-2.71-2.18-1.48-2.14-2.61-6.04-1.09-8.68a4.2 4.2 0 0 1 3.55-2.16c1.11-.02 2.15.75 2.83.75.68 0 1.95-.92 3.29-.79.56.02 2.13.23 3.14 1.7-.08.05-1.87 1.1-1.84 3.31zM14.2 5.05c.6-.73 1-1.73.89-2.74-.86.04-1.9.57-2.52 1.3-.55.64-1.04 1.67-.91 2.65.96.07 1.94-.49 2.54-1.21z" />
-    </svg>
-  )
-}
-
-const MARK: Record<SocialProvider, (p: { className?: string }) => React.ReactElement> = { google: GoogleMark, apple: AppleMark }
+const MARK = { google: GoogleMark }
 
 export function SocialButtons({ next, onError, disabled }: { next?: string; onError: (message: string) => void; disabled?: boolean }) {
   // null = settings not read (yet, or unreachable): the always-offered providers still show and just try.
@@ -42,7 +34,7 @@ export function SocialButtons({ next, onError, disabled }: { next?: string; onEr
     return () => { alive = false }
   }, [])
 
-  const shown = (["apple", "google"] as SocialProvider[]).filter((p) => ALWAYS_OFFERED.includes(p) || enabled?.[p])
+  const shown = (["google"] as const).filter((p) => ALWAYS_OFFERED.includes(p) || enabled?.[p])
   if (shown.length === 0) return null
 
   const start = async (provider: SocialProvider) => {
@@ -74,7 +66,7 @@ export function SocialButtons({ next, onError, disabled }: { next?: string; onEr
         {shown.map((provider) => {
           const Mark = MARK[provider]
           return (
-            <Button key={provider} type="button" variant="outline" className="w-full h-11 rounded-xl font-semibold" disabled={disabled || !!busy} onClick={() => start(provider)}>
+            <Button key={provider} type="button" variant="outline" className="w-full" disabled={disabled || !!busy} onClick={() => start(provider)}>
               {busy === provider ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mark className="h-4 w-4" />}
               Continue with {PROVIDER_LABEL[provider]}
             </Button>

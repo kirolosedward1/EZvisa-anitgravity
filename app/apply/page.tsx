@@ -6,6 +6,7 @@ import { NationalityStep } from "@/components/apply/nationality-step"
 import { DestinationStep } from "@/components/apply/destination-step"
 import { PaymentStep } from "@/components/apply/payment-step"
 import { WizardShell } from "@/components/apply/wizard-shell"
+import { WizardAccount } from "@/components/apply/wizard-account"
 import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
 import { Msg } from "@/components/msg"
@@ -15,16 +16,19 @@ import { localizePath } from "@/lib/route-path"
 import { trackEvent } from "@/lib/analytics"
 import { getStepSlug, getStepNumber, isValidStep } from "@/lib/wizard-steps"
 import { createBrowserClient } from "@/lib/supabase/client"
+import { applePersonName } from "@/lib/auth/apple-profile"
+import { accountBirthDate } from "@/lib/auth/account-details"
 import { toCitizenshipIso } from "@/lib/nationalities"
 import { fetchAccountNationality, readRememberedNationality, rememberNationality } from "@/lib/remembered-nationality"
 import { TRAVELLER_NONE, applyTravellerToWebForm, isFreshTravellerForm, markTravellerUsed, useTravellers } from "@/lib/travellers-client"
 import { defaultTraveller, type Traveller } from "@/lib/shared/wizard-contract"
 import { citizenshipName } from "@/lib/nationalities"
 
-import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
+import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY, WIZARD_STEP_STORAGE_KEY, RESUME_DISMISSED_KEY, announceWizardDraftChange } from "@/lib/wizard-storage"
 const AUTO_SAVE_DELAY = 300
 
 interface WizardFormData {
+  insurancePreference?: "quote" | "own"
   // Step 1: Personal & Profile Information
   nationality: string
   countryOfResidence: string
@@ -253,6 +257,8 @@ function ApplyPageContent() {
 
   const handleStartFresh = useCallback(() => {
     localStorage.removeItem(WIZARD_STORAGE_KEY)
+    localStorage.removeItem(WIZARD_STEP_STORAGE_KEY)
+    announceWizardDraftChange()
     // A new application must not pay the one this tab created earlier.
     try { sessionStorage.removeItem(CHECKOUT_STORAGE_KEY) } catch { /* storage unavailable */ }
     const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
@@ -307,7 +313,6 @@ function ApplyPageContent() {
 
   const handleNext = useCallback(() => {
     trackEvent("application_step_completed", { step: currentStep, destination: formData.destination })
-    // 1 destination, 2 traveller, 4 review and pay. Trip and spouse details come after payment (/continue/[id]).
     const nextStep = currentStep <= 1 ? 2 : 4
     setDirection(1)
     setCurrentStep(nextStep)
@@ -316,7 +321,7 @@ function ApplyPageContent() {
 
   const handleBack = useCallback(() => {
     setDirection(-1)
-    setCurrentStep((prevStep) => (prevStep >= 3 ? 2 : 1))
+    setCurrentStep((prevStep) => prevStep >= 4 ? 2 : 1)
     scrollToWizardTop()
   }, [scrollToWizardTop])
 
@@ -359,7 +364,8 @@ function ApplyPageContent() {
       let hasPreviousProgress = false
       if (saved) {
         try {
-          savedData = JSON.parse(saved)
+          const parsed = JSON.parse(saved)
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) savedData = parsed
           hasPreviousProgress = !!(
             savedData.firstName ||
             savedData.lastName ||
@@ -375,7 +381,10 @@ function ApplyPageContent() {
         }
       }
 
-      if (hasPreviousProgress) {
+      if (hasPreviousProgress && searchParams.get("resume") === "1") {
+        // The website's Continue box is an explicit choice to restore this device's saved answers.
+        setFormData({ ...defaultFormData, ...savedData, nationality: savedData.nationality || readRememberedNationality() })
+      } else if (hasPreviousProgress) {
         setPendingSavedData(savedData)
         setShowResumeModal(true)
         setFormData({
@@ -427,8 +436,9 @@ function ApplyPageContent() {
   }, [])
 
   // Saved travellers of the signed-in customer (lib/travellers.ts): the "Who is travelling?" drop-down.
-  const { travellers, email: accountEmail, loaded: travellersLoaded } = useTravellers()
+  const { travellers, email: accountEmail, loaded: travellersLoaded, error: travellersError, refresh: refreshTravellers } = useTravellers()
   const [travellerNotice, setTravellerNotice] = useState<{ nationality: string } | null>(null)
+  const initialTravellerChecked = useRef(false)
 
   /** Fill the traveller step from a saved traveller (null = "Someone else"). Every field stays editable. */
   const pickTraveller = useCallback((t: Traveller | null) => {
@@ -447,13 +457,16 @@ function ApplyPageContent() {
   // Signed in, nothing typed yet: preselect a saved traveller (the one marked "You", else the most recently used).
   // A resumed draft that already has a name, or a form where "Someone else" was chosen, is never touched.
   useEffect(() => {
-    if (!isInitialized || showResumeModal || !travellers.length) return
+    if (!isInitialized || showResumeModal || !travellersLoaded || initialTravellerChecked.current) return
+    // Prefill only when already signed in on arrival. In-wizard sign-in leaves the draft alone until a choice is made.
+    initialTravellerChecked.current = true
+    if (!travellers.length) return
     setFormData((prev) => {
       if (!isFreshTravellerForm(prev) || prev.travellerId === TRAVELLER_NONE || (prev.travellerId && travellers.some((t) => t.id === prev.travellerId))) return prev
       const t = defaultTraveller(travellers)
       return t ? applyTravellerToWebForm(prev, t) : prev
     })
-  }, [isInitialized, showResumeModal, travellers])
+  }, [isInitialized, showResumeModal, travellers, travellersLoaded])
 
   // No saved travellers: fill name, email and phone from the account's profile, as before.
   useEffect(() => {
@@ -465,11 +478,13 @@ function ApplyPageContent() {
         const supabase = createBrowserClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (user && user.email) {
+          const person = applePersonName(user.user_metadata, user.email, user.identities)
           setFormData((prev) => ({
             ...prev,
             email: prev.email || user.email || "",
-            firstName: prev.firstName || (user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || ""),
-            lastName: prev.lastName || (user.user_metadata?.last_name || user.user_metadata?.full_name?.split(" ").slice(1).join(" ") || ""),
+            firstName: prev.firstName || person?.first || "",
+            lastName: prev.lastName || person?.last || "",
+            dateOfBirth: prev.dateOfBirth || (prev.travellerId !== TRAVELLER_NONE && ((!prev.firstName && !prev.lastName) || (prev.firstName === person?.first && prev.lastName === person?.last)) ? accountBirthDate(user.user_metadata?.date_of_birth) : ""),
             phone: prev.phone || (user.user_metadata?.phone || ""),
           }))
         }
@@ -578,6 +593,9 @@ function ApplyPageContent() {
     saveTimeoutRef.current = setTimeout(() => {
       try {
         localStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify(formData))
+        localStorage.setItem(WIZARD_STEP_STORAGE_KEY, getStepSlug(currentStep))
+        sessionStorage.removeItem(RESUME_DISMISSED_KEY)
+        announceWizardDraftChange()
       } catch (error) {
         console.error("Failed to save form data:", error)
       }
@@ -588,11 +606,15 @@ function ApplyPageContent() {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [formData, isInitialized, showResumeModal])
+  }, [formData, currentStep, isInitialized, showResumeModal])
 
   return (
     <div className="min-h-[100dvh] bg-[#FFFFFF]" ref={wizardContainerRef}>
-      <SiteHeader />
+      <SiteHeader wizardAccount={<WizardAccount travellers={travellers} loaded={travellersLoaded} error={travellersError} refresh={refreshTravellers} value={formData.travellerId ?? ""} onChoose={traveller => {
+        pickTraveller(traveller)
+        // A different traveller must review their details before returning to payment.
+        if (currentStep >= 4) editTraveller()
+      }} />} />
       <WizardShell step={currentStep} motionKey={String(currentStep)} direction={direction} formData={formData}>
         {renderStepContent()}
       </WizardShell>

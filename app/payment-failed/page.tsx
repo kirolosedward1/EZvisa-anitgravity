@@ -1,7 +1,8 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { Button } from "@/components/ui/button"
-import { X, RefreshCw, CreditCard, Wifi, Ban, AlertCircle, Mail, MessageCircle } from "lucide-react"
+import { X, RefreshCw, CreditCard, Wifi, Ban, AlertCircle, Mail } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { LangText } from "@/components/lang-text"
@@ -38,27 +39,27 @@ export default function PaymentFailedPage() {
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <main className="min-h-screen pt-24 pb-16 px-4">
-        <div className="container max-w-xl mx-auto text-center">
+      <main id="main-content" className="ez-customer-page ez-payment-page min-h-screen pt-28 pb-16 px-4 md:pt-32">
+        <div className="ez-payment-result container max-w-xl mx-auto text-center">
           {/* Failed Icon */}
           <div className="mb-8">
-            <div className="w-24 h-24 mx-auto rounded-full bg-red-500 flex items-center justify-center">
-              <X className="w-12 h-12 text-white stroke-[3]" />
+            <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center">
+              <X className="w-6 h-6 text-red-700 stroke-[2]" />
             </div>
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl md:text-5xl font-semibold text-foreground mb-4">
-            <LangText en="Payment Failed" ar="فشلت عملية الدفع" />
+          <h1 className="text-3xl md:text-4xl font-medium text-foreground mb-4">
+            <LangText en="Payment not completed" ar="فشلت عملية الدفع" />
           </h1>
           
           <p className="text-lg text-muted-foreground mb-10 max-w-md mx-auto">
-            <LangText en="Your payment could not be processed. Don't worry, no charges were made." ar="تعذّر إتمام الدفع. لا تقلق، لم يُخصم أي مبلغ." />
+            <LangText en="We couldn’t confirm your payment. If your bank shows a charge, contact us before trying again." ar="لم نتمكن من تأكيد الدفع. إذا ظهر خصم في حسابك البنكي، تواصل معنا قبل المحاولة مجددًا." />
           </p>
 
           {/* Possible Reasons */}
           <div className="mb-10">
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-6">
+            <h2 className="text-sm font-medium text-foreground mb-6">
               <LangText en="Possible reasons" ar="أسباب محتملة" />
             </h2>
             <div className="grid grid-cols-2 gap-4">
@@ -67,8 +68,8 @@ export default function PaymentFailedPage() {
                   key={index}
                   className="flex items-center gap-3 text-left"
                 >
-                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                    <reason.icon className="w-5 h-5 text-red-500" />
+                  <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center shrink-0">
+                    <reason.icon className="w-5 h-5 text-muted-foreground" />
                   </div>
                   <span className="text-sm text-muted-foreground"><LangText en={reason.en} ar={reason.ar} /></span>
                 </div>
@@ -87,7 +88,7 @@ export default function PaymentFailedPage() {
               <Button 
                 onClick={handleRetry}
                 size="lg"
-                className="gap-2 px-8 w-full sm:w-auto"
+                className="w-full sm:w-auto"
               >
                 <RefreshCw className="w-4 h-4" />
                 <LangText en="Retry Payment" ar="إعادة محاولة الدفع" />
@@ -97,7 +98,7 @@ export default function PaymentFailedPage() {
 
           {/* Support */}
           <div className="space-y-3">
-            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            <p className="text-sm font-medium text-foreground">
               <LangText en="Need help?" ar="هل تحتاج مساعدة؟" />
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -117,7 +118,7 @@ export default function PaymentFailedPage() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"
               >
-                <MessageCircle className="w-4 h-4" />
+                <WhatsAppIcon className="w-4 h-4" />
                 <LangText en="WhatsApp Support" ar="الدعم عبر واتساب" />
               </a>
             </div>

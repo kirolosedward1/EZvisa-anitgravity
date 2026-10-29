@@ -1,8 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion"
-import { ChevronDown } from "lucide-react"
+import { Check, ChevronDown } from "lucide-react"
+import { GlobiGuide } from "@/components/globi/globi"
 import { LangText } from "@/components/lang-text"
 import { Msg } from "@/components/msg"
 import { CountryFlag } from "@/components/country-flag"
@@ -15,14 +16,14 @@ import { cn } from "@/lib/utils"
 import type { FormData } from "@/lib/form-types"
 
 const STAGES = [
-  { id: "destination", en: "01 Destination", ar: "01 الوجهة" },
-  { id: "traveller", en: "02 Traveller", ar: "02 المسافر" },
-  { id: "review", en: "03 Review & pay", ar: "03 المراجعة والدفع" },
+  { id: "destination", en: "Destination", ar: "الوجهة" },
+  { id: "traveller", en: "Traveller", ar: "المسافر" },
+  { id: "review", en: "Review & pay", ar: "المراجعة والدفع" },
 ] as const
 
 export type WizardStage = (typeof STAGES)[number]["id"]
 
-/** 1 destination, 2 traveller, 4 review and pay. Trip and spouse details are asked after payment. */
+/** 1 destination, 2 traveller, 4 review and pay; retained IDs preserve old links. */
 export function stageForStep(step: number): WizardStage {
   if (step <= 1) return "destination"
   if (step >= 4) return "review"
@@ -65,8 +66,8 @@ function SummaryRows({ formData }: { formData: FormData }) {
       value: String(applicants),
     },
     {
-      label: "Processing",
-      labelAr: "المعالجة",
+      label: "File preparation",
+      labelAr: "تجهيز الملف",
       value: <LangText en="1–2 days" ar={<><bdi dir="ltr">1–2</bdi> يوم</>} />,
     },
   ]
@@ -79,7 +80,7 @@ function SummaryRows({ formData }: { formData: FormData }) {
             <dt className="text-[#5B6475]">
               <LangText en={row.label} ar={row.labelAr} />
             </dt>
-            <dd className="min-w-0 truncate text-end text-[#0A0F1F]">
+            <dd className="min-w-0 text-end text-[#0A0F1F]">
               {row.value ||
                 (row.label === "Destination" ? (
                   <span className="text-[#5B6475]">
@@ -91,7 +92,7 @@ function SummaryRows({ formData }: { formData: FormData }) {
         ))}
       </dl>
       <p className="mt-3 text-[13px] leading-relaxed text-[#5B6475]">
-        <LangText en="Trip dates, hotel and itinerary come after payment." ar="تواريخ الرحلة والفندق وخط السير بعد الدفع." />
+        <LangText en="Preparation starts after we receive your complete details and documents. Trip dates, hotel and itinerary come after payment." ar="يبدأ تجهيز الملف بعد استلام بياناتك ومستنداتك كاملة. تواريخ الرحلة والفندق وخط السير بعد الدفع." />
       </p>
       <div className="mt-5 flex items-center justify-between text-[18px] font-semibold">
         <span>
@@ -116,7 +117,7 @@ function SummaryRows({ formData }: { formData: FormData }) {
 function AedAmount({ amount }: { amount: number }) {
   const locale = useSiteLocale()
   const label = formatAedLabel(amount, locale)
-  // Isolate the whole label so RTL layout keeps «249 درهم» in that order.
+  // Isolate the whole label so RTL layout keeps «249 درهمًا» in that order.
   if (locale === "ar") return <bdi dir="ltr">{label}</bdi>
   return <>{label}</>
 }
@@ -125,13 +126,12 @@ function summaryLine(formData: FormData) {
   const country = formData.destination?.trim() || ""
   const meta = country ? SCHENGEN_META[country] : undefined
   const price = priceForTravellers(formData.spouseAccompanying, formData.travelingWith)
-  return { country, countryAr: meta?.ar || country, price }
+  return { country, countryAr: meta?.ar || country, iso: meta?.iso, price }
 }
 
 export function WizardShell({
   step,
   motionKey,
-  direction,
   formData,
   children,
 }: {
@@ -142,96 +142,82 @@ export function WizardShell({
   children: React.ReactNode
 }) {
   const stage = stageForStep(step)
+  const stageIndex = STAGES.findIndex(item => item.id === stage)
   const reduced = useReducedMotion()
-  const [ready, setReady] = useState(false)
-  const [rtl, setRtl] = useState(false)
   const [summaryOpen, setSummaryOpen] = useState(false)
   const line = summaryLine(formData)
-
-  useEffect(() => {
-    setReady(true)
-    setRtl(document.documentElement.dir === "rtl")
-  }, [])
-
-  const offset = (rtl ? -1 : 1) * direction * 12
-  const enter = !ready ? false : reduced ? { opacity: 0 } : { opacity: 0, x: offset }
+  const arabic = useSiteLocale() === "ar"
+  const applicants = applicantCount(formData.spouseAccompanying, formData.travelingWith)
 
   return (
-    <div className="bg-[#FFFFFF] text-[#0A0F1F]">
-      <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height)] lg:pt-[calc(var(--site-header-height)+48px)]">
-        <h1 className="sr-only">
-          <LangText en="Visa application" ar="طلب التأشيرة" />
-        </h1>
-        <div className="lg:grid lg:grid-cols-[minmax(0,560px)_340px] lg:items-start lg:justify-start lg:gap-x-10">
-        <div
-          className="sticky z-40 -mx-4 mb-3 border-b border-[#E3E7EF] bg-[#FFFFFF] px-4 lg:hidden"
-          style={{ top: "var(--site-header-height)" }}
-        >
-          <button
-            type="button"
-            aria-expanded={summaryOpen}
-            onClick={() => setSummaryOpen((open) => !open)}
-            className="flex w-full items-center justify-between gap-3 py-2.5 text-[13px] text-[#3A4150]"
-          >
-            <span className="min-w-0 truncate">
-              {line.country ? (
-                <>
-                  <span className="rtl:hidden">{line.country}</span>
-                  <span className="hidden rtl:inline">{line.countryAr}</span>
-                </>
-              ) : (
-                <span className="text-[#5B6475]">
-                  <Msg id="summary.yourTrip" />
+    <main className="ez-wizard" id="main-content">
+      <h1 className="sr-only"><LangText en="Visa application" ar="طلب التأشيرة" /></h1>
+      <div className="ez-wizard-layout">
+        <nav className="ez-wizard-progress" aria-label={arabic ? "خطوات طلب التأشيرة" : "Application progress"}>
+          <ol>
+            {STAGES.map((item, index) => (
+              <li key={item.id} aria-current={item.id === stage ? "step" : undefined} data-complete={index < stageIndex || undefined}>
+                <span className="ez-wizard-step-number" aria-hidden="true">
+                  {index < stageIndex ? <Check size={14} /> : index + 1}
                 </span>
-              )}
-            </span>
-            <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-[#0A0F1F]">
-              <AedAmount amount={line.price} />
-              <ChevronDown className={cn("size-4 text-[#5B6475]", summaryOpen && "rotate-180")} aria-hidden />
-            </span>
-          </button>
-          {summaryOpen ? <SummaryRows formData={formData} /> : null}
-        </div>
-        <div className="flex gap-6 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_#E3E7EF] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:col-start-1 lg:row-start-1">
-          {STAGES.map((item) => {
-            const current = item.id === stage
-            return (
-              <span
-                key={item.id}
-                aria-current={current ? "step" : undefined}
-                className={cn(
-                  "whitespace-nowrap border-b-2 pb-2 text-[13px] font-medium",
-                  current ? "border-[#0436DC] text-[#0A0F1F]" : "border-transparent text-[#5B6475]",
-                )}
-              >
-                <LangText en={item.en} ar={item.ar} />
-              </span>
-            )
-          })}
-        </div>
+                <span><LangText en={item.en} ar={item.ar} /></span>
+              </li>
+            ))}
+          </ol>
+        </nav>
 
-        <div id="wizard-form" className="mt-8 min-w-0 w-full max-w-[560px] scroll-mt-28 lg:col-start-1 lg:row-start-2">
+        <aside className="ez-wizard-companion" aria-label={arabic ? "دليل طلبك" : "Your application guide"}>
+          <div className="ez-wizard-companion-inner">
+            <GlobiGuide moment={stage} />
+            <div className="ez-wizard-summary">
+              <button
+                type="button"
+                aria-expanded={summaryOpen}
+                aria-controls="wizard-application-summary"
+                onClick={() => setSummaryOpen(open => !open)}
+                className="ez-wizard-summary-toggle"
+              >
+                <span className="ez-wizard-summary-trip">
+                  {line.country ? <CountryFlag iso={line.iso} /> : null}
+                  <span>
+                    <strong>{line.country ? (arabic ? line.countryAr : line.country) : <Msg id="summary.yourTrip" />}</strong>
+                    <span className="ez-wizard-summary-caption"><LangText en="Application summary" ar="ملخص الطلب" /></span>
+                  </span>
+                </span>
+                <span className="ez-wizard-summary-price">
+                  <strong><AedAmount amount={line.price} /></strong>
+                  <span className="ez-wizard-summary-caption">{applicants} <LangText en={applicants === 1 ? "applicant" : "applicants"} ar={applicants === 1 ? "متقدم" : "متقدمين"} /></span>
+                </span>
+                <ChevronDown className={cn("ez-wizard-summary-chevron", summaryOpen && "rotate-180")} size={18} aria-hidden="true" />
+              </button>
+              <div
+                id="wizard-application-summary"
+                className="ez-wizard-summary-detail"
+                hidden={!summaryOpen}
+                role="region"
+                aria-label={arabic ? "تفاصيل الطلب" : "Application details"}
+                tabIndex={summaryOpen ? 0 : -1}
+              >
+                <SummaryRows formData={formData} />
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <div id="wizard-form" className="ez-wizard-form">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={motionKey}
-              initial={enter}
-              animate={{ opacity: 1, x: 0 }}
-              exit={reduced ? { opacity: 0 } : { opacity: 0, x: offset * -1 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              initial={reduced ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: reduced ? 1 : 0 }}
+              transition={{ duration: reduced ? 0 : 0.16, ease: "easeOut" }}
             >
               {children}
             </motion.div>
           </AnimatePresence>
         </div>
-
-        <aside className="sticky top-[calc(var(--site-header-height)+48px)] hidden w-[340px] shrink-0 border-s border-[#E3E7EF] ps-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:block">
-          <p className="mb-5 text-[12px] font-medium uppercase tracking-[0.06em] text-[#5B6475]">
-            <LangText en="Your application" ar="طلبك" />
-          </p>
-          <SummaryRows formData={formData} />
-        </aside>
-        </div>
       </div>
-    </div>
+    </main>
   )
 }

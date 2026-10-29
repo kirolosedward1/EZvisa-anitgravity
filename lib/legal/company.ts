@@ -22,8 +22,6 @@ export const COMPANY = {
   PHONE_DISPLAY: "+971 54 710 9533",
   PHONE_E164: "+971547109533",
   WHATSAPP_URL: "https://wa.me/971547109533",
-  SUPPORT_HOURS_EN: "9:00 am – 6:00 pm (UAE time)",
-  SUPPORT_HOURS_AR: "من 9:00 صباحًا إلى 6:00 مساءً (بتوقيت الإمارات)",
 } as const
 
 const ENTITY_TOKENS = /\{\{(COMPANY_LEGAL_NAME|TRADE_LICENCE_NO|ISSUING_AUTHORITY|REGISTERED_ADDRESS|EMAIL)\}\}/

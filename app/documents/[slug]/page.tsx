@@ -98,7 +98,8 @@ export default async function DocumentSlugPage({ params }: { params: Promise<{ s
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <DocumentRequirementsPage initialCountry={country.name} />
+      <DocumentRequirementsPage initialCountry={country.name}>
+      </DocumentRequirementsPage>
     </>
   )
 }

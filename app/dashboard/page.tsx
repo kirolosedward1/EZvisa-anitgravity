@@ -1,8 +1,9 @@
+import { Globi } from "@/components/globi/globi"
 import { redirectLocalized, requestLocale } from "@/lib/request-locale";
 import { signOutAction } from "@/lib/route-path";
 import { LocaleLink } from "@/components/locale-link";
 import { cookies } from "next/headers";
-import { LogOut, Plus, Search } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
 import { createServerClient } from "@/lib/supabase/server";
 import { LangText } from "@/components/lang-text";
 import { SiteHeader } from "@/components/site-header";
@@ -16,6 +17,7 @@ import { DashboardHeader } from "@/components/dashboard/dashboard-header";
 import { DashboardCard } from "@/components/dashboard/dashboard-card";
 import { ApplicationView } from "@/components/dashboard/application-view";
 import { visibleApplications } from "@/lib/active-applications";
+import { metadataFullName } from "@/lib/auth/apple-profile";
 import type { VisaApplication } from "@/lib/types/visa-application";
 import { SupportApplication } from "@/components/support-application";
 import { getStatusLabel } from "@/lib/application-status";
@@ -108,23 +110,22 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   relatedApps = visibleApplications(relatedApps);
 
-  const firstName = (user.user_metadata?.full_name || relatedApps[0]?.full_name || "").split(" ")[0];
+  const appName = typeof relatedApps[0]?.full_name === "string" ? relatedApps[0].full_name : "";
+  const firstName = (metadataFullName(user.user_metadata, user.email) || appName).split(" ")[0];
 
   if (!relatedApps || relatedApps.length === 0) {
     return (
       <>
         <SiteHeader />
-        <main id="main-content" className="min-h-screen bg-secondary/40">
+        <main id="main-content" className="ez-customer-page min-h-screen bg-secondary/40">
           <DashboardHeader
             badge="My account"
             title={firstName ? `Welcome, ${firstName}` : "Your account"}
             description={user.email}
           />
           <div className="container mx-auto max-w-6xl px-4 py-12 sm:px-6">
-            <DashboardCard className="mx-auto flex max-w-lg flex-col items-center gap-6 p-8 text-center">
-              <span className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                <Search className="size-6" aria-hidden="true" />
-              </span>
+            <DashboardCard className="ez-dashboard-empty mx-auto flex max-w-lg flex-col items-center gap-6 p-8 text-center">
+              <Globi pose="welcome" className="ez-empty-globi" />
               <div className="flex flex-col gap-2">
                 <h2 className="text-xl font-semibold tracking-tight text-foreground">
                   <LangText en={translations.en.dashboardEmpty.title} ar={translations.ar.dashboardEmpty.title} />
@@ -137,7 +138,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-3">
-                <Button asChild className="rounded-full px-5">
+                <Button asChild>
                   <LocaleLink href="/apply">
                     <Plus />
                     Start an application
@@ -165,7 +166,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="min-h-screen bg-secondary/40">
+      <main id="main-content" className="ez-customer-page min-h-screen bg-secondary/40">
         {mainApp?.id ? <SupportApplication id={mainApp.id} country={mainApp.destination_country} status={getStatusLabel(mainApp).label} step="overview" /> : null}
         <DashboardHeader
           badge="My account"
@@ -180,10 +181,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <span className="ltr-isolate">{user.email}</span>
           </>}
           actions={
-            <Button asChild className="rounded-full px-5">
+            <Button asChild>
               <LocaleLink href="/apply">
                 <Plus />
-                New application
+                <LangText en="New application" ar="طلب جديد" />
               </LocaleLink>
             </Button>
           }
@@ -203,6 +204,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             relatedApps={relatedApps}
             hrefFor={(app) => `/dashboard?id=${app.id}`}
             showTrackingLink
+            showInsurance
             allowDiscard={!isDemo}
           />
         </div>

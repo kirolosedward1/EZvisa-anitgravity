@@ -59,7 +59,7 @@ export function GoogleSignInButton({
       const supabase = createBrowserClient()
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: authCallbackUrl({ next }), queryParams: { prompt: "select_account" } },
+        options: { redirectTo: authCallbackUrl({ next }), scopes: "openid email profile", queryParams: { prompt: "select_account" } },
       })
       if (authError) fail(reported(authError.message, authError.code))
       // On success the browser is leaving for Google: keep the spinner.
@@ -70,16 +70,19 @@ export function GoogleSignInButton({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex w-full min-w-0 flex-col gap-2">
       <Button
         type="button"
         variant="outline"
-        className={cn("h-12 w-full gap-3 rounded-xl border-border bg-background text-sm font-semibold text-foreground shadow-xs hover:border-primary/30 hover:bg-primary/5 hover:text-foreground", className)}
+        className={cn(
+          "w-full min-w-0 max-w-full gap-3 whitespace-normal text-center text-balance",
+          className,
+        )}
         onClick={signIn}
         disabled={loading}
       >
-        {loading ? <Loader2 className="size-5 animate-spin" aria-hidden="true" /> : <GoogleLogo className="size-5" />}
-        {label}
+        {loading ? <Loader2 className="size-5 shrink-0 animate-spin" aria-hidden="true" /> : <GoogleLogo className="size-5 shrink-0" />}
+        <span className="min-w-0 text-balance">{label}</span>
       </Button>
       {error ? <p className="text-center text-xs text-destructive" role="alert">{error}</p> : null}
     </div>

@@ -39,6 +39,10 @@ interface CaseItem {
   has_photos: boolean
   created_at: string
   updated_at: string
+  appointment_choice?: string | null
+  appointment_help_status?: string | null
+  appointment_at?: string | null
+  appointment_centre?: string | null
 }
 
 export default function AdminPage() {
@@ -124,6 +128,33 @@ export default function AdminPage() {
       }
 
       setActionMessage(`Case #${caseItem.id.substring(0, 8)} updated to ${newStatus}`)
+      loadCases(secret, filterStatus, searchQuery)
+    } catch (err: any) {
+      setActionError(err.message)
+    }
+  }
+
+  const handleHelpStatus = async (caseItem: CaseItem, helpStatus: string) => {
+    if (!helpStatus) return
+    setActionError(null)
+    setActionMessage(null)
+    try {
+      const res = await fetch("/api/admin/cases", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${secret}`,
+        },
+        body: JSON.stringify({
+          id: caseItem.id,
+          appointment_help_status: helpStatus,
+          expected_updated_at: caseItem.updated_at,
+          notes: `Appointment help status set to ${helpStatus}`,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to update appointment help")
+      setActionMessage(`Appointment help for #${caseItem.id.substring(0, 8)} set to ${helpStatus}`)
       loadCases(secret, filterStatus, searchQuery)
     } catch (err: any) {
       setActionError(err.message)
@@ -217,7 +248,7 @@ export default function AdminPage() {
                 {actionError}
               </p>
             )}
-            <Button type="submit" className="w-full h-12 font-semibold bg-blue-600 hover:bg-blue-500 text-white">
+            <Button type="submit" className="w-full">
               Authenticate
             </Button>
           </form>
@@ -244,17 +275,17 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              size="sm"
+              size="xs"
               onClick={() => loadCases(secret, filterStatus, searchQuery)}
               disabled={loading}
-              className="border-slate-800 bg-slate-900 hover:bg-slate-800 text-slate-200"
+              className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-              Refresh Cases
+              <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
+              <span>Refresh Cases</span>
             </Button>
             <Button
               variant="ghost"
-              size="sm"
+              size="xs"
               onClick={() => {
                 sessionStorage.removeItem("ez_admin_secret")
                 setIsAuthenticated(false)
@@ -284,20 +315,23 @@ export default function AdminPage() {
         <div className="flex flex-col md:flex-row gap-4 justify-between bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
           <div className="flex flex-wrap gap-2">
             {["all", "draft", "submitted", "reviewing", "awaiting_documents", "ready", "completed", "rejected", "cancelled"].map((st) => (
-              <button
+              <Button
                 key={st}
+                type="button"
+                size="xs"
+                variant={filterStatus === st ? "default" : "outline"}
                 onClick={() => {
                   setFilterStatus(st)
                   loadCases(secret, st, searchQuery)
                 }}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                className={
                   filterStatus === st
-                    ? "bg-blue-600 text-white"
-                    : "bg-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-                }`}
+                    ? "capitalize"
+                    : "capitalize border-slate-800 bg-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+                }
               >
                 {st}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -315,9 +349,9 @@ export default function AdminPage() {
               />
             </div>
             <Button
-              size="sm"
+              size="xs"
               onClick={() => loadCases(secret, filterStatus, searchQuery)}
-              className="bg-slate-800 hover:bg-slate-700 text-white"
+              className="bg-slate-800 text-white hover:bg-slate-700"
             >
               Search
             </Button>
@@ -427,45 +461,64 @@ export default function AdminPage() {
                         >
                           {c.application_status}
                         </span>
+                        {c.appointment_choice ? (
+                          <p className="mt-2 text-[10px] text-slate-400">Choice: {c.appointment_choice}</p>
+                        ) : null}
+                        <label className="mt-2 block text-[10px] text-slate-400">
+                          Help status
+                          <select
+                            value={c.appointment_help_status || ""}
+                            onChange={(event) => handleHelpStatus(c, event.target.value)}
+                            className="mt-1 block w-full rounded border border-slate-700 bg-slate-900 px-1 py-1 text-[11px] text-slate-200"
+                          >
+                            <option value="">—</option>
+                            <option value="requested">requested</option>
+                            <option value="contacted">contacted</option>
+                            <option value="booked">booked</option>
+                            <option value="cancelled">cancelled</option>
+                          </select>
+                        </label>
                       </td>
 
                       <td className="p-4 pr-6 text-right">
                         <div className="flex items-center justify-end gap-1.5 flex-wrap">
                           {c.application_status === "submitted" && (
                             <Button
-                              size="sm"
+                              size="xs"
                               onClick={() => handleStatusUpdate(c, "reviewing")}
-                              className="h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
                             >
                               Review
                             </Button>
                           )}
 
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="outline"
                             onClick={() => handleTriggerEmail(c.id, "documents.requested")}
-                            className="h-8 text-xs border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-300"
+                            className="border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800"
                           >
-                            <Mail className="w-3 h-3 mr-1" /> Request Docs
+                            <Mail className="size-3" aria-hidden="true" />
+                            <span>Request Docs</span>
                           </Button>
 
                           <Button
-                            size="sm"
+                            size="xs"
                             variant="outline"
                             onClick={() => handleGenerateDocuments(c.id)}
-                            className="h-8 text-xs border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-300"
+                            className="border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800"
                           >
-                            <FileCode className="w-3 h-3 mr-1" /> Generate
+                            <FileCode className="size-3" aria-hidden="true" />
+                            <span>Generate</span>
                           </Button>
 
                           {c.application_status !== "ready" && (
                             <Button
-                              size="sm"
+                              size="xs"
                               onClick={() => handleTriggerEmail(c.id, "documents.ready")}
-                              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
+                              className="bg-emerald-600 text-white hover:bg-emerald-500"
                             >
-                              <CheckCircle2 className="w-3 h-3 mr-1" /> Mark Ready
+                              <CheckCircle2 className="size-3" aria-hidden="true" />
+                              <span>Mark Ready</span>
                             </Button>
                           )}
 

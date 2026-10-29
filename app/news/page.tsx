@@ -1,7 +1,8 @@
-import { getAllPosts, categories } from "@/lib/blog"
+import { getAllPosts } from "@/lib/blog"
 import { BlogHero } from "@/components/blog/blog-hero"
 import { CategoryFilter } from "@/components/blog/category-filter"
 import { BlogCard } from "@/components/blog/blog-card"
+import { LangText } from "@/components/lang-text"
 import { Msg } from "@/components/msg"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -50,31 +51,33 @@ export default async function NewsPage({
   const params = await searchParams
   const selectedCategory = params.category || "All"
   const allPosts = await getAllPosts()
+  const categories = ["All", ...new Set(allPosts.map((post) => post.category))]
   const filteredPosts =
     selectedCategory === "All" ? allPosts : allPosts.filter((post) => post.category === selectedCategory)
 
   return (
     <div className="min-h-screen flex flex-col">
       <SiteHeader forceBackground={true} />
-      <main className="flex-1">
-        <BlogHero />
-        <section className="py-12 md:py-16">
-          <div className="container mx-auto px-4 max-w-7xl">
-            <CategoryFilter categories={categories} selectedCategory={selectedCategory} />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-              {filteredPosts.map((post) => (
-                <BlogCard key={post.slug} post={post} />
-              ))}
-            </div>
-
-            {filteredPosts.length === 0 && (
-              <div className="text-center py-16">
-                <p className="text-muted-foreground text-lg"><Msg id="news.empty" /></p>
+      <main id="main-content" className="ez-journal flex-1">
+        <div className="ez-journal-shell">
+          <BlogHero />
+          <CategoryFilter categories={categories} selectedCategory={selectedCategory} />
+          {filteredPosts[0] && <BlogCard post={filteredPosts[0]} featured />}
+          {filteredPosts.length > 1 && (
+            <section className="ez-journal-library" aria-labelledby="journal-library-title">
+              <div data-site-reveal="rise" className="ez-journal-section-title">
+                <h2 id="journal-library-title"><LangText en="More for your journey" ar="المزيد لرحلتك" /></h2>
+                <span><LangText en={`${filteredPosts.length - 1} articles`} ar={`${filteredPosts.length - 1} مقالات`} /></span>
               </div>
-            )}
-          </div>
-        </section>
+              <div data-site-stagger className="ez-journal-grid">
+                {filteredPosts.slice(1).map((post) => <BlogCard key={post.slug} post={post} />)}
+              </div>
+            </section>
+          )}
+          {filteredPosts.length === 0 && (
+            <div className="text-center py-16"><p className="text-muted-foreground text-lg"><Msg id="news.empty" /></p></div>
+          )}
+        </div>
       </main>
       <Footer />
     </div>

@@ -1,5 +1,6 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import React, { useState } from "react"
 import { LocaleLink } from "@/components/locale-link"
 import { Printer, Download, ArrowLeft, CheckCircle2, ShieldAlert, Info } from "lucide-react"
@@ -32,37 +33,23 @@ export function DossierViewerClient({
     }, 150)
   }
 
-  const handleDownloadHtml = () => {
-    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.href = url
-    link.download = `EZvisa_Consular_Dossier_${destinationCountry.replace(/\s+/g, "_")}_${token.substring(0, 8).toUpperCase()}.html`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
-
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-slate-950">
+    <div className="ez-dossier-page min-h-screen">
       {/* Top Floating Control Toolbar (Hidden in print) */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-slate-900/95 border-b border-slate-200 dark:border-slate-800 shadow-sm print:hidden">
+      <header className="ez-dossier-toolbar sticky top-0 z-50 border-b border-border bg-white print:hidden">
         <div className="container max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <Button asChild variant="ghost" size="sm" className="h-9 px-2.5 text-xs text-muted-foreground hover:text-foreground">
               <LocaleLink href={`/track/${token}`}>
                 <ArrowLeft className="w-4 h-4 mr-1.5" />
-                Case Dashboard
+                Your application
               </LocaleLink>
             </Button>
             <div className="h-4 w-px bg-border hidden sm:block" />
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="text-sm font-semibold text-foreground">Consular Dossier Pack</h1>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 font-semibold border border-emerald-500/20">
-                  Ready to Submit
-                </span>
+                <h1 className="text-lg font-medium text-foreground">Your visa file</h1>
+
               </div>
               <p className="text-xs text-muted-foreground">
                 {applicantName} &bull; {destinationCountry} Schengen
@@ -70,7 +57,7 @@ export function DossierViewerClient({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <Button
               onClick={handlePrint}
               disabled={isPrinting}
@@ -81,18 +68,16 @@ export function DossierViewerClient({
               {isPrinting ? "Preparing Print..." : "Print Dossier (A4)"}
             </Button>
 
-            <Button
-              onClick={handleDownloadHtml}
-              variant="outline"
-              size="sm"
-              className="text-xs font-medium"
-            >
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Save HTML
+            <Button asChild variant="outline" size="sm" className="text-xs font-medium">
+              <a href={`/api/download-document?token=${encodeURIComponent(token)}&format=html`}>
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Save HTML
+              </a>
             </Button>
 
             <Button asChild variant="outline" size="sm" className="text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-400">
               <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
+                <WhatsAppIcon className="size-4" />
                 <LangText en={translations.en.support.whatsApp} ar={translations.ar.support.whatsApp} />
               </a>
             </Button>
@@ -117,7 +102,7 @@ export function DossierViewerClient({
 
       {/* Main Dossier Content Container */}
       <main className="container max-w-4xl mx-auto py-8 px-4 print:p-0 print:m-0 print:max-w-none">
-        <div className="bg-white text-slate-900 shadow-xl rounded-xl border border-slate-200/80 p-8 sm:p-12 print:shadow-none print:border-none print:p-0 print:rounded-none">
+        <div className="ez-dossier-paper bg-white text-slate-900 border border-border p-4 sm:p-12 print:border-none print:p-0">
           <div 
             className="dossier-rendered-content"
             dangerouslySetInnerHTML={{ __html: htmlContent }} 

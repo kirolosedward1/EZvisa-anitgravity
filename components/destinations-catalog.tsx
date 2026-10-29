@@ -1,239 +1,40 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Search, ArrowRight, Compass, HelpCircle } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { destinations, Destination } from "@/lib/destinations"
+import { useState } from "react"
+import { Search, ArrowRight } from "lucide-react"
+import { destinations, type Destination } from "@/lib/destinations"
 import { destinationNameAr } from "@/lib/destination-names-ar"
-import { motion, AnimatePresence } from "framer-motion"
 import { LocaleLink } from "@/components/locale-link"
 import { Image } from "@/components/image"
-import { LangText } from "@/components/lang-text"
 import { useSiteLocale } from "@/components/locale-provider"
 import { CountryFlag } from "@/components/country-flag"
 import { SCHENGEN_META } from "@/lib/countries"
+import { formatAedLabel } from "@/lib/currency"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
-type TabType = "all" | "schengen" | "non-schengen"
-
-/** Photo card: the whole card opens the destination page; "Apply" goes straight to the wizard. */
-/** `compact` (narrow five-across rows) drops the Type column so Ready in and Fee keep their room. */
 export function DestinationCard({ country, compact = false }: { country: Destination; compact?: boolean }) {
   const arabic = useSiteLocale() === "ar"
-  const name = country.name
-  const nameAr = destinationNameAr(country.slug) || name
-  const allSpecs = [
-    { label: "Type", ar: "النوع", value: country.region === "Schengen" ? "Schengen" : country.visaType, valueAr: country.region === "Schengen" ? "شنغن" : country.visaType },
-    { label: "Ready in", ar: "جاهز خلال", value: "1–2 days", valueAr: "\u20661–2\u2069 يوم" },
-    { label: "Fee", ar: "الرسوم", value: `${PRICE_AED} AED`, valueAr: `${PRICE_AED} درهم` },
-  ]
-  const specs = compact ? allSpecs.slice(1) : allSpecs
-  return (
-    <div className="photo-card group relative aspect-[3/4] overflow-hidden rounded-[1.75rem] bg-foreground shadow-md ring-1 ring-border/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/15 focus-within:ring-2 focus-within:ring-ring">
-      <Image
-        src={country.image}
-        alt=""
-        fill
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-      />
-      {/* Photo stays bright at the top; text sits on a deep gradient at the bottom. */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1F] via-[#0A0F1F]/55 via-45% to-transparent" />
-      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#0A0F1F]/35 to-transparent" />
-
-      <LocaleLink href={`/destinations/${country.slug}`} className="absolute inset-0 z-10 rounded-[1.75rem] focus-visible:outline-none" aria-label={arabic ? `متطلبات تأشيرة ${nameAr} وكيفية التقديم` : `${name} visa: requirements and how to apply`} />
-
-      <span className="pointer-events-none absolute end-4 top-4 z-20 flex size-9 items-center justify-center rounded-full bg-[#0A0F1F]/30 text-primary-foreground ring-1 ring-primary-foreground/30 transition-colors duration-300 group-hover:bg-primary-foreground group-hover:text-foreground">
-        <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-      </span>
-
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex flex-col items-center gap-4 p-5 text-center text-primary-foreground">
-        <CountryFlag iso={SCHENGEN_META[name]?.iso} title={arabic ? nameAr : name} className="size-7 ring-2 ring-primary-foreground/80 shadow-md" />
-        <h3>
-          <LangText en={name} ar={nameAr} />
-        </h3>
-
-        <dl className={`grid w-full border-y border-primary-foreground/15 py-3 ${compact ? "grid-cols-2" : "grid-cols-3"}`}>
-          {specs.map((spec) => (
-            <div key={spec.label} className="flex flex-col items-center gap-1">
-              <dt className="text-[10px] font-medium uppercase tracking-[0.12em] text-primary-foreground/55">
-                <LangText en={spec.label} ar={spec.ar} />
-              </dt>
-              <dd className="text-xs font-semibold tabular-nums">
-                {arabic && spec.label === "Ready in" ? (
-                  <>
-                    <bdi dir="ltr">1–2</bdi> يوم
-                  </>
-                ) : (
-                  <LangText en={spec.value} ar={spec.valueAr} />
-                )}
-              </dd>
-            </div>
-          ))}
-        </dl>
-
-        {/* Desktop: the button opens on hover (or keyboard focus). Touch screens have no hover, so it always shows there. */}
-        <div className="grid w-full transition-[grid-template-rows,opacity,margin] duration-300 ease-out lg:-mt-4 lg:grid-rows-[0fr] lg:opacity-0 lg:group-hover:mt-0 lg:group-hover:grid-rows-[1fr] lg:group-hover:opacity-100 lg:group-focus-within:mt-0 lg:group-focus-within:grid-rows-[1fr] lg:group-focus-within:opacity-100">
-          <div className="min-h-0 overflow-hidden">
-            <LocaleLink
-              href={`/apply?to=${encodeURIComponent(name)}`}
-              className="pointer-events-auto relative z-30 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-primary-foreground text-sm font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
-              aria-label={arabic ? `قدّم على تأشيرة ${nameAr}` : `Apply for a ${name} visa`}
-            >
-              <LangText en={`Apply for ${name}`} ar={`قدّم على تأشيرة ${nameAr}`} />
-              <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
-            </LocaleLink>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+  const name = arabic ? destinationNameAr(country.slug) || country.name : country.name
+  return <article data-site-reveal="rise" className={`ez-catalog-card${compact ? " ez-catalog-compact" : ""}`}>
+    <LocaleLink href={`/destinations/${country.slug}`} className="ez-catalog-image" aria-label={arabic ? `متطلبات تأشيرة ${name}` : `${name} visa requirements`}>
+      <Image src={country.image} alt="" fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="object-cover" />
+      <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={name} className="size-9" />
+    </LocaleLink>
+    <div className="ez-catalog-heading"><h3><LocaleLink href={`/destinations/${country.slug}`}>{name}</LocaleLink></h3></div>
+    <p>{arabic ? "مستنداتك، وخطوات التقديم، وما تتوقعه." : "Your documents, application steps and what to expect."}</p>
+    <div className="ez-catalog-bottom"><span>{formatAedLabel(PRICE_AED, arabic ? "ar" : "en")} <small>{arabic ? "لتجهيز الملف" : "file preparation"}</small></span><LocaleLink href={`/apply?to=${encodeURIComponent(country.name)}`} aria-label={arabic ? `قدّم على تأشيرة ${name}` : `Apply for ${name}`}>{arabic ? "ابدأ الطلب" : "Apply"}<ArrowRight size={15} className="rtl:rotate-180" aria-hidden="true" /></LocaleLink></div>
+  </article>
 }
 
 export function DestinationsCatalog() {
   const arabic = useSiteLocale() === "ar"
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeTab, setActiveTab] = useState<TabType>("all")
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" })
-  }, [])
-
-  // Filter destinations based on search query and active tab
-  const filteredDestinations = destinations.filter((dest) => {
-    const query = searchQuery.trim()
-    const arabicName = destinationNameAr(dest.slug)
-    const matchesSearch =
-      dest.name.toLowerCase().includes(query.toLowerCase()) ||
-      (arabicName !== "" && arabicName.includes(query))
-    
-    if (activeTab === "schengen") {
-      return matchesSearch && dest.region === "Schengen"
-    } else if (activeTab === "non-schengen") {
-      return matchesSearch && dest.region !== "Schengen"
-    }
-    
-    return matchesSearch
-  })
-
-  return (
-    <div className="w-full">
-      {/* Search and Tabs Control Panel */}
-      <div className="bg-background/80 border-b border-border/40 py-6 mb-10">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Real-time Search */}
-            <div className="relative w-full md:max-w-sm">
-              <Search className="absolute start-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder={arabic ? "ابحث عن دولة" : "Search country..."}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="ps-11 pe-4 h-11 text-sm bg-muted/40 hover:bg-muted/60 focus:bg-background border-border/80 rounded-full transition-all focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            {/* Custom Sliding Tabs */}
-            <div className="flex items-center bg-muted/60 p-1.5 rounded-full border border-border/20 w-full md:w-auto overflow-x-auto select-none no-scrollbar">
-              {(
-                [
-                  { id: "all", en: "All Destinations", ar: "كل الوجهات" },
-                  { id: "schengen", en: "Schengen Zone", ar: "منطقة شنغن" },
-                  { id: "non-schengen", en: "Non-Schengen", ar: "خارج شنغن" },
-                ] as const
-              ).map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`relative px-5 py-2 text-xs font-semibold rounded-full transition-colors whitespace-nowrap outline-none cursor-pointer ${
-                    activeTab === tab.id
-                      ? "text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="activeTabGlow"
-                      className="absolute inset-0 bg-primary rounded-full shadow-sm"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10"><LangText en={tab.en} ar={tab.ar} /></span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Grid View */}
-      <section className="pb-24">
-        <div className="container mx-auto px-6 max-w-6xl">
-          <AnimatePresence>
-            {filteredDestinations.length > 0 ? (
-              <motion.div
-                initial={false}
-                className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
-              >
-                {filteredDestinations.map((country) => (
-                  <DestinationCard key={country.id} country={country} />
-                ))}
-              </motion.div>
-            ) : activeTab === "non-schengen" ? (
-              // Glassmorphic Coming Soon Block
-              <motion.div
-                key="coming-soon"
-                initial={false}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="max-w-2xl mx-auto text-center py-16 px-6 border border-border/40 rounded-3xl"
-              >
-                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 text-primary">
-                  <Compass className="w-8 h-8 animate-pulse" />
-                </div>
-                <h3 className="text-2xl font-semibold text-foreground mb-3">
-                  <LangText en="Non-Schengen Visa Support" ar="دعم تأشيرات خارج شنغن" />
-                </h3>
-                <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto mb-8">
-                  <LangText
-                    en="We're currently expanding our platform to support visa applications for the United States, United Kingdom, Canada, Australia, and more."
-                    ar="نوسّع المنصة حاليًا لدعم طلبات التأشيرة إلى الولايات المتحدة والمملكة المتحدة وكندا وأستراليا وغيرها."
-                  />
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <LocaleLink href="/apply" className="px-6 py-2.5 bg-primary text-primary-foreground font-semibold rounded-full hover:bg-primary/90 transition-colors text-xs">
-                    <LangText en="Start Schengen Application" ar="ابدأ طلب شنغن" />
-                  </LocaleLink>
-                  <LocaleLink href="/contact" className="px-6 py-2.5 bg-muted-foreground/10 hover:bg-muted-foreground/15 text-foreground font-semibold rounded-full transition-colors text-xs border border-border/20">
-                    <LangText en="Get Notified / Support" ar="أبلغني أو تواصل معنا" />
-                  </LocaleLink>
-                </div>
-              </motion.div>
-            ) : (
-              // Empty State
-              <motion.div
-                key="empty-state"
-                initial={false}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="text-center py-20"
-              >
-                <HelpCircle className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
-                <p className="text-lg font-medium text-muted-foreground">
-                  <LangText en={`No destinations found matching "${searchQuery}"`} ar={`لا توجد وجهة تطابق «${searchQuery}»`} />
-                </p>
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="mt-3 text-sm font-semibold text-primary hover:underline cursor-pointer"
-                >
-                  <LangText en="Clear Search Filter" ar="امسح البحث" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </section>
+  const [query, setQuery] = useState("")
+  const filtered = destinations.filter(country => country.name.toLowerCase().includes(query.trim().toLowerCase()) || destinationNameAr(country.slug).includes(query.trim()))
+  return <section className="ez-destination-catalog">
+    <div className="ez-catalog-toolbar">
+      <p aria-live="polite">{arabic ? `${filtered.length} وجهة في شنغن` : `${filtered.length} Schengen ${filtered.length === 1 ? "destination" : "destinations"}`}</p>
+      <div className="ez-catalog-search"><Search size={19} aria-hidden="true" /><label htmlFor="destination-search" className="sr-only">{arabic ? "ابحث عن دولة" : "Search destinations"}</label><input id="destination-search" type="search" placeholder={arabic ? "إلى أين ترغب بالسفر؟" : "Where would you like to go?"} value={query} onChange={event => setQuery(event.target.value)} /></div>
     </div>
-  )
+    {filtered.length ? <div data-site-stagger className="ez-catalog-grid">{filtered.map(country => <DestinationCard key={country.id} country={country} />)}</div> : <div className="ez-catalog-empty"><h2>{arabic ? "لم نجد هذه الوجهة" : "We couldn’t find that destination"}</h2><p>{arabic ? "جرّب اسم دولة أخرى أو استعرض كل الوجهات." : "Try another country name or browse all destinations."}</p><button onClick={() => setQuery("")}>{arabic ? "امسح البحث" : "Clear search"}</button></div>}
+  </section>
 }

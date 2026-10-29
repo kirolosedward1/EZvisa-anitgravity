@@ -1,3 +1,4 @@
+import { LocaleLink } from "@/components/locale-link"
 import { headers } from "next/headers"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -16,11 +17,11 @@ export async function LegalDoc({ doc, titleEn, titleAr }: { doc: string; titleEn
       <SiteHeader forceBackground={true} />
       <div className="min-h-screen bg-background">
         {/* LEGAL DRAFT – pending Legal Auditor */}
-        <article className="container mx-auto max-w-3xl px-6 pb-16 pt-32">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[#0436DC]">{ar ? "قانوني" : "Legal"}</p>
+        <div className="ez-legal"><nav aria-label={ar ? "السياسات" : "Policies"}>{[["terms-of-service", "Terms of service", "شروط الخدمة"], ["privacy-policy", "Privacy policy", "سياسة الخصوصية"], ["refund-policy", "Refund policy", "سياسة الاسترداد"], ["cookie-policy", "Cookie policy", "سياسة ملفات تعريف الارتباط"], ["disclaimer", "Disclaimer", "إخلاء المسؤولية"]].map(([key, en, arabic]) => <LocaleLink key={key} href={`/${key}`} aria-current={doc === key ? "page" : undefined}>{ar ? arabic : en}</LocaleLink>)}</nav><article>
+
           <h1 className="mt-2 text-3xl font-semibold text-[#0A0F1F]">{ar ? titleAr : titleEn}</h1>
           <div lang={ar ? "ar" : "en"}><LegalMarkdown source={LEGAL_MD[`${doc}.${ar ? "ar" : "en"}`]} /></div>
-        </article>
+        </article></div>
       </div>
       <Footer />
     </>

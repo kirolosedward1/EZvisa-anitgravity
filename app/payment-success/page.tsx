@@ -1,9 +1,10 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { LocaleLink } from "@/components/locale-link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Check, ClipboardList, Clock, FileText, Loader2, MessageCircle, RefreshCw, Upload, X } from "lucide-react"
+import { ArrowRight, Check, ClipboardList, Clock, FileText, Loader2, RefreshCw, Upload, X } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
 import { PaymentWaitBang, PaymentWaitRing } from "@/components/payment/payment-mark"
@@ -163,9 +164,9 @@ function PaymentSuccessContent() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background">
       <SiteHeader forceBackground={true} />
-      <main id="main-content" className="flex-1 px-4 pb-16 pt-28 md:pt-32">
+      <main id="main-content" className="ez-customer-page ez-payment-page flex-1 px-4 pb-16 pt-28 md:pt-32">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-          <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-8" aria-live="polite">
+          <section className="ez-payment-result border border-border bg-card p-6 sm:p-8" aria-live="polite">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
               <div className="flex size-12 shrink-0 items-center justify-center" role="status">{statusIcon}</div>
               <div className="flex min-w-0 flex-col gap-2">
@@ -178,16 +179,16 @@ function PaymentSuccessContent() {
                   {outcome === "missing" && <LangText en="We couldn't verify this payment" ar="تعذّر التحقق من هذه الدفعة" />}
                 </h1>
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  {outcome === "checking" && <LangText en="We're checking this payment with Ziina. This takes a few seconds." ar={"نتحقق من هذا الدفع مع ⁨Ziina⁩. يستغرق ذلك بضع ثوانٍ."} />}
+                  {outcome === "checking" && <LangText en="We're checking this payment with the payment gateway. This takes a few seconds." ar={"نتحقق من هذا الدفع مع بوابة الدفع. يستغرق ذلك بضع ثوانٍ."} />}
                   {outcome === "paid" && <LangText en="Your visa file is open. A receipt is on its way to your email." ar="ملف التأشيرة مفتوح الآن. الإيصال في طريقه إلى بريدك." />}
                   {outcome === "failed" && <LangText en="You weren't charged. You can retry the payment whenever you're ready." ar="لم يُخصم أي مبلغ. يمكنك إعادة محاولة الدفع متى شئت." />}
-                  {outcome === "pending" && <LangText en="If you completed payment, it can take a minute to show. Check again, and we'll ask Ziina for the latest status." ar={"إذا دفعت فقد يستغرق ظهوره دقيقة. تحقق مجددًا وسنسأل ⁨Ziina⁩ عن آخر حالة."} />}
+                  {outcome === "pending" && <LangText en="If you completed payment, it can take a minute to show. Check again, and we'll ask the payment gateway for the latest status." ar={"إذا دفعت فقد يستغرق ظهوره دقيقة. تحقق مجددًا وسنسأل بوابة الدفع عن آخر حالة."} />}
                   {outcome === "cancelled" && <LangText en="There is nothing left to confirm for this application." ar="لا يوجد ما يحتاج إلى تأكيد لهذا الطلب." />}
                   {outcome === "missing" && <LangText en="This return link doesn't include an application we can check. If you paid, open your dashboard or contact us on WhatsApp." ar="لا يتضمن رابط العودة هذا طلبًا يمكننا التحقق منه. إذا كنت قد دفعت، افتح لوحتك أو تواصل معنا عبر واتساب." />}
                 </p>
                 {outcome === "checking" && confirmingSlow && (
                   <p className="text-sm font-medium text-foreground">
-                    <LangText en="Still confirming with Ziina…" ar={"ما زلنا نؤكد الدفع مع ⁨Ziina⁩…"} />
+                    <LangText en="Still confirming with the payment gateway…" ar={"ما زلنا نؤكد الدفع مع بوابة الدفع…"} />
                   </p>
                 )}
                 {reference && (
@@ -247,13 +248,13 @@ function PaymentSuccessContent() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               {outcome === "paid" && (
                 <>
-                  <Button asChild size="lg" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                  <Button asChild size="lg">
                     <LocaleLink href={continueHref}>
                       <LangText en="Continue application" ar="أكمل الطلب" />
                       <ArrowRight className="size-4 rtl:rotate-180" aria-hidden="true" />
                     </LocaleLink>
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                  <Button asChild size="lg" variant="outline">
                     <LocaleLink href={uploadHref}>
                       <LangText en="Upload documents first" ar="ارفع المستندات أولًا" />
                     </LocaleLink>
@@ -262,16 +263,16 @@ function PaymentSuccessContent() {
               )}
               {outcome === "pending" && (
                 <>
-                  <Button type="button" size="lg" className="h-12 rounded-xl px-6 text-sm font-semibold" onClick={() => setAttempt((n) => n + 1)}>
+                  <Button type="button" size="lg" onClick={() => setAttempt((n) => n + 1)}>
                     <LangText en="Check again" ar="تحقق مجددًا" />
                   </Button>
-                  <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                  <Button asChild size="lg" variant="outline">
                     <LocaleLink href={applicationHref}><LangText en="Go to my application" ar="الانتقال إلى طلبي" /></LocaleLink>
                   </Button>
                 </>
               )}
               {outcome === "failed" && (
-                <Button asChild size="lg" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                <Button asChild size="lg">
                   <LocaleLink href={localePath("/apply?step=payment&retry=true")}>
                     <RefreshCw className="size-4" aria-hidden="true" />
                     <LangText en="Retry payment" ar="إعادة محاولة الدفع" />
@@ -279,7 +280,7 @@ function PaymentSuccessContent() {
                 </Button>
               )}
               {(outcome === "cancelled" || outcome === "missing") && (
-                <Button asChild size="lg" variant="outline" className="h-12 rounded-xl px-6 text-sm font-semibold">
+                <Button asChild size="lg" variant="outline">
                   <LocaleLink href={localePath("/dashboard")}><LangText en="Go to my dashboard" ar="الانتقال إلى لوحتي" /></LocaleLink>
                 </Button>
               )}
@@ -288,7 +289,7 @@ function PaymentSuccessContent() {
 
           <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
             <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-medium text-[#1A7F37] hover:underline">
-              <MessageCircle className="size-4" aria-hidden="true" />
+              <WhatsAppIcon className="size-4" />
               <LangText en="Questions? Message us on WhatsApp" ar="لديك سؤال؟ راسلنا على واتساب" />
             </a>
             <LocaleLink href={localePath("/dashboard")} className="font-medium text-foreground hover:underline">

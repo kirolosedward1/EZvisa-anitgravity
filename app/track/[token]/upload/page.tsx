@@ -74,7 +74,7 @@ export default function UploadDocumentsPage() {
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <main className="min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
+      <main id="main-content" className="ez-customer-page min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
           <div className="flex items-center justify-between gap-4">
             <LocaleLink href={`/track/${token}`} className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">

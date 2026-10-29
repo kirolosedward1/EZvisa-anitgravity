@@ -1,129 +1,68 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { usePathname, useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { X, Clock } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
-import { Msg } from "@/components/msg"
-import { useMessage } from "@/components/use-message"
-import { useLocalizedHref } from "@/components/locale-link"
+import { usePathname } from "next/navigation"
+import { ArrowRight, BookmarkCheck, X } from "lucide-react"
+import { LocaleLink } from "@/components/locale-link"
+import { useSiteLocale } from "@/components/locale-provider"
+import { CountryFlag } from "@/components/country-flag"
+import { SCHENGEN_META, countryNameAr } from "@/lib/countries"
+import { WIZARD_STORAGE_KEY, WIZARD_STEP_STORAGE_KEY, WIZARD_DRAFT_EVENT, RESUME_DISMISSED_KEY } from "@/lib/wizard-storage"
+import { parseResumeDraft, showResumeOnPath, type ResumeDraft } from "@/lib/wizard-resume"
 
-export function ContinueApplicationNotification() {
-  const [isVisible, setIsVisible] = useState(false)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const pathname = usePathname()
-  const router = useRouter()
-  const localize = useLocalizedHref()
-  const dismissLabel = useMessage("continue.dismiss")
+/** Dismissible saved-application entry point on the homepage and other public pages. */
+export function ContinueApplicationNotification({ inline = false }: { inline?: boolean }) {
+  const pathname = usePathname() || "/"
+  const arabic = useSiteLocale() === "ar"
+  const [draft, setDraft] = useState<ResumeDraft | null>(null)
+  const [dismissed, setDismissed] = useState(false)
+  const [cookieOpen, setCookieOpen] = useState(false)
+  const t = (en: string, ar: string) => arabic ? ar : en
 
   useEffect(() => {
-    // Don't show on the wizard pages themselves
-    const path = (pathname ?? "").replace(/^\/ar(?=\/|$)/, "") || "/"
-    if (path.startsWith("/apply") || path.startsWith("/payment-")) {
-      return
-    }
-
-    // Check if user has incomplete application
-    const checkIncompleteApplication = () => {
+    const sync = () => {
       try {
-        const wizardData = localStorage.getItem(WIZARD_STORAGE_KEY)
-        const dismissedUntil = localStorage.getItem("notification-dismissed-until")
-        
-        if (!wizardData) {
-          return false
-        }
-
-        const data = JSON.parse(wizardData)
-        
-        // Check if dismissed recently (within 24 hours)
-        if (dismissedUntil) {
-          const dismissTime = parseInt(dismissedUntil)
-          const now = Date.now()
-          if (now < dismissTime) {
-            return false
-          }
-        }
-
-        // A paid application clears the draft (lib/wizard-storage), so any draft left here is unfinished.
-        return Boolean(data?.firstName || data?.nationality || data?.destination)
-      } catch (error) {
-        console.error("Error checking incomplete application:", error)
-        return false
-      }
+        setDraft(parseResumeDraft(localStorage.getItem(WIZARD_STORAGE_KEY), localStorage.getItem(WIZARD_STEP_STORAGE_KEY)))
+        setDismissed(sessionStorage.getItem(RESUME_DISMISSED_KEY) === "1")
+      } catch { setDraft(null) }
     }
-
-    // Show notification after 5 seconds delay
-    const timer = setTimeout(() => {
-      if (checkIncompleteApplication()) {
-        setIsVisible(true)
-        setTimeout(() => setIsAnimating(true), 50)
-      }
-    }, 5000)
-
-    return () => clearTimeout(timer)
+    sync()
+    window.addEventListener("storage", sync)
+    window.addEventListener("pageshow", sync)
+    window.addEventListener(WIZARD_DRAFT_EVENT, sync)
+    document.addEventListener("visibilitychange", sync)
+    return () => {
+      window.removeEventListener("storage", sync)
+      window.removeEventListener("pageshow", sync)
+      window.removeEventListener(WIZARD_DRAFT_EVENT, sync)
+      document.removeEventListener("visibilitychange", sync)
+    }
   }, [pathname])
 
-  const handleDismiss = () => {
-    setIsAnimating(false)
-    setTimeout(() => {
-      setIsVisible(false)
-      // Dismiss for 24 hours
-      const dismissUntil = Date.now() + 24 * 60 * 60 * 1000
-      localStorage.setItem("notification-dismissed-until", dismissUntil.toString())
-    }, 300)
+  useEffect(() => {
+    if (inline || !showResumeOnPath(pathname)) return
+    const sync = () => setCookieOpen(Boolean(document.querySelector("[data-cookie-banner]")))
+    sync()
+    const observer = new MutationObserver(sync)
+    observer.observe(document.body, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [inline, pathname])
+
+  if (!draft || dismissed || (!inline && (!showResumeOnPath(pathname) || cookieOpen))) return null
+  const country = Object.prototype.hasOwnProperty.call(SCHENGEN_META, draft.destination) ? draft.destination : ""
+  const title = country ? (arabic ? `طلب تأشيرة ${countryNameAr(country)}` : `Your ${country} application`) : t("Your saved application", "طلبك المحفوظ")
+
+  function dismiss() {
+    setDismissed(true)
+    try { sessionStorage.setItem(RESUME_DISMISSED_KEY, "1") } catch { /* still hidden until navigation */ }
   }
 
-  const handleContinue = () => {
-    router.push(localize("/apply"))
-  }
-
-  if (!isVisible) {
-    return null
-  }
-
-  return (
-    <div
-      className={cn(
-        "fixed bottom-4 left-4 z-50 max-w-sm transition-all duration-300 ease-out",
-        isAnimating ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-      )}
-    >
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-5 relative">
-        {/* Close button */}
-        <button
-          onClick={handleDismiss}
-          className="absolute top-3 right-3 text-gray-400 hover:text-gray-600 transition-colors"
-          aria-label={dismissLabel}
-        >
-          <X className="h-4 w-4" />
-        </button>
-
-        {/* Content */}
-        <div className="flex items-start gap-4 pr-6">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-            <Clock className="h-5 w-5 text-primary" />
-          </div>
-          
-          <div className="flex-1">
-            <h3 className="text-base font-semibold text-gray-900 mb-1">
-              <Msg id="continue.title" />
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              <Msg id="continue.body" />
-            </p>
-            
-            <Button
-              onClick={handleContinue}
-              size="sm"
-              className="w-full bg-primary hover:bg-primary/90 text-white"
-            >
-              <Msg id="continue.action" />
-            </Button>
-          </div>
-        </div>
-      </div>
+  return <section className={`ez-resume-box${inline ? " ez-resume-inline" : " ez-resume-floating"}`} aria-label={t("Continue your application", "متابعة طلبك")}>
+    <div className="ez-resume-heading">
+      {country ? <CountryFlag iso={SCHENGEN_META[country].iso} country={country} className="size-8" /> : <BookmarkCheck className="ez-resume-icon" aria-hidden="true" />}
+      <div><h2>{title}</h2><p>{t("Saved on this device. Pick up where you left off.", "محفوظ على هذا الجهاز. تابع من حيث توقفت.")}</p></div>
+      <button type="button" onClick={dismiss} className="ez-resume-dismiss" aria-label={t("Hide this reminder", "إخفاء هذا التذكير")}><X size={16} aria-hidden="true" /></button>
     </div>
-  )
+    <LocaleLink className="ez-resume-action" href={`/apply?resume=1&step=${draft.step}`}>{t("Continue application", "متابعة الطلب")}<ArrowRight size={17} className="rtl:rotate-180" aria-hidden="true" /></LocaleLink>
+  </section>
 }

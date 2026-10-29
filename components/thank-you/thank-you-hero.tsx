@@ -1,160 +1,40 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
-import { CheckCircle2, Mail } from "lucide-react"
+import { Mail } from "lucide-react"
+import { Globi } from "@/components/globi/globi"
 import { useSiteLocale } from "@/components/locale-provider"
 import { customerText } from "@/lib/translations/customer"
 
-interface ApplicationData {
-  firstName: string
-  lastName: string
-  email: string
-  orderId?: string
-}
-
 interface ThankYouHeroProps {
-  applicationData: ApplicationData
+  applicationData: { firstName: string; lastName: string; email: string; orderId?: string }
 }
 
 export function ThankYouHero({ applicationData }: ThankYouHeroProps) {
   const locale = useSiteLocale()
   const arabic = locale === "ar"
-  const [showConfetti, setShowConfetti] = useState(false)
-  const [emailSent, setEmailSent] = useState(false)
-
-  useEffect(() => {
-    // Trigger confetti on mount
-    setShowConfetti(true)
-    
-    // Simulate email check
-    setTimeout(() => {
-      setEmailSent(true)
-    }, 1500)
-
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" })
-  }, [])
 
   return (
-    <section className="relative py-16 md:py-24 overflow-hidden">
-      {/* Decorative Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/5 rounded-full" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full" />
-      </div>
-
-      <div className="container mx-auto px-4 max-w-4xl relative">
-        <div className="text-center">
-          {/* Success Icon with Animation */}
-          <motion.div
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ 
-              type: "spring", 
-              stiffness: 260, 
-              damping: 20,
-              duration: 0.6 
-            }}
-            className="mb-8 flex justify-center"
-          >
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                <CheckCircle2 className="w-14 h-14 text-white stroke-[2.5]" />
-              </div>
-              {/* Animated ring */}
-              <motion.div
-                initial={{ scale: 1, opacity: 0.6 }}
-                animate={{ scale: 1.8, opacity: 0 }}
-                transition={{ 
-                  duration: 1.5,
-                  repeat: Number.POSITIVE_INFINITY,
-                  ease: "easeOut"
-                }}
-                className="absolute inset-0 rounded-full border-4 border-emerald-500"
-              />
-            </div>
-          </motion.div>
-
-          {/* Main Heading */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold mb-4 text-[#0A0F1F]">
-              {customerText(locale, "thanks.paid")} <span className="text-[#0436DC]">{customerText(locale, "thanks.paidAccent")}</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-6">
-              {arabic ? (
-                <>
-                  أهلًا بك، <bdi dir="ltr">{applicationData.firstName}</bdi>
-                </>
-              ) : (
-                customerText("en", "thanks.welcome", { name: applicationData.firstName })
-              )}
-            </p>
-            <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-              {customerText(locale, "thanks.received")}
-            </p>
-          </motion.div>
-
-          {/* Order/Reference Number */}
-          {applicationData.orderId && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="mt-8 inline-flex items-center gap-2 bg-primary/10 px-6 py-3 rounded-full"
-            >
-              <span className="text-sm font-medium text-primary">
-                {arabic ? (
-                  <>
-                    المرجع: <bdi dir="ltr">#{applicationData.orderId}</bdi>
-                  </>
-                ) : (
-                  customerText("en", "thanks.reference", { id: applicationData.orderId })
-                )}
-              </span>
-            </motion.div>
-          )}
-
-          {/* Email Confirmation Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: emailSent ? 1 : 0, scale: emailSent ? 1 : 0.9 }}
-            transition={{ delay: 0.7 }}
-            className="mt-6 inline-flex items-center gap-2 text-emerald-600"
-          >
-            <Mail className="w-5 h-5" />
-            <span className="text-sm font-medium">
-              {arabic ? (
-                <>
-                  أُرسلت رسالة التأكيد إلى <bdi dir="ltr">{applicationData.email}</bdi>
-                </>
-              ) : (
-                customerText("en", "thanks.email", { email: applicationData.email })
-              )}
-            </span>
-          </motion.div>
-
-          {/* Decorative Elements */}
-          <div className="mt-8 flex justify-center gap-2">
-            {[...Array(3)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ scale: 0 }}
-                animate={{ scale: [0, 1, 0] }}
-                transition={{
-                  duration: 2,
-                  repeat: Number.POSITIVE_INFINITY,
-                  delay: i * 0.2,
-                }}
-                className="w-2 h-2 bg-primary/40 rounded-full"
-              />
-            ))}
-          </div>
-        </div>
+    <section className="px-5 pb-12 pt-28 md:pt-32 text-center">
+      <Globi pose="celebrate" className="mx-auto mb-5 max-w-44" />
+      <div className="mx-auto max-w-2xl">
+        <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-foreground">
+          {customerText(locale, "thanks.paid")} <span className="text-primary">{customerText(locale, "thanks.paidAccent")}</span>
+        </h1>
+        <p className="mt-5 text-lg text-muted-foreground">
+          {arabic ? <>أهلًا بك، <bdi dir="ltr">{applicationData.firstName}</bdi></> : customerText("en", "thanks.welcome", { name: applicationData.firstName })}
+        </p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">{customerText(locale, "thanks.received")}</p>
+        {applicationData.orderId && (
+          <p className="mt-6 inline-flex rounded-xl bg-secondary px-5 py-3 text-sm font-medium text-primary">
+            {arabic ? <>المرجع: <bdi dir="ltr">#{applicationData.orderId}</bdi></> : customerText("en", "thanks.reference", { id: applicationData.orderId })}
+          </p>
+        )}
+        {applicationData.email && (
+          <p className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+            <Mail className="size-4 text-primary" aria-hidden="true" />
+            <span>{arabic ? "تحقّق من رسالة التأكيد في بريدك:" : "Check your inbox for the confirmation:"} <bdi dir="ltr">{applicationData.email}</bdi></span>
+          </p>
+        )}
       </div>
     </section>
   )

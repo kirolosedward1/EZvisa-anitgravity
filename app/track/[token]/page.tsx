@@ -5,6 +5,7 @@ import { Footer } from "@/components/footer"
 import { DashboardHeader } from "@/components/dashboard/dashboard-header"
 import { ApplicationView } from "@/components/dashboard/application-view"
 import { SupportApplication } from "@/components/support-application"
+import { LangText } from "@/components/lang-text"
 import { getApplicationByToken } from "@/lib/applications"
 import { isDemoToken, getDemoRelatedApplications } from "@/lib/demo-data"
 import { getStatusLabel } from "@/lib/application-status"
@@ -36,17 +37,16 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <main id="main-content" className="min-h-screen bg-secondary/40">
+      <main id="main-content" className="ez-customer-page min-h-screen bg-secondary/40">
         <SupportApplication id={mainApp.id || token} country={mainApp.destination_country} status={getStatusLabel(mainApp).label} step="overview" />
         <DashboardHeader
           title={`Your ${country} visa application`}
           description={
             <>
-              The same application is in the EZvisa app.{" "}
-              <LocaleLink href="/login?next=/dashboard" className="font-medium text-primary hover:underline">
-                Sign in
-              </LocaleLink>{" "}
-              to see all your applications in one place.
+              <LangText en="The same application is in the EZvisa app." ar="يمكنك متابعة الطلب نفسه في تطبيق EZvisa." />{" "}
+              <LocaleLink href="/dashboard" className="font-medium text-primary hover:underline">
+                <LangText en="View all your applications" ar="عرض جميع طلباتك" />
+              </LocaleLink>
             </>
           }
         />

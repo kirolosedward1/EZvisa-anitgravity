@@ -161,7 +161,7 @@ export function UploadChecklist({
   const percent = rows.length ? Math.round((received / rows.length) * 100) : 0
 
   return (
-    <section aria-label={customerText(locale, "docs.yours")} className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+    <section aria-label={customerText(locale, "docs.yours")} className="ez-document-panel">
       <div className="flex flex-col gap-3 px-5 pb-2 pt-5 sm:px-6">
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="panel-title text-foreground">{customerText(locale, "docs.yours")}</h2>

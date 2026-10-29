@@ -35,5 +35,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function VideosPage() {
-  return <VideosContent />
+  return (
+    <VideosContent>
+    </VideosContent>
+  )
 }

@@ -1,3 +1,4 @@
+import { TravelPhoto } from "@/components/travel-photo"
 import type { ReactNode } from "react"
 import { headers } from "next/headers"
 import { ltr } from "@/lib/bidi"
@@ -18,7 +19,7 @@ const STEPS = [
     },
   },
   {
-    when: { en: "Same day", ar: "في اليوم نفسه" },
+    when: { en: "When you’re ready", ar: "عندما تكون جاهزًا" },
     title: { en: "Finish your application", ar: "أكمل طلبك" },
     body: {
       en: "Add your travel dates, accommodation plans, passport and employment details. This takes about 10 minutes, and your answers are saved automatically.",
@@ -26,7 +27,7 @@ const STEPS = [
     },
   },
   {
-    when: { en: "Same day", ar: "في اليوم نفسه" },
+    when: { en: "When you’re ready", ar: "عندما تكون جاهزًا" },
     title: { en: "Upload your documents", ar: "ارفع مستنداتك" },
     body: {
       en: "Upload your passport, Emirates ID, residence visa, photo, bank statement, and salary certificate or NOC on the website or in the EZvisa app.",
@@ -45,16 +46,16 @@ const STEPS = [
     when: { en: "Your appointment", ar: "موعدك" },
     title: { en: "Submit at the visa centre", ar: "قدّم في مركز التأشيرات" },
     body: {
-      en: "Book an appointment with the visa centre for your destination (VFS Global, BLS International or TLScontact). On the day, you submit your file, pay the embassy fee and give your fingerprints.",
-      ar: `احجز موعدًا في مركز التأشيرات الخاص بوجهتك (${ltr("VFS Global")} أو ${ltr("BLS International")} أو ${ltr("TLScontact")}). وفي يوم الموعد تقدّم ملفك وتدفع رسوم السفارة وتسجّل بصماتك.`,
+      en: "Book an appointment with the visa centre for your destination (VFS Global, BLS International or TLScontact). Follow the centre’s instructions for payment, document submission and any required biometrics.",
+      ar: `احجز موعدًا في مركز التأشيرات الخاص بوجهتك (${ltr("VFS Global")} أو ${ltr("BLS International")} أو ${ltr("TLScontact")}). واتبع تعليمات المركز بشأن الدفع وتقديم المستندات والبصمات المطلوبة.`,
     },
   },
   {
     when: { en: "Usually 15 days", ar: "عادة 15 يومًا" },
     title: { en: "The embassy decides", ar: "السفارة تقرّر" },
     body: {
-      en: "Embassies usually decide within 15 calendar days. In busy periods this can take up to 45 days. The visa centre lets you know when your passport is ready to collect.",
-      ar: "تصدر السفارات قرارها عادة خلال 15 يومًا تقويميًا، وقد يمتد ذلك إلى 45 يومًا في فترات الذروة. ويبلغك مركز التأشيرات عندما يصبح جوازك جاهزًا للاستلام.",
+      en: "Embassies usually decide within 15 calendar days. Some applications can take up to 45 days if further examination is needed. The visa centre lets you know when your passport is ready to collect.",
+      ar: "تصدر السفارات قرارها عادة خلال 15 يومًا تقويميًا، وقد يمتد ذلك إلى 45 يومًا إذا استلزم الطلب دراسة إضافية. ويبلغك مركز التأشيرات عندما يصبح جوازك جاهزًا للاستلام.",
     },
   },
 ]
@@ -63,12 +64,10 @@ export async function AfterPaymentTimeline() {
   const arabic = (await headers()).get("x-ez-locale") === "ar"
   const pick = (copy: { en: ReactNode; ar: ReactNode }) => (arabic ? copy.ar : copy.en)
   return (
-    <section className="bg-secondary/50 py-20 md:py-28">
+    <section className="ez-timeline py-20 md:py-28">
       <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
         <div className="flex flex-col items-start gap-5 lg:sticky lg:top-32 lg:self-start">
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            {pick({ en: "After you pay", ar: "بعد الدفع" })}
-          </span>
+
           <h2 className="text-balance text-foreground">
             {pick({ en: "What happens after payment", ar: "ماذا يحدث بعد الدفع" })}
           </h2>
@@ -78,6 +77,7 @@ export async function AfterPaymentTimeline() {
               ar: "نجهّز ملفك خلال يوم إلى يومين من استلام مستنداتك. وتعتمد بقية المدة على تاريخ موعدك وعلى السفارة.",
             })}
           </p>
+          <TravelPhoto photo="departure" arabic={arabic} className="ez-timeline-photo" />
         </div>
 
         <ol className="flex flex-col rounded-3xl border border-border/70 bg-card">

@@ -1,5 +1,6 @@
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import type { Metadata } from "next"
-import { Check, MessageCircle, Smartphone } from "lucide-react"
+import { Check } from "lucide-react"
 
 import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
@@ -29,7 +30,7 @@ const TITLE = "EZvisa App – Schengen visa from your phone"
 const DESCRIPTION = `Apply for your Schengen visa, pay ${PRICE_LABEL} when it's ready, upload your documents and follow the real status from the EZvisa iPhone app. Same account as ezvisa.net. Android coming soon.`
 const TITLE_AR = "تطبيق إيزي فيزا لتأشيرة شنغن"
 const DESCRIPTION_AR =
-  "قدّم لطلب تأشيرة شنغن، وادفع 249 درهم عندما يكون الملف جاهزًا، وارفع مستنداتك وتابع الحالة من تطبيق إيزي فيزا لآيفون. الحساب نفسه على ezvisa.net. أندرويد قريبًا."
+  "قدّم لطلب تأشيرة شنغن، وادفع 249 درهمًا عندما يكون الملف جاهزًا، وارفع مستنداتك وتابع الحالة من تطبيق إيزي فيزا لآيفون. الحساب نفسه على ezvisa.net. أندرويد قريبًا."
 
 export async function generateMetadata(): Promise<Metadata> {
   const english: Metadata = {
@@ -108,21 +109,12 @@ export default async function AppPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
 
       <MotionPreferences>
-        <div id="main-content" className="bg-background">
+        <div id="main-content" className="ez-app-page bg-background">
           {/* Hero */}
           <section className="pb-16 pt-32 md:pb-24 md:pt-40" aria-labelledby="app-hero-heading">
             <div className="container mx-auto max-w-6xl px-4 sm:px-6">
               <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
                 <div className="flex flex-col items-start gap-6 text-start">
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary",
-                      hero.enter,
-                    )}
-                  >
-                    <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
-                    {arabic ? "متاح لآيفون" : "Available for iPhone"}
-                  </span>
                   <h1
                     id="app-hero-heading"
                     className={cn(
@@ -136,11 +128,11 @@ export default async function AppPage() {
                   <p className={cn("max-w-md text-lg leading-relaxed text-muted-foreground", hero.enter, hero.delay2)}>
                     {arabic ? (
                       <>
-                        ابدأ الطلب، وادفع <bdi dir="ltr">{copy.priceLabel}</bdi> عندما يكون الملف جاهزًا، وأضف مستنداتك وتابع حالته، من الحساب نفسه الذي تستخدمه على ezvisa.net.
+                        ابدأ الطلب، وادفع <bdi dir="ltr">{copy.priceLabel}</bdi> لبدء تجهيز ملفك، ثم أضف مستنداتك وتابع حالته، من الحساب نفسه الذي تستخدمه على ezvisa.net.
                       </>
                     ) : (
                       <>
-                        Start an application, pay {PRICE_LABEL} when it&apos;s ready, add your documents and follow its
+                        Start an application, pay {PRICE_LABEL} to start your file, then add your documents and follow its
                         status, from the same account you use on ezvisa.net.
                       </>
                     )}
@@ -153,11 +145,11 @@ export default async function AppPage() {
                   </p>
                 </div>
 
-                <div className={cn("flex justify-center lg:justify-end", hero.enter, hero.delay2)}>
+                <div className={cn("flex justify-center", hero.enter, hero.delay2)}>
                   <HeroDevice
                     screens={copy.heroScreens}
-                    frameClassName="w-64 sm:w-72 lg:w-80 xl:w-88"
-                    sizes="(min-width: 1280px) 352px, (min-width: 1024px) 320px, (min-width: 640px) 288px, 256px"
+                    frameClassName="w-56 sm:w-60 lg:w-64 xl:w-68"
+                    sizes="(min-width: 1280px) 272px, (min-width: 1024px) 256px, (min-width: 640px) 240px, 224px"
                   />
                 </div>
               </div>
@@ -170,7 +162,7 @@ export default async function AppPage() {
               <Reveal>
                 <SectionHeading
                   id="app-walkthrough-heading"
-                  chip={arabic ? "كيف يعمل التطبيق" : "How the app works"}
+
                   title={<LangText en="Apply, pay, upload, track." ar="قدّم، ادفع، ارفع، وتابع." />}
                   lede={arabic ? "سؤال واحد في كل شاشة، بالترتيب الذي يحتاجه المختصون، ويُحفظ وأنت تتقدّم." : "One question per screen, in the order our experts need the answers, saved as you go."}
                 />
@@ -186,7 +178,7 @@ export default async function AppPage() {
                 <Reveal>
                   <SectionHeading
                     id="app-status-heading"
-                    chip={arabic ? "متابعة الحالة" : "Status tracking"}
+
                     title={<LangText en="The same status our team sees." ar="نفس الحالة التي يراها فريقنا." />}
                     lede={
                       arabic
@@ -210,7 +202,7 @@ export default async function AppPage() {
                     rel="noopener noreferrer"
                     className="inline-flex w-fit items-center gap-2 font-medium text-primary hover:underline"
                   >
-                    <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                    <WhatsAppIcon className="h-4 w-4" />
                     <LangText en={translations.en.support.message} ar={translations.ar.support.message} />
                   </a>
                 </Reveal>
@@ -227,7 +219,7 @@ export default async function AppPage() {
               <Reveal>
                 <SectionHeading
                   id="app-handoff-heading"
-                  chip={arabic ? "الموقع والتطبيق" : "Website and app"}
+
                   title={<LangText en="Start on ezvisa.net. Finish on your phone." ar="ابدأ على ezvisa.net. وأكمل على هاتفك." />}
                   lede={
                     arabic
@@ -251,7 +243,7 @@ export default async function AppPage() {
                 <Reveal>
                   <SectionHeading
                     id="app-details-heading"
-                    chip={arabic ? "أيضًا في التطبيق" : "Also in the app"}
+
                     title={<LangText en="Things you'd only notice if they were missing." ar="تفاصيل لن تلاحظها إلا إذا غابت." />}
                   />
                 </Reveal>

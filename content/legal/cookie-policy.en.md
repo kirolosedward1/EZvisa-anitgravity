@@ -25,7 +25,7 @@ Non-essential cookies are **not set until you consent** in the cookie banner.
 | `cookie-consent` (local storage entry) | EZvisa | Necessary | Stores your cookie choices | 12 months |
 | `sb-*-auth-token` (cookie/local storage) | Supabase (EZvisa) | Necessary | Keeps you signed in to your account | Session / until logout |
 | Local storage: application form progress | EZvisa | Necessary | Saves your form progress on your device | Until submitted or cleared |
-| Ziina checkout cookies | Ziina | Necessary | Secure payment processing and fraud prevention | Session |
+| Payment gateway checkout cookies | Payment gateway | Necessary | Secure payment processing and fraud prevention | Session |
 | `__vercel*` / platform cookies (if any) | Vercel | Necessary | Hosting, security and performance | Session |
 | `crisp-client/session/*` | Crisp | Functional | Keeps your chat conversation. Set only after you consent to chat cookies | 6 months |
 | `_ga` | Google Analytics (G-3M5NW9FZYG) | Analytics | Distinguishes users. Set only after consent | 13 months |

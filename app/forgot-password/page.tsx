@@ -1,4 +1,5 @@
 "use client"
+import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
 import { Suspense, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { LocaleLink } from "@/components/locale-link"
@@ -50,10 +51,10 @@ function ForgotPasswordForm() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
+    <AuthSplitLayout variant="recovery">
+      <div className="w-full space-y-8">
         {!success && (
-          <div className="text-center">
+          <div>
             <h1 className="text-3xl font-semibold tracking-tight">{copy.resetTitle}</h1>
             <p className="text-muted-foreground mt-2">{copy.resetSubtitle}</p>
           </div>
@@ -99,7 +100,7 @@ function ForgotPasswordForm() {
           </form>
         )}
       </div>
-    </div>
+    </AuthSplitLayout>
   )
 }
 

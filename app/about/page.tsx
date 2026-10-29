@@ -1,3 +1,4 @@
+import { TravelPhoto } from "@/components/travel-photo"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
 import { Minus } from "lucide-react"
@@ -6,7 +7,7 @@ import { Footer } from "@/components/footer"
 import { CompanyLegalNotice } from "@/components/legal/company-details"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
-import { ContactSection } from "@/components/contact-section"
+import { FounderMessage } from "@/components/founder-message"
 import { formatAedLabel } from "@/lib/currency"
 import { requestLocale } from "@/lib/request-locale"
 import { withArabicMeta } from "@/lib/page-meta"
@@ -46,7 +47,7 @@ export default async function AboutPage() {
   const facts = [
     { value: price, label: pick("One fee per application", "رسم واحد لكل طلب") },
     { value: "29", label: pick("Schengen countries", "دولة شنغن") },
-    { value: arabic ? <><bdi dir="ltr">1–2</bdi> يوم</> : "1–2 days", label: pick("To prepare your file", "لتجهيز ملفك") },
+    { value: arabic ? <><bdi dir="ltr">1–2</bdi> يوم</> : "1–2 days", label: pick("After complete details and uploads", "بعد اكتمال البيانات والمستندات") },
     { value: "5", label: pick("Documents we prepare", "مستندات نجهّزها") },
   ]
 
@@ -68,12 +69,12 @@ export default async function AboutPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-background">
+      <div className="ez-about-page min-h-screen bg-background">
         <InnerHero
           badge={pick("About EZvisa", "عن إيزي فيزا")}
           title={pick(
-            "About EZvisa",
-            "عن إيزي فيزا",
+            "Your trip. Our attention to detail.",
+            "رحلتك تستحق اهتمامنا بالتفاصيل.",
           )}
           description={pick(
             "EZvisa prepares Schengen visa applications for UAE residents. We complete your forms, prepare your supporting documents and check everything before you submit it.",
@@ -83,7 +84,9 @@ export default async function AboutPage() {
 
         <section className="pb-20 md:pb-28">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:gap-16">
-            <h2 className="text-balance text-foreground">{pick("What we do", "ماذا نفعل")}</h2>
+            <div className="flex flex-col gap-7"><h2 className="text-balance text-foreground">{pick("What we do", "ماذا نفعل")}</h2>
+              <TravelPhoto photo="planning" arabic={arabic} />
+            </div>
             <div className="flex flex-col gap-5 text-base leading-relaxed text-muted-foreground sm:text-lg">
               {arabic ? (
                 <>
@@ -91,10 +94,10 @@ export default async function AboutPage() {
                     تخبرنا عن رحلتك وترفع مستنداتك. ثم يعبّئ مختص التأشيرات نموذج طلب شنغن، ويكتب خطاب التغطية، ويضع برنامجًا يوميًا للرحلة، ويرتّب حجوزات الطيران والفندق لتواريخ سفرك.
                   </p>
                   <p>
-                    قبل أن نرسل إليك الملف، نتأكد من تطابق التواريخ والوجهات وبيانات العمل وكشوف الحساب في كل المستندات. فالاختلاف بين المستندات سبب شائع لطلب السفارة معلومات إضافية أو لرفض الطلب.
+                    قبل أن نرسل إليك الملف، نتأكد من تطابق التواريخ والوجهات وبيانات العمل وكشوف الحساب في كل المستندات. وإذا كانت هناك بيانات ناقصة أو غير واضحة، نتواصل معك قبل تجهيز المستندات النهائية.
                   </p>
                   <p>
-                    يقيم أغلب عملائنا في الإمارات بتأشيرة إقامة ويحملون جوازات تحتاج إلى تأشيرة شنغن، مثل الجوازات الهندية والمصرية والأردنية والباكستانية.
+                    خدمتنا للمقيمين في الإمارات الذين يحتاجون إلى تأشيرة شنغن قصيرة الإقامة. وتحدد جنسيتك وإقامتك وخطط سفرك المتطلبات التي تنطبق عليك.
                   </p>
                 </>
               ) : (
@@ -106,18 +109,18 @@ export default async function AboutPage() {
                   </p>
                   <p>
                     Before we send you the file, we check that your dates, destinations, employment details and bank statements
-                    match across every document. Inconsistencies between documents are a common reason for an embassy to ask for
-                    more information or to refuse an application.
+                    are consistent across the file. If something is missing or unclear, we ask you before preparing the final documents.
                   </p>
                   <p>
-                    Most of our customers live in the UAE on a residence visa and hold a passport that needs a Schengen visa, such as
-                    an Indian, Egyptian, Jordanian or Pakistani passport.
+                    Our service is for UAE residents who need a short-stay Schengen visa. Your nationality, residence and travel plans determine which requirements apply to you.
                   </p>
                 </>
               )}
             </div>
           </div>
         </section>
+
+        <FounderMessage arabic={arabic} />
 
         <section className="border-y border-border/70 bg-secondary/40">
           <dl className="container mx-auto grid max-w-6xl grid-cols-2 gap-x-8 px-4 sm:px-6 lg:grid-cols-4">
@@ -148,7 +151,6 @@ export default async function AboutPage() {
           </div>
         </section>
 
-        <ContactSection />
       </div>
       <CompanyLegalNotice />
       <Footer />

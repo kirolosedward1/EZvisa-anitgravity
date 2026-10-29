@@ -1,3 +1,4 @@
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import type { Metadata } from "next"
 import { withArabicMeta } from "@/lib/page-meta"
 import { LangText } from "@/components/lang-text"
@@ -149,7 +150,7 @@ export default function TermsOfServicePage() {
             <div className="mt-4 rounded-2xl bg-secondary/60 p-5">
               <p className="text-foreground font-medium"><LangText en="EZvisa" ar="إيزي فيزا" /></p>
               <p className="text-muted-foreground"><LangText en="Email:" ar="البريد الإلكتروني:" /> <span dir="ltr">info@ezvisa.net</span></p>
-              <p className="text-muted-foreground"><LangText en="WhatsApp:" ar="واتساب:" /> <span dir="ltr">{WHATSAPP_DISPLAY}</span></p>
+              <p className="text-muted-foreground"><WhatsAppIcon className="me-1 inline-block size-4 align-text-bottom" /><LangText en="WhatsApp:" ar="واتساب:" /> <span dir="ltr">{WHATSAPP_DISPLAY}</span></p>
             </div>
           </section>
         </div>

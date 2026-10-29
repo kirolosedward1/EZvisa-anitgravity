@@ -1,6 +1,7 @@
 import { Image } from "@/components/image"
 import { format, parseISO } from "date-fns"
-import { CalendarClock, CalendarDays, UserRound } from "lucide-react"
+import { CalendarDays, UserRound } from "lucide-react"
+import { AppointmentCard } from "@/components/dashboard/appointment-card"
 import { DashboardCard } from "@/components/dashboard/dashboard-card"
 import { NextStepCard } from "@/components/dashboard/next-step-card"
 import { ProgressTracker } from "@/components/dashboard/progress-tracker"
@@ -11,7 +12,9 @@ import { ArabicDate } from "@/components/arabic-date"
 import { destinations } from "@/lib/destinations"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 import { customerText } from "@/lib/translations/customer"
-import type { Stage } from "@/lib/application-status"
+import { applicationInsurance } from "@/lib/insurance"
+import { InsuranceCard } from "@/components/dashboard/insurance-card"
+import { customerProgress, isPaid, type Stage } from "@/lib/application-status"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import type { ReactNode } from "react"
 
@@ -36,31 +39,37 @@ function formatTravelDates(app: VisaApplication, arabic: boolean): ReactNode {
 }
 
 /** The case at a glance: destination photo with flag, name and reference, then progress and the next step. */
-export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplication; stage: Stage; arabic: boolean }) {
+export function ApplicationOverview({
+  app,
+  stage,
+  arabic,
+  showHelp = false,
+  showInsurance = false,
+}: {
+  app: VisaApplication
+  stage: Stage
+  arabic: boolean
+  showHelp?: boolean
+  showInsurance?: boolean
+}) {
   const locale = arabic ? "ar" : "en"
   const countryEn = app.destination_country || "Schengen"
   const country = arabic ? SCHENGEN_META[countryEn]?.ar || (countryEn === "Schengen" ? "شنغن" : countryEn) : countryEn
   const photo = destinations.find((d) => d.name === countryEn)?.image
   const reference = app.id ? referenceOf(app.id) : ""
+  const progress = stage === "rejected" || stage === "cancelled" ? null : customerProgress(app)
 
   return (
-    <DashboardCard aria-label={customerText(locale, "overview.caseAria", { country })} className="overflow-hidden">
-      <div className="photo-card relative h-36 bg-foreground sm:h-44">
-        {photo ? <Image src={photo} alt="" fill priority sizes="(max-width: 1024px) 100vw, 760px" className="object-cover" /> : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1F]/85 via-[#0A0F1F]/35 to-[#0A0F1F]/5" />
-        <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 p-5 sm:p-6">
-          <CountryFlag iso={SCHENGEN_META[countryEn]?.iso} title={country} className="size-9 shadow-md ring-2 ring-primary-foreground/80" />
-          <div className="flex min-w-0 flex-col gap-0.5 text-primary-foreground">
-            <h2 className="panel-title panel-title-lg text-primary-foreground">{country}</h2>
-            <p className="text-sm text-primary-foreground/80">
-              {customerText(locale, "overview.schengen")}
-              {reference ? <> · <span className="ltr-isolate tabular-nums">{reference}</span></> : null}
-            </p>
-          </div>
+    <DashboardCard aria-label={customerText(locale, "overview.caseAria", { country })} className="ez-case-overview overflow-hidden">
+      <div className="ez-case-heading">
+        <div>
+          <div className="flex items-center gap-3"><CountryFlag iso={SCHENGEN_META[countryEn]?.iso} title={country} className="size-7" /><h2>{country}</h2></div>
+          <p>{customerText(locale, "overview.schengen")}{reference ? <> · <span className="ltr-isolate tabular-nums">{reference}</span></> : null}</p>
         </div>
+        {photo ? <div className="ez-case-photo"><Image src={photo} alt="" fill sizes="180px" className="object-cover" /></div> : null}
       </div>
 
-      <div className="flex flex-col gap-6 p-5 sm:p-6">
+      <div className="ez-case-body flex flex-col gap-6 p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
@@ -75,31 +84,12 @@ export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplicati
           <StatusPills app={app} arabic={arabic} />
         </div>
 
-        {app.appointment_at ? (
-          <div className="flex items-start gap-3 rounded-xl border border-border/70 px-4 py-3 text-sm">
-            <CalendarClock className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="font-medium text-foreground">
-                {arabic ? (
-                  <>
-                    {customerText("ar", "overview.appointment")}{" "}
-                    <ArabicDate value={app.appointment_at} withTime />
-                  </>
-                ) : (
-                  `Appointment ${format(new Date(app.appointment_at), "EEE, MMM d yyyy 'at' h:mm a")}`
-                )}
-              </span>
-              <span className="text-muted-foreground">
-                {[app.appointment_centre, app.appointment_address].filter(Boolean).join(", ")}
-                {app.appointment_reference ? ` · ${customerText(locale, "overview.ref")} ${app.appointment_reference}` : ""}
-              </span>
-            </div>
-          </div>
-        ) : null}
-
-        {stage !== "rejected" && stage !== "cancelled" && <ProgressTracker stage={stage} arabic={arabic} />}
+        <AppointmentCard app={app} arabic={arabic} showHelp={showHelp} />
 
         <NextStepCard app={app} stage={stage} />
+
+        {progress && <ProgressTracker progress={progress} arabic={arabic} insurance={applicationInsurance(app.additional_notes)} showInsurance={showInsurance} />}
+        {showInsurance && app.id && isPaid(app) && progress && <InsuranceCard key={app.id} applicationId={app.id} initialValue={applicationInsurance(app.additional_notes)} arabic={arabic} />}
       </div>
     </DashboardCard>
   )

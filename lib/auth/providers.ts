@@ -2,8 +2,11 @@
 // - Google is always offered (the main social login for EZvisa customers). It signs people in through Supabase OAuth,
 //   so the Google provider must be enabled on the project (docs/AUTH_SETUP.md); until it is, the button explains that
 //   instead of failing on an error page.
-// - Apple appears only when enabled on the project, the same rule the app applies to both providers
-//   (mobile/lib/google.ts, mobile/lib/apple.ts): the project's public /auth/v1/settings says which are on.
+// - Apple is offered on /login and /signup only when NEXT_PUBLIC_APPLE_SIGNIN_ENABLED is exactly "true"
+//   (lib/auth/apple-signin-flag.ts). Otherwise the button, the account-linking note, and the
+//   "isn't set up yet" message stay hidden. The button uses Apple's logo and the site font, and the round
+//   trip is Supabase OAuth back to /auth/callback. Until the Apple provider is enabled, the button says so. The project's
+//   public /auth/v1/settings (the same check as mobile/lib/apple.ts) is what tells the button to stop early.
 import { supabasePublicEnv } from "@/lib/supabase/client"
 
 export type SocialProvider = "google" | "apple"

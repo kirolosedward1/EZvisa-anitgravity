@@ -15,4 +15,4 @@ Last updated: {{LEGAL_UPDATED}}
 
 **General information.** Content on our website, blog and videos is general information, not legal or immigration advice, and requirements may change at any time. Always confirm current requirements with the official embassy or visa centre.
 
-Questions: {{EMAIL}} · WhatsApp +971 54 710 9533 (9:00 am – 6:00 pm UAE time).
+Questions: {{EMAIL}} · WhatsApp +971 54 710 9533.

@@ -1,4 +1,5 @@
 "use client"
+import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useLocalizedHref } from "@/components/locale-link"
@@ -44,12 +45,12 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
-        <div className="text-center">
-          <h2 className="text-3xl font-semibold tracking-tight">
+    <AuthSplitLayout variant="recovery">
+      <div className="w-full space-y-8">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">
             <LangText en={translations.en.authForm.newPasswordTitle} ar={translations.ar.authForm.newPasswordTitle} />
-          </h2>
+          </h1>
           <p className="text-muted-foreground mt-2">
             <LangText en={translations.en.auth.newPasswordLead} ar={translations.ar.auth.newPasswordLead} />
           </p>
@@ -81,6 +82,6 @@ export default function ResetPasswordPage() {
           </Button>
         </form>
       </div>
-    </div>
+    </AuthSplitLayout>
   )
 }

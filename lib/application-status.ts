@@ -2,6 +2,7 @@
  * Single source of truth for how a visa application's database state maps to
  * what the customer sees on /dashboard and /track/[token].
  */
+import { appointmentSettled } from "@/lib/appointment"
 
 export type ApplicationLike = {
   id?: string | null
@@ -22,18 +23,23 @@ export type ApplicationLike = {
   paid_at?: string | null
   tracking_token?: string | null
   payment_amount?: number | null
+  file_downloaded_at?: string | null
+  appointment_choice?: string | null
+  appointment_at?: string | null
+  appointment_help_status?: string | null
 }
 
-export type StepKey = "payment" | "documents" | "review" | "preparation" | "ready"
+export type StepKey = "payment" | "documents" | "review" | "preparation" | "ready" | "appointment"
 
-export type Stage = StepKey | "rejected" | "cancelled"
+export type Stage = Exclude<StepKey, "appointment"> | "rejected" | "cancelled"
 
 export const APPLICATION_STEPS: { key: StepKey; label: string; description: string }[] = [
   { key: "payment", label: "Payment", description: "Secure your file" },
   { key: "documents", label: "Documents", description: "Upload your papers" },
   { key: "review", label: "Expert review", description: "We check everything" },
   { key: "preparation", label: "Preparation", description: "Cover letter & itinerary" },
-  { key: "ready", label: "Ready", description: "Print & submit" },
+  { key: "ready", label: "Ready", description: "Download your file" },
+  { key: "appointment", label: "Appointment", description: "Date and centre" },
 ]
 
 /** Document types match the `documentType` values accepted by /api/upload-document */
@@ -71,7 +77,7 @@ export function getStage(app: ApplicationLike): Stage {
   return "review"
 }
 
-export function getStepIndex(stage: Stage): number {
+export function getStepIndex(stage: StepKey): number {
   return APPLICATION_STEPS.findIndex((step) => step.key === stage)
 }
 
@@ -205,4 +211,21 @@ export function getReference(token?: string | null): string {
 
 export function getFlagSrc(country: string): string {
   return `/flags/${country.toLowerCase().replace(/\s+/g, "-")}.png`
+}
+
+export type CustomerProgress = { key: StepKey; finished: boolean }
+
+/**
+ * Customer progress on the dashboard. "Ready" stays current until the prepared file
+ * has been downloaded. The appointment step comes after that download.
+ */
+export function customerProgress(app: ApplicationLike): CustomerProgress {
+  const stage = getStage(app)
+  if (stage !== "ready") {
+    if (stage === "rejected" || stage === "cancelled") return { key: "ready", finished: false }
+    return { key: stage, finished: false }
+  }
+  if (!app.file_downloaded_at) return { key: "ready", finished: false }
+  if (!appointmentSettled(app)) return { key: "appointment", finished: false }
+  return { key: "appointment", finished: true }
 }

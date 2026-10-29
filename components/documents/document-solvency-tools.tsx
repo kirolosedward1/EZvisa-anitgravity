@@ -89,10 +89,10 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
               <span>Statements must be stamped by your UAE bank with clear monthly salary credits.</span>
             </p>
 
-            <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-white font-semibold text-xs rounded-xl shadow-xs">
+            <Button asChild size="sm">
               <LocaleLink href={`/tools/bank-balance-calculator?country=${encodeURIComponent(country)}`}>
-                Calculate Your Exact Trip Balance
-                <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                <span>Calculate Your Exact Trip Balance</span>
+                <ArrowRight className="ms-1.5 size-3.5" aria-hidden="true" />
               </LocaleLink>
             </Button>
           </div>
@@ -163,11 +163,11 @@ export function DocumentSolvencyTools({ country, provider = "VFS Global / TLScon
           >
             {showStackingOrder ? (
               <>
-                Hide Sequence <ChevronUp className="w-4 h-4 ml-1" />
+                <span>Hide Sequence</span> <ChevronUp className="ms-1 size-4" aria-hidden="true" />
               </>
             ) : (
               <>
-                View 11 Steps <ChevronDown className="w-4 h-4 ml-1" />
+                <span>View 11 Steps</span> <ChevronDown className="ms-1 size-4" aria-hidden="true" />
               </>
             )}
           </Button>

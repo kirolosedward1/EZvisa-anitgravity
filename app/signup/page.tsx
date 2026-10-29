@@ -1,6 +1,7 @@
 "use client"
+import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
 
-import { useState, Suspense } from "react"
+import { useRef, useState, Suspense } from "react"
 import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
 import { useSearchParams } from "next/navigation"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -9,11 +10,15 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2 } from "lucide-react"
-import { GoogleSignInButton } from "@/components/auth/google-sign-in"
+import { SocialSignIn } from "@/components/auth/social-sign-in"
 import { EmailSent, useCooldown } from "@/components/auth/email-sent"
 import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
-import { authCallbackUrl } from "@/lib/auth/redirect"
+import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
+import { AccountDetailsFields } from "@/components/auth/account-details-fields"
+import { AgeConfirmation } from "@/components/auth/age-confirmation"
+import { CompleteAccountProfile } from "@/components/auth/complete-account-profile"
+import { registrationDetails, accountDetailsError } from "@/lib/auth/account-details"
 import { translations } from "@/lib/translations"
 import { authFormErrorText } from "@/lib/translations/auth-form"
 
@@ -24,14 +29,18 @@ function SignupForm() {
   const searchParams = useSearchParams()
   const localize = useLocalizedHref()
   const rawNext = searchParams.get("next") || "/dashboard"
-  const safe = rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.includes(":") ? rawNext : "/dashboard"
+  const safe = safeNext(rawNext)
   const next = localize(safe)
 
   const [email, setEmail] = useState("")
+  const [name, setName] = useState("")
+  const [birthdate, setBirthdate] = useState("")
+  const [confirmed, setConfirmed] = useState(false)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const inFlight = useRef(false)
 
   const supabase = createBrowserClient()
   const cooldown = useCooldown()
@@ -50,6 +59,12 @@ function SignupForm() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (inFlight.current) return
+    const details = registrationDetails(name, birthdate, confirmed)
+    if (details.error) {
+      setError(accountDetailsError(locale, details.error))
+      return
+    }
     const clean = email.trim()
     if (!EMAIL_RE.test(clean)) {
       setError(copy.errors["invalid-email"])
@@ -60,29 +75,32 @@ function SignupForm() {
       return
     }
     setIsLoading(true)
+    inFlight.current = true
     setError("")
 
-    const { error } = await supabase.auth.signUp({
-      email: clean,
-      password,
-      options: {
-        emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }),
-      },
-    })
-
-    if (error) {
-      setError(authFormErrorText(locale, error))
-      setIsLoading(false)
-    } else {
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, birthdate, confirmed, email: clean, password, next, locale }),
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        if (result.field) { setError(accountDetailsError(locale, result.field)); return }
+        throw new Error(result.error || copy.errors.unknown)
+      }
       setSuccess(true)
-      setIsLoading(false)
       cooldown.start()
+    } catch (cause) {
+      setError(authFormErrorText(locale, cause))
+    } finally {
+      inFlight.current = false
+      setIsLoading(false)
     }
   }
 
   if (success) {
     return (
-      <div className="w-full max-w-md rounded-xl border border-border/50 bg-card p-8 shadow-lg">
+      <div className="w-full">
         <EmailSent
           title={copy.checkEmailTitle}
           email={email.trim()}
@@ -97,11 +115,22 @@ function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg border border-border/50">
-      <div className="text-center">
+    <div className="w-full space-y-8">
+      <div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">{copy.signupTitle}</h1>
         <p className="text-muted-foreground mt-2">{copy.signupSubtitle}</p>
       </div>
+
+      <div className="flex flex-col gap-5">
+        <SocialSignIn
+          next={localize(`/signup?profile=complete&next=${encodeURIComponent(next)}`)}
+          appleLabel={copy.signUpApple}
+          googleLabel={copy.signUpGoogle}
+          linkingNote={copy.sameEmailFirst}
+          divider={copy.orDivider}
+          onAppleError={(message) => setError(authFormErrorText(locale, message))}
+          onGoogleError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
+        />
 
       <form onSubmit={handleSignup} className="space-y-6" noValidate>
         {error && (
@@ -111,6 +140,7 @@ function SignupForm() {
         )}
 
         <div className="space-y-4">
+          <AccountDetailsFields name={name} birthdate={birthdate} onName={value => { setName(value); setError("") }} onBirthdate={value => { setBirthdate(value); setConfirmed(false); setError("") }} />
           <div className="space-y-2">
             <Label htmlFor="email">{copy.emailLabel}</Label>
             <Input
@@ -141,6 +171,7 @@ function SignupForm() {
           </div>
         </div>
 
+        <AgeConfirmation checked={confirmed} onChange={value => { setConfirmed(value); setError("") }} disabled={isLoading} />
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>
@@ -152,12 +183,7 @@ function SignupForm() {
           )}
         </Button>
       </form>
-
-      <GoogleSignInButton
-        next={next}
-        label={copy.signUpGoogle}
-        onError={arabic ? (message) => setError(authFormErrorText("ar", message)) : undefined}
-      />
+      </div>
 
       <div className="text-center text-sm text-muted-foreground">
         {copy.haveAccount}{" "}
@@ -169,12 +195,21 @@ function SignupForm() {
   )
 }
 
+function SignupContent() {
+  const searchParams = useSearchParams()
+  const localize = useLocalizedHref()
+  if (searchParams.get("profile") === "complete") {
+    return <CompleteAccountProfile next={localize(safeNext(searchParams.get("next")))} />
+  }
+  return <SignupForm />
+}
+
 export default function SignupPage() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+    <AuthSplitLayout variant="signup">
       <Suspense fallback={<div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" /></div>}>
-        <SignupForm />
+        <SignupContent />
       </Suspense>
-    </div>
+    </AuthSplitLayout>
   )
 }

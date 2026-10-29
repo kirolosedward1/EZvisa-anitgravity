@@ -166,17 +166,17 @@ export function ContactForm() {
                 type="submit"
                 size="lg"
                 disabled={isSubmitting}
-                className="inline-flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-primary px-8 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 md:w-auto"
+                className="w-full md:w-auto"
               >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                    {t("Sending...", "جارٍ الإرسال...")}
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    <span>{t("Sending...", "جارٍ الإرسال...")}</span>
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
-                    {t("Send message", "أرسل الرسالة")}
+                    <Send className="size-4" aria-hidden="true" />
+                    <span>{t("Send message", "أرسل الرسالة")}</span>
                   </>
                 )}
               </Button>

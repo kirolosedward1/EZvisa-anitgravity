@@ -42,7 +42,7 @@ export const VISA_RULES: VisaRulesConfig = {
     providers: {
       default: "VFS Global Center",
       overrides: {
-        france: "TLScontact",
+        france: "VFS Global",
         switzerland: "VFS Global",
         germany: "VFS Global",
         italy: "VFS Global",
