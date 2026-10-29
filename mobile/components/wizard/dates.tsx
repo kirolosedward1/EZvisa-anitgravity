@@ -26,33 +26,12 @@ export function useDateFmt() {
   return { loc, short: (s: string) => parse(s)!.toLocaleDateString(loc, { day: "numeric", month: "short" }) };
 }
 
-/** Summary bar shown above Continue on the dates screen. */
-export function DatesSummary({ f, patch }: { f: WizardForm; patch?: (p: Partial<WizardForm>) => void }) {
-  const P = usePalette();
-  const { t } = useT(); const { short } = useDateFmt();
-  if (!f.travelStartDate) return null;
-  const n = stayDays(f.travelStartDate, f.travelEndDate);
-  const text = f.travelEndDate && n > 0 ? `${short(f.travelStartDate)} – ${short(f.travelEndDate)} · ${t(n === 1 ? "1 day" : "{n} days", { n })}` : `${short(f.travelStartDate)} – ${t("Select return date")}`;
-  const flex = f.datesFlexible === "yes" && !!patch;
-  const body = (<>
-      <Icon name="calendar" size={15} color={P.BLUE} />
-      <Text variant="subhead" weight="600" color={P.BLUE} style={{ flex: 1 }}>{text}</Text>
-      {flex && <Text variant="subhead" weight="600" color={P.BLUE}>{t("Edit")}</Text>}
-    </>);
-  const st = { flexDirection: "row" as const, alignItems: "center" as const, gap: S.xs, backgroundColor: P.SOFT, borderRadius: R.tile, paddingHorizontal: S.md, paddingVertical: S.sm, marginBottom: S.sm };
-  if (flex) return (
-    // Flexible: shows the exact entry/exit dates that will be saved; tap to switch to Fixed with them prefilled.
-    <Pressable testID="dates-summary" onPress={() => { select(); patch!({ datesFlexible: "no" }); }} accessibilityRole="button" accessibilityLabel={`${text}, ${t("Edit exact dates")}`}
-      style={({ pressed }) => [st, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}>{body}</Pressable>
-  );
-  return <View testID="dates-summary" accessible accessibilityLabel={text} style={st}>{body}</View>;
-}
-
 export function DatesAnswer({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>) => void }) {
   const P = usePalette();
   const { t } = useT();
   const flexible = f.datesFlexible === "yes";
-  React.useEffect(() => { if (!f.datesFlexible) patch({ datesFlexible: "no" }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // Canvas: Flexible is the default for a new trip; saved exact dates open on "I have exact dates".
+  React.useEffect(() => { if (!f.datesFlexible) patch({ datesFlexible: f.travelStartDate ? "no" : "yes" }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const seg = (on: boolean, label: string, v: "no" | "yes") => (
     <Pressable key={v} onPress={() => { select(); patch({ datesFlexible: v }); }} accessibilityRole="tab" accessibilityState={{ selected: on }} aria-selected={on} accessibilityLabel={label}
       style={{ flex: 1, minHeight: 36, borderRadius: 9, alignItems: "center", justifyContent: "center", backgroundColor: on ? P.WHITE : "transparent", ...(on ? { shadowColor: P.SHADOW, shadowOpacity: 0.08, shadowRadius: 3, shadowOffset: { width: 0, height: 1 }, elevation: 1 } : null) }}>
@@ -62,7 +41,7 @@ export function DatesAnswer({ f, patch }: { f: WizardForm; patch: (p: Partial<Wi
   return (
     <View style={{ gap: S.md }}>
       <View accessibilityRole="tablist" style={{ flexDirection: "row", backgroundColor: P.TRACK, borderRadius: 11, padding: 2 }} testID="dates-mode">
-        {seg(!flexible, t("Fixed dates"), "no")}{seg(flexible, t("Flexible"), "yes")}
+        {seg(!flexible, t("I have exact dates"), "no")}{seg(flexible, t("Flexible"), "yes")}
       </View>
       {flexible ? <Flexible f={f} patch={patch} /> : <Fixed f={f} patch={patch} />}
     </View>
@@ -92,8 +71,22 @@ function Fixed({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>) =>
     if (!start || (start && end) || d <= start) patch({ travelStartDate: d, travelEndDate: "" });
     else patch({ travelEndDate: d });
   };
+  const long = (d?: string) => (d ? parse(d)!.toLocaleDateString(loc, { weekday: "short", day: "numeric", month: "short" }) : "—");
+  const n = stayDays(start, end);
+  const cellBox = (k: string, v: string, testID: string) => (
+    <View style={{ flex: 1, gap: 2, paddingVertical: S.sm, paddingHorizontal: S.sm }} accessible accessibilityLabel={`${k}: ${v}`} testID={testID}>
+      <Text variant="caption" tone="secondary">{k}</Text><Text variant="callout" weight="600" numberOfLines={1}>{v}</Text>
+    </View>
+  );
   return (
     <View style={{ gap: S.md }}>
+      <View style={{ flexDirection: "row", backgroundColor: P.WHITE, borderRadius: R.tile, borderWidth: 1, borderColor: P.BORDER }} testID="dates-exact-summary">
+        {cellBox(t("Departure"), long(start), "dates-departure")}
+        <View style={{ width: 1, backgroundColor: P.BORDER }} />
+        {cellBox(t("Return"), long(end), "dates-return")}
+        <View style={{ width: 1, backgroundColor: P.BORDER }} />
+        {cellBox(t("Stay"), n > 0 && end ? t(n === 1 ? "1 day" : "{n} days", { n }) : "—", "dates-stay")}
+      </View>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.xs }} accessibilityRole="radiogroup" accessibilityLabel={t("Trip length")} testID="date-quickpicks">
         {DURS.map(([n, l]) => { const v = start ? addDays(start, n - 1) : ""; return <Chip key={n} on={!!start && end === v} label={t(l)} onPress={() => { if (!start) { select(); const s = min; patch({ travelStartDate: s, travelEndDate: addDays(s, n - 1) }); return; } select(); patch({ travelEndDate: v }); }} />; })}
       </View>
@@ -138,38 +131,75 @@ function Flexible({ f, patch }: { f: WizardForm; patch: (p: Partial<WizardForm>)
   const P = usePalette();
   const { t } = useT(); const { loc } = useDateFmt();
   const min = iso(earliestDeparture());
-  const months = useMemo(() => { const n = earliestDeparture(); return Array.from({ length: 12 }, (_, i) => new Date(n.getFullYear(), n.getMonth() + i, 1)); }, []);
+  // Eight months from this one; a month that ends before the earliest departure (15 days out) is "too soon".
+  const months = useMemo(() => { const n = new Date(); return Array.from({ length: 8 }, (_, i) => new Date(n.getFullYear(), n.getMonth() + i, 1)); }, []);
   const key = (d: Date) => iso(d).slice(0, 7);
+  const tooSoon = (m: Date) => iso(new Date(m.getFullYear(), m.getMonth() + 1, 0)) < min;
   const [win, setWin] = useState<[string, string] | null>(() => (f.travelStartDate ? [f.travelStartDate.slice(0, 7), (f.travelEndDate || f.travelStartDate).slice(0, 7)] : null));
-  const [stay, setStay] = useState(() => Math.max(1, stayDays(f.travelStartDate, f.travelEndDate) || 7));
+  const [stay, setStay] = useState(() => Math.max(2, stayDays(f.travelStartDate, f.travelEndDate) || 10));
   const apply = (w: [string, string], n: number) => {
     const first = `${w[0]}-01`; const dep = first < min ? min : first;
-    const [ey, em] = w[1].split("-").map(Number); const winEnd = iso(new Date(ey, em, 0));
-    let ret = addDays(dep, n - 1); if (ret > winEnd && winEnd > dep) ret = winEnd;
-    patch({ travelStartDate: dep, travelEndDate: ret === dep ? addDays(dep, 1) : ret });
+    patch({ travelStartDate: dep, travelEndDate: addDays(dep, n - 1) });
   };
+  /** One month, or two next to each other (tapping the neighbour of a single month joins it). */
   const pickMonth = (k: string) => {
     select();
-    const w: [string, string] = !win || win[0] !== win[1] || k < win[0] ? [k, k] : [win[0], k];
+    const next = (a: string) => { const [y, m] = a.split("-").map(Number); return iso(new Date(y, m, 1)).slice(0, 7); };
+    let w: [string, string] = [k, k];
+    if (win && win[0] === win[1] && next(win[0]) === k) w = [win[0], k];
+    else if (win && win[0] === win[1] && next(k) === win[0]) w = [k, win[0]];
     setWin(w); apply(w, stay);
   };
   const step = (d: number) => { const n = Math.min(90, Math.max(2, stay + d)); if (n === stay) return; select(); setStay(n); if (win) apply(win, n); };
+  const monthName = (k: string) => { const [y, m] = k.split("-").map(Number); return new Date(y, m - 1, 1).toLocaleDateString(loc, { month: "long" }); };
+  const btn = (d: number, label: string, glyph: string) => (
+    <Pressable onPress={() => step(d)} accessibilityRole="button" accessibilityLabel={label} hitSlop={4}
+      style={{ width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: P.BORDER, backgroundColor: P.WHITE, alignItems: "center", justifyContent: "center" }}>
+      <Text variant="headline" color={P.BLUE}>{glyph}</Text>
+    </Pressable>
+  );
   return (
-    <View style={{ gap: S.md }}>
-      <Text variant="subhead" weight="600" tone="secondary">{t("Travel anytime between")}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: S.xs }} accessibilityRole="radiogroup">
-        {months.map((m) => { const k = key(m); const on = !!win && k >= win[0] && k <= win[1]; return <Chip key={k} on={on} label={m.toLocaleDateString(loc, { month: "short", year: "numeric" })} onPress={() => pickMonth(k)} />; })}
-      </ScrollView>
-      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: P.WHITE, borderRadius: R.tile, paddingHorizontal: S.md, paddingVertical: S.sm }}>
-        <Text variant="body" weight="600">{t("Stay length")}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
-          <Pressable onPress={() => step(-1)} accessibilityRole="button" accessibilityLabel={t("Fewer days")} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: P.BORDER, alignItems: "center", justifyContent: "center" }}><Text variant="headline" color={P.BLUE}>−</Text></Pressable>
-          <Text variant="body" weight="600" style={{ minWidth: 64, textAlign: "center" }} accessibilityLiveRegion="polite">{t("{n} days", { n: stay })}</Text>
-          <Pressable onPress={() => step(1)} accessibilityRole="button" accessibilityLabel={t("More days")} style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: P.BORDER, alignItems: "center", justifyContent: "center" }}><Text variant="headline" color={P.BLUE}>+</Text></Pressable>
+    <View style={{ gap: S.lg }}>
+      <View style={{ gap: S.sm }}>
+        <Text variant="optionSm" weight="600" accessibilityRole="header">{t("How long?")}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: P.WHITE, borderRadius: R.tile, borderWidth: 1, borderColor: P.BORDER, paddingHorizontal: S.sm, paddingVertical: S.sm }}
+          accessibilityRole="adjustable" accessibilityLabel={t("Stay length")} accessibilityValue={{ text: t("{n} days", { n: stay }) }}
+          accessibilityActions={[{ name: "increment" }, { name: "decrement" }]} onAccessibilityAction={(e) => step(e.nativeEvent.actionName === "increment" ? 1 : -1)} testID="flex-stay">
+          {btn(-1, t("Fewer days"), "−")}
+          <View style={{ alignItems: "center" }}>
+            <Text variant="resultTitle" accessibilityLiveRegion="polite">{t("{n} days", { n: stay })}</Text>
+            <Text variant="caption" tone="secondary">{t("Up to 90")}</Text>
+          </View>
+          {btn(1, t("More days"), "+")}
         </View>
       </View>
-      <Text variant="footnote" tone="secondary">{t("We'll use the first possible day in your window. You can change to exact dates any time before documents.")}</Text>
-      {!!f.travelStartDate && <Pressable onPress={() => { select(); patch({ datesFlexible: "no" }); }} accessibilityRole="button"><Text variant="subhead" weight="600" color={P.BLUE}>{t("Adjust exact dates")}</Text></Pressable>}
+      <View style={{ gap: S.sm }}>
+        <View style={{ gap: 2 }}>
+          <Text variant="optionSm" weight="600" accessibilityRole="header">{t("Which month?")}</Text>
+          <Text variant="note" tone="secondary">{t("Pick one, or two next to each other")}</Text>
+        </View>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.xs }} accessibilityRole="radiogroup" testID="flex-months">
+          {months.map((m) => {
+            const k = key(m); const soon = tooSoon(m); const on = !!win && k >= win[0] && k <= win[1];
+            const label = m.toLocaleDateString(loc, { month: "short", year: "numeric" });
+            return (
+              <Pressable key={k} disabled={soon} onPress={() => pickMonth(k)} accessibilityRole="radio" accessibilityState={{ checked: on, disabled: soon }} aria-checked={on}
+                accessibilityLabel={soon ? `${label}, ${t("too soon")}` : label}
+                style={({ pressed }) => ({ width: "23.5%", minHeight: 56, borderRadius: R.button, alignItems: "center", justifyContent: "center", paddingHorizontal: 4,
+                  backgroundColor: on ? P.BLUE : P.WHITE, borderWidth: on ? 0 : 1, borderColor: P.BORDER, opacity: soon ? 0.5 : 1, transform: [{ scale: pressed ? 0.97 : 1 }] })}>
+                <Text variant="callout" weight="600" color={on ? P.ON : P.INK} numberOfLines={1}>{m.toLocaleDateString(loc, { month: "short" })}</Text>
+                <Text variant="caption" color={on ? P.ON : P.PAST} numberOfLines={1}>{soon ? t("too soon") : String(m.getFullYear())}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+      {!!win && (
+        <View style={{ flexDirection: "row", gap: S.xs, alignItems: "flex-start", backgroundColor: P.SOFT, borderRadius: R.tile, padding: S.md }} testID="flex-summary">
+          <Icon name="calendar" size={16} color={P.BLUE} />
+          <Text variant="note" style={{ flex: 1 }}>{t("{n} days, {months}. We confirm exact dates before booking.", { n: stay, months: win[0] === win[1] ? monthName(win[0]) : t("{a} or {b}", { a: monthName(win[0]), b: monthName(win[1]) }) })}</Text>
+        </View>
+      )}
     </View>
   );
 }

@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emptyForm, applyTraveller, coerceResidence, validatePersonal, validatePassport, validateStep, UAE_NATIONALITIES, OTHER_NATIONALITY, SCHENGEN_VISA_REQUIRED, SCHENGEN, UAE_EMIRATES, RESIDENCE_COUNTRIES, type TravellerDetails, type WizardForm } from "../lib/wizard";
-import { QUESTIONS, Q_BY_ID, REVIEW, activeQuestions, firstUnanswered, progressOf, normalizePage, setAccountEmail, setTravellers } from "../lib/questions";
+import { QUESTIONS, Q_BY_ID, REVIEW, activeQuestions, firstUnanswered, progressOf, normalizePage, setAccountEmail, setTravellers, partsOf, questionErrors } from "../lib/questions";
 import { searchCountries } from "../lib/search";
 import { WORLD } from "../lib/world";
 import { AR } from "../lib/ar";
@@ -20,7 +20,7 @@ test("before payment: the website's destination and traveller steps, in its orde
   ]);
   // After payment, passport validity comes before the number (only asked when the number is still missing).
   const post = postIds(form({ hasValidPassport: "yes" }));
-  assert.ok(post.indexOf("hasValidPassport") < post.indexOf("passportNumberAfter"));
+  assert.ok(post.indexOf("hasValidPassport") < post.indexOf("passportDetails"));
   assert.ok(!post.includes("passportExpiry") && !post.includes("dateOfBirth"));
 });
 
@@ -58,15 +58,33 @@ test("saved traveller with every field filled goes to Review", () => {
 test("trip questions follow the website order, ending with the residence visa", () => {
   const f = form({ previousRefusals: "yes", willVisitOtherCountries: "yes" });
   assert.deepEqual(activeQuestions(f, "post").filter((q) => q.step === "trip").map((q) => q.id), [
-    "purposeOfTrip", "dates", "travelingWith", "hotelCategory", "fundingSource", "balanceRange",
-    "isFirstSchengenVisa", "previousRefusals", "refusalDetails", "willVisitOtherCountries", "additionalCountries", "residenceVisaValid",
+    "purposeOfTrip", "dates", "travelingWith", "hotelCategory", "funding", "visaHistory", "willVisitOtherCountries", "additionalCountries", "residenceVisaValid",
   ]);
+  // Canvas merged screens: funding + balance, and first visa + refusals (+ details only after a "yes").
+  assert.deepEqual(partsOf(Q_BY_ID.funding, f).map((q) => q.id), ["fundingSource", "balanceRange"]);
+  assert.deepEqual(partsOf(Q_BY_ID.visaHistory, f).map((q) => q.id), ["isFirstSchengenVisa", "previousRefusals", "refusalDetails"]);
+  assert.deepEqual(partsOf(Q_BY_ID.visaHistory, form({ previousRefusals: "no" })).map((q) => q.id), ["isFirstSchengenVisa", "previousRefusals"]);
+});
+
+test("group screens keep the contract's rules for each of their questions", () => {
+  const g = Q_BY_ID.funding;
+  assert.deepEqual(Object.keys(questionErrors(g, form())), ["fundingSource", "balanceRange"]);
+  assert.deepEqual(questionErrors(g, form({ fundingSource: "self", balanceRange: "10000-25000" })), {});
+  // A refusal needs its details; without a refusal the details are not asked.
+  assert.equal(questionErrors(Q_BY_ID.visaHistory, form({ isFirstSchengenVisa: "yes", previousRefusals: "yes" })).refusalDetails, "Please add the refusal details");
+  assert.deepEqual(questionErrors(Q_BY_ID.visaHistory, form({ isFirstSchengenVisa: "yes", previousRefusals: "no" })), {});
+  // Passport expiry is optional, but when given it must cover the trip plus 3 months.
+  const trip = { hasValidPassport: "yes" as const, passportNumber: "A1234567", travelStartDate: "2030-05-01", travelEndDate: "2030-05-10" };
+  assert.deepEqual(questionErrors(Q_BY_ID.passportDetails, form(trip)), {});
+  assert.equal(questionErrors(Q_BY_ID.passportDetails, form({ ...trip, passportExpiry: "2030-06-01" })).passportExpiry, "Passport must be valid at least 3 months after your return date");
+  // Members are only asked inside their group.
+  assert.ok(!activeQuestions(form({ hasValidPassport: "yes" }), "post").some((q) => q.memberOf));
 });
 
 test("after payment, the passport number is hidden for 'no', which clears it", () => {
-  assert.ok(postIds(form()).includes("passportNumberAfter"), "unanswered validity still asks for the number");
-  assert.ok(!postIds(form({ hasValidPassport: "no" })).includes("passportNumberAfter"));
-  assert.ok(postIds(form({ hasValidPassport: "yes" })).includes("passportNumberAfter"));
+  assert.ok(postIds(form()).includes("passportDetails"), "unanswered validity still asks for the number");
+  assert.ok(!postIds(form({ hasValidPassport: "no" })).includes("passportDetails"));
+  assert.ok(postIds(form({ hasValidPassport: "yes" })).includes("passportDetails"));
   assert.deepEqual(Q_BY_ID.hasValidPassport.onPick!("no", form({ hasValidPassport: "yes", passportNumber: "A1" })), { passportNumber: "" });
   assert.equal(validatePassport(form({ hasValidPassport: "no" })).passportNumber, undefined);
   assert.equal(validatePassport(form({ hasValidPassport: "yes" })).passportNumber, "Enter your passport number.");
@@ -122,7 +140,8 @@ test("self-employed applicants never see NOC", () => {
     assert.ok(!postIds(f).includes("hasNOC"));
   }
   assert.ok(employmentIds(EMPLOYED).includes("hasNOC"));
-  assert.deepEqual(employmentIds(form({ employmentStatus: "business" })), ["employmentStatus", "companyName", "averageMonthlyIncome"]);
+  assert.deepEqual(employmentIds(form({ employmentStatus: "business" })), ["employmentStatus", "business"]);
+  assert.deepEqual(employmentIds(EMPLOYED), ["employmentStatus", "work", "hasNOC"]);
 });
 
 test("changing employment after NOC was answered removes the NOC answer", () => {

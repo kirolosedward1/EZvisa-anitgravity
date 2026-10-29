@@ -9,7 +9,7 @@ import type { GlobiPose } from "../components/globi/poses";
 import type { IconName } from "../components/ui/core";
 import {
   SCHENGEN, UAE_NATIONALITIES, EMIRATE_OPTIONS, SCHENGEN_VISA_REQUIRED, MARITAL, EMPLOYMENT, SALARY, PURPOSES, COMPANIONS, HOTELS, FUNDING, BALANCE,
-  PRE_PAYMENT_STEPS, DETAIL_STEPS, showSpouse, validateStep, validateDetailStep, adultMax, earliestDeparture, iso, label as optLabel,
+  PRE_PAYMENT_STEPS, DETAIL_STEPS, showSpouse, validateStep, validateDetailStep, adultMax, earliestDeparture, iso, passportCoversTrip, label as optLabel,
   type WizardForm, type WizardStep, type DetailStep, type Errors, type Traveller,
 } from "./wizard";
 /** A question's step: before payment (destination, personal) or after payment (trip, passport, spouse, employment). */
@@ -18,7 +18,7 @@ const PRE: QStep[] = ["destination", "personal"];
 export const isPreStep = (s: QStep) => PRE.includes(s);
 
 export type Opt = { value: string; label: string };
-export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "dates" | "contact" | "textarea" | "countries" | "pair" | "traveller";
+export type QKind = "country" | "choice" | "yesno" | "text" | "date" | "dates" | "contact" | "textarea" | "countries" | "pair" | "traveller" | "group";
 /** One text field of a "pair" screen (two fields on one page). */
 export type PairField = { key: keyof WizardForm; label: string; placeholder: string; contentType?: string; autoComplete?: string };
 export type Question = {
@@ -50,6 +50,13 @@ export type Question = {
   /** Where an empty wheel starts (e.g. 1990 for date of birth). */
   defaultDate?: (f: WizardForm) => string;
   text?: { keyboard?: "default" | "email-address"; caps?: "none" | "words" | "characters" | "sentences"; contentType?: string; autoComplete?: string; upper?: boolean };
+  /** "group" only (canvas merged screens): the questions shown together on this screen, in order. Each keeps its own
+   *  keys, options and rules; `partLabels` is the small heading over each one (null: none, the screen title asks it). */
+  parts?: string[]; partLabels?: Record<string, string | null>;
+  /** Set on a question that is shown inside a group screen (never asked on its own). */
+  memberOf?: string;
+  /** Extra rule for this screen on top of the contract's step validation (e.g. passport expiry vs the return date). */
+  check?: (f: WizardForm) => Errors;
   /** Note after an answer; amber/red notes stop auto-advance so the user can read them. */
   note?: (f: WizardForm) => { tone: "green" | "amber" | "blue" | "red"; text: string } | null;
 };
@@ -120,22 +127,25 @@ export const QUESTIONS: Question[] = [
   { id: "additionalCountries", explain: { why: "The country with the most nights is where you apply.", usedFor: "Itinerary, embassy choice", sharedWith: "The consulate only" }, ask: "Which other countries, and when?", pose: "plane", step: "trip", keys: ["additionalCountries"], label: "Additional Countries to Visit", required: false, kind: "countries", applies: (f) => f.willVisitOtherCountries === "yes",
     hint: "Add other Schengen countries you plan to visit during your trip" },
   // Last trip question, as on the website's trip step. Rows that answered the older "Emirates ID" question are not asked.
-  { id: "residenceVisaValid", explain: { why: "Most consulates need your UAE residence visa valid 3 months after you return.", usedFor: "Document check", sharedWith: "The EZvisa team and the consulate" }, view: {"layout": "tiles", "subs": {"yes": "Valid well past your return.", "no": "Expires before, or renewal pending. I'll flag it for the team."}}, ask: "Is your UAE residence visa valid at least 3 months after you return?", pose: "passport", step: "trip", keys: ["residenceVisaValid"], label: "Is your UAE residence visa valid at least 3 months after your return date?", required: true, kind: "yesno",
+  { id: "residenceVisaValid", explain: { why: "Most consulates need your UAE residence visa valid 3 months after you return.", usedFor: "Document check", sharedWith: "The EZvisa team and the consulate" }, view: {"layout": "tiles", "subs": {"yes": "Valid well past your return.", "no": "Expires before, or renewal pending. I'll flag it for the team."}}, ask: (f) => (f.travelEndDate ? "Is your UAE residence visa valid until at least {until}?" : "Is your UAE residence visa valid?"), pose: "passport", step: "trip", keys: ["residenceVisaValid"], label: "Is your UAE residence visa valid at least 3 months after your return date?", required: true, kind: "yesno",
     applies: (f) => !f.hasEmiratesId,
     note: (f) => (f.residenceVisaValid === "no" ? { tone: "amber", text: "Most embassies need your UAE residence visa to be valid at least 3 months after you return. Renew it before your appointment; our team will guide you." } : null) },
   // ---- Passport, only when the number is still missing (older rows) ----
   { id: "hasValidPassport", explain: { why: "Your passport must be valid at least 3 months after you return. A No never blocks: we keep going.", usedFor: "Document check", sharedWith: "The EZvisa team and the consulate" }, view: {"layout": "tiles", "subs": {"yes": "I'll ask for the number next.", "no": "Renewing it, or it expires soon."}}, ask: "Do you have a valid passport?", pose: "passport", step: "passport", keys: ["hasValidPassport"], label: "Do you have a valid passport?", required: true, kind: "yesno",
     hint: "Your passport should have at least 6 months validity from your travel date.",
     onPick: (v) => (v === "no" ? { passportNumber: "" } : {}),
-    note: (f) => (f.hasValidPassport === "no" ? { tone: "amber", text: "You'll need a valid passport (at least 6 months validity from your travel date) before your visa appointment. Our team will contact you." } : null) },
+    // Canvas Passport: a No never blocks; the passport goes on "To get later" (additional_notes.missingDocuments).
+    note: (f) => (f.hasValidPassport === "no" ? { tone: "amber", text: "No problem. We keep going. Added to \"To get later\". The team starts the rest now." } : null) },
   { id: "passportNumberAfter", explain: { why: "The number goes on the form and the reservations.", usedFor: "Application form, reservations", sharedWith: "The consulate only" }, ask: "What's your passport number?", pose: "passport", step: "passport", keys: ["passportNumber"], label: "Passport Number", required: true, kind: "text", placeholder: "e.g. A1234567", applies: (f) => f.hasValidPassport !== "no",
     text: { caps: "characters", upper: true } },
+  { id: "passportExpiryAfter", explain: { why: "Your passport must be valid at least 3 months after you return.", usedFor: "Document check", sharedWith: "The EZvisa team and the consulate" }, ask: "Expiry date", pose: "passport", step: "passport", keys: ["passportExpiry"], label: "Passport Expiry Date", required: false, kind: "date",
+    placeholder: "Select expiry date", min: () => todayIso(), applies: (f) => f.hasValidPassport !== "no" },
   // ---- Spouse Information, only when married and the spouse travels ----
   { id: "spouseName", explain: { why: "Your spouse gets their own application in the same file.", usedFor: "Spouse's application form", sharedWith: "The consulate only" }, ask: "Who's the spouse travelling with you?", pose: "writing", step: "spouse", keys: ["spouseFirstName", "spouseLastName"], label: "Spouse Name", required: true, kind: "pair", hint: "As on your spouse's passport.",
     fields: [{ key: "spouseFirstName", label: "Spouse First Name", placeholder: "Enter first name" }, { key: "spouseLastName", label: "Spouse Last Name", placeholder: "Enter last name" }] },
   { id: "spouseHasValidPassport", explain: { why: "Their passport must be valid too. A No never blocks.", usedFor: "Document check", sharedWith: "The EZvisa team and the consulate" }, view: {"layout": "tiles", "labels": {"no": "No, add later"}}, ask: "Does your spouse have a valid passport?", pose: "companion", step: "spouse", keys: ["spouseHasValidPassport"], label: "Does your spouse have a valid passport?", required: true, kind: "yesno",
     hint: "Your spouse's passport should have at least 6 months validity from your travel date.",
-    note: (f) => (f.spouseHasValidPassport === "no" ? { tone: "amber", text: "Your spouse will need to obtain a valid passport before applying for a visa." } : null) },
+    note: (f) => (f.spouseHasValidPassport === "no" ? { tone: "amber", text: "Added to \"To get later\". We keep going." } : null) },
   // ---- Employment ----
   { id: "employmentStatus", explain: { why: "The consulate wants to see you have a reason to come back. An employer letter and a salary that matches your bank statement do that.", usedFor: "Cover letter, NOC request", sharedWith: "The consulate only" }, view: {"layout": "grid", "labels": {"business": "Business owner", "unemployed": "Not working"}, "subs": {"employed": "Salary certificate, NOC", "business": "Trade licence, no NOC", "freelancer": "Permit, no NOC", "student": "Enrolment letter", "unemployed": "Sponsor's documents", "retired": "Pension statement"}, "icons": {"employed": "briefcase.fill", "business": "building.2.fill", "freelancer": "laptopcomputer", "student": "graduationcap.fill", "unemployed": "person.fill", "retired": "leaf.fill"}}, ask: "What do you do for work?", pose: "documents", step: "employment", keys: ["employmentStatus"], label: "Employment Status", required: true, kind: "choice", options: EMPLOYMENT,
     onPick: (v) => (v !== "employed" ? { hasNOC: "" } : {}) },
@@ -148,6 +158,33 @@ export const QUESTIONS: Question[] = [
   { id: "hasNOC", explain: { why: "A No Objection Certificate from your employer is on most document lists. Not yet is fine.", usedFor: "Document list", sharedWith: "The EZvisa team and the consulate" }, view: {"layout": "tiles", "labels": {"no": "Not yet"}, "subs": {"yes": "I'll ask you to upload it next.", "no": "Added to \"To get later\". I'll send a template for HR."}}, ask: "Do you have a No Objection Certificate?", pose: "documents", step: "employment", keys: ["hasNOC"], label: "Do you have a No Objection Certificate?", required: false, kind: "yesno", applies: EMP },
   { id: "averageMonthlyIncome", explain: { why: "Your income should match your bank statement.", usedFor: "Cover letter", sharedWith: "The consulate only" }, ask: "Average monthly income?", pose: "wallet", step: "employment", keys: ["averageMonthlyIncome"], label: "Average Monthly Income", required: true, kind: "text", placeholder: "e.g., 15,000 AED", applies: BIZ },
 ];
+// Canvas merged screens (Funding, FirstVisa, PassportNumber, SpouseName): several contract questions on one screen. The
+// group sits where its first member was; the members stay in Q_BY_ID (old resume pages) but are only asked inside it.
+const GROUPS: { id: string; parts: string[]; ask: string; label: string; pose: GlobiPose; partLabels: Record<string, string | null>; check?: Question["check"] }[] = [
+  { id: "funding", parts: ["fundingSource", "balanceRange"], ask: "Who's paying for the trip?", label: "Funding", pose: "wallet", partLabels: { fundingSource: null, balanceRange: "Roughly how much is in that account?" } },
+  { id: "visaHistory", parts: ["isFirstSchengenVisa", "previousRefusals", "refusalDetails"], ask: "Your Schengen history", label: "Visa history", pose: "passport",
+    partLabels: { isFirstSchengenVisa: "Is this your first Schengen visa?", previousRefusals: "Have you ever had a visa refusal, anywhere?", refusalDetails: "What happened? Country, year and the reason on the letter" } },
+  { id: "passportDetails", parts: ["passportNumberAfter", "passportExpiryAfter"], ask: "Passport number and expiry", label: "Passport", pose: "passport", partLabels: { passportNumberAfter: "Passport number", passportExpiryAfter: "Expiry date" },
+    check: (f) => (f.passportExpiry && !passportCoversTrip(f) ? { passportExpiry: "Passport must be valid at least 3 months after your return date" } : {}) },
+  { id: "work", parts: ["jobCompany", "employmentStartDate", "monthlySalary"], ask: "Where do you work?", label: "Job and company", pose: "writing",
+    partLabels: { jobCompany: null, employmentStartDate: "Working there since", monthlySalary: "Monthly salary range (AED)" } },
+  { id: "business", parts: ["companyName", "averageMonthlyIncome"], ask: "Tell me about your business", label: "Business", pose: "writing", partLabels: { companyName: "Company name", averageMonthlyIncome: "Average monthly income" } },
+  { id: "spouse", parts: ["spouseName", "spouseHasValidPassport"], ask: "Who's the spouse travelling with you?", label: "Spouse", pose: "companion", partLabels: { spouseName: null, spouseHasValidPassport: "Does your spouse have a valid passport?" } },
+];
+for (const g of GROUPS) {
+  const members = g.parts.map((id) => QUESTIONS.find((q) => q.id === id)!);
+  const first = members[0]; const at = QUESTIONS.indexOf(first);
+  for (const m of members) m.memberOf = g.id;
+  QUESTIONS.splice(at, 0, {
+    id: g.id, step: first.step, keys: [...new Set(members.flatMap((m) => m.keys))], label: g.label, required: true, kind: "group", ask: g.ask, pose: g.pose,
+    parts: g.parts, partLabels: g.partLabels, check: g.check, explain: first.explain,
+    applies: (f) => members.some((m) => !m.applies || m.applies(f)),
+  });
+}
+/** The members of a group screen that apply to these answers (a question on its own: itself). */
+export const partsOf = (q: Question, f: WizardForm): Question[] =>
+  q.kind === "group" ? (q.parts ?? []).map((id) => QUESTIONS.find((x) => x.id === id)!).filter((m) => !m.applies || m.applies(f)) : [q];
+
 /** The question text Globi asks (English key; the screen translates it with t()). */
 export const askOf = (q: Question, f: WizardForm) => (typeof q.ask === "function" ? q.ask(f) : q.ask);
 export const Q_BY_ID: Record<string, Question> = Object.fromEntries(QUESTIONS.map((q) => [q.id, q]));
@@ -161,7 +198,7 @@ export function activeQuestions(f: WizardForm, phase: Phase = "pre"): Question[]
   // After payment: every Continue step in the website's order (spouse only when the spouse travels). Answered
   // questions are skipped by the screen, so the customer sees exactly the steps the website's /continue shows.
   const steps: QStep[] = phase === "pre" ? PRE_PAYMENT_STEPS.filter((s) => s !== "payment") as QStep[] : DETAIL_STEPS.filter((s) => s !== "spouse" || showSpouse(f));
-  return steps.flatMap((s) => QUESTIONS.filter((q) => q.step === s && (!q.applies || q.applies(f))));
+  return steps.flatMap((s) => QUESTIONS.filter((q) => q.step === s && !q.memberOf && (!q.applies || q.applies(f))));
 }
 /** The questions Continue application asks for this row: the same after-payment steps for website and app rows
  *  (the website's /continue asks trip, passport if missing, spouse and employment too). Shared by the screen and
@@ -180,8 +217,9 @@ export const continueError = (q: Question, f: WizardForm, saved: WizardForm) => 
 export const continueNeeded = (f: WizardForm, website: boolean) => continueQuestions(f, website).some((q) => !!continueError(q, f, f));
 /** Errors for one question: the website's step validation, limited to this question's fields. */
 export function questionErrors(q: Question, f: WizardForm): Errors {
-  const all = isPreStep(q.step) ? validateStep(q.step as WizardStep, f) : validateDetailStep(q.step as DetailStep, f); const out: Errors = {};
-  for (const k of q.keys) if (all[k]) out[k] = all[k];
+  const all = { ...(isPreStep(q.step) ? validateStep(q.step as WizardStep, f) : validateDetailStep(q.step as DetailStep, f)), ...(q.check?.(f) ?? {}) }; const out: Errors = {};
+  const keys = q.kind === "group" ? partsOf(q, f).flatMap((m) => m.keys) : q.keys;
+  for (const k of keys) if (all[k]) out[k] = all[k];
   return out;
 }
 export const firstError = (q: Question, f: WizardForm) => Object.values(questionErrors(q, f))[0] as string | undefined;

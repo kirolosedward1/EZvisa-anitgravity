@@ -31,6 +31,9 @@ export type Notes = {
   submittedAt?: string;
   /** public.travellers rows the main applicant / the spouse were filled from (lib/travellers.ts), if any. */
   travellerId?: string; spouseTravellerId?: string;
+  /** App-only keys (the contract keeps unknown keys): documents the customer will bring later (lib/missing.ts),
+   *  the insurance preference from Review & pay, and the flexible-dates window. */
+  missingDocuments?: string[]; insurancePreference?: string; flexibleDuration?: number; flexibleMonths?: string[];
 };
 export type Application = VisaRow & {
   status: AppStatus; reference: string; country_id: string | null;

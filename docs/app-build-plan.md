@@ -477,3 +477,22 @@ that `mobile-app` had already removed; they are rewritten with the wizard in Pha
 | Draft conflict: the two copies side by side, one button per copy | `components/wizard/sync.tsx` |
 | v1 analytics: question view / answer / back with time on screen, wizard exit, review row tap, sign-up at pay, payment result, Globi tap, WhatsApp hand-off (stored once migration 0016 runs) | `lib/analytics.ts` |
 | Arabic for every new string (212 added) | `lib/ar.ts` |
+
+## 7d. Phase 4 · delivered (29 Oct)
+
+Decision: no contract change was needed. The flexible window, the "To get later" list and the insurance preference are
+app-only `additional_notes` keys (`flexibleDuration`, `flexibleMonths`, `missingDocuments`, `insurancePreference`), which
+the contract's `applicationColumns` keeps (`...prev`). Flexible dates still fill the contract's exact
+`travelStartDate` / `travelEndDate` (the first possible days in the window) with `datesFlexible: "yes"`, so the website,
+the validators and `needsContinue` behave exactly as before. The canvas's spouse date of birth / passport number and
+spouse employment screens have no contract fields and are left out (website alignment).
+
+| Item | Where |
+|---|---|
+| Header as drawn: Trip · Passport · Spouse · Employment (only the steps this case still has), back, "Save" closes (every answer is already saved) | `mobile/app/continue/[id].tsx` |
+| Dates: Flexible is the default (How long? stepper up to 90, Which month? grid with "too soon", one or two neighbouring months, summary line); "I have exact dates" with Departure / Return / Stay above the calendar | `components/wizard/dates.tsx` |
+| Merged screens as a `group` question kind (each member keeps its contract keys, options and rules): funding + balance; first visa + refusal + details; passport number + expiry (expiry optional, must cover the return + 3 months); spouse name + passport; job + start date + salary; business name + income | `lib/questions.ts` (`GROUPS`, `partsOf`), `components/wizard/QuestionView.tsx` |
+| A "No" never blocks: passport, spouse passport and NOC go to "To get later" with an amber note, and the list is saved as `missingDocuments` with every answer | `lib/missing.ts`, `app/continue/[id].tsx` |
+| Residence visa asks "valid until at least {return + 3 months}?"; NOC shows what a good NOC says and "Send me the template" (WhatsApp) | `lib/questions.ts`, `QuestionView.tsx` |
+| Last question's button: "Finish and upload documents" | `app/continue/[id].tsx` |
+| Tests updated for the grouped screens, plus a new test of the group rules; Arabic for every new string | `scripts/wizard-rules.test.ts`, `scripts/test-after-payment.ts`, `lib/ar.ts` |
