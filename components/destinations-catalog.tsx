@@ -20,7 +20,7 @@ export function DestinationCard({ country, compact = false }: { country: Destina
       <Image src={country.image} alt="" fill sizes="(max-width: 639px) 100vw, (max-width: 1023px) 50vw, 33vw" className="object-cover" />
       <CountryFlag iso={SCHENGEN_META[country.name]?.iso} title={name} className="size-9" />
     </LocaleLink>
-    <div className="ez-catalog-heading"><h3><LocaleLink href={`/destinations/${country.slug}`}>{name}</LocaleLink></h3><ArrowRight size={20} aria-hidden="true" className="rtl:rotate-180" /></div>
+    <div className="ez-catalog-heading"><h3><LocaleLink href={`/destinations/${country.slug}`}>{name}</LocaleLink></h3></div>
     <p>{arabic ? "مستنداتك، وخطوات التقديم، وما تتوقعه." : "Your documents, application steps and what to expect."}</p>
     <div className="ez-catalog-bottom"><span>{formatAedLabel(PRICE_AED, arabic ? "ar" : "en")} <small>{arabic ? "لتجهيز الملف" : "file preparation"}</small></span><LocaleLink href={`/apply?to=${encodeURIComponent(country.name)}`} aria-label={arabic ? `قدّم على تأشيرة ${name}` : `Apply for ${name}`}>{arabic ? "ابدأ الطلب" : "Apply"}<ArrowRight size={15} className="rtl:rotate-180" aria-hidden="true" /></LocaleLink></div>
   </article>
