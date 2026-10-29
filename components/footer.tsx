@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { LangText } from "@/components/lang-text"
 import { LocaleLink } from "@/components/locale-link"
 import { PaymentMarks } from "@/components/payment-marks"
+import { LanguageToggle } from "@/components/language-toggle"
 import { openCookieSettings } from "@/components/cookie-consent"
 import { CompanyFooterBlock } from "@/components/legal/company-details"
 import { COMPANY, COMPANY_DETAILS_READY } from "@/lib/legal/company"
@@ -155,6 +156,7 @@ function AccountFooter({ className }: { className?: string }) {
             </LocaleLink>
           ))}
         </nav>
+        <LanguageToggle />
       </div>
     </footer>
   )
@@ -364,12 +366,15 @@ export function Footer({
               })}
             </div>
 
+            <div className="flex flex-col items-center gap-3 md:flex-row md:gap-5">
+            <LanguageToggle />
             <p className="text-xs text-[#3A4150] text-center md:text-end">
               <LangText
                 en={<>&copy; {currentYear} {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. All rights reserved. · ` : ""}EZvisa</>}
                 ar={<>&copy; {currentYear} {COMPANY_DETAILS_READY ? `${COMPANY.COMPANY_LEGAL_NAME}. جميع الحقوق محفوظة. · ` : ""}EZvisa</>}
               />
             </p>
+            </div>
           </div>
         </div>
       </div>
