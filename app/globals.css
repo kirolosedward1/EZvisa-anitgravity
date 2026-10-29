@@ -562,10 +562,11 @@ h1,h2,h3 { text-wrap: balance; }
 header img[alt="EZvisa Logo"] { filter: none; }
 .ez-site-header nav a,.ez-site-header nav button { font-size: 14px; font-weight: 500; }
 .ez-site-header .ez-nav-link[aria-current] { color: var(--ez-blue); text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 8px; }
+.ez-site-header .ez-account-nav-link[aria-current] { color: var(--ez-blue); background: var(--ez-sky); text-decoration: none; }
 .ez-nav-mobile-link[aria-current],.ez-nav-mobile-link[data-active="true"],.ez-nav-sub-link[aria-current] { color: var(--ez-blue); background: var(--ez-sky); box-shadow: inset 3px 0 var(--ez-blue); }
 [dir="rtl"] .ez-nav-mobile-link[aria-current],[dir="rtl"] .ez-nav-mobile-link[data-active="true"],[dir="rtl"] .ez-nav-sub-link[aria-current] { box-shadow: inset -3px 0 var(--ez-blue); }
 .ez-nav-mobile-link[aria-current] .site-menu-item,.ez-nav-sub-link[aria-current] .text-foreground { color: inherit; }
-.ez-nav-link:focus-visible,.ez-nav-mobile-link:focus-visible { outline: 2px solid var(--ez-blue); outline-offset: 3px; }
+.ez-nav-link:focus-visible,.ez-account-nav-link:focus-visible,.ez-nav-mobile-link:focus-visible { outline: 2px solid var(--ez-blue); outline-offset: 3px; }
 [data-slot="button"] { border-radius: 999px; box-shadow: none; }
 .ez-site-header [data-slot="button"] { font-size: 14px; padding-inline: 20px; }
 .ez-hero { background: var(--ez-sky); padding: 128px var(--ez-space) 66px; }

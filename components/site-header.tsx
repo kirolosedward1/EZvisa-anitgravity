@@ -300,7 +300,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
                       href={item.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "ez-nav-link rounded-full px-3.5 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                        "ez-account-nav-link rounded-full px-3.5 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                         active ? "bg-secondary text-foreground" : "text-foreground/75 hover:bg-secondary hover:text-foreground",
                       )}
                     >
