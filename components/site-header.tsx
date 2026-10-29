@@ -360,7 +360,6 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                         <CountryFlag iso={SCHENGEN_META[dest.name]?.iso} title={dest.name} />
                                         <div className="flex-1 min-w-0">
                                           <div className="text-sm font-semibold text-foreground group-hover/item:text-primary transition-colors truncate">{dest.name}</div>
-                                          <div className="text-[11px] text-muted-foreground truncate">{dest.visaType}</div>
                                         </div>
                                       </LocaleLink>
                                     ))}
