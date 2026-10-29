@@ -5,14 +5,14 @@ Read [AGENTS.md](AGENTS.md), then [DESIGN.md](DESIGN.md) before editing. The des
 ## Current release — 29 October 2026
 
 - Website is on `main`, deployed by the Vercel project `e-zvisa-anitgravity` to `www.ezvisa.net`, `ezvisa.net` and `new.ezvisa.net`.
-- Latest functional commit: `1221e882063dc3ee7b4743dfd1057233855fa6da`. Production deployment: `dpl_FqdbEvbEx1epGWVHi4vV9MsnJ2x2` (READY).
+- Use the current `main` HEAD and Vercel’s latest READY production deployment as the release reference. The original dashboard-insurance implementation was `1221e88`; later commits correct its position and remove the repeated tracking-page sign-in prompt.
 - Previous design remains on `old.ezvisa.net`, deployment `dpl_B3LEF7gouDsxtm8DAjFVHqp6D15r`, branch `archive/pre-redesign-2026-10-29`. Preserve it.
 - Native app is the separate `mobile-app` branch. Do not merge it into website `main`.
 - This checkout is `/Users/kiro/Downloads/ezvisa-main-release`. `/Users/kiro/Downloads/ezvisa-redesign` is a mirrored local development workspace, not the Git repository.
 
 ## Last completed changes
 
-- Tracking-page intro now checks `getSessionUser()`: authenticated visitors see “View all your applications” linked to `/dashboard`, while guests see Sign in. English and Arabic are paired. The token still exposes one case only; this does not broaden application access.
+- Tracking-page intro uses a neutral “View all your applications” link to `/dashboard` for everyone. The repeated sign-in prompt is removed in English and Arabic. Dashboard authentication and token access restrictions are unchanged.
 
 - Insurance is **after Preparation and before Ready, in the dashboard only**. Wizard: Destination → Traveller → Review & pay. Retired insurance deep links and saved step 5 resolve to review.
 - Paid dashboard applications offer “Buy insurance through EZvisa” (separate quote) and “I’ll provide my own.” A preference never purchases a policy, confirms cover or changes the visa service fee.

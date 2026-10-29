@@ -143,7 +143,7 @@ Sources: [`components/auth`](components/auth), [`lib/auth/account-details.ts`](l
 
 Use the shared split layout, compact forms and contextual Globi. Name, date of birth, email and clear validation stay readable on phones. Age confirmation starts unchecked. Preserve both browser and server validation and the one-time social profile-completion path.
 
-Tracking-page account prompts must check the current session: signed-in users see “View all your applications” linking to `/dashboard`; only guests see “Sign in.” Tracking tokens still grant access to one case only.
+Tracking-page introductions always use “View all your applications” linking to `/dashboard`. Do not add a second “Sign in” prompt beneath the heading. The dashboard performs its normal authentication check; tracking tokens still grant access to one case only.
 
 A real successful login is not proven by a demo. Do not request passwords in chat or expose provider secrets in the browser. Keep return paths inside the site and preserve wizard state on modal sign-in.
 
