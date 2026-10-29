@@ -19,7 +19,7 @@ EZvisa is the **controller** of your personal data under UAE Federal Decree-Law 
 | Travel data | Destination, dates, itinerary, accommodation, flight details, travel companions | You |
 | Employment & financial data | Employer, job title, salary/income, bank statements, sponsorship letters, NOCs | You |
 | Family data | Spouse and dependants' details (where you apply together) | You — you must have their permission to share it |
-| Payment data | Amount, transaction reference, payment status (we do **not** store full card numbers; cards are processed by Ziina) | You / Ziina |
+| Payment data | Amount, transaction reference, payment status (we do **not** store full card numbers; cards are processed by the payment gateway) | You / Payment gateway |
 | Account & communications | Login details, messages, chat transcripts, support history | You |
 | Technical & usage data | IP address, device and browser type, pages viewed, referrer, cookie IDs, app push-notification token | Automatically, see the [Cookie Policy](/cookie-policy) |
 
@@ -52,7 +52,7 @@ We do not sell personal data and we do not make decisions about you based solely
 |---|---|---|---|
 | Supabase | Database, authentication and document file storage | All application data and uploaded documents | USA (AWS us-east-1) |
 | Vercel | Website hosting and delivery | Technical data, data in transit | Global edge network / USA |
-| Ziina | Payment processing | Payment and contact data | UAE |
+| Payment gateway | Payment processing | Payment and contact data | UAE |
 | HubSpot | CRM — leads and enquiries | Contact and enquiry data | USA/EU |
 | Crisp | Live chat | Chat messages, contact, technical data | EU (France) |
 | Google Analytics / Google Tag Manager | Website analytics and tag management | Technical & usage data (pseudonymous) | USA/global |

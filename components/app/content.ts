@@ -34,7 +34,7 @@ export const SCREENS = {
     id: "pay",
     label: "Pay",
     src: "/app/screenshots/pay.png",
-    alt: `EZvisa app review and pay screen for a Germany application showing the ${PRICE_LABEL} service fee and a Pay with Ziina button`,
+    alt: `EZvisa app review and pay screen for a Germany application showing the ${PRICE_LABEL} service fee and a payment button`,
   },
   upload: {
     id: "upload",
@@ -74,7 +74,7 @@ export const WALKTHROUGH_STEPS: WalkthroughStep[] = [
     id: "pay",
     tab: "Pay",
     title: `Review, then pay ${PRICE_LABEL}`,
-    body: "Check your answers on one page, then pay through Ziina. The price is set by our server, so what you see is what you pay.",
+    body: "Check your answers on one page, then pay through the payment gateway. The price is set by our server, so what you see is what you pay.",
     details: [`${PRICE_LABEL} per application`, "Guest checkout, sign in later with the same email", "Embassy and visa centre fees are paid at your appointment", "EZvisa is not VAT-registered; prices shown are final."],
     screen: SCREENS.pay,
   },
@@ -147,7 +147,7 @@ export const FAQS: Faq[] = [
   },
   {
     question: "How much does it cost?",
-    answer: `The app is free to download. The service is ${PRICE_LABEL} per application, paid in the app through Ziina after you have reviewed your answers. Embassy and visa centre fees are paid separately at your appointment. EZvisa is not VAT-registered; prices shown are final.`,
+    answer: `The app is free to download. The service is ${PRICE_LABEL} per application, paid in the app through the payment gateway after you have reviewed your answers. Embassy and visa centre fees are paid separately at your appointment. EZvisa is not VAT-registered; prices shown are final.`,
   },
   {
     question: "I started on the website. Will it show in the app?",

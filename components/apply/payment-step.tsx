@@ -24,7 +24,7 @@ const KNOWN_ERRORS: Record<string, MessageKey> = {
   "An application with these details was just submitted. Please wait a few minutes before starting another one.": "apply.errDuplicate",
   "Failed to save application. Please try again.": "apply.errSave",
   "Failed to generate payment link. Please try again.": "apply.errPayLink",
-  "Ziina didn't open within 20 seconds. Check your connection and retry.": "apply.errTimeout",
+  "The payment gateway didn't open within 20 seconds. Check your connection and retry.": "apply.errTimeout",
   "An unexpected error occurred. Please try again.": "apply.errUnexpected",
 }
 
@@ -251,7 +251,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
       console.error("Payment flow error:", error)
       const aborted = error instanceof Error && error.name === "AbortError"
       const errorMsg = aborted
-        ? "Ziina didn't open within 20 seconds. Check your connection and retry."
+        ? "The payment gateway didn't open within 20 seconds. Check your connection and retry."
         : error instanceof Error
           ? error.message
           : "An unexpected error occurred. Please try again."
@@ -315,8 +315,8 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
 
       <p className="mt-5 text-[13px] leading-relaxed text-[#5B6475]">
         <LangText
-          en="Secure payment through Ziina. EZvisa prepares and submits your application; the visa decision is made by the embassy."
-          ar="دفع آمن عبر زينة. تجهّز EZvisa طلبك وتقدّمه، وقرار التأشيرة يصدر من السفارة."
+          en="Secure payment through the payment gateway. EZvisa prepares and submits your application; the visa decision is made by the embassy."
+          ar="دفع آمن عبر بوابة الدفع. تجهّز EZvisa طلبك وتقدّمه، وقرار التأشيرة يصدر من السفارة."
         />{" "}
         <LangText
           en="EZvisa is not VAT-registered; prices shown are final."
@@ -356,8 +356,8 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
             ادفع <bdi dir="ltr">{paymentAmount}</bdi> {dirhamNoun(paymentAmount)}
           </>
         }
-        loadingLabel="Opening Ziina…"
-        loadingLabelAr="جارٍ فتح زينة…"
+        loadingLabel="Opening the payment gateway…"
+        loadingLabelAr="جارٍ فتح بوابة الدفع…"
       />
 
       {isProcessing ? (
@@ -365,7 +365,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
           <div className="w-full max-w-[360px] text-center">
             <HandoffRing />
             <h2 className="wizard-question mt-6 text-[#0A0F1F]">
-              <LangText en="Taking you to Ziina" ar="جارٍ تحويلك إلى زينة" />
+              <LangText en="Taking you to the payment gateway" ar="جارٍ تحويلك إلى بوابة الدفع" />
             </h2>
             <p className="mt-2 text-[15px] leading-relaxed text-[#5B6475]">
               <LangText

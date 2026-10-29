@@ -28,7 +28,7 @@ export function ReceiptView({ app }: { app: VisaApplication }) {
     app.email ? `Email: ${app.email}` : "",
     amount === null ? "" : `${item}: ${amount} AED`,
     amount === null ? "" : `Total paid: ${amount} AED`,
-    "Paid via Ziina",
+    "Paid via the payment gateway",
     "Embassy and visa centre fees are not included. No VAT is charged.",
   ].filter(Boolean)
 
@@ -57,7 +57,7 @@ export function ReceiptView({ app }: { app: VisaApplication }) {
         </div>
         <div className="flex flex-col gap-0.5">
           <dt className="text-xs text-muted-foreground">Paid via</dt>
-          <dd className="font-medium text-foreground">Ziina</dd>
+          <dd className="font-medium text-foreground">Payment gateway</dd>
         </div>
       </dl>
 

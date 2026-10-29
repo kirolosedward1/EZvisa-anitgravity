@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
     console.error("[payment] create-payment failed", { ms: Date.now() - started, timedOut, error })
     return json(
       {
-        error: timedOut ? "Ziina took too long to respond. Retry." : "Failed to create payment intent",
+        error: timedOut ? "The payment gateway took too long to respond. Retry." : "Failed to create payment intent",
         elapsedMs: Date.now() - started,
       },
       { status: timedOut ? 504 : 500 },

@@ -102,8 +102,8 @@ const en = {
   "next.appointmentTitle": "Add your visa appointment",
   "next.appointmentBody": "Your file is downloaded. Add the appointment you already have, or say you will add it later.",
 
-  "pay.opening": "Opening Ziina…",
-  "pay.timeout": "Ziina didn't open within 20 seconds.",
+  "pay.opening": "Opening the payment gateway…",
+  "pay.timeout": "The payment gateway didn't open within 20 seconds.",
   "pay.failed": "We couldn't open the payment page.",
   "pay.retry": "Retry",
   "pay.startFailed": "Could not start payment",

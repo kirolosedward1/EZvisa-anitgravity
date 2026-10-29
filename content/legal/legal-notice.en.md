@@ -11,7 +11,7 @@
 | Email | {{EMAIL}} |
 | WhatsApp / Phone | +971 54 710 9533 |
 | VAT | Not registered for VAT in the UAE. Prices do not include VAT. |
-| Payment processing | Ziina |
+| Payment processing | Payment gateway |
 
 **Nature of the service.** EZvisa prepares visa application files (application forms, cover letter, travel itinerary, flight and hotel reservations for visa purposes, and document guidance) for Schengen visa applicants for the 29 Schengen countries. EZvisa is not a government authority, embassy, consulate, visa application centre or travel agency, and does not decide on visa applications.
 

@@ -179,16 +179,16 @@ function PaymentSuccessContent() {
                   {outcome === "missing" && <LangText en="We couldn't verify this payment" ar="تعذّر التحقق من هذه الدفعة" />}
                 </h1>
                 <p className="text-base leading-relaxed text-muted-foreground">
-                  {outcome === "checking" && <LangText en="We're checking this payment with Ziina. This takes a few seconds." ar={"نتحقق من هذا الدفع مع ⁨Ziina⁩. يستغرق ذلك بضع ثوانٍ."} />}
+                  {outcome === "checking" && <LangText en="We're checking this payment with the payment gateway. This takes a few seconds." ar={"نتحقق من هذا الدفع مع بوابة الدفع. يستغرق ذلك بضع ثوانٍ."} />}
                   {outcome === "paid" && <LangText en="Your visa file is open. A receipt is on its way to your email." ar="ملف التأشيرة مفتوح الآن. الإيصال في طريقه إلى بريدك." />}
                   {outcome === "failed" && <LangText en="You weren't charged. You can retry the payment whenever you're ready." ar="لم يُخصم أي مبلغ. يمكنك إعادة محاولة الدفع متى شئت." />}
-                  {outcome === "pending" && <LangText en="If you completed payment, it can take a minute to show. Check again, and we'll ask Ziina for the latest status." ar={"إذا دفعت فقد يستغرق ظهوره دقيقة. تحقق مجددًا وسنسأل ⁨Ziina⁩ عن آخر حالة."} />}
+                  {outcome === "pending" && <LangText en="If you completed payment, it can take a minute to show. Check again, and we'll ask the payment gateway for the latest status." ar={"إذا دفعت فقد يستغرق ظهوره دقيقة. تحقق مجددًا وسنسأل بوابة الدفع عن آخر حالة."} />}
                   {outcome === "cancelled" && <LangText en="There is nothing left to confirm for this application." ar="لا يوجد ما يحتاج إلى تأكيد لهذا الطلب." />}
                   {outcome === "missing" && <LangText en="This return link doesn't include an application we can check. If you paid, open your dashboard or contact us on WhatsApp." ar="لا يتضمن رابط العودة هذا طلبًا يمكننا التحقق منه. إذا كنت قد دفعت، افتح لوحتك أو تواصل معنا عبر واتساب." />}
                 </p>
                 {outcome === "checking" && confirmingSlow && (
                   <p className="text-sm font-medium text-foreground">
-                    <LangText en="Still confirming with Ziina…" ar={"ما زلنا نؤكد الدفع مع ⁨Ziina⁩…"} />
+                    <LangText en="Still confirming with the payment gateway…" ar={"ما زلنا نؤكد الدفع مع بوابة الدفع…"} />
                   </p>
                 )}
                 {reference && (
