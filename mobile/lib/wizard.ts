@@ -21,7 +21,7 @@
  *  - Website components must import lists/rules from here, never keep their own copies.
  */
 
-export const CONTRACT_VERSION = "2026-10-24.2"
+export const CONTRACT_VERSION = "2026-10-29.1"
 
 // ---------------------------------------------------------------------------------------------------------
 // Business constants
@@ -233,7 +233,6 @@ export function validatePersonal(f: WizardAnswers): Errors {
   const e: Errors = {}
   if (!f.firstName.trim()) e.firstName = "Enter your first name."
   if (!f.lastName.trim()) e.lastName = "Enter your last name."
-  if (!f.passportNumber.trim()) e.passportNumber = "Enter your passport number."
   if (!f.phoneLocal.trim() && !f.phone.trim()) e.phone = "Enter your phone number."; else if (!isValidPhone(f.phone)) e.phone = "Enter a valid phone number."
   if (!f.email.trim()) e.email = "Enter your email."; else if (!isValidEmail(f.email.trim())) e.email = "Enter a valid email address."
   if (!f.dateOfBirth || f.dateOfBirth < "1900-01-01" || isNaN(Date.parse(f.dateOfBirth))) e.dateOfBirth = "Enter your date of birth."
@@ -285,7 +284,7 @@ export function validateTrip(f: WizardAnswers): Errors {
   if (!f.residenceVisaValid && !f.hasEmiratesId) e.residenceVisaValid = "Choose yes or no."
   return e
 }
-/** Passport, after payment: only for cases that reached payment without a number (older rows, app drafts). */
+/** Passport number is collected after payment; existing saved answers remain valid. */
 export function validatePassport(f: Pick<WizardAnswers, "hasValidPassport" | "passportNumber">): Errors {
   if (f.hasValidPassport === "no") return {}
   return (f.passportNumber ?? "").trim() ? {} : { passportNumber: "Enter your passport number." }
