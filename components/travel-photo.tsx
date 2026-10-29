@@ -41,7 +41,7 @@ export function TravelPhoto({ photo, arabic = false, className = "" }: {
           sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 1023px) 80vw, 480px"
           style={{ objectFit: "cover", objectPosition: image.position }} />
       </div>
-      <figcaption><a href={image.source} target="_blank" rel="noopener noreferrer">{arabic ? "تصوير:" : "Photo:"} {image.author} / Freepik</a></figcaption>
+      {photo !== "departure" && (<figcaption><a href={image.source} target="_blank" rel="noopener noreferrer">{arabic ? "تصوير:" : "Photo:"} {image.author} / Freepik</a></figcaption>)}
     </figure>
   )
 }
