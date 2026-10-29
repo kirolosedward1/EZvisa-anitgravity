@@ -755,9 +755,9 @@ header img[alt="EZvisa Logo"] { filter: none; }
 }
 @media(max-width: 479px) {
   .ez-wizard-progress { padding: 20px 20px 16px; }
-  .ez-wizard-progress ol { gap: 8px; }
-  .ez-wizard-progress li:not(:last-child)::after { margin-inline-start: 0; }
-  .ez-wizard-progress li { gap: 6px; font-size: 12px; white-space: normal; }
+  .ez-wizard-progress ol { gap: 0; }
+  .ez-wizard-progress li { position: relative; flex: 1; flex-direction: column; gap: 6px; font-size: 12px; white-space: normal; text-align: center; }
+  .ez-wizard-progress li:not(:last-child)::after { position: absolute; top: 10px; inset-inline-start: calc(50% + 19px); width: calc(100% - 38px); min-width: 0; margin-inline-start: 0; }
   .ez-wizard-step-number { width: 22px; height: 22px; }
   .ez-wizard .ez-wizard-companion { padding: 12px 20px 0; }
   .ez-wizard .globi-guide { gap: 12px; }

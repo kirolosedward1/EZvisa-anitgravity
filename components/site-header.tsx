@@ -247,7 +247,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
               href={whatsappLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+              className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-border px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary sm:px-4 sm:text-sm"
               aria-label="Need help? Chat with us on WhatsApp / تحتاج مساعدة؟ تواصل معنا عبر واتساب"
             >
               <WhatsAppIcon className="text-[#1A7F37] size-[18px]" />
