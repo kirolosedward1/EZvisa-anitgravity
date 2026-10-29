@@ -23,7 +23,7 @@ import { getWhatsAppUrl } from "@/lib/whatsapp"
 
 const nationalities = HOMEPAGE_NATIONALITIES
 
-/** Task pages (wizard, after-payment questions, payment status): logo, "Need help?" and WhatsApp only. */
+/** Task pages keep a compact header; the application can provide an in-place account dialog. */
 const MINIMAL_PREFIXES = ["/apply", "/continue", "/appointment", "/payment-success", "/payment-failed"]
 /** Customer pages: always the short account header. */
 const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip"]
@@ -43,9 +43,10 @@ const matches = (path: string, prefixes: string[]) => prefixes.some((p) => path 
 interface SiteHeaderProps {
   hideNavigation?: boolean
   forceBackground?: boolean
+  wizardAccount?: React.ReactNode
 }
 
-export function SiteHeader({ hideNavigation = false, forceBackground = false }: SiteHeaderProps) {
+export function SiteHeader({ hideNavigation = false, forceBackground = false, wizardAccount }: SiteHeaderProps) {
   const headerRef = useRef<HTMLElement>(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [showWhatsAppTooltip, setShowWhatsAppTooltip] = useState(false)
@@ -232,7 +233,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
     { label: "Videos", ar: "الفيديوهات", id: "/videos", type: "link" },
   ]
 
-  // Task pages: a plain bar with the logo and one way to get help, nothing to wander off to.
+  // Task pages keep help and optional in-place account access beside the logo.
   if (isMinimal) {
     return (
       <header ref={headerRef} className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
@@ -240,16 +241,19 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
           <LocaleLink href="/" className="flex shrink-0 items-center" aria-label="EZvisa home">
             <Image src="/images/logo-main.png" alt="EZvisa Logo" width={120} height={38} className="h-7 w-auto" priority />
           </LocaleLink>
-          <Link
-            href={whatsappLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-            aria-label="Need help? Chat with us on WhatsApp / تحتاج مساعدة؟ تواصل معنا عبر واتساب"
-          >
-            <WhatsAppIcon className="text-[#1A7F37] size-[18px]" />
-            <LangText en="Need help?" ar="تحتاج مساعدة؟" />
-          </Link>
+          <div className="flex items-center gap-2">
+            {wizardAccount}
+            <Link
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+              aria-label="Need help? Chat with us on WhatsApp / تحتاج مساعدة؟ تواصل معنا عبر واتساب"
+            >
+              <WhatsAppIcon className="text-[#1A7F37] size-[18px]" />
+              <LangText en="Need help?" ar="تحتاج مساعدة؟" />
+            </Link>
+          </div>
         </div>
       </header>
     )

@@ -6,6 +6,7 @@ import { NationalityStep } from "@/components/apply/nationality-step"
 import { DestinationStep } from "@/components/apply/destination-step"
 import { PaymentStep } from "@/components/apply/payment-step"
 import { WizardShell } from "@/components/apply/wizard-shell"
+import { WizardAccount } from "@/components/apply/wizard-account"
 import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
 import { Msg } from "@/components/msg"
@@ -434,8 +435,9 @@ function ApplyPageContent() {
   }, [])
 
   // Saved travellers of the signed-in customer (lib/travellers.ts): the "Who is travelling?" drop-down.
-  const { travellers, email: accountEmail, loaded: travellersLoaded } = useTravellers()
+  const { travellers, email: accountEmail, loaded: travellersLoaded, error: travellersError, refresh: refreshTravellers } = useTravellers()
   const [travellerNotice, setTravellerNotice] = useState<{ nationality: string } | null>(null)
+  const initialTravellerChecked = useRef(false)
 
   /** Fill the traveller step from a saved traveller (null = "Someone else"). Every field stays editable. */
   const pickTraveller = useCallback((t: Traveller | null) => {
@@ -454,13 +456,16 @@ function ApplyPageContent() {
   // Signed in, nothing typed yet: preselect a saved traveller (the one marked "You", else the most recently used).
   // A resumed draft that already has a name, or a form where "Someone else" was chosen, is never touched.
   useEffect(() => {
-    if (!isInitialized || showResumeModal || !travellers.length) return
+    if (!isInitialized || showResumeModal || !travellersLoaded || initialTravellerChecked.current) return
+    // Prefill only when already signed in on arrival. In-wizard sign-in leaves the draft alone until a choice is made.
+    initialTravellerChecked.current = true
+    if (!travellers.length) return
     setFormData((prev) => {
       if (!isFreshTravellerForm(prev) || prev.travellerId === TRAVELLER_NONE || (prev.travellerId && travellers.some((t) => t.id === prev.travellerId))) return prev
       const t = defaultTraveller(travellers)
       return t ? applyTravellerToWebForm(prev, t) : prev
     })
-  }, [isInitialized, showResumeModal, travellers])
+  }, [isInitialized, showResumeModal, travellers, travellersLoaded])
 
   // No saved travellers: fill name, email and phone from the account's profile, as before.
   useEffect(() => {
@@ -603,7 +608,11 @@ function ApplyPageContent() {
 
   return (
     <div className="min-h-[100dvh] bg-[#FFFFFF]" ref={wizardContainerRef}>
-      <SiteHeader />
+      <SiteHeader wizardAccount={<WizardAccount travellers={travellers} loaded={travellersLoaded} error={travellersError} refresh={refreshTravellers} value={formData.travellerId ?? ""} onChoose={traveller => {
+        pickTraveller(traveller)
+        // A different traveller must review their details before returning to payment.
+        if (currentStep >= 4) editTraveller()
+      }} />} />
       <WizardShell step={currentStep} motionKey={String(currentStep)} direction={direction} formData={formData}>
         {renderStepContent()}
       </WizardShell>
