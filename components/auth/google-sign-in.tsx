@@ -59,7 +59,7 @@ export function GoogleSignInButton({
       const supabase = createBrowserClient()
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: authCallbackUrl({ next }), queryParams: { prompt: "select_account" } },
+        options: { redirectTo: authCallbackUrl({ next }), scopes: "openid email profile", queryParams: { prompt: "select_account" } },
       })
       if (authError) fail(reported(authError.message, authError.code))
       // On success the browser is leaving for Google: keep the spinner.

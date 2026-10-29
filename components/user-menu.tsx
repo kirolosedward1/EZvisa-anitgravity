@@ -60,7 +60,7 @@ function MenuLink({ href, icon: Icon, en, ar }: { href: string; icon: LucideIcon
 }
 
 /** `user` (id + metadata) is set for Supabase sessions; the profile photo is read from it (lib/avatar.ts). */
-export type Viewer = { email: string; name?: string; demo: boolean; user?: Pick<User, "id" | "user_metadata"> } | null
+export type Viewer = { email: string; name?: string; demo: boolean; user?: Pick<User, "id" | "user_metadata" | "app_metadata"> } | null
 
 /** The signed-in customer (Supabase session, or the demo sandbox cookie). `ready` turns true once checked. */
 export function useViewer(): { viewer: Viewer; ready: boolean } {
@@ -79,13 +79,13 @@ export function useViewer(): { viewer: Viewer; ready: boolean } {
     supabase.auth.getSession().then(({ data }) => {
       if (!alive) return
       const user = data.session?.user
-      if (user?.email) setViewer({ email: user.email, name: metadataFullName(user.user_metadata, user.email) || undefined, demo: false, user: { id: user.id, user_metadata: user.user_metadata } })
+      if (user?.email) setViewer({ email: user.email, name: metadataFullName(user.user_metadata, user.email) || undefined, demo: false, user: { id: user.id, user_metadata: user.user_metadata, app_metadata: user.app_metadata } })
       else setViewer(demo ? { email: "Demo account", demo: true } : null)
       setReady(true)
     })
     const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
       const user = session?.user
-      setViewer(user?.email ? { email: user.email, name: metadataFullName(user.user_metadata, user.email) || undefined, demo: false, user: { id: user.id, user_metadata: user.user_metadata } } : readDemoCookie() ? { email: "Demo account", demo: true } : null)
+      setViewer(user?.email ? { email: user.email, name: metadataFullName(user.user_metadata, user.email) || undefined, demo: false, user: { id: user.id, user_metadata: user.user_metadata, app_metadata: user.app_metadata } } : readDemoCookie() ? { email: "Demo account", demo: true } : null)
     })
     return () => {
       alive = false

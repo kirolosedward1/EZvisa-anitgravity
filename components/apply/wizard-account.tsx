@@ -1,5 +1,7 @@
 "use client"
 
+import { CompleteAccountProfile } from "@/components/auth/complete-account-profile"
+import { hasAdultConfirmation } from "@/lib/auth/account-details"
 import { useRef, useState } from "react"
 import { Check, Eye, EyeOff, Loader2, UserRound } from "lucide-react"
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -89,6 +91,7 @@ export function WizardAccount({ travellers, loaded, error, refresh, value, onCho
   const t = (en: string, ar: string) => arabic ? ar : en
   const [open, setOpen] = useState(false)
   const [choice, setChoice] = useState(value)
+  const needsProfile = !!viewer && !viewer.demo && !hasAdultConfirmation(viewer.user)
   const selected = travellers.find(traveller => traveller.id === choice)
 
   return <Dialog open={open} onOpenChange={next => { setOpen(next); if (next) setChoice(value) }}>
@@ -101,10 +104,10 @@ export function WizardAccount({ travellers, loaded, error, refresh, value, onCho
     <DialogContent dir={arabic ? "rtl" : "ltr"} className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl p-6 sm:max-w-[440px] sm:p-8">
       <div className="flex size-11 items-center justify-center rounded-full bg-secondary text-primary"><UserRound size={22} aria-hidden="true" /></div>
       <div className="space-y-3 pe-3">
-        <DialogTitle className="text-2xl font-medium leading-tight">{t(viewer ? "Your saved travellers" : "Sign in to EZvisa", viewer ? "المسافرون المحفوظون" : "تسجيل الدخول إلى إيزي فيزا")}</DialogTitle>
-        <DialogDescription className="leading-relaxed">{viewer ? t("Choose who’s travelling to fill their details. Your destination and trip stay the same.", "اختر المسافر لتعبئة بياناته. تبقى الوجهة والرحلة كما هما.") : t("Use your saved traveller details. Your answers stay here while you sign in.", "استخدم بيانات المسافرين المحفوظة. تبقى إجاباتك هنا أثناء تسجيل الدخول.")}</DialogDescription>
+        <DialogTitle className="text-2xl font-medium leading-tight">{needsProfile ? t("Complete your account", "أكمل حسابك") : t(viewer ? "Your saved travellers" : "Sign in to EZvisa", viewer ? "المسافرون المحفوظون" : "تسجيل الدخول إلى إيزي فيزا")}</DialogTitle>
+        <DialogDescription className="leading-relaxed">{needsProfile ? t("Account holders must be 18 or older. Confirm your details to continue.", "يجب أن يكون عمر صاحب الحساب 18 عامًا أو أكثر. أكد بياناتك للمتابعة.") : viewer ? t("Choose who’s travelling to fill their details. Your destination and trip stay the same.", "اختر المسافر لتعبئة بياناته. تبقى الوجهة والرحلة كما هما.") : t("Use your saved traveller details. Your answers stay here while you sign in.", "استخدم بيانات المسافرين المحفوظة. تبقى إجاباتك هنا أثناء تسجيل الدخول.")}</DialogDescription>
       </div>
-      {viewer ? <>
+      {needsProfile ? <CompleteAccountProfile next={arabic ? "/ar/apply?resume=1" : "/apply?resume=1"} onComplete={refresh} /> : viewer ? <>
         <p className="break-all border-b border-border pb-4 text-sm text-muted-foreground" dir="ltr">{viewer.demo ? t("Demo account", "حساب تجريبي") : viewer.email}</p>
         {!loaded ? <p role="status" className="flex items-center gap-2 py-4 text-sm text-muted-foreground"><Loader2 size={17} className="animate-spin" aria-hidden="true" />{t("Loading saved travellers…", "جارٍ تحميل المسافرين…")}</p> : error ? <div role="alert" className="space-y-3 text-sm"><p>{t("We couldn’t load your travellers. You can retry or enter the details yourself.", "تعذّر تحميل المسافرين. يمكنك إعادة المحاولة أو إدخال البيانات بنفسك.")}</p><Button variant="outline" onClick={refresh}>{t("Try again", "حاول مرة أخرى")}</Button></div> : travellers.length ? <>
           <TravellerSelect id="wizard-account-traveller" travellers={travellers} value={choice} onChange={traveller => setChoice(traveller?.id ?? TRAVELLER_NONE)} helper={{ en: "This fills the main traveller. You can review and edit the details before payment.", ar: "ستُملأ بيانات المسافر الرئيسي. يمكنك مراجعتها وتعديلها قبل الدفع." }} />

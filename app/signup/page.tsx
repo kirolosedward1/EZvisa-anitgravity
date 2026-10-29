@@ -16,8 +16,9 @@ import { useSiteLocale } from "@/components/locale-provider"
 import { EMAIL_RE } from "@/lib/auth/errors"
 import { authCallbackUrl, safeNext } from "@/lib/auth/redirect"
 import { AccountDetailsFields } from "@/components/auth/account-details-fields"
+import { AgeConfirmation } from "@/components/auth/age-confirmation"
 import { CompleteAccountProfile } from "@/components/auth/complete-account-profile"
-import { accountDetails, accountDetailsError } from "@/lib/auth/account-details"
+import { registrationDetails, accountDetailsError } from "@/lib/auth/account-details"
 import { translations } from "@/lib/translations"
 import { authFormErrorText } from "@/lib/translations/auth-form"
 
@@ -34,6 +35,7 @@ function SignupForm() {
   const [email, setEmail] = useState("")
   const [name, setName] = useState("")
   const [birthdate, setBirthdate] = useState("")
+  const [confirmed, setConfirmed] = useState(false)
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -58,7 +60,7 @@ function SignupForm() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     if (inFlight.current) return
-    const details = accountDetails(name, birthdate)
+    const details = registrationDetails(name, birthdate, confirmed)
     if (details.error) {
       setError(accountDetailsError(locale, details.error))
       return
@@ -77,15 +79,15 @@ function SignupForm() {
     setError("")
 
     try {
-      const { error: signupError } = await supabase.auth.signUp({
-        email: clean,
-        password,
-        options: {
-          data: details.data,
-          emailRedirectTo: authCallbackUrl({ type: "signup", path: "/api/auth/callback", next }),
-        },
+      const response = await fetch("/api/auth/signup", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, birthdate, confirmed, email: clean, password, next, locale }),
       })
-      if (signupError) throw signupError
+      const result = await response.json()
+      if (!response.ok) {
+        if (result.field) { setError(accountDetailsError(locale, result.field)); return }
+        throw new Error(result.error || copy.errors.unknown)
+      }
       setSuccess(true)
       cooldown.start()
     } catch (cause) {
@@ -138,7 +140,7 @@ function SignupForm() {
         )}
 
         <div className="space-y-4">
-          <AccountDetailsFields name={name} birthdate={birthdate} onName={value => { setName(value); setError("") }} onBirthdate={value => { setBirthdate(value); setError("") }} />
+          <AccountDetailsFields name={name} birthdate={birthdate} onName={value => { setName(value); setError("") }} onBirthdate={value => { setBirthdate(value); setConfirmed(false); setError("") }} />
           <div className="space-y-2">
             <Label htmlFor="email">{copy.emailLabel}</Label>
             <Input
@@ -169,6 +171,7 @@ function SignupForm() {
           </div>
         </div>
 
+        <AgeConfirmation checked={confirmed} onChange={value => { setConfirmed(value); setError("") }} disabled={isLoading} />
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading ? (
             <>

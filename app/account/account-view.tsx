@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { parsePhoneNumberFromString } from "libphonenumber-js"
 import {
   Camera,
+  CalendarDays,
   ChevronRight,
   FileText,
   Globe,
@@ -48,6 +49,8 @@ import { EMAIL_RE } from "@/lib/auth/errors"
 import { isAppleRelayEmail } from "@/lib/auth/apple-profile"
 import { SUPPORT_EMAIL } from "@/lib/shared/wizard-contract"
 import type { PillTone } from "@/lib/application-status"
+import { accountAge } from "@/lib/auth/account-details"
+import { formatDisplayDate, formatArabicDate } from "@/lib/dates"
 import { cn } from "@/lib/utils"
 
 export type AccountProfile = {
@@ -56,6 +59,7 @@ export type AccountProfile = {
   name: string
   phone: string
   citizenship: string
+  birthdate?: string
   providers: string[]
   createdAt: string | null
   /** Hide My Email (@privaterelay.appleid.com). The address is real; Apple forwards mail to it. */
@@ -149,6 +153,7 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
 
   const hasPassword = profile.providers.includes("email")
   const citizenshipIso = toCitizenshipIso(profile.citizenship)
+  const age = accountAge(profile.birthdate)
   const receipts = applications.filter((a) => a.receipt)
   const memberSince = profile.createdAt
     ? new Date(profile.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
@@ -337,6 +342,7 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
           <div className="divide-y divide-border">
             <DetailRow icon={UserRound} label="Name" value={profile.name || "Not added"} action={profile.name ? "Edit" : "Add"} onClick={() => open("name")} />
             <DetailRow icon={Mail} label="Email" value={<span className="ltr-isolate">{profile.email}</span>} onClick={() => open("email")} />
+            {profile.birthdate ? <DetailRow icon={CalendarDays} label={arabic ? "تاريخ الميلاد" : "Date of birth"} value={<>{arabic ? formatArabicDate(profile.birthdate) : formatDisplayDate(profile.birthdate)}{age !== null ? <span className="ms-2 text-xs font-normal text-muted-foreground">{arabic ? `(${age} عامًا)` : `(${age} years old)`}</span> : null}</>} /> : null}
             <DetailRow icon={Phone} label="Phone number" value={profile.phone ? <span className="ltr-isolate">{displayPhone(profile.phone)}</span> : "Not added"} action={profile.phone ? "Edit" : "Add"} onClick={() => open("phone")} />
             <DetailRow
               icon={Globe}

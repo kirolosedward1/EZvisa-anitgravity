@@ -8,6 +8,7 @@ import { getStatusLabel, isPaid } from "@/lib/application-status"
 import { referenceOf } from "@/lib/shared/wizard-contract"
 import { isAppleRelayEmail, metadataFullName } from "@/lib/auth/apple-profile"
 
+import { accountBirthDate } from "@/lib/auth/account-details"
 import type { Metadata } from "next"
 import { withArabicMeta } from "@/lib/page-meta"
 
@@ -40,6 +41,7 @@ export default async function AccountPage() {
     name: metadataFullName(meta, user.email) || [str(meta.first_name), str(meta.last_name)].filter(Boolean).join(" "),
     privateRelay: isAppleRelayEmail(user.email),
     phone: str(meta.phone),
+    birthdate: accountBirthDate(meta.date_of_birth),
     citizenship: str(meta.citizenship) || str(meta.nationality),
     providers,
     createdAt: user.created_at ?? null,
