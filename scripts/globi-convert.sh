@@ -37,6 +37,8 @@ done
 POSES=(welcome destination passport checklist calendar shield waiting celebrate companion documents travel
        thinking phone writing wallet lock plane hotel stamp puzzled magnify)
 
+# --size goes into an ffmpeg filtergraph: accept a plain integer in a sane range only.
+[[ "$SIZE" =~ ^[0-9]+$ ]] && (( SIZE >= 64 && SIZE <= 2048 )) || { echo "--size must be a whole number of pixels between 64 and 2048." >&2; exit 2; }
 command -v ffmpeg >/dev/null || { echo "ffmpeg is not installed." >&2; exit 1; }
 missing=0
 for p in "${POSES[@]}"; do [[ -f "$SRC/$p.webm" ]] || { echo "missing source: $SRC/$p.webm" >&2; missing=1; }; done

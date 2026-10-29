@@ -289,6 +289,9 @@ The EZvisa mobile app lives in `mobile/` on the **`mobile-app` branch** of this 
   "Need help?" and WhatsApp; signed-in customers and customer pages get the short account header (My applications,
   New application, Destinations, Help, account menu); everyone else gets the marketing nav.
 - Change procedure, auth/Supabase configuration and known leftovers: `docs/APP_WEB_SYNC.md`, `docs/AUTH_SETUP.md`.
+- **App design (separate from the website's section 4):** the app follows the "EZvisa app with Globi" canvas. Its
+  tokens, type roles (maximum weight 600), canvas components and Globi rules are in `mobile/docs/design-system.md`;
+  the build plan and phase record are in `docs/app-build-plan.md`. Globi assets come from `scripts/globi-convert.sh`.
 
 ---
 
