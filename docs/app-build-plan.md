@@ -461,3 +461,19 @@ that `mobile-app` had already removed; they are rewritten with the wizard in Pha
 | Applications: "+", Active / Past, "Needs you" and "With the team" rows with pills (Continue, Upload, Pay, Ready), phone drafts included, the website tip; guest view with phone drafts, Sign in and Create account | `app/(tabs)/applications/index.tsx` |
 | Discard confirm: the canvas action sheet (Globi, "Discard the Spain draft?", answers saved, nothing refunded, Keep it) for swipe, long press and the detail trash; the swipe now asks once and slides back | `components/DiscardHost.tsx`, `lib/discard.ts`, `components/SwipeToDiscard.tsx` |
 | Section headers 13/600 sentence case, grouped lists on the 20 pt gutter; Arabic for every new string | `components/ui/core.tsx`, `lib/ar.ts` |
+
+## 7c. Phase 3 · delivered (29 Oct)
+
+| Item | Where |
+|---|---|
+| Every question is the title inside Globi's bubble, no description line; answers drawn per the canvas (list rows, two-column grid tiles, two tall yes/no tiles, chips) from a `view` field per question; the stored values stay the contract's | `mobile/lib/questions.ts` (`view`, `explain`), `components/wizard/choices.tsx`, `QuestionView.tsx` |
+| Tap Globi: "Why I ask this" sheet (why, used for, shared with, Ask the team on WhatsApp) on every question | `components/wizard/QuestionView.tsx`, `lib/questions.ts` (`explain`) |
+| Destination: popular countries then "All N countries"; nationality quick grid; traveller tiles ("Who is travelling to France?") | `components/wizard/choices.tsx` |
+| Contact asks only the phone (WhatsApp opt-in kept); the account email fills the email. The passport number is asked after payment only (website rule) | `lib/questions.ts` |
+| Three-step header (Destination · Traveller · Review & pay) with WhatsApp help; the 1.5 s "Saved" pill once the server confirms | `components/ui/canvas.tsx` (`StepHeader`), `components/wizard/sync.tsx` |
+| Review as drawn: Trip / Traveller / Contact rows that open the question, account email tag, "To get later", price rows; then Create account at pay (guests), Insurance (quote / own policy / not now, priced separately, never changes the fee, saved as `insurancePreference`), Price breakdown (per traveller, VAT included, appointment fees from `config/pricing.ts`) and "Pay N AED securely" | `mobile/app/apply/index.tsx`, `lib/missing.ts` |
+| Payment states as drawn: checking (three steps with seconds), received (numbered next steps, Continue application, View receipt, Done), not confirmed yet (last checked), still confirming (no second charge), didn't go through, cancelled (Pay now / Later), offline | `mobile/app/payment/[id].tsx` |
+| Notification pre-prompt once after the first payment, before the next screen (examples of the only messages sent) | `components/payment/PushAsk.tsx` |
+| Draft conflict: the two copies side by side, one button per copy | `components/wizard/sync.tsx` |
+| v1 analytics: question view / answer / back with time on screen, wizard exit, review row tap, sign-up at pay, payment result, Globi tap, WhatsApp hand-off (stored once migration 0016 runs) | `lib/analytics.ts` |
+| Arabic for every new string (212 added) | `lib/ar.ts` |

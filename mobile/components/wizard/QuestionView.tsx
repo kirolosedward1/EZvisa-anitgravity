@@ -4,12 +4,14 @@ import React, { useRef, useState } from "react";
 import { ScrollView, View, Platform, TextInput, I18nManager, type TextInputInstance } from "react-native";
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Text, Shake, PressScale, QuestionHeader, Chip } from "../ui";
+import { Button, Text, Shake, PressScale, QuestionHeader, Chip, SheetScaffold, Card, RowGroup, Row, PrimaryButton, SecondaryButton } from "../ui";
+import { OptionAnswers, YesNoAnswer, NationalityGrid, CountryAnswer, TravellerTiles } from "./choices";
+import { track } from "../../lib/analytics";
+import { whatsapp } from "../../lib/api";
 import { PhoneField } from "../CountryPicker";
 import { Checkbox, Note } from "./fields";
 import { DatesAnswer, DatesSummary } from "./dates";
-import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries } from "./answers";
-import { TravellerRows } from "./travellers";
+import { DateAnswer, AdditionalCountries } from "./answers";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { select, tap } from "../../lib/haptics";
@@ -42,6 +44,8 @@ const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean,
   [T.title3, { color: c.label, minHeight: 52, borderRadius: R.input, backgroundColor: c.surface, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: err || focused ? 1.5 : 1, borderColor: err ? c.red : focused ? c.accent : c.border, textAlign: rtl ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)] as any;
 
 export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, onGlobiPress, children }: Props) {
+  const [explain, setExplain] = useState(false);
+  const openExplain = onGlobiPress ?? (() => { track("globi_tap", { question: q.id }); setExplain(true); });
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
   const inputRef = useRef<TextInputInstance>(null); const input2Ref = useRef<TextInputInstance>(null);
   // Lift the screen (and its Continue bar) above the iOS keyboard; S.md between button and keyboard.
@@ -51,7 +55,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
 
   const [focus, setFocus] = useState<string | null>(null); // the field being typed in (blue border)
   const liveErr = errorOf(q, f);
-  const hasInput = q.kind === "contact" ? !!f.phoneLocal.trim() && (!!account || !!f.email.trim()) : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
+  const hasInput = q.kind === "contact" ? !!f.phoneLocal.trim() : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
   const e = showErr || (settled && hasInput) ? liveErr : undefined;
   const note = q.note?.(f);
   const answered = isAnswered(q, f);
@@ -69,7 +73,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
   ) : undefined;
   const title = (
     <View style={{ gap: S.sm }}>
-      <QuestionHeader question={question} pose={other ? "magnify" : q.pose} chip={chipRow} titleRef={titleRef} onGlobiPress={onGlobiPress} />
+      <QuestionHeader question={question} pose={other ? "magnify" : q.pose} chip={chipRow} titleRef={titleRef} onGlobiPress={openExplain} />
       {belowTitle}
     </View>
   );
@@ -81,8 +85,8 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
 
   const body = (() => {
     switch (q.kind) {
-      case "choice": return <ChoiceList label={t(q.label)} options={q.options!} flag={q.flag} value={f[q.keys[0]] as string} onPick={pick} />;
-      case "yesno": return <YesNoTiles label={t(q.label)} value={f[q.keys[0]] as string} onPick={pick} />;
+      case "choice": return <OptionAnswers q={q} f={f} options={q.options!} value={f[q.keys[0]] as string} onPick={pick} />;
+      case "yesno": return <YesNoAnswer q={q} f={f} value={f[q.keys[0]] as string} onPick={pick} />;
       case "text": case "textarea": return (
         <TextInput ref={inputRef} value={String(f[q.keys[0]] ?? "")} onChangeText={(v) => patch({ [q.keys[0]]: tp.upper ? v.toUpperCase() : v } as Partial<WizardForm>)}
           placeholder={t(q.placeholder ?? "")} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(q.label)} autoFocus
@@ -112,17 +116,11 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
       }
       case "contact": return (
         <View style={{ gap: S.md }}>
-          {!account && <View style={{ gap: S.xs }}>
-            <Text variant="footnote" weight="600" tone="secondary">{t("Email Address")}</Text>
-            <TextInput ref={inputRef} value={f.email} onChangeText={(v) => patch({ email: v })} placeholder="your.email@example.com" placeholderTextColor={c.secondaryLabel}
-              accessibilityLabel={t("Email Address")} autoFocus keyboardType="email-address" autoCapitalize="none" autoCorrect={false} textContentType="emailAddress" autoComplete="email"
-              returnKeyType="next" blurOnSubmit={false} testID="question-input" onFocus={() => setFocus("email")} onBlur={() => setFocus(null)} style={fieldStyle(c, !!e && !!qe.email, isRTL, focus === "email")} />
-          </View>}
           <View style={{ gap: S.xs }}>
-            {!account && <Text variant="footnote" weight="600" tone="secondary">{t("Phone Number")}</Text>}
+            <Text variant="note" weight="600" tone="secondary">{t("Phone number")}</Text>
             <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e && !!qe.phone} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />
           </View>
-          <Checkbox label={t("Receive application updates via WhatsApp")} value={f.whatsappOptIn} onChange={(v) => patch({ whatsappOptIn: v })} icon="logo.whatsapp" />
+          <Checkbox label={t("Send me application updates on WhatsApp")} value={f.whatsappOptIn} onChange={(v) => patch({ whatsappOptIn: v })} icon="logo.whatsapp" />
         </View>
       );
       case "date": return (
@@ -142,7 +140,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
       case "dates": return <DatesAnswer f={f} patch={patch} />;
       case "countries": return <AdditionalCountries f={f} onChange={(v) => patch({ additionalCountries: v })} />;
       // Saved travellers (lib/travellers.ts): tapping one fills the answers it carries; the screen decides where to go next.
-      case "traveller": return <TravellerRows travellers={getTravellers()} onPick={pick} />;
+      case "traveller": return <TravellerTiles travellers={getTravellers()} onPick={pick} />;
       default: return null;
     }
   })();
@@ -161,10 +159,18 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
     <Animated.View style={[{ flex: 1, backgroundColor: c.bg }, kbPad]}>
       {header}
       <Animated.View key={pageKey} entering={entering} style={{ flex: 1 }}>
-        {q.kind === "country" ? (
-          <CountryList key={allMode && q.allNames ? "all" : "top"} names={allMode && q.allNames ? q.allNames.filter((n) => !q.names!.includes(n)) : q.names!} searchAll={allMode ? undefined : q.allNames} value={f[q.keys[0]] as string} onPick={pick} searchPlaceholder={q.searchPlaceholder ?? "Search country..."} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
+        {q.kind === "country" && !(q.id === "nationality" && !other) ? (
+          <CountryAnswer key={other ? "all" : "top"} names={other ? q.allNames! : q.names!} searchAll={other ? undefined : q.allNames} value={f[q.keys[0]] as string} onPick={pick}
+            searchPlaceholder={other ? "Search nationality" : "Search country"} popular={q.id === "destination" ? ["France", "Italy", "Spain", "Germany", "Greece"] : undefined}
+            allTitle={q.id === "destination" ? t("All {n} countries", { n: q.names!.length }) : undefined} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
+        ) : q.kind === "country" ? (
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+            {title}
+            <NationalityGrid value={f.nationality} onPick={pick} onOther={() => pick(OTHER_NATIONALITY)} />
+            {errBox}
+          </ScrollView>
         ) : (
-          <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+          <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
             {title}
             {body}
             {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" color={c.label}>{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
@@ -175,6 +181,14 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
       </Animated.View>
       {bar}
       {children}
+      <SheetScaffold visible={explain} onClose={() => setExplain(false)} pose={q.pose} globiSize={96} bubble title={t("Why I ask this")} testID="globi-explain"
+        actions={<View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flex: 1 }}><SecondaryButton title={t("Ask the team")} whatsapp onPress={() => { track("whatsapp_handoff", { screen: "globi-explain" }); whatsapp(); }} /></View>
+          <View style={{ flex: 1 }}><PrimaryButton title={t("Got it")} onPress={() => setExplain(false)} /></View>
+        </View>}>
+        <Card padded><Text variant="body">{t(q.explain.why)}</Text></Card>
+        <RowGroup><Row label={t("Used for")} value={t(q.explain.usedFor)} /><Row label={t("Shared with")} value={t(q.explain.sharedWith)} /></RowGroup>
+      </SheetScaffold>
     </Animated.View>
   );
 }

@@ -1,10 +1,6 @@
-// Copy, clock and the stalled-payment actions for the payment result screen.
+// Copy and clock for the payment result screen.
 // The verifier in app/payment/[id].tsx is unchanged; this only decides what that wait looks like.
 import { useEffect, useRef, useState } from "react";
-import { View } from "react-native";
-import { Button, PressScale, Text } from "../ui";
-import { curve, R, S, useColors } from "../../lib/theme";
-import { tap } from "../../lib/haptics";
 import type { Lang } from "../../lib/i18n";
 
 export const PAYMENT_SLOW_MS = 8_000;
@@ -59,24 +55,4 @@ export function usePaymentWaitClock(active: boolean, resetKey: number, headStart
     return () => { if (slow) clearTimeout(slow); if (stall) clearTimeout(stall); };
   }, [active, resetKey, headStart]);
   return elapsed;
-}
-
-
-/** Shown once the check has run for 20s. Polling continues behind these. */
-export function PaymentStallActions({ retryLabel, leaveLabel, onRetry, onLeave }: { retryLabel: string; leaveLabel: string; onRetry: () => void; onLeave: () => void }) {
-  const c = useColors(); const BRAND = c.accent; const BORDER = c.border;
-  return (
-    <>
-      <View testID="payment-retry"><Button title={retryLabel} onPress={onRetry} /></View>
-      <PressScale
-        testID="payment-leave"
-        onPress={() => { tap(); onLeave(); }}
-        accessibilityRole="button"
-        accessibilityLabel={leaveLabel}
-        style={[{ minHeight: 48, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: c.surface, borderWidth: 1, borderColor: BORDER }, curve]}
-      >
-        <Text variant="headline" weight="600" color={BRAND} numberOfLines={2} center style={{ flexShrink: 1 }}>{leaveLabel}</Text>
-      </PressScale>
-    </>
-  );
 }

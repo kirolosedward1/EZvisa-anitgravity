@@ -1,12 +1,14 @@
 // Autosave status and the "newer copy" prompt for the wizard (state lives in lib/form.tsx).
 // The indicator is truthful: "Saved" only after the server confirmed the answers on screen; "Not saved" otherwise.
-import { Modal, View, AccessibilityInfo } from "react-native";
+import { View, AccessibilityInfo } from "react-native";
 import { useEffect, useRef } from "react";
 import { router } from "expo-router";
-import { Text, Icon, Button, PressScale, showSaved } from "../ui";
-import { useColors, S, R, curve } from "../../lib/theme";
+import { Text, Icon, PressScale, showSaved, SheetScaffold, PrimaryButton, SecondaryButton } from "../ui";
+import { useColors, S, R } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { useForm, type SyncStatus } from "../../lib/form";
+import { draftPosition } from "../../lib/questions";
+import type { WizardForm } from "../../lib/wizard";
 import { medium } from "../../lib/haptics";
 
 /** Autosave status (canvas AutoSave.dc.html): a 1.5 s "Saved" pill when the server confirms, no timestamps. Saves are
@@ -44,15 +46,23 @@ function label(s: SyncStatus, t: (k: string) => string) {
   }
 }
 
-/** Asks which copy to keep when the server copy changed elsewhere. Nothing is overwritten without a choice. */
+/** Asks which copy to keep when the server copy changed elsewhere (canvas DraftConflict.dc.html: the two copies side by
+ *  side, then one button per copy). Nothing is overwritten without a choice. */
 export function DraftConflictSheet() {
-  const c = useColors(); const { t } = useT(); const { conflict, resolveConflict } = useForm();
+  const c = useColors(); const { t } = useT(); const { conflict, resolveConflict, form, page } = useForm();
   useEffect(() => { if (conflict) medium(); }, [!!conflict]);
   if (!conflict) return null;
   const s = conflict.server;
-  const when = s?.updatedAt ? new Date(s.updatedAt).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
-  const where = s?.editedOn === "website" ? t("on the website") : t("on another device");
-  const copy = conflict.reason === "newer" ? { title: t("Newer version found"), body: t("This application was changed {where} ({when}).", { where, when }), main: t("Load newer version"), alt: t("Keep this version") }
+  const fmt = (iso?: string | null) => iso ? new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "";
+  const web = s?.editedOn === "website";
+  const where = web ? t("on the website") : t("on another device");
+  const summary = (f: Partial<WizardForm> | undefined, p: string) => {
+    if (!f) return "";
+    const pos = draftPosition(f as WizardForm, p);
+    return [f.firstName ? t("Name answered.") : t("Name not yet entered."), t("Up to question {i}.", { i: pos.i })].join(" ");
+  };
+  const newer = conflict.reason === "newer";
+  const copy = newer ? { title: t("This application changed on another device"), main: web ? t("Keep the website version") : t("Keep the other version"), alt: t("Keep this phone's version") }
     : conflict.reason === "existing" ? { title: t("Application in progress"), body: t("You already have a {c} application saved to your account.", { c: t(s?.form.destination || "") }), main: t("Continue it"), alt: t("Start a separate one") }
     : conflict.reason === "closed" ? { title: t("Already submitted"), body: t("This application was submitted {where}.", { where }), main: t("Open application"), alt: null }
     : { title: t("Draft removed"), body: t("This draft was discarded {where}.", { where }), main: t("Save as new"), alt: t("Discard") };
@@ -62,18 +72,25 @@ export function DraftConflictSheet() {
     resolveConflict("server");
   };
   const alt = () => resolveConflict(conflict.reason === "gone" ? "discard" : "mine");
+  const col = (head: string, when: string, line: string) => (
+    <View style={{ flex: 1, backgroundColor: c.bg, borderWidth: 1, borderColor: c.border, borderRadius: R.button, padding: 12 }} accessible accessibilityLabel={`${head}. ${when}. ${line}`}>
+      <Text variant="caption" weight="600" tone="secondary" style={{ textTransform: "uppercase", letterSpacing: 0.3 }}>{head}</Text>
+      {!!when && <Text variant="callout" weight="600" style={{ marginTop: 4 }}>{when}</Text>}
+      <Text variant="caption" tone="secondary" style={{ marginTop: 2 }}>{line}</Text>
+    </View>
+  );
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={() => {}}>
-      <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: S.lg }}>
-        <View style={[{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.md }, curve]} accessibilityViewIsModal testID="draft-conflict">
-          <Text variant="title3" accessibilityRole="header">{copy.title}</Text>
-          <Text variant="subhead" tone="secondary">{copy.body}</Text>
-          <View style={{ gap: S.sm }}>
-            <Button title={copy.main} onPress={main} />
-            {copy.alt && <Button title={copy.alt} variant={conflict.reason === "gone" ? "destructive" : "secondary"} onPress={alt} />}
-          </View>
+    <SheetScaffold visible onClose={() => {}} pose="puzzled" title={copy.title} line={"body" in copy ? copy.body : undefined} testID="draft-conflict"
+      actions={<>
+        <PrimaryButton title={copy.main} onPress={main} testID="conflict-main" />
+        {copy.alt && <SecondaryButton title={copy.alt} onPress={alt} testID="conflict-alt" />}
+      </>}>
+      {newer && (
+        <View style={{ flexDirection: "row", gap: S.xs }}>
+          {col(web ? t("On the website") : t("On another device"), fmt(s?.updatedAt), summary(s?.form, s?.question ? `q:${s.question}` : "review"))}
+          {col(t("On this phone"), "", summary(form, page))}
         </View>
-      </View>
-    </Modal>
+      )}
+    </SheetScaffold>
   );
 }
