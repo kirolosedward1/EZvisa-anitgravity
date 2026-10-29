@@ -1,5 +1,50 @@
 import type { Metadata } from "next"
 
+export const SITE_URL = "https://www.ezvisa.net"
+
+/** Default 1200×630 share cards, rendered by scripts/generate-og-images.mjs. */
+export function defaultOgImage(arabic = false) {
+  return arabic
+    ? { url: `${SITE_URL}/og/ezvisa-og-ar.png`, width: 1200, height: 630, alt: "إيزي فيزا: تأشيرة شنغن، ببساطة" }
+    : { url: `${SITE_URL}/og/ezvisa-og.png`, width: 1200, height: 630, alt: "EZvisa: your Schengen visa, made simple" }
+}
+
+/** Open Graph locale codes. Both audiences are UAE residents. */
+export const OG_LOCALE = { en: "en_US", ar: "ar_AE" } as const
+
+/** The real profiles linked from the footer. Keep in sync with components/footer.tsx. */
+export const SOCIAL_PROFILES = [
+  "https://www.youtube.com/@ezvisa_dxb",
+  "https://www.instagram.com/ezvisa.net",
+  "https://www.facebook.com/ezvisadxb",
+  "https://www.tiktok.com/@ezvisa.net",
+]
+
+/** The logo file's real size: 873×216. */
+export const ORGANIZATION_LOGO = {
+  "@type": "ImageObject",
+  url: `${SITE_URL}/images/logo-main.png`,
+  width: 873,
+  height: 216,
+}
+
+export const ORGANIZATION_FOUNDER = {
+  "@type": "Person",
+  name: "Kirolos Edward",
+  jobTitle: "Founder",
+  url: `${SITE_URL}/about`,
+}
+
+/**
+ * Canonical and hreflang links for a page published in English at `path` and in Arabic at `/ar${path}`.
+ * `path` is the English path, e.g. "/pricing" or "/".
+ */
+export function localeAlternates(path: string, arabic: boolean): NonNullable<Metadata["alternates"]> {
+  const en = `${SITE_URL}${path === "/" ? "/" : path}`
+  const ar = `${SITE_URL}/ar${path === "/" ? "" : path}`
+  return { canonical: arabic ? ar : en, languages: { en, ar, "x-default": en } }
+}
+
 interface SEOProps {
   title: string
   description: string
@@ -16,7 +61,7 @@ export function generateSEO({
   title,
   description,
   keywords = [],
-  image = "/images/logo-main.png",
+  image = "/og/ezvisa-og.png",
   url = "",
   type = "website",
   publishedTime,
@@ -54,7 +99,6 @@ export function generateSEO({
       title,
       description,
       images: [image.startsWith("http") ? image : `${baseUrl}${image}`],
-      creator: "@ezvisa",
     },
     alternates: {
       canonical: fullUrl,
@@ -82,12 +126,8 @@ export function generateOrganizationSchema() {
     "@id": "https://www.ezvisa.net/#organization",
     name: "EZvisa",
     url: "https://www.ezvisa.net/",
-    logo: {
-      "@type": "ImageObject",
-      url: "https://www.ezvisa.net/images/logo-main.png",
-      width: 600,
-      height: 200,
-    },
+    logo: ORGANIZATION_LOGO,
+    founder: ORGANIZATION_FOUNDER,
     description:
       "Professional Schengen visa document preparation service for 29 European countries.",
     address: {
@@ -102,13 +142,7 @@ export function generateOrganizationSchema() {
       availableLanguage: ["en", "ar"],
       email: "hello@ezvisa.net",
     },
-    sameAs: [
-      "https://facebook.com/ezvisa",
-      "https://twitter.com/ezvisa",
-      "https://instagram.com/ezvisa",
-      "https://youtube.com/@ezvisa",
-      "https://tiktok.com/@ezvisa",
-    ],
+    sameAs: SOCIAL_PROFILES,
   }
 }
 

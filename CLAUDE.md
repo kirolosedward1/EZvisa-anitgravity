@@ -12,6 +12,8 @@ Read [AGENTS.md](AGENTS.md), then [DESIGN.md](DESIGN.md) before editing. The des
 
 ## Last completed changes
 
+- SEO pass (branch `claude/ezvisa-seo-improvement-2hdd3u`): per-language canonicals, en/ar hreflang, bilingual sitemap, destination `Service`/`BreadcrumbList` schema, 1200×630 share cards, corrected social profiles, `llms.txt`. Details and open recommendations: [docs/seo/2026-10-29-seo-audit.md](docs/seo/2026-10-29-seo-audit.md). New indexable pages should use `withArabicMeta()` or `localeAlternates()` and be added to `app/sitemap.ts`.
+
 - Tracking-page intro uses a neutral “View all your applications” link to `/dashboard` for everyone. The repeated sign-in prompt is removed in English and Arabic. Dashboard authentication and token access restrictions are unchanged.
 
 - Insurance is **after Preparation and before Ready, in the dashboard only**. Wizard: Destination → Traveller → Review & pay. Retired insurance deep links and saved step 5 resolve to review.

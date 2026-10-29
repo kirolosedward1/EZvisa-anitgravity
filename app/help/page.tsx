@@ -12,10 +12,12 @@ import { TopicIcon } from "@/components/help/topic-icon"
 import { HELP_ARTICLES, HELP_TOPICS, helpArticleHref, topicArticles } from "@/lib/help/articles"
 import type { HelpSearchItem } from "@/lib/help/search"
 import { requestLocale } from "@/lib/request-locale"
+import { OG_LOCALE, SITE_URL, defaultOgImage, localeAlternates } from "@/lib/seo"
 
 export async function generateMetadata(): Promise<Metadata> {
   const arabic = (await requestLocale()) === "ar"
-  const url = arabic ? "https://www.ezvisa.net/ar/help" : "https://www.ezvisa.net/help"
+  const lang = arabic ? "ar" : "en"
+  const alternates = localeAlternates("/help", arabic)
   const title = arabic ? "مركز المساعدة" : "Help center"
   const description = arabic
     ? "إجابات عن الأسعار والدفع والمستندات والرفع والمواعيد وتأمين السفر والحساب والاسترداد في إيزي فيزا."
@@ -23,8 +25,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical: url, languages: { en: "https://www.ezvisa.net/help", ar: "https://www.ezvisa.net/ar/help" } },
-    openGraph: { title: `${title} | EZvisa`, description, url, type: "website" },
+    alternates,
+    openGraph: { title: `${title} | EZvisa`, description, url: `${SITE_URL}${arabic ? "/ar" : ""}/help`, siteName: "EZvisa", type: "website", locale: OG_LOCALE[lang], alternateLocale: OG_LOCALE[arabic ? "en" : "ar"], images: [defaultOgImage(arabic)] },
   }
 }
 

@@ -12,6 +12,7 @@ import { InnerHero } from "@/components/inner-hero"
 import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { requestLocale } from "@/lib/request-locale"
+import { OG_LOCALE, defaultOgImage, localeAlternates } from "@/lib/seo"
 import { PRICE_AED, priceAed } from "@/lib/shared/wizard-contract"
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,12 +23,16 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: `الأسعار: ${price} لكل طلب تأشيرة شنغن`,
       description: `تتقاضى ${ltr("EZvisa")} ${price} عن كل طلب (${spouse} مع الزوج أو الزوجة) مقابل نموذج الطلب وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. رسوم السفارة وتأمين السفر منفصلة.`,
-      alternates: { canonical: "https://www.ezvisa.net/ar/pricing" },
+      alternates: localeAlternates("/pricing", true),
       openGraph: {
         title: `أسعار ${ltr("EZvisa")}: ${price} لكل طلب`,
         description: "رسم واحد لكل ما نجهّزه. رسوم السفارة وتأمين السفر تُدفع منفصلة.",
         url: "https://www.ezvisa.net/ar/pricing",
+        siteName: "EZvisa",
         type: "website",
+        locale: OG_LOCALE.ar,
+        alternateLocale: OG_LOCALE.en,
+        images: [defaultOgImage(true)],
       },
     }
   }
@@ -36,12 +41,16 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       "EZvisa charges 249 AED per application (498 AED with your spouse) for the application form, cover letter, itinerary, and flight and hotel reservations. Embassy fees and travel insurance are separate.",
     keywords: ["Schengen visa cost UAE", "Schengen visa fee Dubai", "visa application service price", "Europe visa cost UAE"],
-    alternates: { canonical: "https://www.ezvisa.net/pricing" },
+    alternates: localeAlternates("/pricing", false),
     openGraph: {
       title: "EZvisa Pricing: 249 AED per Application",
       description: "One fee for everything we prepare. Embassy fees and travel insurance are paid separately.",
       url: "https://www.ezvisa.net/pricing",
+      siteName: "EZvisa",
       type: "website",
+      locale: OG_LOCALE.en,
+      alternateLocale: OG_LOCALE.ar,
+      images: [defaultOgImage()],
     },
   }
 }

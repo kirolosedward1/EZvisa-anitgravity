@@ -10,6 +10,7 @@ import { HelpSupport } from "@/components/help/help-support"
 import { TopicIcon } from "@/components/help/topic-icon"
 import { HELP_TOPICS, helpArticleHref, helpTopic, topicArticles } from "@/lib/help/articles"
 import { requestLocale } from "@/lib/request-locale"
+import { OG_LOCALE, SITE_URL, defaultOgImage, localeAlternates } from "@/lib/seo"
 
 export function generateStaticParams() {
   return HELP_TOPICS.map((topic) => ({ topic: topic.slug }))
@@ -21,12 +22,12 @@ export async function generateMetadata({ params }: { params: Promise<{ topic: st
   if (!topic) return { title: "Help center" }
   const arabic = (await requestLocale()) === "ar"
   const lang = arabic ? "ar" : "en"
-  const url = `https://www.ezvisa.net${arabic ? "/ar" : ""}/help/${slug}`
+  const alternates = localeAlternates(`/help/${slug}`, arabic)
   return {
     title: `${topic.title[lang]} | ${arabic ? "مركز المساعدة" : "Help center"}`,
     description: topic.description[lang],
-    alternates: { canonical: url, languages: { en: `https://www.ezvisa.net/help/${slug}`, ar: `https://www.ezvisa.net/ar/help/${slug}` } },
-    openGraph: { title: topic.title[lang], description: topic.description[lang], url, type: "website" },
+    alternates,
+    openGraph: { title: topic.title[lang], description: topic.description[lang], url: `${SITE_URL}${arabic ? "/ar" : ""}/help/${slug}`, siteName: "EZvisa", type: "website", locale: OG_LOCALE[lang], alternateLocale: OG_LOCALE[arabic ? "en" : "ar"], images: [defaultOgImage(arabic)] },
   }
 }
 

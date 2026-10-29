@@ -9,6 +9,7 @@ import { AfterPaymentTimeline } from "@/components/after-payment-timeline"
 import { ServicesSection } from "@/components/services-section"
 import { formatAedLabel } from "@/lib/currency"
 import { requestLocale } from "@/lib/request-locale"
+import { OG_LOCALE, defaultOgImage, localeAlternates } from "@/lib/seo"
 import { ltr } from "@/lib/bidi"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 
@@ -19,12 +20,16 @@ export async function generateMetadata(): Promise<Metadata> {
     return {
       title: "كيف تعمل: من أول إجابة حتى موعد التأشيرة",
       description: `كيف تجهّز ${ltr("EZvisa")} ملف تأشيرة شنغن: أجب عن بضعة أسئلة، وادفع ${price}، وارفع مستنداتك، واستلم نموذج الطلب وخطاب التغطية وبرنامج الرحلة والحجوزات خلال ${ltr("1–2")} يوم.`,
-      alternates: { canonical: "https://www.ezvisa.net/ar/how-it-works" },
+      alternates: localeAlternates("/how-it-works", true),
       openGraph: {
         title: "كيف تعمل إيزي فيزا",
         description: `أجب عن بضعة أسئلة، وادفع، وارفع مستنداتك. ملفك جاهز خلال ${ltr("1–2")} يوم.`,
         url: "https://www.ezvisa.net/ar/how-it-works",
+        siteName: "EZvisa",
         type: "website",
+        locale: OG_LOCALE.ar,
+        alternateLocale: OG_LOCALE.en,
+        images: [defaultOgImage(true)],
       },
     }
   }
@@ -33,12 +38,16 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       "How EZvisa prepares your Schengen visa file: answer a few questions, pay 249 AED, upload your documents, and get your application form, cover letter, itinerary and reservations in 1–2 days.",
     keywords: ["visa application process", "how to apply Schengen visa UAE", "Schengen visa steps", "Schengen visa appointment Dubai"],
-    alternates: { canonical: "https://www.ezvisa.net/how-it-works" },
+    alternates: localeAlternates("/how-it-works", false),
     openGraph: {
       title: "How EZvisa Works",
       description: "Answer a few questions, pay, upload your documents. Your file is ready in 1–2 days.",
       url: "https://www.ezvisa.net/how-it-works",
+      siteName: "EZvisa",
       type: "website",
+      locale: OG_LOCALE.en,
+      alternateLocale: OG_LOCALE.ar,
+      images: [defaultOgImage()],
     },
   }
 }

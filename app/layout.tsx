@@ -12,6 +12,7 @@ import { LocaleProvider } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
+import { OG_LOCALE, defaultOgImage } from "@/lib/seo"
 import { CrispVisibility } from "@/components/crisp-visibility"
 import Script from "next/script"
 import "./globals.css"
@@ -38,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const description = arabic
     ? `طلبات تأشيرة شنغن يجهّزها مختصون للمقيمين في الإمارات: نموذج الطلب وخطاب التغطية وبرنامج يومي وحجوزات الطيران والفندق. جاهز خلال ${ltr("1–2")} يوم مقابل ${price}.`
     : "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED."
-  const twitterDescription = arabic
+  const shareDescription = arabic
     ? `ملف تأشيرة شنغن يجهّزه مختصون خلال ${ltr("1–2")} يوم: النموذج وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. ${price}.`
     : "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED."
   return {
@@ -75,26 +76,16 @@ export async function generateMetadata(): Promise<Metadata> {
   },
   openGraph: {
     title: arabic ? "EZvisa | خدمة طلب تأشيرة شنغن للمقيمين في الإمارات" : "EZvisa | Schengen Visa Application Service for UAE Residents",
-    description,
-    url: "https://www.ezvisa.net/",
+    description: shareDescription,
+    // No url here: pages without their own openGraph would otherwise all claim the homepage's URL.
     siteName: "EZvisa",
-    locale: arabic ? "ar" : "en_US",
+    locale: OG_LOCALE[arabic ? "ar" : "en"],
     type: "website",
-    images: [
-      {
-        url: "https://www.ezvisa.net/images/logo-main.png",
-        width: 1200,
-        height: 630,
-        alt: "EZvisa - Schengen Visa Application Service",
-      },
-    ],
+    images: [defaultOgImage(arabic)],
   },
+  // Only the card type: title, description and image are filled from each page's own Open Graph tags.
   twitter: {
     card: "summary_large_image",
-    title: arabic ? "EZvisa | خدمة طلب تأشيرة شنغن للمقيمين في الإمارات" : "EZvisa | Schengen Visa Application Service for UAE Residents",
-    description: twitterDescription,
-    images: ["https://www.ezvisa.net/images/logo-main.png"],
-    creator: "@ezvisa",
   },
   robots: {
     index: true,
@@ -111,7 +102,6 @@ export async function generateMetadata(): Promise<Metadata> {
   // No canonical here: a root canonical is inherited by every page that doesn't set its own, which told search
   // engines those pages duplicate the homepage. Each indexable page sets its own (the homepage in app/page.tsx).
   // (The placeholder site-verification codes were removed: they published meaningless meta tags.)
-  generator: 'v0.app'
   }
 }
 

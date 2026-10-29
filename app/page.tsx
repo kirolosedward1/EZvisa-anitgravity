@@ -18,6 +18,7 @@ import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { requestLocale } from "@/lib/request-locale"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
+import { OG_LOCALE, ORGANIZATION_FOUNDER, ORGANIZATION_LOGO, SOCIAL_PROFILES, defaultOgImage, localeAlternates } from "@/lib/seo"
 
 export async function generateMetadata(): Promise<Metadata> {
   const arabic = (await requestLocale()) === "ar"
@@ -46,22 +47,16 @@ export async function generateMetadata(): Promise<Metadata> {
     "Schengen visa requirements UAE",
     "visa approval service Dubai"
   ],
-  alternates: {
-    canonical: "https://www.ezvisa.net/",
-  },
+  alternates: localeAlternates("/", arabic),
   openGraph: {
     title: arabic ? "خدمة طلب تأشيرة شنغن للمقيمين في الإمارات | EZvisa" : "Schengen Visa Application Service for UAE Residents | EZvisa",
     description: arabic ? `ملف تأشيرة شنغن يجهّزه مختصون خلال ${ltr("1–2")} يوم: النموذج وخطاب التغطية وبرنامج الرحلة وحجوزات الطيران والفندق. ${price}.` : "Your Schengen visa file prepared by visa specialists in 1–2 days: form, cover letter, itinerary, flight and hotel reservations. 249 AED.",
-    url: "https://www.ezvisa.net/",
+    url: arabic ? "https://www.ezvisa.net/ar" : "https://www.ezvisa.net/",
+    siteName: "EZvisa",
     type: "website",
-    images: [
-      {
-        url: "https://www.ezvisa.net/images/logo-main.png",
-        width: 1200,
-        height: 630,
-        alt: "EZvisa - Schengen Visa Application Service UAE",
-      },
-    ],
+    locale: OG_LOCALE[arabic ? "ar" : "en"],
+    alternateLocale: OG_LOCALE[arabic ? "en" : "ar"],
+    images: [defaultOgImage(arabic)],
   },
   }
 }
@@ -77,12 +72,8 @@ export default async function Home() {
         "@id": "https://www.ezvisa.net/#organization",
         name: "EZvisa",
         url: "https://www.ezvisa.net/",
-        logo: {
-          "@type": "ImageObject",
-          url: "https://www.ezvisa.net/images/logo-main.png",
-          width: 600,
-          height: 200,
-        },
+        logo: ORGANIZATION_LOGO,
+        founder: ORGANIZATION_FOUNDER,
         description: arabic
           ? `طلبات تأشيرة شنغن يجهّزها مختصون للمقيمين في الإمارات. جاهز خلال ${ltr("1–2")} يوم مقابل ${price}.`
           : "Schengen visa applications prepared for UAE residents by visa specialists: application form, cover letter, day-by-day itinerary, and flight and hotel reservations. Ready in 1–2 days for 249 AED.",
@@ -98,13 +89,7 @@ export default async function Home() {
           availableLanguage: ["en", "ar"],
           email: "hello@ezvisa.net",
         },
-        sameAs: [
-          "https://facebook.com/ezvisa",
-          "https://twitter.com/ezvisa",
-          "https://instagram.com/ezvisa",
-          "https://www.youtube.com/@ezvisa",
-          "https://www.tiktok.com/@ezvisa.net"
-        ],
+        sameAs: SOCIAL_PROFILES,
       },
       {
         "@type": "WebSite",
