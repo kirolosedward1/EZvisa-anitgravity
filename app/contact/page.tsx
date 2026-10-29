@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     {
       title: "Contact Us: WhatsApp, Email and Phone",
       description:
-        "Ask a visa specialist about your Schengen visa before you pay, or about an application you've started. WhatsApp +971 54 710 9533 or email info@ezvisa.net.",
+        "Ask a visa specialist about your Schengen visa before you pay, or about an application you've started. WhatsApp +971 54 710 9533 or email hello@ezvisa.net.",
       keywords: ["contact EZvisa", "Schengen visa help Dubai", "visa support WhatsApp UAE"],
       alternates: {
         canonical: "https://www.ezvisa.net/contact",
@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     {
       title: "تواصل مع إيزي فيزا",
-      description: "اسأل مختص تأشيرات عن تأشيرة شنغن قبل الدفع، أو عن طلب بدأته. واتساب +971547109533 أو البريد info@ezvisa.net.",
+      description: "اسأل مختص تأشيرات عن تأشيرة شنغن قبل الدفع، أو عن طلب بدأته. واتساب +971547109533 أو البريد hello@ezvisa.net.",
       path: "/ar/contact",
     },
   )
@@ -51,10 +51,10 @@ const CHANNELS = [
   {
     label: "Email",
     labelAr: "البريد الإلكتروني",
-    value: "info@ezvisa.net",
+    value: "hello@ezvisa.net",
     note: "For detailed questions and refund requests. Please include your EZ- reference if you have one.",
     noteAr: "للأسئلة المفصلة وطلبات الاسترداد. يُرجى ذكر مرجع EZ- إن كان لديك.",
-    href: "mailto:info@ezvisa.net",
+    href: "mailto:hello@ezvisa.net",
     external: false,
     icon: <Mail className="size-5" aria-hidden="true" />,
   },
