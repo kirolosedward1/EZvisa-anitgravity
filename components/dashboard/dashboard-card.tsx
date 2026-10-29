@@ -7,7 +7,7 @@ export function DashboardCard({
 }: React.ComponentProps<"section">) {
   return (
     <section
-      className={cn("rounded-2xl border border-border/70 bg-card text-card-foreground shadow-xs", className)}
+      className={cn("ez-customer-panel rounded-lg border border-border/70 bg-card text-card-foreground", className)}
       {...props}
     >
       {children}
@@ -27,7 +27,7 @@ export function DashboardCardHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-6 pb-1 pt-5">
+    <div className="ez-customer-panel-heading flex items-center justify-between gap-4 px-6 pb-1 pt-5">
       <div className="flex min-w-0 flex-col gap-0.5">
         <h2 className="panel-title text-foreground">{title}</h2>
         {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}

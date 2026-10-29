@@ -144,22 +144,20 @@ test("centre place shows the provider above the address and builds no map link",
   assert.equal(/maps\.|directions|daddr|appointment_lat/.test(source), false)
 })
 
-test("dropdown centres match the visa centre guide", () => {
-  const src = readFileSync(new URL("../components/tools/appointment-guide-client.tsx", import.meta.url), "utf8")
-  const lit = src.split(/const APPOINTMENT_CENTERS[^=]*=\s*/)[1].split(/\n}\n/)[0] + "\n}"
-  const web = new Function(`return (${lit});`)() as Record<string, { provider: string; countries: string[]; dubaiAddress: string; abuDhabiAddress: string }>
-  assert.deepEqual(Object.keys(web).sort(), VISA_CENTRES.map((item) => item.key).sort())
+test("appointment options keep the provider and address for each available city", () => {
   for (const item of VISA_CENTRES) {
-    const guide = web[item.key]
-    assert.equal(guide.provider, item.provider)
-    assert.deepEqual(guide.countries, item.countries)
-    assert.equal(guide.dubaiAddress, item.dubaiAddress)
-    assert.equal(guide.abuDhabiAddress, item.abuDhabiAddress)
     const options = appointmentCentreOptions(item.countries[0])
-    assert.equal(options.length, 2)
-    assert.equal(options[0].provider, item.provider)
-    assert.equal(options[0].address, item.dubaiAddress)
-    assert.equal(options[1].address, item.abuDhabiAddress)
+    const expected = [item.dubaiAddress, item.abuDhabiAddress].filter(Boolean)
+    assert.deepEqual(options.map(option => option.address), expected)
+    assert.ok(options.every(option => option.provider === item.provider))
+    assert.equal(new Set(options.map(option => option.id)).size, options.length)
   }
   assert.deepEqual(appointmentCentreOptions("Bulgaria"), [])
+})
+
+test("France follows the official VFS Abu Dhabi route, without a stale TLS option", () => {
+  const options = appointmentCentreOptions("France")
+  assert.equal(options.length, 1)
+  assert.equal(options[0].centre, "VFS Global, Abu Dhabi")
+  assert.equal(options[0].address, "Level B2, The Mall, World Trade Center, Abu Dhabi")
 })

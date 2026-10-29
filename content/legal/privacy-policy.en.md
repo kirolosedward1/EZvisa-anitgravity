@@ -6,7 +6,7 @@ This policy explains how {{COMPANY_LEGAL_NAME}}, trading as **EZvisa** (Trade Li
 
 EZvisa is the **controller** of your personal data under UAE Federal Decree-Law No. 45 of 2021 on the Protection of Personal Data (**PDPL**). Where the EU/EEA General Data Protection Regulation (**GDPR**) applies to our processing, we also comply with it. EZvisa is a private company, not a government body.
 
-**Contact for privacy matters:** {{EMAIL}} · WhatsApp/Phone +971 54 710 9533 (9:00 am – 6:00 pm UAE time). [If a Data Protection Officer is appointed: DPO contact – {{EMAIL}}].
+**Contact for privacy matters:** {{EMAIL}} · WhatsApp/Phone +971 54 710 9533. [If a Data Protection Officer is appointed: DPO contact – {{EMAIL}}].
 
 ## 2. Personal data we collect
 
@@ -109,4 +109,4 @@ Our site links to embassy, visa centre and other websites. We are not responsibl
 We may update this policy. The "Last updated" date shows the latest version; material changes will be notified by email or a notice on the website/app before they take effect.
 
 ## 12. Contact
-{{COMPANY_LEGAL_NAME}} (EZvisa), {{REGISTERED_ADDRESS}} · {{EMAIL}} · WhatsApp/Phone +971 54 710 9533 · 9:00 am – 6:00 pm UAE time.
+{{COMPANY_LEGAL_NAME}} (EZvisa), {{REGISTERED_ADDRESS}} · {{EMAIL}} · WhatsApp/Phone +971 54 710 9533.

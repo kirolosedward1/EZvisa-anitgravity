@@ -1,5 +1,6 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { LocaleLink } from "@/components/locale-link"
@@ -113,7 +114,7 @@ export function ThankYouCTASection({ orderId, transactionId }: ThankYouCTASectio
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <MessageCircle className="w-4 h-4" />
+                <WhatsAppIcon className="w-4 h-4" />
                 <span className="flex-1 text-start">
                   <LangText en={translations.en.support.whatsApp} ar={translations.ar.support.whatsApp} />
                 </span>

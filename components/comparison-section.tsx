@@ -1,8 +1,8 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { useState, useEffect } from "react"
 import { ArrowRight, Check, Minus } from "lucide-react"
-import { motion } from "framer-motion"
 import { Image } from "@/components/image"
 import { ReadyLine } from "@/components/ready-line"
 import { APPLICATION_READY } from "@/lib/copy"
@@ -12,7 +12,6 @@ import { LocaleLink } from "@/components/locale-link"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { useSiteLocale } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
-import { SectionPhoto } from "@/components/section-photo"
 
 export function ComparisonSection() {
   const locale = useSiteLocale()
@@ -52,22 +51,18 @@ export function ComparisonSection() {
     { name: "Day-by-day itinerary that matches your bookings", ar: "برنامج يومي يطابق حجوزاتك", others: false },
     { name: "Flight and hotel reservations, no tickets to buy", ar: "حجوزات طيران وفندق من دون شراء تذاكر", others: false },
     { name: "Every document checked before you submit", ar: "مراجعة كل مستند قبل التقديم", others: false },
-    { name: "A visa specialist to answer questions on WhatsApp", ar: "مختص تأشيرات يجيب عن أسئلتك على واتساب", others: false },
+    { whatsapp: true, name: "A visa specialist to answer questions on WhatsApp", ar: "مختص تأشيرات يجيب عن أسئلتك على واتساب", others: false },
     { name: APPLICATION_READY, ar: "", others: false },
   ]
 
   return (
-    <section className="photo-hero relative overflow-hidden py-20 md:py-28">
-      <SectionPhoto src="/images/countries/italy.jpg" />
+    <section className="ez-comparison py-20 md:py-28">
       <div className="container relative mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 sm:px-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)] lg:items-center lg:gap-16">
-        <div className="flex flex-col items-start gap-5">
-          <span className="inline-flex items-center rounded-full bg-background px-3 py-1 text-xs font-medium text-primary">
-            <LangText en="Why EZvisa" ar="لماذا إيزي فيزا" />
-          </span>
-          <h2 className="hero-copy text-balance">
+        <div data-site-reveal="rise" className="flex flex-col items-start gap-5">
+          <h2 className="text-balance">
             <LangText en="Applying on your own vs. with EZvisa" ar="التقديم بنفسك مقارنة بالتقديم مع إيزي فيزا" />
           </h2>
-          <p className="hero-copy text-base leading-relaxed opacity-85 sm:text-lg">
+          <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
             <LangText
               en="You can apply for a Schengen visa yourself. This is what changes when a specialist prepares the file with you."
               ar="يمكنك التقدّم لتأشيرة شنغن بنفسك. هذا ما يتغيّر عندما يجهّز مختص الملف معك."
@@ -81,16 +76,7 @@ export function ComparisonSection() {
           </Button>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-40px" }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="relative overflow-hidden rounded-3xl border border-border/70 bg-card"
-        >
-          {/* The EZvisa column, tinted top to bottom */}
-          <div aria-hidden="true" className="pointer-events-none absolute inset-y-0 end-0 w-24 bg-primary/[0.05] sm:w-40" />
-
+        <div data-site-reveal="fade" className="ez-comparison-table overflow-hidden">
           <table className="relative w-full border-collapse text-left">
             <caption className="sr-only">
               <LangText en="Applying on your own compared with applying through EZvisa" ar="مقارنة التقديم بنفسك مع التقديم عبر إيزي فيزا" />
@@ -114,6 +100,7 @@ export function ComparisonSection() {
               {features.map((feature) => (
                 <tr key={feature.name} className="border-b border-border/60 last:border-0">
                   <th scope="row" className="px-5 py-4 text-sm font-normal text-foreground sm:px-7 sm:text-base">
+                    {feature.whatsapp && <WhatsAppIcon className="me-2 inline-block size-4 align-text-bottom text-primary" />}
                     {feature.name === APPLICATION_READY ? <ReadyLine /> : <LangText en={feature.name} ar={feature.ar} />}
                   </th>
                   <td className="px-2 py-4 text-center">
@@ -145,7 +132,7 @@ export function ComparisonSection() {
               </tr>
             </tfoot>
           </table>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

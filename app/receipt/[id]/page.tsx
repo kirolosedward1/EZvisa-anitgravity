@@ -39,7 +39,7 @@ export default async function ReceiptPage({ params }: { params: Promise<{ id: st
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
+      <main id="main-content" className="ez-customer-page min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
         <SupportApplication id={app.id ?? id} country={app.destination_country} step="receipt" />
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
           <LocaleLink href={`/dashboard?id=${app.id ?? id}`} className="inline-flex items-center gap-2 self-start text-sm text-muted-foreground transition-colors hover:text-foreground">

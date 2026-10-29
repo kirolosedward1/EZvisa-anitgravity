@@ -66,7 +66,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
+      <main id="main-content" className="ez-customer-page min-h-screen bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
         <SupportApplication id={app.id ?? id} country={app.destination_country} status={getStatusLabel(app).label} step="trip" />
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
           <LocaleLink href={`/dashboard?id=${app.id ?? id}`} className="inline-flex items-center gap-2 self-start text-sm text-muted-foreground transition-colors hover:text-foreground">
@@ -81,7 +81,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
             </p>
           </div>
 
-          <section aria-label="Trip details" className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+          <section aria-label="Trip details" className="ez-trip-panel overflow-hidden border border-border bg-card">
             <div className="flex items-center gap-3 px-6 pb-2 pt-5">
               <CountryFlag iso={SCHENGEN_META[country]?.iso} country={country} className="size-8" />
               <h2 className="panel-title text-foreground">{country}</h2>
@@ -97,7 +97,7 @@ export default async function TripPage({ params }: { params: Promise<{ id: strin
           </section>
 
           {others.length ? (
-            <section aria-label="Other countries" className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+            <section aria-label="Other countries" className="ez-trip-panel overflow-hidden border border-border bg-card">
               <h2 className="panel-title px-6 pb-2 pt-5 text-foreground">Also visiting</h2>
               <ul className="divide-y divide-border/60">
                 {others.map((v) => (

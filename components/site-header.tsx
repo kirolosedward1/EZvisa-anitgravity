@@ -1,5 +1,6 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { Image } from "@/components/image"
 import Link from "next/link"
 import { LocaleLink } from "@/components/locale-link"
@@ -22,14 +23,6 @@ import { getWhatsAppUrl } from "@/lib/whatsapp"
 
 const nationalities = HOMEPAGE_NATIONALITIES
 
-function WhatsAppGlyph({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" fill="#1A7F37" />
-    </svg>
-  )
-}
-
 /** Task pages (wizard, after-payment questions, payment status): logo, "Need help?" and WhatsApp only. */
 const MINIMAL_PREFIXES = ["/apply", "/continue", "/appointment", "/payment-success", "/payment-failed"]
 /** Customer pages: always the short account header. */
@@ -41,6 +34,7 @@ const ACCOUNT_NAV = [
   { href: "/destinations", en: "Destinations", ar: "الوجهات" },
   { href: "/documents", en: "Required documents", ar: "المستندات المطلوبة" },
   { href: "/news", en: "Blog", ar: "المدونة" },
+  { href: "/videos", en: "Videos", ar: "الفيديوهات" },
   { href: "/contact", en: "Help", ar: "المساعدة" },
 ]
 
@@ -58,6 +52,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   const rawPathname = usePathname()
   // /ar/* renders the same pages: compare against the locale-free path so /ar gets exactly the EN header.
   const pathname = rawPathname?.replace(/^\/ar(?=\/|$)/, "") || "/"
+  const navCurrent = (href: string): "page" | "location" | undefined =>
+    pathname === href ? "page" : pathname.startsWith(`${href}/`) ? "location" : undefined
   const router = useRouter()
   const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
   const isWizardPage = path.startsWith("/apply")
@@ -227,11 +223,12 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
   }, [pathname])
 
   const navItems = [
-    { label: "Services", ar: "الخدمات", id: "services", type: "scroll" },
+    { label: "How it works", ar: "كيف يعمل", id: "/how-it-works", type: "link" },
     { label: "Destinations", ar: "الوجهات", id: "/destinations", type: "link" },
     { label: "Documents", ar: "المستندات", id: "/documents", type: "link" },
-    { label: "FAQ", ar: "الأسئلة الشائعة", id: "faq", type: "scroll" },
-    { label: "News", ar: "الأخبار", id: "/news", type: "link" },
+    { label: "Pricing", ar: "الأسعار", id: "/pricing", type: "link" },
+    { label: "Travel tools", ar: "أدوات السفر", id: "/tools", type: "link" },
+    { label: "Blog", ar: "المدونة", id: "/news", type: "link" },
     { label: "Videos", ar: "الفيديوهات", id: "/videos", type: "link" },
   ]
 
@@ -250,7 +247,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
             className="inline-flex h-10 items-center gap-2 rounded-full border border-border px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
             aria-label="Need help? Chat with us on WhatsApp / تحتاج مساعدة؟ تواصل معنا عبر واتساب"
           >
-            <WhatsAppGlyph className="size-[18px]" />
+            <WhatsAppIcon className="text-[#1A7F37] size-[18px]" />
             <LangText en="Need help?" ar="تحتاج مساعدة؟" />
           </Link>
         </div>
@@ -269,7 +266,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
 
       <header
         ref={headerRef}
-        className={`fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
+        className={`ez-site-header fixed top-0 inset-x-0 z-50 transition-all duration-300 ${
           scrolled ? "py-2" : "py-4"
         }`}
       >
@@ -300,7 +297,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                       href={item.href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "rounded-full px-3.5 py-2 text-sm font-medium transition-colors whitespace-nowrap",
+                        "ez-nav-link rounded-full px-3.5 py-2 text-sm font-medium transition-colors whitespace-nowrap",
                         active ? "bg-secondary text-foreground" : "text-foreground/75 hover:bg-secondary hover:text-foreground",
                       )}
                     >
@@ -324,7 +321,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                       <>
                         <LocaleLink
                           href={item.id}
-                          className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors cursor-pointer group whitespace-nowrap"
+                          aria-current={navCurrent(item.id)}
+                          className="ez-nav-link relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors cursor-pointer group whitespace-nowrap"
                         >
                           <LangText en={item.label} ar={item.ar} />
                           <ChevronDown className="ms-1 h-3.5 w-3.5 opacity-60 group-hover:opacity-100 transition-all duration-300" />
@@ -356,7 +354,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                       <LocaleLink
                                         key={dest.id}
                                         href={`/destinations/${dest.slug}`}
-                                        className="group/item flex items-center gap-3 p-3 rounded-2xl hover:bg-secondary/40 transition-colors border border-transparent hover:border-border/50"
+                                        aria-current={pathname === `/destinations/${dest.slug}` ? "page" : undefined}
+                                        className="ez-nav-sub-link group/item flex items-center gap-3 p-3 rounded-2xl hover:bg-secondary/40 transition-colors border border-transparent hover:border-border/50"
                                       >
                                         <CountryFlag iso={SCHENGEN_META[dest.name]?.iso} title={dest.name} />
                                         <div className="flex-1 min-w-0">
@@ -382,7 +381,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                     ) : (
                       <LocaleLink
                         href={item.id}
-                        className="relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
+                        aria-current={navCurrent(item.id)}
+                        className="ez-nav-link relative z-10 inline-flex items-center justify-center bg-transparent border-0 outline-none p-0 px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors cursor-pointer whitespace-nowrap"
                       >
                         <LangText en={item.label} ar={item.ar} />
                       </LocaleLink>
@@ -415,7 +415,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   className="h-10 w-10 flex items-center justify-center rounded-full bg-green-50 hover:bg-green-100 transition-colors shadow-sm"
                   aria-label="Contact us on WhatsApp / تواصل معنا عبر واتساب"
                 >
-                  <WhatsAppGlyph className="size-[22px]" />
+                  <WhatsAppIcon className="text-[#1A7F37] size-[22px]" />
                 </Link>
 
                 <AnimatePresence>
@@ -441,7 +441,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                   <div className="hidden sm:block">
                     <Button variant="default" asChild className="h-10 min-h-10">
                       <LocaleLink href="/apply">
-                        <span><LangText en="Get Started" ar="ابدأ الآن" /></span>
+                        <span><LangText en="Start application" ar="ابدأ الآن" /></span>
                         <ArrowRight aria-hidden="true" />
                       </LocaleLink>
                     </Button>
@@ -462,7 +462,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                           className="relative h-10 w-10 min-h-10 min-w-10 p-0 before:absolute before:-inset-[2px] before:content-[''] [&>svg]:!size-4 [&>svg]:!rounded-none [&>svg]:!bg-transparent [&>svg]:!p-0 [&>svg]:!text-primary-foreground"
                         >
                           <LocaleLink href="/apply">
-                            <span className="sr-only"><LangText en="Get Started" ar="ابدأ الآن" /></span>
+                            <span className="sr-only"><LangText en="Start application" ar="ابدأ الآن" /></span>
                             <ArrowRight aria-hidden="true" />
                           </LocaleLink>
                         </Button>
@@ -532,7 +532,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                         <div className="w-full">
                           <button
                             onClick={() => setIsMobileDestinationsOpen(!isMobileDestinationsOpen)}
-                            className="site-menu-item w-full flex items-center justify-between py-3.5 px-4 text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"
+                            aria-expanded={isMobileDestinationsOpen}
+                            data-active={navCurrent(item.id) ? "true" : undefined}
+                            className="ez-nav-mobile-link site-menu-item w-full flex items-center justify-between py-3.5 px-4 text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"
                           >
                             <span><LangText en={item.label} ar={item.ar} /></span>
                             <ChevronDown className={`h-5 w-5 transition-transform duration-300 ${isMobileDestinationsOpen ? "rotate-180" : ""}`} />
@@ -550,8 +552,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                                     <LocaleLink
                                       key={dest.id}
                                       href={`/destinations/${dest.slug}`}
+                                        aria-current={pathname === `/destinations/${dest.slug}` ? "page" : undefined}
                                       onClick={() => setIsMenuOpen(false)}
-                                      className="flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary/50 transition-colors"
+                                      className="ez-nav-mobile-link flex items-center gap-3 py-3 px-4 rounded-xl hover:bg-secondary/50 transition-colors"
                                     >
                                       <CountryFlag iso={SCHENGEN_META[dest.name]?.iso} title={dest.name} />
                                       <span className="site-menu-item text-foreground">{dest.name}</span>
@@ -579,8 +582,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false }: 
                       ) : (
                         <LocaleLink
                           href={item.id}
+                          aria-current={navCurrent(item.id)}
                           onClick={() => setIsMenuOpen(false)}
-                          className="site-menu-item block py-3.5 px-4 text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"
+                          className="ez-nav-mobile-link site-menu-item block py-3.5 px-4 text-foreground/80 hover:bg-secondary hover:text-foreground rounded-2xl transition-colors bg-transparent border-0 outline-none cursor-pointer"
                         >
                           <LangText en={item.label} ar={item.ar} />
                         </LocaleLink>

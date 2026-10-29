@@ -11,9 +11,9 @@ export const SCHENGEN_FUNDS_RULES: Record<string, CountryFundsRule> = {
   spain: {
     country: "Spain",
     currency: "EUR",
-    dailyRateWithHotel: 113.40,
-    dailyRateNoHotel: 113.40,
-    minimumTotal: 1020.60, // Spain requires min 9 days worth (€1,020.60) even for 2-day trips
+    dailyRateWithHotel: 122.10,
+    dailyRateNoHotel: 122.10,
+    minimumTotal: 1098.90, // Spain requires min 9 days worth (€1,098.90) even for 2-day trips
     note: "Spain requires at least 10% of the gross minimum interprofessional wage per person per day."
   },
   france: {
@@ -35,7 +35,7 @@ export const SCHENGEN_FUNDS_RULES: Record<string, CountryFundsRule> = {
     country: "Germany",
     currency: "EUR",
     dailyRateWithHotel: 45,
-    dailyRateNoHotel: 85,
+    dailyRateNoHotel: 45,
     note: "Germany expects at least €45 per day to cover daily meals, local transit, and incidental costs."
   },
   switzerland: {
@@ -49,14 +49,14 @@ export const SCHENGEN_FUNDS_RULES: Record<string, CountryFundsRule> = {
     country: "Netherlands",
     currency: "EUR",
     dailyRateWithHotel: 55,
-    dailyRateNoHotel: 90,
+    dailyRateNoHotel: 55,
     note: "The Netherlands requires €55 per person per day with confirmed hotel reservations."
   },
   greece: {
     country: "Greece",
     currency: "EUR",
     dailyRateWithHotel: 50,
-    dailyRateNoHotel: 85,
+    dailyRateNoHotel: 50,
     minimumTotal: 300,
     note: "Greece requires at least €50 per day, with a minimum requirement of €300 for short stays up to 5 days."
   },
@@ -82,8 +82,17 @@ export function calculateRequiredFunds(
   const dailyRate = hasHotel ? rule.dailyRateWithHotel : rule.dailyRateNoHotel
   
   let totalForeign = dailyRate * Math.max(1, days) * Math.max(1, travelers)
+  // Italian Table A varies by duration and number of participants, not hotel status.
+  if (countryKey.toLowerCase() === "italy") {
+    const group = travelers > 1
+    const perPerson = days <= 5 ? (group ? 212.81 : 269.60)
+      : days <= 10 ? days * (group ? 26.33 : 44.93)
+      : days <= 20 ? (group ? 25.82 : 51.64) + days * (group ? 22.21 : 36.67)
+      : (group ? 118.79 : 206.58) + days * (group ? 17.04 : 27.89)
+    totalForeign = perPerson * Math.max(1, travelers)
+  }
   
-  if (rule.minimumTotal) {
+  if (rule.minimumTotal && countryKey.toLowerCase() !== "italy") {
     const minRequired = rule.minimumTotal * Math.max(1, travelers)
     if (totalForeign < minRequired) {
       totalForeign = minRequired
@@ -92,7 +101,7 @@ export function calculateRequiredFunds(
 
   const rateToAed = rule.currency === "CHF" ? CHF_TO_AED : EUR_TO_AED
   const totalAed = Math.ceil(totalForeign * rateToAed)
-  const recommendedBufferAed = Math.ceil(totalAed * 1.3) // 30% safety cushion recommended by experts
+  const recommendedBufferAed = Math.ceil(totalAed * 1.3) // Optional budget example; not a consular requirement
 
   return {
     country: rule.country,
@@ -100,7 +109,7 @@ export function calculateRequiredFunds(
     days,
     travelers,
     dailyRate,
-    totalForeign: Math.round(totalForeign),
+    totalForeign: Math.round(totalForeign * 100) / 100,
     totalAed,
     recommendedBufferAed,
     note: rule.note

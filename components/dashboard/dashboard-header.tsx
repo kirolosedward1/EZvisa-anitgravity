@@ -11,7 +11,7 @@ export function DashboardHeader({
   actions?: React.ReactNode
 }) {
   return (
-    <section className="pb-8 pt-28 md:pt-32">
+    <section className="ez-customer-heading pb-8 pt-28 md:pt-32">
       <div className="container mx-auto flex max-w-6xl flex-col gap-5 px-4 sm:px-6 md:flex-row md:items-end md:justify-between">
         <div className="flex min-w-0 flex-col gap-1.5">
           <h1 className="app-title text-foreground">{title}</h1>

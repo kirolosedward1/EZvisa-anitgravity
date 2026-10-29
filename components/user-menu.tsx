@@ -50,9 +50,9 @@ function initialsOf(viewer: NonNullable<Viewer>): string {
 
 function MenuLink({ href, icon: Icon, en, ar }: { href: string; icon: LucideIcon; en: string; ar: string }) {
   return (
-    <DropdownMenuItem asChild className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm">
+    <DropdownMenuItem asChild className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
       <LocaleLink href={href}>
-        <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+        <Icon className="size-4 text-current" aria-hidden="true" />
         <LangText en={en} ar={ar} />
       </LocaleLink>
     </DropdownMenuItem>
@@ -145,7 +145,7 @@ export function UserMenu() {
             <form action={signOut} method="POST">
               <DropdownMenuItem asChild className="cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive focus:text-destructive">
                 <button type="submit" className="w-full">
-                  <LogOut className="size-4" aria-hidden="true" />
+                  <LogOut className="size-4 text-current" aria-hidden="true" />
                   {viewer.demo ? <LangText en="Exit demo" ar="الخروج من العرض التجريبي" /> : <LangText en="Sign out" ar="تسجيل الخروج" />}
                 </button>
               </DropdownMenuItem>
@@ -160,15 +160,15 @@ export function UserMenu() {
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2 px-1 pb-2 pt-1">
-              <DropdownMenuItem asChild className="cursor-pointer justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground">
+              <DropdownMenuItem asChild className="cursor-pointer justify-center gap-2 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[color-mix(in_srgb,var(--primary)_88%,black)] hover:text-white focus:bg-[color-mix(in_srgb,var(--primary)_88%,black)] focus:text-white">
                 <LocaleLink href="/login">
-                  <LogIn className="size-4" aria-hidden="true" />
+                  <LogIn className="size-4 text-current" aria-hidden="true" />
                   <LangText en="Sign in" ar="تسجيل الدخول" />
                 </LocaleLink>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild className="cursor-pointer justify-center gap-2 rounded-xl border border-border px-3 py-2.5 text-sm font-semibold">
+              <DropdownMenuItem asChild className="ez-account-signup cursor-pointer justify-center gap-2 rounded-xl border-0 bg-background px-3 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
                 <LocaleLink href="/signup">
-                  <UserPlus className="size-4" aria-hidden="true" />
+                  <UserPlus className="size-4 text-current" aria-hidden="true" />
                   <LangText en="Sign up" ar="إنشاء حساب" />
                 </LocaleLink>
               </DropdownMenuItem>

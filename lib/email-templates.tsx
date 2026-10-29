@@ -157,7 +157,7 @@ export const getPaymentSuccessEmail = (data: ApplicationData, paymentAmount: num
                   <li>We'll prepare your verifiable flight reservation, hotel reservation and travel itinerary for your visa application</li>
                   <li>You'll receive a personalized cover letter for your visa application</li>
                   <li>All documents will be sent to you via email</li>
-                  <li>WhatsApp support is available 9am–6pm UAE time</li>
+                  <li>Contact us on WhatsApp for support</li>
                 </ul>
               </div>
               

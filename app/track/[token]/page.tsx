@@ -36,7 +36,7 @@ export default async function TrackPage({ params }: { params: Promise<{ token: s
   return (
     <>
       <SiteHeader forceBackground={true} />
-      <main id="main-content" className="min-h-screen bg-secondary/40">
+      <main id="main-content" className="ez-customer-page min-h-screen bg-secondary/40">
         <SupportApplication id={mainApp.id || token} country={mainApp.destination_country} status={getStatusLabel(mainApp).label} step="overview" />
         <DashboardHeader
           title={`Your ${country} visa application`}

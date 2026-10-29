@@ -269,9 +269,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
   const nationality = citizenshipName(formData.nationality)
   const nationalityAr = citizenshipNameAr(formData.nationality) || nationality
   const travellerName = [formData.firstName, formData.lastName].filter(Boolean).join(" ").trim()
-  const passport = formData.passportNumber?.trim()
   const withSpouse = applicantCount(formData.spouseAccompanying, formData.travelingWith) > 1
-  const travellerLine = [travellerName, passport].filter(Boolean).join(" · ")
 
   return (
     <div>
@@ -293,7 +291,7 @@ export function PaymentStep({ formData, onBack, onEditTrip, onEditTraveller, pay
       </ReviewRow>
 
       <ReviewRow label="Traveller" labelAr="المسافر" onEdit={onEditTraveller}>
-        {travellerLine ? travellerLine : <Msg id="summary.yourTrip" />}
+        {travellerName ? travellerName : <Msg id="summary.yourTrip" />}
       </ReviewRow>
 
       <ReviewRow

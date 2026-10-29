@@ -81,11 +81,8 @@ function SamplePreview({ service, onExpand }: { service: Service; onExpand: () =
       className="relative flex aspect-[5/6] items-center justify-center overflow-hidden rounded-3xl border border-border/70 bg-secondary sm:aspect-[4/3]"
     >
       {/* Soft brand glow behind the paper */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_50%_45%,color-mix(in_oklch,var(--primary)_12%,transparent),transparent)]" />
 
       {/* Two sheets behind, for depth */}
-      <div aria-hidden="true" className="absolute h-[78%] aspect-[1/1.38] translate-x-6 rotate-[5deg] rounded-lg bg-background/70 shadow-sm ring-1 ring-border/60" />
-      <div aria-hidden="true" className="absolute h-[78%] aspect-[1/1.38] -translate-x-5 -rotate-[3deg] rounded-lg bg-background/85 shadow-sm ring-1 ring-border/60" />
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.button
@@ -144,10 +141,9 @@ export function ServicesSection() {
   return (
     <section id="services" className="relative overflow-hidden bg-background py-20 sm:py-28">
       <div className="container relative mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"><LangText en="What's included" ar="ما يشمله الملف" /></span>
+        <div data-site-reveal="rise" className="mx-auto flex max-w-2xl flex-col items-center gap-4 text-center">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight text-foreground text-balance sm:text-4xl md:text-5xl">
-            <LangText en="Every document your embassy file needs" ar="كل مستند يحتاجه ملف السفارة" />
+            <LangText en="Your file, taken care of" ar="كل مستند يحتاجه ملف السفارة" />
           </h2>
           <p className="text-base leading-relaxed text-muted-foreground text-pretty">
             <LangText

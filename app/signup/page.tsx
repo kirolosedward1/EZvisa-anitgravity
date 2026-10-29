@@ -1,4 +1,5 @@
 "use client"
+import { AuthSplitLayout } from "@/components/auth/auth-split-layout"
 
 import { useState, Suspense } from "react"
 import { LocaleLink, useLocalizedHref } from "@/components/locale-link"
@@ -82,7 +83,7 @@ function SignupForm() {
 
   if (success) {
     return (
-      <div className="w-full max-w-md rounded-xl border border-border/50 bg-card p-8 shadow-lg">
+      <div className="w-full">
         <EmailSent
           title={copy.checkEmailTitle}
           email={email.trim()}
@@ -97,8 +98,8 @@ function SignupForm() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-8 rounded-xl border border-border/50 bg-card px-4 py-8 shadow-lg sm:p-8">
-      <div className="text-center">
+    <div className="w-full space-y-8">
+      <div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">{copy.signupTitle}</h1>
         <p className="text-muted-foreground mt-2">{copy.signupSubtitle}</p>
       </div>
@@ -177,10 +178,10 @@ function SignupForm() {
 
 export default function SignupPage() {
   return (
-    <div className="min-h-[100dvh] flex items-center justify-center bg-background px-4 py-12 sm:px-6 lg:px-8">
+    <AuthSplitLayout variant="signup">
       <Suspense fallback={<div className="flex justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" /></div>}>
         <SignupForm />
       </Suspense>
-    </div>
+    </AuthSplitLayout>
   )
 }

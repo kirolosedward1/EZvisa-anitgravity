@@ -4,6 +4,7 @@ const STATIC_ORIGINS = [
   SITE_URL,
   "https://ezvisa.net",
   "https://www.ezvisa.net",
+  "https://new.ezvisa.net",
   "http://localhost:3000",
   "http://localhost:8081",
   "http://localhost:19006",

@@ -1,9 +1,10 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react"
+import { ArrowLeft, ShieldCheck, SlidersHorizontal } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { Analytics } from "@vercel/analytics/next"
-import { suppressesChat } from "@/lib/chat-routes"
+import { CHAT_WIDGET_ENABLED, suppressesChat } from "@/lib/chat-routes"
 import { concealCrisp, presentCrisp } from "@/components/crisp-visibility"
 
 /**
@@ -185,7 +186,7 @@ function Banner({ manage, setManage, prefs, setPrefs, save }: {
     const w = window as W
     w.$crisp?.push(["do", "chat:hide"])
     return () => {
-      if (suppressesChat(window.location.pathname)) return
+      if (!CHAT_WIDGET_ENABLED || suppressesChat(window.location.pathname)) return
       if (!document.documentElement.classList.contains("hide-crisp")) w.$crisp?.push(["do", "chat:show"])
     }
   }, [])
@@ -196,62 +197,62 @@ function Banner({ manage, setManage, prefs, setPrefs, save }: {
     { key: "marketing", label: t("Marketing", "التسويق"), desc: t("Google Tag Manager ad tags, to measure our advertising.", "وسوم الإعلانات عبر Google Tag Manager، لقياس إعلاناتنا.") },
   ]
   const policyHref = ar ? "/ar/cookie-policy" : "/cookie-policy"
-  const btn = "h-11 flex-1 whitespace-nowrap sm:flex-none sm:min-w-32 rounded-xl border border-[#0436DC] bg-white px-3 text-[14px] font-semibold text-[#0436DC] cursor-pointer transition-colors hover:bg-[#0436DC]/5"
-  const link = "h-11 px-2 whitespace-nowrap text-[14px] font-semibold text-[#0436DC] underline underline-offset-2 cursor-pointer"
+  const heading = useRef<HTMLHeadingElement>(null)
+  const manageButton = useRef<HTMLButtonElement>(null)
+  const wasManaging = useRef(false)
+  useEffect(() => {
+    if (manage) heading.current?.focus({ preventScroll: true })
+    else if (wasManaging.current) manageButton.current?.focus({ preventScroll: true })
+    wasManaging.current = manage
+  }, [manage])
 
   return (
-    <div
+    <section
       role="dialog"
       aria-modal="false"
       aria-labelledby="cookie-banner-title"
+      aria-describedby="cookie-banner-description"
       dir={ar ? "rtl" : "ltr"}
       lang={ar ? "ar" : "en"}
       data-cookie-banner
-      style={{ bottom: offset }}
-      className="fixed inset-x-0 z-[1000] border-t border-[#E3E7EF] bg-white"
+      style={{ "--cookie-offset": `${offset}px` } as CSSProperties}
+      className={`ez-cookie${manage ? " ez-cookie-manage" : ""}`}
     >
-      <div className="mx-auto max-h-[70vh] w-full max-w-6xl overflow-y-auto px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <p id="cookie-banner-title" className="text-[13px] leading-snug text-[#5B6475]">
-          {t("We use cookies for chat and analytics. ", "نستخدم ملفات تعريف الارتباط للدردشة والتحليلات. ")}
-          <a href={policyHref} className="text-[#0436DC] underline">{t("Cookie policy", "سياسة الكوكيز")}</a>
-        </p>
-
-        {manage && (
-          <div className="mt-3 divide-y divide-[#E3E7EF] border-y border-[#E3E7EF]">
-            <label className="flex items-start justify-between gap-3 py-3">
-              <span>
-                <span className="block text-[13px] font-semibold text-[#0A0F1F]">{t("Necessary", "الضرورية")}</span>
-                <span className="block text-[13px] text-[#5B6475]">{t("Sign-in (Supabase) and your cookie choice. Always on.", "تسجيل الدخول (Supabase) وحفظ اختيارك. مفعّلة دائمًا.")}</span>
-              </span>
-              <input type="checkbox" checked disabled className="mt-1 h-4 w-4 accent-[#0436DC]" />
-            </label>
-            {toggles.map((o) => (
-              <label key={o.key} className="flex cursor-pointer items-start justify-between gap-3 py-3">
-                <span>
-                  <span className="block text-[13px] font-semibold text-[#0A0F1F]">{o.label}</span>
-                  <span className="block text-[13px] text-[#5B6475]">{o.desc}</span>
-                </span>
-                <input
-                  type="checkbox"
-                  checked={prefs[o.key]}
-                  onChange={(e) => setPrefs({ ...prefs, [o.key]: e.target.checked })}
-                  className="mt-1 h-4 w-4 cursor-pointer accent-[#0436DC]"
-                />
-              </label>
-            ))}
-          </div>
-        )}
-
-        <div className="mt-2.5 flex flex-nowrap items-center gap-2">
-          <button type="button" onClick={() => save(ALL)} className={btn}>{t("Accept all", "قبول الكل")}</button>
-          <button type="button" onClick={() => save(DENIED)} className={btn}>{t("Reject", "رفض")}</button>
-          {manage ? (
-            <button type="button" onClick={() => save(prefs)} className={link}>{t("Save", "حفظ")}</button>
-          ) : (
-            <button type="button" onClick={() => setManage(true)} className={link}>{t("Manage", "إدارة")}</button>
-          )}
+      <header className="ez-cookie-header">
+        <div className="ez-cookie-title-row">
+          <ShieldCheck className="ez-cookie-icon" aria-hidden="true" />
+          <h2 ref={heading} tabIndex={-1} id="cookie-banner-title">{manage ? t("Cookie preferences", "تفضيلات ملفات الارتباط") : t("Cookies, your choice.", "ملفات الارتباط، اختيارك.")}</h2>
+          {manage && <button type="button" className="ez-cookie-back" onClick={() => setManage(false)} aria-label={t("Back to cookie notice", "العودة إلى إشعار ملفات الارتباط")}><ArrowLeft className="rtl:rotate-180" aria-hidden="true" /></button>}
         </div>
-      </div>
-    </div>
+        <p id="cookie-banner-description">{manage
+          ? t("Choose which optional cookies to allow. You can update your preferences at any time.", "اختر ملفات الارتباط الاختيارية التي تسمح بها. يمكنك تعديل تفضيلاتك في أي وقت.")
+          : t("Essential cookies keep EZvisa working. You choose whether to allow chat, analytics and marketing cookies.", "تحافظ ملفات الارتباط الضرورية على عمل إيزي فيزا. وأنت تختار السماح بملفات المحادثة والتحليلات والتسويق.")}</p>
+        <a href={policyHref} className="ez-cookie-policy">{t("Read our cookie policy", "اقرأ سياسة ملفات الارتباط")}</a>
+      </header>
+
+      {manage && <div className="ez-cookie-options">
+        <div className="ez-cookie-option">
+          <div><span className="ez-cookie-label">{t("Necessary", "الضرورية")}</span><p>{t("For sign-in and remembering your cookie choices.", "لتسجيل الدخول وحفظ اختياراتك لملفات الارتباط.")}</p></div>
+          <span className="ez-cookie-always">{t("Always on", "مفعّلة دائمًا")}</span>
+        </div>
+        {toggles.map((o) => <label key={o.key} className="ez-cookie-option ez-cookie-option-toggle">
+          <div><span id={`cookie-${o.key}-label`} className="ez-cookie-label">{o.label}</span><p id={`cookie-${o.key}-description`}>{o.desc}</p></div>
+          <span className="ez-cookie-toggle">
+            <input type="checkbox" role="switch" aria-labelledby={`cookie-${o.key}-label`} aria-describedby={`cookie-${o.key}-description`} checked={prefs[o.key]} onChange={(e) => setPrefs({ ...prefs, [o.key]: e.target.checked })} />
+            <span aria-hidden="true" />
+          </span>
+        </label>)}
+      </div>}
+
+      <footer className="ez-cookie-footer">
+        <div className="ez-cookie-actions">
+          <button type="button" onClick={() => save(DENIED)} className="ez-cookie-button">{t("Reject optional", "رفض الاختيارية")}</button>
+          <button type="button" onClick={() => save(ALL)} className={`ez-cookie-button${manage ? "" : " ez-cookie-primary"}`}>{t("Accept all", "قبول الكل")}</button>
+        </div>
+        {manage
+          ? <button type="button" onClick={() => save(prefs)} className="ez-cookie-button ez-cookie-primary ez-cookie-save">{t("Save my preferences", "حفظ تفضيلاتي")}</button>
+          : <button ref={manageButton} type="button" onClick={() => setManage(true)} aria-expanded={false} className="ez-cookie-settings"><SlidersHorizontal aria-hidden="true" />{t("Manage preferences", "إدارة التفضيلات")}</button>}
+      </footer>
+    </section>
   )
 }

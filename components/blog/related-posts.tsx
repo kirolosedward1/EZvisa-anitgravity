@@ -1,67 +1,15 @@
 import { getAllPosts } from "@/lib/blog"
-import { Image } from "@/components/image"
-import { Calendar, Clock } from "lucide-react"
-import { LocaleLink } from "@/components/locale-link"
+import { BlogCard } from "@/components/blog/blog-card"
 import { Msg } from "@/components/msg"
-import { NewsCategory, NewsDate, NewsReadTime, NewsTitle, newsTitleText } from "@/components/blog/news-copy"
-import { requestLocale } from "@/lib/request-locale"
 
-export async function RelatedPosts({
-  currentSlug,
-  category,
-}: {
-  currentSlug: string
-  category: string
-}) {
-  const locale = await requestLocale()
+export async function RelatedPosts({ currentSlug, category }: { currentSlug: string; category: string }) {
   const allPosts = await getAllPosts()
-
-  // Filter posts by same category, exclude current post, limit to 3
   const relatedPosts = allPosts.filter((post) => post.category === category && post.slug !== currentSlug).slice(0, 3)
-
-  if (!relatedPosts || relatedPosts.length === 0) return null
-
+  if (!relatedPosts.length) return null
   return (
-    <section className="py-16 bg-muted/30 border-t">
-      <div className="container mx-auto px-4" style={{ maxWidth: "85%" }}>
-        <h2 className="text-3xl font-semibold mb-8"><Msg id="news.related" /></h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {relatedPosts.map((post) => (
-            <LocaleLink
-              key={post.slug}
-              href={`/news/${post.slug}`}
-              className="group block bg-card border rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
-            >
-              <div className="relative h-48 overflow-hidden">
-                <Image
-                  src={post.featuredImage || "/placeholder.svg"}
-                  alt={newsTitleText(locale, post.slug, post.title)}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
-              <div className="p-4">
-                <span className="inline-block px-2 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium mb-2">
-                  <NewsCategory category={post.category} />
-                </span>
-                <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                  <NewsTitle slug={post.slug} fallback={post.title} />
-                </h3>
-                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    <NewsDate iso={post.publishedAt} />
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    <NewsReadTime value={post.readTime} />
-                  </span>
-                </div>
-              </div>
-            </LocaleLink>
-          ))}
-        </div>
-      </div>
+    <section className="ez-journal-related" aria-labelledby="related-articles">
+      <div className="ez-journal-section-title"><h2 id="related-articles"><Msg id="news.related" /></h2></div>
+      <div className="ez-journal-grid">{relatedPosts.map((post) => <BlogCard key={post.slug} post={post} />)}</div>
     </section>
   )
 }

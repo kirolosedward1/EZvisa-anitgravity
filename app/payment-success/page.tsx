@@ -1,9 +1,10 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { LocaleLink } from "@/components/locale-link"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Check, ClipboardList, Clock, FileText, Loader2, MessageCircle, RefreshCw, Upload, X } from "lucide-react"
+import { ArrowRight, Check, ClipboardList, Clock, FileText, Loader2, RefreshCw, Upload, X } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
 import { LangText } from "@/components/lang-text"
 import { PaymentWaitBang, PaymentWaitRing } from "@/components/payment/payment-mark"
@@ -163,9 +164,9 @@ function PaymentSuccessContent() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-background">
       <SiteHeader forceBackground={true} />
-      <main id="main-content" className="flex-1 px-4 pb-16 pt-28 md:pt-32">
+      <main id="main-content" className="ez-customer-page ez-payment-page flex-1 px-4 pb-16 pt-28 md:pt-32">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-          <section className="rounded-3xl border border-border/70 bg-card p-6 shadow-sm sm:p-8" aria-live="polite">
+          <section className="ez-payment-result border border-border bg-card p-6 sm:p-8" aria-live="polite">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
               <div className="flex size-12 shrink-0 items-center justify-center" role="status">{statusIcon}</div>
               <div className="flex min-w-0 flex-col gap-2">
@@ -288,7 +289,7 @@ function PaymentSuccessContent() {
 
           <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
             <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-medium text-[#1A7F37] hover:underline">
-              <MessageCircle className="size-4" aria-hidden="true" />
+              <WhatsAppIcon className="size-4" />
               <LangText en="Questions? Message us on WhatsApp" ar="لديك سؤال؟ راسلنا على واتساب" />
             </a>
             <LocaleLink href={localePath("/dashboard")} className="font-medium text-foreground hover:underline">

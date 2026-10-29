@@ -1,6 +1,5 @@
 import type { Metadata } from "next"
 import { DocumentRequirementsPage } from "@/components/document-requirements-page"
-import { LatestGuides } from "@/components/latest-guides"
 import { countryNameAr, getCountryBySlug } from "@/lib/countries"
 import { requestLocale } from "@/lib/request-locale"
 import { ltr } from "@/lib/bidi"
@@ -100,7 +99,6 @@ export default async function DocumentSlugPage({ params }: { params: Promise<{ s
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <DocumentRequirementsPage initialCountry={country.name}>
-        <LatestGuides />
       </DocumentRequirementsPage>
     </>
   )

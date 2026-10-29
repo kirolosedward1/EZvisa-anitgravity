@@ -56,23 +56,16 @@ export function ApplicationOverview({
   const progress = stage === "rejected" || stage === "cancelled" ? null : customerProgress(app)
 
   return (
-    <DashboardCard aria-label={customerText(locale, "overview.caseAria", { country })} className="overflow-hidden">
-      <div className="photo-card relative h-36 bg-foreground sm:h-44">
-        {photo ? <Image src={photo} alt="" fill priority sizes="(max-width: 1024px) 100vw, 760px" className="object-cover" /> : null}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0A0F1F]/85 via-[#0A0F1F]/35 to-[#0A0F1F]/5" />
-        <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 p-5 sm:p-6">
-          <CountryFlag iso={SCHENGEN_META[countryEn]?.iso} title={country} className="size-9 shadow-md ring-2 ring-primary-foreground/80" />
-          <div className="flex min-w-0 flex-col gap-0.5 text-primary-foreground">
-            <h2 className="panel-title panel-title-lg text-primary-foreground">{country}</h2>
-            <p className="text-sm text-primary-foreground/80">
-              {customerText(locale, "overview.schengen")}
-              {reference ? <> · <span className="ltr-isolate tabular-nums">{reference}</span></> : null}
-            </p>
-          </div>
+    <DashboardCard aria-label={customerText(locale, "overview.caseAria", { country })} className="ez-case-overview overflow-hidden">
+      <div className="ez-case-heading">
+        <div>
+          <div className="flex items-center gap-3"><CountryFlag iso={SCHENGEN_META[countryEn]?.iso} title={country} className="size-7" /><h2>{country}</h2></div>
+          <p>{customerText(locale, "overview.schengen")}{reference ? <> · <span className="ltr-isolate tabular-nums">{reference}</span></> : null}</p>
         </div>
+        {photo ? <div className="ez-case-photo"><Image src={photo} alt="" fill sizes="180px" className="object-cover" /></div> : null}
       </div>
 
-      <div className="flex flex-col gap-6 p-5 sm:p-6">
+      <div className="ez-case-body flex flex-col gap-6 p-5 sm:p-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
@@ -89,9 +82,9 @@ export function ApplicationOverview({
 
         <AppointmentCard app={app} arabic={arabic} showHelp={showHelp} />
 
-        {progress && <ProgressTracker progress={progress} arabic={arabic} />}
-
         <NextStepCard app={app} stage={stage} />
+
+        {progress && <ProgressTracker progress={progress} arabic={arabic} />}
       </div>
     </DashboardCard>
   )

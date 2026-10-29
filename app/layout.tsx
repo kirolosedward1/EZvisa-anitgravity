@@ -1,11 +1,12 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { headers } from "next/headers"
-import { IBM_Plex_Sans_Arabic, Poppins } from "next/font/google"
+import { IBM_Plex_Sans_Arabic, DM_Sans } from "next/font/google"
 import { CookieConsent } from "@/components/cookie-consent"
 import { ScrollRestoration } from "@/components/scroll-restoration"
 import { ContinueApplicationNotification } from "@/components/continue-application-notification"
 import { NavigationProgressBar } from "@/components/navigation-progress"
+import { SiteMotion } from "@/components/site-motion"
 import { LocaleDirection } from "@/components/locale-direction"
 import { LocaleProvider } from "@/components/locale-provider"
 import { formatAedLabel } from "@/lib/currency"
@@ -15,14 +16,14 @@ import { CrispVisibility } from "@/components/crisp-visibility"
 import Script from "next/script"
 import "./globals.css"
 
-const poppins = Poppins({
+const poppins = DM_Sans({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-poppins",
   display: "swap",
 })
 
-// Arabic glyphs only. Latin keeps Poppins because this subset's unicode-range does not cover it.
+// Arabic glyphs only. Latin keeps DM Sans because this subset's unicode-range does not cover it.
 const plexArabic = IBM_Plex_Sans_Arabic({
   subsets: ["arabic"],
   weight: ["400", "500", "600"],
@@ -176,6 +177,7 @@ export default async function RootLayout({
         <LocaleDirection />
         <CrispVisibility />
         <NavigationProgressBar />
+        <SiteMotion />
         <ScrollRestoration />
         {/* overflow-x-clip (not hidden): hidden would turn <main> into a scroll container and stop position: sticky from working on every page */}
         <main className="overflow-x-clip w-full flex flex-col min-h-screen">

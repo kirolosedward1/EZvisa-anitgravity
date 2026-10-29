@@ -1,3 +1,4 @@
+import { Globi, type GlobiPose } from "@/components/globi/globi"
 import { LocaleLink } from "@/components/locale-link"
 import { ArrowRight, Download, Printer, Upload } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -139,13 +140,19 @@ export async function NextStepCard({ app, stage }: { app: VisaApplication; stage
     )
   }
 
+  const pose: GlobiPose = stage === "ready" ? "checklist" : stage === "payment" ? "shield" : stage === "documents" ? "documents" : "waiting"
+  const showCharacter = stage !== "cancelled" && stage !== "rejected"
   return (
-    <div id={stage === "payment" ? "pay" : undefined} className="flex flex-col gap-4 border-t border-border/70 pt-6">
+    <div id={stage === "payment" ? "pay" : undefined} className="ez-next-step">
+      {showCharacter && <Globi pose={pose} className="ez-next-globi" />}
+      <div className="ez-next-content">
+
       <div className="flex max-w-xl flex-col gap-1">
-        <h3 className="panel-title panel-title-lg text-foreground">{content.title}</h3>
+        <h3 className="text-foreground">{content.title}</h3>
         <p className="text-sm leading-relaxed text-muted-foreground">{content.body}</p>
       </div>
-      {content.actions && <div className="flex flex-wrap items-center gap-2">{content.actions}</div>}
+      {content.actions && <div className="mt-4 flex flex-wrap items-center gap-2">{content.actions}</div>}
+      </div>
     </div>
   )
 }

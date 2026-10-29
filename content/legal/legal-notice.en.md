@@ -10,7 +10,6 @@
 | Registered address | {{REGISTERED_ADDRESS}} |
 | Email | {{EMAIL}} |
 | WhatsApp / Phone | +971 54 710 9533 |
-| Support hours | 9:00 am – 6:00 pm (UAE time, GMT+4) |
 | VAT | Not registered for VAT in the UAE. Prices do not include VAT. |
 | Payment processing | Ziina |
 

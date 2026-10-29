@@ -1,5 +1,6 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { Image } from "@/components/image"
 import { useState } from "react"
 import { usePathname } from "next/navigation"
@@ -143,8 +144,9 @@ function AccountFooter({ className }: { className?: string }) {
             href={getWhatsAppUrl(supportCase ? supportMessage(supportCase) : "Hi EZvisa! I have a question about my visa application.", arabic)}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-[#1A7F37] hover:underline"
+            className="inline-flex items-center gap-2 font-medium text-[#1A7F37] hover:underline"
           >
+            <WhatsAppIcon className="size-4 shrink-0" />
             <LangText en="WhatsApp support" ar="الدعم عبر واتساب" />
           </a>
           {links.map((link) => (
@@ -231,6 +233,7 @@ export function Footer({
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-[#1A7F37] hover:underline transition-colors font-medium"
                   >
+                    <WhatsAppIcon className="size-4 shrink-0" />
                     <LangText en="Chat with us on WhatsApp" ar="تحدث معنا على واتساب" />
                     <ArrowUpRight className="h-3.5 w-3.5" />
                   </a>

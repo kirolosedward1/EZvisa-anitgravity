@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { claimPaymentCreation } from "@/lib/payment-creation-lock"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { isAllowedPaymentOrigin, paymentCorsHeaders, paymentReturnUrl } from "@/lib/cors"
@@ -18,6 +19,7 @@ export async function POST(request: NextRequest) {
     for (const [key, value] of Object.entries(paymentCorsHeaders(origin))) headers.set(key, value)
     return NextResponse.json(body, { status: init.status, headers })
   }
+  let releasePaymentLock: (() => Promise<void>) | undefined
   const started = Date.now()
   try {
     const isDev = process.env.NODE_ENV === "development"
@@ -86,6 +88,15 @@ export async function POST(request: NextRequest) {
     }
     const { createClient } = await import("@supabase/supabase-js")
     const supabase = createClient(supabaseUrl, supabaseKey)
+    const lock = await claimPaymentCreation(supabase, applicationId)
+    if (!lock.acquired) {
+      const message = lock.status === 404 ? "Application not found"
+        : lock.status === 423 ? "Checkout is already being prepared. Please retry in a moment."
+        : "Could not prepare checkout. Please retry."
+      return json({ error: message }, { status: lock.status, headers: { "Retry-After": "3" } })
+    }
+    releasePaymentLock = lock.release
+
     const { data: app, error: appError } = await supabase
       .from("visa_applications")
       .select("id, payment_id, payment_status, application_status, additional_notes")
@@ -188,6 +199,8 @@ export async function POST(request: NextRequest) {
       },
       { status: timedOut ? 504 : 500 },
     )
+  } finally {
+    await releasePaymentLock?.()
   }
 }
 
@@ -199,7 +212,7 @@ async function linkIntent(supabase: SupabaseClient, applicationId: string, inten
       .select("additional_notes, updated_at")
       .eq("id", applicationId)
       .maybeSingle()
-    if (error || !cur) { console.error("[payment] Failed to load application to link payment", error?.code); return }
+    if (error || !cur) throw new Error("Could not load application to link payment")
     let notes: Record<string, any> = {}
     try { const j = cur.additional_notes ? JSON.parse(cur.additional_notes) : {}; if (j && typeof j === "object") notes = j } catch { notes = { legacyNotes: cur.additional_notes } }
     const ids: string[] = Array.isArray(notes.paymentIntentIds) ? notes.paymentIntentIds.filter((x: unknown) => typeof x === "string") : []
@@ -211,8 +224,8 @@ async function linkIntent(supabase: SupabaseClient, applicationId: string, inten
       .eq("id", applicationId)
     q = cur.updated_at == null ? q.is("updated_at", null) : q.eq("updated_at", cur.updated_at)
     const { data: rows, error: upError } = await q.select("id")
-    if (upError) { console.error("[payment] Failed to link payment to application", upError.code); return }
+    if (upError) throw new Error("Could not link payment to application")
     if (rows && rows.length) return
   }
-  console.error("[payment] Could not link payment after retries", applicationId)
+  throw new Error("Could not link payment after retries")
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { useRef, useState } from "react"
 import { LocaleLink } from "@/components/locale-link"
 import { useSiteLocale } from "@/components/locale-provider"
@@ -93,12 +94,12 @@ const initialsOf = (name: string, email: string) => {
 
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3">
+    <section className="ez-account-section flex flex-col gap-3">
       <div className="flex flex-col gap-1 px-1">
         <h2 className="panel-title text-foreground">{title}</h2>
         {description ? <p className="text-sm text-muted-foreground">{description}</p> : null}
       </div>
-      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-xs">{children}</div>
+      <div className="ez-account-section-body">{children}</div>
     </section>
   )
 }
@@ -106,7 +107,7 @@ function Section({ title, description, children }: { title: string; description?
 function DetailRow({ icon: Icon, label, value, action = "Edit", onClick }: { icon: LucideIcon; label: string; value: React.ReactNode; action?: string; onClick?: () => void }) {
   const body = (
     <>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+      <span className="ez-account-row-icon flex size-9 shrink-0 items-center justify-center text-primary">
         <Icon className="size-4" aria-hidden="true" />
       </span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -116,7 +117,7 @@ function DetailRow({ icon: Icon, label, value, action = "Edit", onClick }: { ico
       {onClick ? <span className="shrink-0 text-sm font-medium text-primary">{action}</span> : null}
     </>
   )
-  const row = "flex w-full items-center gap-4 px-5 py-4 text-left"
+  const row = "flex w-full items-center gap-4 px-5 py-4 text-start"
   return onClick ? (
     <button type="button" onClick={onClick} className={cn(row, "transition-colors hover:bg-secondary/60 focus-visible:bg-secondary/60 focus-visible:outline-none")}>
       {body}
@@ -250,12 +251,12 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-5xl grid-cols-1 gap-8 lg:grid-cols-[320px_1fr] lg:items-start">
-      <h1 className="sr-only">Account</h1>
+    <div className="ez-account-layout">
+      <header className="ez-account-heading"><div><h1>{arabic ? "حسابك" : "Your account"}</h1><p>{arabic ? "بياناتك، والمسافرون معك، وكل رحلاتك في مكان واحد." : "Your details, your travellers, and every journey in one place."}</p></div><LocaleLink href="/dashboard" className="ez-account-back">{arabic ? "عرض طلباتي" : "View my applications"}<ChevronRight className="size-4 rtl:rotate-180" aria-hidden="true" /></LocaleLink></header>
 
       {/* Profile card */}
       <aside className="flex flex-col gap-4 lg:sticky lg:top-28">
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card p-6 text-center shadow-xs">
+        <div className="ez-account-profile flex flex-col items-center gap-4 p-6 text-center">
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger
               className="group relative rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -311,9 +312,9 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
           <p className="text-xs text-muted-foreground">Your photo and details are the same in the EZvisa app.</p>
         </div>
 
-        <div className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 shadow-xs">
+        <div className="ez-account-links flex flex-col gap-2 p-2">
           <a href={whatsappHref("Hi EZvisa, I need help with my account.", arabic)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary">
-            <svg viewBox="0 0 24 24" className="size-4" aria-hidden="true"><path fill="#1A7F37" d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.01c5.46 0 9.9-4.45 9.9-9.91A9.84 9.84 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.22 8.22 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24a8.24 8.24 0 0 1 8.24 8.25c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.15.16-.29.18-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43s.17-.25.25-.41c.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.22.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.48-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.28Z" /></svg>
+            <WhatsAppIcon className="size-4 text-[#1A7F37]" />
             WhatsApp support
             <ChevronRight className="ms-auto size-4 text-muted-foreground" aria-hidden="true" />
           </a>
@@ -525,7 +526,7 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
               {deleteStep === "failed" ? (
                 <>
                   <Button asChild variant="outline" className="rounded-full hover:bg-secondary hover:text-foreground">
-                    <a href={whatsappHref(`Please delete my EZvisa account (${profile.email}).`, arabic)} target="_blank" rel="noopener noreferrer">Request by WhatsApp</a>
+                    <a href={whatsappHref(`Please delete my EZvisa account (${profile.email}).`, arabic)} target="_blank" rel="noopener noreferrer"><WhatsAppIcon className="size-4" />Request by WhatsApp</a>
                   </Button>
                   <Button asChild variant="outline" className="rounded-full hover:bg-secondary hover:text-foreground">
                     <a href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Delete my EZvisa account")}&body=${encodeURIComponent(`Please delete my EZvisa account and personal data.\nAccount email: ${profile.email}`)}`}>Request by email</a>

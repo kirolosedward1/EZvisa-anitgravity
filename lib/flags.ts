@@ -13,5 +13,7 @@ export const FLAG_SLUGS = new Set([
 export function flagSrc(name?: string | null): string | null {
   if (!name) return null
   const slug = countrySlug(name)
+  // ASCII alias avoids filesystem Unicode normalization differences for Côte d’Ivoire.
+  if (slug === "côte-d'ivoire") return "/flags/ivory-coast.png"
   return FLAG_SLUGS.has(slug) ? `/flags/${encodeURIComponent(slug)}.png` : null
 }

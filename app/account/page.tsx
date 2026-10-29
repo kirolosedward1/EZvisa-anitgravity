@@ -61,7 +61,7 @@ export default async function AccountPage() {
   return (
     <>
       <SiteHeader />
-      <main id="main-content" className="bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
+      <main id="main-content" className="ez-customer-page bg-secondary/40 px-4 pb-20 pt-28 md:pt-32">
         <AccountView profile={profile} applications={applications} />
       </main>
       <Footer />

@@ -67,7 +67,7 @@ export function SchengenCalculatorClient() {
     : "/apply"
 
   return (
-    <div className="space-y-10">
+    <div className="ez-stay-tool space-y-10">
       <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
@@ -104,22 +104,22 @@ export function SchengenCalculatorClient() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-1.5 uppercase tracking-wider">
+                <label htmlFor="planned-entry" className="text-xs font-semibold text-muted-foreground block mb-1.5 uppercase tracking-wider">
                   <Msg id="calc.entryDate" />
                 </label>
                 <Input
-                  type="date"
+                  id="planned-entry" type="date"
                   value={plannedTrip.startDate}
                   onChange={(e) => setPlannedTrip(prev => ({ ...prev, startDate: e.target.value }))}
                   className="bg-background text-sm h-11"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-1.5 uppercase tracking-wider">
+                <label htmlFor="planned-exit" className="text-xs font-semibold text-muted-foreground block mb-1.5 uppercase tracking-wider">
                   <Msg id="calc.exitDate" />
                 </label>
                 <Input
-                  type="date"
+                  id="planned-exit" type="date"
                   value={plannedTrip.endDate}
                   onChange={(e) => setPlannedTrip(prev => ({ ...prev, endDate: e.target.value }))}
                   className="bg-background text-sm h-11"

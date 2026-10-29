@@ -7,6 +7,7 @@ import { useState } from "react"
 import type React from "react"
 import { useRouter } from "next/navigation"
 import { useLocalizedHref } from "@/components/locale-link"
+import { GlobiGuide } from "@/components/globi/globi"
 import { TripDetailsStep } from "@/components/apply/trip-details-step"
 import { SpouseStep } from "@/components/apply/spouse-step"
 import { EmploymentStep } from "@/components/apply/employment-step"
@@ -204,6 +205,8 @@ export function ContinueForm({
         ))}
       </div>
 
+      <div className="ez-continue-layout">
+      <div className="ez-continue-guide"><GlobiGuide moment={step} compact /></div>
       <div className="mt-8 w-full max-w-[560px]">
         {error ? (
           <p className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive" role="alert">
@@ -325,6 +328,7 @@ export function ContinueForm({
             continueLabelAr={nextLabel.ar}
           />
         ) : null}
+      </div>
       </div>
     </div>
   )

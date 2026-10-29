@@ -10,7 +10,7 @@ export async function SupportCard({ id, token, destination }: { id?: string; tok
   const arabic = (await requestLocale()) === "ar"
   const locale = arabic ? "ar" : "en"
   return (
-    <DashboardCard aria-label={customerText(locale, "support.aria")} className="flex flex-col gap-4 p-6">
+    <DashboardCard aria-label={customerText(locale, "support.aria")} className="ez-customer-support flex flex-col gap-4 p-6">
       <div className="flex flex-col gap-1">
         <h2 className="panel-title text-foreground">{customerText(locale, "support.title")}</h2>
         <p className="text-sm leading-relaxed text-muted-foreground">

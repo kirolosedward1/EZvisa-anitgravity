@@ -1,5 +1,7 @@
 "use client"
 
+import { Globi } from "@/components/globi/globi"
+import { LangText } from "@/components/lang-text"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowRight } from "lucide-react"
@@ -108,7 +110,7 @@ export function AppointmentForm({
     (screen === "when" && (!date || !time || !centre))
 
   return (
-    <div className="bg-[#FFFFFF] text-[#0A0F1F]">
+    <div className="ez-appointment-page bg-[#FFFFFF] text-[#0A0F1F]">
       <div className="mx-auto w-full max-w-6xl px-4 pb-28 pt-[var(--site-header-height)]">
         <nav className="flex gap-6 overflow-x-auto border-b border-[#E3E7EF]" aria-label={t("step.progress")}>
           <LocaleLink href={dossierHref} className="whitespace-nowrap border-b-2 border-transparent pb-2 text-[13px] font-medium text-[#5B6475]">
@@ -119,7 +121,7 @@ export function AppointmentForm({
           </span>
         </nav>
 
-        <div className="mt-8 w-full max-w-[560px]">
+        <div className="ez-appointment-layout"><aside className="ez-appointment-guide"><Globi pose="calendar" /><h2><LangText en="One step closer to departure." ar="خطوة أقرب إلى رحلتك." /></h2><p><LangText en="Keep your appointment details here, alongside your visa file. We’ll help you prepare for what comes next." ar="احتفظ بتفاصيل موعدك هنا مع ملف التأشيرة. سنساعدك في الاستعداد للخطوة التالية." /></p></aside><div className="mt-8 w-full max-w-[560px]">
           {screen === "question" ? (
             <>
               <h1 className="wizard-question text-[#0A0F1F]">{t("appt.question")}</h1>
@@ -245,6 +247,7 @@ export function AppointmentForm({
 
           {error ? <p className="mt-3 text-sm text-[#B83200]">{error}</p> : null}
         </div>
+      </div>
       </div>
       <WizardBar
         onBack={() => {

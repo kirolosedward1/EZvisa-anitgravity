@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
-import { suppressesChat } from "@/lib/chat-routes"
+import { CHAT_WIDGET_ENABLED, suppressesChat } from "@/lib/chat-routes"
 
 type CrispWindow = Window & { $crisp?: unknown[]; CRISP_WEBSITE_ID?: string }
 
@@ -60,7 +60,7 @@ function releaseCrispNodes() {
  * On those routes the script is not inserted, and a widget already on the page is hidden.
  */
 export function presentCrisp(websiteId: string) {
-  if (suppressesChat(window.location.pathname)) {
+  if (!CHAT_WIDGET_ENABLED || suppressesChat(window.location.pathname)) {
     concealCrisp()
     return
   }
@@ -83,7 +83,7 @@ export function CrispVisibility() {
   const pathname = usePathname()
 
   useEffect(() => {
-    const hide = suppressesChat(window.location.pathname) || suppressesChat(pathname)
+    const hide = !CHAT_WIDGET_ENABLED || suppressesChat(window.location.pathname) || suppressesChat(pathname)
     if (hide) {
       concealCrisp()
       return () => {

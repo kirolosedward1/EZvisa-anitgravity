@@ -2,7 +2,7 @@ import { Metadata } from "next"
 import { LocaleLink } from "@/components/locale-link"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
-import { Button } from "@/components/ui/button"
+import { InnerHero } from "@/components/inner-hero"
 import { formatAedLabel } from "@/lib/currency"
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import { requestLocale } from "@/lib/request-locale"
@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
       },
       openGraph: {
         title: "Free Schengen Travel Tools & Calculators | EZvisa UAE",
-        description: "Official European Commission 90/180-day stay calculator, embassy bank balance estimator, and UAE appointment booking guide.",
+        description: "90/180-day stay planning calculator, embassy bank balance estimator, and UAE appointment booking guide.",
         url: "https://www.ezvisa.net/tools",
         type: "website",
       },
@@ -57,9 +57,9 @@ export default async function ToolsIndexPage() {
       color: "",
       badgeColor: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border-blue-200",
       features: [
-        t("Official rolling 180-day calculation algorithm", "حساب قاعدة 180 يومًا المتحركة"),
+        t("Rolling 180-day calculation", "حساب قاعدة 180 يومًا المتحركة"),
         t("Add unlimited past and future trip dates", "أضف تواريخ الرحلات السابقة والقادمة"),
-        t("Direct export into visa application file", "اعرف الأيام المستخدمة والأيام المتبقية"),
+        t("See used days and remaining allowance", "اعرف الأيام المستخدمة والأيام المتبقية"),
       ]
     },
     {
@@ -68,15 +68,15 @@ export default async function ToolsIndexPage() {
       badge: t("Official Solvency Thresholds", "حدود الملاءة المالية"),
       icon: Wallet,
       description: t(
-        "Determine the exact closing balance required in your UAE bank statement for Spain, France, Italy, Germany, and Switzerland.",
-        "احسب الرصيد الختامي المطلوب في كشف حسابك الإماراتي لإسبانيا وفرنسا وإيطاليا وألمانيا وسويسرا.",
+        "Estimate funds for your travel plans. Bank evidence and the consulate’s assessment depend on your circumstances.",
+        "قدّر المبلغ المناسب لخطط سفرك. تعتمد المستندات المالية وتقييم القنصلية على ظروفك.",
       ),
       href: "/tools/bank-balance-calculator",
       cta: t("Check Required Funds", "احسب المبلغ المطلوب"),
       color: "",
       badgeColor: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200",
       features: [
-        t("Real-time AED conversions from EUR / CHF", "تحويل من اليورو والفرنك إلى الدرهم"),
+        t("Indicative EUR / CHF conversions to AED", "تحويل تقريبي من اليورو والفرنك إلى الدرهم"),
         t("Multi-traveler & trip duration multipliers", "حساب لعدة مسافرين ولمدة الرحلة"),
         t("Guidance on salary credits and NOC alignment", "إرشاد عن إيداعات الراتب ومطابقة شهادة عدم الممانعة"),
       ]
@@ -87,8 +87,8 @@ export default async function ToolsIndexPage() {
       badge: t("VFS, TLS & BLS Directory", "دليل VFS وTLS وBLS"),
       icon: MapPin,
       description: t(
-        "Navigate visa application centers across Dubai (Wafi Mall, Sheikh Zayed Rd, Al Barsha) and Abu Dhabi with center procedures and biometrics rules.",
-        "مراكز تقديم التأشيرة في دبي (وافي مول، شارع الشيخ زايد، البرشاء) وأبوظبي، مع إجراءات المركز وقواعد البصمة.",
+        "Find the official booking route for your destination and understand what to bring to your appointment.",
+        "اعثر على مسار الحجز الرسمي لوجهتك وتعرّف على ما يلزم إحضاره إلى الموعد.",
       ),
       href: "/tools/appointment-guide",
       cta: t("Explore Visa Centers", "استعرض مراكز التأشيرات"),
@@ -96,7 +96,7 @@ export default async function ToolsIndexPage() {
       badgeColor: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300 border-amber-200",
       features: [
         t("Country-to-center jurisdiction mapping", "أي مركز يخدم كل دولة"),
-        t("59-month biometrics (VIS) exemption rules", "قاعدة إعفاء البصمة لـ59 شهرًا"),
+        t("When previous fingerprints may be reused", "متى يمكن إعادة استخدام البصمات السابقة"),
         t("Center counter security and document guidelines", "إرشادات الدخول والمستندات في المركز"),
       ]
     }
@@ -120,129 +120,19 @@ export default async function ToolsIndexPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-svh flex flex-col bg-background">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteHeader forceBackground={true} />
 
-      <main className="flex-1 py-14 md:py-20">
-        <div className="container max-w-6xl mx-auto px-4 sm:px-6">
-          
-          {/* Header */}
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold uppercase tracking-wider mb-4">
-              <span>{t("UAE Traveler Intelligence Suite", "أدوات للمقيمين في الإمارات")}</span>
-            </div>
-            <h1 className="text-3xl sm:text-5xl font-semibold text-foreground tracking-tight">
-              {t("Free Schengen Visa Tools & Calculators", "أدوات وحاسبات مجانية لتأشيرة شنغن")}
-            </h1>
-            <p className="text-base sm:text-lg text-muted-foreground mt-4 leading-relaxed">
-              {t(
-                "Plan your European itinerary with total confidence. Built specifically for UAE residents, Golden Visa holders, and frequent travelers to help you meet consular requirements.",
-                "أدوات للمقيمين في الإمارات وحاملي الإقامة الذهبية والمسافرين المتكررين، لحساب أيام الإقامة والرصيد ومركز التقديم.",
-              )}
-            </p>
-          </div>
-
-          {/* Tools Grid */}
-          <div className="grid md:grid-cols-3 gap-8 mb-20">
-            {tools.map((tool) => {
-              const Icon = tool.icon
-              return (
-                <div 
-                  key={tool.id} 
-                  className="bg-card border border-border/80 rounded-3xl p-8 flex flex-col justify-between hover:shadow-xl hover:border-primary/40 transition-all duration-300 relative overflow-hidden group"
-                >
-                  <div className={"absolute inset-0 bg-[#F7F8FA]" + tool.color + " opacity-70 pointer-events-none group-hover:opacity-100 transition-opacity"} />
-                  
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between gap-2 mb-6">
-                      <div className="w-12 h-12 rounded-2xl bg-background border border-border/80 flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform">
-                        <Icon className="w-6 h-6 text-primary" />
-                      </div>
-                      <span className={"text-[11px] font-semibold px-2.5 py-1 rounded-full border " + tool.badgeColor}>
-                        {tool.badge}
-                      </span>
-                    </div>
-
-                    <h2 className="text-xl font-semibold text-foreground mb-3 group-hover:text-primary transition-colors">
-                      {tool.title}
-                    </h2>
-
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                      {tool.description}
-                    </p>
-
-                    <div className="space-y-2.5 mb-8 border-t border-border/60 pt-4">
-                      {tool.features.map((feat, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs text-foreground/80 font-medium">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                          <span>{feat}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="relative z-10 pt-2">
-                    <Button asChild className="w-full">
-                      <LocaleLink href={tool.href} className="flex items-center justify-center gap-2">
-                        <span>{tool.cta}</span>
-                        <ArrowRight aria-hidden="true" />
-                      </LocaleLink>
-                    </Button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Value Banner */}
-          <div className="bg-slate-900 text-white rounded-3xl p-8 md:p-12 relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full pointer-events-none" />
-            
-            <div className="relative z-10 max-w-2xl">
-              <div className="inline-flex items-center gap-2 text-primary-foreground/80 text-xs font-semibold uppercase tracking-wider mb-4">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>{t("Consulate-Ready Document Preparation", "تجهيز ملف التأشيرة")}</span>
-              </div>
-
-              <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-4">
-                {t("Done calculating? Let our experts assemble your complete visa file.", "انتهيت من الحساب؟ يجهّز المختصون ملف التأشيرة.")}
-              </h2>
-
-              <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-8">
-                {arabic ? (
-                  <>نموذج الطلب وحجوزات الطيران والفندق وخطاب التغطية وبرنامج الرحلة. جاهز خلال <bdi dir="ltr">1–2</bdi> يوم. تأمين السفر إضافة اختيارية.</>
-                ) : (
-                  "From embassy application forms and verifiable flight & hotel reservations to customized cover letters and travel insurance, get your complete Schengen dossier ready in 24–48 hours."
-                )}
-              </p>
-
-              <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
-                <div className="flex w-full flex-col items-center gap-2 sm:w-auto sm:items-start">
-                  <Button asChild size="lg" className="w-full sm:w-auto">
-                    <LocaleLink href="/apply">
-                      <span className="sm:hidden">{t("Start your application", "ابدأ طلبك")}</span>
-                      <span className="hidden sm:inline">
-                        {arabic
-                          ? `ابدأ طلبك · ${formatAedLabel(PRICE_AED, "ar")}`
-                          : `Start Your Application • From ${formatAedLabel(PRICE_AED, "en")}`}
-                      </span>
-                    </LocaleLink>
-                  </Button>
-                  <p className="text-center text-xs text-white/75 sm:hidden">
-                    {arabic ? `من ${formatAedLabel(PRICE_AED, "ar")}` : `From ${formatAedLabel(PRICE_AED, "en")}`}
-                  </p>
-                </div>
-
-                <Button asChild variant="outline" size="lg" className="w-full sm:w-auto h-12 px-6 rounded-full border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-white font-medium">
-                  <LocaleLink href="/how-it-works">
-                    {t("How It Works", "كيف تعمل")}
-                  </LocaleLink>
-                </Button>
-              </div>
-            </div>
-          </div>
-
+      <main>
+        <InnerHero title={t("A little planning goes a long way.", "القليل من التخطيط يصنع فرقًا.")} description={t("Three free tools for the practical details: your travel days, your budget and your appointment. Start with the one you need.", "ثلاث أدوات مجانية لتفاصيل رحلتك: أيام السفر والميزانية والموعد. ابدأ بما تحتاج إليه.")} />
+        <div className="ez-tools-directory">
+          {tools.map(tool => { const Icon = tool.icon; return <article key={tool.id}>
+            <Icon aria-hidden="true" />
+            <div><h2>{tool.title}</h2><p>{tool.description}</p><LocaleLink href={tool.href}>{tool.cta}<ArrowRight size={20} className="rtl:rotate-180" aria-hidden="true" /></LocaleLink></div>
+            <div><ul>{tool.features.map(feature => <li key={feature}>{feature}</li>)}</ul></div>
+          </article> })}
+          <p className="text-sm text-muted-foreground pt-8">{t("These tools help you plan. Always check your visa conditions and the destination’s current official instructions.", "تساعدك هذه الأدوات على التخطيط. راجع دائمًا شروط تأشيرتك والتعليمات الرسمية الحالية لوجهتك.")}</p>
         </div>
       </main>
 

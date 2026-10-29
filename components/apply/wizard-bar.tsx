@@ -35,7 +35,7 @@ export function WizardBar({
   onContinue,
   disabled = false,
   showContinue = true,
-  arrow = false,
+  arrow = true,
 }: WizardBarProps) {
   return (
     <div data-wizard-bar className="fixed inset-x-0 bottom-0 z-30 border-t border-[#E3E7EF] bg-[#FFFFFF]">

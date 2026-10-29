@@ -60,9 +60,9 @@ export function DocumentsIndex({ children }: { children?: ReactNode }) {
         <section className="pb-20 md:pb-24" aria-label={arabic ? "الدول" : "Countries"}>
           <div className="container mx-auto max-w-6xl px-4 sm:px-6">
             {filteredCountries.length > 0 ? (
-              <ul className="grid grid-cols-1 overflow-hidden rounded-3xl border border-border/70 bg-card sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="ez-document-country-list">
                 {filteredCountries.map((country) => (
-                  <li key={country.name} className="-mb-px -me-px border-b border-e border-border/70">
+                  <li key={country.name} className="">
                     <LocaleLink
                       href={`/documents/required-documents-to-apply-for-a-tourist-visa-in-${country.slug}`}
                       className="group flex items-center gap-3 px-5 py-4 transition-colors hover:bg-secondary/60"

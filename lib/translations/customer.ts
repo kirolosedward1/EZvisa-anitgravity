@@ -158,7 +158,7 @@ const en = {
 
   "support.aria": "Support",
   "support.title": "Questions about your file?",
-  "support.body": "Our Dubai-based visa specialists reply on WhatsApp, usually within minutes.",
+  "support.body": "Ask our visa specialists about your documents, application or next step.",
   "support.chat": "Chat with a specialist",
 
   "thanks.missingTitle": "No Application Data Found",
@@ -211,7 +211,7 @@ const en = {
   "thanks.checklist": "Document Checklist",
   "thanks.checklistHint": "What you'll need",
   "thanks.help": "Need Help?",
-  "thanks.hours": "WhatsApp support, 9am–6pm UAE time",
+  "thanks.hours": "WhatsApp support",
   "thanks.love": "Love our service?",
   "thanks.shareBody": "Share EZvisa with friends and help them travel too!",
   "thanks.share": "Share with Friends",
@@ -372,7 +372,7 @@ const ar = {
 
   "support.aria": "الدعم",
   "support.title": "أسئلة عن ملفك؟",
-  "support.body": "يرد مختصو التأشيرات في دبي عبر واتساب، عادة خلال دقائق.",
+  "support.body": "اسأل مختصي التأشيرات عن مستنداتك أو طلبك أو خطوتك القادمة.",
   "support.chat": "تحدث مع مختص",
 
   "thanks.missingTitle": "لا توجد بيانات للطلب",
@@ -425,7 +425,7 @@ const ar = {
   "thanks.checklist": "قائمة المستندات",
   "thanks.checklistHint": "ما ستحتاجه",
   "thanks.help": "تحتاج مساعدة؟",
-  "thanks.hours": "دعم واتساب، من 9 صباحًا إلى 6 مساءً بتوقيت الإمارات",
+  "thanks.hours": "دعم واتساب",
   "thanks.love": "أعجبتك الخدمة؟",
   "thanks.shareBody": "شارك إيزي فيزا مع أصدقائك وساعدهم على السفر أيضًا.",
   "thanks.share": "شارك مع الأصدقاء",

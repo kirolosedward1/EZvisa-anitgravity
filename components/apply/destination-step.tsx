@@ -156,8 +156,8 @@ export function DestinationStep({ formData, updateFormData, onNext, isLoading }:
         ) : null}
         <p className="mt-3 text-[13px] leading-relaxed text-[#5B6475]">
           <LangText
-            en="Visiting several countries? Pick the one where you'll spend the most nights. You'll add the full plan after payment."
-            ar="ستزور أكثر من دولة؟ اختر الدولة التي ستقضي فيها أطول مدة. ستضيف خطة الرحلة كاملة بعد الدفع."
+            en="You’ll add your trip dates and full travel plan after payment."
+            ar="ستضيف تواريخ رحلتك وخطة السفر الكاملة بعد الدفع."
           />
         </p>
       </div>

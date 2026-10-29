@@ -1,3 +1,4 @@
+import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { LangText } from "@/components/lang-text"
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
@@ -8,7 +9,6 @@ import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
 import { ScrollToTop } from "@/components/scroll-to-top"
 import { InnerHero } from "@/components/inner-hero"
-import { LatestGuides } from "@/components/latest-guides"
 import { formatAedLabel } from "@/lib/currency"
 import { ltr } from "@/lib/bidi"
 import { requestLocale } from "@/lib/request-locale"
@@ -53,22 +53,22 @@ const INCLUDED = [
   { en: "Flight reservation (no ticket purchase needed)", ar: "حجز طيران (من دون شراء تذكرة)" },
   { en: "Hotel reservations for your full stay", ar: "حجوزات فندق لكامل إقامتك" },
   { en: "Document check by a visa specialist", ar: "مراجعة المستندات من مختص تأشيرات" },
-  { en: "Support on WhatsApp and email until your appointment", ar: `دعم عبر ${ltr("WhatsApp")} والبريد حتى موعدك` },
+  { whatsapp: true, en: "Support on WhatsApp and email until your appointment", ar: `دعم عبر ${ltr("WhatsApp")} والبريد حتى موعدك` },
 ]
 
 const SEPARATE = [
   {
     title: { en: "Embassy visa fee", ar: "رسوم تأشيرة السفارة" },
     body: {
-      en: "€90 for adults and €45 for children aged 6 to 12, paid in dirhams at the visa centre on the day.",
-      ar: `${ltr("€90")} للبالغين و${ltr("€45")} للأطفال من 6 إلى 12 عامًا، تُدفع بالدرهم في مركز التأشيرات يوم الموعد.`,
+      en: "Standard fee: €90 for adults, €45 for children aged 6–11, and no visa fee for children under 6. Exemptions may apply. Follow the centre’s payment instructions.",
+      ar: `${ltr("€90")} للبالغين و${ltr("€45")} للأطفال من 6 إلى 11 عامًا، ودون رسوم تأشيرة لمن هم دون 6. قد تنطبق إعفاءات. اتبع تعليمات الدفع الخاصة بالمركز.`,
     },
   },
   {
     title: { en: "Visa centre service charge", ar: "رسوم خدمة مركز التأشيرات" },
     body: {
-      en: "Set by VFS Global, BLS or TLScontact, depending on the country. Also paid at your appointment.",
-      ar: `تحددها ${ltr("VFS Global")} أو ${ltr("BLS")} أو ${ltr("TLScontact")} حسب الدولة. وتُدفع أيضًا في موعدك.`,
+      en: "Set by VFS Global, BLS or TLScontact, depending on the country. Payment timing and amounts depend on the centre.",
+      ar: `تحددها ${ltr("VFS Global")} أو ${ltr("BLS")} أو ${ltr("TLScontact")} حسب الدولة. ويختلف موعد الدفع والمبلغ حسب المركز.`,
     },
   },
   {
@@ -98,10 +98,10 @@ export default async function PricingPage() {
     <>
       <ScrollToTop />
       <SiteHeader forceBackground={true} />
-      <div className="min-h-screen bg-background">
+      <div className="ez-pricing-page min-h-screen bg-background">
         <InnerHero
           badge={pick("Pricing", "الأسعار")}
-          title={pick("Pricing", "الأسعار")}
+          title={pick("A clear price. A carefully prepared file.", "سعر واضح. وملف يُجهّز بعناية.")}
           description={pick(
             `One fixed fee of ${price} per application, or ${spouse} when your spouse travels with you. Embassy fees and travel insurance are paid separately.`,
             `رسم ثابت قدره ${price} لكل طلب، أو ${spouse} عندما يسافر معك الزوج أو الزوجة. رسوم السفارة وتأمين السفر تُدفع بشكل منفصل.`,
@@ -111,7 +111,7 @@ export default async function PricingPage() {
         <section className="pb-20 md:pb-28">
           <div className="container mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
             {/* What the fee covers */}
-            <div className="flex flex-col gap-8 rounded-3xl border border-border/70 bg-card p-6 sm:p-10">
+            <div className="ez-price-included flex flex-col gap-8 p-6 sm:p-10">
               <div className="flex flex-col gap-2">
                 <h2 className="panel-title text-muted-foreground">{pick("EZvisa service fee", <>رسوم خدمة <bdi dir="ltr">EZvisa</bdi></>)}</h2>
                 <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -128,7 +128,7 @@ export default async function PricingPage() {
               <ul className="flex flex-col gap-3.5 border-t border-border/70 pt-8">
                 {INCLUDED.map((item) => (
                   <li key={item.en} className="flex items-start gap-3 text-base text-foreground">
-                    <Check className="mt-1 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />
+                    {item.whatsapp ? <WhatsAppIcon className="mt-1 size-4 shrink-0 text-primary" /> : <Check className="mt-1 size-4 shrink-0 text-primary" strokeWidth={2.5} aria-hidden="true" />}
                     {pick(item.en, item.ar)}
                   </li>
                 ))}
@@ -141,12 +141,12 @@ export default async function PricingPage() {
                     <ArrowRight aria-hidden="true" />
                   </LocaleLink>
                 </Button>
-                <p className="text-sm text-muted-foreground">{pick("Your file is ready 1–2 days after you upload your documents.", <>يصبح ملفك جاهزًا خلال <bdi dir="ltr">1–2</bdi> يوم من رفع مستنداتك.</>)}</p>
+                <p className="text-sm text-muted-foreground">{pick("Prepared in 1–2 days after we receive your complete details and documents.", <>يصبح ملفك جاهزًا خلال <bdi dir="ltr">1–2</bdi> يوم بعد استلام بياناتك ومستنداتك كاملة.</>)}</p>
               </div>
             </div>
 
             {/* What is paid elsewhere */}
-            <div className="flex flex-col gap-6 rounded-3xl bg-secondary/60 p-6 sm:p-10">
+            <div className="ez-price-separate flex flex-col gap-6 p-6 sm:p-10">
               <div className="flex flex-col gap-2">
                 <h2 className="panel-title text-foreground">{pick("Paid separately", "يُدفع بشكل منفصل")}</h2>
                 <p className="text-sm leading-relaxed text-muted-foreground">{pick("These costs are paid to the embassy, the visa centre or the insurer. EZvisa is not VAT-registered, so the prices shown are final.", "تُدفع هذه التكاليف للسفارة أو مركز التأشيرات أو شركة التأمين. إيزي فيزا غير مسجّلة لضريبة القيمة المضافة، لذا فالأسعار المعروضة نهائية.")}</p>
@@ -210,7 +210,6 @@ export default async function PricingPage() {
           </div>
         </section>
 
-        <LatestGuides />
       </div>
       <Footer />
     </>

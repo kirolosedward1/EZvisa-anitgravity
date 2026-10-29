@@ -22,7 +22,7 @@ import { TRAVELLER_NONE, applyTravellerToWebForm, isFreshTravellerForm, markTrav
 import { defaultTraveller, type Traveller } from "@/lib/shared/wizard-contract"
 import { citizenshipName } from "@/lib/nationalities"
 
-import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
+import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY, WIZARD_STEP_STORAGE_KEY, RESUME_DISMISSED_KEY, announceWizardDraftChange } from "@/lib/wizard-storage"
 const AUTO_SAVE_DELAY = 300
 
 interface WizardFormData {
@@ -254,6 +254,8 @@ function ApplyPageContent() {
 
   const handleStartFresh = useCallback(() => {
     localStorage.removeItem(WIZARD_STORAGE_KEY)
+    localStorage.removeItem(WIZARD_STEP_STORAGE_KEY)
+    announceWizardDraftChange()
     // A new application must not pay the one this tab created earlier.
     try { sessionStorage.removeItem(CHECKOUT_STORAGE_KEY) } catch { /* storage unavailable */ }
     const fromCountry = searchParams.get("from") || searchParams.get("nationality") || ""
@@ -360,7 +362,8 @@ function ApplyPageContent() {
       let hasPreviousProgress = false
       if (saved) {
         try {
-          savedData = JSON.parse(saved)
+          const parsed = JSON.parse(saved)
+          if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) savedData = parsed
           hasPreviousProgress = !!(
             savedData.firstName ||
             savedData.lastName ||
@@ -376,7 +379,10 @@ function ApplyPageContent() {
         }
       }
 
-      if (hasPreviousProgress) {
+      if (hasPreviousProgress && searchParams.get("resume") === "1") {
+        // The website's Continue box is an explicit choice to restore this device's saved answers.
+        setFormData({ ...defaultFormData, ...savedData, nationality: savedData.nationality || readRememberedNationality() })
+      } else if (hasPreviousProgress) {
         setPendingSavedData(savedData)
         setShowResumeModal(true)
         setFormData({
@@ -580,6 +586,9 @@ function ApplyPageContent() {
     saveTimeoutRef.current = setTimeout(() => {
       try {
         localStorage.setItem(WIZARD_STORAGE_KEY, JSON.stringify(formData))
+        localStorage.setItem(WIZARD_STEP_STORAGE_KEY, getStepSlug(currentStep))
+        sessionStorage.removeItem(RESUME_DISMISSED_KEY)
+        announceWizardDraftChange()
       } catch (error) {
         console.error("Failed to save form data:", error)
       }
@@ -590,7 +599,7 @@ function ApplyPageContent() {
         clearTimeout(saveTimeoutRef.current)
       }
     }
-  }, [formData, isInitialized, showResumeModal])
+  }, [formData, currentStep, isInitialized, showResumeModal])
 
   return (
     <div className="min-h-[100dvh] bg-[#FFFFFF]" ref={wizardContainerRef}>

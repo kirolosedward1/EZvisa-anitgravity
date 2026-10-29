@@ -1,9 +1,9 @@
-// Visa centres in the UAE. The provider, country list and street addresses match
-// components/tools/appointment-guide-client.tsx (APPOINTMENT_CENTERS). That file keeps the
-// object literal so the mobile copy-check can read it. This module is what the website renders.
+// Saved appointment options. Always confirm the booking address with the official provider.
+// France route verified against France-Visas UAE instructions on 2026-10-29:
+// https://france-visas.gouv.fr/en/web/france-visas/emirats-arabes-unis
 
 export type VisaCentreRecord = {
-  key: "vfs" | "tls" | "bls"
+  key: "vfs" | "france" | "bls"
   provider: string
   countries: string[]
   dubaiAddress: string
@@ -27,13 +27,13 @@ export const VISA_CENTRES: VisaCentreRecord[] = [
     abuDhabiAddressAr: "الطابق B2، المول، مركز التجارة العالمي، أبوظبي",
   },
   {
-    key: "tls",
-    provider: "TLScontact",
+    key: "france",
+    provider: "VFS Global",
     countries: ["France"],
-    dubaiAddress: "Al Manara Building, 2nd Floor, Sheikh Zayed Road, Dubai",
-    abuDhabiAddress: "Level 25, Shining Towers, Mubarak Bin Mohammed St, Abu Dhabi",
-    dubaiAddressAr: "مبنى المنارة، الطابق 2، شارع الشيخ زايد، دبي",
-    abuDhabiAddressAr: "الطابق 25، أبراج شاينينغ، شارع مبارك بن محمد، أبوظبي",
+    dubaiAddress: "",
+    abuDhabiAddress: "Level B2, The Mall, World Trade Center, Abu Dhabi",
+    dubaiAddressAr: "",
+    abuDhabiAddressAr: "الطابق B2، المول، مركز التجارة العالمي، أبوظبي",
   },
   {
     key: "bls",
@@ -78,7 +78,7 @@ export function appointmentCentreOptions(country?: string | null): CentreOption[
       address: item.abuDhabiAddress,
       addressAr: item.abuDhabiAddressAr,
     },
-  ]
+  ].filter((option) => option.address.length > 0)
 }
 
 /** Provider stored on a known centre, else derived from the centre text, else the text itself. */

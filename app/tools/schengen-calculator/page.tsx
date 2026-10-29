@@ -1,3 +1,4 @@
+import { InnerHero } from "@/components/inner-hero"
 import { Metadata } from "next"
 import { headers } from "next/headers"
 import { SiteHeader } from "@/components/site-header"
@@ -50,22 +51,9 @@ export default async function SchengenCalculatorPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteHeader forceBackground={true} />
 
-      <main className="flex-1 py-12 md:py-16">
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-2 block">
-              <Msg id="calc.eyebrow" />
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight">
-              <Msg id="calc.title" />
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">
-              <Msg id="calc.intro" />
-            </p>
-          </div>
-
-          <SchengenCalculatorClient />
-        </div>
+      <main className="ez-tool-page flex-1">
+        <InnerHero variant="plain" title={<Msg id="calc.title" />} description={<Msg id="calc.intro" />} />
+        <div className="container max-w-5xl mx-auto px-6"><SchengenCalculatorClient /></div>
       </main>
 
       <Footer />

@@ -33,12 +33,12 @@ export function ReceiptView({ app }: { app: VisaApplication }) {
   ].filter(Boolean)
 
   return (
-    <article className="flex w-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xs">
+    <article className="ez-receipt flex w-full flex-col overflow-hidden border border-border bg-card">
       <div className="flex items-start justify-between gap-4 p-6 sm:p-8">
         <div className="flex flex-col gap-3">
           <Image src="/images/logo-main.png" alt="EZvisa" width={140} height={40} className="h-7 w-auto" />
           <div className="flex flex-col gap-0.5">
-            <h1 className="panel-title panel-title-lg text-foreground">Receipt</h1>
+            <h1 className="text-foreground">Receipt</h1>
             <p className="ltr-isolate text-sm tabular-nums text-muted-foreground">{reference}</p>
           </div>
         </div>

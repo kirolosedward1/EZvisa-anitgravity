@@ -3,7 +3,7 @@
 import type React from "react"
 import { useEffect, useRef, useState } from "react"
 import { LangText } from "@/components/lang-text"
-import { useMessage } from "@/components/use-message"
+import { useSiteLocale } from "@/components/locale-provider"
 import { WizardBar } from "@/components/apply/wizard-bar"
 import {
   ChoiceList,
@@ -20,8 +20,8 @@ import { TRAVELLER_NONE } from "@/lib/travellers-client"
 import { UAE_EMIRATES, type Traveller } from "@/lib/shared/wizard-contract"
 import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
-import { UserRound } from "lucide-react"
-import { normalizePassport, toWesternDigits } from "@/lib/digits"
+import { ChevronDown, UserRound } from "lucide-react"
+import { toWesternDigits } from "@/lib/digits"
 import { phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "@/lib/phone"
 
 interface NationalityStepProps {
@@ -68,9 +68,9 @@ function localIso(date: Date) {
 }
 
 export function NationalityStep({ formData, updateFormData, onNext, onBack, isLoading, travellers = [], onPickTraveller, travellerNotice }: NationalityStepProps) {
+  const arabic = useSiteLocale() === "ar"
   const [showErrors, setShowErrors] = useState(false)
   const [maxDob, setMaxDob] = useState("")
-  const passportPlaceholder = useMessage("apply.passportPlaceholderN")
   const seeded = useRef(false)
   const dobDigits = useRef("")
   const withSpouse = formData.spouseAccompanying === "yes"
@@ -88,18 +88,16 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
     if (seeded.current) return
     seeded.current = true
     const patch: FormDataUpdate = {}
-    if (formData.passportNumber.trim() && formData.hasValidPassport !== "yes") patch.hasValidPassport = "yes"
     if (formData.spouseAccompanying !== "yes") {
       if (!formData.maritalStatus) patch.maritalStatus = "single"
       if (formData.spouseAccompanying !== "no") patch.spouseAccompanying = "no"
     }
     if (Object.keys(patch).length) updateFormData(patch)
-  }, [formData.hasValidPassport, formData.maritalStatus, formData.passportNumber, formData.spouseAccompanying, updateFormData])
+  }, [formData.maritalStatus, formData.spouseAccompanying, updateFormData])
 
   const errors = {
     firstName: !formData.firstName.trim(),
     lastName: !formData.lastName.trim(),
-    passport: !formData.passportNumber.trim(),
     phone: !phone,
     email: !formData.email.trim() || !isValidEmail(formData.email.trim()),
     // The form is noValidate, so the input's max isn't enforced by the browser: check the date and 18+ here.
@@ -135,8 +133,8 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
       <WizardQuestion
         title="Who is travelling?"
         titleAr="من المسافر؟"
-        helper="Enter details exactly as they appear in your passport."
-        helperAr="أدخل البيانات كما تظهر في جواز سفرك."
+        helper="Enter your name as it appears in your passport. You’ll add your passport number after payment."
+        helperAr="أدخل اسمك كما يظهر في جواز سفرك. ستضيف رقم الجواز بعد الدفع."
       />
 
       {travellers.length ? (
@@ -207,32 +205,6 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             </FieldError>
           ) : null}
         </div>
-      </div>
-
-      <div className="mt-7" data-invalid={invalid("passport")}>
-        <label htmlFor="passportNumber" className={wizardLabelClass}>
-          <LangText en="Passport number" ar="رقم الجواز" />
-        </label>
-        <input
-          id="passportNumber"
-          value={formData.passportNumber || ""}
-          onChange={(event) => {
-            const passportNumber = normalizePassport(event.target.value)
-            set({ passportNumber, hasValidPassport: passportNumber.trim() ? "yes" : undefined })
-          }}
-          inputMode="text"
-          placeholder={passportPlaceholder}
-          autoCapitalize="characters"
-          autoCorrect="off"
-          spellCheck={false}
-          aria-invalid={invalid("passport")}
-          className={cn(fieldClass, "uppercase", invalidClass("passport"))}
-        />
-        {showErrors && errors.passport ? (
-          <FieldError>
-            <LangText en="Enter your passport number." ar="أدخل رقم الجواز." />
-          </FieldError>
-        ) : null}
       </div>
 
       <div className="mt-7" data-invalid={invalid("phone")}>
@@ -372,37 +344,32 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
         ) : null}
       </div>
 
-      <fieldset className="mt-7" data-invalid={invalid("cityOfResidence")}>
-        <legend className={wizardLabelClass}>
+      <div className="mt-7" data-invalid={invalid("cityOfResidence")}>
+        <label htmlFor="cityOfResidence" className={wizardLabelClass}>
           <LangText en="Emirate you live in" ar="الإمارة التي تقيم فيها" />
-        </legend>
-        <div className="grid grid-cols-2 gap-2" role="radiogroup">
-          {UAE_EMIRATES.map((emirate) => {
-            const selected = formData.cityOfResidence === emirate
-            return (
-              <button
-                key={emirate}
-                type="button"
-                role="radio"
-                aria-checked={selected}
-                onClick={() => set({ cityOfResidence: emirate, countryOfResidence: "United Arab Emirates" })}
-                className={cn(
-                  "h-11 rounded-[10px] border px-3 text-start text-[15px] transition-colors",
-                  selected ? "border-primary bg-primary/10 font-medium text-primary" : "border-[#E3E7EF] bg-background text-foreground hover:border-primary/40",
-                  showErrors && errors.cityOfResidence && !selected && "border-[#B83200]",
-                )}
-              >
-                <LangText en={emirate} ar={EMIRATE_AR[emirate] ?? emirate} />
-              </button>
-            )
-          })}
+        </label>
+        <div className="relative">
+          <select
+            id="cityOfResidence"
+            name="cityOfResidence"
+            autoComplete="address-level1"
+            value={formData.cityOfResidence || ""}
+            onChange={(event) => set({ cityOfResidence: event.target.value, countryOfResidence: "United Arab Emirates" })}
+            aria-invalid={invalid("cityOfResidence")}
+            aria-describedby={invalid("cityOfResidence") ? "emirate-error" : undefined}
+            className={cn(fieldClass, "appearance-none pe-11 cursor-pointer", invalidClass("cityOfResidence"))}
+          >
+            <option value="" disabled>{arabic ? "اختر الإمارة" : "Select emirate"}</option>
+            {UAE_EMIRATES.map((emirate) => <option key={emirate} value={emirate}>{arabic ? EMIRATE_AR[emirate] ?? emirate : emirate}</option>)}
+          </select>
+          <ChevronDown size={17} aria-hidden="true" className="pointer-events-none absolute end-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
         </div>
         {showErrors && errors.cityOfResidence ? (
-          <FieldError>
+          <div id="emirate-error"><FieldError>
             <LangText en="Choose the emirate you live in." ar="اختر الإمارة التي تقيم فيها." />
-          </FieldError>
+          </FieldError></div>
         ) : null}
-      </fieldset>
+      </div>
 
       <WizardBar
         onBack={onBack}

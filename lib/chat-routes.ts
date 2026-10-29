@@ -5,3 +5,5 @@ export function suppressesChat(path: string | null | undefined): boolean {
   if (/\/apply(?:\/|$)|\/continue(?:\/|$)|\/payment-|\/checkout(?:\/|$)/.test(bare)) return true
   return /^(?:\/ar)?\/(?:login|signup|forgot-password|reset-password)$/.test(bare)
 }
+/** Temporarily disabled site-wide. Re-enable here when live chat is ready to return. */
+export const CHAT_WIDGET_ENABLED = false

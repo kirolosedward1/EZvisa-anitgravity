@@ -1,8 +1,7 @@
-import { LatestGuides } from "@/components/latest-guides"
 import { SiteHeader } from "@/components/site-header"
 import { HeroSection } from "@/components/hero-section"
+import { FounderMessage } from "@/components/founder-message"
 import { PopularDestinations } from "@/components/popular-destinations"
-import { ExploreCountries } from "@/components/explore-countries"
 import { FAQ_AR, FAQ_EN } from "@/lib/faq"
 import { WHATSAPP_DISPLAY } from "@/lib/contact"
 import dynamic from "next/dynamic"
@@ -167,18 +166,17 @@ export default async function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteHeader />
-      <div id="main-content" className="min-h-screen">
+      <main id="main-content" className="min-h-screen ez-home">
         <HeroSection />
-        <ServicesSection />
         <PopularDestinations />
-        <ExploreCountries />
+        <ServicesSection />
+        <FounderMessage arabic={arabic} />
         <HowItWorksSimple />
         <ComparisonSection />
         <AppPromoSection />
         <FAQSection />
-        <LatestGuides />
-        <Footer />
-      </div>
+      </main>
+      <Footer />
     </>
   )
 }

@@ -1,3 +1,4 @@
+import { InnerHero } from "@/components/inner-hero"
 import { Metadata } from "next"
 import { SiteHeader } from "@/components/site-header"
 import { Footer } from "@/components/footer"
@@ -15,7 +16,7 @@ export function generateMetadata(): Promise<Metadata> {
       },
       openGraph: {
         title: "UAE Schengen Visa Appointment Centers Guide | EZvisa",
-        description: "Locations, slot release patterns, and rules for VFS Global, TLScontact, and BLS International in Dubai & Abu Dhabi.",
+        description: "Official booking routes and practical guidance on Schengen visa appointments in the UAE.",
         url: "https://www.ezvisa.net/tools/appointment-guide",
         type: "website",
       },
@@ -50,24 +51,9 @@ export default async function AppointmentGuidePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SiteHeader forceBackground={true} />
 
-      <main className="flex-1 py-12 md:py-16">
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-semibold uppercase tracking-widest text-primary mb-2 block">
-              {arabic ? "مواعيد التأشيرة في الإمارات" : "UAE Appointment Intelligence"}
-            </span>
-            <h1 className="text-3xl sm:text-4xl font-semibold text-foreground tracking-tight">
-              {arabic ? "دليل مراكز مواعيد تأشيرة شنغن" : "Schengen Visa Appointment Centers Guide"}
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-3 leading-relaxed">
-              {arabic
-                ? "عناوين الحجز لدى VFS Global وTLScontact وBLS International في دبي وأبوظبي، مع نمط فتح المواعيد وقواعد البصمة."
-                : "Navigate appointment booking across VFS Global, TLScontact, and BLS International in Dubai and Abu Dhabi. Understand slot release patterns, biometrics rules, and center protocols."}
-            </p>
-          </div>
-
-          <AppointmentGuideClient />
-        </div>
+      <main className="ez-tool-page flex-1">
+        <InnerHero variant="plain" title={arabic ? "موعد التأشيرة، خطوة بخطوة" : "Your visa appointment, step by step"} description={arabic ? "اعثر على التعليمات الرسمية للحجز، وتعرّف على البصمات والمستندات المطلوبة قبل زيارتك." : "Find the official booking instructions and understand biometrics and document checks before your visit."} />
+        <div className="container max-w-5xl mx-auto px-6"><AppointmentGuideClient /></div>
       </main>
 
       <Footer />
