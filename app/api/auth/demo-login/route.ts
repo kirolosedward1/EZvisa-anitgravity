@@ -2,8 +2,18 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
 import { safeNext } from "@/lib/auth/redirect";
+import { DEMO_STAFF_ALLOWED, DEMO_STAFF_COOKIE } from "@/lib/staff/session";
+import { isRole } from "@/lib/staff/roles";
 
 async function processDemoLogin(scenarioParam: string | null, nextParam: string | null, originUrl: string, isJson: boolean) {
+  // Staff console demo (local and preview builds only): built-in demo cases, never the database, never writes.
+  if (scenarioParam === "staff" && DEMO_STAFF_ALLOWED) {
+    const role = new URL(originUrl).searchParams.get("role") ?? "admin";
+    (await cookies()).set(DEMO_STAFF_COOKIE, isRole(role) ? role : "admin", { path: "/", httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 8 });
+    const target = nextParam?.startsWith("/staff") ? safeNext(nextParam) : "/staff/overview";
+    return isJson ? NextResponse.json({ success: true, redirect: target }) : NextResponse.redirect(new URL(target, originUrl), { status: 303 });
+  }
+
   const scenarioKey = (scenarioParam && scenarioParam in DEMO_CONFIGS ? scenarioParam : "ready") as DemoScenario;
   const config = DEMO_CONFIGS[scenarioKey];
 

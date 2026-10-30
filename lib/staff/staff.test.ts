@@ -1,0 +1,178 @@
+import assert from "node:assert/strict"
+import { test } from "node:test"
+import { addBusinessDays, dubaiWeekStart, dueLabel, slaLabel } from "./sla.ts"
+import { byUrgency, isOver, toStaffCase } from "./cases.ts"
+import { can, canOpen, navFor } from "./roles.ts"
+import { overviewFor, greeting } from "./overview.ts"
+import { deviceLabel } from "./audit-format.ts"
+
+const H = 3_600_000
+const NOW = Date.parse("2026-10-30T10:00:00Z") // Friday 14:00 in Dubai
+
+test("SLA labels read 'over' or 'left'", () => {
+  assert.deepEqual(slaLabel(new Date(NOW - 28 * H).toISOString(), NOW), { text: "1d 4h over", over: true })
+  assert.deepEqual(slaLabel(new Date(NOW + 2 * H).toISOString(), NOW), { text: "2h left", over: false })
+  assert.deepEqual(slaLabel(new Date(NOW + 19 * H + 20 * 60_000).toISOString(), NOW), { text: "19h left", over: false })
+  assert.equal(slaLabel(new Date(NOW - 5 * 60_000).toISOString(), NOW).text, "5m over")
+})
+
+test("business days skip the Dubai weekend", () => {
+  // Thursday 10:00 Dubai + 2 business days = Monday 10:00 Dubai.
+  assert.equal(addBusinessDays("2026-10-29T06:00:00Z", 2), "2026-11-02T06:00:00.000Z")
+  // Saturday counts from Monday: Monday + 2 = Wednesday.
+  assert.equal(addBusinessDays("2026-10-31T06:00:00Z", 2), "2026-11-04T06:00:00.000Z")
+  // Monday + 2 = Wednesday.
+  assert.equal(addBusinessDays("2026-11-02T06:00:00Z", 2), "2026-11-04T06:00:00.000Z")
+})
+
+test("due labels and the Dubai week", () => {
+  assert.equal(dueLabel("2026-10-30T15:00:00Z", NOW), "Due today")
+  assert.equal(dueLabel("2026-10-31T09:00:00Z", NOW), "Due tomorrow")
+  assert.equal(dueLabel("2026-11-02T09:00:00Z", NOW), "Due Mon")
+  assert.equal(dueLabel("2026-11-12T09:00:00Z", NOW), "Due 12 Nov")
+  // Week starts Monday 26 Oct 00:00 Dubai = 25 Oct 20:00 UTC.
+  assert.equal(new Date(dubaiWeekStart(NOW)).toISOString(), "2026-10-25T20:00:00.000Z")
+})
+
+const notes = (uploads: { type: string; at: string }[], extra: Record<string, unknown> = {}) =>
+  JSON.stringify({ employmentStatus: "employed", uploads: uploads.map((u) => ({ ...u, name: "f.pdf", path: `x/${u.type}` })), ...extra })
+const app = (over: Record<string, unknown> = {}) => ({
+  id: "11111111-1111-1111-1111-111111111111",
+  tracking_token: "ez-abcdef123",
+  full_name: "Test Person",
+  email: "t@example.com",
+  phone: "",
+  nationality: "Egypt",
+  destination_country: "France",
+  travel_purpose: "tourism",
+  payment_status: "paid",
+  application_status: "submitted",
+  created_at: "2026-10-20T08:00:00Z",
+  updated_at: "2026-10-28T08:00:00Z",
+  ...over,
+})
+
+test("an unpaid application is a draft with no clock", () => {
+  const c = toStaffCase(app({ payment_status: "pending", application_status: "draft" }))
+  assert.equal(c.stage, "payment")
+  assert.equal(c.side, "draft")
+  assert.equal(c.dueAt, null)
+  assert.equal(c.ref, "EZ-ABCDEF12")
+  assert.equal(toStaffCase(app({ payment_status: "failed", application_status: "draft" })).paymentFailed, true)
+})
+
+test("an upload waiting for a check is ours, 24 hours from the oldest waiting upload", () => {
+  const c = toStaffCase(
+    app({ has_passport: true, has_photos: true, additional_notes: notes([{ type: "passportCopy", at: "2026-10-29T06:00:00Z" }, { type: "photo", at: "2026-10-29T08:00:00Z" }]) }),
+  )
+  assert.equal(c.stage, "documents")
+  assert.equal(c.side, "us")
+  assert.equal(c.task, "review")
+  assert.equal(c.since, "2026-10-29T06:00:00Z")
+  assert.equal(c.dueAt, "2026-10-30T06:00:00.000Z")
+  assert.equal(isOver(c, NOW), true)
+})
+
+test("nothing uploaded, or a document sent back, waits on the customer", () => {
+  const missing = toStaffCase(app())
+  assert.equal(missing.side, "customer")
+  assert.match(missing.what, /^Waiting for /)
+  const flags = { has_passport: true, has_photos: true, has_bank_statements: true, has_employment_proof: true }
+  const sentBack = toStaffCase(app({ ...flags, additional_notes: notes([{ type: "photo", at: "2026-10-20T06:00:00Z" }]) }), {
+    passportCopy: { status: "approved", note: null, reviewedAt: "2026-10-21T06:00:00Z" },
+    residencyCopy: { status: "approved", note: null, reviewedAt: "2026-10-21T06:00:00Z" },
+    photo: { status: "rejected", note: "Blurry", reviewedAt: "2026-10-21T06:00:00Z" },
+    bankStatement: { status: "approved", note: null, reviewedAt: "2026-10-21T06:00:00Z" },
+    nocCertificate: { status: "approved", note: null, reviewedAt: "2026-10-21T06:00:00Z" },
+  })
+  assert.equal(sentBack.side, "customer")
+  assert.equal(sentBack.what, "Personal photo sent back")
+})
+
+test("a row that shares a flag but has no upload of its own is still missing", () => {
+  // has_passport covers both the passport and the residence visa; only the passport was uploaded and approved.
+  const c = toStaffCase(
+    app({ has_passport: true, additional_notes: notes([{ type: "passportCopy", at: "2026-10-27T06:00:00Z" }]) }),
+    { passportCopy: { status: "approved", note: null, reviewedAt: "2026-10-28T06:00:00Z" } },
+  )
+  assert.equal(c.side, "customer")
+  assert.equal(c.task, null)
+  assert.match(c.what, /^Waiting for /)
+})
+
+test("preparation is due 2 business days after the last approval", () => {
+  const c = toStaffCase(app({ application_status: "preparation" }), { photo: { status: "approved", note: null, reviewedAt: "2026-10-29T06:00:00Z" } })
+  assert.equal(c.task, "files")
+  assert.equal(c.dueAt, "2026-11-02T06:00:00.000Z")
+})
+
+test("ready cases: help requests are ours for 8 hours, otherwise the customer's turn", () => {
+  const help = toStaffCase(app({ application_status: "ready", appointment_help_status: "requested", appointment_help_requested_at: "2026-10-30T01:00:00Z" }))
+  assert.equal(help.task, "help")
+  assert.equal(help.dueAt, "2026-10-30T09:00:00.000Z")
+  assert.equal(toStaffCase(app({ application_status: "ready" })).side, "customer")
+  assert.equal(toStaffCase(app({ application_status: "ready", appointment_at: "2026-11-05T06:00:00Z" })).side, "none")
+})
+
+test("closed cases and no outcome stage", () => {
+  assert.equal(toStaffCase(app({ application_status: "completed" })).side, "closed")
+  assert.equal(toStaffCase(app({ application_status: "cancelled" })).stage, "cancelled")
+  // The legacy "rejected" status is shown as Closed; there is no refused/outcome stage.
+  assert.equal(toStaffCase(app({ application_status: "rejected" })).stage, "closed")
+  assert.equal(toStaffCase(app({ application_status: "appointment_booked" })).stage, "appointment")
+})
+
+test("queue order: past SLA first, then the nearest deadline", () => {
+  const mk = (id: string, due: number) => ({ ...toStaffCase(app({ id })), side: "us" as const, dueAt: new Date(NOW + due * H).toISOString() })
+  const sorted = [mk("a", 5), mk("b", -1), mk("c", 2), mk("d", -10)].sort(byUrgency(NOW)).map((c) => c.id)
+  assert.deepEqual(sorted, ["d", "b", "c", "a"])
+})
+
+test("roles: matrix, sidebars per role", () => {
+  assert.equal(can("admin", "team"), true)
+  assert.equal(can("specialist", "docs"), true)
+  assert.equal(can("support", "docs"), false)
+  assert.equal(can("support", "msg"), true)
+  assert.equal(can("finance", "refund"), true)
+  assert.equal(can("finance", "msg"), false)
+  const keys = (role: Parameters<typeof navFor>[0]) => navFor(role).flatMap((g) => g.items.map((i) => i.key))
+  // Support desk board sidebar.
+  assert.deepEqual(keys("support"), ["notifications", "overview", "cases", "appointments", "customers", "messaging", "analytics"])
+  // Finance desk board sidebar.
+  assert.deepEqual(keys("finance"), ["notifications", "overview", "cases", "customers", "payments", "insurance", "analytics", "reports", "audit"])
+  assert.equal(keys("admin").length, 15)
+  assert.equal(canOpen("specialist", "payments"), false)
+})
+
+test("overview numbers", () => {
+  const cases = [
+    { ...toStaffCase(app({ id: "1", has_passport: true, additional_notes: notes([{ type: "passportCopy", at: "2026-10-28T06:00:00Z" }]) }), {}, "s1"), createdAt: "2026-10-28T06:00:00Z" },
+    toStaffCase(app({ id: "2", application_status: "preparation" }), {}, "s2"),
+    toStaffCase(app({ id: "3", payment_status: "failed", application_status: "draft", created_at: "2026-10-01T06:00:00Z" })),
+    toStaffCase(app({ id: "4", application_status: "ready", appointment_at: "2026-10-30T11:30:00Z", appointment_centre: "VFS Dubai" })),
+    toStaffCase(app({ id: "5", application_status: "completed" })),
+  ]
+  const team = [{ id: "s1", name: "Ann Lee", role: "specialist" }, { id: "s2", name: "Bo Kim", role: "specialist" }]
+  const o = overviewFor(cases, team, { now: NOW })
+  assert.equal(o.kpi.needsUs, 2)
+  assert.equal(o.kpi.overdue, 2)
+  assert.equal(o.kpi.files, 1)
+  assert.equal(o.kpi.apptsThisWeek, 1)
+  assert.deepEqual(o.kpi.nextAppt, { at: "2026-10-30T11:30:00Z", centre: "VFS Dubai" })
+  assert.equal(o.kpi.failedPayments, 1)
+  assert.equal(o.counts.staleDrafts, 1)
+  assert.equal(o.counts.unassigned, 1)
+  assert.deepEqual(o.workload.map((w) => [w.name, w.open]), [["Ann Lee", 1], ["Bo Kim", 1]])
+  assert.equal(o.byStage.find((s) => s.stage === "ready")?.n, 1)
+  assert.equal(o.chart.length, 14)
+  const mine = overviewFor(cases, team, { now: NOW, mine: "s1" })
+  assert.equal(mine.kpi.needsUs, 1)
+  assert.equal(mine.kpi.failedPayments, 1, "money figures stay team-wide")
+  assert.equal(greeting(NOW), "Good afternoon")
+})
+
+test("device labels", () => {
+  assert.equal(deviceLabel("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/130.0 Safari/537.36"), "Chrome on macOS")
+  assert.equal(deviceLabel("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1"), "Safari on iPhone")
+  assert.equal(deviceLabel(null), "")
+})

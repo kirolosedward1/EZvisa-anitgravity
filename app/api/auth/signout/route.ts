@@ -8,6 +8,7 @@ async function handleSignOut(request: Request) {
   // Clear demo session cookies
   cookieStore.delete("ez_demo_session")
   cookieStore.delete("ez_demo_active")
+  cookieStore.delete("ez_demo_staff")
 
   try {
     const supabase = await createServerClient()
