@@ -627,3 +627,10 @@ Owner: "no need for decisions in this app … our work finished after creating t
 | Application page: "Upload documents" scrolls to Your documents and highlights the first missing one (a rejected document still opens the picker) | `app/(tabs)/applications/[id].tsx` |
 | "Scan pages (PDF)" removed from Add document (owner: broken) | `lib/capture.ts` |
 | Session key stays the same if the Supabase address becomes a custom domain (for Google sign-in branding) | `lib/supabase.ts` |
+
+## 7p. Sample NOC (30 Oct)
+
+| Item | Where |
+|---|---|
+| Website page "What a good NOC looks like" (`/documents/noc-sample`, Arabic too): a sample letter from a UAE employer with the parts to fill in marked, and the checklist every NOC needs. Merged to main ([PR #114](https://github.com/kirolosedward1/EZvisa-anitgravity/pull/114)) | website `app/documents/noc-sample/page.tsx` |
+| The app's NOC card ("What a good NOC says") has "See a sample NOC", which opens that page in the in-app browser (Arabic page in Arabic) | `components/wizard/QuestionView.tsx` |
