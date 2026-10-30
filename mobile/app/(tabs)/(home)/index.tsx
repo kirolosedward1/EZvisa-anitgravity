@@ -15,7 +15,8 @@ import { Chevron, Text, Flag, Icon, PressScale, Avatar, Skeleton, useTabInset, P
 import { GlobiPose, GLOBI_SIZE } from "../../../components/globi/GlobiPose";
 import { PopularTiles } from "../../../components/home/PopularTiles";
 import { useColors, S, R } from "../../../lib/theme";
-import { STATUS_LABEL, APP_STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, referenceOf, type Application } from "../../../lib/data";
+import { FaqList, faqFor } from "../../../components/FaqList";
+import { APP_STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, referenceOf, type Application } from "../../../lib/data";
 import { useApps } from "../../../lib/useApps";
 import { tap, error as hError } from "../../../lib/haptics";
 import { nextAction as cardAction } from "../../../lib/nextStep";
@@ -210,13 +211,17 @@ function useItems(apps: Application[] | null): Item[] | null {
 }
 
 /** "Other applications" (canvas Home): round flag, name, status, chevron. Unpaid drafts swipe left to discard. */
-function AppList({ items, title }: { items: Item[]; title: string }) {
+const HOME_APPS = 4;
+function AppList({ items: all, title }: { items: Item[]; title: string }) {
   const c = useColors(); const { t } = useT();
-  if (!items.length) return null;
+  if (!all.length) return null;
+  // Home previews the newest four (items arrive newest first); the Applications tab has them all.
+  const items = all.slice(0, HOME_APPS);
+  const seeAll = () => router.navigate("/applications");
   return (
     <View testID="home-others">
-      <SectionHeader title={title} />
-      <View style={{ marginHorizontal: S.gutter }}><Card>
+      <SectionHeader title={title} action={all.length > HOME_APPS ? t("See all") : undefined} onAction={seeAll} />
+      <View style={{ marginHorizontal: S.gutter, gap: S.sm }}><Card>
         {items.map((i, idx) => (
           <Animated.View key={i.key} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT} testID="home-app-row">
             <SwipeToDiscard enabled={!!i.remove} onDiscard={() => askDiscard(i.remove!, t, { country: i.country, answers: i.answers, draft: !!i.draft })} testID="home-swipe">
@@ -234,7 +239,9 @@ function AppList({ items, title }: { items: Item[]; title: string }) {
             {idx < items.length - 1 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginStart: S.md + 40 + S.sm }} />}
           </Animated.View>
         ))}
-      </Card></View>
+      </Card>
+      <SecondaryButton title={all.length > HOME_APPS ? t("See all {n} applications", { n: all.length }) : t("Go to my applications")} onPress={() => { tap(); seeAll(); }} testID="home-see-all" />
+      </View>
     </View>
   );
 }
@@ -322,6 +329,12 @@ export default function Home() {
       )}
       <AppList items={others} title={othersTitle} />
       {!offline && !loading && <PopularTiles />}
+      {!loading && (
+        <View testID="home-faq">
+          <SectionHeader title={t("Common questions")} action={t("All questions")} onAction={() => router.navigate("/account/help")} />
+          <View style={{ marginHorizontal: S.gutter }}><FaqList list={faqFor(heroApp ?? (draftItem ? { status: "draft", payment_status: null } : null))} /></View>
+        </View>
+      )}
     </ScrollView>
     </SwipeLock.Provider>
   );

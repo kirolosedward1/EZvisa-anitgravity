@@ -149,7 +149,10 @@ export default function ApplicationDetail() {
     switch (next.kind) {
       case "pay": pay(); return;
       case "continue": router.push(`/continue/${a.id}`); return;
-      case "fix": case "upload": if (next.item && canUpload) pickFile(next.item.req.document_type, next.item.req.id); else toDocs(next.item?.req.id); return;
+      // "Upload documents": take the customer to the documents list (and flash the first missing one); a rejected
+      // document's "Upload new …" opens the picker for that document straight away.
+      case "upload": toDocs(next.item?.req.id); return;
+      case "fix": if (next.item && canUpload) pickFile(next.item.req.document_type, next.item.req.id); else toDocs(next.item?.req.id); return;
       case "ready": case "book": case "appointment": case "done": router.push(`/appointment/${a.id}`); return;
       case "closed": track("whatsapp_handoff", { screen: "closed" }); whatsapp(`Hi EZvisa, I have a question about my ${name} application (${a.reference}).`); return;
     }
@@ -195,7 +198,7 @@ export default function ApplicationDetail() {
       {locked ? (
         <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
       ) : list ? (<>
-        <View onLayout={(e) => { docsY.current = e.nativeEvent.layout.y; }} />
+        <View collapsable={false} onLayout={(e) => { docsY.current = e.nativeEvent.layout.y; }} testID="docs-anchor" />
         {/* Canvas Upload: "Your documents · i of n received", then Still needed and Received. */}
         <View style={{ paddingHorizontal: S.gutter, gap: S.xs, marginBottom: S.sm }} accessible accessibilityLabel={t("{i} of {n} received", { i: done, n: list.customer.length })}>
           <Text variant="headline" accessibilityRole="header">{t("Your documents")}</Text>

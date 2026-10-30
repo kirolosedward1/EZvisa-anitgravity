@@ -6,13 +6,13 @@ import { useT } from "../../lib/i18n";
 import { PressScale, Text } from "../ui";
 import { GlobiPose } from "../globi/GlobiPose";
 import { useColors, useLargeText, S, R, curve } from "../../lib/theme";
-import { VISA_FEE_EUR } from "../../config/pricing";
 
-/** Canvas Country.dc.html: three fact tiles (stay, embassy fee, when to apply: the website's facts strip), then Globi's tip about the visa centre.
- *  Facts are the Schengen rules every country shares; the fee is the standard adult fee kept in config/pricing.ts. */
+/** Canvas Country.dc.html: two fact tiles (stay 90/180, when to apply), then Globi's tip about the visa centre.
+ *  Facts are the Schengen rules every country shares, worded as the owner set them. */
 export function GlanceList({ info, onCentre }: { info: CountryInfo; onCentre: () => void }) {
   const c = useColors(); const { t } = useT(); const big = useLargeText();
-  const tiles: [string, string][] = [[t("Stay"), t("90 days")], [t("Embassy fee"), `€${VISA_FEE_EUR}`], [t("When to apply"), t("6 months to 15 days before")]];
+  // Owner's short copy: two tiles, stay and when to apply (no fee tile).
+  const tiles: [string, string][] = [[t("Stay"), "90/180"], [t("When to apply"), t("1–5 months before")]];
   return (
     <View testID="country-glance" style={{ gap: S.md, paddingHorizontal: S.gutter }}>
       <View style={{ flexDirection: big ? "column" : "row", gap: S.xs }}>
@@ -27,7 +27,7 @@ export function GlanceList({ info, onCentre }: { info: CountryInfo; onCentre: ()
         style={[{ flexDirection: "row", alignItems: "center", gap: S.sm, padding: S.sm, borderRadius: R.card, backgroundColor: c.surfaceRaised, borderWidth: 1, borderColor: c.border }, curve]}>
         <GlobiPose pose="destination" size={47} style={{ margin: -4 }} />
         <Text variant="callout" style={{ flex: 1 }}>
-          {info.provider ? t("Appointments at {p} in Dubai or Abu Dhabi. Apply between 6 months and 15 days before you travel.", { p: info.provider.provider }) : t("Apply between 6 months and 15 days before you travel.")}
+          {info.provider ? t("Appointments at {p} in Dubai or Abu Dhabi. Apply 1 to 5 months before you travel.", { p: info.provider.provider }) : t("Apply 1 to 5 months before you travel.")}
         </Text>
       </PressScale>
     </View>

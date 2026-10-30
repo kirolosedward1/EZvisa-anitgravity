@@ -68,7 +68,7 @@ export default function UploadPreview() {
   };
 
   const lowRes = !!crop && Math.min(crop.width, crop.height) < MIN_SHORT_SIDE;
-  const canRetake = Platform.OS !== "web" && (p.source === "camera" || p.source === "library" || p.source === "scan");
+  const canRetake = Platform.OS !== "web" && (p.source === "camera" || p.source === "library");
   const meta = kind === "image" ? (img && crop ? `${Math.round(crop.width)} × ${Math.round(crop.height)}` : "") : [t("PDF"), mb(file.size)].filter(Boolean).join(" · ");
 
   return (

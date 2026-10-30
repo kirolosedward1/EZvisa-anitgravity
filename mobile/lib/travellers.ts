@@ -34,8 +34,12 @@ export async function fetchTravellers(): Promise<Traveller[]> {
   const s = await session();
   if (!s) return [];
   try {
-    const res = await fetch(siteUrl("/api/travellers"), { headers: { Authorization: `Bearer ${s.token}`, Accept: "application/json" } });
-    if (res.ok) { const j = await res.json(); if (Array.isArray(j?.travellers)) return j.travellers as Traveller[]; }
+    // The wizard waits for this list, so a slow website (cold start, weak signal) falls back to the table after 4 s.
+    const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), 4000);
+    try {
+      const res = await fetch(siteUrl("/api/travellers"), { headers: { Authorization: `Bearer ${s.token}`, Accept: "application/json" }, signal: ctl.signal });
+      if (res.ok) { const j = await res.json(); if (Array.isArray(j?.travellers) && j.travellers.length) return j.travellers as Traveller[]; }
+    } finally { clearTimeout(timer); }
   } catch { /* fall back to the table */ }
   try {
     const { data, error } = await table().select(COLS).eq("email", s.email);
