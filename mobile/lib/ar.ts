@@ -1285,4 +1285,9 @@ export const AR: Record<string, string> = {
   "Preparing…": "جارٍ التحضير…",
   "Export my data": "تصدير بياناتي",
   "A file you can save or share": "ملف يمكنك حفظه أو مشاركته",
+  "You need a connection to sign out everywhere. Nothing was changed.": "تحتاج إلى اتصال بالإنترنت لتسجيل الخروج من كل الأجهزة. لم يتغير شيء.",
+  "Couldn't sign out everywhere": "تعذّر تسجيل الخروج من كل الأجهزة",
+  "Sign out everywhere?": "تسجيل الخروج من كل الأجهزة؟",
+  "Every phone and browser signed in to this account is signed out. Others may take up to an hour.": "سيُسجَّل خروج كل هاتف ومتصفح يستخدم هذا الحساب. قد يستغرق ذلك حتى ساعة على الأجهزة الأخرى.",
+  "Sign out everywhere": "تسجيل الخروج من كل الأجهزة",
 };

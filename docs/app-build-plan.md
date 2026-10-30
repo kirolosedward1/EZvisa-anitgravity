@@ -587,3 +587,18 @@ Still needs a Mac or a store build: the Globi clips, the app icon, the splash an
 | Mock backend: signed links for the owner's own documents (`/storage/v1/object/sign/visa_documents/…`) | `scripts/mock-supabase.mjs` |
 
 Not drawn as in the canvas: Globi's size is not listed (he ships inside the app and can't be cleared), and the export is a file the person saves or shares, not a ZIP by email (that needs a server job).
+
+## 7m. Check of every screen, Sign out everywhere (30 Oct)
+
+| Item | Where |
+|---|---|
+| Sign out everywhere (canvas SecurityPrivacy): ends the account's sessions on every phone and browser (Supabase global sign-out; other devices lose access within the hour), with the same "unsaved answers / unsent uploads" warning as Sign out. Needs a connection; offline nothing changes and it says so | `lib/auth.tsx`, `app/(tabs)/account/index.tsx` |
+| Screen sweep: opens all 35 routes signed in and signed out, in English light, English dark and Arabic (105 loads), against the mock; fails on a page error, console error, blank screen or error screen. 105/105 pass | `scripts/e2e-screens-web.cjs` |
+
+Canvas screens still not built, and why:
+- Onboarding 1–3 and Sign up at pay: dropped (owner decisions: no onboarding; pay first, account after payment).
+- Referral (50 AED credits): needs the owner to approve the offer and a credits backend.
+- Payment methods (saved cards): needs card storage at the payment gateway.
+- Live Activity, App Store review prompt, icon and splash: need native code in the next store build.
+- Device list (Security & privacy) and quiet hours for pushes: need a server-side session list and push scheduling.
+- Two-factor sign-in by email: needs the Supabase MFA setting.
