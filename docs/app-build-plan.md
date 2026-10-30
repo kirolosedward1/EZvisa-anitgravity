@@ -555,3 +555,14 @@ Still needs a Mac or a store build: the Globi clips, the app icon, the splash an
 | Owner: the payment comes before the account. Guests give email and phone at Contact (signed-in customers still see only the phone), go Review → insurance → price → "Pay N AED securely" (the guest row is created and the payment gateway opens in one step). After the result (paid, pending, failed or cancelled) the payment screen asks "Create your account" with that email prefilled; once signed in it re-checks and shows the signed-in next steps. The sign-up-at-pay page is removed. | `lib/questions.ts`, `components/wizard/QuestionView.tsx`, `app/apply/index.tsx`, `app/payment/[id].tsx` |
 | Globi moves: transparent animated WebP for all 21 poses (320 px, 12 fps, 8.7 MB in total), built on Linux by `scripts/globi-convert.sh --stills-only`; no new native module, so it ships in an update. Web uses React Native's Image (expo-image's web wrapper has zero height and Chrome never advances it). | `assets/globi/anim/`, `components/globi/GlobiPose.tsx` |
 | Test: a guest's contact needs email and phone; signed in, the phone is enough | `scripts/wizard-rules.test.ts` |
+
+## 7j. Guest follow-up, travellers and details, end-to-end test (30 Oct)
+
+| Item | Where |
+|---|---|
+| Bug fixed: "Start my application" on Welcome (and "Continue without an account" on sign-in) landed on Home, not the wizard. Guest mode switches the protected routes, which reset navigation and dropped the push; the root now opens the wizard once the app side is mounted, and closes a sign-in screen left underneath | `app/_layout.tsx`, `lib/onboarding.ts`, `app/welcome.tsx`, `app/auth/index.tsx` |
+| A guest's submitted case is remembered on the phone until someone signs in with that email; Home shows "Create your account" for it and opens the payment result with the account form | `lib/guestCases.ts`, `app/(tabs)/(home)/index.tsx`, `app/apply/index.tsx` |
+| Saved travellers as drawn (Globi line, one card per person: passport masked, expiry with "check before your next trip" within a year, emirate, last used) | `app/(tabs)/account/travellers.tsx` |
+| Account details as drawn (Personal, Sign-in methods with Google linked or not, Membership, and the canvas notes) | `app/(tabs)/account/details.tsx` |
+| New end-to-end run of the v1.1 wizard (signed in: destination → nationality → name → phone-only contact → travelling with → Review → insurance → 249 AED; guest: email asked, account form after a failed payment): 15/15. The five older e2e scripts are marked stale | `scripts/e2e-wizard-web.mjs`, `scripts/mock-supabase.mjs` (in-memory `travellers` table) |
+| The resume sheet no longer tells a guest the draft is "on your account" | `app/apply/index.tsx` |

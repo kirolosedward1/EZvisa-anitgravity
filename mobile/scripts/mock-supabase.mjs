@@ -14,6 +14,7 @@ import crypto from "node:crypto";
 const PORT = Number(process.env.PORT || 54321);
 const SERVICE_KEY = process.env.SERVICE_KEY || "mock-service-role";
 const NO_TRIGGER = process.env.NO_TRIGGER === "1"; // emulate a database without the updated_at trigger
+const travellers = [];
 let rows = [];
 let clock = 0;
 
@@ -82,6 +83,19 @@ function rest(req, res, url, body) {
     }
     return send(res, 200, list);
   };
+  // public.travellers (saved travellers): in memory, owner = the row's email (the signed-in email, or any with the
+  // service key), eq. filters only. Enough for the Saved travellers screen and the wizard's "Who is travelling?".
+  if (table === "travellers") {
+    const q = query(url); const mine = (r) => c?.service || (!!c?.email && r.email === c.email);
+    const match = (r) => mine(r) && q.filters.every(([k, f]) => f(r[k]));
+    if (req.method === "GET") return reply(travellers.filter(match));
+    if (req.method === "POST") {
+      const add = (Array.isArray(body) ? body : [body]).map((r) => ({ id: r.id ?? crypto.randomUUID(), created_at: new Date().toISOString(), ...r, email: r.email ?? c?.email }));
+      travellers.push(...add); return prefer.includes("return=representation") ? reply(add) : send(res, 201);
+    }
+    if (req.method === "PATCH") { const hit = travellers.filter(match); hit.forEach((r) => Object.assign(r, body)); return prefer.includes("return=representation") ? reply(hit) : send(res, 204); }
+    if (req.method === "DELETE") { const keep = travellers.filter((r) => !match(r)); travellers.length = 0; travellers.push(...keep); return send(res, 204); }
+  }
   if (table !== "visa_applications") return req.method === "GET" ? send(res, 200, []) : send(res, 201, prefer.includes("return=representation") ? [] : undefined);
   const q = query(url);
   const match = (r) => visible(c, r) && q.filters.every(([k, f]) => f(r[k]));
@@ -121,7 +135,7 @@ http.createServer(async (req, res) => {
   const body = ["POST", "PATCH"].includes(req.method) ? await readBody(req) : null;
   const p = url.pathname;
   if (p === "/__db") return send(res, 200, rows);
-  if (p === "/__db/reset") { rows = []; return send(res, 200, { ok: true }); }
+  if (p === "/__db/reset") { rows = []; travellers.length = 0; return send(res, 200, { ok: true }); }
   if (p === "/__db/edit") { const r = rows.find((x) => x.id === body.id); if (!r) return send(res, 404, {}); Object.assign(r, body.patch, { updated_at: nowTs() }); return send(res, 200, r); }
   if (p.startsWith("/rest/v1/")) return rest(req, res, url, body);
   if (p === "/auth/v1/token") {

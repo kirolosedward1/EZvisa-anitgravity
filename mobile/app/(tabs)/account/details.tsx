@@ -4,7 +4,7 @@ import { rankCountries } from "../../../components/CountryPicker";
 import { useMemo, useState } from "react";
 import { ScrollView, View, Pressable } from "react-native";
 import { Stack, router } from "expo-router";
-import { ListGroup, ListRow, EmptyState, Button, TextField, Text, Icon, Sheet, InlineError, useTabInset } from "../../../components/ui";
+import { EmptyState, Button, TextField, Text, Icon, Sheet, InlineError, useTabInset, RowGroup, Row } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
 import { useAuth } from "../../../lib/auth";
 import { useT } from "../../../lib/i18n";
@@ -42,7 +42,6 @@ export default function AccountDetails() {
   const ids = ((u.identities ?? []) as { provider: string }[]).map((i) => i.provider);
   const providers = [...new Set(ids.length ? ids : [(u.app_metadata?.provider as string | undefined) ?? "email"])];
   const hasEmailPw = providers.includes("email");
-  const label = (p: string) => t(p === "google" ? "Google" : p === "apple" ? "Apple" : "Email");
   const full = (meta.full_name as string | undefined) ?? "";
   const open = (e: Edit) => { select(); setErr(null); setNote(null); setQ(""); setV2(""); if (e === "phone") { const p = parseSaved(meta.phone); setPIso(p.iso); setV1(formatNational(p.iso, p.digits)); setPE164(toE164(p.iso, p.digits) ?? ""); setEdit(e); return; }
     setV1(e === "name" ? full : e === "email" ? u.email ?? "" : e === "citizenship" ? citizenshipIso(meta.citizenship) : ""); setEdit(e); };
@@ -60,24 +59,28 @@ export default function AccountDetails() {
     try { const { error } = await supabase.auth.updateUser(payload); if (error) throw error; success(); if (done) setNote(done); else setEdit(null); }
     catch (e: any) { hError(); setErr(t(e?.message ?? String(e))); } finally { setBusy(false); }
   };
-  const row = (title: string, value: string | undefined, e: Edit) => <ListRow title={title} value={value || undefined} trailing={value ? undefined : <Text variant="body" tone="accent">{t("Add")}</Text>} onPress={() => open(e)} />;
   const titles: Record<string, string> = { name: t("Name"), email: t("Email"), phone: t("Phone number"), citizenship: t("Citizenship"), password: hasEmailPw ? t("Change password") : t("Set password") };
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.background }} contentContainerStyle={{ paddingTop: S.xl, paddingBottom: pb }} testID="account-details">
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.background }} contentContainerStyle={{ paddingTop: S.md, paddingBottom: pb }} testID="account-details">
       {header}
-      <ListGroup header={t("Personal")} inset={16}>
-        {row(t("Name"), full, "name")}
-        {row(t("Email"), u.email ?? "", "email")}
-        {row(t("Phone number"), displayPhone(meta.phone) ? "\u2068" + displayPhone(meta.phone) + "\u2069" : "", "phone")}
-        {meta.citizenship
-          ? <ListRow title={t("Citizenship")} trailing={<View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}><Flag country={citizenshipName(meta.citizenship)} size={20} /><Text variant="body" tone="secondary">{t(citizenshipName(meta.citizenship))}</Text></View>} onPress={() => open("citizenship")} />
-          : row(t("Citizenship"), "", "citizenship")}
-      </ListGroup>
-      <ListGroup header={t("Sign-in")} inset={16}>
-        <ListRow title={t("Sign-in methods")} value={providers.map(label).join(" · ")} />
-        <ListRow title={t("Password")} value={hasEmailPw ? "••••••••" : undefined} trailing={hasEmailPw ? undefined : <Text variant="body" tone="accent">{t("Set")}</Text>} onPress={() => open("password")} />
-      </ListGroup>
-      {!!u.created_at && <ListGroup><ListRow title={t("Member since")} value={new Date(u.created_at).toLocaleDateString(lang === "ar" ? "ar" : undefined, { month: "long", year: "numeric" })} /></ListGroup>}
+      {/* Canvas AccountDetails: Personal, Sign-in methods, Membership, each with its note. */}
+      <View style={{ paddingHorizontal: S.gutter, gap: S.xl }}>
+        <RowGroup header={t("Personal")} footer={t("Citizenship prefills the nationality question. Only passports that need a Schengen visa are listed.")}>
+          <Row label={t("Name")} value={full || t("Add")} tint={!full} onPress={() => open("name")} testID="details-name" />
+          <Row label={t("Phone number")} value={displayPhone(meta.phone) ? "\u2068" + displayPhone(meta.phone) + "\u2069" : t("Add")} tint={!displayPhone(meta.phone)} onPress={() => open("phone")} />
+          <Row label={t("Citizenship")} value={meta.citizenship ? t(citizenshipName(meta.citizenship)) : t("Add")} tint={!meta.citizenship} onPress={() => open("citizenship")} />
+        </RowGroup>
+        <RowGroup header={t("Sign-in methods")} footer={t("Changing the email sends a confirmation link to the new address first.")}>
+          <Row label={t("Email")} value={u.email ?? ""} onPress={() => open("email")} />
+          <Row label={t("Password")} value={hasEmailPw ? t("Set · change") : t("Set")} onPress={() => open("password")} />
+          <Row label="Google" value={providers.includes("google") ? t("Linked") : t("Not linked")} />
+          {providers.includes("apple") && <Row label="Apple" value={t("Linked")} />}
+        </RowGroup>
+        <RowGroup header={t("Membership")} footer={t("Passport numbers are kept in Saved travellers.")}>
+          {!!u.created_at && <Row label={t("Member since")} value={new Date(u.created_at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "long", year: "numeric" })} />}
+          <Row label={t("Saved travellers")} onPress={() => router.push("/account/travellers")} />
+        </RowGroup>
+      </View>
 
       <Sheet visible={!!edit} onClose={close} title={edit ? titles[edit] : undefined} closeLabel={t("Close")} testID="details-sheet">
         {note ? <View style={{ gap: S.md, paddingVertical: S.sm }}><Text variant="body">{note}</Text><Button title={t("Done")} onPress={() => setEdit(null)} /></View>

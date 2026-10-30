@@ -2,7 +2,8 @@ import "../lib/perf"; // first: starts the startup clock
 import { initSentry } from "../lib/sentry";
 import { installCrashHandler } from "../lib/crash";
 import { startAnalytics } from "../lib/analytics";
-import { Stack, useSegments } from "expo-router";
+import { Stack, router, useSegments } from "expo-router";
+import { takeWizardStart } from "../lib/onboarding";
 import { StatusBar } from "expo-status-bar";
 import { ThemeProvider, DarkTheme, DefaultTheme } from "expo-router";
 import { AppearanceProvider, useAppearance } from "../lib/appearance";
@@ -42,6 +43,13 @@ function Boot() {
 function Routes() {
   const c = useColors(); const { session, guest, loading } = useAuth();
   const inApp = loading || !!session || guest;
+  // Guest start from Welcome: open the wizard after the protected routes switched (see lib/onboarding.ts).
+  useEffect(() => {
+    if (!guest || loading) return;
+    // Close a sign-in screen left underneath, so closing the wizard lands on Home.
+    const h = setTimeout(() => { if (!takeWizardStart()) return; if (router.canDismiss()) router.dismissAll(); router.push("/apply"); }, 50);
+    return () => clearTimeout(h);
+  }, [guest, loading]);
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
       {/* Signed out: any app route (e.g. "/") goes to Welcome. Without redirectTo, expo-router 58 falls back to the first

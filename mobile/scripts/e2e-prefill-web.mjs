@@ -1,3 +1,5 @@
+// STALE since the v1.1 wizard (canvas question order, Review → insurance → price → pay). The current end-to-end run is
+// scripts/e2e-wizard-web.mjs; this script still describes the older flow and fails on it.
 // Prefill + profile-confirm + account-switch check in the real app UI (Expo web), two accounts on one "device"
 // (one browser profile). Supabase is mocked at the network layer, so no real data is read or written.
 // Run: start `npx expo start --web` with EXPO_PUBLIC_SUPABASE_URL=https://dravvaykssrbktztmrlj.supabase.co and any

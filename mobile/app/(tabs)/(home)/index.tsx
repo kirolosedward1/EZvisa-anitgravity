@@ -4,6 +4,7 @@
 //   else "Pick up where you left off?" for a draft, else "No application yet".
 // - Other applications as rows, then three popular countries. Offline: Globi waits, queued uploads show, actions pause.
 // Everything comes from the live rows and this phone's drafts (lib/useApps, lib/form); nothing is invented.
+import { useGuestCases, forgetGuestCases, type GuestCase } from "../../../lib/guestCases";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,7 +12,7 @@ import { useNetInfo } from "@react-native-community/netinfo";
 import { useEffect, useRef, useState } from "react";
 import Animated from "react-native-reanimated";
 import { Chevron, Text, Flag, Icon, PressScale, Avatar, Skeleton, useTabInset, ProgressSegments, Card, Bubble, PrimaryButton, SecondaryButton, SectionHeader, ErrorView, SearchField } from "../../../components/ui";
-import { GlobiPose } from "../../../components/globi/GlobiPose";
+import { GlobiPose, GLOBI_SIZE } from "../../../components/globi/GlobiPose";
 import { PopularTiles } from "../../../components/home/PopularTiles";
 import { useColors, S, R } from "../../../lib/theme";
 import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, referenceOf, type Application } from "../../../lib/data";
@@ -118,6 +119,24 @@ function DraftCard({ country, local, step, onResume }: { country: string; local?
       </View>
       {prog && <View style={{ marginTop: S.md }}><ProgressSegments count={prog.steps.length} index={prog.stepIndex} fraction={prog.segs[prog.stepIndex]?.fill ?? 0} /></View>}
       <View style={{ marginTop: S.md }}><PrimaryButton title={t("Resume")} onPress={() => { tap(); onResume(); }} testID="resume-draft" /></View>
+    </Card>
+  );
+}
+
+/** A case this phone submitted as a guest (pay first): finish the account so the application is yours. */
+function GuestCaseCard({ g }: { g: GuestCase }) {
+  const { t } = useT();
+  return (
+    <Card padded testID="home-guest-case">
+      <View style={{ flexDirection: "row", gap: S.sm, alignItems: "center" }}>
+        <GlobiPose pose="lock" size={GLOBI_SIZE.home} style={{ margin: -8 }} />
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text variant="caption" weight="600" tone="accent">{[t(g.country), g.reference].filter(Boolean).join(" · ").toUpperCase()}</Text>
+          <Text variant="question">{t("Create your account")}</Text>
+          <Text variant="note" tone="secondary">{t("Use {e} to follow this application, add your details and upload documents.", { e: g.email })}</Text>
+        </View>
+      </View>
+      <View style={{ marginTop: S.md }}><PrimaryButton title={t("Continue")} onPress={() => { tap(); router.push({ pathname: "/payment/[id]", params: { id: g.id, returned: "closed", email: g.email } }); }} testID="guest-case-continue" /></View>
     </Card>
   );
 }
@@ -245,6 +264,9 @@ export default function Home() {
   const [swiping, setSwiping] = useState(false);
   const [q, setQ] = useState("");
   useResumePayment();
+  const guestCases = useGuestCases();
+  useEffect(() => { if (session?.user.email) forgetGuestCases(session.user.email); }, [session?.user.email]);
+  const guestCase = !session ? guestCases[0] : undefined;
   const loadedAt = useRef<number | null>(null);
   useEffect(() => { if (apps) loadedAt.current = Date.now(); }, [apps]);
   const [errAt, setErrAt] = useState<number | null>(null);
@@ -263,7 +285,7 @@ export default function Home() {
   const local = draftItem ? drafts.find((d) => `l:${d.key}` === draftItem.key || (!!d.draftId && `s:${d.draftId}` === draftItem.key)) : undefined;
   const loading = !!session && apps === null && !err;
   const failed = !!session && apps === null && !!err;
-  const empty = !loading && !failed && !heroApp && !draftItem;
+  const empty = !loading && !failed && !heroApp && !draftItem && !guestCase;
   const title = first ? t("Hi, {name}", { name: first }) : t("Where to next?");
   const othersTitle = offline && loadedAt.current ? `${t("Other applications")} · ${t("from {t}", { t: hhmm(loadedAt.current) })}` : heroKey ? t("Other applications") : t("Your applications");
 
@@ -286,7 +308,8 @@ export default function Home() {
         {loading ? <HomeSkeleton /> : failed ? (
           <Card padded><ErrorView compact title={t("Couldn't load your applications")} message={t("Check your connection and try again. Your answers are saved.")} onRetry={() => { tap(); load(); }} onWhatsApp={() => whatsapp()}
             diagnostic={[offline ? "offline" : "network error", errAt ? hhmm(errAt) : ""].filter(Boolean).join(" · ")} /></Card>
-        ) : heroApp ? <AppCard a={heroApp} offline={offline} />
+        ) : guestCase ? <GuestCaseCard g={guestCase} />
+          : heroApp ? <AppCard a={heroApp} offline={offline} />
           : draftItem ? <DraftCard country={draftItem.country} local={local} step={draftItem.draft ?? ""} onResume={() => draftItem.open()} />
           : <EmptyCard />}
       </View>
