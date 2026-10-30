@@ -29,6 +29,7 @@ import { SUPABASE_ENABLED } from "../../lib/config";
 import { whatsapp } from "../../lib/api";
 import { money, startPayment, usePaying, useQuote } from "../../lib/payments";
 import { formatPayAmount, PAY_AED } from "../../lib/payLabel";
+import { rememberGuestCase } from "../../lib/guestCases";
 import { submitApplication, guestSubmit, listRequirements, patchNotes, DraftConflictError, type Requirement } from "../../lib/data";
 import { PrefillOffer } from "../../components/wizard/extras";
 import { fetchTravellers, applyTravellerToForm, markTravellerUsed } from "../../lib/travellers";
@@ -373,6 +374,7 @@ export default function Apply() {
         const g = await guestSubmit({ ...f }, guestId.current ?? (guestId.current = Crypto.randomUUID())); success(); cancelDraftReminder();
         guestId.current = null; // the next application gets its own id
         setSubmitted({ applicationId: g.id, reference: g.reference, destination: f.destination, spouse, guestEmail: g.email }); clearDraft();
+        rememberGuestCase({ id: g.id, email: g.email, reference: g.reference, country: f.destination }).catch(() => {});
         if (pay) { inFlight.current = false; setBusy(false); await payNow(g.id, g.email); }
         return;
       }
@@ -595,7 +597,7 @@ export default function Apply() {
         actions={<>
           <PrimaryButton title={f.destination ? t("Continue {c} application", { c: t(f.destination) }) : t("Continue")} onPress={() => setResumeAsk(false)} />
           <SecondaryButton title={t("Start a new one")} onPress={() => { setResumeAsk(false); startNew(); const v = linkValues(); setForm((x) => ({ ...x, ...v })); setEditing(null); }} />
-          <Text variant="footnote" tone="secondary" center>{t("The draft stays saved on this phone and on your account.")}</Text>
+          <Text variant="footnote" tone="secondary" center>{session ? t("The draft stays saved on this phone and on your account.") : t("The draft stays saved on this phone.")}</Text>
         </>}>
         <RowGroup>
           {!!f.destination && <Row label={t("Destination")} value={t(f.destination)} />}

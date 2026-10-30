@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { Stack, router, useFocusEffect } from "expo-router";
 import { GlobiPose } from "../../../components/globi/GlobiPose";
-import { ListGroup, ListRow, EmptyState, Button, Flag, Sheet, InlineError, SegmentedControl, SkeletonRows, useTabInset } from "../../../components/ui";
+import { EmptyState, Button, Sheet, InlineError, SegmentedControl, SkeletonRows, useTabInset, Card, Avatar, Text, PressScale, GlobiLine, SecondaryButton } from "../../../components/ui";
 import { FormField, CountryField, DateField, SelectField, Input } from "../../../components/wizard/fields";
 import { useFmtDate } from "../../../components/wizard/answers";
 import { useColors, S } from "../../../lib/theme";
@@ -19,6 +19,9 @@ type Draft = { firstName: string; lastName: string; relationship: TravellerRelat
 const EMPTY: Draft = { firstName: "", lastName: "", relationship: "other", nationality: "", dateOfBirth: "", passportNumber: "", passportExpiry: "", cityOfResidence: "" };
 const toDraft = (x: Traveller): Draft => ({ firstName: x.firstName ?? "", lastName: x.lastName ?? "", relationship: x.relationship, nationality: x.nationality ?? "", dateOfBirth: x.dateOfBirth ?? "", passportNumber: x.passportNumber ?? "", passportExpiry: x.passportExpiry ?? "", cityOfResidence: x.cityOfResidence ?? "" });
 const RELATION: { value: TravellerRelationship; label: string }[] = [{ value: "self", label: "You" }, { value: "spouse", label: "Spouse" }, { value: "other", label: "Other" }];
+
+/** Days from today to an ISO date (negative when past). Read at call time, outside render state. */
+const daysFromToday = (d: string) => (Date.parse(d) - Date.now()) / 864e5;
 
 export default function SavedTravellers() {
   const c = useColors(); const pb = useTabInset(); const { session } = useAuth(); const { t } = useT(); const fmt = useFmtDate();
@@ -56,21 +59,46 @@ export default function SavedTravellers() {
       { text: t("Remove"), style: "destructive", onPress: async () => { try { await deleteTraveller(x.id); success(); setEdit(null); load(); } catch (e: any) { hError(); Alert.alert(t(e?.message ?? "Couldn't remove. Check your connection and try again.")); } } },
     ]);
   };
-  const subtitle = (x: Traveller) => [x.nationality ? t(x.nationality) : "", maskPassport(x.passportNumber), x.dateOfBirth ? t("Born {d}", { d: fmt(x.dateOfBirth) }) : ""].filter(Boolean).join(" · ") || t("Name only");
   const relation = (x: Traveller) => (x.relationship === "self" ? t("You") : x.relationship === "spouse" ? t("Spouse") : undefined);
+  /** "12 Jun 2031", with a nudge when it runs out within a year (many consulates want 3+ months after the trip). */
+  const expiryLine = (d: string) => { const left = daysFromToday(d); return left < 0 ? `${fmt(d)} · ${t("expired")}` : left < 365 ? `${fmt(d)} · ${t("check before your next trip")}` : fmt(d); };
 
   return (
-    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.background }} contentContainerStyle={{ paddingTop: S.xl, paddingBottom: pb }} testID="saved-travellers">
+    <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.background }} contentContainerStyle={{ paddingTop: S.md, paddingBottom: pb }} testID="saved-travellers">
       {header}
-      {list === null ? <View style={{ paddingHorizontal: S.lg }}><SkeletonRows n={2} /></View>
-        : list.length ? (
-          <ListGroup header={t("Saved travellers")} footer={t("Shown in the \"Who is travelling?\" question when you apply.")} inset={16}>
-            {list.map((x) => <ListRow key={x.id} leading={<Flag country={x.nationality} size={28} />} title={travellerName(x)} subtitle={subtitle(x)} value={relation(x)} minHeight={56} onPress={() => open(x)} />)}
-          </ListGroup>
-        ) : (
-          <View style={{ paddingVertical: S.xl }}><EmptyState icon="person.2.fill" mascot={<GlobiPose pose="companion" size={120} />} title={t("No saved travellers yet.")} message={loadErr ?? t("Everyone you apply for is added here after payment, so the next application starts filled in.")} /></View>
-        )}
-      <ListGroup><ListRow title={t("Add traveller")} tint chevron={false} onPress={() => open()} /></ListGroup>
+      {/* Canvas Travellers: Globi's line, one card per person with the passport, expiry, emirate and last use. */}
+      <View style={{ paddingHorizontal: S.gutter, gap: S.lg }}>
+        <GlobiLine pose="companion" text={t("Pick one when you start an application. I skip what I already know.")} />
+        {list === null ? <SkeletonRows n={2} />
+          : list.length ? list.map((x) => (
+            <Card key={x.id} testID={`traveller-${x.id}`}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, padding: S.md }}>
+                <Avatar name={travellerName(x)} size={44} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text variant="headline" numberOfLines={1}>{travellerName(x)}</Text>
+                  <Text variant="note" tone="secondary" numberOfLines={2}>{[relation(x), x.nationality ? t(x.nationality) : "", x.dateOfBirth ? t("born {d}", { d: fmt(x.dateOfBirth) }) : ""].filter(Boolean).join(" · ") || t("Name only")}</Text>
+                </View>
+                <PressScale onPress={() => open(x)} accessibilityRole="button" accessibilityLabel={t("Edit {n}", { n: travellerName(x) })} hitSlop={8} style={{ minHeight: 44, justifyContent: "center" }} testID="traveller-edit">
+                  <Text variant="callout" weight="600" tone="accent">{t("Edit")}</Text>
+                </PressScale>
+              </View>
+              {[
+                [t("Passport"), x.passportNumber ? maskPassport(x.passportNumber) : t("Not added")],
+                [t("Expires"), x.passportExpiry ? expiryLine(x.passportExpiry) : t("Not added")],
+                [t("Emirate"), x.cityOfResidence ? t(x.cityOfResidence) : t("Not added")],
+                ...(x.lastUsedAt ? [[t("Last used"), fmt(x.lastUsedAt.slice(0, 10))]] : []),
+              ].map(([k, v]) => (
+                <View key={k} style={{ flexDirection: "row", justifyContent: "space-between", gap: S.md, paddingHorizontal: S.md, paddingVertical: 12, borderTopWidth: 1, borderColor: c.separator }}>
+                  <Text variant="note" tone="secondary">{k}</Text>
+                  <Text variant="note" weight="600" style={{ flexShrink: 1, textAlign: "right" }}>{v}</Text>
+                </View>
+              ))}
+            </Card>
+          )) : (
+            <View style={{ paddingVertical: S.md }}><EmptyState icon="person.2.fill" mascot={<GlobiPose pose="companion" size={120} />} title={t("No saved travellers yet.")} message={loadErr ?? t("Everyone you apply for is added here after payment, so the next application starts filled in.")} /></View>
+          )}
+        <SecondaryButton title={t("Add traveller")} onPress={() => open()} testID="traveller-add" />
+      </View>
 
       <Sheet visible={!!edit} onClose={() => { if (!busy) setEdit(null); }} title={edit?.id ? t("Edit traveller") : t("Add traveller")} closeLabel={t("Close")} testID="traveller-sheet">
         {!!edit && (

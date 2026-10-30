@@ -9,3 +9,9 @@ export function useWelcomed() {
   return v;
 }
 export async function markWelcomed() { cache = true; await AsyncStorage.setItem(KEY, "1").catch(() => {}); }
+
+/** "Start my application" on Welcome: guest mode switches the root routes (Stack.Protected), which resets navigation and
+ *  would drop a push made at the same moment. Welcome asks here; the root opens the wizard once the app side is mounted. */
+let startWizard = false;
+export const requestWizardStart = () => { startWizard = true; };
+export const takeWizardStart = () => { const v = startWizard; startWizard = false; return v; };

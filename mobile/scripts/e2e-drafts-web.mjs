@@ -1,3 +1,5 @@
+// STALE since the v1.1 wizard (canvas question order, Review → insurance → price → pay). The current end-to-end run is
+// scripts/e2e-wizard-web.mjs; this script still describes the older flow and fails on it.
 // End-to-end check of draft autosave / resume / conflicts on the app's web build against scripts/mock-supabase.mjs.
 //   EXPO_PUBLIC_SUPABASE_URL=http://localhost:54321 EXPO_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_mock npx expo export --platform web --output-dir /tmp/web-dist
 //   STATIC_DIR=/tmp/web-dist node scripts/mock-supabase.mjs &

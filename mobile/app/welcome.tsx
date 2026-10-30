@@ -14,7 +14,7 @@ import { GlobiPose, GLOBI_SIZE } from "../components/globi/GlobiPose";
 import { GoogleButton } from "../components/GoogleButton";
 import { useAuth } from "../lib/auth";
 import { useColors, useLargeText, S, R, SIZE } from "../lib/theme";
-import { markWelcomed } from "../lib/onboarding";
+import { markWelcomed, requestWizardStart } from "../lib/onboarding";
 import { tap, success, error as hError } from "../lib/haptics";
 import { useT } from "../lib/i18n";
 import { signInWithGoogle, googleEnabled } from "../lib/google";
@@ -39,8 +39,7 @@ export default function Welcome() {
 
   /** Guest start: the route guard opens the app side, then the wizard opens on its first question. */
   const start = () => {
-    tap(); clearNotice(); markWelcomed(); continueAsGuest();
-    setTimeout(() => router.push("/apply"), 0);
+    tap(); clearNotice(); markWelcomed(); requestWizardStart(); continueAsGuest();
   };
   const signIn = () => { tap(); clearNotice(); markWelcomed(); router.push({ pathname: "/auth", params: { mode: "signin" } }); };
   const provider = (which: "google" | "apple") => async () => {
