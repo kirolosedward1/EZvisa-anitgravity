@@ -15,6 +15,8 @@ import { View, Platform } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { NetworkBanner } from "../components/NetworkBanner";
+import { ToastHost } from "../components/ui/feedback";
+import { DiscardHost } from "../components/DiscardHost";
 import { BootOverlay } from "../components/Boot";
 import { LockGate } from "../lib/lock";
 import { startUploadQueue } from "../lib/uploads";
@@ -48,6 +50,7 @@ function Routes() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="apply" options={{ presentation: "modal" }} />
         <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
+        <Stack.Screen name="appointment/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="continue/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="receipt/[id]" />
         {/* full screen: a swipe-to-dismiss sheet would fight the crop handles */}
@@ -59,6 +62,8 @@ function Routes() {
       <Stack.Screen name="auth" options={{ presentation: "modal" }} />
       <Stack.Screen name="payment-return" />
       <Stack.Screen name="payment/[id]" options={{ presentation: "modal", gestureEnabled: false }} />
+      {/* Development only (redirects to Home in release builds): the canvas component gallery. */}
+      <Stack.Screen name="dev/gallery" />
     </Stack>
   );
 }
@@ -94,6 +99,8 @@ function Themed() {
           <Routes />
           <StatusBackdrop />
           <NotificationRouter />
+          <ToastHost />
+          <DiscardHost />
           <NetworkBanner />
           <LockGate />
           <Boot />

@@ -53,7 +53,7 @@ export default function AuthCallback() {
     : type === "magiclink" ? { title: t("Send a new link"), to: "/auth/magic-link" as const }
     : { title: t("Sign in"), to: "/auth" as const };
   return (
-    <AuthShell nav="none" title={title} testID="auth-callback-error">
+    <AuthShell nav="none" pose="puzzled" title={title} testID="auth-callback-error">
       <View style={{ gap: S.sm }}>
         <Text variant="body" tone="secondary">{message}</Text>
         <View style={{ height: S.md }} />

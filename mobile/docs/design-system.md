@@ -103,3 +103,13 @@ Primary buttons carry a soft brand-blue glow in light mode (`0 6px 16px rgba(4,5
 
 The EZvisa logo appears only on the welcome screen and the receipt. Other headers use a 40pt spacer so titles stay centred.
 Globi appears in the wizard, on the payment result, and in empty states (`EmptyState mascot={<Globi … />}`), never as decoration.
+
+## Canvas components (app design "EZvisa app with Globi", Phase 1)
+
+New and redrawn screens use `components/ui/canvas.tsx` and `components/ui/feedback.tsx` (exported from `components/ui`):
+`QuestionHeader` (Globi 124 + speech bubble; the question is the screen title, no description line), `Bubble`, `GlobiLine`,
+`StepHeader`, `Card`, `Row` / `RowGroup`, `Switch`, `ChoiceTile` (`yesno`, `option`, `grid`), `ListChoice`, `PrimaryButton`,
+`SecondaryButton` (`whatsapp` dot), `Chip`, `InfoNote` (`neutral`, `info`, `success`, `later`), `showToast` / `showSaved`
+(1.5 s pill, only after the server confirms), `SheetScaffold`, `ActionSheet`. Globi is `components/globi/GlobiPose.tsx`
+(21 poses, `scripts/globi-convert.sh`). Type roles: `question`, `pageTitle`, `resultTitle`, `tile`, `option`, `optionSm`,
+`row`, `button`, `note`; maximum weight 600. No gradients, glows or sparkles. `/dev/gallery` shows all of them in development.

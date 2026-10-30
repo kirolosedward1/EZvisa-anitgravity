@@ -5,18 +5,19 @@
 //   - GET /api/check-payment?id= for the payment id the server returned to THIS device (stored, never from a URL).
 // Ziina reporting "completed" while the row is not yet updated shows "Payment received · updating" and keeps checking.
 import { useEffect, useRef, useState } from "react";
-import { AccessibilityInfo, AppState, View, Platform } from "react-native";
+import { AccessibilityInfo, AppState, ScrollView, View, Platform } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Icon, Text, type IconName } from "../../components/ui";
-import { PaymentMark } from "../../components/payment/PaymentMark";
-import { Globi, type GlobiPose, type GlobiMood } from "../../components/mascot/Globi";
-import { PaymentStallActions, devPaymentPreview, paymentPhrase, paymentWaitPhase, usePaymentWaitClock, PAYMENT_SLOW_MS, PAYMENT_STALL_MS } from "../../components/payment/PaymentWait";
+import { Card, HeaderIconButton, Icon, InfoNote, PrimaryButton, SecondaryButton, Text } from "../../components/ui";
+import { GlobiPose, GLOBI_SIZE, type GlobiPose as Pose } from "../../components/globi/GlobiPose";
+import { PushAsk, shouldAskPush } from "../../components/payment/PushAsk";
+import { devPaymentPreview, paymentPhrase, paymentWaitPhase, usePaymentWaitClock, PAYMENT_SLOW_MS, PAYMENT_STALL_MS } from "../../components/payment/PaymentWait";
 import { useColors, S } from "../../lib/theme";
+import { referenceOf } from "../../lib/wizard";
 import { useT } from "../../lib/i18n";
 import { useAuth } from "../../lib/auth";
-import { getApplication, needsContinue } from "../../lib/data";
+import { getApplication as loadApp, needsContinue, type Application } from "../../lib/data";
 import { whatsapp } from "../../lib/api";
 import { forgetPayment, intentStatus, knownPayment, serverStatus, startPayment, usePaying, type ServerStatus } from "../../lib/payments";
 import { setupPush } from "../../lib/push";
@@ -56,13 +57,15 @@ export default function PaymentResult() {
   const initialState: State = preview === "failure" ? "failed" : "checking";
   const [state, setState] = useState<State>(initialState); const [needsEmp, setNeedsEmp] = useState(false); const paying = usePaying();
   const [attempt, setAttempt] = useState(0);
+  const [app, setApp] = useState<Application | null>(null); const [checkedAt, setCheckedAt] = useState<number | null>(null);
+  const [paidAt, setPaidAt] = useState<number | null>(null); const [ask, setAsk] = useState<null | (() => void)>(null);
   const headStart = preview === "slow" ? PAYMENT_SLOW_MS : preview === "stalled" ? PAYMENT_STALL_MS : 0;
   const elapsed = usePaymentWaitClock(state === "checking", attempt, headStart);
   const run = useRef(0); const pollSleep = useRef<(() => void) | null>(null);
   const returned = useRef(returnedParam === "cancel" || returnedParam === "closed" ? returnedParam : "success");
   const stateRef = useRef<State>(initialState);
   const OUTCOME: Partial<Record<State, "paid" | "pending" | "failed" | "cancelled">> = { paid: "paid", confirming: "paid", pending: "pending", failed: "failed", cancelled: "cancelled" };
-  const show = (s: State) => { const o = OUTCOME[s]; if (o && stateRef.current !== s) track("payment_finished", { outcome: o }); stateRef.current = s; setState(s); };
+  const show = (s: State) => { const o = OUTCOME[s]; if (o && stateRef.current !== s) { track("payment_finished", { outcome: o }); if (o === "paid") setPaidAt(Date.now()); } stateRef.current = s; setState(s); };
 
   const read = async (): Promise<Signals> => {
     let asked = 0, failed = 0;
@@ -70,9 +73,10 @@ export default function PaymentResult() {
     const p = await knownPayment(id!);
     const [server, db, intent] = await Promise.all([
       attempt(() => serverStatus(id!)),
-      session ? attempt(async () => { const a = await getApplication(id!); setNeedsEmp(needsContinue(a)); return a.payment_status; }) : Promise.resolve(undefined),
+      session ? attempt(async () => { const a = await loadApp(id!); setApp(a); setNeedsEmp(needsContinue(a)); return a.payment_status; }) : Promise.resolve(undefined),
       p ? attempt(() => intentStatus(p.paymentId)) : Promise.resolve(undefined),
     ]);
+    if (!(asked > 0 && failed === asked)) setCheckedAt(Date.now());
     return { server, db, intent, offline: asked > 0 && failed === asked };
   };
 
@@ -87,7 +91,7 @@ export default function PaymentResult() {
       if (run.current !== me) return;
       if (s.offline) { show("offline"); return; } // every request failed: no network (re-checked below)
       const done = settled(s);
-      if (done === "paid") { show("paid"); success(); forgetPayment(id!); if (session) setupPush(true).catch(() => {}); return; }
+      if (done === "paid") { show("paid"); success(); forgetPayment(id!); if (session) setupPush(false).catch(() => {}); return; }
       if (done === "failed") { show("failed"); hError(); forgetPayment(id!); return; }
       if (s.intent === "completed" && stateRef.current !== "confirming") { show("confirming"); success(); }
       if (s.intent && (s.intent === "completed" || PROCESSING.includes(s.intent))) until = Math.max(until, started + POLL_FOR);
@@ -114,7 +118,7 @@ export default function PaymentResult() {
       const s = await read();
       if (run.current !== me || !["pending", "confirming"].includes(stateRef.current) || s.offline) return;
       const done = settled(s);
-      if (done === "paid") { show("paid"); success(); forgetPayment(id!); if (session) setupPush(true).catch(() => {}); }
+      if (done === "paid") { show("paid"); success(); forgetPayment(id!); if (session) setupPush(false).catch(() => {}); }
       else if (done === "failed") { show("failed"); hError(); forgetPayment(id!); }
       else if (s.intent === "completed" && stateRef.current !== "confirming") { show("confirming"); success(); }
     } finally { quietBusy.current = false; }
@@ -145,7 +149,7 @@ export default function PaymentResult() {
     if (!preview || attempt > 0) return;
     if (preview === "failure") { hError(); return; }
     if (preview !== "success" && preview !== "late") return;
-    const timer = setTimeout(() => { stateRef.current = "paid"; setState("paid"); success(); }, preview === "success" ? 900 : 22_000);
+    const timer = setTimeout(() => { stateRef.current = "paid"; setState("paid"); setPaidAt(Date.now()); success(); }, preview === "success" ? 900 : 22_000);
     return () => clearTimeout(timer);
   }, [preview, attempt]);
 
@@ -157,50 +161,156 @@ export default function PaymentResult() {
   };
 
   const guest = !session;
-  const V: Record<State, { icon: IconName | null; color: string; title: string; body: string }> = {
-    checking: { icon: null, color: c.tint, title: t("Checking your payment…"), body: t("This takes a few seconds.") },
-    paid: { icon: "checkmark.circle.fill", color: c.green, title: t("Payment received"), body: guest ? t("Sign in with the email you used to continue your application.") : needsEmp ? t("Next, add your passport number and employment details, then upload your documents.") : t("You can upload your documents now.") },
-    confirming: { icon: "checkmark.circle.fill", color: c.green, title: t("Payment received"), body: guest ? t("Sign in with the email you used to continue your application.") : t("Updating your application. This can take a minute.") },
-    pending: { icon: "clock.fill", color: c.tint, title: t("Payment not confirmed yet"), body: guest ? t("Sign in with the email you used to see the latest status.") : t("If you paid, it can take a minute to show. We'll update your application automatically.") },
-    failed: { icon: "exclamationmark.circle.fill", color: c.red, title: t("Payment didn't go through"), body: t("You weren't charged. Try again or pay on WhatsApp.") },
-    cancelled: { icon: "xmark.circle.fill", color: c.secondaryLabel, title: t("Payment cancelled"), body: t("Nothing was charged. You can pay whenever you're ready.") },
-    offline: { icon: "wifi.slash", color: c.secondaryLabel, title: t("You're offline"), body: t("We'll check your payment when you're back online.") },
-  };
-  const v = V[state];
-  // Globi reacts to the outcome (the mark below still carries the state for VoiceOver and the animation).
-  const GLOBI: Record<State, [GlobiPose, GlobiMood]> = {
-    checking: ["think", "think"], paid: ["celebrate", "excited"], confirming: ["celebrate", "happy"], pending: ["phone", "calm"],
-    failed: ["heart", "calm"], cancelled: ["idle", "calm"], offline: ["sleep", "sleepy"],
-  };
-  // The 20s stall stays up through the verifier's "not confirmed yet" state. Quiet polling still promotes that to paid,
-  // and the same mark morphs into the check — the screen does not swap to a different result view underneath the user.
+  const country = app?.destination_country || "";
+  const ref = referenceOf(id ?? "");
+  const amount = app?.total_amount ?? null;
+  const clock = (ms: number | null) => ms ? new Date(ms).toLocaleTimeString(lang === "ar" ? "ar-AE" : "en-GB", { hour: "2-digit", minute: "2-digit" }) : "";
+  // Canvas: PaymentChecking / Pending / Stalled = thinking, Payment received = celebrate, Failed = puzzled, Cancelled and Offline = waiting.
+  const GLOBI: Record<State, Pose> = { checking: "thinking", paid: "celebrate", confirming: "celebrate", pending: "thinking", failed: "puzzled", cancelled: "waiting", offline: "waiting" };
+  // The 20s stall stays up through the verifier's "not confirmed yet" state. Quiet polling still promotes that to paid.
   const phase = state === "checking" ? paymentWaitPhase(elapsed) : null;
   const stalled = phase === "stalled" || (state === "pending" && elapsed >= PAYMENT_STALL_MS);
-  const title = stalled ? pt("Still confirming your payment") : v.title;
-  const body = stalled ? pt("We'll keep checking in the background.") : phase === "slow" ? pt("Still confirming with Ziina…") : v.body;
-  const mark = state === "failed" ? "failure" as const : state === "paid" || state === "confirming" ? "success" as const : state === "checking" || stalled ? "checking" as const : null;
+  const received = state === "paid" || state === "confirming";
+  const TITLE: Record<State, string> = {
+    checking: t("Checking your payment"), paid: t("Payment received"), confirming: t("Payment received"), pending: t("Payment not confirmed yet"),
+    failed: t("Payment didn't go through"), cancelled: t("Payment cancelled"), offline: t("You're offline. Showing what I last saw."),
+  };
+  const LINE: Record<State, string> = {
+    checking: phase === "slow" ? pt("Still confirming with the payment gateway…") : t("Confirming with your bank. A few seconds."),
+    paid: [amount != null ? `${amount} AED` : "", ref, clock(paidAt)].filter(Boolean).join(" · "),
+    confirming: t("Updating your application. This can take a minute."),
+    pending: guest ? t("Sign in with the email you used to see the latest status.") : t("If you paid, it can take a minute to show. You don't need to stay here."),
+    failed: t("You weren't charged. Try again, or pay on WhatsApp."),
+    cancelled: t("Nothing was charged. Your answers are saved."),
+    offline: t("I'll check your payment when you're back online"),
+  };
+  const title = stalled ? pt("Still confirming your payment") : TITLE[state];
+  const line = stalled ? t("Taking longer than usual. You can leave; I'll notify you when it's done.") : LINE[state];
   const leave = () => router.replace(session ? `/applications/${id}` : "/", { withAnchor: true });
+  const home = () => router.replace("/", { withAnchor: true });
+  /** Once, after the first payment: the notification pre-prompt (canvas PushAsk) before the next screen. */
+  const then = (go: () => void) => async () => { if (session && await shouldAskPush()) setAsk(() => go); else go(); };
+  const next = then(() => router.replace(needsEmp ? `/continue/${id}` : `/applications/${id}`, { withAnchor: true }));
   const retryCheck = () => { if (previewRef.current) { setAttempt((n) => n + 1); show("checking"); return; } verify(); };
-  useEffect(() => { if (Platform.OS === "ios") AccessibilityInfo.announceForAccessibility(`${title}. ${body}`); }, [title, body]);
-  return (
-    <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: Platform.OS === "ios" ? S.lg : insets.top + S.lg }} testID="payment-result">
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.md, padding: S.xl }}>
-        <Globi pose={GLOBI[state][0]} mood={GLOBI[state][1]} size={132} animate={!stalled} />
-        {mark ? <PaymentMark mode={mark} paused={stalled} label={title} /> : v.icon ? <Icon name={v.icon} size={40} color={v.color} /> : null}
-        <View accessibilityLiveRegion="polite" style={{ alignItems: "center", gap: S.md }}>
-          <Text variant="title1" center accessibilityRole="header" testID="payment-state">{title}</Text>
-          <Text variant="body" tone="secondary" center>{body}</Text>
+  const help = (m: string) => () => { track("whatsapp_handoff", { screen: "payment" }); whatsapp(m); };
+  // V1 analytics: one payment_result per settled view (stalled and offline included).
+  const result = stalled ? "stalled" : received ? "paid" : state === "checking" ? null : state;
+  useEffect(() => { if (result) track("payment_result", { state: result }); }, [result]);
+  useEffect(() => { if (Platform.OS === "ios") AccessibilityInfo.announceForAccessibility(`${title}. ${line}`); }, [title, line]);
+
+  const appRow = country ? `${t(country)} · ${ref}` : ref;
+  const summary = (rows: [string, string][]) => (
+    <Card testID="payment-summary">
+      {rows.map(([k, v], i) => (
+        <View key={k} style={{ flexDirection: "row", justifyContent: "space-between", gap: S.md, paddingHorizontal: S.md, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: c.separator }}>
+          <Text variant="note" tone="secondary">{k}</Text>
+          <Text variant="note" weight="600" style={{ flexShrink: 1, textAlign: "right" }}>{v}</Text>
         </View>
+      ))}
+    </Card>
+  );
+  const body = (() => {
+    if (state === "checking" && !stalled) {
+      const secs = Math.max(1, Math.round(elapsed / 1000));
+      const steps: [string, "done" | "now" | "next", string?][] = [[t("Back from the payment page"), "done"], [t("Confirming the payment"), "now", t("{n} s", { n: secs })], [t("Updating your application"), "next"]];
+      return (
+        <Card padded testID="payment-steps">
+          {steps.map(([label, st, right], i) => (
+            <View key={label} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: c.separator }}>
+              <View style={{ width: 24, height: 24, borderRadius: 12, alignItems: "center", justifyContent: "center", backgroundColor: st === "done" ? c.success : st === "now" ? c.accent : c.fill }}>
+                {st === "done" ? <Icon name="checkmark" size={12} color={c.onAccent} weight="bold" /> : st === "now" ? <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: c.onAccent }} /> : null}
+              </View>
+              <Text variant="optionSm" style={{ flex: 1 }} tone={st === "next" ? "secondary" : undefined}>{label}</Text>
+              {!!right && <Text variant="note" tone="secondary" accessibilityLabel={t("{n} seconds", { n: secs })}>{right}</Text>}
+            </View>
+          ))}
+        </Card>
+      );
+    }
+    if (received && !guest) {
+      const steps: [string, string][] = [
+        ...(needsEmp ? [[t("A few more questions"), t("Trip dates, passport and job. About 3 minutes.")] as [string, string]] : []),
+        [t("Upload your documents"), t("Photos of your passport, Emirates ID and bank statement are fine.")],
+        [t("We prepare the file"), t("Ready in 1 to 2 days. We message you on WhatsApp.")],
+      ];
+      return (
+        <Card padded testID="payment-next-steps">
+          <View style={{ gap: S.md }}>
+            {steps.map(([a, b], i) => (
+              <View key={a} style={{ flexDirection: "row", gap: 12, alignItems: "flex-start" }}>
+                <View style={{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: i ? c.fill : c.accent }}>
+                  <Text variant="note" weight="600" color={i ? c.label : c.onAccent}>{i + 1}</Text>
+                </View>
+                <View style={{ flex: 1, gap: 2 }}><Text variant="optionSm" weight="600">{a}</Text><Text variant="note" tone="secondary">{b}</Text></View>
+              </View>
+            ))}
+          </View>
+        </Card>
+      );
+    }
+    if (stalled) return <View style={{ gap: S.sm }}>{summary([[t("Application"), appRow]])}<InfoNote tone="info" icon="checkmark.shield.fill" text={t("If you were charged it will count, no second charge")} /></View>;
+    if (state === "pending") return summary([[t("Application"), appRow], ...(amount != null ? [[t("Amount"), `${amount} AED`] as [string, string]] : []), ...(checkedAt ? [[t("Last checked"), clock(checkedAt)] as [string, string]] : [])]);
+    if (state === "failed") return summary([[t("Application"), appRow], ...(amount != null ? [[t("Amount"), `${amount} AED`] as [string, string]] : [])]);
+    if (state === "cancelled") return (
+      <Card padded testID="payment-cancelled-card">
+        <Text variant="optionSm" weight="600">{country ? t(country) : ref}</Text>
+        <Text variant="note" tone="secondary">{[t("Submitted, not paid"), amount != null ? `${amount} AED` : ""].filter(Boolean).join(" · ")}</Text>
+      </Card>
+    );
+    if (state === "offline") return <View style={{ gap: S.sm }}><InfoNote icon="wifi.slash" text={t("Nothing is lost. It updates when the connection returns.")} />{summary([[t("Application"), appRow], ...(checkedAt ? [[t("Last checked"), clock(checkedAt)] as [string, string]] : [])])}</View>;
+    return null;
+  })();
+
+  const actions = (() => {
+    const wa = (label: string, m: string) => <SecondaryButton whatsapp title={label} onPress={help(m)} testID="payment-whatsapp" />;
+    if (stalled) return <>
+      <PrimaryButton title={pt("Go to my application")} onPress={leave} testID="payment-leave" />
+      <SecondaryButton title={t("Retry now")} onPress={retryCheck} testID="payment-retry" />
+      {wa(t("Ask a person on WhatsApp"), "Hi EZvisa, my payment is still confirming.")}
+    </>;
+    if (state === "checking") return null;
+    if (received && guest) return <PrimaryButton title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} />;
+    if (received) return <>
+      <PrimaryButton title={needsEmp ? t("Continue application") : t("Upload documents")} onPress={next} testID="payment-continue" />
+      {state === "paid" && <SecondaryButton title={t("View receipt")} onPress={then(() => router.replace(`/receipt/${id}`, { withAnchor: true }))} testID="payment-receipt" />}
+    </>;
+    if (state === "pending") return <>
+      {guest ? <PrimaryButton title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} /> : <PrimaryButton title={t("Check again")} onPress={verify} testID="payment-check" />}
+      {wa(t("I paid but it isn't showing"), "Hi EZvisa, I paid but my payment isn't showing yet.")}
+    </>;
+    if (state === "failed") return <>
+      <PrimaryButton title={paying ? t("Opening secure payment…") : t("Retry payment")} loading={paying} disabled={paying} onPress={retry} testID="payment-retry" />
+      {wa(t("Pay via WhatsApp instead"), "Hi EZvisa, I need help paying for my application.")}
+    </>;
+    if (state === "cancelled") return <>
+      <PrimaryButton title={paying ? t("Opening secure payment…") : t("Pay now")} loading={paying} disabled={paying} onPress={retry} testID="payment-retry" />
+      <SecondaryButton title={t("Later, back to Home")} onPress={home} />
+    </>;
+    return <>
+      <PrimaryButton title={t("Try again")} onPress={verify} testID="payment-check" />
+      <SecondaryButton title={pt("Go to my application")} onPress={leave} />
+    </>;
+  })();
+  const done = ["paid", "confirming", "pending", "failed", "cancelled"].includes(state) && !stalled;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: Platform.OS === "ios" ? S.sm : insets.top + S.sm }} testID="payment-result">
+      <View style={{ height: 44, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingHorizontal: S.gutter }}>
+        {done && <HeaderIconButton icon="xmark" label={t("Done")} onPress={received ? then(leave) : leave} testID="payment-done" />}
       </View>
-      <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
-        {stalled && <PaymentStallActions retryLabel={t("Retry")} leaveLabel={pt("Go to my application")} onRetry={retryCheck} onLeave={leave} />}
-        {state === "paid" && !guest && <Button title={needsEmp ? t("Continue application") : t("Upload documents")} onPress={() => router.replace(needsEmp ? `/continue/${id}` : `/applications/${id}`, { withAnchor: true })} />}
-        {guest && ["paid", "confirming", "pending"].includes(state) && !stalled && <Button title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} />}
-        {["pending", "confirming", "offline"].includes(state) && !stalled && <Button title={t("Check again")} variant="secondary" onPress={verify} />}
-        {(state === "failed" || state === "cancelled") && <Button title={paying ? t("Opening secure payment…") : state === "failed" ? t("Retry") : t("Try again")} loading={paying} disabled={paying} onPress={retry} />}
-        {(state === "failed" || (state === "pending" && !stalled)) && <Button title={t("Pay via WhatsApp instead")} variant="plain" color={c.label} onPress={() => whatsapp("Hi EZvisa, I need help paying for my application.")} />}
-        {state !== "checking" && !stalled && <Button title={t("Done")} variant="plain" color={c.label} onPress={leave} />}
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", gap: S.lg, paddingHorizontal: S.gutter, paddingBottom: S.lg }}>
+        <View style={{ alignItems: "center", gap: S.sm }} accessibilityLiveRegion="polite">
+          <GlobiPose pose={stalled ? "thinking" : GLOBI[state]} size={GLOBI_SIZE.result} animated={state === "checking" || received} />
+          <Text variant="resultTitle" center accessibilityRole="header" testID="payment-state">{title}</Text>
+          {!!line && <Text variant="callout" tone="secondary" center style={{ maxWidth: 320 }}>{line}</Text>}
+        </View>
+        {body}
+      </ScrollView>
+      <View style={{ paddingHorizontal: S.gutter, paddingBottom: Math.max(insets.bottom, S.lg), gap: 10 }}>
+        {actions}
+        {(state === "checking" || stalled) && <Text variant="caption" tone="secondary" center>{t("We keep checking in the background.")}</Text>}
       </View>
+      <PushAsk visible={!!ask} country={country} onDone={() => { const go = ask; setAsk(null); go?.(); }} />
     </View>
   );
 }

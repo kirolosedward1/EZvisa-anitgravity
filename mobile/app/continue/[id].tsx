@@ -7,9 +7,8 @@ import { View, Platform, AccessibilityInfo, I18nManager } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Text, Skeleton, InlineError, EmptyState, Button, type IconName } from "../../components/ui";
+import { Text, Skeleton, InlineError, EmptyState, Button, showSaved, StepHeader, PressScale, type IconName } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
-import { CircleButton, StepIndicator, type FlowStep } from "../../components/flow";
 import { QuestionView } from "../../components/wizard/QuestionView";
 import { useColors, S, R } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
@@ -20,11 +19,12 @@ import { continueQuestions, continueError, Q_BY_ID, type Question } from "../../
 import { fetchTravellers, rememberTravellersAfterPayment, markTravellerUsed } from "../../lib/travellers";
 import { TravellerRows } from "../../components/wizard/travellers";
 import { success, error as hError, tap, select } from "../../lib/haptics";
+import { missingDocuments, flexibleNotes } from "../../lib/missing";
 
 const AUTO_MS = 260;
 
 /** Short label + icon per after-payment step; Documents (upload) always comes last. */
-const STEP_UI: Record<string, [string, IconName]> = { trip: ["Trip", "airplane"], passport: ["Passport", "person.text.rectangle"], spouse: ["Spouse", "person.2.fill"], employment: ["Work", "briefcase.fill"] };
+const STEP_UI: Record<string, [string, IconName]> = { trip: ["Trip", "airplane"], passport: ["Passport", "person.text.rectangle"], spouse: ["Spouse", "person.2.fill"], employment: ["Employment", "briefcase.fill"] };
 
 export default function ContinueApplication() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -72,7 +72,6 @@ export default function ContinueApplication() {
   const idx = q ? list.findIndex((x) => x.id === q.id) : -1;
   // Steps of this row's questions (website rows: passport + employment), then Documents.
   const stepKeys = [...new Set(list.map((x) => x.step as string))];
-  const flowSteps: FlowStep[] = [...stepKeys.map((k) => ({ key: k, label: t(STEP_UI[k]?.[0] ?? k), icon: STEP_UI[k]?.[1] ?? ("circle" as IconName) })), { key: "docs", label: t("Documents"), icon: "doc.on.doc.fill" as IconName }];
   const inStep = q ? list.filter((x) => x.step === q.step) : [];
   const patch = (x: Partial<WizardForm>) => setF((y) => (y ? { ...y, ...x } : y));
   const goTo = (next: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setQid(next); setShowErr(false); setAllMode(false); setErr(null); };
@@ -83,7 +82,10 @@ export default function ContinueApplication() {
     const run = saving.current.catch(() => {}).then(async () => {
       const r = await saveAfterPayment(id!, nf);
       if (!r.synced) throw new Error(t("Your application is already in review, so it can't be changed here. Please message us on WhatsApp."));
+      // App-only notes keys (kept by the contract's applicationColumns): "To get later" and the flexible window.
+      await patchNotes(id!, { missingDocuments: missingDocuments(nf), ...flexibleNotes(nf) }).catch(() => {});
       rememberTravellersAfterPayment(nf); // paid case: passport details + spouse become saved travellers (never throws)
+      showSaved(); // the server confirmed: 1.5 s "Saved" pill
     });
     saving.current = run;
     return run;
@@ -119,17 +121,15 @@ export default function ContinueApplication() {
   };
 
   const top = Platform.OS === "ios" ? S.sm : insets.top + S.xs;
+  // Canvas: Trip · Passport · Spouse · Employment segments (only the steps this row still has) and "Save" on the right:
+  // every answer is already saved, so Save just closes.
+  const segIndex = q ? stepKeys.indexOf(q.step) : 0;
   const header = (
-    <View style={{ paddingTop: top, paddingHorizontal: S.lg, gap: S.md, paddingBottom: S.sm }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
-        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={t("Back")} onPress={back} /></View>
-        <View style={{ flex: 1, alignItems: "center" }}><Text variant="subhead" weight="600" testID="continue-title">{t("Continue application")}</Text></View>
-        <CircleButton icon="xmark" label={t("Close")} onPress={close} />
-      </View>
-      {q && list.length > 0 && (
-        <StepIndicator steps={flowSteps} current={stepKeys.indexOf(q.step)} fraction={inStep.length ? inStep.indexOf(q) / inStep.length : 0}
-          a11yLabel={t("{step}, {i} of {n}", { step: t(DETAIL_STEP_TITLES[q.step as DetailStep]?.title ?? q.step), i: idx + 1, n: list.length })} />
-      )}
+    <View style={{ paddingTop: top, paddingBottom: S.sm }}>
+      <StepHeader steps={stepKeys.map((k) => t(STEP_UI[k]?.[0] ?? k))} index={segIndex} fraction={inStep.length && q ? inStep.indexOf(q) / inStep.length : 0} onBack={back}
+        a11yLabel={q ? t("{step}, {i} of {n}", { step: t(DETAIL_STEP_TITLES[q.step as DetailStep]?.title ?? q.step), i: idx + 1, n: list.length }) : t("Continue application")}
+        right={<PressScale onPress={close} accessibilityRole="button" accessibilityLabel={t("Save and close")} testID="continue-save" style={{ minWidth: 44, minHeight: 44, alignItems: "center", justifyContent: "center" }}>
+          <Text variant="callout" weight="600" tone="accent">{t("Save")}</Text></PressScale>} />
     </View>
   );
 
@@ -164,7 +164,7 @@ export default function ContinueApplication() {
   return (
     <QuestionView q={q} f={f} patch={patch} pick={pick} advance={() => advance()} showErr={showErr} errTick={errTick} settled={settled}
       header={header} entering={slideIn(dir, isRTL, reduce)} pageKey={q.id} titleRef={titleRef} allMode={allMode}
-      doneLabel={busy ? t("Saving…") : undefined} errorOf={(x, y) => continueError(x, y, saved.current)}
+      doneLabel={busy ? t("Saving…") : !list.slice(idx + 1).some((x) => pending(x, f)) ? t("Finish and upload documents") : undefined} errorOf={(x, y) => continueError(x, y, saved.current)}
       belowTitle={err || spousePicker ? <>{err ? <InlineError text={err} /> : null}{spousePicker}</> : undefined} />
   );
 }

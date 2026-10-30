@@ -1,4 +1,5 @@
-// Sticky footer. No application: "Apply for <country>" with the turnaround under it (no price: the server sets it).
+// Sticky footer (canvas Country.dc.html). No application: "From 249 AED" beside "Apply for <country>" (the contract's
+// service fee per traveller; the server still sets the amount charged), with the turnaround under it.
 // A draft: "Continue your <country> application". An open case: "View your application" in the secondary style, so a
 // second application is never started by accident. A hairline appears on top once content scrolls under it.
 import { useState } from "react";
@@ -9,6 +10,7 @@ import { footerKind, type CountryApp } from "../../lib/countryInfo";
 import { useT } from "../../lib/i18n";
 import { S, useColors } from "../../lib/theme";
 import { Button, Text } from "../ui";
+import { PRICE_AED } from "../../lib/wizard";
 
 /** «يوم إلى يومين» when the footnote fits on one line, otherwise the shorter «1–2 أيام عمل». */
 function ReadyWhen() {
@@ -37,7 +39,13 @@ export function CountryFooter({ name, state, loading, onApply, onContinue, onVie
       <Animated.View pointerEvents="none" style={[{ position: "absolute", top: 0, start: 0, end: 0, height: StyleSheet.hairlineWidth, backgroundColor: c.separator }, line]} testID="footer-hairline" />
       {loading && <Button title={t("Apply for {c}", { c: country })} loading onPress={() => {}} />}
       {!loading && kind === "apply" && <>
-        <Button title={t("Apply for {c}", { c: country })} onPress={onApply} />
+        <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}>
+          <View testID="footer-price">
+            <Text variant="footnote" tone="secondary">{t("From")}</Text>
+            <Text variant="title3" style={{ fontSize: 18 }} tabular>{`${PRICE_AED} ${t("AED")}`}</Text>
+          </View>
+          <View style={{ flex: 1 }}><Button title={t("Apply for {c}", { c: country })} onPress={onApply} /></View>
+        </View>
         <ReadyWhen />
       </>}
       {!loading && kind === "continue" && <Button title={t("Continue your {c} application", { c: country })} onPress={onContinue} />}

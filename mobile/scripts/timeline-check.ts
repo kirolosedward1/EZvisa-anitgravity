@@ -68,12 +68,14 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 { const a = row({ application_status: "rejected", payment_status: "paid" }, { ...app, wizard: selfEmployed }); const s = buildTimeline(a);
   ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download" && st(s, "file").at === null, "F refused after the file was delivered: File ready done, no time");
   ok(!s.some((x) => x.state === "current"), "F nothing is current once the case has ended");
+  ok(st(s, "decision").label === "Not approved" && st(s, "decision").state === "failed" && st(s, "documents").state === "done" && st(s, "appointment").state === "done", "F refused: documents and appointment done, decision Not approved");
   ok(next(a).title === "Visa refused", "F next action: Visa refused"); }
 
 // G. Granted (status completed).
 { const s = buildTimeline(row({ application_status: "completed", payment_status: "paid" }, { ...app }));
   ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download", "G granted: File ready done");
-  ok(s.at(-1)!.key === "file", "G the last step is File ready to download"); }
+  ok(s.at(-1)!.key === "decision" && s.at(-1)!.label === "Visa approved" && s.at(-1)!.state === "done", "G the last step is the decision: Visa approved");
+  ok(s.map((x) => x.key).join(",") === "submitted,paid,documents,file,appointment,decision", "G order: the file is ready before the appointment, then the decision"); }
 
 // H. Cancelled by EZvisa after payment.
 { const s = buildTimeline(row({ application_status: "cancelled", payment_status: "paid" }, { ...app, submittedAt: "2026-10-02T09:30:00Z" }));

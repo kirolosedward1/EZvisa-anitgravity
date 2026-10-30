@@ -12,7 +12,7 @@ import { buildChecklist } from "./checklist";
 import { appointmentOf } from "./appointment";
 import { isDiscarded } from "./discard";
 
-export type StepKey = "submitted" | "paid" | "documents" | "appointment" | "file";
+export type StepKey = "submitted" | "paid" | "documents" | "file" | "appointment" | "decision";
 /** done: the data says it happened. current: the step being worked on now. attention: needs the customer (failed
  *  payment, rejected document). failed: refused or cancelled. todo: not reached. */
 export type StepState = "done" | "current" | "todo" | "attention" | "failed";
@@ -50,22 +50,26 @@ export function buildTimeline(a: Application): Step[] {
   const complete = items.length > 0 && items.every((i) => i.state !== "missing" && i.state !== "rejected");
   const uploadTimes = (n.uploads ?? []).map((u: any) => valid(u?.at)).filter(Boolean) as string[];
   const lastUpload = uploadTimes.sort().at(-1) ?? null;
-  const docsDone = FILE_READY.includes(st) || (paid && complete);
+  const docsDone = FILE_READY.includes(st) || st === "rejected" || (paid && complete);
   steps.push({ key: "documents", label: "Documents", state: docsDone ? "done" : paid && rejected.length ? "attention" : "todo", at: docsDone ? lastUpload : null,
     note: !docsDone && paid && rejected.length ? "Re-upload needed" : undefined });
 
-  // 4. Appointment: only when staff entered one. The time shown is the appointment itself.
-  const ap = appointmentOf(a);
-  steps.push({ key: "appointment", label: "Appointment", state: ap ? "done" : "todo", at: ap?.at ?? null, scheduled: !!ap, note: ap?.centre });
-
-  // 5. File ready to download: what EZvisa delivers. Done once staff mark the file ready (or anything after it, the
-  //    embassy's decision included: completed / rejected only happen after the file was delivered). Cancelled ends the
-  //    case. No ready-at column exists, so no time.
-  if (st === "cancelled") steps.push({ key: "file", label: "Cancelled", state: "failed", at: null });
-  else steps.push({ key: "file", label: "File ready to download", state: FILE_READY.includes(st) || st === "rejected" ? "done" : "todo", at: null });
+  // 4. File ready to download: what EZvisa delivers, before the appointment (the customer brings the printed file).
+  //    Done once staff mark the file ready (or anything after it: completed / rejected only happen after the file was
+  //    delivered). Cancelled ends the case. No ready-at column exists, so no time.
+  const ended = st === "completed" || st === "rejected";
+  if (st === "cancelled") { steps.push({ key: "file", label: "Cancelled", state: "failed", at: null }); }
+  else {
+    steps.push({ key: "file", label: "File ready to download", state: FILE_READY.includes(st) || ended ? "done" : "todo", at: null });
+    // 5. Appointment: the date staff entered (or the customer added). A decision means it took place.
+    const ap = appointmentOf(a);
+    steps.push({ key: "appointment", label: "Appointment", state: ap || ended ? "done" : "todo", at: ap?.at ?? null, scheduled: !!ap, note: ap?.centre });
+    // 6. Decision: the consulate's answer, from the status staff set.
+    steps.push({ key: "decision", label: st === "completed" ? "Visa approved" : st === "rejected" ? "Not approved" : "Decision", state: st === "completed" ? "done" : st === "rejected" ? "failed" : "todo", at: null });
+  }
 
   // The first step not yet done is "current" (nothing is current once the case has ended). The file can be ready
-  // before an appointment is entered, so an open Appointment ahead of a finished File ready is still the current step.
+  // before an appointment is entered, so an open Appointment after a finished File ready is the current step.
   if (!["completed", "rejected", "cancelled"].includes(st)) {
     const next = steps.findIndex((s) => s.state !== "done");
     if (next >= 0 && steps[next].state === "todo") steps[next] = { ...steps[next], state: "current" };

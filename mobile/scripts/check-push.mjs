@@ -8,6 +8,7 @@ let n = 0; const ok = (name, fn) => { fn(); n++; console.log("ok -", name); };
 
 ok("tap route: application url from a push", () => assert.equal(notificationRoute({ type: "status", applicationId: id, url: `/applications/${id}` }), `/applications/${id}`));
 ok("tap route: reminder urls", () => { assert.equal(notificationRoute({ url: "/account" }), "/account"); assert.equal(notificationRoute({ url: "/apply" }), "/apply"); });
+ok("tap route: every push opens its own screen (appointment, continue, trip, receipt)", () => { for (const p of ["appointment", "continue", "trip", "receipt"]) { assert.equal(notificationRoute({ url: `/${p}/${id}` }), `/${p}/${id}`); assert.ok(needsSession(`/${p}/${id}`)); } });
 ok("tap route: rejects anything else", () => {
   for (const url of ["/applications/abc", "/applications/../account", "https://evil.example", "/payment/" + id, `/applications/${id}?x=1`, 42, null]) assert.equal(notificationRoute({ url }), null);
   assert.equal(notificationRoute(null), null); assert.equal(notificationRoute("x"), null);

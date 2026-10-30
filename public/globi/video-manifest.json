@@ -1,0 +1,73 @@
+{
+  "sourceDirectory": "/Users/kiro/Downloads/globi",
+  "processing": "Magnific video background removal; transparent VP9 WebM; high quality, foreground refinement",
+  "playback": "autoplay, muted, loop, playsInline; pause when outside viewport; user pause control",
+  "assets": [
+    {
+      "pose": "welcome",
+      "file": "welcome.webm",
+      "sourceCreation": "3778116641",
+      "transparentCreation": "jUMwcRzLD0"
+    },
+    {
+      "pose": "destination",
+      "file": "destination.webm",
+      "sourceCreation": "3778233242",
+      "transparentCreation": "UPB4p8gwny"
+    },
+    {
+      "pose": "passport",
+      "file": "passport.webm",
+      "sourceCreation": "3779344679",
+      "transparentCreation": "u5ZK6zJQLD"
+    },
+    {
+      "pose": "checklist",
+      "file": "checklist.webm",
+      "sourceCreation": "3778174908",
+      "transparentCreation": "rgTSYeqxtc"
+    },
+    {
+      "pose": "calendar",
+      "file": "calendar.webm",
+      "sourceCreation": "3778876544",
+      "transparentCreation": "rgTSYdbxtc"
+    },
+    {
+      "pose": "shield",
+      "file": "shield.webm",
+      "sourceCreation": "3779060272",
+      "transparentCreation": "bxnj2D65Y2"
+    },
+    {
+      "pose": "waiting",
+      "file": "waiting.webm",
+      "sourceCreation": "3778962175",
+      "transparentCreation": "rgTSYoBxtc"
+    },
+    {
+      "pose": "celebrate",
+      "file": "celebrate.webm",
+      "sourceCreation": "3778133409",
+      "transparentCreation": "p8gIj9Mehw"
+    },
+    {
+      "pose": "companion",
+      "file": "companion.webm",
+      "sourceCreation": "3778242048",
+      "transparentCreation": "WD1pbJIcXe"
+    },
+    {
+      "pose": "documents",
+      "file": "documents.webm",
+      "sourceCreation": "3778222703",
+      "transparentCreation": "6ACGhx8iJO"
+    },
+    {
+      "pose": "travel",
+      "file": "travel.webm",
+      "sourceCreation": "3779479414",
+      "transparentCreation": "IfyCwnGtvE"
+    }
+  ]
+}

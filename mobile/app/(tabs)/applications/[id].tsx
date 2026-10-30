@@ -1,11 +1,15 @@
-import { AppointmentCard } from "../../../components/Appointment";
+import { StatusHero, NextCard, ToGetLater, nextOf } from "../../../components/status/StatusCards";
+import { AppointmentDaySheet } from "../../../components/status/AppointmentDay";
+import { appointmentOf } from "../../../lib/appointment";
+import { missingDocuments, type MissingDoc } from "../../../lib/missing";
+import { track } from "../../../lib/analytics";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View, type ScrollViewInstance } from "react-native";
+import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, Share, View, type ScrollViewInstance } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import { useTabInset, Button, ListGroup, ListRow, EmptyState, Flag, StatusPill, Timeline, ProgressBar, IconTile, Skeleton, InlineError, Text, ChipGroup, Surface } from "../../../components/ui";
+import { useTabInset, Button, ListGroup, ListRow, EmptyState, Timeline, ProgressBar, Skeleton, InlineError, Text, ChipGroup, RowGroup, Row, InfoNote } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
-import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, needsContinue, employmentOf } from "../../../lib/data";
+import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, employmentOf, continueForm } from "../../../lib/data";
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
@@ -14,14 +18,12 @@ import { intentStatus, knownPayment, money, startPayment, usePaying, useQuote } 
 import { Linking } from "react-native";
 import { success, error as hError, tap } from "../../../lib/haptics";
 import { chooseSource, pickFrom, validateFile } from "../../../lib/capture";
-import { useT, ltr } from "../../../lib/i18n";
+import { useT } from "../../../lib/i18n";
 import { router } from "expo-router";
-import { countdown } from "../../../lib/countdown";
 import { askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
 import { Pressable } from "react-native";
-import { Icon, Chevron } from "../../../components/ui";
+import { Icon } from "../../../components/ui";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from "react-native-reanimated";
-import { formatDetailDate, formatDetailRange } from "../../../lib/dates";
 import { formatPayAmount, PAY_AED } from "../../../lib/payLabel";
 
 const EDITABLE = UPLOAD_STATUSES;
@@ -35,6 +37,7 @@ export default function ApplicationDetail() {
   const [upErr, setUpErr] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [reqs, setReqs] = useState<Requirement[] | null>(null);
+  const [day, setDay] = useState(false);
   /** quiet = background refresh: a failure keeps what is on screen instead of replacing it with an error. */
   const load = useCallback(async (quiet = false) => {
     try {
@@ -80,10 +83,10 @@ export default function ApplicationDetail() {
   // Ziina status of the checkout this device opened (server proxy), so a paid-but-not-yet-recorded payment shows as confirming.
   useEffect(() => { let on = true; if (unpaid) knownPayment(a!.id).then((p) => p && intentStatus(p.paymentId)).then((s) => on && setZiina(s ?? null)).catch(() => {}); return () => { on = false; }; }, [a?.id, a?.payment_status]);
   // The locked Trip plan row only scrolls to the payment step; paying always needs its own tap there.
-  const scroller = useRef<ScrollViewInstance>(null); const payY = useRef(0); const docsY = useRef(0);
+  const scroller = useRef<ScrollViewInstance>(null); const docsY = useRef(0);
   const [flash, setFlash] = useState<{ id: string; n: number } | null>(null);
   const toDocs = (firstId?: string) => { tap(); scroller.current?.scrollTo({ y: Math.max(0, docsY.current - 16), animated: true }); if (firstId) setTimeout(() => setFlash((f) => ({ id: firstId, n: (f?.n ?? 0) + 1 })), 350); };
-  const toPayStep = () => { tap(); scroller.current?.scrollTo({ y: Math.max(0, payY.current - S.md), animated: true }); };
+  const toPayStep = () => { tap(); scroller.current?.scrollTo({ y: 0, animated: true }); };
   const pay = async () => {
     if (!a || paying) return; setUpErr(null);
     try { const o = await startPayment(a.id); router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }); }
@@ -120,7 +123,32 @@ export default function ApplicationDetail() {
   const paid = isPaid(a); const locked = a.status !== "draft" && !paid;
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
+  const next = nextOf(a, list ? list.customer : null);
   const due = quote?.amount ?? a.total_amount;
+  if (next.kind === "pay" && due != null) { next.cta = PAY_AED; next.vars = { ...next.vars, amount: formatPayAmount(due) }; }
+  const ap = appointmentOf(a);
+  // "To get later" until the document arrives; nothing once the case is finished.
+  const received = new Set((list?.customer ?? []).filter((i) => !isOpen(i)).map((i) => i.req.document_type));
+  const later = ["completed", "rejected", "cancelled"].includes(a.status) ? []
+    : ((((a.notes as any)?.missingDocuments as MissingDoc[] | undefined) ?? missingDocuments(continueForm(a))).filter((m) => !received.has(m)));
+  const applyAgain = () => { tap(); router.push({ pathname: "/apply", params: { to: name } }); };
+  const primary = () => {
+    tap();
+    switch (next.kind) {
+      case "pay": pay(); return;
+      case "continue": router.push(`/continue/${a.id}`); return;
+      case "fix": case "upload": if (next.item && canUpload) pickFile(next.item.req.document_type, next.item.req.id); else toDocs(next.item?.req.id); return;
+      case "ready": case "book": case "appointment": router.push(`/appointment/${a.id}`); return;
+      case "refused": track("whatsapp_handoff", { screen: "refused" }); whatsapp(`Hi EZvisa, my ${name} visa (${a.reference}) was refused. Can a specialist call me?`); return;
+      case "approved": Share.share({ message: t("My {c} visa is approved. Applied with EZvisa: https://www.ezvisa.net", { c: t(name) }) }).catch(() => {}); return;
+    }
+  };
+  const alt = () => {
+    tap();
+    if (next.kind === "fix") { track("whatsapp_handoff", { screen: "doc-rejected" }); whatsapp(`Hi EZvisa, why does my ${next.item ? next.item.req.title : "document"} need replacing? (${a.reference})`); return; }
+    if (next.kind === "ready") { toDocs(); return; }
+    if (next.kind === "refused" || next.kind === "approved") applyAgain();
+  };
   return (
     <ScrollView ref={scroller} contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.tint} />}>
@@ -129,64 +157,46 @@ export default function ApplicationDetail() {
           {isAbandoned(a) && <Pressable onPress={() => askDiscard(() => { discardApplication(a).then(() => (router.canGoBack() ? router.back() : router.replace("/applications"))).catch((e) => setUpErr(e?.message ?? String(e))); }, t)} hitSlop={10} accessibilityRole="button" accessibilityLabel={t("Discard")} testID="detail-discard" style={{ minWidth: 36, height: 36, alignItems: "center", justifyContent: "center" }}><Icon name="trash" size={20} color={c.red} /></Pressable>}
           <SupportButton header context={`application ${a.reference}`} />
         </View>) }} />
-      <View style={{ marginHorizontal: S.md, marginTop: S.xs, marginBottom: S.xxl }}>
-        <Surface level={1} style={{ padding: S.md, gap: S.md }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: S.xs }}>
-            <StatusPill v={a.status} a={a} />
-            <Text variant="caption" tone="tertiary" tabular>{ltr(a.reference)}</Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
-            <Flag country={name} size={56} />
-            <View style={{ flex: 1 }}>
-              <Text variant="title2" accessibilityRole="header" numberOfLines={1}>{[t(name), a.travel_purpose && t(a.travel_purpose)].filter(Boolean).join(" · ")}</Text>
-              <Text variant="subhead" tone="secondary" tabular style={lang === "ar" ? { writingDirection: "rtl", textAlign: "right" } : undefined}>{[lang === "ar" ? a.full_name && ltr(a.full_name) : a.full_name, a.entry_date && ltr(formatDetailRange(a.entry_date, a.exit_date, lang))].filter(Boolean).join(" · ")}</Text>
-            </View>
-          </View>
-        </Surface>
+      {/* Canvas Status: hero, the one next thing (Next: you / Next: us), the steps, "To get later", Trip. */}
+      <View style={{ paddingHorizontal: S.gutter, paddingTop: S.xs, gap: S.lg, marginBottom: S.xl }}>
+        <StatusHero a={a} />
+        <NextCard n={next} onPrimary={next.cta ? primary : undefined} onAlt={next.alt ? alt : undefined} busy={next.kind === "pay" && paying} />
+        {ziina === "completed" && unpaid && <InfoNote tone="success" text={t("Payment received. Updating your application…")} />}
+        <RowGroup header={t("Status")}><Timeline a={a} t={t} /></RowGroup>
+        <ToGetLater items={later} onAdd={() => toDocs()} />
+        {a.status !== "cancelled" && (
+          <RowGroup header={t("Trip")}>
+            {paid && <Row label={t("Appointment")} icon="calendar" value={ap ? new Date(ap.at).toLocaleString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : t("Book now")} tint={!ap} onPress={() => { tap(); router.push(`/appointment/${a.id}`); }} testID="trip-appointment" />}
+            {paid && <Row label={t("What happens on the day")} icon="list.bullet" onPress={() => { tap(); setDay(true); }} testID="trip-day" />}
+            {paid
+              ? <Row label={t("Trip plan")} sub={t("Ideas, not bookings")} icon="map.fill" onPress={() => router.push(`/trip/${a.id}`)} testID="trip-plan" />
+              : <Row label={t("Trip plan")} sub={t("Your trip plan unlocks after payment")} icon="lock.fill" onPress={toPayStep} />}
+            {paid && <Row label={t("Receipt")} icon="doc.text.fill" value={[a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : "", "PDF"].filter(Boolean).join(" · ")} onPress={() => router.push(`/receipt/${a.id}`)} testID="trip-receipt" />}
+          </RowGroup>
+        )}
       </View>
-      <ListGroup header={t("Status")}><Timeline a={a} t={t} /></ListGroup>
-      {locked && <View onLayout={(e) => { payY.current = e.nativeEvent.layout.y; }} />}
-      {locked && (
-        <ListGroup header={t("Next step")} footer={t("Documents unlock after payment.")} inset={58}>
-          {ziina === "completed" || ziina === "pending"
-            ? <ListRow icon="clock.fill" iconColor={c.tint} title={ziina === "completed" ? t("Payment received") : t("Payment processing")} subtitle={t("Updating your application…")} onPress={() => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: "success" } })} />
-            : <ListRow icon="creditcard.fill" iconColor={c.green} title={paying ? t("Opening secure payment…") : due != null ? t(PAY_AED, { amount: formatPayAmount(due) }) : t("Pay securely")} subtitle={a.payment_status === "failed" ? t("The last payment didn't go through.") : t("Card, Apple Pay or Google Pay via Ziina")} onPress={paying ? undefined : pay} />}
-        </ListGroup>
-      )}
-      {needsContinue(a) && (
-        <ListGroup header={t("Next step")} footer={t("Then upload your documents below.")} inset={58}>
-          <NextStepCard icon="briefcase.fill" title={t("Continue application")} subtitle={t("Add your passport number and employment details.")} target={t("opens application form")} onPress={() => { tap(); router.push(`/continue/${a.id}`); }} />
-        </ListGroup>
-      )}
-      {paid && !needsContinue(a) && list && list.customer.length - done > 0 && (
-        <ListGroup header={t("Next step")} inset={58}>
-          <NextStepCard icon="arrow.up.doc.fill" title={t(list.customer.length - done === 1 ? "Submit 1 document" : "Submit {n} documents", { n: list.customer.length - done })} target={t("opens documents")}
-            subtitle={(() => { const o = list.customer.filter(isOpen).map((i) => t(i.req.title)); return o.slice(0, 3).join(", ") + (o.length > 3 ? " " + t("+{n} more", { n: o.length - 3 }) : ""); })()}
-            onPress={() => toDocs(list.customer.find(isOpen)?.req.id)} />
-        </ListGroup>
-      )}
-      <ListGroup header={t("Trip")} inset={16}>
-        <ListRow title={t("Traveller")} value={a.full_name} />
-        {!!a.entry_date && <ListRow title={t("Dates")} value={ltr(formatDetailRange(a.entry_date, a.exit_date, lang))} wrapValue />}
-        {paid && <ListRow title={t("Paid")} value={formatDetailDate(((a as any).paid_at as string | undefined) ?? a.payments.find((p) => ["paid", "completed"].includes(p.status))?.created_at ?? (a as any).updated_at ?? null, lang)} />}
-        {(a.total_amount != null || quote) && <ListRow title={t("Total")} value={a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : money(quote)} />}
-        {countdown(a.entry_date, a.exit_date, t) && <ListRow title={t("Countdown")} value={countdown(a.entry_date, a.exit_date, t)!} />}
-        {a.status !== "cancelled" && (paid
-          ? <ListRow icon="map.fill" iconColor={c.indigo} title={t("Trip plan")} subtitle={t("Ideas, not bookings")} onPress={() => router.push(`/trip/${a.id}`)} />
-          : <ListRow icon="lock.fill" iconColor={c.grey} title={t("Trip plan")} subtitle={t("Your trip plan unlocks after payment")} onPress={toPayStep} />)}
-      </ListGroup>
-      <AppointmentCard a={a} />
+      <AppointmentDaySheet visible={day} onClose={() => setDay(false)} travellers={a.applicants.length} />
       {locked ? (
         <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
       ) : list ? (<>
         <View onLayout={(e) => { docsY.current = e.nativeEvent.layout.y; }} />
-        <ListGroup header={t("Your documents · {i} of {n}", { i: done, n: list.customer.length })} footer={canUpload ? t("PDF or image · max 4 MB. Tap a missing item to upload it.") : undefined} inset={58}>
-          <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} accessible accessibilityLabel={`${done} of ${list.customer.length} documents provided`}>
-            <View style={{ height: 4, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 4, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.green : c.tintFill }} /></View>
-          </View>
-          {list.customer.map((i) => <CheckRow key={i.req.id} flash={flash?.id === i.req.id ? flash.n : 0} i={i} busy={busyType(i.req.document_type)} canUpload={canUpload}
-            onPress={() => (isOpen(i) ? (canUpload ? pickFile(i.req.document_type, i.req.id) : undefined) : i.doc && open(i.doc.storage_path))} />)}
-        </ListGroup>
+        {/* Canvas Upload: "Your documents · i of n received", then Still needed and Received. */}
+        <View style={{ paddingHorizontal: S.gutter, gap: S.xs, marginBottom: S.sm }} accessible accessibilityLabel={t("{i} of {n} received", { i: done, n: list.customer.length })}>
+          <Text variant="headline" accessibilityRole="header">{t("Your documents")}</Text>
+          <Text variant="note" tone="secondary">{t("{i} of {n} received", { i: done, n: list.customer.length })}</Text>
+          <View style={{ height: 4, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 4, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.success : c.accent }} /></View>
+        </View>
+        {list.customer.some(isOpen) && (
+          <ListGroup header={t("Still needed")} footer={canUpload ? t("PDF or image · max 4 MB. Tap a missing item to upload it.") : undefined} inset={58}>
+            {list.customer.filter(isOpen).map((i) => <CheckRow key={i.req.id} flash={flash?.id === i.req.id ? flash.n : 0} i={i} busy={busyType(i.req.document_type)} canUpload={canUpload}
+              onPress={canUpload ? () => pickFile(i.req.document_type, i.req.id) : undefined} />)}
+          </ListGroup>
+        )}
+        {list.customer.some((i) => !isOpen(i)) && (
+          <ListGroup header={t("Received")} inset={58}>
+            {list.customer.filter((i) => !isOpen(i)).map((i) => <CheckRow key={i.req.id} i={i} busy={busyType(i.req.document_type)} canUpload={false} onPress={i.doc ? () => open(i.doc!.storage_path) : undefined} />)}
+          </ListGroup>
+        )}
         {!!list.ezvisa.length && (
           <ListGroup header={t("We prepare these")} inset={58}>
             {list.ezvisa.map((i) => <CheckRow key={i.req.id} i={i} busy={false} canUpload={false} onPress={i.doc?.storage_path ? () => open(i.doc!.storage_path) : undefined} />)}
@@ -207,9 +217,6 @@ export default function ApplicationDetail() {
         {picking && <View style={{ padding: S.md }}><ChipGroup label={t("Document type")} options={DOC_TYPES} value="" onChange={pickFile} /></View>}
       </ListGroup>}
       <InlineError text={upErr} />
-      <ListGroup header={t("Payments")} inset={58}>
-        {a.payments.map((p) => <ListRow key={p.id} icon="creditcard.fill" iconColor={c.grey} title={p.amount != null ? money({ amount: p.amount, currency: p.currency }) : t("Card payment")} subtitle={ziina === "completed" && p.status !== "paid" ? t("Paid · confirming") : formatDetailDate(p.created_at, lang)} value={t(STATUS_LABEL[p.status] ?? p.status)} onPress={paid ? () => router.push(`/receipt/${a.id}`) : undefined} a11yHint={paid ? t("Payment receipt") : undefined} />)}
-      </ListGroup>
       <ListGroup header={t("Support")} footer={t("Your reference {r} is added to the message.", { r: a.reference })} inset={58}>
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
@@ -238,21 +245,6 @@ function UploadRow({ j }: { j: UploadJob }) {
         </View>
       )}
     </View>
-  );
-}
-
-function NextStepCard({ icon, title, subtitle, target, onPress }: { icon: "briefcase.fill" | "arrow.up.doc.fill"; title: string; subtitle?: string; target: string; onPress: () => void }) {
-  const c = useColors();
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${title}, ${target}`} accessibilityHint={subtitle}
-      style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm + 2, backgroundColor: pressed ? c.fillSubtle : "transparent" })}>
-      <View style={{ width: 32, height: 32, borderRadius: R.sm, backgroundColor: c.accentSoft, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={16} color={c.accent} /></View>
-      <View style={{ flex: 1 }}>
-        <Text variant="headline">{title}</Text>
-        {!!subtitle && <Text variant="subhead" tone="secondary" numberOfLines={2}>{subtitle}</Text>}
-      </View>
-      <Chevron />
-    </Pressable>
   );
 }
 

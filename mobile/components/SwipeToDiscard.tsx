@@ -1,11 +1,12 @@
 // Swipe a row toward the leading edge to discard it (the iOS list pattern, built on PanResponder + Reanimated so no new
-// native module is needed). A short swipe leaves a red Discard button showing; tapping it discards. A long swipe (past
-// half the row) discards at once. The swipe is the confirmation, so neither asks again. RTL swipes the other way.
+// native module is needed). A short swipe leaves a red Discard button showing; tapping it, or a long swipe past half
+// the row, asks once (canvas DiscardConfirm: the action sheet from lib/discard askDiscard) and the row slides back
+// while it asks, so "Keep it" leaves everything as it was. RTL swipes the other way.
 import { createContext, useContext, useRef, useState } from "react";
 import { I18nManager, PanResponder, Pressable, StyleSheet, View, type LayoutChangeEvent } from "react-native";
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring, withTiming } from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { Icon, Text } from "./ui";
-import { useColors, S, SPRING, DUR } from "../lib/theme";
+import { useColors, S, SPRING } from "../lib/theme";
 import { useT } from "../lib/i18n";
 import { medium, select } from "../lib/haptics";
 
@@ -22,7 +23,7 @@ export function SwipeToDiscard({ onDiscard, radius = 0, enabled = true, testID, 
   const x = useSharedValue(0); const width = useRef(0); const start = useRef(0); const past = useRef(false);
   const [open, setOpen] = useState(false); const [dragging, setDragging] = useState(false); const cooling = useRef(false);
   const snap = (to: number) => { x.value = withSpring(to, SPRING.press); setOpen(to !== 0); };
-  const discard = () => { medium(); x.value = withTiming(dir * (width.current || 400), { duration: DUR.fast }, (done) => { if (done) runOnJS(onDiscard)(); }); };
+  const discard = () => { medium(); snap(0); onDiscard(); };
   // While dragging (and briefly after), a cover on the row takes the touch, so the tap that ends a swipe never opens the row.
   const drag = (on: boolean) => { lock(on); if (on) { setDragging(true); return; } cooling.current = true; setTimeout(() => { cooling.current = false; setDragging(false); }, 350); };
   const live = useRef({ snap, discard, enabled, dir, drag }); live.current = { snap, discard, enabled, dir, drag };

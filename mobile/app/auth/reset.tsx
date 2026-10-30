@@ -30,7 +30,7 @@ export default function ResetPassword() {
     finally { inFlight.current = false; setBusy(false); }
   };
   if (!session) return (
-    <AuthShell nav="close" title={t("Reset password")} testID="auth-reset-nosession">
+    <AuthShell nav="close" pose="lock" title={t("Reset password")} testID="auth-reset-nosession">
       <View style={{ gap: S.md }}>
         <Text variant="body" tone="secondary">{t("Open the reset link from your email on this phone.")}</Text>
         <Button title={t("Send reset link")} onPress={() => router.replace("/auth/forgot")} />
@@ -38,7 +38,7 @@ export default function ResetPassword() {
     </AuthShell>
   );
   return (
-    <AuthShell nav="none" title={t("Choose a new password")} subtitle={session.user.email ?? undefined} testID="auth-reset">
+    <AuthShell nav="none" pose="lock" title={t("Choose a new password")} testID="auth-reset">
       <View style={{ gap: S.sm }}>
         <PasswordField isNew value={pw} onChangeText={(v) => { setPw(v); setErr(null); }} onSubmitEditing={save} returnKeyType="done" autoFocus />
         {!err && <Text variant="footnote" tone="secondary" style={{ marginHorizontal: S.xs }}>{t("At least 8 characters.")}</Text>}

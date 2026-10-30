@@ -14,8 +14,10 @@ import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
-import { Button, Text, Icon, SuccessCheck, InlineError } from "../../components/ui";
-import { CircleButton, StepIndicator, type FlowStep } from "../../components/flow";
+import { Button, Text, Icon, SuccessCheck, InlineError, StepHeader, HeaderIconButton, QuestionHeader, Card, RowGroup, Row, PrimaryButton, SecondaryButton, InfoNote, SheetScaffold, StickyCTA, ChoiceTile } from "../../components/ui";
+import { AuthForm } from "../../components/AuthForm";
+import { missingDocuments, MISSING_LABEL } from "../../lib/missing";
+import { INSURANCE_AED_PER_TRAVELLER, VISA_FEE_EUR, appointmentFeesAed } from "../../config/pricing";
 import { Note } from "../../components/wizard/fields";
 import { useFmtDate } from "../../components/wizard/answers";
 import { useColors, S, R, curve } from "../../lib/theme";
@@ -38,8 +40,8 @@ import { useNetInfo } from "@react-native-community/netinfo";
 import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
 import { WORLD } from "../../lib/world";
-import { emptyForm, type WizardForm, type WizardStep, type Traveller, TRAVELLER_KEYS, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, hasAnswers, safeDecode } from "../../lib/wizard";
-import { type Question, setAccountEmail, setTravellers, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue } from "../../lib/questions";
+import { emptyForm, type WizardForm, type WizardStep, type Traveller, TRAVELLER_KEYS, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, hasAnswers, safeDecode, priceAed, PRICE_AED } from "../../lib/wizard";
+import { type Question, setAccountEmail, setTravellers, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue, phoneDisplay } from "../../lib/questions";
 
 const WORLD_NAMES = WORLD.map((w) => w.name);
 const isoDate = (s?: string) => (s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(s)) ? s : "");
@@ -53,15 +55,33 @@ const cleanAfterPrefill = (f: WizardForm): WizardForm => coerceResidence({ ...f,
 const STEP_ORDER: WizardStep[] = ["destination", "personal", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
-/** Where you are: Details (the questions before payment) -> Review -> Payment. The line after Details fills as you answer. */
-function Progress({ f, page }: { f: WizardForm; page: string }) {
-  const { t } = useT();
-  const p = progressOf(f, page); const cur = p.segs[p.stepIndex];
-  const review = p.curStep === "payment";
-  const steps: FlowStep[] = [{ key: "details", label: t("Details"), icon: "person.text.rectangle" }, { key: "review", label: t("Review"), icon: "doc.text" }, { key: "pay", label: t("Payment"), icon: "creditcard" }];
-  const label = t("{step}, step {i} of {n}", { step: t(STEP_TITLES[p.curStep].title), i: p.stepIndex + 1, n: p.steps.length }) + (!review && cur ? ", " + t("{i} of {n}", { i: cur.index, n: cur.count }) : "");
-  return <StepIndicator steps={steps} current={review ? 1 : 0} fraction={review ? 0 : cur?.fill ?? 0} a11yLabel={label} />;
+/** After Review, before the payment page (canvas): create the account (guests), insurance, the price breakdown. */
+type After = "signup" | "insurance" | "price";
+/** Insurance choice (canvas Insurance): a separately quoted request or the customer's own policy. Never charged here;
+ *  stored as additional_notes.insurancePreference ("quote" | "own"), the website's dashboard key. */
+type Insurance = "quote" | "own" | "later";
+/** Short labels for the Review rows. */
+const REVIEW_LABEL: Record<string, string> = { destination: "Destination", nationality: "Nationality", name: "Name", dateOfBirth: "Date of birth", cityOfResidence: "Emirate", contact: "Phone", travellingWith: "Travelling" };
+
+/** One Review row (canvas): label, value, chevron; the whole row opens that question and returns straight here. */
+function ReviewRow({ label, value, error, onPress, tag, testID }: { label: string; value: string; error?: string; onPress?: () => void; tag?: string; testID?: string }) {
+  const c = useColors(); const { t } = useT();
+  return (
+    <PressScale onPress={onPress} disabled={!onPress} scaleTo={onPress ? 0.99 : 1} accessibilityRole={onPress ? "button" : "text"} accessibilityLabel={`${label}: ${value || error || ""}`} accessibilityHint={onPress ? t("Opens the question") : undefined} testID={testID}
+      style={{ minHeight: 50, paddingHorizontal: S.md, paddingVertical: S.sm, flexDirection: "row", alignItems: "center", gap: S.sm }}>
+      <Text variant="callout" tone="secondary" style={{ width: "38%" }}>{label}</Text>
+      <View style={{ flex: 1, alignItems: "flex-end" }}>
+        {error && !value ? <Text variant="body" weight="600" tone="red">{error}</Text> : <Text variant="body" weight="600" style={{ textAlign: "right" }}>{value}</Text>}
+        {!!error && !!value && <Text variant="footnote" tone="red" style={{ textAlign: "right" }}>{error}</Text>}
+      </View>
+      {!!tag && <View style={{ paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, backgroundColor: c.fill }}><Text variant="footnote" tone="secondary">{tag}</Text></View>}
+      {!!onPress && <Icon name="chevron.right" size={13} color={c.textTertiary} weight="semibold" />}
+    </PressScale>
+  );
 }
+
+/** Milliseconds since `at` (event handlers only; keeps the clock out of render). */
+const msSince = (at: number) => Date.now() - at;
 
 export default function Apply() {
   const c = useColors(); const reduce = useReducedMotion(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const fmt = useFmtDate();
@@ -112,7 +132,9 @@ export default function Apply() {
   }, [pickedTraveller, draftId, session]);
   const [profileAsk, setProfileAsk] = useState<{ uid: string; key: string; changes: ProfileChange[] } | null>(null);
   const [profileBusy, setProfileBusy] = useState(false); const [profileErr, setProfileErr] = useState<string | null>(null); const [profileSavedFor, setProfileSavedFor] = useState<string | null>(null);
-  const [milestone, setMilestone] = useState<string | null>(null); const prevStep = useRef<WizardStep | null>(null);
+  const prevStep = useRef<WizardStep | null>(null);
+  const [after, setAfter] = useState<After | null>(null); const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
+  const [insurance, setInsurance] = useState<Insurance>("quote");
   useEffect(() => { listRequirements().then(setReqs).catch(() => {}); cancelDraftReminder(); }, []);
 
   const page = hydrated ? normalizePage(rawPage, f) : rawPage;
@@ -124,8 +146,7 @@ export default function Apply() {
     const prev = prevStep.current; prevStep.current = step;
     if (!prev || STEP_ORDER.indexOf(step) <= STEP_ORDER.indexOf(prev) || editing) return;
     const done = t("{step} done", { step: t(STEP_TITLES[prev].title) });
-    success(); setMilestone(done); AccessibilityInfo.announceForAccessibility(done);
-    const tm = setTimeout(() => setMilestone(null), 2200); return () => clearTimeout(tm);
+    success(); AccessibilityInfo.announceForAccessibility(done); // haptic on step complete (the Saved pill shows the save)
   }, [step]);
   // Signed in, new application: fill the empty answers from the user's own profile (lib/profile.ts) and offer the other
   // stable answers of their last application. A draft that already has personal answers, or the account's draft that
@@ -242,6 +263,23 @@ export default function Apply() {
     track("wizard_step_viewed", { step: s as any });
   }, [page, hydrated]);
   useEffect(() => { if (submitted) { track("wizard_step_completed", { step: "review" }); track("wizard_submit", { guest: !!submitted.guestEmail }); } }, [!!submitted]);
+  // v1 product events: each question's time on screen, answers and backs (question ids only, never answers).
+  const qStart = useRef<{ id: string; at: number } | null>(null);
+  useEffect(() => {
+    if (!hydrated || submitted || !q) return;
+    track("wizard_question_view", { question: q.id, step: q.step as any }); qStart.current = { id: q.id, at: msSince(0) };
+  }, [page, hydrated]);
+  const timed = (e: "wizard_question_answer" | "wizard_question_back") => {
+    const s0 = qStart.current; if (!s0 || !q || s0.id !== q.id) return;
+    track(e, { question: q.id, step: q.step as any, ms: msSince(s0.at) }); qStart.current = null;
+  };
+  // Account created or signed in at "Create account to pay": continue to insurance with the same draft.
+  useEffect(() => {
+    if (after !== "signup" || !session) return;
+    const prov = (session.user.app_metadata?.provider as string | undefined) ?? "email";
+    track("signup_at_pay", { method: prov === "apple" || prov === "google" ? prov : "email" });
+    setAfter("insurance");
+  }, [after, session]);
   // New question: move VoiceOver focus to its title.
   useEffect(() => {
     setShowErr(false);
@@ -261,7 +299,7 @@ export default function Apply() {
     if (nf !== nf0) { fRef.current = nf; patch({ email: nf.email }); }
     const e = firstError(q, nf);
     if (e) { hError(); setShowErr(true); setErrTick((n) => n + 1); AccessibilityInfo.announceForAccessibility(t(e)); return; }
-    tap();
+    tap(); timed("wizard_question_answer");
     const list = activeQuestions(nf);
     if (editing) {
       const fresh = list.find((x) => !editing.has(x.id)); // became relevant because of this edit (e.g. married -> spouse questions)
@@ -303,7 +341,9 @@ export default function Apply() {
   };
   const back = () => {
     tap();
+    if (after) { setAfter(after === "price" ? "insurance" : null); return; }
     if (allMode) { setAllMode(false); return; }
+    timed("wizard_question_back");
     if (editing) { setEditing(null); goTo(REVIEW, -1); return; }
     const list = activeQuestions(f);
     if (page === REVIEW) { goTo(`q:${list[list.length - 1].id}`, -1); return; }
@@ -311,10 +351,11 @@ export default function Apply() {
     if (i > 0) goTo(`q:${list[i - 1].id}`, -1); else close();
   };
   const close = () => {
+    if (!submitted) track("wizard_exit", { question: q?.id ?? "review" });
     if (hasAnswers(fRef.current) && !submitted) scheduleDraftReminder(t("Continue your application"), t("Your answers are saved."));
     if (router.canGoBack()) router.back(); else router.replace("/");
   };
-  const edit = (id: string) => { tap(); setEditing(new Set(activeQuestions(f).map((x) => x.id))); goTo(`q:${id}`, -1); };
+  const edit = (id: string) => { tap(); setAfter(null); setEditing(new Set(activeQuestions(f).map((x) => x.id))); goTo(`q:${id}`, -1); };
 
   const spouse = showSpouse(f);
   // Price only from the server (check-payment quote for the saved row, or the create-payment response); never computed here.
@@ -322,7 +363,14 @@ export default function Apply() {
   const paying = usePaying();
   const invalid = firstInvalid(f);
   /** Submit once: button disabled + in-flight guard + the same draft row updated idempotently (lib/data.ts). */
-  const submit = async () => {
+  /** Opens the payment gateway for a submitted application, then the verified result screen. */
+  const payNow = async (id: string) => {
+    if (paying) return;
+    const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned } }); setTimeout(() => setSubmitted(null), 400); };
+    try { track("payment_started"); track("payment_start"); const o = await startPayment(id); result(o.returned); }
+    catch (e: any) { if (e?.busy) return; if (e?.alreadyPaid) { result("success"); return; } hError(); setErr(e?.message ?? String(e)); }
+  };
+  const submit = async (pay = false) => {
     if (inFlight.current) return;
     if (invalid) { hError(); edit(invalid.id); return; }
     inFlight.current = true; setBusy(true); setErr(null);
@@ -337,7 +385,9 @@ export default function Apply() {
       const id = await flushDraft();
       if (!id) { hError(); if (!hasConflict()) setErr(offline ? t("You're offline. Connect to submit.") : t("Not saved yet. Check your connection and try again.")); return; }
       const a = await submitApplication(f, id, baseAt()); success(); cancelDraftReminder();
+      if (insurance !== "later") patchNotes(a.id, { insurancePreference: insurance } as any).catch(() => {});
       setSubmitted({ applicationId: a.id, reference: a.reference, destination: a.destination_country, spouse }); clearDraft();
+      if (pay) { inFlight.current = false; setBusy(false); await payNow(a.id); }
     } catch (e: any) { hError(); if (e instanceof DraftConflictError) checkRemote(); else setErr(e?.message ?? String(e)); }
     finally { inFlight.current = false; setBusy(false); }
   };
@@ -372,98 +422,172 @@ export default function Apply() {
   );
 
   const entering = slideIn(dir, isRTL, reduce);
+  const prog = progressOf(f, page); const seg = prog.segs[prog.stepIndex];
+  const review = page === REVIEW;
+  const stepIndex = review || after ? 2 : prog.stepIndex;
+  const fraction = after === "signup" ? 0.85 : after === "insurance" ? 0.4 : after === "price" ? 0.7 : review ? 0.5 : seg?.fill ?? 0;
+  const a11y = review || after ? t("Review and pay, step 3 of 3") : t("{step}, question {i} of {n}", { step: t(prog.curStep === "destination" ? "Destination" : "Traveller"), i: Math.max(1, seg?.index ?? 1), n: Math.max(1, seg?.count ?? 1) });
   const header = (
-    <View style={{ paddingTop: top, paddingHorizontal: S.lg, gap: S.md, paddingBottom: S.sm }}>
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
-        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><CircleButton icon="chevron.left" label={editing ? t("Back to review") : t("Back")} onPress={back} /></View>
-        <View style={{ flex: 1, alignItems: "center" }}>
-          {milestone ? <Text variant="caption" weight="600" color={c.green} testID="milestone">{"✓ " + milestone}</Text> : <SyncIndicator hasAnswers={hasAnswers(f)} />}
-        </View>
-        <CircleButton icon="xmark" label={t("Close")} onPress={() => { tap(); close(); }} />
-      </View>
-      <Progress f={f} page={page} />
+    <View style={{ paddingTop: top, paddingBottom: S.sm, gap: S.xxs }}>
+      <StepHeader steps={[t("Destination"), t("Traveller"), t("Review & pay")]} index={stepIndex} fraction={fraction} onBack={back} backLabel={editing ? t("Back to review") : t("Back")} a11yLabel={a11y}
+        right={<HeaderIconButton icon="questionmark.circle" label={t("Help on WhatsApp")} onPress={() => { track("whatsapp_handoff", { screen: review ? "review" : "wizard" }); whatsapp(); }} testID="wizard-help" />} />
+      <View style={{ alignItems: "center" }}><SyncIndicator hasAnswers={hasAnswers(f)} /></View>
     </View>
   );
+  const travellers2 = showSpouse(f) ? 2 : 1;
+  const due = quote?.amount ?? priceAed(f.spouseAccompanying, f.travelingWith);
+  const travellerNames = [[f.firstName, f.lastName].filter(Boolean).join(" ") || t("You"), ...(travellers2 > 1 ? [t("Your spouse")] : [])];
 
-  // ---------------- Review ----------------
+  // ---------------- After Review: create account, insurance, price ----------------
+  if (page === REVIEW && after === "signup") return (
+    <View style={{ flex: 1, backgroundColor: c.bg }} testID="signup-at-pay">
+      {header}
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: Math.max(insets.bottom, S.lg) + S.lg, gap: S.lg }}>
+        <QuestionHeader question={t("Create an account so your application has a home.")} pose="lock" />
+        <AuthForm mode={authMode} onMode={setAuthMode} initialEmail={f.email || undefined} />
+        <RowGroup><Row label={t("Your answers")} value={t("Kept, nothing to redo")} />{!!f.phone && <Row label={t("Phone")} value={phoneDisplay(f.phone)} />}</RowGroup>
+      </ScrollView>
+    </View>
+  );
+  if (page === REVIEW && after === "insurance") {
+    const each = t("from {a} AED each", { a: INSURANCE_AED_PER_TRAVELLER });
+    const opts: [Insurance, string, string][] = [
+      ["quote", travellers2 > 1 ? t("Quote insurance for both travellers") : t("Quote insurance for me"), t("€30,000 medical cover, accepted by every Schengen consulate. Quoted separately.")],
+      ["own", t("I already have a policy"), t("Upload the certificate with your documents")],
+      ["later", t("Not now"), t("You can add it before the appointment")],
+    ];
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg }} testID="insurance">
+        {header}
+        <ScrollView contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+          <QuestionHeader question={t("Add travel insurance? Schengen needs €30,000 cover.")} pose="shield" />
+          <View style={{ gap: 10 }} accessibilityRole="radiogroup" accessibilityLabel={t("Travel insurance")}>
+            {opts.map(([v, label, sub]) => <ChoiceTile key={v} label={label} sub={sub} selected={insurance === v} onPress={() => setInsurance(v)} testID={`insurance-${v}`}
+              trailing={v === "quote" ? <Text variant="note" weight="600" tone="accent">{each}</Text> : undefined} />)}
+          </View>
+          <RowGroup>
+            <Row label={t("Price")} value={t("Quoted separately, not part of this payment")} />
+            <Row label={t("Service fee")} value={t("Stays the same")} />
+          </RowGroup>
+        </ScrollView>
+        <StickyCTA><PrimaryButton title={t("Continue")} onPress={() => { tap(); setAfter("price"); }} testID="insurance-continue" /></StickyCTA>
+      </View>
+    );
+  }
+  if (page === REVIEW && after === "price") {
+    const fees = appointmentFeesAed(travellers2);
+    const line = (k: string, v: string, tone?: "secondary") => (
+      <View key={k} style={{ flexDirection: "row", justifyContent: "space-between", gap: S.sm, paddingVertical: 6 }}>
+        <Text variant="callout" style={{ flex: 1 }}>{k}</Text><Text variant="callout" weight="500" tone={tone} tabular>{v}</Text>
+      </View>
+    );
+    return (
+      <View style={{ flex: 1, backgroundColor: c.bg }} testID="price-breakdown">
+        {header}
+        <ScrollView contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+          <QuestionHeader question={t("Here is the full price.")} pose="wallet" />
+          <Card padded>
+            {travellerNames.map((n, i) => (
+              <View key={i} style={{ paddingTop: i ? S.sm : 0, marginTop: i ? S.xs : 0, borderTopWidth: i ? 1 : 0, borderTopColor: c.separator }}>
+                <Text variant="note" weight="600" tone="secondary">{n}</Text>
+                {line(t("Visa service"), `${PRICE_AED} ${t("AED")}`)}
+                {insurance === "quote" && line(t("Travel insurance"), t("quoted separately"), "secondary")}
+              </View>
+            ))}
+            <View style={{ height: 1, backgroundColor: c.separator, marginVertical: S.xs }} />
+            {line(t("Subtotal"), `${priceAed(f.spouseAccompanying, f.travelingWith)} ${t("AED")}`)}
+            {line(t("VAT 5%"), t("included"), "secondary")}
+            <View style={{ flexDirection: "row", justifyContent: "space-between", paddingTop: 6 }}>
+              <Text variant="headline">{t("Due now")}</Text><Text variant="headline" tabular testID="due-now">{`${formatPayAmount(due)} ${t("AED")}`}</Text>
+            </View>
+          </Card>
+          <Card padded>
+            <Text variant="note" weight="600" tone="secondary">{t("Paid at the appointment, not to EZvisa")}</Text>
+            {line(t("Visa fee · €{e} each", { e: VISA_FEE_EUR }), t("about {a} AED", { a: fees.visa }), "secondary")}
+            {line(t("Visa centre fee"), t("about {a} AED", { a: fees.centre }), "secondary")}
+          </Card>
+          <InlineError text={err} />
+        </ScrollView>
+        <StickyCTA caption={t("Full refund if you cancel before review starts.")}>
+          <PrimaryButton title={paying ? t("Opening secure payment…") : t("Pay {a} AED securely", { a: formatPayAmount(due) })} loading={busy || paying} disabled={busy || paying || !SUPABASE_ENABLED || (offline && !!session)} onPress={() => submit(true)} testID="pay-now" />
+        </StickyCTA>
+        <DraftConflictSheet />
+      </View>
+    );
+  }
+
+  // ---------------- Review (canvas Review.dc.html) ----------------
   if (page === REVIEW) {
     const qs = activeQuestions(f).filter((x) => x.kind !== "traveller"); // the picker owns no answer: its values show on the other rows
-    const groups = (["destination", "personal"] as const).map((s) => ({ s, qs: qs.filter((x) => x.step === s) })).filter((g) => g.qs.length);
+    const pick2 = (ids: string[]) => qs.filter((x) => ids.includes(x.id));
+    const sections: [string, Question[]][] = [
+      [t("Trip"), pick2(["destination"])],
+      [t("Traveller"), pick2(["nationality", "name", "dateOfBirth", "cityOfResidence"])],
+      [t("Contact"), pick2(["contact", "travellingWith"])],
+    ];
+    const later = missingDocuments(f);
+    const row = (x: Question) => {
+      const e = firstError(x, f); const v = displayValue(x, f, t, fmt);
+      return <ReviewRow key={x.id} label={t(REVIEW_LABEL[x.id] ?? x.label)} value={v} error={e ? (v ? t(e) : t("Missing")) : undefined} onPress={() => { track("review_row_tap", { field: x.id }); edit(x.id); }} testID={`review-${x.id}`} />;
+    };
+    const toPay = () => {
+      tap();
+      if (invalid) { hError(); edit(invalid.id); return; }
+      setAfter(session ? "insurance" : "signup");
+    };
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         {header}
-        <ScrollView contentContainerStyle={{ paddingHorizontal: S.lg, paddingBottom: S.xl, gap: S.lg }}>
+        <ScrollView contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
           <Animated.View entering={entering} style={{ gap: S.lg }}>
-            <View style={{ gap: S.xxs }}>
-              <Text ref={titleRef} variant="largeTitle" accessibilityRole="header">{t("Review")}</Text>
-              <Text variant="subhead" tone="secondary">{t("Tap an answer to change it.")}</Text>
-            </View>
+            <QuestionHeader question={t("That's everything for now.")} pose="shield" titleRef={titleRef} />
             {!!invalid && <View style={{ gap: S.sm }} testID="review-gaps">
-              <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead">{t("{n} answers missing", { n: qs.filter((x) => firstError(x, f)).length })}</Text></Note>
-              <Button title={t("Fix next")} variant="secondary" size="M" icon="arrow.right" onPress={() => edit(invalid.id)} />
+              <InfoNote tone="later" text={t("{n} answers missing", { n: qs.filter((x) => firstError(x, f)).length })} />
+              <SecondaryButton compact title={t("Fix next")} onPress={() => edit(invalid.id)} />
             </View>}
-            {offline && <Note tone="amber" icon="wifi.slash"><Text variant="subhead">{t("You're offline. Your answers are saved on this phone and will save to your account when you're back online.")}</Text></Note>}
+            {offline && <InfoNote tone="later" icon="wifi.slash" text={t("You're offline. Your answers are saved on this phone and will save to your account when you're back online.")} />}
             {!!profileAsk && profileAsk.key === activeKey && profileAsk.uid === uid && (
-              <View testID="profile-ask" accessibilityRole="summary" style={[{ borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.sm }, curve]}>
+              <Card padded testID="profile-ask" style={{ borderColor: c.accent, borderWidth: 1.5, gap: S.sm }}>
                 <Text variant="headline" accessibilityRole="header">{t("Update your profile too?")}</Text>
-                <Text variant="subhead" tone="secondary">{t("You changed details that came from your profile. Save them for your next application?")}</Text>
                 {profileAsk.changes.map((ch) => {
                   const show = (v: string) => (ch.key === "dateOfBirth" ? fmt(v) : ch.key === "nationality" ? t(v) : v);
                   return (
-                    <View key={ch.key} style={{ gap: S.xxs }} accessible accessibilityLabel={t("{field}: {to}, profile has {from}", { field: t(ch.label), to: show(ch.to), from: show(ch.from) })}>
-                      <Text variant="footnote" tone="secondary">{t(ch.label)}</Text>
-                      <Text variant="body" weight="500">{show(ch.to)}</Text>
-                      <Text variant="caption" tone="secondary">{t("Profile: {v}", { v: show(ch.from) })}</Text>
+                    <View key={ch.key} style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }} accessible accessibilityLabel={t("{field}: {to}, profile has {from}", { field: t(ch.label), to: show(ch.to), from: show(ch.from) })}>
+                      <Text variant="callout" tone="secondary">{`${t(ch.label)}:`}</Text>
+                      <Text variant="callout" tone="secondary" style={{ textDecorationLine: "line-through" }}>{show(ch.from)}</Text>
+                      <Text variant="callout" weight="600">{show(ch.to)}</Text>
                     </View>
                   );
                 })}
                 <InlineError text={profileErr} />
                 <View style={{ flexDirection: "row", gap: S.sm }}>
-                  <View style={{ flex: 1 }}><Button title={t("Keep profile")} variant="secondary" size="M" disabled={profileBusy} onPress={() => answerProfile(false)} /></View>
                   <View style={{ flex: 1 }}><Button title={t("Update profile")} size="M" loading={profileBusy} onPress={() => answerProfile(true)} /></View>
+                  <View style={{ flex: 1 }}><Button title={t("Just this application")} variant="secondary" size="M" disabled={profileBusy} onPress={() => answerProfile(false)} /></View>
                 </View>
-              </View>
+              </Card>
             )}
-            {profileSavedFor === activeKey && <Note tone="green" icon="checkmark.circle.fill"><Text variant="subhead">{t("Profile updated.")}</Text></Note>}
-            {groups.map((g) => (
-              <View key={g.s} style={{ gap: S.xs }}>
-                <Text variant="footnote" tone="secondary" weight="600" accessibilityRole="header">{t(STEP_TITLES[g.s].title)}</Text>
-                <View style={[{ borderRadius: R.card, backgroundColor: c.card, overflow: "hidden" }, curve]}>
-                  {g.qs.map((x, i) => {
-                    const e = firstError(x, f); const v = displayValue(x, f, t, fmt);
-                    return (
-                      <PressScale key={x.id} onPress={() => edit(x.id)} accessibilityRole="button" accessibilityLabel={`${t(x.label)}: ${v || (e ? t("Missing") : t("Not answered"))}`} accessibilityHint={t("Edit")} testID={`review-${x.id}`}
-                        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 56, opacity: pressed ? 0.6 : 1,
-                          borderTopWidth: i ? 1 : 0, borderTopColor: c.separator })}>
-                        <View style={{ flex: 1, gap: S.xxs }}>
-                          <Text variant="footnote" tone="secondary">{t(x.label)}</Text>
-                          {e && !v ? <Text variant="subhead" tone="red" weight="500">{t("Missing")}</Text>
-                            : <Text variant="body" weight="500">{v || t("Not answered")}</Text>}
-                          {e && !!v && <Text variant="footnote" tone="red">{t(e)}</Text>}
-                        </View>
-                        <View style={{ transform: [{ scaleX: isRTL ? -1 : 1 }] }}><Icon name="chevron.right" size={13} color={c.tertiaryLabel} weight="semibold" /></View>
-                      </PressScale>
-                    );
-                  })}
-                </View>
-              </View>
+            {profileSavedFor === activeKey && <InfoNote tone="success" text={t("Profile updated.")} />}
+            {sections.filter(([, list]) => list.length).map(([title, list]) => (
+              <RowGroup key={title} header={title}>
+                {list.map(row)}
+                {title === t("Contact") && !!session?.user.email && <ReviewRow label={t("Email")} value={session.user.email} tag={t("account")} />}
+              </RowGroup>
             ))}
-            <View style={[{ borderRadius: R.card, backgroundColor: c.card, padding: S.md, gap: S.xs }, curve]} testID="review-total">
-              {quote && spouse && <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Text variant="subhead" tone="secondary">{t("Including Accompanying Spouse")}</Text></View>}
-              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
-                <Text variant="headline">{t("Total Fee")}</Text>
-                {quote ? <Text variant="title2" tone="tint" tabular>{money(quote)}</Text> : <Text variant="subhead" tone="secondary">{t("Shown at checkout")}</Text>}
-              </View>
-              <Text variant="footnote" tone="secondary">{t("Embassy fees are paid at the appointment.")}</Text>
-            </View>
-            {!session && <Note tone="blue" icon="person.crop.circle"><Text variant="subhead">{t("No account needed to pay. Afterwards, sign in with {e} to continue.", { e: f.email.trim() })}</Text></Note>}
+            {later.length > 0 && (
+              <RowGroup header={t("To get later")}>
+                {later.map((m) => <ReviewRow key={m} label={t(MISSING_LABEL[m])} value={t("Add after payment")} />)}
+              </RowGroup>
+            )}
+            <RowGroup header={t("Price")}>
+              <ReviewRow label={t("EZvisa service · {n} travellers", { n: travellers2 })} value={`${formatPayAmount(due)} ${t("AED")}`} onPress={() => { tap(); setAfter("price"); }} testID="review-price" />
+              <ReviewRow label={t("Embassy and visa centre fees")} value={t("paid at appointment")} />
+            </RowGroup>
             <InlineError text={err} />
           </Animated.View>
         </ScrollView>
-        <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: Math.max(insets.bottom, S.md), backgroundColor: c.bg }}>
-          <Button title={!SUPABASE_ENABLED ? t("Unavailable") : busy ? t("Submitting...") : t("Submit application")} icon={session ? "lock.fill" : undefined}
-            loading={busy} disabled={!SUPABASE_ENABLED || busy || (offline && !!session)} onPress={submit} />
-        </View>
+        <StickyCTA caption={t("Card, Apple Pay or Google Pay. Full refund if you cancel before review starts.")}>
+          <PrimaryButton title={!SUPABASE_ENABLED ? t("Unavailable") : t("Continue to payment")} disabled={!SUPABASE_ENABLED} onPress={toPay} testID="continue-to-payment" />
+        </StickyCTA>
         <DraftConflictSheet />
       </View>
     );
@@ -480,18 +604,18 @@ export default function Apply() {
         <Icon name="person.crop.circle" size={12} color={c.tint} /><Text variant="caption" tone="secondary" weight="600">{t(fromProfile?.source === "traveller" ? "From your saved travellers" : "From your profile")}</Text></View> : undefined}
       belowTitle={!!prefill && !allMode ? <PrefillOffer name={prefill.name} onUse={usePrefill} onDismiss={() => { tap(); setPrefill(null); }} /> : undefined}>
       <DraftConflictSheet />
-      <Modal visible={resumeAsk} transparent animationType="fade" onRequestClose={() => setResumeAsk(false)}>
-        <View style={{ flex: 1, backgroundColor: c.overlay, justifyContent: "center", padding: S.gutter }}>
-          <View style={[{ backgroundColor: c.bg, borderRadius: R.card, padding: S.lg, gap: S.md }, curve]} accessibilityViewIsModal>
-            <Text variant="title3" accessibilityRole="header">{t("Continue Application?")}</Text>
-            <Text variant="subhead" tone="secondary">{t("Pick up where you left off, or start fresh.")}</Text>
-            <View style={{ flexDirection: "row", gap: S.sm }}>
-              <View style={{ flex: 1 }}><Button title={t("Start Fresh")} variant="secondary" onPress={() => { setResumeAsk(false); startNew(); const v = linkValues(); setForm((x) => ({ ...x, ...v })); setEditing(null); }} /></View>
-              <View style={{ flex: 1 }}><Button title={t("Continue")} onPress={() => setResumeAsk(false)} /></View>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      <SheetScaffold visible={resumeAsk} onClose={() => setResumeAsk(false)} pose="welcome" title={t("Welcome back. Pick up where you left off?")} testID="resume-sheet"
+        actions={<>
+          <PrimaryButton title={f.destination ? t("Continue {c} application", { c: t(f.destination) }) : t("Continue")} onPress={() => setResumeAsk(false)} />
+          <SecondaryButton title={t("Start a new one")} onPress={() => { setResumeAsk(false); startNew(); const v = linkValues(); setForm((x) => ({ ...x, ...v })); setEditing(null); }} />
+          <Text variant="footnote" tone="secondary" center>{t("The draft stays saved on this phone and on your account.")}</Text>
+        </>}>
+        <RowGroup>
+          {!!f.destination && <Row label={t("Destination")} value={t(f.destination)} />}
+          {!!(f.firstName || f.lastName) && <Row label={t("Traveller")} value={[f.firstName, f.lastName].filter(Boolean).join(" ")} />}
+          {!!savedAt && <Row label={t("Saved")} value={new Date(savedAt).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} />}
+        </RowGroup>
+      </SheetScaffold>
     </QuestionView>
   );
 }

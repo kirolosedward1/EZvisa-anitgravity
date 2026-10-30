@@ -2,17 +2,18 @@
 // The split and the rules are the website's (contract 2026-10-24.x): destination -> who is travelling -> pay, then
 // trip -> passport (if missing) -> spouse (if travelling) -> employment.
 // Run: bun scripts/run-check.ts scripts/payment-split-check.ts
-import { activeQuestions, normalizePage, setAccountEmail, firstInvalid, continueNeeded, Q_BY_ID } from "../lib/questions";
+import { activeQuestions, normalizePage, setAccountEmail, firstInvalid, continueNeeded, Q_BY_ID, partsOf } from "../lib/questions";
 import { emptyForm, validatePersonal, validateStep, detailSteps, priceAed, PRICE_AED, type WizardForm } from "../lib/wizard";
 declare const process: any;
 
 let fail = 0;
 const ok = (c: boolean, l: string) => { console.log(`${c ? "PASS" : "FAIL"}  ${l}`); if (!c) fail++; };
-const ids = (f: WizardForm, phase: "pre" | "post") => activeQuestions(f, phase).map((q) => q.id);
+// Every question asked, with the members of a group screen (canvas merged screens) listed in its place.
+const ids = (f: WizardForm, phase: "pre" | "post") => activeQuestions(f, phase).flatMap((q) => partsOf(q, f).map((x) => x.id));
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 setAccountEmail(null);
-ok(same(ids(emptyForm, "pre"), ["destination", "nationality", "name", "passportNumber", "contact", "travellingWith", "dateOfBirth", "cityOfResidence"]),
+ok(same(ids(emptyForm, "pre"), ["destination", "nationality", "name", "contact", "travellingWith", "dateOfBirth", "cityOfResidence"]),
   "pre: the website's order (destination step, then who is travelling)");
 ok(same([...new Set(activeQuestions(emptyForm, "pre").map((q) => q.step))], ["destination", "personal"]), "pre: two steps before Review & pay");
 ok(!ids(emptyForm, "pre").includes("countryOfResidence") && emptyForm.countryOfResidence === "United Arab Emirates", "residence is UAE without a screen");
@@ -21,7 +22,8 @@ const pre: WizardForm = { ...emptyForm, destination: "France", nationality: "Ind
   email: "ab@example.com", phoneLocal: "501234567", phone: "+971501234567", dateOfBirth: "1990-01-01", passportNumber: "N1234567", spouseAccompanying: "no" };
 ok(Object.keys(validatePersonal(pre)).length === 0 && Object.keys(validateStep("destination", pre)).length === 0 && !firstInvalid(pre),
   "pre: complete without trip, spouse or employment answers");
-ok(!!validatePersonal({ ...pre, passportNumber: "" }).passportNumber, "pre: passport number is required (website rule)");
+ok(!validatePersonal({ ...pre, passportNumber: "" }).passportNumber && !ids(emptyForm, "pre").includes("passportNumber"),
+  "pre: passport number is neither asked nor required before payment (website traveller step; asked after payment)");
 ok(!!validatePersonal({ ...pre, cityOfResidence: "" }).cityOfResidence, "pre: the emirate is required");
 ok(validatePersonal({ ...pre, dateOfBirth: "2015-01-01" }).dateOfBirth === "The main applicant must be 18 or older.", "pre: 18+ with the website's message");
 
@@ -40,8 +42,8 @@ for (const id of ["purposeOfTrip", "dates", "travelingWith", "hotelCategory", "r
   ok(post.includes(id), `post: asks ${id}`);
 ok(post.indexOf("residenceVisaValid") > post.indexOf("additionalCountries") && post.indexOf("residenceVisaValid") < post.indexOf("hasValidPassport"),
   "post: the residence visa question ends the trip step, as on the website");
-ok(!post.includes("dateOfBirth") && !post.includes("passportExpiry") && !post.includes("itinerary") && !post.includes("hasEmiratesId"),
-  "post: no date of birth (asked before payment), passport expiry, itinerary or Emirates ID");
+ok(!post.includes("dateOfBirth") && post.includes("passportExpiryAfter") && !post.includes("itinerary") && !post.includes("hasEmiratesId"),
+  "post: no date of birth (asked before payment), itinerary or Emirates ID; passport expiry is asked with the number");
 ok(!ids({ ...emptyForm }, "post").some((id) => id.startsWith("spouse")) && ids({ ...emptyForm, maritalStatus: "married", spouseAccompanying: "yes" }, "post").includes("spouseName"),
   "post: spouse questions only when the spouse travels");
 ok(!ids({ ...emptyForm, hasEmiratesId: "yes" }, "post").includes("residenceVisaValid"), "website rows that answered Emirates ID are not asked the residence question");

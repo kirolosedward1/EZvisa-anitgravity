@@ -5,7 +5,7 @@ import { useT } from "./i18n";
 import { Icon } from "../components/ui";
 
 const ROOTS = ["index", "countries"];
-const ROOT_OF: Record<string, string> = { "[id]": "/applications", "notifications": "/account", "details": "/account", "destination/[slug]": "/", "country/[slug]": "/countries" };
+const ROOT_OF: Record<string, string> = { "[id]": "/applications", "notifications": "/account", "details": "/account", "settings": "/account", "travellers": "/account", "destination/[slug]": "/", "country/[slug]": "/countries" };
 
 /** iOS back chevron for a detail screen that was opened without a screen under it (deep link, push, cross-tab). */
 export function HeaderBack({ fallback, navigation }: { fallback: string; navigation?: { getState: () => { index: number }; goBack: () => void } }) {
@@ -31,7 +31,7 @@ export function useStackOptions() {
     headerLargeTitleShadowVisible: false,
     headerTintColor: c.tint,
     headerTitleStyle: { color: c.label, fontWeight: "600" as const },
-    headerLargeTitleStyle: { color: c.label, fontWeight: "700" as const },
+    headerLargeTitleStyle: { color: c.label, fontWeight: "600" as const },
     headerStyle: isIOS ? undefined : { backgroundColor: c.bg },
     contentStyle: { backgroundColor: c.bg },
     headerBackButtonDisplayMode: "minimal" as const,

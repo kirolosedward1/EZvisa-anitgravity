@@ -31,7 +31,7 @@ const TRIP = { datesFlexible: "no", travelingWith: "alone", hotelCategory: "3-st
   const qs = continueQuestions(f, true);
   ok(qs.length > 0 && qs.every((q) => ["trip", "passport", "employment"].includes(q.step)), `website row asks the trip, passport and employment steps (${qs.map((q) => q.id).join(", ")})`);
   ok(!!qs.find((q) => !!firstError(q, f)), "the screen has a question to start on (no redirect loop)");
-  ok(qs.some((q) => q.id === "passportNumberAfter"), "passport number is asked although the website never stored the validity answer");
+  ok(qs.some((q) => q.id === "passportDetails"), "passport number is asked although the website never stored the validity answer");
   f = { ...f, ...TRIP, hasValidPassport: "yes", passportNumber: "a1234567", employmentStatus: "student" };
   const r1 = await saveAfterPayment("web-1", f);
   ok(r1.synced, "saved");
@@ -56,7 +56,7 @@ const TRIP = { datesFlexible: "no", travelingWith: "alone", hotelCategory: "3-st
   a = toApplication(app); f = continueForm(a);
   ok(!isWebsiteRow(a) && needsContinue(a), "app row, paid, after-payment answers missing: Continue needed");
   ok(continueQuestions(f, false)[0]?.id === "purposeOfTrip", "app row starts at the trip questions");
-  ok(f.previousRefusals === "" && continueQuestions(f, false).some((q) => q.id === "previousRefusals" && !!firstError(q, f)), "app row: the stored previous_rejections=false is not taken as a No (refusal question still asked)");
+  ok(f.previousRefusals === "" && continueQuestions(f, false).some((q) => q.id === "visaHistory" && !!firstError(q, f)), "app row: the stored previous_rejections=false is not taken as a No (refusal question still asked)");
   ok(continueForm({ ...toApplication({ ...web, additional_notes: "{}" }), previous_rejections: true, rejection_details: "France 2024" }).previousRefusals === "yes", "website row: the previous_rejections column is still read as the answer");
   f = { ...f, purposeOfTrip: "tourism", travelStartDate: inDays(30), travelEndDate: inDays(40), datesFlexible: "no", travelingWith: "alone", hotelCategory: "3-star", fundingSource: "self",
     balanceRange: "10000-25000", isFirstSchengenVisa: "yes", previousRefusals: "no", residenceVisaValid: "yes", dateOfBirth: "1992-02-02", hasValidPassport: "yes", passportNumber: "N7654321",
@@ -100,7 +100,7 @@ const TRIP = { datesFlexible: "no", travelingWith: "alone", hotelCategory: "3-st
   let fn = continueForm(toApplication(nop));
   const nq = continueQuestions(fn, true);
   const ni = nq.map((q) => q.id);
-  ok(ni.includes("hasValidPassport") && ni.indexOf("hasValidPassport") < ni.indexOf("passportNumberAfter"), `website row without a number is asked "Do you have a valid passport?" before the number (${ni.join(", ")})`);
+  ok(ni.includes("hasValidPassport") && ni.indexOf("hasValidPassport") < ni.indexOf("passportDetails"), `website row without a number is asked "Do you have a valid passport?" before the number (${ni.join(", ")})`);
   fn = { ...fn, ...TRIP, hasValidPassport: "no" };
   ok(!continueQuestions(fn, true).some((q) => !!firstError(q, fn)), "answering No: no passport number demanded");
   await saveAfterPayment("web-nop", fn);

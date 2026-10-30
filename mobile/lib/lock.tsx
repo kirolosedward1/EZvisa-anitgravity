@@ -6,6 +6,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as LocalAuthentication from "expo-local-authentication";
 import { BlurView } from "expo-blur";
 import { Button, Icon, Text } from "../components/ui";
+import { GlobiPose } from "../components/globi/GlobiPose";
 import { Logo } from "../components/Logo";
 import { useColors, S } from "./theme";
 import { useT } from "./i18n";
@@ -68,12 +69,34 @@ export function LockGate() {
     </View>
   );
   if (!locked) return null;
+  return <LockScreen label={label} onUnlock={unlock} />;
+}
+
+/** The lock overlay itself (exported for the development gallery). */
+export function LockScreen({ label, onUnlock }: { label: string; onUnlock: () => void }) {
+  const c = useColors(); const { t } = useT(); const unlock = onUnlock;
+  // Canvas FaceIDLock.dc.html: the app is blurred behind a canvas-tinted veil (nothing readable), Globi with a Face ID
+  // badge, the title, and "Unlock" / "Use passcode". iOS offers the device passcode in the same system prompt.
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: c.bg, alignItems: "center", justifyContent: "center", gap: S.lg, zIndex: 900, padding: S.xl }]} accessibilityViewIsModal>
-      <Logo height={30} />
-      <Icon name="faceid" size={44} color={c.tint} />
-      <Text variant="title3" center accessibilityRole="header">{t("EZvisa is locked")}</Text>
-      <View style={{ alignSelf: "stretch" }}><Button title={t("Unlock with {m}", { m: t(label) })} onPress={unlock} /></View>
+    <View style={[StyleSheet.absoluteFill, { zIndex: 900 }]} accessibilityViewIsModal testID="lock-gate">
+      <BlurView intensity={80} tint="systemThickMaterialLight" style={StyleSheet.absoluteFill} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: c.bg, opacity: 0.6 }]} />
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.xl, paddingHorizontal: S.xxl }}>
+        <View style={{ width: 160, height: 160, alignItems: "center", justifyContent: "center" }}>
+          <GlobiPose pose="lock" size={153} animated={false} />
+          <View style={{ position: "absolute", end: 6, bottom: 10, width: 44, height: 44, borderRadius: 22, backgroundColor: c.surfaceRaised, borderWidth: 1, borderColor: c.border, alignItems: "center", justifyContent: "center" }}>
+            <Icon name="faceid" size={24} color={c.accent} />
+          </View>
+        </View>
+        <View style={{ gap: S.xs, alignItems: "center" }}>
+          <Text variant="resultTitle" center accessibilityRole="header" style={{ fontSize: 22 }}>{t("EZvisa is locked")}</Text>
+          <Text variant="body" tone="secondary" center>{t("Unlock to see your applications.")}</Text>
+        </View>
+        <View style={{ alignSelf: "stretch", gap: 10 }}>
+          <Button title={t("Unlock with {m}", { m: t(label) })} onPress={unlock} />
+          <Button title={t("Use passcode")} variant="plain" size="M" color={c.label} onPress={unlock} />
+        </View>
+      </View>
     </View>
   );
 }

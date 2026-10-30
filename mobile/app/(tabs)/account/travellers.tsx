@@ -4,7 +4,7 @@
 import { useCallback, useState } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { Stack, router, useFocusEffect } from "expo-router";
-import { Globi } from "../../../components/mascot/Globi";
+import { GlobiPose } from "../../../components/globi/GlobiPose";
 import { ListGroup, ListRow, EmptyState, Button, Flag, Sheet, InlineError, SegmentedControl, SkeletonRows, useTabInset } from "../../../components/ui";
 import { FormField, CountryField, DateField, SelectField, Input } from "../../../components/wizard/fields";
 import { useFmtDate } from "../../../components/wizard/answers";
@@ -68,7 +68,7 @@ export default function SavedTravellers() {
             {list.map((x) => <ListRow key={x.id} leading={<Flag country={x.nationality} size={28} />} title={travellerName(x)} subtitle={subtitle(x)} value={relation(x)} minHeight={56} onPress={() => open(x)} />)}
           </ListGroup>
         ) : (
-          <View style={{ paddingVertical: S.xl }}><EmptyState icon="person.2.fill" mascot={<Globi pose="duo" size={120} />} title={t("No saved travellers yet.")} message={loadErr ?? t("Everyone you apply for is added here after payment, so the next application starts filled in.")} /></View>
+          <View style={{ paddingVertical: S.xl }}><EmptyState icon="person.2.fill" mascot={<GlobiPose pose="companion" size={120} />} title={t("No saved travellers yet.")} message={loadErr ?? t("Everyone you apply for is added here after payment, so the next application starts filled in.")} /></View>
         )}
       <ListGroup><ListRow title={t("Add traveller")} tint chevron={false} onPress={() => open()} /></ListGroup>
 

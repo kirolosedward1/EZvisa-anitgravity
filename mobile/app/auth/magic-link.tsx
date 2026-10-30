@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { AuthShell, EmailField, EmailSent, isOffline, useCooldown } from "../../components/auth/AuthShell";
 import { Button, InlineError } from "../../components/ui";
 import { supabase } from "../../lib/supabase";
@@ -31,10 +31,11 @@ export default function MagicLink() {
     finally { inFlight.current = false; setBusy(false); }
   };
   return (
-    <AuthShell nav="back" title={sent ? t("Check your email") : t("Sign in with a link")} subtitle={sent ? undefined : t("No password needed.")} testID="auth-magic">
+    <AuthShell nav="back" pose="phone" bare={sent} title={t("Sign in with a link")} testID="auth-magic">
       {sent ? (
         <>
-          <EmailSent email={email} note={t("Open it on this phone. The link works once and expires after a while.")} onResend={send} resending={busy} left={cool.left} onChangeEmail={() => { setSent(false); setErr(null); }} />
+          <EmailSent email={email} note={t("Open it on this phone. The link works once and expires after a while.")} onResend={send} resending={busy} left={cool.left}
+            changeLabel={t("Use a password instead")} onChangeEmail={() => router.replace({ pathname: "/auth", params: { mode: "signin", email } })} />
           <InlineError text={err} />
         </>
       ) : (

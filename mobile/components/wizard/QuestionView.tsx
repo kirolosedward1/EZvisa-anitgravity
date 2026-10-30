@@ -4,19 +4,19 @@ import React, { useRef, useState } from "react";
 import { ScrollView, View, Platform, TextInput, I18nManager, type TextInputInstance } from "react-native";
 import Animated, { useAnimatedKeyboard, useAnimatedStyle } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Button, Text, Shake, PressScale } from "../ui";
+import { Button, Text, Shake, PressScale, QuestionHeader, Chip, SheetScaffold, Card, RowGroup, Row, PrimaryButton, SecondaryButton } from "../ui";
+import { OptionAnswers, YesNoAnswer, NationalityGrid, CountryAnswer, TravellerTiles } from "./choices";
+import { track } from "../../lib/analytics";
+import { whatsapp } from "../../lib/api";
 import { PhoneField } from "../CountryPicker";
 import { Checkbox, Note } from "./fields";
-import { DatesAnswer, DatesSummary } from "./dates";
-import { ChoiceList, YesNoTiles, CountryList, DateAnswer, AdditionalCountries } from "./answers";
-import { TravellerRows } from "./travellers";
-import { MascotHeader } from "../mascot/MascotHeader";
-import { promptFor } from "../mascot/prompts";
+import { DatesAnswer } from "./dates";
+import { DateAnswer, AdditionalCountries } from "./answers";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
 import { select, tap } from "../../lib/haptics";
 import { OTHER_NATIONALITY, tripDays, iso as isoLocal, type WizardForm } from "../../lib/wizard";
-import { type Question, questionErrors, firstError, isAnswered, getAccountEmail, getTravellers } from "../../lib/questions";
+import { type Question, questionErrors, firstError, isAnswered, getAccountEmail, getTravellers, askOf, partsOf } from "../../lib/questions";
 
 type Props = {
   q: Question; f: WizardForm; patch: (x: Partial<WizardForm>) => void;
@@ -34,14 +34,18 @@ type Props = {
   doneLabel?: string;
   /** This screen's error rule (default firstError; Continue application keeps a saved departure date valid). */
   errorOf?: (q: Question, f: WizardForm) => string | undefined;
+  /** Tapping Globi (opens the "why I ask" sheet). Without it Globi is decorative. */
+  onGlobiPress?: () => void;
   children?: React.ReactNode;
 };
 
 /** White field with a hairline; blue while typing, red on an error. */
 const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean, focused = false) =>
-  [T.title3, { color: c.label, minHeight: 52, borderRadius: R.lg, backgroundColor: c.surface, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: err || focused ? 1.5 : 1, borderColor: err ? c.red : focused ? c.accent : c.border, textAlign: rtl ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)] as any;
+  [T.title3, { color: c.label, minHeight: 52, borderRadius: R.input, backgroundColor: c.surface, paddingHorizontal: S.md, paddingVertical: S.sm, borderWidth: err || focused ? 1.5 : 1, borderColor: err ? c.red : focused ? c.accent : c.border, textAlign: rtl ? "right" : "left" }, curve, Platform.OS === "web" && ({ outlineStyle: "none" } as any)] as any;
 
-export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, children }: Props) {
+export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, onGlobiPress, children }: Props) {
+  const [explain, setExplain] = useState(false);
+  const openExplain = onGlobiPress ?? (() => { track("globi_tap", { question: q.id }); setExplain(true); });
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
   const inputRef = useRef<TextInputInstance>(null); const input2Ref = useRef<TextInputInstance>(null);
   // Lift the screen (and its Continue bar) above the iOS keyboard; S.md between button and keyboard.
@@ -51,52 +55,56 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
 
   const [focus, setFocus] = useState<string | null>(null); // the field being typed in (blue border)
   const liveErr = errorOf(q, f);
-  const hasInput = q.kind === "contact" ? !!f.phoneLocal.trim() && (!!account || !!f.email.trim()) : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
-  const e = showErr || (settled && hasInput) ? liveErr : undefined;
+  const hasInput = q.kind === "contact" ? !!f.phoneLocal.trim() : q.kind === "dates" ? !!f.travelStartDate : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
+  const group = q.kind === "group";
+  const e = showErr || (settled && hasInput && !group) ? liveErr : undefined;
   const note = q.note?.(f);
   const answered = isAnswered(q, f);
   const days = q.id === "travelEndDate" ? tripDays(f) : 0;
-  const label = q.kind === "contact" && account ? "Phone Number" : q.label;
 
-  // Globi asks the question in his own words; the formal label stays as the caption and the accessible header.
-  const mascot = !(allMode && q.allNames) && !!promptFor(q.id).say;
+  // The question is the screen title, inside Globi's speech bubble (canvas). No description line under it: the
+  // website's field label stays only as the accessible name of the answer controls.
+  const other = !!(allMode && q.allNames);
+  const until = f.travelEndDate ? (([y, m, d]) => new Date(y, m - 1 + 3, d))(f.travelEndDate.split("-").map(Number)).toLocaleDateString(rtl ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "long" }) : "";
+  const question = other ? t(OTHER_NATIONALITY) : t(askOf(q, f), { country: f.destination ? t(f.destination) : "", until });
+  const chipRow = (!q.required || chips) ? (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: S.xs }}>
+      {!q.required && <Chip label={t("Optional")} tone="neutral" />}
+      {chips}
+    </View>
+  ) : undefined;
   const title = (
-    <View style={{ gap: S.xs }}>
-      {mascot && <View style={{ marginBottom: S.xxs }}><MascotHeader questionId={q.id} f={f} /></View>}
-      {(!q.required || chips) && <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
-        {!q.required && <View style={{ paddingHorizontal: S.xs, paddingVertical: S.xxs, borderRadius: R.round, backgroundColor: c.fill }}><Text variant="caption" tone="secondary" weight="600">{t("Optional")}</Text></View>}
-        {chips}
-      </View>}
-      <Text ref={titleRef} variant={mascot ? "subhead" : "title1"} tone={mascot ? "secondary" : "label"} weight={mascot ? "600" : undefined} accessibilityRole="header" testID="question-title">{allMode && q.allNames ? t(OTHER_NATIONALITY) : t(label)}</Text>
+    <View style={{ gap: S.sm }}>
+      <QuestionHeader question={question} pose={other ? "magnify" : q.pose} chip={chipRow} titleRef={titleRef} onGlobiPress={openExplain} />
       {belowTitle}
-      {allMode && q.allNames ? <Text variant="subhead" tone="secondary">{t("Countries whose citizens need a Schengen visa.")}</Text> : !!q.hint && <Text variant="subhead" tone="secondary">{t(q.hint)}</Text>}
     </View>
   );
   const errBox = e ? <Shake on={`${e}|${errTick}`}><View accessibilityRole="alert" testID="question-error"><Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{t(e)}</Text></Note></View></Shake> : null;
   // When the error says the same as the note, show it once, as the error.
   const noteBox = note && note.text !== e ? <Note tone={note.tone}>{t(note.text)}</Note> : null;
-  const tp = q.text ?? {};
   const qe = questionErrors(q, f);
 
-  const body = (() => {
-    switch (q.kind) {
-      case "choice": return <ChoiceList label={t(q.label)} options={q.options!} flag={q.flag} value={f[q.keys[0]] as string} onPick={pick} />;
-      case "yesno": return <YesNoTiles label={t(q.label)} value={f[q.keys[0]] as string} onPick={pick} />;
+  /** The answer controls for one question (alone, or as one part of a group screen). */
+  const answerOf = (x: Question, onPick: (v: string) => void, lead: boolean) => {
+    const tp = x.text ?? {}; const xe = !!e && x.keys.some((k) => !!qe[k]);
+    switch (x.kind) {
+      case "choice": return <OptionAnswers q={x} f={f} options={x.options!} value={f[x.keys[0]] as string} onPick={onPick} />;
+      case "yesno": return <YesNoAnswer q={x} f={f} value={f[x.keys[0]] as string} onPick={onPick} />;
       case "text": case "textarea": return (
-        <TextInput ref={inputRef} value={String(f[q.keys[0]] ?? "")} onChangeText={(v) => patch({ [q.keys[0]]: tp.upper ? v.toUpperCase() : v } as Partial<WizardForm>)}
-          placeholder={t(q.placeholder ?? "")} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(q.label)} autoFocus
-          keyboardType={tp.keyboard ?? "default"} autoCapitalize={tp.caps ?? "sentences"} autoCorrect={q.kind === "textarea"} spellCheck={q.kind === "textarea"}
-          textContentType={tp.contentType as any} autoComplete={tp.autoComplete as any} multiline={q.kind === "textarea"} textAlignVertical={q.kind === "textarea" ? "top" : "center"}
-          returnKeyType={q.kind === "textarea" ? "default" : "next"} onSubmitEditing={q.kind === "textarea" ? undefined : advance} blurOnSubmit={false} testID="question-input"
-          onFocus={() => setFocus(q.keys[0])} onBlur={() => setFocus(null)} style={[...fieldStyle(c, !!e, isRTL, focus === q.keys[0]), q.kind === "textarea" && [T.body, { minHeight: 150 }]]} />
+        <TextInput ref={inputRef} value={String(f[x.keys[0]] ?? "")} onChangeText={(v) => patch({ [x.keys[0]]: tp.upper ? v.toUpperCase() : v } as Partial<WizardForm>)}
+          placeholder={t(x.placeholder ?? "")} placeholderTextColor={c.secondaryLabel} accessibilityLabel={t(x.label)} autoFocus={lead}
+          keyboardType={tp.keyboard ?? "default"} autoCapitalize={tp.caps ?? "sentences"} autoCorrect={x.kind === "textarea"} spellCheck={x.kind === "textarea"}
+          textContentType={tp.contentType as any} autoComplete={tp.autoComplete as any} multiline={x.kind === "textarea"} textAlignVertical={x.kind === "textarea" ? "top" : "center"}
+          returnKeyType={x.kind === "textarea" ? "default" : "next"} onSubmitEditing={x.kind === "textarea" ? undefined : advance} blurOnSubmit={false} testID={lead ? "question-input" : `input-${x.id}`}
+          onFocus={() => setFocus(x.keys[0])} onBlur={() => setFocus(null)} style={[...fieldStyle(c, xe, isRTL, focus === x.keys[0]), x.kind === "textarea" && [T.body, { minHeight: 150 }]]} />
       );
       case "pair": {
-        const [a, b] = q.fields ?? [];
+        const [a, b] = x.fields ?? [];
         const field = (x: NonNullable<Question["fields"]>[number], first: boolean) => (
           <View style={{ gap: S.xs }} key={String(x.key)}>
             <Text variant="footnote" weight="600" tone="secondary">{t(x.label)}</Text>
             <TextInput ref={first ? inputRef : input2Ref} value={String(f[x.key] ?? "")} onChangeText={(v) => patch({ [x.key]: v } as Partial<WizardForm>)} placeholder={t(x.placeholder)} placeholderTextColor={c.secondaryLabel}
-              accessibilityLabel={t(x.label)} autoFocus={first} autoCapitalize="words" autoCorrect={false} textContentType={x.contentType as any} autoComplete={x.autoComplete as any}
+              accessibilityLabel={t(x.label)} autoFocus={first && lead} autoCapitalize="words" autoCorrect={false} textContentType={x.contentType as any} autoComplete={x.autoComplete as any}
               returnKeyType={first ? "next" : "done"} blurOnSubmit={false} onSubmitEditing={() => (first ? input2Ref.current?.focus() : advance())} testID={first ? "question-input" : "question-input-2"}
               onFocus={() => setFocus(x.key)} onBlur={() => setFocus(null)} style={fieldStyle(c, !!e && !!qe[x.key], isRTL, focus === x.key)} />
           </View>
@@ -104,29 +112,23 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
         return (
           <View style={{ gap: S.md }}>
             {a && field(a, true)}{b && field(b, false)}
-            {q.id === "spouseName" && !!f.lastName.trim() && f.spouseLastName !== f.lastName && (
+            {x.id === "spouseName" && !!f.lastName.trim() && f.spouseLastName !== f.lastName && (
               <View style={{ alignSelf: "flex-start" }}><Button title={t("Use {v}", { v: f.lastName.trim() })} variant="secondary" size="M" icon="person.2.fill" onPress={() => { tap(); patch({ spouseLastName: f.lastName.trim() }); }} /></View>)}
           </View>
         );
       }
       case "contact": return (
         <View style={{ gap: S.md }}>
-          {!account && <View style={{ gap: S.xs }}>
-            <Text variant="footnote" weight="600" tone="secondary">{t("Email Address")}</Text>
-            <TextInput ref={inputRef} value={f.email} onChangeText={(v) => patch({ email: v })} placeholder="your.email@example.com" placeholderTextColor={c.secondaryLabel}
-              accessibilityLabel={t("Email Address")} autoFocus keyboardType="email-address" autoCapitalize="none" autoCorrect={false} textContentType="emailAddress" autoComplete="email"
-              returnKeyType="next" blurOnSubmit={false} testID="question-input" onFocus={() => setFocus("email")} onBlur={() => setFocus(null)} style={fieldStyle(c, !!e && !!qe.email, isRTL, focus === "email")} />
-          </View>}
           <View style={{ gap: S.xs }}>
-            {!account && <Text variant="footnote" weight="600" tone="secondary">{t("Phone Number")}</Text>}
+            <Text variant="note" weight="600" tone="secondary">{t("Phone number")}</Text>
             <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e && !!qe.phone} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />
           </View>
-          <Checkbox label={t("Receive application updates via WhatsApp")} value={f.whatsappOptIn} onChange={(v) => patch({ whatsappOptIn: v })} icon="logo.whatsapp" />
+          <Checkbox label={t("Send me application updates on WhatsApp")} value={f.whatsappOptIn} onChange={(v) => patch({ whatsappOptIn: v })} icon="logo.whatsapp" />
         </View>
       );
       case "date": return (
         <View style={{ gap: S.md }}>
-          {q.id === "travelEndDate" && !!f.travelStartDate && (
+          {x.id === "travelEndDate" && !!f.travelStartDate && (
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: S.xs }} accessibilityRole="radiogroup" accessibilityLabel={t("Trip length")} testID="date-quickpicks">
               {([[7, "1 week"], [14, "2 weeks"], [21, "3 weeks"], [30, "1 month"]] as const).map(([n, l]) => {
                 const [y, m, d] = f.travelStartDate.split("-").map(Number); const v = isoLocal(new Date(y, m - 1, d + n - 1)); const on = f.travelEndDate === v;
@@ -135,24 +137,48 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
               })}
             </View>
           )}
-          <DateAnswer label={t(q.label)} value={f[q.keys[0]] as string} onChange={(v) => patch({ [q.keys[0]]: v } as Partial<WizardForm>)} min={q.min?.(f)} max={q.max?.(f)} style={q.dateStyle ?? "calendar"} placeholder={q.placeholder} defaultDate={q.defaultDate?.(f)} />
+          <DateAnswer label={t(x.label)} value={f[x.keys[0]] as string} onChange={(v) => patch({ [x.keys[0]]: v } as Partial<WizardForm>)} min={x.min?.(f)} max={x.max?.(f)} style={x.dateStyle ?? "calendar"} placeholder={x.placeholder} defaultDate={x.defaultDate?.(f)} />
         </View>
       );
       case "dates": return <DatesAnswer f={f} patch={patch} />;
       case "countries": return <AdditionalCountries f={f} onChange={(v) => patch({ additionalCountries: v })} />;
       // Saved travellers (lib/travellers.ts): tapping one fills the answers it carries; the screen decides where to go next.
-      case "traveller": return <TravellerRows travellers={getTravellers()} onPick={pick} />;
+      case "traveller": return <TravellerTiles travellers={getTravellers()} onPick={onPick} />;
       default: return null;
     }
-  })();
+  };
+  const partPick = (x: Question) => (v: string) => { select(); patch({ [x.keys[0]]: v, ...(x.onPick?.(v, f) ?? {}) } as Partial<WizardForm>); };
+  const body = q.kind === "group" ? (
+    <View style={{ gap: S.lg }}>
+      {partsOf(q, f).map((x, i) => {
+        const head = q.partLabels?.[x.id]; const n = x.note?.(f);
+        return (
+          <View key={x.id} style={{ gap: S.sm }} testID={`part-${x.id}`}>
+            {!!head && <Text variant="optionSm" weight="600" accessibilityRole="header">{t(head)}{x.required ? "" : ` · ${t("optional")}`}</Text>}
+            {answerOf(x, partPick(x), i === 0)}
+            {n && <Note tone={n.tone}>{t(n.text)}</Note>}
+          </View>
+        );
+      })}
+    </View>
+  ) : answerOf(q, pick, true);
+  // Canvas NOC: what a good NOC says, and the template by WhatsApp.
+  const nocCard = q.id === "hasNOC" ? (
+    <Card padded testID="noc-guide">
+      <View style={{ gap: S.xs }}>
+        <Text variant="callout" weight="600">{t("What a good NOC says")}</Text>
+        <Text variant="note" tone="secondary">{t("Your name and passport number, job title, start date, monthly salary, approved leave dates, and that you'll return to work. On letterhead, signed and stamped.")}</Text>
+        <SecondaryButton compact title={t("Send me the template")} onPress={() => { track("whatsapp_handoff", { screen: "noc-template" }); whatsapp("Hi EZvisa, please send me the NOC template for my employer."); }} />
+      </View>
+    </Card>
+  ) : null;
 
   const auto = q.kind === "choice" || q.kind === "yesno" || q.kind === "country" || q.kind === "traveller";
   const showBtn = !auto || answered || !q.required;
   const btnTitle = !q.required && !answered ? t("Skip") : doneLabel ?? t("Continue");
   const bar = showBtn ? (
     <View style={{ paddingHorizontal: S.lg, paddingTop: S.sm, paddingBottom: barBottom, backgroundColor: c.bg }}>
-      {q.kind === "dates" && <DatesSummary f={f} patch={patch} />}
-      <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} disabled={!!liveErr && (q.required || answered)} onPress={advance} />
+      <Button title={btnTitle} variant={!q.required && !answered ? "secondary" : "primary"} disabled={!group && !!liveErr && (q.required || answered)} onPress={advance} />
     </View>
   ) : <View style={{ height: barBottom }} />;
 
@@ -160,12 +186,21 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
     <Animated.View style={[{ flex: 1, backgroundColor: c.bg }, kbPad]}>
       {header}
       <Animated.View key={pageKey} entering={entering} style={{ flex: 1 }}>
-        {q.kind === "country" ? (
-          <CountryList key={allMode && q.allNames ? "all" : "top"} names={allMode && q.allNames ? q.allNames.filter((n) => !q.names!.includes(n)) : q.names!} searchAll={allMode ? undefined : q.allNames} value={f[q.keys[0]] as string} onPick={pick} searchPlaceholder={q.searchPlaceholder ?? "Search country..."} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
+        {q.kind === "country" && !(q.id === "nationality" && !other) ? (
+          <CountryAnswer key={other ? "all" : "top"} names={other ? q.allNames! : q.names!} searchAll={other ? undefined : q.allNames} value={f[q.keys[0]] as string} onPick={pick}
+            searchPlaceholder={other ? "Search nationality" : "Search country"} popular={q.id === "destination" ? ["France", "Italy", "Spain", "Germany", "Greece"] : undefined}
+            allTitle={q.id === "destination" ? t("All {n} countries", { n: q.names!.length }) : undefined} header={<View style={{ gap: S.md, paddingTop: S.md }}>{title}{errBox}</View>} />
+        ) : q.kind === "country" ? (
+          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+            {title}
+            <NationalityGrid value={f.nationality} onPick={pick} onOther={() => pick(OTHER_NATIONALITY)} />
+            {errBox}
+          </ScrollView>
         ) : (
-          <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.lg, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
+          <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: S.xl, gap: S.lg }}>
             {title}
             {body}
+            {nocCard}
             {days > 0 && <Note tone={days > 90 ? "red" : "blue"}><Text variant="subhead" color={c.label}>{t("Total Stay Duration: {n} days.", { n: days })}</Text></Note>}
             {noteBox}
             {errBox}
@@ -174,6 +209,14 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
       </Animated.View>
       {bar}
       {children}
+      <SheetScaffold visible={explain} onClose={() => setExplain(false)} pose={q.pose} globiSize={96} bubble title={t("Why I ask this")} testID="globi-explain"
+        actions={<View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flex: 1 }}><SecondaryButton title={t("Ask the team")} whatsapp onPress={() => { track("whatsapp_handoff", { screen: "globi-explain" }); whatsapp(); }} /></View>
+          <View style={{ flex: 1 }}><PrimaryButton title={t("Got it")} onPress={() => setExplain(false)} /></View>
+        </View>}>
+        <Card padded><Text variant="body">{t(q.explain.why)}</Text></Card>
+        <RowGroup><Row label={t("Used for")} value={t(q.explain.usedFor)} /><Row label={t("Shared with")} value={t(q.explain.sharedWith)} /></RowGroup>
+      </SheetScaffold>
     </Animated.View>
   );
 }

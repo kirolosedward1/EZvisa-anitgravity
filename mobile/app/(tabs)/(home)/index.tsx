@@ -1,16 +1,22 @@
-import { ScrollView, View, RefreshControl, StyleSheet, useWindowDimensions, type ScrollViewInstance } from "react-native";
-import { Image } from "expo-image";
+// Home (canvas Home.dc.html, HomeDraft, EmptyHome, HomeOffline, Loading, ErrorState). Signed in or guest.
+// - Page title ("Hi, Ahmed" / "Where to next?") with the account avatar.
+// - One hero card: the most recent active application (Globi, reference, the ONE next action, progress, its button),
+//   else "Pick up where you left off?" for a draft, else "No application yet".
+// - Other applications as rows, then three popular countries. Offline: Globi waits, queued uploads show, actions pause.
+// Everything comes from the live rows and this phone's drafts (lib/useApps, lib/form); nothing is invented.
+import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { Stack, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Chevron, ActionPill, StatusPill, Text, Flag, Icon, PressScale, SectionHeader, ListGroup, Avatar, Skeleton, useTabInset, Button, ProgressSegments, Timeline, Surface, HeaderIconButton, IconTile } from "../../../components/ui";
-import { AppointmentCard } from "../../../components/Appointment";
-import { useColors, useIsDark, card, S, R, ICON, AVATAR, SIZE } from "../../../lib/theme";
-import { POPULAR, toSlug } from "../../../lib/countries";
-import { PHOTOS, THUMBS } from "../../../lib/photos";
-import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, type Application } from "../../../lib/data";
+import { useNetInfo } from "@react-native-community/netinfo";
+import { useEffect, useRef, useState } from "react";
+import Animated from "react-native-reanimated";
+import { Chevron, Text, Flag, Icon, PressScale, Avatar, Skeleton, useTabInset, ProgressSegments, Card, Bubble, PrimaryButton, SecondaryButton, SectionHeader, ErrorView, SearchField } from "../../../components/ui";
+import { GlobiPose } from "../../../components/globi/GlobiPose";
+import { PopularTiles } from "../../../components/home/PopularTiles";
+import { useColors, S, R } from "../../../lib/theme";
+import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, referenceOf, type Application } from "../../../lib/data";
 import { useApps } from "../../../lib/useApps";
 import { tap, error as hError } from "../../../lib/haptics";
-import { useEffect, useRef, useState } from "react";
 import { nextAction as cardAction } from "../../../lib/nextStep";
 import { buildChecklist } from "../../../lib/checklist";
 import { nextAction } from "../../../lib/nextAction";
@@ -18,43 +24,40 @@ import { buildTimeline, doneCount, isUserDiscarded, chooseHero } from "../../../
 import { paymentToResume, startPayment } from "../../../lib/payments";
 import { useAuth } from "../../../lib/auth";
 import { useForm, type LocalDraft } from "../../../lib/form";
-import { hasAnswers } from "../../../lib/wizard";
-import { Q_BY_ID } from "../../../lib/questions";
+import { hasAnswers, PRICE_AED } from "../../../lib/wizard";
+import { Q_BY_ID, progressOf, answeredCount, draftPosition } from "../../../lib/questions";
 import { useT, ltr } from "../../../lib/i18n";
 import { countdown } from "../../../lib/countdown";
-import Animated from "react-native-reanimated";
 import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
-import { SwipeToDiscard, SwipeLock, SwipeActive } from "../../../components/SwipeToDiscard";
+import { SwipeToDiscard, SwipeLock } from "../../../components/SwipeToDiscard";
 import { useAvatar } from "../../../lib/avatar";
 import { whatsapp } from "../../../lib/api";
 import { onTabScroll } from "../../../lib/tabBarScroll";
-import { Explore, FaqSection } from "../../../components/home/Sections";
-import { formatTripRange } from "../../../lib/dates";
+import { useUploads, removeUpload } from "../../../lib/uploads";
 
-const tripDates = (a: Application, lang: string) => formatTripRange(a.entry_date, a.exit_date, lang);
-const STEP_LABEL: Record<string, string> = { personal: "Personal", spouse: "Spouse", employment: "Employment", "trip-details": "Trip" };
-const SERVER_STEP: Record<string, string> = { ...STEP_LABEL, payment: "Review" };
-const draftStep = (d: LocalDraft) => { const q = d.page.startsWith("q:") ? Q_BY_ID[d.page.slice(2)] : null; return q ? STEP_LABEL[q.step] ?? q.step : "Review"; };
+/** Contract step slugs as the customer reads them. */
+const STEP_LABEL: Record<string, string> = { destination: "Destination", personal: "Traveller", trip: "Trip", passport: "Passport", spouse: "Spouse", employment: "Employment" };
+const SERVER_STEP: Record<string, string> = { ...STEP_LABEL, payment: "Review & pay" };
+const draftStep = (d: LocalDraft) => { const q = d.page.startsWith("q:") ? Q_BY_ID[d.page.slice(2)] : null; return q ? STEP_LABEL[q.step] ?? q.step : "Review & pay"; };
+const hhmm = (t: number) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-/** Hero for a submitted (or finished) application, built only from its live row: destination, trip dates, status,
- *  progress, ONE next action from the real state, the 5-step timeline, and the appointment when staff entered one. */
-function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () => void }) {
-  const c = useColors(); const dark = useIsDark(); const { t, lang } = useT();
+/** The active application (canvas Home hero card): Globi beside the reference, the one next action, progress, button. */
+function AppCard({ a, offline }: { a: Application; offline: boolean }) {
+  const c = useColors(); const { t } = useT();
   const [paying, setPaying] = useState(false);
-  const name = a.countries?.name ?? "";
+  const name = a.countries?.name ?? a.destination_country ?? "";
   const items = buildChecklist(requirementsFor(employmentOf(a)), a.documents, a.status).customer;
   const n = nextAction(a, items);
   const steps = buildTimeline(a); const done = doneCount(steps);
   const cd = ["completed", "rejected", "cancelled"].includes(a.status) ? null : countdown(a.entry_date, a.exit_date, t);
-  const status = t(a.status === "submitted" && isPaid(a) ? "Paid" : STATUS_LABEL[a.status] ?? a.status); // same wording as the list
   const pending = cardAction(a);
+  const queued = useUploads(a.id).filter((j) => j.state === "queued" || j.state === "failed");
   const open = () => router.push((pending?.href ?? `/applications/${a.id}`) as any, { withAnchor: true });
   const act = () => {
     tap();
     switch (n.kind) {
       case "continue": router.push(`/continue/${a.id}`); return;
-      case "appointment": onShowAppointment(); return;
       case "pay":
         setPaying(true);
         startPayment(a.id).then((o) => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }))
@@ -64,85 +67,103 @@ function Hero({ a, onShowAppointment }: { a: Application; onShowAppointment: () 
       default: open();
     }
   };
-  const actionable = n.kind !== "none" && n.kind !== "open";
-  const { width } = useWindowDimensions();
-  const dates = tripDates(a, lang);
-  // From 375 up the date stays on one line; the countdown wraps beside it. Below that the whole line may wrap.
-  const meta = [dates && ltr(dates), cd].filter(Boolean).join(" · ");
+  const ref = a.reference ?? referenceOf(a.id);
+  const headline = offline && queued.length ? (queued.length === 1 ? t("One upload is waiting for a connection.") : t("{n} uploads are waiting for a connection.", { n: queued.length })) : t(n.title, n.vars);
+  const sub = offline && queued.length ? t("It sends when you're back online.") : [n.body && t(n.body), cd].filter(Boolean).join(" · ");
   return (
-    <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xxl }} testID="home-hero">
-      <Surface level={1} style={{ padding: S.md }}>
-        <PressScale onPress={() => { tap(); open(); }} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={[t(name), status, tripDates(a, lang), cd].filter(Boolean).join(", ")} accessibilityHint={t("Opens the application")}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: S.xs }}>
-            <View style={{ flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: S.xs, flexShrink: 1 }}>
-              <View testID="hero-status"><StatusPill v={a.status} a={a} /></View>
-              {pending && <ActionPill label={t(pending.label)} />}
-            </View>
-            <Text variant="caption" tone="tertiary" tabular numberOfLines={1}>{a.reference}</Text>
-          </View>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginTop: S.md }}>
-            <Flag country={name} size={AVATAR.lg} />
-            <View style={{ flex: 1 }}>
-              <Text variant="title3" accessibilityRole="header" numberOfLines={1}>{t(name || "Application")}</Text>
-              {!!meta && (width >= 375 ? (
-                <View testID="hero-dates" style={{ flexDirection: "row", flexWrap: "wrap", alignItems: "baseline" }}>
-                  {!!dates && <Text variant="subhead" tone="secondary" tabular numberOfLines={1} style={{ flexShrink: 0, maxWidth: "100%" }}>{ltr(dates)}{cd ? " · " : ""}</Text>}
-                  {!!cd && <Text variant="subhead" tone="secondary" tabular style={{ flexShrink: 0 }}>{cd}</Text>}
-                </View>
-              ) : (
-                <Text variant="subhead" tone="secondary" tabular testID="hero-dates">{meta}</Text>
-              ))}
-            </View>
-          </View>
-          <View style={{ marginTop: S.md }}><ProgressSegments count={steps.length} index={done} fraction={0} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t("{n} of {total} steps done", { n: done, total: steps.length })} /></View>
-        </PressScale>
-        <Text variant="subhead" tone="secondary" style={{ marginTop: S.md }} numberOfLines={3} testID="next-action">{[t(n.title, n.vars), n.body && t(n.body)].filter(Boolean).join(" · ")}</Text>
-        <View style={{ marginTop: S.md }}>
-          <Button title={t(n.cta ?? "View application", n.vars)} variant={actionable ? "primary" : "secondary"} loading={paying} onPress={act} />
+    <Card padded testID="home-hero">
+      <PressScale onPress={() => { tap(); open(); }} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={[t(name), ref, headline, sub].filter(Boolean).join(", ")} accessibilityHint={t("Opens the application")}
+        style={{ flexDirection: "row", gap: S.sm, alignItems: "flex-start" }}>
+        <GlobiPose pose={offline ? "waiting" : "checklist"} size={96} style={{ marginTop: -8, marginEnd: -8, marginBottom: -12, marginStart: -16 }} />
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text variant="footnote" weight="600" tone="accent" numberOfLines={1} style={{ textTransform: "uppercase", letterSpacing: 0.3 }}>{`${t(name || "Application")} · ${ltr(ref)}`}</Text>
+          <Text variant="headline" style={{ fontSize: 17, lineHeight: 22 }} testID="next-action">{headline}</Text>
+          {!!sub && <Text variant="callout" tone="secondary">{sub}</Text>}
         </View>
-      </Surface>
-      <View style={[card(c, dark, 0), { marginTop: S.md, paddingVertical: S.xs }]} testID="home-timeline">
-        <Text variant="footnote" tone="secondary" weight="600" style={{ paddingHorizontal: S.md, paddingTop: S.sm }} accessibilityRole="header">{t("Status")}</Text>
-        <Timeline a={a} />
-      </View>
-    </View>
-  );
-}
-
-/** Unsubmitted draft (on this phone, or the account's server draft): destination, step reached, Continue. */
-function DraftHero({ country, step, onContinue }: { country: string; step: string; onContinue: () => void }) {
-  const { t } = useT();
-  return (
-    <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xxl }} testID="home-hero-draft">
-      <Surface level={1} style={{ padding: S.md }}>
-        <Text variant="caption" weight="600" tone="accent">{`${t("Draft")} · ${t(step)}`}</Text>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, marginTop: S.md }}>
-          {!!country && <Flag country={country} size={AVATAR.lg} />}
+      </PressScale>
+      {offline && queued.map((j) => (
+        <View key={j.id} style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: S.sm, padding: S.sm, borderRadius: R.md, backgroundColor: c.fillSubtle }} testID="queued-upload">
+          <Icon name="clock" size={16} color={c.textSecondary} />
           <View style={{ flex: 1 }}>
-            <Text variant="title3" accessibilityRole="header" numberOfLines={1}>{t(country || "New application")}</Text>
-            <Text variant="subhead" tone="secondary" testID="next-action">{t("Not submitted yet.")}</Text>
+            <Text variant="callout" weight="600" numberOfLines={1}>{j.name}</Text>
+            <Text variant="footnote" tone="secondary">{[j.size ? `${(j.size / 1048576).toFixed(1)} MB` : "", t("queued")].filter(Boolean).join(" · ")}</Text>
           </View>
+          <PressScale onPress={() => { tap(); removeUpload(j.id); }} accessibilityRole="button" accessibilityLabel={`${t("Cancel")} ${j.name}`} style={{ minHeight: 44, justifyContent: "center", paddingHorizontal: S.xs }}>
+            <Text variant="note" weight="600" tone="secondary">{t("Cancel")}</Text>
+          </PressScale>
         </View>
-        <View style={{ marginTop: S.md }}><Button title={t("Continue draft")} onPress={() => { tap(); onContinue(); }} /></View>
-      </Surface>
-    </View>
+      ))}
+      <View style={{ marginTop: S.md }}><ProgressSegments count={steps.length} index={done} fraction={0.35} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t("{n} of {total} steps done", { n: done, total: steps.length })} /></View>
+      <View style={{ marginTop: S.md }}>
+        <PrimaryButton title={t(n.cta ?? "View application", n.vars)} loading={paying} disabled={offline && n.kind !== "open" && n.kind !== "none"} onPress={act} testID="hero-action" />
+      </View>
+    </Card>
   );
 }
 
-function HeroSkeleton() {
+/** A draft (canvas HomeDraft): Globi asks "Pick up where you left off?" with the question it stopped at. */
+function DraftCard({ country, local, step, onResume }: { country: string; local?: LocalDraft; step: string; onResume: () => void }) {
+  const { t } = useT();
+  const q = local?.page.startsWith("q:") ? Q_BY_ID[local.page.slice(2)] : null;
+  const where = q ? t("stopped at {q}", { q: t(q.label).toLowerCase() }) : t("stopped at {q}", { q: t(step).toLowerCase() });
+  const prog = local ? progressOf(local.form, local.page) : null;
+  return (
+    <Card padded testID="home-hero-draft">
+      <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 6 }}>
+        <GlobiPose pose="passport" size={96} style={{ marginTop: -8, marginEnd: -8, marginBottom: -12, marginStart: -16 }} />
+        <Bubble style={{ flex: 1 }}>
+          <Text variant="headline" style={{ fontSize: 16, lineHeight: 21 }} accessibilityRole="header">{t("Pick up where you left off?")}</Text>
+          <Text variant="callout" tone="secondary" testID="next-action">{[country && t(country), where].filter(Boolean).join(" · ")}</Text>
+        </Bubble>
+      </View>
+      {prog && <View style={{ marginTop: S.md }}><ProgressSegments count={prog.steps.length} index={prog.stepIndex} fraction={prog.segs[prog.stepIndex]?.fill ?? 0} /></View>}
+      <View style={{ marginTop: S.md }}><PrimaryButton title={t("Resume")} onPress={() => { tap(); onResume(); }} testID="resume-draft" /></View>
+    </Card>
+  );
+}
+
+/** No application yet (canvas EmptyHome). */
+function EmptyCard() {
   const { t } = useT();
   return (
-    <View style={{ paddingHorizontal: S.lg, marginBottom: S.xxl, gap: S.md }} accessible accessibilityLabel={t("Loading")} testID="home-skeleton">
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.md }}><View style={{ flex: 1, gap: S.xs }}><Skeleton w="70%" h={40} r={R.md} /><Skeleton w="50%" h={16} /></View><Skeleton w={64} h={64} r={R.round} /></View>
-      <Skeleton h={S.xxs} r={R.xs} /><Skeleton w="80%" h={14} /><Skeleton h={56} r={R.round} />
-      <View style={{ gap: S.lg, paddingTop: S.sm }}>{Array.from({ length: 5 }).map((_, i) => <View key={i} style={{ flexDirection: "row", gap: S.sm, alignItems: "center" }}><Skeleton w={16} h={16} r={R.round} /><Skeleton w={i % 2 ? "40%" : "55%"} h={14} /></View>)}</View>
+    <Card padded testID="home-empty">
+      <View style={{ alignItems: "center", gap: 14, paddingVertical: S.xs }}>
+        <GlobiPose pose="welcome" size={142} style={{ margin: -11 }} />
+        <View style={{ gap: 6, alignItems: "center" }}>
+          <Text variant="question" center accessibilityRole="header">{t("No application yet")}</Text>
+          <Text variant="callout" tone="secondary" center>{t("Seven questions, about 3 minutes.")}</Text>
+        </View>
+        <View style={{ alignSelf: "stretch" }}><PrimaryButton title={t("Start application")} onPress={() => { tap(); router.push("/apply"); }} testID="home-start" /></View>
+        <Text variant="footnote" tone="secondary" center>{t("{p} AED per person. Embassy fees paid at the appointment.", { p: PRICE_AED })}</Text>
+      </View>
+    </Card>
+  );
+}
+
+/** Loading (canvas Loading.dc.html): the Home layout as flat blocks. */
+function HomeSkeleton() {
+  const { t } = useT();
+  return (
+    <View style={{ gap: S.lg }} accessible accessibilityLabel={t("Loading your applications")} testID="home-skeleton">
+      <Card padded>
+        <View style={{ flexDirection: "row", gap: S.sm }}>
+          <View style={{ opacity: 0.5 }}><GlobiPose pose="waiting" size={66} animated={false} /></View>
+          <View style={{ flex: 1, gap: S.xs }}><Skeleton w={120} h={12} /><Skeleton h={20} /><Skeleton w="70%" h={20} /><Skeleton w="60%" h={14} /></View>
+        </View>
+        <Skeleton h={4} style={{ marginTop: S.md }} /><Skeleton h={48} r={R.button} style={{ marginTop: S.md }} />
+      </Card>
+      <View style={{ gap: S.xs }}>
+        <Skeleton w={120} h={13} />
+        <Card>{[0, 1].map((i) => <View key={i} style={{ flexDirection: "row", gap: S.sm, alignItems: "center", padding: S.md }}><Skeleton w={40} h={40} r={20} /><View style={{ flex: 1, gap: 6 }}><Skeleton w={i ? "30%" : "40%"} h={14} /><Skeleton w={i ? "50%" : "60%"} h={12} /></View></View>)}</Card>
+      </View>
+      <View style={{ gap: S.xs }}><Skeleton w={140} h={13} /><View style={{ flexDirection: "row", gap: 10 }}>{[0, 1, 2].map((i) => <Skeleton key={i} w="31%" h={84} r={R.card} />)}</View></View>
     </View>
   );
 }
 
 /** The other applications (the hero one is left out): drafts saved on this phone + the signed-in user's server
  *  applications, most recently updated first. Only drafts and unpaid cases can be discarded. */
-type Item = { key: string; country: string; status: string; action?: string; actionHref?: string; at: number; open: () => void; /** discards without asking (swipe); the trash button asks once */ remove?: () => void; tone?: "accent" | "secondary"; draft?: string };
+type Item = { key: string; country: string; status: string; action?: string; actionHref?: string; at: number; open: () => void; /** discards without asking (swipe); the trash button asks once */ remove?: () => void; tone?: "accent" | "secondary" | "green"; draft?: string; answers?: number };
 function useItems(apps: Application[] | null): Item[] | null {
   const { t } = useT(); const { hydrated, drafts, openDraft, removeDraft, openServerDraft } = useForm();
   if (!hydrated) return null;
@@ -150,14 +171,14 @@ function useItems(apps: Application[] | null): Item[] | null {
   const linked = new Set(server.map((a) => a.id));
   return [
     ...drafts.filter((d) => hasAnswers(d.form) && !(d.draftId && linked.has(d.draftId) && server.find((a) => a.id === d.draftId)?.status !== "draft")).map((d): Item => ({
-      key: d.draftId ? `s:${d.draftId}` : `l:${d.key}`, country: d.form.destination || (server.find((a) => a.id === d.draftId)?.destination_country ?? ""), status: `${t("Draft")} · ${t(draftStep(d))}`, at: d.savedAt, draft: draftStep(d),
+      key: d.draftId ? `s:${d.draftId}` : `l:${d.key}`, country: d.form.destination || (server.find((a) => a.id === d.draftId)?.destination_country ?? ""), status: `${t("Draft")} · ${t("Details {i} of {n}", draftPosition(d.form, d.page))}`, at: d.savedAt, draft: draftStep(d), answers: answeredCount(d.form),
       open: () => { openDraft(d.key); router.push({ pathname: "/apply", params: { resume: "1" } }); }, remove: () => removeDraft(d.key) })),
     ...server.filter((a) => !(a.status === "draft" && drafts.some((d) => d.draftId === a.id)) && !isUserDiscarded(a)).map((a): Item => {
       const paid = isPaid(a);
       const act = cardAction(a);
       const status = a.status === "draft" ? t("Draft") : act ? t(a.status === "submitted" ? "Paid" : STATUS_LABEL[a.status] ?? a.status) : needsContinue(a) ? t("Continue application")
         : a.status === "submitted" && !paid ? `${t("Submitted")} · ${t("Payment due")}` : paid && a.status === "submitted" ? t("Paid") : t(STATUS_LABEL[a.status] ?? a.status);
-      return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, action: act ? t(act.label) : undefined, actionHref: act?.href, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : "secondary",
+      return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, action: act ? t(act.label) : undefined, actionHref: act?.href, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : ["ready", "approved", "appointment_booked", "completed"].includes(a.status) ? "green" : "secondary",
         // A draft saved from the website or another device opens in the wizard, at the question it was left on.
         open: a.status === "draft" ? () => { openServerDraft(a.id).then((ok) => router.push(ok ? { pathname: "/apply", params: { resume: "1" } } : `/applications/${a.id}`)).catch(() => router.push(`/applications/${a.id}`)); }
           : act ? () => router.push(act.href as any, { withAnchor: true })
@@ -168,53 +189,33 @@ function useItems(apps: Application[] | null): Item[] | null {
   ].sort((x, y) => y.at - x.at).filter(((n) => (i: Item) => !i.remove || n++ < ABANDONED_LIMIT)(0));
 }
 
+/** "Other applications" (canvas Home): round flag, name, status, chevron. Unpaid drafts swipe left to discard. */
 function AppList({ items, title }: { items: Item[]; title: string }) {
   const c = useColors(); const { t } = useT();
   if (!items.length) return null;
   return (
-    <ListGroup header={title} inset={S.md + 28 + S.md} style={{ marginHorizontal: S.xxs }}>
-      {items.map((i) => (
-        <Animated.View key={i.key} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT} testID="home-app-row">
-         <SwipeToDiscard enabled={!!i.remove} onDiscard={() => i.remove?.()} testID="home-swipe">
-          <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: c.surface }}>
-          <PressScale onPress={() => { tap(); i.open(); }} onLongPress={i.remove ? () => askDiscard(i.remove!, t) : undefined} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
-            style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: S.md, paddingStart: S.md, paddingEnd: i.remove ? 0 : S.md, minHeight: 56 }}>
-            {i.country ? <Flag country={i.country} size={28} /> : <View style={{ width: 28, height: 28, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={13} color={c.tint} /></View>}
-            <View style={{ flex: 1, paddingVertical: S.xs }}>
-              <Text variant="body" numberOfLines={1}>{t(i.country || "New application")}</Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}><Text variant="footnote" tone={i.tone ?? "secondary"} numberOfLines={1} style={{ flexShrink: 1 }}>{i.status}</Text>{!!i.action && <ActionPill label={i.action} />}</View>
-            </View>
-            {!i.remove && <Chevron size={13} />}
-          </PressScale>
-          {i.remove && (
-            <SwipeActive.Consumer>{(sw) => sw ? null : <PressScale onPress={() => { tap(); askDiscard(i.remove!, t); }} accessibilityRole="button" accessibilityLabel={`${t("Discard")} ${t(i.country || "")}`} testID="draft-remove"
-              style={{ width: 44, height: 44, marginEnd: S.xs, alignItems: "center", justifyContent: "center" }}>
-              <Icon name="trash" size={17} color={c.red} />
-            </PressScale>}</SwipeActive.Consumer>
-          )}
-          </View>
-         </SwipeToDiscard>
-        </Animated.View>
-      ))}
-    </ListGroup>
-  );
-}
-
-const STORIES = [...POPULAR, "Greece", "Netherlands", "Portugal", "Austria", "Croatia", "Czech Republic"];
-const RING = 78, GAP = 2.5;
-
-/** Instagram-highlight style circle: country photo (flag fallback), name only. */
-function Story({ name }: { name: string }) {
-  const c = useColors(); const { t } = useT(); const photo = THUMBS[toSlug(name)] ?? PHOTOS[toSlug(name)]; const inner = RING - GAP * 4;
-  return (
-    <PressScale scaleTo={0.92} onPress={() => { tap(); router.push(`/destination/${toSlug(name)}`); }} accessibilityRole="button" accessibilityLabel={name} style={{ width: RING + 8, alignItems: "center", gap: S.xs }}>
-      <View style={{ width: RING, height: RING, borderRadius: RING / 2, padding: GAP, borderWidth: StyleSheet.hairlineWidth, borderColor: c.separator }}>
-        <View style={{ flex: 1, borderRadius: RING / 2, backgroundColor: c.bg, padding: GAP, alignItems: "center", justifyContent: "center" }}>
-          {photo ? <Image source={photo} style={{ width: inner, height: inner, borderRadius: inner / 2, backgroundColor: c.card }} contentFit="cover" cachePolicy="memory" recyclingKey={name} /> : <Flag country={name} size={inner} />}
-        </View>
-      </View>
-      <Text variant="caption" weight="500" numberOfLines={2} center maxFontSizeMultiplier={1.35} style={{ width: RING + 8 }}>{t(name)}</Text>
-    </PressScale>
+    <View testID="home-others">
+      <SectionHeader title={title} />
+      <View style={{ marginHorizontal: S.gutter }}><Card>
+        {items.map((i, idx) => (
+          <Animated.View key={i.key} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT} testID="home-app-row">
+            <SwipeToDiscard enabled={!!i.remove} onDiscard={() => askDiscard(i.remove!, t, { country: i.country, answers: i.answers, draft: !!i.draft })} testID="home-swipe">
+              <PressScale onPress={() => { tap(); i.open(); }} onLongPress={i.remove ? () => askDiscard(i.remove!, t, { country: i.country, answers: i.answers, draft: !!i.draft }) : undefined} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
+                accessibilityHint={i.remove ? t("Swipe left to discard") : undefined} scaleTo={0.99}
+                style={{ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, minHeight: 56, paddingVertical: S.xs, backgroundColor: c.surface }}>
+                {i.country ? <Flag country={i.country} size={40} /> : <View style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={15} color={c.tint} /></View>}
+                <View style={{ flex: 1 }}>
+                  <Text variant="row" numberOfLines={1}>{t(i.country || "New application")}</Text>
+                  <Text variant="note" tone={i.tone === "green" ? "success" : i.tone === "accent" ? "accent" : "secondary"} numberOfLines={1}>{[i.status, i.action].filter(Boolean).join(" · ")}</Text>
+                </View>
+                <Chevron size={13} />
+              </PressScale>
+            </SwipeToDiscard>
+            {idx < items.length - 1 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginStart: S.md + 40 + S.sm }} />}
+          </Animated.View>
+        ))}
+      </Card></View>
+    </View>
   );
 }
 
@@ -236,14 +237,20 @@ function useResumePayment() {
 }
 
 export default function Home() {
-  const c = useColors(); const dark = useIsDark(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t, lang } = useT();
+  const c = useColors(); const pb = useTabInset(); const insets = useSafeAreaInsets(); const { t } = useT();
   const { session, apps, unread, refreshing, refresh, err, load } = useApps(true, true);
+  const { drafts } = useForm();
   const photo = useAvatar(session?.user.id);
-  const [swiping, setSwiping] = useState(false); // a row is being swiped: the list does not scroll (SwipeLock)
+  const net = useNetInfo(); const offline = net.isConnected === false;
+  const [swiping, setSwiping] = useState(false);
+  const [q, setQ] = useState("");
   useResumePayment();
-  const scroll = useRef<ScrollViewInstance>(null); const apptY = useRef<number | null>(null);
-  const name = (session?.user.user_metadata?.full_name as string | undefined)?.split(" ")[0];
-  const today = new Date().toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : undefined, { weekday: "long", day: "numeric", month: "long" });
+  const loadedAt = useRef<number | null>(null);
+  useEffect(() => { if (apps) loadedAt.current = Date.now(); }, [apps]);
+  const [errAt, setErrAt] = useState<number | null>(null);
+  useEffect(() => { setErrAt(err ? Date.now() : null); }, [err]);
+  const fullName = (session?.user.user_metadata?.full_name as string | undefined) ?? "";
+  const first = fullName.split(" ")[0];
   const items = useItems(session ? apps : null);
   const server = session ? apps ?? [] : [];
 
@@ -253,86 +260,44 @@ export default function Home() {
   const draftItem = hero?.kind === "draft" ? hero.d : undefined;
   const heroKey = heroApp ? `s:${heroApp.id}` : draftItem?.key;
   const others = (items ?? []).filter((i) => i.key !== heroKey);
+  const local = draftItem ? drafts.find((d) => `l:${d.key}` === draftItem.key || (!!d.draftId && `s:${d.draftId}` === draftItem.key)) : undefined;
   const loading = !!session && apps === null && !err;
   const failed = !!session && apps === null && !!err;
-  const showAppointment = () => { if (apptY.current != null) scroll.current?.scrollTo({ y: Math.max(0, apptY.current - S.lg), animated: true }); };
-  const continueDraft = () => {
-    draftItem?.open();
-  };
+  const empty = !loading && !failed && !heroApp && !draftItem;
+  const title = first ? t("Hi, {name}", { name: first }) : t("Where to next?");
+  const othersTitle = offline && loadedAt.current ? `${t("Other applications")} · ${t("from {t}", { t: hhmm(loadedAt.current) })}` : heroKey ? t("Other applications") : t("Your applications");
 
   return (
     <SwipeLock.Provider value={setSwiping}>
-    <ScrollView scrollEnabled={!swiping} onScroll={onTabScroll} scrollEventThrottle={16} ref={scroll} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xs, paddingBottom: pb }}
+    <ScrollView scrollEnabled={!swiping} onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.md + (offline ? 64 : 0), paddingBottom: pb, gap: S.lg }}
       refreshControl={session ? <RefreshControl refreshing={refreshing} onRefresh={() => { tap(); refresh(); }} tintColor={c.tint} /> : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.gutter, minHeight: 48 }} testID="home-header">
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.gutter, minHeight: 44 }} testID="home-header">
+        <Text variant="pageTitle" accessibilityRole="header" numberOfLines={1} style={{ flex: 1 }}>{title}</Text>
         {session ? (
-          <PressScale onPress={() => { tap(); router.navigate("/account"); }} accessibilityRole="button" accessibilityLabel={t("Account")} hitSlop={8}>
-            <Avatar name={(session.user.user_metadata?.full_name as string) ?? session.user.email ?? ""} size={AVATAR.md} uri={photo} />
+          <PressScale onPress={() => { tap(); router.navigate(unread ? "/account/notifications" : "/account"); }} accessibilityRole="button" hitSlop={8} testID="home-avatar"
+            accessibilityLabel={unread ? t("Account, {n} unread notifications", { n: unread }) : t("Account")}>
+            <Avatar name={fullName || session.user.email || ""} size={36} uri={photo} />
+            {unread > 0 && <View style={{ position: "absolute", top: -1, end: -1, width: 10, height: 10, borderRadius: 5, backgroundColor: c.danger, borderWidth: 2, borderColor: c.bg }} />}
           </PressScale>
         ) : null}
-        <View style={{ flex: 1 }}>
-          <Text variant="caption" tone="secondary" numberOfLines={1}>{today}</Text>
-          <Text variant="title2" accessibilityRole="header" numberOfLines={1}>{name ? t("Hi, {name}", { name }) : t("Where to next?")}</Text>
-        </View>
-        {session
-          ? <HeaderIconButton icon="bell" label={unread ? t("Notifications, {n} unread", { n: unread }) : t("Notifications")} dot={unread > 0} onPress={() => router.push("/account/notifications")} />
-          : <HeaderIconButton icon="person.fill" label={t("Sign in")} onPress={() => router.push({ pathname: "/auth", params: { mode: "signin" } })} />}
       </View>
-      <View style={{ marginTop: S.xl }} />
-      {loading ? <HeroSkeleton /> : failed ? (
-        <View style={[card(c, dark, 0), { marginHorizontal: S.lg, marginBottom: S.xxl, padding: S.md, gap: S.sm }]} testID="home-error" accessibilityLiveRegion="polite">
-          <Text variant="headline">{t("Couldn't load your applications.")}</Text>
-          <Text variant="subhead" tone="secondary">{t("Check your connection and try again.")}</Text>
-          <Button title={t("Try again")} size="M" variant="secondary" onPress={() => { tap(); load(); }} />
-        </View>
-      ) : heroApp ? (
-        <>
-          <Hero a={heroApp} onShowAppointment={showAppointment} />
-          <View onLayout={(e) => { apptY.current = e.nativeEvent.layout.y; }}><AppointmentCard a={heroApp} /></View>
-        </>
-      ) : draftItem ? (
-        <DraftHero country={draftItem.country} step={draftItem.draft ?? ""} onContinue={continueDraft} />
-      ) : (
-        <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xl }} testID="home-headline">
-          {!session && (
-            <View testID="home-start">
-              <Button title={t("Start application")} icon="airplane" onPress={() => { tap(); router.push("/apply"); }} />
-            </View>
-          )}
-          {session && apps?.length === 0 && (
-            <View style={[card(c, dark, 0), { padding: S.md, gap: S.sm }]} testID="home-timeline-empty">
-              <Text variant="headline">{t("No application yet")}</Text>
-              <Text variant="subhead" tone="secondary">{t("Start an application to track it here.")}</Text>
-              <Button title={t("Start application")} size="M" onPress={() => { tap(); router.push("/apply"); }} />
-            </View>
-          )}
+      <View style={{ paddingHorizontal: S.gutter }}>
+        {loading ? <HomeSkeleton /> : failed ? (
+          <Card padded><ErrorView compact title={t("Couldn't load your applications")} message={t("Check your connection and try again. Your answers are saved.")} onRetry={() => { tap(); load(); }} onWhatsApp={() => whatsapp()}
+            diagnostic={[offline ? "offline" : "network error", errAt ? hhmm(errAt) : ""].filter(Boolean).join(" · ")} /></Card>
+        ) : heroApp ? <AppCard a={heroApp} offline={offline} />
+          : draftItem ? <DraftCard country={draftItem.country} local={local} step={draftItem.draft ?? ""} onResume={() => draftItem.open()} />
+          : <EmptyCard />}
+      </View>
+      {empty && (
+        <View style={{ paddingHorizontal: S.gutter }}>
+          <SearchField value={q} onChangeText={setQ} placeholder={t("Search destinations")} returnKeyType="search" testID="home-search"
+            onSubmitEditing={() => { const v = q.trim(); router.navigate(v ? { pathname: "/countries", params: { q: v } } : "/countries"); }} />
         </View>
       )}
-      <PressScale onPress={() => { tap(); router.navigate("/countries"); }} accessibilityRole="search" accessibilityLabel={t("Search destinations")}
-        style={{ marginHorizontal: S.gutter, marginBottom: S.xl, minHeight: SIZE.row, borderRadius: R.input, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.md }}>
-        <Icon name="magnifyingglass" size={ICON.md} color={c.secondaryLabel} weight="medium" />
-        <Text variant="body" tone="secondary">{t("Search destinations")}</Text>
-      </PressScale>
-      <SectionHeader title={t("Popular countries")} action={t("See all")} onAction={() => router.navigate("/countries")} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: S.lg - 4, gap: S.xs }} testID="popular-stories">
-        {STORIES.map((n) => <Story key={n} name={n} />)}
-      </ScrollView>
-      <AppList items={others} title={heroKey ? t("Other applications") : t("Your applications")} />
-      <View style={{ paddingHorizontal: S.gutter, marginBottom: S.xxl }}>
-        <PressScale onPress={() => { tap(); whatsapp(); }} accessibilityRole="button" accessibilityLabel={t("Need help?")} scaleTo={0.985} lift>
-          <Surface level={1} style={{ padding: S.md, flexDirection: "row", alignItems: "center", gap: S.sm }}>
-            <IconTile name="logo.whatsapp" color={c.whatsapp} size={40} />
-            <View style={{ flex: 1 }}>
-              <Text variant="headline">{t("Need help?")}</Text>
-              <Text variant="footnote" tone="secondary" numberOfLines={2}>{t("Message us on WhatsApp or by email.")}</Text>
-            </View>
-            <Chevron />
-          </Surface>
-        </PressScale>
-      </View>
-      <Explore />
-      <FaqSection />
+      <AppList items={others} title={othersTitle} />
+      {!offline && !loading && <PopularTiles />}
     </ScrollView>
     </SwipeLock.Provider>
   );
