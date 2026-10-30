@@ -20,13 +20,14 @@ import { formatAppointment, formatDetailDate } from "../../lib/dates";
 import { iso } from "../../lib/wizard";
 import { track } from "../../lib/analytics";
 import { success, tap, error as hError, select } from "../../lib/haptics";
+import { cachedApplication } from "../../lib/appsCache";
 
 const TIMES = ["08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00"];
 
 export default function Appointment() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, lang } = useT();
-  const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null);
+  const [a, setA] = useState<Application | null>(() => cachedApplication(id)); /* shown at once, then the full row */ const [err, setErr] = useState<string | null>(null);
   const [adding, setAdding] = useState(false); const [date, setDate] = useState(""); const [time, setTime] = useState("09:00");
   const [busy, setBusy] = useState(false); const [saveErr, setSaveErr] = useState<string | null>(null);
   const [day, setDay] = useState(false); const [remind, setRemind] = useState(false);

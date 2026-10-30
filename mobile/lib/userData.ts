@@ -4,6 +4,7 @@
 import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { clearQueue } from "./uploads";
+import { resetAppsCache } from "./appsCache";
 import { resetDiscarded } from "./discard";
 import { resetAvatar } from "./avatar";
 import { setRemindersEnabled } from "./reminders";
@@ -22,6 +23,7 @@ export const USER_KEYS = [
 const USER_PREFIXES = ["ezvisa.itinerary.v1."];      // trip plans per application (lib/itinerary.ts)
 
 export async function clearUserData() {
+  resetAppsCache(); // the shared applications list (memory only)
   clearQueue(); // upload queue + the local copies of passports/statements (lib/uploads.ts)
   resetDiscarded(); resetAvatar();
   if (Platform.OS !== "web") await setRemindersEnabled(false, null).catch(() => {}); // cancels scheduled reminders

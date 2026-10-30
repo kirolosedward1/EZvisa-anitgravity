@@ -28,14 +28,19 @@ import { Pressable } from "react-native";
 import { Icon } from "../../../components/ui";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from "react-native-reanimated";
 import { formatPayAmount, PAY_AED } from "../../../lib/payLabel";
+import { cachedApplication, putApplication } from "../../../lib/appsCache";
+import { supabase } from "../../../lib/supabase";
+import { useAuth } from "../../../lib/auth";
 
 const EDITABLE = UPLOAD_STATUSES;
-const REFRESH_MS = 30_000;
+const REFRESH_MS = 120_000; // fallback only: Realtime brings changes at once
 
 export default function ApplicationDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors(); const pb = useTabInset(); const { t, lang } = useT();
-  const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null);
+  const { session: me } = useAuth(); const myEmail = me?.user.email ?? null;
+  // The shared list (lib/appsCache.ts) shows the application at once; the full row loads right after.
+  const [a, setA] = useState<Application | null>(() => cachedApplication(id, myEmail)); const [err, setErr] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [upErr, setUpErr] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
@@ -44,18 +49,22 @@ export default function ApplicationDetail() {
   /** quiet = background refresh: a failure keeps what is on screen instead of replacing it with an error. */
   const load = useCallback(async (quiet = false) => {
     try {
-      const app = await getApplication(id!); setA(app); setErr(null);
+      const app = await getApplication(id!); setA(app); setErr(null); putApplication(app, myEmail);
       listRequirements(app.country_id, employmentOf(app)).then(setReqs).catch(() => setReqs([]));
     } catch (e: any) { if (!quiet) setErr(e?.message ?? String(e)); }
-  }, [id]);
-  // Staff can change statuses on the website while this screen is open: refresh every 30 s while it is visible and
-  // the app is in the foreground, and right away when the app comes back. (No realtime: that needs a DB change.)
+  }, [id, myEmail]);
+  // Staff can change statuses on the website while this screen is open: Realtime on this row (migrations/0009, RLS
+  // limits it to the owner) reloads within a second; coming back to the foreground reloads too, and a slow timer
+  // covers a dropped connection.
   useFocusEffect(useCallback(() => {
     load();
     const tick = setInterval(() => { if (AppState.currentState === "active") load(true); }, REFRESH_MS);
     const sub = AppState.addEventListener("change", (s) => { if (s === "active") load(true); });
-    return () => { clearInterval(tick); sub.remove(); };
-  }, [load]));
+    const ch = id && supabase ? supabase.channel(`app-${id}-${Math.random().toString(36).slice(2, 8)}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "visa_applications", filter: `id=eq.${id}` }, () => load(true))
+      .subscribe() : null;
+    return () => { clearInterval(tick); sub.remove(); if (ch) supabase?.removeChannel(ch); };
+  }, [load, id]));
   const onDone = useCallback(() => { success(); load(true); }, [load]);
   const queue = useUploads(id, onDone);
 

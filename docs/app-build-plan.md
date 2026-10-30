@@ -634,3 +634,15 @@ Owner: "no need for decisions in this app … our work finished after creating t
 |---|---|
 | Website page "What a good NOC looks like" (`/documents/noc-sample`, Arabic too): a sample letter from a UAE employer with the parts to fill in marked, and the checklist every NOC needs. Merged to main ([PR #114](https://github.com/kirolosedward1/EZvisa-anitgravity/pull/114)) | website `app/documents/noc-sample/page.tsx` |
 | The app's NOC card ("What a good NOC says") has "See a sample NOC", which opens that page in the in-app browser (Arabic page in Arabic) | `components/wizard/QuestionView.tsx` |
+
+## 7q. Performance and launch prep (30 Oct)
+
+| Item | Where |
+|---|---|
+| Store builds use the fingerprint update policy; Expo Go / preview keep sdkVersion (Expo Go needs it). `APP_VARIANT=production` in the EAS production profile | `app.config.ts`, `eas.json` |
+| One shared applications list for every screen: instant render, simultaneous loads merged, 3 s reuse (4 quick tab switches: 1 query). Detail screens show the cached row first. Memory only, emptied on sign-out | `lib/appsCache.ts`, `lib/useApps.ts`, `lib/userData.ts`, detail screens |
+| Realtime on visa_applications (migration 0009 block 2 applied, guard passed); the application page listens to its own row (30 s polling → 2 min fallback) | `app/(tabs)/applications/[id].tsx` |
+| Universal links: app side (associated domains, Android intent filters, `lib/linkRoute.ts` + `+native-intent`), website files (PR #116) waiting for APPLE_TEAM_ID / ANDROID_CERT_SHA256 on Vercel | `app.config.ts`, `app/+native-intent.tsx`, `scripts/link-route-check.ts` |
+| Crash reports tagged production / preview | `lib/sentry.ts` |
+| Maestro flows for the real build; launch checklist | `.maestro/`, `docs/LAUNCH-CHECKLIST.md` |
+| Not done, on purpose: FlashList (lists are short or already virtualised), photo placeholders (photos are bundled, 720 px), no-restart language switch (React Native needs the reload to flip native layout) | |
