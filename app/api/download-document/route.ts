@@ -4,17 +4,20 @@ import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/li
 import { generateCompleteDossierPack } from "@/lib/documents/templates"
 import { isDemoToken, getDemoApplicationByToken } from "@/lib/demo-data"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { recordApplicationEvent } from "@/lib/application-events-server"
 
 /** First download unlocks the appointment step. A missing column must not block the file. */
 async function stampDownloaded(supabase: SupabaseClient, id?: string | null) {
   if (!id) return
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("visa_applications")
       .update({ file_downloaded_at: new Date().toISOString() })
       .eq("id", id)
       .is("file_downloaded_at", null)
+      .select("id")
     if (error) console.error("file_downloaded_at:", error.message)
+    else if (data?.length) await recordApplicationEvent(id, "file_downloaded", {}, "customer", supabase)
   } catch (err) {
     console.error("file_downloaded_at:", err)
   }

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { recordApplicationEvent } from "@/lib/application-events-server"
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import crypto from "crypto"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
@@ -168,6 +169,7 @@ export async function POST(request: NextRequest) {
       .update({ [DOC_FLAG[documentType]]: true, additional_notes: JSON.stringify(notes), updated_at: new Date().toISOString() })
       .eq("id", verifiedAppId)
     if (updateError) console.error("Upload flag update error:", updateError)
+    else await recordApplicationEvent(verifiedAppId, "document_uploaded", { document_type: documentType }, "customer", supabase)
 
     return NextResponse.json({ success: true, path: uploadData.path })
   } catch (error) {

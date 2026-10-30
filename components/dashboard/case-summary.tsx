@@ -32,12 +32,15 @@ export function CaseSummary({
   showTrackingLink = true,
   allowDiscard = false,
   arabic,
+  specialist,
 }: {
   app: VisaApplication
   stage: Stage
   showTrackingLink?: boolean
   allowDiscard?: boolean
   arabic: boolean
+  /** The visa specialist on the case (lib/application-events.ts specialistName), when one is assigned. */
+  specialist?: string
 }) {
   const locale = arabic ? "ar" : "en"
   const t = (key: CustomerKey) => customerText(locale, key)
@@ -72,6 +75,7 @@ export function CaseSummary({
           </DashPill>
           <span className="tabular-nums">{formatAedLabel(app.payment_amount || PRICE_AED, locale)}</span>
         </Row>
+        {paid && specialist ? <Row label={t("case.specialist")}><bdi>{specialist}</bdi></Row> : null}
         {paid && insurance ? <Row label={t("case.insurance")}>{t(insurance === "quote" ? "case.insQuote" : "case.insOwn")}</Row> : null}
         {!paid ? <Row label={t("case.traveller")}>{app.full_name}</Row> : null}
         <Row label={t(paid ? "case.created" : "case.started")}>{date(app.created_at)}</Row>

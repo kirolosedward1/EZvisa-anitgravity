@@ -11,7 +11,7 @@ const COPY: Partial<Record<Stage, { title: CustomerKey; body: CustomerKey }>> = 
 }
 
 /** `id` gives the EZ- reference the customer sees; the tracking token is only a fallback. */
-export async function SupportCard({ id, token, destination, stage }: { id?: string; token: string; destination?: string; stage?: Stage }) {
+export async function SupportCard({ id, token, destination, stage, specialist }: { id?: string; token: string; destination?: string; stage?: Stage; specialist?: string }) {
   const arabic = (await requestLocale()) === "ar"
   const locale = arabic ? "ar" : "en"
   const copy = (stage && COPY[stage]) || { title: "support.title", body: "support.bodyCase" }
@@ -28,7 +28,7 @@ export async function SupportCard({ id, token, destination, stage }: { id?: stri
         className="inline-flex h-[42px] items-center justify-center gap-2 rounded-lg bg-[#1A7F37] px-[18px] text-sm font-medium text-white transition-colors hover:bg-[#166C2F]"
       >
         <WhatsAppIcon className="size-4" />
-        {customerText(locale, "support.chat")}
+        {specialist ? customerText(locale, "support.chatWith", { name: specialist }) : customerText(locale, "support.chat")}
       </a>
       <a href="mailto:hello@ezvisa.net" className="inline-flex items-center justify-center gap-2 py-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground">
         <Mail className="size-[15px]" aria-hidden="true" />

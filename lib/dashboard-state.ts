@@ -6,6 +6,7 @@ import { customerProgress, detailsMissing, getStage, isPaid, type ApplicationLik
 import { DOC_FLAG, REQUIREMENTS, parseNotes, requiredFlags } from "@/lib/shared/wizard-contract"
 import type { CustomerKey } from "@/lib/translations/customer"
 import { isRowIn, rowState, uploadRecords, type DocumentReviews, type RowState } from "@/lib/document-reviews"
+import { appointmentCardState, type AppointmentApp } from "@/lib/appointment"
 
 export type Turn = "you" | "us"
 
@@ -61,4 +62,30 @@ export function customerDocuments(app: ApplicationLike, reviews?: DocumentReview
     total: rows.length,
     missing: rows.filter((r) => !isRowIn(r.state)),
   }
+}
+
+export type CustomerTodo =
+  | { kind: "redo"; doc: string; note: string | null }
+  | { kind: "upload"; docs: string[] }
+  | { kind: "details" }
+  | { kind: "appointment" }
+
+/**
+ * Everything on a paid, open case that waits on the customer, most urgent first: documents sent back for a new
+ * file, documents not uploaded yet, post-payment answers, then the appointment. The dashboard lists them in the
+ * "What we need from you" box when there are two or more (one item is already the case card's next step).
+ */
+export function customerTodos(app: ApplicationLike & AppointmentApp, reviews?: DocumentReviews): CustomerTodo[] {
+  const stage = getStage(app)
+  if (!isPaid(app) || stage === "cancelled" || stage === "rejected") return []
+  const { rows } = customerDocuments(app, reviews)
+  const todos: CustomerTodo[] = rows
+    .filter((r) => r.state === "rejected")
+    .map((r) => ({ kind: "redo" as const, doc: r.document_type, note: reviews?.[r.document_type]?.note ?? null }))
+  const missing = rows.filter((r) => r.state === "missing").map((r) => r.document_type)
+  if (missing.length) todos.push({ kind: "upload", docs: missing })
+  if (detailsMissing(app)) todos.push({ kind: "details" })
+  const appointment = appointmentCardState(app)
+  if (appointment === "not_answered" || appointment === "later") todos.push({ kind: "appointment" })
+  return todos
 }

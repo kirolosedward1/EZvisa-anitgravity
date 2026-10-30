@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { recordApplicationEvent } from "@/lib/application-events-server"
 import { getOwnApplication, getSessionUser, serviceClient } from "@/lib/applications"
 import { planAppointmentWrite } from "@/lib/appointment"
 import { checkRateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit"
@@ -66,5 +67,8 @@ export async function POST(request: Request) {
     }
   }
 
+  if (decision.patch.appointment_at) {
+    await recordApplicationEvent(id, "appointment_saved", { at: decision.patch.appointment_at, centre: decision.patch.appointment_centre ?? null }, "customer", supabase)
+  }
   return NextResponse.json({ ok: true })
 }

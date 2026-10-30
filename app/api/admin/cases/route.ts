@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { recordApplicationEvent } from "@/lib/application-events-server"
 import { createClient } from "@supabase/supabase-js"
 import { hasBearerSecret } from "@/lib/bearer-auth"
 
@@ -137,6 +138,8 @@ export async function PATCH(request: NextRequest) {
         { status: 409 }
       )
     }
+
+    if (application_status) await recordApplicationEvent(id, "status_changed", { to: application_status }, "team", supabase)
 
     // 3. Log Audit Trail. email_logs has a unique (event_type, entity_id) index for email idempotency, so each
     // audit entry needs its own entity_id or every update after the first one is silently rejected.

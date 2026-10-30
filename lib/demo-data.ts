@@ -40,12 +40,19 @@ export const DEMO_CONFIGS: Record<DemoScenario, DemoUserConfig> = {
     email: "demo.family@ezvisa.net",
     name: "Marcus Vance",
     title: "Multi-Application Family (Italy & Germany)",
-    description: "3 visa files to test the multi-case switcher, including an unpaid draft",
-    badge: "3 Applications",
+    description: "4 visa files: a family trip to Italy, Germany and an unpaid draft",
+    badge: "4 Applications",
     badgeVariant: "blue",
     destination: "Italy & Germany",
   },
 };
+
+/** A UAE-time slot `days` from now, so the demo appointment countdown never runs out. */
+function demoDaysAhead(days: number, hourUtc: number, minute = 0): string {
+  const d = new Date(Date.now() + days * 86_400_000)
+  d.setUTCHours(hourUtc, minute, 0, 0)
+  return d.toISOString()
+}
 
 export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
   "demo.ready@ezvisa.net": [
@@ -71,8 +78,9 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       application_status: "ready",
       payment_status: "paid",
       payment_amount: 249,
-      file_downloaded_at: "2026-10-20T10:00:00.000Z",
-      appointment_at: "2026-11-12T06:30:00.000Z",
+      paid_at: "2026-03-01T10:43:00.000Z",
+      file_downloaded_at: "2026-03-04T08:30:00.000Z",
+      appointment_at: demoDaysAhead(12, 5, 30),
       appointment_centre: "TLScontact, Dubai",
       appointment_address: "Al Manara Building, 2nd Floor, Sheikh Zayed Road, Dubai",
       appointment_reference: "TLS-2048",
@@ -103,6 +111,7 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       application_status: "submitted",
       payment_status: "paid",
       payment_amount: 249,
+      paid_at: "2026-03-10T08:20:00.000Z",
       // Passport and residence visa are in; the photo was sent back (DEMO_DOCUMENT_REVIEWS) and needs a new file.
       additional_notes: JSON.stringify({
         uploads: [
@@ -138,8 +147,36 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       application_status: "ready",
       payment_status: "paid",
       payment_amount: 249,
+      paid_at: "2026-03-05T12:10:00.000Z",
       created_at: "2026-03-05T12:00:00.000Z",
       updated_at: "2026-03-07T16:00:00.000Z",
+    },
+    {
+      // Same destination and dates as Marcus's Italy case: the switcher groups them as one family trip.
+      id: "demo-app-multi-4",
+      tracking_token: "ez-demo-multi-it2026-b",
+      full_name: "Lina Vance",
+      email: "demo.family@ezvisa.net",
+      phone: "+971 55 443 2211",
+      nationality: "Indian / UAE Resident",
+      destination_country: "Italy",
+      travel_purpose: "Vacation & Culture",
+      entry_date: "2026-07-01",
+      exit_date: "2026-07-14",
+      duration_days: 14,
+      has_passport: true,
+      has_photos: true,
+      has_bank_statements: false,
+      has_employment_proof: false,
+      has_accommodation: true,
+      has_flight_booking: true,
+      has_travel_insurance: false,
+      application_status: "awaiting_documents",
+      payment_status: "paid",
+      payment_amount: 249,
+      paid_at: "2026-03-05T12:12:00.000Z",
+      created_at: "2026-03-05T12:05:00.000Z",
+      updated_at: "2026-03-06T09:00:00.000Z",
     },
     {
       id: "demo-app-multi-2",
@@ -203,6 +240,17 @@ export const DEMO_DOCUMENT_REVIEWS: Record<string, { document_type: string; stat
       note: "The background is not plain white and the photo is cropped at the chin. Please retake it against a white wall, face centred, no glasses.",
       reviewed_at: "2026-03-11T09:10:00.000Z",
     },
+  ],
+}
+
+/** Activity rows of the demo cases (same shape as application_events). Uploads, reviews and payment come from the row. */
+export const DEMO_APPLICATION_EVENTS: Record<string, { kind: string; payload: Record<string, unknown>; created_at: string }[]> = {
+  "demo-app-pending": [
+    { kind: "specialist_assigned", payload: { name: "Nour" }, created_at: "2026-03-11T08:15:00.000Z" },
+  ],
+  "demo-app-multi-1": [
+    { kind: "specialist_assigned", payload: { name: "Omar" }, created_at: "2026-03-06T08:00:00.000Z" },
+    { kind: "status_changed", payload: { to: "ready" }, created_at: "2026-03-07T16:00:00.000Z" },
   ],
 }
 

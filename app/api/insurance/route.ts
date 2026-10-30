@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { recordApplicationEvent } from "@/lib/application-events-server"
 import { createServerClient } from "@/lib/supabase/server"
 import { UUID_RE, serviceClient } from "@/lib/applications"
 import { isPaid } from "@/lib/application-status"
@@ -39,5 +40,6 @@ export async function POST(request: Request) {
     : update.eq("additional_notes", app.additional_notes)
   const { data: saved, error: saveError } = await update.select("id")
   if (saveError || !saved?.length) return NextResponse.json({ error: "save_failed" }, { status: 409 })
+  await recordApplicationEvent(app.id, "insurance_preference", { preference }, "customer", writer)
   return NextResponse.json({ ok: true, preference })
 }
