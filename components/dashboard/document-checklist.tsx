@@ -1,101 +1,164 @@
 import { LocaleLink } from "@/components/locale-link"
-import { Check, Upload } from "lucide-react"
-import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashboard-card"
-import { StatusBadge } from "@/components/dashboard/status-badge"
-import { getDocumentProgress, getStage, isPaid, REQUIRED_DOCUMENTS } from "@/lib/application-status"
-import { customerText, type CustomerKey } from "@/lib/translations/customer"
-import { DOC_FLAG, REQUIREMENTS, parseNotes, requiredFlags } from "@/lib/shared/wizard-contract"
+import { Check, ChevronRight, FileText } from "lucide-react"
+import { DashPill } from "@/components/dashboard/dash-pill"
 import { DocumentUploadPanel } from "@/components/dashboard/document-upload-panel"
+import { getStage, isPaid, type Stage } from "@/lib/application-status"
+import { formatAedLabel } from "@/lib/currency"
+import { customerText, type CustomerKey } from "@/lib/translations/customer"
+import { DOC_FLAG, PRICE_AED } from "@/lib/shared/wizard-contract"
+import { DOC_TITLE_KEY, customerDocuments } from "@/lib/dashboard-state"
 import type { VisaApplication } from "@/lib/types/visa-application"
 
-const DOC_LABEL: Record<(typeof REQUIRED_DOCUMENTS)[number]["key"], { title: CustomerKey; hint: CustomerKey }> = {
-  has_passport: { title: "docs.passport", hint: "docs.passportHint" },
-  has_photos: { title: "docs.photo", hint: "docs.photoHint" },
-  has_bank_statements: { title: "docs.bank", hint: "docs.bankHint" },
-  has_employment_proof: { title: "docs.job", hint: "docs.jobHint" },
+const PREPARED: CustomerKey[] = ["dash.prepCover", "dash.prepFlight", "dash.prepHotel", "dash.prepItinerary"]
+const PREPARED_FILE: CustomerKey[] = ["dash.prepCover", "dash.prepForm", "dash.prepFlight", "dash.prepHotel", "dash.prepDayPlan"]
+/** "We prepare for you": what EZvisa adds, shown under the customer's own documents. */
+function WePrepare({ arabic }: { arabic: boolean }) {
+  const locale = arabic ? "ar" : "en"
+  return (
+    <div className="flex flex-col gap-2.5 rounded-b-xl border-t border-[#eef1f6] bg-[#fafbfe] px-5 pb-[18px] pt-4">
+      <p className="text-[13px] font-medium text-foreground">{customerText(locale, "dash.wePrepare")}</p>
+      <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {PREPARED.map((key) => (
+          <li key={key} className="flex items-center gap-[7px] text-[13px] text-muted-foreground">
+            <Check className="size-3.5 shrink-0 text-primary" strokeWidth={2.4} aria-hidden="true" />
+            {customerText(locale, key)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
-export function DocumentChecklist({ app, arabic }: { app: VisaApplication; arabic: boolean }) {
+/** Before payment: what the fee covers, what is paid separately, and the documents to start gathering. */
+function BeforePayment({ app, arabic }: { app: VisaApplication; arabic: boolean }) {
   const locale = arabic ? "ar" : "en"
-  const token = app.tracking_token ?? ""
-  // While documents are still being collected, each row uploads directly (same rows as the upload desk and the app).
-  const stage = getStage(app)
-  if (token && isPaid(app) && (stage === "documents" || stage === "review")) {
-    const notes = parseNotes(app.additional_notes)
-    const needed = requiredFlags(notes.wizard?.employmentStatus ?? notes.employmentStatus)
-    const rows = REQUIREMENTS.filter((r) => !r.provided_by_ezvisa && needed.includes(DOC_FLAG[r.document_type]))
-    const status = Object.fromEntries(needed.map((flag) => [flag, !!app[flag]]))
-    return <DocumentUploadPanel token={token} rows={rows} status={status} />
-  }
-  const { received, total } = getDocumentProgress(app)
-  const percent = Math.round((received / total) * 100)
-
+  const t = (key: CustomerKey, values?: Record<string, string | number>) => customerText(locale, key, values)
+  const amount = formatAedLabel(app.payment_amount || PRICE_AED, locale)
+  const covers: [CustomerKey, CustomerKey | null][] = [
+    ["dash.coverCheck", "dash.coverCheckBody"],
+    ["dash.coverLetter", "dash.coverLetterBody"],
+    ["dash.coverBookings", "dash.coverBookingsBody"],
+    ["dash.coverItinerary", "dash.coverItineraryBody"],
+    ["dash.coverSupport", null],
+  ]
+  const separate: [CustomerKey, CustomerKey][] = [
+    ["dash.embassyFee", "dash.atCentre"],
+    ["dash.centreFee", "dash.atCentre"],
+    ["dash.insuranceFee", "dash.quotedLater"],
+  ]
+  const { rows } = customerDocuments(app)
   return (
-    <DashboardCard aria-label={customerText(locale, "docs.title")}>
-      <DashboardCardHeader
-        title={customerText(locale, "docs.title")}
-        description={customerText(locale, "docs.count", { n: received, total })}
-        action={
-          received < total ? (
-            <LocaleLink
-              href={`/track/${token}/upload`}
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/10"
-            >
-              <Upload className="size-4" aria-hidden="true" />
-              {customerText(locale, "docs.upload")}
-            </LocaleLink>
-          ) : null
-        }
-      />
-
-      <div className="px-6 pt-3">
-        <div
-          className="h-1.5 overflow-hidden rounded-full bg-muted"
-          role="progressbar"
-          aria-valuenow={received}
-          aria-valuemin={0}
-          aria-valuemax={total}
-          aria-label={customerText(locale, "docs.progress")}
-        >
-          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${percent}%` }} />
+    <>
+      <section aria-label={t("dash.coversTitle", { amount })} className="ez-dash-card grid gap-6 p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_17rem]">
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <h2 className="ez-dash-section text-foreground">{t("dash.coversTitle", { amount })}</h2>
+            <p className="text-[13px] text-muted-foreground">{t("dash.coversBody")}</p>
+          </div>
+          <ul className="flex flex-col gap-2.5">
+            {covers.map(([title, body]) => (
+              <li key={title} className="flex items-start gap-2.5 text-sm leading-relaxed">
+                <Check className="mt-1 size-3.5 shrink-0 text-primary" strokeWidth={2.4} aria-hidden="true" />
+                <span>
+                  <span className="font-medium text-foreground">{t(title)}</span>
+                  {body ? <span className="text-muted-foreground"> · {t(body)}</span> : null}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-      </div>
-
-      <ul className="flex flex-col divide-y divide-border/60 px-2 pb-2 pt-3">
-        {REQUIRED_DOCUMENTS.map((doc) => {
-          const isReceived = Boolean(app[doc.key])
-          return (
-            <li key={doc.key} className="flex items-center justify-between gap-4 rounded-xl px-4 py-3">
-              <div className="flex min-w-0 items-center gap-3">
-                {isReceived ? (
-                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-success text-success-foreground">
-                    <Check className="size-3.5" strokeWidth={3} aria-hidden="true" />
-                  </span>
-                ) : (
-                  <span className="size-7 shrink-0 rounded-full border-2 border-dashed border-border" aria-hidden="true" />
-                )}
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">{customerText(locale, DOC_LABEL[doc.key].title)}</p>
-                  <p className="truncate text-xs text-muted-foreground">{customerText(locale, DOC_LABEL[doc.key].hint)}</p>
-                </div>
+        <div className="flex flex-col gap-2 rounded-[10px] bg-secondary p-4">
+          <p className="text-[13px] font-medium text-foreground">{t("dash.separately")}</p>
+          <dl className="flex flex-col gap-1.5 text-[13px]">
+            {separate.map(([label, value]) => (
+              <div key={label} className="flex justify-between gap-3">
+                <dt className="text-muted-foreground">{t(label)}</dt>
+                <dd className="whitespace-nowrap text-end text-foreground">{t(value)}</dd>
               </div>
-              {isReceived ? (
-                <StatusBadge tone="success">{customerText(locale, "docs.received")}</StatusBadge>
-              ) : (
-                <LocaleLink
-                  href={`/track/${token}/upload?type=${doc.uploadType}`}
-                  className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label={`${customerText(locale, "docs.upload")} ${customerText(locale, DOC_LABEL[doc.key].title)}`}
-                >
-                  <StatusBadge tone="warning" className="transition-colors hover:bg-warning/20">
-                    {customerText(locale, "docs.upload")}
-                  </StatusBadge>
-                </LocaleLink>
-              )}
+            ))}
+          </dl>
+          <LocaleLink href="/pricing" className="mt-1 text-[13px] font-medium text-primary hover:underline">{t("dash.pricing")}</LocaleLink>
+        </div>
+      </section>
+      <section aria-label={t("dash.afterTitle", { n: rows.length })} className="ez-dash-card flex flex-wrap items-center gap-4 px-5 py-[18px]">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-secondary text-muted-foreground">
+          <FileText className="size-5" strokeWidth={1.8} aria-hidden="true" />
+        </span>
+        <div className="flex min-w-[220px] flex-1 flex-col gap-0.5">
+          <p className="text-sm font-medium text-foreground">{t("dash.afterTitle", { n: rows.length })}</p>
+          <p className="text-[13px] leading-relaxed text-muted-foreground">{t("dash.afterBody")}</p>
+        </div>
+        <LocaleLink href="/documents" className="inline-flex h-9 items-center gap-1 rounded-lg px-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground">
+          {t("dash.fullList")}
+          <ChevronRight className="size-4 rtl:rotate-180" aria-hidden="true" />
+        </LocaleLink>
+      </section>
+    </>
+  )
+}
+
+/** After the documents are in: the customer's received rows, and (once ready) the prepared documents as tiles. */
+function YourFile({ app, stage, arabic }: { app: VisaApplication; stage: Stage; arabic: boolean }) {
+  const locale = arabic ? "ar" : "en"
+  const t = (key: CustomerKey, values?: Record<string, string | number>) => customerText(locale, key, values)
+  const token = app.tracking_token ?? ""
+  const { rows, status } = customerDocuments(app)
+  const ready = stage === "ready"
+  return (
+    <section aria-label={t("dash.yourFile")} className="ez-dash-card overflow-hidden">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-5 pb-4 pt-5">
+        <div className="flex flex-col gap-1">
+          <h2 className="ez-dash-section text-foreground">{t("dash.yourFile")}</h2>
+          <p className="text-[13px] text-muted-foreground">{t("dash.yourFileBody", { n: rows.length })}</p>
+        </div>
+        <DashPill tone={ready ? "success" : "info"}>{t(ready ? "dash.complete" : "dash.inProgress")}</DashPill>
+      </div>
+      {ready && token ? (
+        <ul className="grid grid-cols-2 gap-2.5 px-5 pb-5 sm:grid-cols-5">
+          {PREPARED_FILE.map((key) => (
+            <li key={key}>
+              <LocaleLink href={`/track/${token}/dossier`} className="flex h-full flex-col gap-2 rounded-[10px] border border-border bg-background p-2.5 text-[13px] font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-[#f7f9fd]">
+                <span className="flex h-16 flex-col gap-1.5 rounded-md bg-secondary p-2.5" aria-hidden="true">
+                  <span className="h-1 w-3/4 rounded bg-[#d3dceb]" />
+                  <span className="h-1 w-full rounded bg-[#d3dceb]" />
+                  <span className="h-1 w-5/6 rounded bg-[#d3dceb]" />
+                  <span className="h-1 w-2/3 rounded bg-[#d3dceb]" />
+                </span>
+                {t(key)}
+              </LocaleLink>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <ul>
+        {rows.map((row) => {
+          const received = status[DOC_FLAG[row.document_type]]
+          const title = arabic && DOC_TITLE_KEY[row.document_type] ? t(DOC_TITLE_KEY[row.document_type]) : row.title
+          return (
+            <li key={row.id} className="flex items-center gap-3 border-t border-[#eef1f6] px-5 py-3 text-sm">
+              <span className={received ? "flex size-6 shrink-0 items-center justify-center rounded-full bg-[#e3f5e8] text-[#1a7f37]" : "size-6 shrink-0 rounded-full border-2 border-dashed border-border"}>
+                {received ? <Check className="size-3.5" strokeWidth={2.8} aria-hidden="true" /> : null}
+              </span>
+              <span className="flex-1 font-medium text-foreground">{title}</span>
+              <span className="text-[13px] text-muted-foreground">{t(received ? "dash.received" : "dash.waiting")}</span>
             </li>
           )
         })}
       </ul>
-    </DashboardCard>
+      {!ready ? <WePrepare arabic={arabic} /> : null}
+    </section>
   )
+}
+
+/** The documents section under the next step, shaped by the stage. */
+export function DocumentChecklist({ app, arabic }: { app: VisaApplication; arabic: boolean }) {
+  const stage = getStage(app)
+  const token = app.tracking_token ?? ""
+  if (stage === "cancelled") return null
+  if (!isPaid(app)) return <BeforePayment app={app} arabic={arabic} />
+  if (token && (stage === "documents" || stage === "review")) {
+    const { rows, status } = customerDocuments(app)
+    return <DocumentUploadPanel token={token} rows={rows} status={status} footer={<WePrepare arabic={arabic} />} />
+  }
+  return <YourFile app={app} stage={stage} arabic={arabic} />
 }

@@ -1,23 +1,31 @@
 import { LocaleLink } from "@/components/locale-link"
 import { format, parseISO } from "date-fns"
-import { ChevronRight, ExternalLink, Printer, Receipt, Upload } from "lucide-react"
-import { DashboardCard, DashboardCardHeader } from "@/components/dashboard/dashboard-card"
+import { ChevronRight, Link2, Navigation, Printer, Receipt, Upload } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { CopyButton } from "@/components/dashboard/copy-button"
-import { StatusBadge } from "@/components/dashboard/status-badge"
-import { DirhamAmount } from "@/components/aed-amount"
+import { DashPill } from "@/components/dashboard/dash-pill"
 import { VisaCentrePlace } from "@/components/visa-centre-place"
 import { getReference, isPaid, type Stage } from "@/lib/application-status"
 import { ArabicDate } from "@/components/arabic-date"
+import { formatAedLabel } from "@/lib/currency"
+import { applicationInsurance } from "@/lib/insurance"
 import { PRICE_AED, referenceOf } from "@/lib/shared/wizard-contract"
-import { customerText, statusText } from "@/lib/translations/customer"
+import { customerText, statusText, type CustomerKey } from "@/lib/translations/customer"
 import { isDiscardable } from "@/lib/active-applications"
 import { DiscardButton } from "@/components/dashboard/discard-button"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import type { ReactNode } from "react"
 
-function formatDate(value?: string, pattern = "MMM d, yyyy") {
-  return value ? format(parseISO(value), pattern) : null
+function Row({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-t border-[#eef1f6] py-[9px] text-sm">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="flex items-center justify-end gap-2 text-end font-medium text-foreground">{children}</dd>
+    </div>
+  )
 }
 
+/** Compact case details: reference, service fee (pill before the amount), dates, then the case's links. */
 export function CaseSummary({
   app,
   stage,
@@ -32,87 +40,66 @@ export function CaseSummary({
   arabic: boolean
 }) {
   const locale = arabic ? "ar" : "en"
+  const t = (key: CustomerKey) => customerText(locale, key)
   const token = app.tracking_token ?? ""
   // The id-based reference, the one the app, emails and WhatsApp use; the token form only for rows without an id.
   const reference = app.id ? referenceOf(app.id) : getReference(token)
   const paid = isPaid(app)
+  const cancelled = (app.application_status || "").toLowerCase() === "cancelled"
+  const insurance = applicationInsurance(app.additional_notes)
+  const date = (value?: string | null, withTime = false) =>
+    !value ? "—" : arabic ? <ArabicDate value={value} withTime={withTime} fallback="—" /> : format(parseISO(value), withTime ? "d MMM, HH:mm" : "d MMM yyyy")
 
   const links = [
-    showTrackingLink && { href: `/track/${token}`, label: customerText(locale, "case.track"), icon: ExternalLink },
-    paid && stage !== "ready" && { href: `/track/${token}/upload`, label: customerText(locale, "case.upload"), icon: Upload },
-    stage === "ready" && { href: `/track/${token}/dossier`, label: customerText(locale, "case.print"), icon: Printer },
-    paid && app.id && typeof app.payment_amount === "number" && { href: `/receipt/${app.id}`, label: customerText(locale, "case.receipt"), icon: Receipt },
-    paid && app.id && { href: `/trip/${app.id}`, label: customerText(locale, "case.trip"), icon: ExternalLink },
-  ].filter(Boolean) as { href: string; label: string; icon: typeof ExternalLink }[]
+    showTrackingLink && token && { href: `/track/${token}`, label: t("case.track"), icon: Link2 },
+    paid && stage !== "ready" && token && { href: `/track/${token}/upload`, label: t("case.upload"), icon: Upload },
+    stage === "ready" && token && { href: `/track/${token}/dossier`, label: t("case.print"), icon: Printer },
+    paid && app.id && typeof app.payment_amount === "number" && { href: `/receipt/${app.id}`, label: t("case.receipt"), icon: Receipt },
+    paid && app.id && { href: `/trip/${app.id}`, label: t("case.trip"), icon: Navigation },
+  ].filter(Boolean) as { href: string; label: string; icon: LucideIcon }[]
 
   return (
-    <DashboardCard aria-label={customerText(locale, "case.title")}>
-      <DashboardCardHeader title={customerText(locale, "case.title")} />
-      <dl className="flex flex-col gap-3 px-6 pb-5 pt-4 text-sm">
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">{customerText(locale, "case.reference")}</dt>
-          <dd className="ltr-isolate flex items-center gap-1 font-semibold tabular-nums text-foreground">
-            {reference}
-            {reference && <CopyButton value={reference} label={customerText(locale, "case.copy")} copiedLabel={customerText(locale, "case.copied")} />}
-          </dd>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">{customerText(locale, "case.payment")}</dt>
-          <dd>
-            <StatusBadge tone={(app.application_status || "").toLowerCase() === "cancelled" ? "neutral" : paid ? "success" : "warning"}>
-              {statusText(locale, (app.application_status || "").toLowerCase() === "cancelled" ? "Cancelled" : paid ? "Paid" : "Pending")}
-            </StatusBadge>
-          </dd>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">{customerText(locale, "case.amount")}</dt>
-          <dd className="font-medium tabular-nums text-foreground">
-            {arabic ? <DirhamAmount amount={app.payment_amount || PRICE_AED} /> : `${app.payment_amount || PRICE_AED} AED`}
-          </dd>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">{customerText(locale, "case.created")}</dt>
-          <dd className="font-medium text-foreground">
-            {arabic ? <ArabicDate value={app.created_at} fallback="—" /> : formatDate(app.created_at ?? undefined) ?? "—"}
-          </dd>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <dt className="text-muted-foreground">{customerText(locale, "case.updated")}</dt>
-          <dd className="font-medium text-foreground">
-            {arabic ? (
-              <ArabicDate value={app.updated_at || app.created_at} withTime fallback="—" />
-            ) : (
-              formatDate(app.updated_at || app.created_at || undefined, "MMM d, h:mm a") ?? "—"
-            )}
-          </dd>
-        </div>
+    <section aria-label={t("case.title")} className="ez-dash-card px-5 pb-2 pt-[18px]">
+      <h2 className="ez-dash-panel mb-2 text-foreground">{t("case.title")}</h2>
+      <dl>
+        <Row label={t("case.reference")}>
+          <span className="ltr-isolate tabular-nums">{reference}</span>
+          {reference && <CopyButton value={reference} label={t("case.copy")} copiedLabel={t("case.copied")} />}
+        </Row>
+        <Row label={t("case.serviceFee")}>
+          <DashPill tone={cancelled ? "neutral" : paid ? "success" : "warning"} dot={false} className="h-[22px]">
+            {cancelled ? statusText(locale, "Cancelled") : paid ? statusText(locale, "Paid") : t("case.due")}
+          </DashPill>
+          <span className="tabular-nums">{formatAedLabel(app.payment_amount || PRICE_AED, locale)}</span>
+        </Row>
+        {paid && insurance ? <Row label={t("case.insurance")}>{t(insurance === "quote" ? "case.insQuote" : "case.insOwn")}</Row> : null}
+        {!paid ? <Row label={t("case.traveller")}>{app.full_name}</Row> : null}
+        <Row label={t(paid ? "case.created" : "case.started")}>{date(app.created_at)}</Row>
+        {paid ? <Row label={t("case.updated")}>{date(app.updated_at || app.created_at, true)}</Row> : null}
       </dl>
 
       {app.appointment_centre || app.appointment_address ? (
-        <div className="border-t border-border/60 px-6 py-4">
-          <p className="mb-1 text-sm text-muted-foreground">{customerText(locale, "appt.centre")}</p>
+        <div className="border-t border-[#eef1f6] py-3">
+          <p className="mb-1 text-sm text-muted-foreground">{t("appt.centre")}</p>
           <VisaCentrePlace centre={app.appointment_centre} address={app.appointment_address} locale={locale} />
         </div>
       ) : null}
 
-      {allowDiscard && app.id && isDiscardable(app) && <DiscardButton applicationId={app.id} />}
-
       {links.length > 0 && (
-        <ul className="flex flex-col border-t border-border/60 p-2">
+        <ul className="-mx-2 flex flex-col border-t border-[#eef1f6] pb-1 pt-1.5">
           {links.map(({ href, label, icon: Icon }) => (
             <li key={href}>
-              <LocaleLink
-                href={href}
-                className="group flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
-              >
+              <LocaleLink href={href} className="group flex items-center gap-2.5 rounded-lg px-3 py-[11px] text-sm font-medium text-foreground transition-colors hover:bg-secondary">
                 <Icon className="size-4 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true" />
                 <span className="flex-1">{label}</span>
-                <ChevronRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                <ChevronRight className="size-4 text-[#8b97ab] rtl:rotate-180" aria-hidden="true" />
               </LocaleLink>
             </li>
           ))}
         </ul>
       )}
-    </DashboardCard>
+
+      {allowDiscard && app.id && isDiscardable(app) && <DiscardButton applicationId={app.id} />}
+    </section>
   )
 }

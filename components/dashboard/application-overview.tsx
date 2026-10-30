@@ -1,96 +1,119 @@
 import { Image } from "@/components/image"
 import { format, parseISO } from "date-fns"
-import { CalendarDays, UserRound } from "lucide-react"
-import { AppointmentCard } from "@/components/dashboard/appointment-card"
-import { DashboardCard } from "@/components/dashboard/dashboard-card"
+import { CalendarDays, Check, Clock, UserRound } from "lucide-react"
+import { LocaleLink } from "@/components/locale-link"
 import { NextStepCard } from "@/components/dashboard/next-step-card"
-import { ProgressTracker } from "@/components/dashboard/progress-tracker"
-import { StatusPills } from "@/components/dashboard/status-pills"
+import { CopyButton } from "@/components/dashboard/copy-button"
+import { DashPill } from "@/components/dashboard/dash-pill"
 import { CountryFlag } from "@/components/country-flag"
-import { SCHENGEN_META } from "@/lib/countries"
 import { ArabicDate } from "@/components/arabic-date"
+import { SCHENGEN_META } from "@/lib/countries"
 import { destinations } from "@/lib/destinations"
 import { referenceOf } from "@/lib/shared/wizard-contract"
-import { customerText } from "@/lib/translations/customer"
-import { applicationInsurance } from "@/lib/insurance"
-import { InsuranceCard } from "@/components/dashboard/insurance-card"
-import { customerProgress, isPaid, type Stage } from "@/lib/application-status"
+import { customerText, statusText } from "@/lib/translations/customer"
+import { getStatusLabel, isPaid, type Stage } from "@/lib/application-status"
+import { whoseTurn } from "@/lib/dashboard-state"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import type { ReactNode } from "react"
 
-function formatTravelDates(app: VisaApplication, arabic: boolean): ReactNode {
-  const start = app.entry_date || app.travel_start_date
-  const end = app.exit_date || app.travel_end_date
-  const locale = arabic ? "ar" : "en"
-  if (!start) return customerText(locale, "overview.datesLater")
-  if (!arabic) {
-    const startText = format(parseISO(start), "MMM d")
-    if (!end) return format(parseISO(start), "MMM d, yyyy")
-    return `${startText} – ${format(parseISO(end), "MMM d, yyyy")}`
-  }
-  if (!end) return <ArabicDate value={start} />
-  return (
-    <>
-      <ArabicDate value={start} />
-      {" – "}
-      <ArabicDate value={end} />
-    </>
-  )
+function shortDate(value: string, arabic: boolean, withYear = true): ReactNode {
+  return arabic ? <ArabicDate value={value} /> : format(parseISO(value), withYear ? "d MMM yyyy" : "d MMM")
 }
 
-/** The case at a glance: destination photo with flag, name and reference, then progress and the next step. */
-export function ApplicationOverview({
-  app,
-  stage,
-  arabic,
-  showHelp = false,
-  showInsurance = false,
-}: {
-  app: VisaApplication
-  stage: Stage
-  arabic: boolean
-  showHelp?: boolean
-  showInsurance?: boolean
-}) {
+function travelDates(app: VisaApplication, arabic: boolean): ReactNode | null {
+  const start = app.entry_date || app.travel_start_date
+  const end = app.exit_date || app.travel_end_date
+  if (!start) return null
+  if (!end) return shortDate(start, arabic)
+  return <>{shortDate(start, arabic, false)} – {shortDate(end, arabic)}</>
+}
+
+/** The case card: destination photo, flag and reference, status and whose turn it is, then the one next step. */
+export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplication; stage: Stage; arabic: boolean }) {
   const locale = arabic ? "ar" : "en"
+  const t = (key: Parameters<typeof customerText>[1], values?: Record<string, string | number>) => customerText(locale, key, values)
   const countryEn = app.destination_country || "Schengen"
   const country = arabic ? SCHENGEN_META[countryEn]?.ar || (countryEn === "Schengen" ? "شنغن" : countryEn) : countryEn
   const photo = destinations.find((d) => d.name === countryEn)?.image
   const reference = app.id ? referenceOf(app.id) : ""
-  const progress = stage === "rejected" || stage === "cancelled" ? null : customerProgress(app)
+  const status = getStatusLabel(app)
+  const turn = whoseTurn(app)
+  const paid = isPaid(app)
+  const dates = travelDates(app, arabic)
 
   return (
-    <DashboardCard aria-label={customerText(locale, "overview.caseAria", { country })} className="ez-case-overview overflow-hidden">
-      <div className="ez-case-heading">
-        <div>
-          <div className="flex items-center gap-3"><CountryFlag iso={SCHENGEN_META[countryEn]?.iso} title={country} className="size-7" /><h2>{country}</h2></div>
-          <p>{customerText(locale, "overview.schengen")}{reference ? <> · <span className="ltr-isolate tabular-nums">{reference}</span></> : null}</p>
+    <section aria-label={t("overview.caseAria", { country })} className="ez-dash-card overflow-hidden">
+      {photo ? (
+        <div className="relative h-[168px] bg-[#edf4ff]">
+          <Image src={photo} alt={t("dash.photoAlt", { country })} fill sizes="(min-width: 1024px) 760px, 100vw" className="object-cover" priority />
         </div>
-        {photo ? <div className="ez-case-photo"><Image src={photo} alt="" fill sizes="180px" className="object-cover" /></div> : null}
-      </div>
+      ) : null}
 
-      <div className="ez-case-body flex flex-col gap-6 p-5 sm:p-6">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <UserRound className="size-4" aria-hidden="true" />
-              {app.full_name}
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarDays className="size-4" aria-hidden="true" />
-              {formatTravelDates(app, arabic)}
-            </span>
+      <div className="flex flex-col gap-[18px] px-5 pt-[22px] sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <CountryFlag iso={SCHENGEN_META[countryEn]?.iso} title={country} className="size-10 ring-2 ring-white" />
+            <div className="flex min-w-0 flex-col gap-[3px]">
+              <h2 className="ez-dash-case-title text-foreground">{country}</h2>
+              <p className="flex flex-wrap items-center gap-x-1 text-[13px] text-muted-foreground">
+                {t("overview.schengen")}
+                {reference ? (
+                  <>
+                    {" · "}
+                    <span className="ltr-isolate tabular-nums">{reference}</span>
+                    <CopyButton value={reference} label={t("case.copy")} copiedLabel={t("case.copied")} />
+                  </>
+                ) : null}
+                {!paid && stage === "payment" ? <> · {t("dash.draft")}</> : null}
+              </p>
+            </div>
           </div>
-          <StatusPills app={app} arabic={arabic} />
+          <div className="flex flex-wrap items-center gap-2">
+            <DashPill tone={status.tone}>{statusText(locale, status.label)}</DashPill>
+            {turn && (
+              <DashPill tone={turn === "you" ? "info" : "neutral"} dot={false}>
+                {t(turn === "you" ? "dash.nextYou" : "dash.nextUs")}
+              </DashPill>
+            )}
+          </div>
         </div>
 
-        <AppointmentCard app={app} arabic={arabic} showHelp={showHelp} />
-
-        <NextStepCard app={app} stage={stage} />
-
-        {progress && <ProgressTracker progress={progress} arabic={arabic} insurance={applicationInsurance(app.additional_notes)} showInsurance={showInsurance} />}
-        {showInsurance && app.id && isPaid(app) && progress && <InsuranceCard key={app.id} applicationId={app.id} initialValue={applicationInsurance(app.additional_notes)} arabic={arabic} />}
+        <div className="flex flex-wrap gap-x-[22px] gap-y-2 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-[7px]">
+            <UserRound className="size-4" aria-hidden="true" />
+            {app.full_name}
+          </span>
+          <span className="inline-flex items-center gap-[7px]">
+            <CalendarDays className="size-4" aria-hidden="true" />
+            {dates ?? (
+              <>
+                {t("dash.datesNotSet")}
+                {paid && app.id ? (
+                  <>
+                    {" · "}
+                    <LocaleLink href={`/continue/${app.id}`} className="font-medium text-primary hover:underline">{t("dash.addDates")}</LocaleLink>
+                  </>
+                ) : null}
+              </>
+            )}
+          </span>
+          {paid && app.paid_at ? (
+            <span className="inline-flex items-center gap-[7px]">
+              <Check className="size-4" aria-hidden="true" />
+              {t("dash.paid")} {shortDate(app.paid_at, arabic)}
+            </span>
+          ) : !paid && app.created_at ? (
+            <span className="inline-flex items-center gap-[7px]">
+              <Clock className="size-4" aria-hidden="true" />
+              {t("dash.started")} {shortDate(app.created_at, arabic)}
+            </span>
+          ) : null}
+        </div>
       </div>
-    </DashboardCard>
+
+      <div className="m-5 mt-5 sm:m-6 sm:mt-5">
+        <NextStepCard app={app} stage={stage} arabic={arabic} />
+      </div>
+    </section>
   )
 }
