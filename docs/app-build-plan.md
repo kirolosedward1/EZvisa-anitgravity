@@ -510,3 +510,15 @@ spouse employment screens have no contract fields and are left out (website alig
 | v1 analytics: status_view (you / us), appointment_booked, WhatsApp hand-offs | `components/status/StatusCards.tsx`, `app/appointment/[id].tsx` |
 
 Not built, on purpose (need the owner or native work): Referral (no referral programme or credit exists on the business side; the 50 AED in `config/pricing.ts` stays a placeholder), Rate experience and the App Store review ask, the Live Activity (needs an ActivityKit widget target in a native build), the camera capture guide and document viewer redesign (the existing picker, crop and upload queue stay), the trip countdown screen (the trip-day reminders already exist). "Approved" and "Refused" use the website's `completed` and `rejected` statuses.
+
+## 7f. Phase 6 · delivered (30 Oct)
+
+| Item | Where |
+|---|---|
+| Account as drawn: profile card (photo, name, email, member since), Travel (saved travellers, application history, receipts), App (notifications, settings), Help (WhatsApp, email, legal pages), Sign out, Delete account | `app/(tabs)/account/index.tsx` |
+| Delete account as a sheet: what is deleted and kept, paid cases in progress named, "Type DELETE to confirm"; WhatsApp / email request when the server can't do it | `app/(tabs)/account/index.tsx` |
+| Settings (new): Notifications (trip, appointment and passport reminders, passport expiry), Language & region, Appearance (theme, Globi animations), Security & privacy (Face ID, lock after, usage sharing, privacy policy), About (version with diagnostics, terms, refunds) | `app/(tabs)/account/settings.tsx` |
+| Status steps reordered (owner, 30 Oct): Submitted, Paid, Documents, File ready, Appointment, Decision (Visa approved / Not approved) | `lib/timeline.ts`, `scripts/timeline-check.ts` |
+| Icons the web build could not draw are mapped | `components/ui/core.tsx` |
+
+Not built (no data or backend behind them): payment methods (cards are handled by the payment gateway), data & storage sizes, active-device list and "sign out everywhere", quiet hours and per-channel email / WhatsApp switches (pushes are sent by the server per status; the app can't change email or WhatsApp sending), report a problem with logs.
