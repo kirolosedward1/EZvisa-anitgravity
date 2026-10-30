@@ -1,4 +1,5 @@
--- NOT YET RUN. Needs the owner's approval, then run in the ezvisa-uae SQL editor (dravvaykssrbktztmrlj) after 0008.
+-- RUN 2026-10-30 on ezvisa-uae (dravvaykssrbktztmrlj), after 0008, with the owner's approval. Verified: an anon insert of
+-- v1 events succeeds (test rows rolled back).
 -- Widens public.wizard_events (0004, 0008) for the v1 product events of the app design canvas (note "Analytics events
 -- (v1)"). Still anonymous: no user id, no email, no free text. Every value is an id, an enum or a number.
 -- The app needs no update afterwards: until this runs it keeps v1 events on the phone and retries daily (lib/analytics.ts).

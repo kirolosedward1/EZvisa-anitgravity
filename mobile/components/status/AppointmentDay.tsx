@@ -37,22 +37,22 @@ export function AppointmentDaySheet({ visible, onClose, travellers }: { visible:
 
 export const PACKING = ["Printed EZvisa file, every set", "Original passports", "Emirates IDs", "2 passport photos each, white background", "Original bank statements, stamped", "Fees: card or cash"] as const;
 
-/** Bring on the day: a checklist kept on this phone only (a personal packing aid, not application data). */
-export function PackingList({ appId }: { appId: string }) {
+/** A checklist kept on this phone only (a personal aid, not application data): Bring on the day, Before you fly. */
+export function Checklist({ storeKey, items, header }: { storeKey: string; items: readonly string[]; header: (done: number, total: number) => string }) {
   const c = useColors(); const { t } = useT();
-  const key = `ezvisa.packing.${appId}`;
   const [done, setDone] = useState<string[]>([]);
-  useEffect(() => { AsyncStorage.getItem(key).then((v) => { try { setDone(v ? JSON.parse(v) : []); } catch { setDone([]); } }).catch(() => {}); }, [key]);
-  const toggle = (x: string) => { select(); setDone((d) => { const n = d.includes(x) ? d.filter((y) => y !== x) : [...d, x]; AsyncStorage.setItem(key, JSON.stringify(n)).catch(() => {}); return n; }); };
+  useEffect(() => { AsyncStorage.getItem(storeKey).then((v) => { try { setDone(v ? JSON.parse(v) : []); } catch { setDone([]); } }).catch(() => {}); }, [storeKey]);
+  const toggle = (x: string) => { select(); setDone((d) => { const n = d.includes(x) ? d.filter((y) => y !== x) : [...d, x]; AsyncStorage.setItem(storeKey, JSON.stringify(n)).catch(() => {}); return n; }); };
+  const count = items.filter((x) => done.includes(x)).length;
   return (
     <View style={{ gap: S.xs }}>
-      <Text variant="note" weight="600" tone="secondary" accessibilityRole="header">{t("Bring on the day · {i} of {n} packed", { i: done.length, n: PACKING.length })}</Text>
+      <Text variant="note" weight="600" tone="secondary" accessibilityRole="header">{header(count, items.length)}</Text>
       <Card>
-        {PACKING.map((x, i) => {
+        {items.map((x, i) => {
           const on = done.includes(x);
           return (
             <PressScale key={x} onPress={() => toggle(x)} accessibilityRole="checkbox" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={t(x)}
-              style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 48, paddingHorizontal: S.md, borderTopWidth: i ? 1 : 0, borderColor: c.separator }}>
+              style={{ flexDirection: "row", alignItems: "center", gap: 12, minHeight: 48, paddingHorizontal: S.md, paddingVertical: S.xs, borderTopWidth: i ? 1 : 0, borderColor: c.separator }}>
               <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: on ? 0 : 1.5, borderColor: c.border, backgroundColor: on ? c.success : "transparent", alignItems: "center", justifyContent: "center" }}>
                 {on && <Icon name="checkmark" size={12} color={c.onSuccess} weight="bold" />}
               </View>
@@ -63,4 +63,10 @@ export function PackingList({ appId }: { appId: string }) {
       </Card>
     </View>
   );
+}
+
+/** Bring on the day (canvas Appointment). */
+export function PackingList({ appId }: { appId: string }) {
+  const { t } = useT();
+  return <Checklist storeKey={`ezvisa.packing.${appId}`} items={PACKING} header={(i, n) => t("Bring on the day · {i} of {n} packed", { i, n })} />;
 }

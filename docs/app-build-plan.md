@@ -532,4 +532,18 @@ Not built (no data or backend behind them): payment methods (cards are handled b
 | Over-the-air safety: Globi's video player loads only when the build has the expo-video native module, so this update can't crash a build made before it (the stills show instead) | `components/globi/GlobiPose.tsx` |
 | Release checks: type check, lint (0 errors), all node and bun checks, contract sync 284/284, iOS + Android `expo export` with the live database reference | `.github/workflows/eas-update.yml` (same steps) |
 
-Still open for the owner: the HEVC-alpha Globi clips need one macOS run of `scripts/globi-convert.sh` (no hevc_videotoolbox here); migration 0016 for the v1 analytics events; the app icon and splash are native assets and change with the next store build, not an update; the placeholders in `config/pricing.ts`.
+Still open for the owner: the HEVC-alpha Globi clips need one macOS run of `scripts/globi-convert.sh` (no hevc_videotoolbox here); the app icon and splash are native assets and change with the next store build, not an update. (Migrations 0008 and 0016 and the amounts in `config/pricing.ts` were approved and done on 30 Oct, see 7h.)
+
+## 7h. Owner approvals and follow-ups (30 Oct)
+
+The owner approved the open items ("Approve all").
+
+| Item | Result |
+|---|---|
+| `migrations/0008_wizard_events_funnel.sql` (approved 22 Oct, never run) and `0016_wizard_events_v1.sql` | Run on ezvisa-uae in that order. Verified: every constraint is in place, and an anon insert of v1 events works (test rows rolled back; the 374 existing rows are untouched). The app needs no update: queued v1 events send on the next retry. |
+| `config/pricing.ts` amounts | Confirmed as they are (insurance 90 AED, referral 50 AED, visa fee €90 ≈ 360 AED, centre fee ≈ 130 AED, VAT 5%) |
+| Help (canvas Help, ReportProblem) | Search, the FAQ (lib/faq.ts, the website's answers), WhatsApp and email, "Report a problem" email with the app version and phone model only | 
+| Trip countdown (canvas TripCountdown) | After approval: days to departure and a "Before you fly" checklist on the phone; a push can open it |
+| Finished cases | No "Book now" or "Still needed" once a case is approved, refused or cancelled |
+
+Still needs a Mac or a store build: the Globi clips, the app icon, the splash and the system appearance setting.
