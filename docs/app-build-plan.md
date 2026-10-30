@@ -566,3 +566,13 @@ Still needs a Mac or a store build: the Globi clips, the app icon, the splash an
 | Account details as drawn (Personal, Sign-in methods with Google linked or not, Membership, and the canvas notes) | `app/(tabs)/account/details.tsx` |
 | New end-to-end run of the v1.1 wizard (signed in: destination → nationality → name → phone-only contact → travelling with → Review → insurance → 249 AED; guest: email asked, account form after a failed payment): 15/15. The five older e2e scripts are marked stale | `scripts/e2e-wizard-web.mjs`, `scripts/mock-supabase.mjs` (in-memory `travellers` table) |
 | The resume sheet no longer tells a guest the draft is "on your account" | `app/apply/index.tsx` |
+
+## 7k. Photo grid, apply again, rating, photo tip (30 Oct)
+
+| Item | Where |
+|---|---|
+| Owner: Home's popular countries as a two-column grid, each tile a photo of the country (bundled `assets/countries`), flag and name on a flat scrim; six countries; one column at large text sizes | `components/home/PopularTiles.tsx` |
+| Apply again (canvas Reapply): what carries over (travellers, passport validity, employment, destination; new dates; a fresh bank statement), then the wizard with the "use your last application" offer | `components/status/Reapply.tsx` |
+| Rate your experience (canvas RateExperience), once per finished case: stars, what went well, what to fix, sent to support by email (no feedback backend). The App Store review ask waits for the next store build (native module) | `components/status/RateCard.tsx` |
+| Photo tip before the camera (canvas CameraCapture): "Fill the frame. Avoid glare on the photo." on the source picker | `lib/capture.ts` |
+| Inbox footer says whether push notifications are on | `app/(tabs)/account/notifications.tsx` |

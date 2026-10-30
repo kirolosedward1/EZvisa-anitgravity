@@ -1,29 +1,39 @@
-// "Popular countries" (canvas Home, EmptyHome, HomeDraft): three soft-tinted tiles with the round flag and the name.
-import { View } from "react-native";
+// "Popular countries" on Home (owner, 30 Oct): a two-column grid of photo tiles, a photo of the country as the
+// background, the round flag and the name on a flat scrim for contrast (no gradients). One column at large text sizes.
+import { View, useWindowDimensions } from "react-native";
 import { router } from "expo-router";
+import { Image } from "expo-image";
 import { Flag, PressScale, SectionHeader, Text } from "../ui";
-import { useColors, useIsDark, useLargeText, S, R, curve } from "../../lib/theme";
+import { useColors, useLargeText, S, R, curve } from "../../lib/theme";
 import { toSlug } from "../../lib/countries";
+import { PHOTOS } from "../../lib/photos";
 import { tap } from "../../lib/haptics";
 import { useT } from "../../lib/i18n";
 
-/** Canvas tints (light / dark, HomeDark.dc.html). Other countries use the neutral fill. */
-const TINT: Record<string, [string, string]> = { France: ["#E8ECFB", "#1A2140"], Italy: ["#E6E6E3", "#242424"], Spain: ["#EDE9DD", "#2A251C"] };
-export const HOME_TILES = ["France", "Italy", "Spain"];
+export const HOME_TILES = ["France", "Italy", "Spain", "Germany", "Greece", "Switzerland"];
 
 export function PopularTiles({ names = HOME_TILES }: { names?: string[] }) {
-  const c = useColors(); const dark = useIsDark(); const { t } = useT(); const big = useLargeText();
+  const c = useColors(); const { t } = useT(); const big = useLargeText(); const { width } = useWindowDimensions();
+  const gap = 10; const cols = big ? 1 : 2;
+  const w = (Math.min(width, 600) - S.gutter * 2 - gap * (cols - 1)) / cols;
   return (
     <View style={{ gap: S.xs }} testID="popular-countries">
       <SectionHeader title={t("Popular countries")} action={t("See all")} onAction={() => router.navigate("/countries")} />
-      <View style={{ flexDirection: big ? "column" : "row", gap: 10, paddingHorizontal: S.gutter }}>
-        {names.map((n) => (
-          <PressScale key={n} onPress={() => { tap(); router.push(`/destination/${toSlug(n)}`); }} accessibilityRole="button" accessibilityLabel={t(n)} testID="popular-tile"
-            style={[{ flex: big ? undefined : 1, minHeight: 84, borderRadius: R.card, padding: 10, justifyContent: "space-between", backgroundColor: TINT[n]?.[dark ? 1 : 0] ?? c.fill }, curve]}>
-            <Flag country={n} size={24} />
-            <Text variant="callout" weight="600" numberOfLines={1}>{t(n)}</Text>
-          </PressScale>
-        ))}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap, paddingHorizontal: S.gutter }}>
+        {names.map((n) => {
+          const photo = PHOTOS[toSlug(n)];
+          return (
+            <PressScale key={n} onPress={() => { tap(); router.push(`/destination/${toSlug(n)}`); }} accessibilityRole="button" accessibilityLabel={t(n)} testID="popular-tile"
+              style={[{ width: w, height: big ? 120 : Math.round(w * 0.78), borderRadius: R.card, overflow: "hidden", backgroundColor: c.fill }, curve]}>
+              {!!photo && <Image source={photo} style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" transition={150} accessibilityIgnoresInvertColors />}
+              <View style={{ position: "absolute", left: 0, right: 0, bottom: 0, top: 0, backgroundColor: "rgba(0,0,0,0.28)" }} />
+              <View style={{ flex: 1, padding: 12, justifyContent: "space-between" }}>
+                <Flag country={n} size={26} />
+                <Text variant="headline" weight="600" color="#FFFFFF" numberOfLines={1} style={{ textShadowColor: "rgba(0,0,0,0.35)", textShadowRadius: 4, textShadowOffset: { width: 0, height: 1 } }}>{t(n)}</Text>
+              </View>
+            </PressScale>
+          );
+        })}
       </View>
     </View>
   );

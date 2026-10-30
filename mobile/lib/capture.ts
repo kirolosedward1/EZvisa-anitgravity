@@ -176,7 +176,9 @@ export function chooseSource(lang: Lang): Promise<Source | null> {
   if (Platform.OS === "web") return Promise.resolve("files");
   return new Promise((res) => {
     const opts: [Source, string][] = [["camera", t("Take photo")], ["scan", t("Scan pages (PDF)")], ["library", t("Choose photo")], ["files", t("Choose file")]];
-    if (Platform.OS === "ios") ActionSheetIOS.showActionSheetWithOptions({ options: [...opts.map((o) => o[1]), t("Cancel")], cancelButtonIndex: opts.length }, (i) => res(i < opts.length ? opts[i][0] : null));
-    else Alert.alert(t("Add document"), undefined, [...opts.map(([v, l]) => ({ text: l, onPress: () => res(v) })), { text: t("Cancel"), style: "cancel" as const, onPress: () => res(null) }], { cancelable: true, onDismiss: () => res(null) });
+    // Canvas CameraCapture: the one tip that saves a re-upload, before the camera opens.
+    const tip = t("Fill the frame. Avoid glare on the photo.");
+    if (Platform.OS === "ios") ActionSheetIOS.showActionSheetWithOptions({ title: t("Add document"), message: tip, options: [...opts.map((o) => o[1]), t("Cancel")], cancelButtonIndex: opts.length }, (i) => res(i < opts.length ? opts[i][0] : null));
+    else Alert.alert(t("Add document"), tip, [...opts.map(([v, l]) => ({ text: l, onPress: () => res(v) })), { text: t("Cancel"), style: "cancel" as const, onPress: () => res(null) }], { cancelable: true, onDismiss: () => res(null) });
   });
 }
