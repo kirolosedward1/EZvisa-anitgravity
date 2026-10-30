@@ -178,7 +178,7 @@ Moderate phone-preview scale, short product explanations and a clear walkthrough
 | Cookie consent | [`components/cookie-consent.tsx`](components/cookie-consent.tsx) |
 | Travel photo | [`components/travel-photo.tsx`](components/travel-photo.tsx) |
 
-Globi uses supplied transparent video assets from `public`. Reuse poses such as welcome, destination, passport, documents, checklist, calendar, shield, companion and celebrate where they suit the task. Play muted and inline, loop while visible, and pause offscreen for performance. Do not add visible pause controls. Keep artwork contained and unclipped; decorative circles must remain circular at every breakpoint.
+Globi uses supplied transparent video assets from `public`. Reuse poses such as welcome, destination, passport, documents, checklist, calendar, shield, companion and celebrate where they suit the task. Added 30 October 2026: thinking (hand on chin), phone (holding the app), notes (ticking a notepad), budget (statement with coins), secure (padlock), pointing, hotel (waving beside a bed), stamp (stamping a document), calm (deep breath, open arms; used on Payment not completed) and review (magnifying glass). `public/globi/video-manifest.json` lists every pose and its source clip. Play muted and inline, loop while visible, and pause offscreen for performance. Do not add visible pause controls. Keep artwork contained and unclipped; decorative circles must remain circular at every breakpoint.
 
 If a new character pose is truly needed, the owner authorized preparing a prompt for Magnific. Preserve Globi's blue globe body, face, proportions and established materials. Do not substitute a generic mascot or use a still image as the main replacement for the requested video.
 

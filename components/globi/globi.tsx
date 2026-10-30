@@ -3,7 +3,9 @@
 import { useEffect, useRef, useState } from "react"
 import { useSiteLocale } from "@/components/locale-provider"
 
-export type GlobiPose = "welcome" | "destination" | "passport" | "checklist" | "calendar" | "shield" | "waiting" | "celebrate" | "companion" | "documents" | "travel"
+export type GlobiPose =
+  | "welcome" | "destination" | "passport" | "checklist" | "calendar" | "shield" | "waiting" | "celebrate" | "companion" | "documents" | "travel"
+  | "thinking" | "phone" | "notes" | "budget" | "secure" | "pointing" | "hotel" | "stamp" | "calm" | "review"
 
 /** Supplied Globi clips. Each pose autoplays muted and loops while visible. */
 export function Globi({ pose, className = "" }: { pose: GlobiPose; className?: string }) {

@@ -1536,6 +1536,8 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 .ez-payment-result h1 { font-size:36px; line-height:1.2; }
 .ez-payment-result h2 { font-size:18px; line-height:1.4; font-weight:500; }
 @media(max-width:639px) { .ez-payment-result h1 { font-size:30px; } }
+/* Payment not completed: Globi panel beside the content, so the card itself has no padding. */
+.ez-payment-result.ez-payment-failed { padding:0; }
 
 /* Cookie notice and preferences: compact, non-modal, above any wizard actions. */
 .ez-cookie { --cookie-gap:24px; position:fixed; z-index:1000; inset-inline-start:24px; bottom:calc(var(--cookie-offset,0px) + var(--cookie-gap) + env(safe-area-inset-bottom,0px)); width:420px; max-width:calc(100% - 48px); max-height:min(660px,calc(100dvh - var(--cookie-offset,0px) - 48px - env(safe-area-inset-bottom,0px))); display:flex; flex-direction:column; background:#fff; color:var(--ez-ink,#102347); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 48px rgb(16 35 71 / .14); overflow:hidden; }

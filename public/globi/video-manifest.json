@@ -68,6 +68,66 @@
       "file": "travel.webm",
       "sourceCreation": "3779479414",
       "transparentCreation": "IfyCwnGtvE"
+    },
+    {
+      "pose": "thinking",
+      "file": "thinking.webm",
+      "sourceCreation": "3799949032",
+      "description": "Hand on chin, thinking"
+    },
+    {
+      "pose": "phone",
+      "file": "phone.webm",
+      "sourceCreation": "3799949833",
+      "description": "Holding a phone with the app"
+    },
+    {
+      "pose": "notes",
+      "file": "notes.webm",
+      "sourceCreation": "3799950870",
+      "description": "Ticking a checklist on a notepad"
+    },
+    {
+      "pose": "budget",
+      "file": "budget.webm",
+      "sourceCreation": "3799951404",
+      "description": "Reading a statement, coins floating"
+    },
+    {
+      "pose": "secure",
+      "file": "secure.webm",
+      "sourceCreation": "3799952338",
+      "description": "Holding a padlock"
+    },
+    {
+      "pose": "pointing",
+      "file": "pointing.webm",
+      "sourceCreation": "3799970658",
+      "description": "Pointing ahead"
+    },
+    {
+      "pose": "hotel",
+      "file": "hotel.webm",
+      "sourceCreation": "3799971465",
+      "description": "Waving beside a hotel bed"
+    },
+    {
+      "pose": "stamp",
+      "file": "stamp.webm",
+      "sourceCreation": "3799972642",
+      "description": "Stamping a document"
+    },
+    {
+      "pose": "calm",
+      "file": "calm.webm",
+      "sourceCreation": "3799973088",
+      "description": "Deep breath, then open arms: reassurance"
+    },
+    {
+      "pose": "review",
+      "file": "review.webm",
+      "sourceCreation": "3799998955",
+      "description": "Checking a document with a magnifying glass"
     }
   ]
 }

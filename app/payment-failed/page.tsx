@@ -1,131 +1,156 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { AlertTriangle, CreditCard, Landmark, RefreshCw, Wifi, XCircle } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { Button } from "@/components/ui/button"
-import { X, RefreshCw, CreditCard, Wifi, Ban, AlertCircle, Mail } from "lucide-react"
 import { SiteHeader } from "@/components/site-header"
-import { Footer } from "@/components/footer"
 import { LangText } from "@/components/lang-text"
+import { LocaleLink } from "@/components/locale-link"
+import { Globi } from "@/components/globi/globi"
 import { useArabic } from "@/components/ready-line"
-import { useLocalizedHref } from "@/components/locale-link"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { getWhatsAppUrl } from "@/lib/whatsapp"
+import { CHECKOUT_STORAGE_KEY, WIZARD_STORAGE_KEY } from "@/lib/wizard-storage"
+
+const REASONS: { icon: LucideIcon; en: string; ar: string; bodyEn: string; bodyAr: string }[] = [
+  {
+    icon: CreditCard,
+    en: "Card limit or balance",
+    ar: "حد البطاقة أو الرصيد",
+    bodyEn: "The amount was above what the card allows today.",
+    bodyAr: "المبلغ أعلى مما تسمح به البطاقة اليوم.",
+  },
+  {
+    icon: Landmark,
+    en: "Declined by your bank",
+    ar: "رفض البنك العملية",
+    bodyEn: "Some banks block online or international payments until you approve them in their app.",
+    bodyAr: "تحظر بعض البنوك الدفع عبر الإنترنت أو الدولي حتى توافق عليه في تطبيقها.",
+  },
+  {
+    icon: XCircle,
+    en: "Payment page closed",
+    ar: "أُغلقت صفحة الدفع",
+    bodyEn: "The payment was cancelled, or the page closed before it finished.",
+    bodyAr: "أُلغي الدفع أو أُغلقت الصفحة قبل اكتماله.",
+  },
+  {
+    icon: Wifi,
+    en: "Connection dropped",
+    ar: "انقطع الاتصال",
+    bodyEn: "The connection was lost while the payment gateway was confirming.",
+    bodyAr: "انقطع الاتصال أثناء تأكيد بوابة الدفع.",
+  },
+]
+
+/** True when this browser still holds the wizard draft or the checkout, so retrying keeps the answers. */
+function hasSavedApplication(): boolean {
+  try {
+    return !!(localStorage.getItem(WIZARD_STORAGE_KEY) || sessionStorage.getItem(CHECKOUT_STORAGE_KEY) || sessionStorage.getItem("pendingApplication"))
+  } catch {
+    return false
+  }
+}
 
 export default function PaymentFailedPage() {
-  const router = useRouter()
   const arabic = useArabic()
-  const localize = useLocalizedHref()
-  const [canRetry, setCanRetry] = useState(false)
+  const [saved, setSaved] = useState(false)
 
-  useEffect(() => {
-    const pendingData = sessionStorage.getItem("pendingApplication")
-    setCanRetry(!!pendingData)
-  }, [])
+  useEffect(() => setSaved(hasSavedApplication()), [])
 
-  const handleRetry = () => {
-    router.push(localize("/apply?step=payment&retry=true"))
-  }
-
-  const whatsAppHref = getWhatsAppUrl("Hi, I need help with my payment that failed. Can you assist me?", arabic)
-
-  const reasons = [
-    { icon: CreditCard, en: "Insufficient funds", ar: "الرصيد غير كافٍ" },
-    { icon: Ban, en: "Card declined by bank", ar: "رفض البنك البطاقة" },
-    { icon: AlertCircle, en: "Payment cancelled", ar: "أُلغي الدفع" },
-    { icon: Wifi, en: "Network connection issue", ar: "مشكلة في الاتصال بالشبكة" },
-  ]
+  const whatsAppHref = getWhatsAppUrl(
+    arabic ? "مرحبًا، لم يكتمل الدفع لطلبي. هل يمكنكم المساعدة؟" : "Hi, my payment didn't go through. Can you help?",
+    arabic,
+  )
 
   return (
-    <>
+    <div className="flex min-h-[100dvh] flex-col bg-background">
       <SiteHeader forceBackground={true} />
-      <main id="main-content" className="ez-customer-page ez-payment-page min-h-screen pt-28 pb-16 px-4 md:pt-32">
-        <div className="ez-payment-result container max-w-xl mx-auto text-center">
-          {/* Failed Icon */}
-          <div className="mb-8">
-            <div className="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center">
-              <X className="w-6 h-6 text-red-700 stroke-[2]" />
+      <main id="main-content" className="ez-customer-page ez-payment-page flex-1 px-4 pb-16 pt-28 md:pt-32">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+          <section className="ez-payment-result ez-payment-failed grid overflow-hidden border border-border bg-card p-0 md:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]">
+            <div className="flex items-end justify-center overflow-hidden bg-[#edf4ff] px-6 pt-6 md:items-center md:px-0 md:py-10">
+              <Globi pose="calm" className="w-44 shrink-0 md:w-[120%] md:max-w-none" />
             </div>
-          </div>
 
-          {/* Title */}
-          <h1 className="text-3xl md:text-4xl font-medium text-foreground mb-4">
-            <LangText en="Payment not completed" ar="فشلت عملية الدفع" />
-          </h1>
-          
-          <p className="text-lg text-muted-foreground mb-10 max-w-md mx-auto">
-            <LangText en="We couldn’t confirm your payment. If your bank shows a charge, contact us before trying again." ar="لم نتمكن من تأكيد الدفع. إذا ظهر خصم في حسابك البنكي، تواصل معنا قبل المحاولة مجددًا." />
-          </p>
+            <div className="flex min-w-0 flex-col gap-8 p-6 sm:p-8 md:p-10">
+              <header className="flex flex-col gap-3">
+                <h1 className="text-foreground">
+                  <LangText en="Payment not completed" ar="لم يكتمل الدفع" />
+                </h1>
+                <p className="text-base leading-relaxed text-muted-foreground sm:text-lg">
+                  {saved ? (
+                    <LangText
+                      en="No problem. Your answers are saved, so you can try again in a moment."
+                      ar="لا بأس. إجاباتك محفوظة، ويمكنك المحاولة مجددًا خلال لحظات."
+                    />
+                  ) : (
+                    <LangText
+                      en="No problem. You can try the payment again, or start a new application."
+                      ar="لا بأس. يمكنك إعادة محاولة الدفع أو بدء طلب جديد."
+                    />
+                  )}
+                </p>
+              </header>
 
-          {/* Possible Reasons */}
-          <div className="mb-10">
-            <h2 className="text-sm font-medium text-foreground mb-6">
-              <LangText en="Possible reasons" ar="أسباب محتملة" />
-            </h2>
-            <div className="grid grid-cols-2 gap-4">
-              {reasons.map((reason, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center gap-3 text-left"
-                >
-                  <div className="w-10 h-10 rounded-full bg-transparent flex items-center justify-center shrink-0">
-                    <reason.icon className="w-5 h-5 text-muted-foreground" />
-                  </div>
-                  <span className="text-sm text-muted-foreground"><LangText en={reason.en} ar={reason.ar} /></span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* CTAs */}
-          <div className="mb-12">
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {canRetry
-                  ? <LangText en="Your application details have been saved." ar="تم حفظ تفاصيل طلبك." />
-                  : <LangText en="You can retry your payment or start a new application." ar="يمكنك إعادة محاولة الدفع أو بدء طلب جديد." />}
+              <p className="flex gap-3 rounded-lg bg-amber-50 p-4 text-sm leading-relaxed text-amber-950">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-700" aria-hidden="true" />
+                <span>
+                  <LangText
+                    en="If your bank shows a charge for this attempt, message us before paying again so you aren't charged twice."
+                    ar="إذا ظهر خصم لهذه المحاولة في حسابك البنكي، راسلنا قبل الدفع مرة أخرى حتى لا يُخصم المبلغ مرتين."
+                  />
+                </span>
               </p>
-              <Button 
-                onClick={handleRetry}
-                size="lg"
-                className="w-full sm:w-auto"
-              >
-                <RefreshCw className="w-4 h-4" />
-                <LangText en="Retry Payment" ar="إعادة محاولة الدفع" />
-              </Button>
-            </div>
-          </div>
 
-          {/* Support */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-foreground">
-              <LangText en="Need help?" ar="هل تحتاج مساعدة؟" />
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              {/* Email */}
-              <a 
-                href="mailto:hello@ezvisa.net" 
-                className="flex items-center gap-2 text-sm text-primary hover:underline font-medium"
-              >
-                <Mail className="w-4 h-4" />
-                hello@ezvisa.net
-              </a>
-              
-              {/* WhatsApp */}
-              <a 
-                href={whatsAppHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-sm text-green-600 hover:underline font-medium"
-              >
-                <WhatsAppIcon className="w-4 h-4" />
-                <LangText en="WhatsApp Support" ar="الدعم عبر واتساب" />
-              </a>
+              <div className="flex flex-col gap-4">
+                <h2 className="text-foreground">
+                  <LangText en="What usually stops a payment" ar="ما الذي يوقف الدفع عادةً" />
+                </h2>
+                <ul className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+                  {REASONS.map(({ icon: Icon, en, ar, bodyEn, bodyAr }) => (
+                    <li key={en} className="flex gap-3">
+                      <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-primary">
+                        <Icon className="size-4" aria-hidden="true" />
+                      </span>
+                      <span className="flex min-w-0 flex-col gap-0.5">
+                        <span className="text-sm font-medium text-foreground"><LangText en={en} ar={ar} /></span>
+                        <span className="text-sm leading-relaxed text-muted-foreground"><LangText en={bodyEn} ar={bodyAr} /></span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="flex flex-col gap-3 border-t border-border/70 pt-6 sm:flex-row sm:items-center">
+                <Button asChild size="lg">
+                  <LocaleLink href={saved ? "/apply?step=payment&retry=true" : "/apply"}>
+                    <RefreshCw className="size-4" aria-hidden="true" />
+                    {saved ? <LangText en="Try payment again" ar="أعد محاولة الدفع" /> : <LangText en="Start an application" ar="ابدأ طلبًا" />}
+                  </LocaleLink>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <a href={whatsAppHref} target="_blank" rel="noopener noreferrer">
+                    <WhatsAppIcon className="size-4 text-[#1A7F37]" />
+                    <LangText en="Message us on WhatsApp" ar="راسلنا على واتساب" />
+                  </a>
+                </Button>
+              </div>
             </div>
-          </div>
+          </section>
+
+          <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <span>
+              <LangText en="Prefer email?" ar="تفضّل البريد الإلكتروني؟" />{" "}
+              <a href="mailto:hello@ezvisa.net" className="font-medium text-primary hover:underline" dir="ltr">hello@ezvisa.net</a>
+            </span>
+            <LocaleLink href="/help/pricing-and-payment/payment-did-not-go-through" className="font-medium text-foreground hover:underline">
+              <LangText en="Payment help" ar="مساعدة الدفع" />
+            </LocaleLink>
+          </p>
         </div>
       </main>
-      <Footer />
-    </>
+    </div>
   )
 }
