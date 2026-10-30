@@ -83,7 +83,7 @@ export default function Account() {
   const since = u.created_at ? new Date(u.created_at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { month: "short", year: "numeric" }) : "";
   /** Ends this phone's session and wipes the person's data from it (lib/auth.tsx). Unsaved answers are saved first;
    *  what still couldn't be saved (offline) and unsent uploads are named before the wipe. */
-  const signOut = async () => {
+  const signOut = async (everywhere = false) => {
     const saved = await saveBeforeSignOut().catch(() => false);
     const n = pendingUploads();
     // This phone's push token is removed with the session (lib/auth.tsx); offline it stays until someone signs in here again.
@@ -92,8 +92,14 @@ export default function Account() {
       n ? t("{n} uploads haven't been sent yet. Signing out cancels them.", { n }) : saved && t("Your applications stay in your account."),
       offline && t("You're offline, so this phone may still get this account's notifications.")].filter(Boolean).join("\n\n");
     // Web (testing build): the same warning through the browser dialog, only when something would be lost.
-    if (Platform.OS === "web") { if (saved || window.confirm(`${t("Sign out?")}\n\n${note}`)) endSession(); return; }
-    Alert.alert(t("Sign out?"), note, [{ text: t("Cancel"), style: "cancel" }, { text: t("Sign out"), style: "destructive", onPress: () => { endSession(); } }]);
+    const end = () => endSession({ everywhere }).catch(() => {
+      const m = t("You need a connection to sign out everywhere. Nothing was changed.");
+      if (Platform.OS === "web") window.alert(m); else Alert.alert(t("Couldn't sign out everywhere"), m);
+    });
+    const title = everywhere ? t("Sign out everywhere?") : t("Sign out?");
+    const text = everywhere ? [t("Every phone and browser signed in to this account is signed out. Others may take up to an hour."), note].filter(Boolean).join("\n\n") : note;
+    if (Platform.OS === "web") { if ((saved && !everywhere) || window.confirm(`${title}\n\n${text}`)) end(); return; }
+    Alert.alert(title, text, [{ text: t("Cancel"), style: "cancel" }, { text: everywhere ? t("Sign out everywhere") : t("Sign out"), style: "destructive", onPress: end }]);
   };
   return (
     <ScrollView onScroll={onTabScroll} scrollEventThrottle={16} style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top + S.xl, paddingBottom: pb, paddingHorizontal: S.gutter, gap: S.xl }}>
@@ -130,7 +136,8 @@ export default function Account() {
       </RowGroup>
       {help}
       <RowGroup>
-        <Row label={t("Sign out")} destructive onPress={signOut} testID="sign-out" />
+        <Row label={t("Sign out")} destructive onPress={() => signOut()} testID="sign-out" />
+        <Row label={t("Sign out everywhere")} destructive onPress={() => signOut(true)} testID="sign-out-everywhere" />
         <Row label={t("Delete account")} destructive onPress={() => { setTyped(""); setDelErr(null); setDelFailed(false); setDel(true); }} testID="delete-account" />
       </RowGroup>
       <SheetScaffold visible={del} onClose={() => !deleting && setDel(false)} pose="puzzled" title={t("Delete your EZvisa account?")} testID="delete-sheet"

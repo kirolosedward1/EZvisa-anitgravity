@@ -24,7 +24,8 @@ type Ctx = {
   notice: string | null; clearNotice: () => void;
   /** Set while a password-reset link has signed the user in and a new password is still to be chosen. */
   recovery: boolean; setRecovery: (v: boolean) => void;
-  signOut: () => Promise<void>;
+  /** `everywhere`: also ends the account's sessions on every other phone and browser (needs a connection; throws offline). */
+  signOut: (o?: { everywhere?: boolean }) => Promise<void>;
   /** Bumps on every sign-out so providers holding user data in memory can reset. */
   epoch: number;
 };
@@ -118,11 +119,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const continueAsGuest = useCallback(() => setGuest(true), []);
   const clearNotice = useCallback(() => setNotice(null), []);
-  const signOut = useCallback(async () => {
+  const signOut = useCallback(async (o?: { everywhere?: boolean }) => {
     if (!supabase) return;
     leaving.current = true;
     try {
       await withTimeout(unregisterPushToken().catch(() => {}), 3000); // needs the session, so before signing out
+      if (o?.everywhere) {
+        // Revokes every refresh token of the account; other devices lose access when their current token runs out (≤ 1 hour).
+        const { error } = await supabase.auth.signOut({ scope: "global" });
+        if (error) throw error;
+      }
       await signOutLocally();
     } finally { leaving.current = false; }
   }, []);
