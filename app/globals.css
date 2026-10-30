@@ -590,6 +590,8 @@ header img[alt="EZvisa Logo"] { filter: none; }
 .ez-welcome-character>p { text-align: center; margin-top: -15px; font-size: 14px; color: var(--muted-foreground); }
 .globi-art { position: relative; aspect-ratio: 1; width: 100%; background: transparent; }
 .globi-art video { display: block; width: 100%; height: 100%; object-fit: contain; background: transparent; }
+/* Arabic reads right to left: Globi faces the same way as the text. */
+[dir="rtl"] .globi-art video { transform: scaleX(-1); }
 .ez-application-wrap { max-width: 540px; scroll-margin-top: 100px; }
 .ez-application-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ez-country-picker { min-width: 0; width: 100%; text-align: start; background: #fff; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color .18s; }
@@ -1536,8 +1538,6 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 .ez-payment-result h1 { font-size:36px; line-height:1.2; }
 .ez-payment-result h2 { font-size:18px; line-height:1.4; font-weight:500; }
 @media(max-width:639px) { .ez-payment-result h1 { font-size:30px; } }
-/* Payment not completed: Globi panel beside the content, so the card itself has no padding. */
-.ez-payment-result.ez-payment-failed { padding:0; }
 
 /* Cookie notice and preferences: compact, non-modal, above any wizard actions. */
 .ez-cookie { --cookie-gap:24px; position:fixed; z-index:1000; inset-inline-start:24px; bottom:calc(var(--cookie-offset,0px) + var(--cookie-gap) + env(safe-area-inset-bottom,0px)); width:420px; max-width:calc(100% - 48px); max-height:min(660px,calc(100dvh - var(--cookie-offset,0px) - 48px - env(safe-area-inset-bottom,0px))); display:flex; flex-direction:column; background:#fff; color:var(--ez-ink,#102347); border:1px solid var(--border); border-radius:16px; box-shadow:0 12px 48px rgb(16 35 71 / .14); overflow:hidden; }
@@ -1606,8 +1606,6 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 /* Real travel photography supports informational sections without competing with Globi. */
 .ez-travel-photo { width:100%; min-width:0; margin:0; }
 .ez-travel-photo-frame { position:relative; aspect-ratio:4 / 3; overflow:hidden; border-radius:12px; background:var(--ez-sky); }
-.ez-travel-photo figcaption { margin-top:8px; color:var(--muted-foreground); font-size:10px; line-height:1.5; }
-.ez-travel-photo figcaption a:hover { color:var(--ez-blue); text-decoration:underline; text-underline-offset:3px; }
 .ez-timeline-photo { margin-top:8px; }
 .ez-timeline-photo .ez-travel-photo-frame { max-height:280px; }
 .ez-documents-photo { margin-top:12px; }

@@ -699,13 +699,13 @@ export const HELP_ARTICLES: HelpArticle[] = [
     body: {
       en: [
         "Once your application is paid, the Insurance step in your application gives you two choices:",
-        "- Buy insurance through EZvisa: we send you a quote. It's priced separately and doesn't change your service fee.",
+        "- Buy travel insurance through EZvisa: we send you a quote. It's priced separately and doesn't change your service fee.",
         "- I'll provide my own: buy a policy that meets the embassy's requirements and bring the certificate to your appointment.",
         "Choosing an option doesn't buy a policy or confirm cover. With a quote, your cover starts only after you accept and pay for it.",
       ],
       ar: [
         "بعد دفع طلبك، تعرض لك خطوة التأمين في طلبك خيارين:",
-        "- شراء التأمين عبر إيزي فيزا: نرسل لك عرض سعر. يُسعَّر بشكل منفصل ولا يغيّر رسوم خدمتك.",
+        "- شراء تأمين السفر عبر إيزي فيزا: نرسل لك عرض سعر. يُسعَّر بشكل منفصل ولا يغيّر رسوم خدمتك.",
         "- سأقدّم وثيقتي: اشترِ وثيقة تستوفي متطلبات السفارة وأحضر شهادتها إلى موعدك.",
         "اختيار أحد الخيارين لا يشتري وثيقة ولا يؤكد التغطية. وفي حالة عرض السعر، تبدأ التغطية فقط بعد موافقتك ودفعك.",
       ],

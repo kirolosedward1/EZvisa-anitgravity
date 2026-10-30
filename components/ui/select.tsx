@@ -5,11 +5,14 @@ import * as SelectPrimitive from '@radix-ui/react-select'
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { useSiteLocale } from '@/components/locale-provider'
 
+// Radix selects default to left-to-right; follow the page language.
 function Select({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+  const dir = useSiteLocale() === "ar" ? "rtl" : "ltr"
+  return <SelectPrimitive.Root data-slot="select" dir={dir} {...props} />
 }
 
 function SelectGroup({

@@ -131,7 +131,6 @@ function AccountFooter({ className }: { className?: string }) {
     { href: "/contact", en: "Contact", ar: "اتصل بنا" },
     { href: "/privacy-policy", en: "Privacy", ar: "الخصوصية" },
     { href: "/terms-of-service", en: "Terms", ar: "الشروط" },
-    { href: "/refund-policy", en: "Refunds", ar: "الاسترداد" },
   ]
   return (
     <footer className={cn("border-t border-border/80 bg-background text-foreground", className)}>

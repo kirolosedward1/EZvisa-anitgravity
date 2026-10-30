@@ -26,7 +26,7 @@ const en = {
   "status.upload": "Upload documents",
   "status.action": "Action required",
 
-  "step.insurance": "Insurance",
+  "step.insurance": "Travel insurance",
   "step.insuranceHint": "Preference not recorded",
   "step.insuranceQuote": "Separate quote requested",
   "step.insuranceOwn": "Providing your own",
@@ -244,7 +244,7 @@ const ar = {
   "status.upload": "ارفع المستندات",
   "status.action": "إجراء مطلوب",
 
-  "step.insurance": "التأمين",
+  "step.insurance": "تأمين السفر",
   "step.insuranceHint": "لم يُسجّل الاختيار",
   "step.insuranceQuote": "طلب عرض سعر منفصل",
   "step.insuranceOwn": "ستوفّر التأمين بنفسك",

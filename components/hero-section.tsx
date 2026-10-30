@@ -43,7 +43,7 @@ export function HeroSection() {
     <section id="hero" className="ez-hero">
       <div className="ez-welcome">
         <div className="ez-welcome-copy">
-          <h1 data-site-reveal="rise">{t("Your Schengen visa,", "تأشيرة شنغن،")}<br /><em>{t("made simple.", "ببساطة.")}</em></h1>
+          <h1 data-site-reveal="rise">{t("Your Schengen visa,", "تأشيرة شنغن،")}{arabic ? " " : <br />}<em>{t("made simple.", "ببساطة.")}</em></h1>
           <p data-site-reveal="rise" data-site-delay="80" className="ez-hero-description">{t("You dream up the trip. We’ll prepare your Schengen paperwork. Five documents, one specialist team, and a little help from Globi.", "خطّط لرحلتك، واترك لنا أوراق شنغن. خمسة مستندات، وفريق مختص، والقليل من المساعدة من غلوبي.")}</p>
           <ContinueApplicationNotification inline />
           <div className="ez-application-wrap" id="application-start" data-ui>

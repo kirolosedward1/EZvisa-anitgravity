@@ -11,10 +11,12 @@ export const GOOGLE_PLAY_URL = "#"
 export const GOOGLE_PLAY_AVAILABLE = false
 
 const BADGE_FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+// Badges are drawn left to right in both languages: on /ar the SVG text would otherwise inherit dir="rtl", anchor at its
+// end and run off the badge.
 
 function AppStoreBadge({ className, arabic }: { className?: string; arabic: boolean }) {
   return (
-    <svg viewBox="0 0 120 40" className={className} aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 120 40" direction="ltr" className={className} aria-hidden="true" focusable="false">
       <rect x="0.5" y="0.5" width="119" height="39" rx="6.5" fill="#000" stroke="#a6a6a6" />
       <g fill="#fff">
         <path
@@ -34,7 +36,7 @@ function AppStoreBadge({ className, arabic }: { className?: string; arabic: bool
 
 function GooglePlayBadge({ className, arabic }: { className?: string; arabic: boolean }) {
   return (
-    <svg viewBox="0 0 135 40" className={className} aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 135 40" direction="ltr" className={className} aria-hidden="true" focusable="false">
       <rect x="0.5" y="0.5" width="134" height="39" rx="6.5" fill="#000" stroke="#a6a6a6" />
       <g transform="translate(9 7)">
         <polygon points="1,1 15,13 1,25" fill="#00c3ff" />

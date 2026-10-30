@@ -5,11 +5,14 @@ import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu'
 import { CheckIcon, ChevronRightIcon, CircleIcon } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { useSiteLocale } from '@/components/locale-provider'
 
+// Radix menus default to left-to-right; follow the page language so /ar menus open right-to-left.
 function DropdownMenu({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  const dir = useSiteLocale() === 'ar' ? 'rtl' : 'ltr'
+  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" dir={dir} {...props} />
 }
 
 function DropdownMenuPortal({

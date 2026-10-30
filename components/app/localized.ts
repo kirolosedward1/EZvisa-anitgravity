@@ -1,4 +1,5 @@
-import type { DisplayLocale } from "@/lib/currency"
+import { formatAedLabel, type DisplayLocale } from "@/lib/currency"
+import { PRICE_AED } from "@/lib/shared/wizard-contract"
 import {
   DETAILS,
   FAQS,
@@ -166,7 +167,7 @@ export function appCopy(locale: DisplayLocale): AppCopy {
     }
   }
   return {
-    priceLabel: "249 درهمًا",
+    priceLabel: formatAedLabel(PRICE_AED, "ar"),
     screens: AR_SCREENS,
     heroScreens: [AR_SCREENS.home, AR_SCREENS.apply, AR_SCREENS.track],
     walkthrough: AR_WALKTHROUGH,

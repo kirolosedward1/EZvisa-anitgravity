@@ -27,10 +27,10 @@ test("retired insurance links resume at payment without changing payment/spouse 
   assert.equal(getStepSlug(3), "destination")
 })
 
-test("dashboard puts Insurance after Preparation and before Ready without marking a legacy policy complete", () => {
+test("dashboard puts Travel insurance after Preparation and before Ready without marking a legacy policy complete", () => {
   const html = renderToStaticMarkup(createElement(ProgressTracker, { progress: { key: "payment", finished: false }, arabic: false, showInsurance: true }))
-  assert.ok(html.indexOf("Preparation") < html.indexOf("Insurance"))
-  assert.ok(html.indexOf("Insurance") < html.indexOf("Ready"))
+  assert.ok(html.indexOf("Preparation") < html.indexOf("Travel insurance"))
+  assert.ok(html.indexOf("Travel insurance") < html.indexOf("Ready"))
   const insurance = html.match(/<li\b[^>]*>[\s\S]*?<\/li>/g)?.[4] || ""
   assert.match(insurance, /Preference not recorded/)
   assert.doesNotMatch(insurance, /completed/)
@@ -48,7 +48,7 @@ test("quote is a completed preference, not evidence of purchased insurance; serv
 
 test("public tracking does not include the dashboard-only insurance step", () => {
   const html = renderToStaticMarkup(createElement(ProgressTracker, { progress: { key: "documents", finished: false }, arabic: false }))
-  assert.doesNotMatch(html, /Insurance/)
+  assert.doesNotMatch(html, /insurance/i)
 })
 
 test("saving insurance preserves uploads, traveller answers and existing metadata", () => {

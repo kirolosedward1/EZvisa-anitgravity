@@ -1,4 +1,5 @@
 import { PRICE_AED } from "@/lib/shared/wizard-contract"
+import { ltr } from "@/lib/bidi"
 
 export type Currency = "AED" | "USD"
 
@@ -41,14 +42,14 @@ function dirhamNounForDigits(digits: string): "درهم" | "درهمًا" {
 /**
  * The one price label for marketing blocks.
  * English keeps the code after the amount (`249 AED`, `1000+ AED`).
- * Arabic puts the plus on the left of the digits (`249 درهمًا`, `+1000 درهم`),
- * which is the order the bidi algorithm keeps when the number is an LTR run.
+ * Arabic is a price tag, as the owner asked: the amount first, then درهم, read left to right (`249 درهم`, `+1000 درهم`).
+ * The label is wrapped in a left-to-right isolate so an Arabic page doesn't reverse the two. Prose that counts dirhams
+ * in a sentence uses dirhamNoun() for the grammatical form instead.
  */
 export function formatAedLabel(amount: number, locale: DisplayLocale, plus = false): string {
   const digits = String(amount)
   if (locale === "ar") {
-    const noun = dirhamNoun(amount)
-    return plus ? `+${digits} ${noun}` : `${digits} ${noun}`
+    return ltr(plus ? `+${digits} درهم` : `${digits} درهم`)
   }
   return plus ? `${digits}+ AED` : `${digits} AED`
 }
