@@ -7,12 +7,27 @@ export type GlobiPose =
   | "welcome" | "destination" | "passport" | "checklist" | "calendar" | "shield" | "waiting" | "celebrate" | "companion" | "documents" | "travel"
   | "thinking" | "phone" | "notes" | "budget" | "secure" | "pointing" | "hotel" | "stamp" | "calm" | "review"
 
+/**
+ * WebKit (every browser on iPhone and iPad, and Safari on Mac) plays the VP9 WebM clips but drops their alpha channel,
+ * so Globi would stand on a black box. There the same clip is shown as a transparent animated WebP
+ * (public/globi/anim, made from the WebM files), or the still pose when the visitor asks for reduced motion.
+ */
+function webkitWithoutVideoAlpha(): boolean {
+  const ua = navigator.userAgent
+  const appleTouch = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)
+  const safari = /Safari\//.test(ua) && !/(Chrome|Chromium|Edg|OPR|Firefox)\//.test(ua)
+  return appleTouch || safari
+}
+
 /** Supplied Globi clips. Each pose autoplays muted and loops while visible. */
 export function Globi({ pose, className = "" }: { pose: GlobiPose; className?: string }) {
   const root = useRef<HTMLDivElement>(null)
   const video = useRef<HTMLVideoElement>(null)
   const [visible, setVisible] = useState(pose === "welcome")
   const [loaded, setLoaded] = useState(pose === "welcome")
+  // Decided after mounting (the server cannot know the browser); until then the box keeps its size and stays empty.
+  const [format, setFormat] = useState<"video" | "image" | null>(null)
+  useEffect(() => setFormat(webkitWithoutVideoAlpha() ? "image" : "video"), [])
   useEffect(() => {
     if (!root.current) return
     const observer = new IntersectionObserver(([entry]) => {
@@ -26,9 +41,16 @@ export function Globi({ pose, className = "" }: { pose: GlobiPose; className?: s
     if (!video.current) return
     if (visible) video.current.play().catch(() => {})
     else video.current.pause()
-  }, [visible, pose])
+  }, [visible, pose, format])
   return <div ref={root} className={`globi-art ${className}`}>
-    <video ref={video} key={pose} src={loaded ? `/globi/${pose}.webm` : undefined} muted autoPlay loop playsInline preload={pose === "welcome" ? "auto" : "none"} aria-hidden="true" />
+    {format === "video" ? (
+      <video ref={video} key={pose} src={loaded ? `/globi/${pose}.webm` : undefined} muted autoPlay loop playsInline preload={pose === "welcome" ? "auto" : "none"} aria-hidden="true" />
+    ) : format === "image" && loaded ? (
+      <picture key={pose}>
+        <source media="(prefers-reduced-motion: reduce)" srcSet={`/globi/${pose}.webp`} />
+        <img src={`/globi/anim/${pose}.webp`} alt="" aria-hidden="true" decoding="async" fetchPriority={pose === "welcome" ? "high" : "auto"} />
+      </picture>
+    ) : null}
   </div>
 }
 

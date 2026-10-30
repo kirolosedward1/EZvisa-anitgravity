@@ -129,5 +129,6 @@
       "sourceCreation": "3799998955",
       "description": "Checking a document with a magnifying glass"
     }
-  ]
+  ],
+  "webkit": "anim/<pose>.webp: transparent animated WebP (15 fps; 480px, welcome 560px) made from each WebM with ffmpeg libwebp_anim, for iPhone/iPad and Safari, which drop VP9 alpha. Stills <pose>.webp are used with prefers-reduced-motion."
 }

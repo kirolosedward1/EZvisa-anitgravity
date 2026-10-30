@@ -589,9 +589,10 @@ header img[alt="EZvisa Logo"] { filter: none; }
 .ez-welcome-character>.globi-art { width: 118%; max-width: 680px; margin-inline-start: -9%; }
 .ez-welcome-character>p { text-align: center; margin-top: -15px; font-size: 14px; color: var(--muted-foreground); }
 .globi-art { position: relative; aspect-ratio: 1; width: 100%; background: transparent; }
-.globi-art video { display: block; width: 100%; height: 100%; object-fit: contain; background: transparent; }
+.globi-art video, .globi-art img { display: block; width: 100%; height: 100%; object-fit: contain; background: transparent; }
+.globi-art picture { display: contents; }
 /* Arabic reads right to left: Globi faces the same way as the text. */
-[dir="rtl"] .globi-art video { transform: scaleX(-1); }
+[dir="rtl"] .globi-art video, [dir="rtl"] .globi-art img { transform: scaleX(-1); }
 .ez-application-wrap { max-width: 540px; scroll-margin-top: 100px; }
 .ez-application-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .ez-country-picker { min-width: 0; width: 100%; text-align: start; background: #fff; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; transition: border-color .18s; }
