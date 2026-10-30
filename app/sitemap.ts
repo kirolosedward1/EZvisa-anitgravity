@@ -28,6 +28,7 @@ const STATIC_PAGES: Page[] = [
   { path: "/tools/schengen-calculator", changeFrequency: "monthly", priority: 0.8 },
   { path: "/tools/bank-balance-calculator", changeFrequency: "monthly", priority: 0.75 },
   { path: "/tools/appointment-guide", changeFrequency: "monthly", priority: 0.75 },
+  { path: "/documents/noc-sample", changeFrequency: "monthly", priority: 0.7 },
   { path: "/videos", changeFrequency: "monthly", priority: 0.7 },
   { path: "/app", changeFrequency: "monthly", priority: 0.7 },
   { path: "/about", changeFrequency: "monthly", priority: 0.7 },
