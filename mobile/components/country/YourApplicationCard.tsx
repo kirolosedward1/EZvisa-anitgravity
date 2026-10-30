@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { View } from "react-native";
 import { router } from "expo-router";
 import type { CountryApp } from "../../lib/countryInfo";
-import { STATUS_LABEL, employmentOf, isPaid, requirementsFor, type Application } from "../../lib/data";
+import { STATUS_LABEL, APP_STATUS_LABEL, employmentOf, isPaid, requirementsFor, type Application } from "../../lib/data";
 import { buildChecklist } from "../../lib/checklist";
 import { nextAction } from "../../lib/nextAction";
 import { buildTimeline, doneCount } from "../../lib/timeline";
@@ -52,7 +52,7 @@ export function YourApplicationCard({ state, onContinueDraft }: { state: Country
   const items = buildChecklist(requirementsFor(employmentOf(a)), a.documents, a.status).customer;
   const n = nextAction(a, items);
   const steps = buildTimeline(a); const done = doneCount(steps);
-  const status = t(a.status === "submitted" && isPaid(a) ? "Paid" : STATUS_LABEL[a.status] ?? a.status);
+  const status = t(a.status === "submitted" && isPaid(a) ? "Paid" : APP_STATUS_LABEL[a.status] ?? a.status);
   const dates = tripDates(a, lang);
   const next = [t(n.title, n.vars), n.body && t(n.body)].filter(Boolean).join(" · ");
   return (

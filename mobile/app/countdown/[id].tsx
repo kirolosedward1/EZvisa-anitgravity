@@ -1,4 +1,4 @@
-// Trip countdown (canvas TripCountdown): after the visa is approved, the days to departure and a "Before you fly"
+// Trip countdown (canvas TripCountdown): once the file is ready, the days to departure and a "Before you fly"
 // checklist kept on this phone. The trip-day reminders (a week and a day before) come from lib/reminders.ts.
 import { useCallback, useEffect, useState } from "react";
 import { Platform, ScrollView, View } from "react-native";

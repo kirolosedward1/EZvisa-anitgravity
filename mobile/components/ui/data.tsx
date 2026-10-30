@@ -8,7 +8,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, with
 import { router } from "expo-router";
 import { useColors, useIsDark, useContentScale, card, S, R, T, curve, SPRING } from "../../lib/theme";
 import { FLAG_SVG } from "../../assets/flags";
-import { STATUS_LABEL, type Application } from "../../lib/data";
+import { STATUS_LABEL, APP_STATUS_LABEL, type Application } from "../../lib/data";
 import { buildTimeline, type Step } from "../../lib/timeline";
 import { useT, ltr } from "../../lib/i18n";
 import { formatDay, formatTimelineStamp } from "../../lib/dates";
@@ -51,7 +51,7 @@ const STATUS_TONE = (c: ReturnType<typeof useColors>, v: string) => (({ paid: c.
 export function StatusPill({ v, a }: { v: string; a?: { status: string; payment_status?: string | null } }) {
   const { t } = useT();
   const c = useColors(); const st = a ? stage(a) : null; const col = st ? st.color ?? (c as any)[st.tone] ?? c.grey : STATUS_TONE(c, v); v = st ? st.key : v;
-  return <Pill color={col} label={t(st ? st.label : STATUS_LABEL[v] ?? v)} />;
+  return <Pill color={col} label={t(st ? st.label : APP_STATUS_LABEL[v] ?? v)} />;
 }
 /** The one status pill: outlined, with a coloured dot (white inside, so it reads the same on cards and the canvas). */
 function Pill({ color, label, testID }: { color: string; label: string; testID?: string }) {
@@ -86,39 +86,30 @@ export function ActionPill({ label }: { label: string }) {
   return <Pill color={c.orange} label={label} testID="action-pill" />;
 }
 
-// Customer-facing journey, from the live columns only: application_status (website/admin: submitted -> reviewing -> ready |
-// cancelled) and payment_status (set by the Ziina webhook). Dates are shown only where the row really has one.
-export const JOURNEY = ["submitted", "paid", "reviewing", "ready"] as const;
-const PAID = (p?: string | null) => p === "paid" || p === "completed";
-export function journeyIndex(status: string, payment?: string | null) {
-  if (status === "draft") return -1;
-  if (["ready", "approved", "completed"].includes(status)) return 3;
-  if (["reviewing", "awaiting_documents", "appointment_booked"].includes(status)) return 2;
-  if (PAID(payment)) return 1;
-  return 0;
-}
-export function MiniProgress({ status, payment }: { status: string; payment?: string | null }) {
-  const c = useColors(); const { t } = useT(); const idx = journeyIndex(status, payment);
+/** Compact rail of the website's six steps (lib/timeline.ts): filled up to the current step. */
+export function MiniProgress({ a }: { a: Application }) {
+  const c = useColors(); const { t } = useT(); const steps = buildTimeline(a);
+  const cur = steps.findIndex((s) => s.state !== "done"); const idx = cur < 0 ? steps.length - 1 : cur;
   return (
-    <View style={{ flexDirection: "row", alignItems: "center" }} accessible accessibilityLabel={t("Step {i} of {n}", { i: idx + 1, n: 4 })}>
-      {JOURNEY.map((_, i) => (
-        <React.Fragment key={i}>
+    <View style={{ flexDirection: "row", alignItems: "center" }} accessible accessibilityLabel={t("Step {i} of {n}", { i: idx + 1, n: steps.length })}>
+      {steps.map((s, i) => (
+        <React.Fragment key={s.key}>
           <View style={{ width: 10, height: 10, borderRadius: R.xs, backgroundColor: i <= idx ? c.tint : c.fill }} />
-          {i < JOURNEY.length - 1 && <View style={{ flex: 1, height: 2, backgroundColor: i < idx ? c.tint : c.fill }} />}
+          {i < steps.length - 1 && <View style={{ flex: 1, height: 2, backgroundColor: i < idx ? c.tint : c.fill }} />}
         </React.Fragment>
       ))}
     </View>
   );
 }
 
-/** Five-step status timeline (lib/timeline.ts). A step shows as done only when the row says so, and a time only when
+/** The website's six-step tracker (lib/timeline.ts). A step shows as done only when the row says so, and a time only when
  *  the row has a real one; there is no placeholder or estimated date. */
 export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
   const c = useColors(); const { t, lang } = useT();
   // The step dot grows with the text and stays centred on the first line of its label (body text, capped at 2x).
   const k = useContentScale(1.6); const dot = Math.round(14 * k); const mark = Math.round(7 * k); const line = (T.body.lineHeight ?? 22) * useContentScale(2);
   const steps = buildTimeline(a);
-  const tone = (st: Step["state"], key: Step["key"]) => (st === "done" || st === "current" ? c.tint : st === "attention" ? c.orange : st === "failed" ? (key === "file" && a.status === "cancelled" ? c.secondaryLabel : c.red) : c.tertiaryLabel);
+  const tone = (st: Step["state"], key: Step["key"]) => (st === "done" || st === "current" ? c.tint : st === "attention" ? c.orange : st === "failed" ? (a.status === "cancelled" ? c.secondaryLabel : c.red) : c.tertiaryLabel);
   return (
     <View style={{ paddingHorizontal: S.md, paddingVertical: S.sm }} testID="timeline">
       {steps.map((s, i) => {
@@ -128,7 +119,7 @@ export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
         const stateWord = s.state === "done" ? t("done") : s.state === "current" ? t("in progress") : s.state === "attention" ? t("needs attention") : s.state === "todo" ? t("not yet") : "";
         return (
           <View key={s.key} style={{ flexDirection: "row", gap: S.sm, minHeight: last ? 24 : 44 }} accessible testID={`step-${s.key}`}
-            accessibilityLabel={[t(s.label), stateWord, s.note && t(s.note), when].filter(Boolean).join(", ")}>
+            accessibilityLabel={[t(s.label), stateWord, s.note && t(s.note, s.vars), when].filter(Boolean).join(", ")}>
             <View style={{ alignItems: "center", width: dot }}>
               <View style={{ width: dot, height: dot, borderRadius: dot / 2, marginTop: Math.max(0, (line - dot) / 2), backgroundColor: filled ? col : c.surface, borderWidth: 1.5, borderColor: col, alignItems: "center", justifyContent: "center" }}>
                 {s.state === "done" && <Icon name="checkmark" size={mark} color={c.onAccent} weight="bold" />}
@@ -143,7 +134,7 @@ export function Timeline({ a }: { a: Application; t?: (s: string) => string }) {
                 <Text variant="body" weight={s.state === "current" || s.state === "attention" ? "600" : "400"} tone={reached ? "label" : "secondary"} color={s.state === "attention" || s.state === "failed" ? col : undefined} style={{ flex: 1 }}>{t(s.label)}</Text>
                 {!!when && <Text variant="footnote" tone="secondary" tabular>{when}</Text>}
               </View>
-              {!!s.note && <Text variant="footnote" tone="secondary" numberOfLines={2}>{t(s.note)}</Text>}
+              {!!s.note && <Text variant="footnote" tone="secondary" numberOfLines={2}>{t(s.note, s.vars)}</Text>}
             </View>
           </View>
         );
@@ -173,7 +164,7 @@ export function ApplicationRow({ a }: { a: Application }) {
   const { lang } = useT();
   const name = a.countries?.name ?? "Application";
   return (
-    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${name}, ${a.reference}, ${STATUS_LABEL[a.status] ?? a.status}`}
+    <PressScale onPress={() => { tap(); router.push(`/applications/${a.id}`, { withAnchor: true }); }} accessibilityRole="button" accessibilityLabel={`${name}, ${a.reference}, ${APP_STATUS_LABEL[a.status] ?? a.status}`}
       style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, paddingVertical: S.sm, minHeight: 64, opacity: pressed ? 0.6 : 1 })}>
       <Flag country={name} size={40} />
       <View style={{ flex: 1, gap: S.xxs }}>
@@ -208,7 +199,7 @@ export function StatusHeroCard({ a }: { a: Application }) {
         <View style={{ flex: 1 }}><Text variant="headline">{t(name)}</Text><Text variant="subhead" tone="secondary" tabular>{ltr(a.reference)}</Text></View>
         <StatusPill v={a.status} a={a} />
       </View>
-      <MiniProgress status={a.status} payment={a.payment_status} />
+      <MiniProgress a={a} />
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text variant="subhead" tone="secondary">{status}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: S.xxs }}><Text variant="subhead" tone="tint" weight="600">{t("View")}</Text><Icon name="chevron.right" size={12} color={c.tint} weight="semibold" /></View>

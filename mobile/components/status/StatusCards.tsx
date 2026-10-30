@@ -1,6 +1,6 @@
-// Application status (canvas Status, StatusNextYou, StatusNextUs, DocRejected, FileReady, VisaApproved, VisaRefused):
+// Application status (canvas Status, StatusNextYou, StatusNextUs, DocRejected, FileReady), on the website's steps:
 // the hero card (country, travellers, dates, countdown), one "Next: you / Next: us" card with Globi and the one action
-// that matters, and "To get later". Everything is derived from the row (status, payment, documents, notes): no
+// that matters, and "To get later". EZvisa's work ends with the file and the appointment; no visa decision is shown. Everything is derived from the row (status, payment, documents, notes): no
 // promise the data can't back (no approval odds, no fixed delivery day).
 import { useEffect } from "react";
 import { View } from "react-native";
@@ -42,7 +42,7 @@ export function StatusHero({ a }: { a: Application }) {
   );
 }
 
-export type NextKind = "pay" | "continue" | "fix" | "upload" | "us" | "ready" | "book" | "appointment" | "decision" | "approved" | "refused" | "done" | "cancelled";
+export type NextKind = "pay" | "continue" | "fix" | "upload" | "us" | "preparing" | "ready" | "book" | "appointment" | "done" | "closed" | "cancelled";
 export type Next = { kind: NextKind; who: "you" | "us" | null; pose: Pose; title: string; body: string; vars?: Record<string, string | number>; cta?: string; alt?: string; item?: CheckItem;
   /** Document names for the body, translated one by one (English keys). */ docs?: string[] };
 
@@ -53,8 +53,8 @@ export function nextOf(a: Application, list: CheckItem[] | null): Next {
   const rejected = open.filter((i) => i.state === "rejected");
   const country = a.countries?.name ?? "";
   if (a.status === "cancelled") return { kind: "cancelled", who: null, pose: "waiting", title: "Cancelled", body: "This application was cancelled. Nothing more to do." };
-  if (a.status === "rejected") return { kind: "refused", who: null, pose: "puzzled", title: "Not approved this time", body: "A specialist will read the letter with you and explain your options.", cta: "Talk to a specialist", alt: "Apply again" };
-  if (a.status === "completed") return { kind: "approved", who: null, pose: "celebrate", title: "Visa approved", body: "Have a great trip. Your file stays here for next time.", cta: "Share the news", alt: "Apply again" };
+  if (a.status === "rejected") return { kind: "closed", who: null, pose: "waiting", title: "Application closed", body: "This application is closed. Questions? Message us.", cta: "Message us", alt: "Apply again" };
+  if (a.status === "completed") return { kind: "done", who: null, pose: "celebrate", title: "All done", body: "Your file is ready and your appointment is set. Our work on this application is finished.", alt: "Apply again" };
   if (!isPaid(a)) return { kind: "pay", who: "you", pose: "wallet", title: "Pay to start", body: a.payment_status === "failed" ? "The last payment didn't go through." : "Documents unlock after payment.", cta: "Pay securely" };
   if (needsContinue(a)) return { kind: "continue", who: "you", pose: "writing", title: "A few more questions", body: "Trip dates, passport and job. About 3 minutes.", cta: "Continue application" };
   if (rejected.length) return { kind: "fix", who: "you", pose: "magnify", item: rejected[0], title: rejected.length === 1 ? "One document needs replacing" : "{n} documents need replacing", vars: { n: rejected.length },
@@ -63,15 +63,16 @@ export function nextOf(a: Application, list: CheckItem[] | null): Next {
     body: "", docs: open.slice(0, 3).map((i) => i.req.title), cta: open.length === 1 ? "Upload 1 document" : "Upload {n} documents" };
   const ap = appointmentOf(a);
   if (ap && Date.parse(ap.at) > Date.now() - 6 * 3600e3) return { kind: "appointment", who: "you", pose: "calendar", title: "Your appointment", body: ap.centre ?? "", cta: "View appointment" };
-  if (ap) return { kind: "decision", who: "us", pose: "waiting", title: "Waiting for the decision", body: "The consulate usually decides within about 15 days. I'll message you when it changes." };
-  if (["ready", "approved"].includes(a.status)) return { kind: "ready", who: "you", pose: "celebrate", title: "Your {c} file is ready", vars: { c: country }, body: "Print the full set for the appointment, then book your slot.", cta: "Book the appointment", alt: "Open documents" };
+  if (ap) return { kind: "done", who: null, pose: "celebrate", title: "All done", body: "Your file is ready and your appointment is set. Our work on this application is finished.", cta: "View appointment", alt: "Apply again" };
+  if (a.status === "ready") return { kind: "ready", who: "you", pose: "celebrate", title: "Your {c} file is ready", vars: { c: country }, body: "Download and print the full set, then add your appointment.", cta: "Add the appointment", alt: "Open documents" };
+  if (a.status === "approved") return { kind: "preparing", who: "us", pose: "writing", title: "Preparing your file", body: "Cover letter, bookings and itinerary. Usually 1 to 2 days." };
   if (a.status === "appointment_booked") return { kind: "book", who: "you", pose: "calendar", title: "Appointment booked", body: "Add the date so I can remind you the day before.", cta: "Add the date" };
-  return { kind: "us", who: "us", pose: "writing", title: "Nothing to do", body: "The team is writing your file. It's usually ready 1 to 2 days after review starts; I'll message you.", };
+  return { kind: "us", who: "us", pose: "magnify", title: "Expert review", body: "A specialist is checking everything. Your file is usually ready 1 to 2 days after that; I'll message you." };
 }
 
 export function NextCard({ n, onPrimary, onAlt, busy }: { n: Next; onPrimary?: () => void; onAlt?: () => void; busy?: boolean }) {
   const c = useColors(); const { t } = useT();
-  const big = n.kind === "approved" || n.kind === "refused" || n.kind === "ready";
+  const big = n.kind === "done" || n.kind === "ready";
   const docName = n.item ? t(n.item.req.title).toLowerCase() : "";
   useEffect(() => { if (n.who) track("status_view", { next: n.who }); }, [n.kind]); // eslint-disable-line react-hooks/exhaustive-deps
   return (

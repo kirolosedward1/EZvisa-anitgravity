@@ -7,7 +7,7 @@ import { appointmentOf } from "../../../lib/appointment";
 import { missingDocuments, type MissingDoc } from "../../../lib/missing";
 import { track } from "../../../lib/analytics";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, Share, View, type ScrollViewInstance } from "react-native";
+import { Alert, AppState, Platform, ActionSheetIOS, RefreshControl, ScrollView, View, type ScrollViewInstance } from "react-native";
 import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Timeline, ProgressBar, Skeleton, InlineError, Text, ChipGroup, RowGroup, Row, InfoNote } from "../../../components/ui";
@@ -150,16 +150,15 @@ export default function ApplicationDetail() {
       case "pay": pay(); return;
       case "continue": router.push(`/continue/${a.id}`); return;
       case "fix": case "upload": if (next.item && canUpload) pickFile(next.item.req.document_type, next.item.req.id); else toDocs(next.item?.req.id); return;
-      case "ready": case "book": case "appointment": router.push(`/appointment/${a.id}`); return;
-      case "refused": track("whatsapp_handoff", { screen: "refused" }); whatsapp(`Hi EZvisa, my ${name} visa (${a.reference}) was refused. Can a specialist call me?`); return;
-      case "approved": Share.share({ message: t("My {c} visa is approved. Applied with EZvisa: https://www.ezvisa.net", { c: t(name) }) }).catch(() => {}); return;
+      case "ready": case "book": case "appointment": case "done": router.push(`/appointment/${a.id}`); return;
+      case "closed": track("whatsapp_handoff", { screen: "closed" }); whatsapp(`Hi EZvisa, I have a question about my ${name} application (${a.reference}).`); return;
     }
   };
   const alt = () => {
     tap();
     if (next.kind === "fix") { track("whatsapp_handoff", { screen: "doc-rejected" }); whatsapp(`Hi EZvisa, why does my ${next.item ? next.item.req.title : "document"} need replacing? (${a.reference})`); return; }
     if (next.kind === "ready") { toDocs(); return; }
-    if (next.kind === "refused" || next.kind === "approved") applyAgain();
+    if (next.kind === "closed" || next.kind === "done") applyAgain();
   };
   return (
     <ScrollView ref={scroller} contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }} contentContainerStyle={{ paddingBottom: pb }}

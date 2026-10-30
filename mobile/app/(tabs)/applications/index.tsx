@@ -11,7 +11,7 @@ import { GlobiPose } from "../../../components/globi/GlobiPose";
 import { SegmentedControl, EmptyState, Skeleton, Flag, Text, PressScale, useTabInset, Card, SectionHeader, PrimaryButton, SecondaryButton, ErrorView, HeaderIconButton } from "../../../components/ui";
 import { useT } from "../../../lib/i18n";
 import { useColors, S, R } from "../../../lib/theme";
-import { STATUS_LABEL, isPaid, needsContinue, type Application } from "../../../lib/data";
+import { STATUS_LABEL, APP_STATUS_LABEL, isPaid, needsContinue, type Application } from "../../../lib/data";
 import { nextAction } from "../../../lib/nextStep";
 import { useApps, ACTIVE } from "../../../lib/useApps";
 import { useForm, type LocalDraft } from "../../../lib/form";
@@ -27,7 +27,7 @@ import { whatsapp } from "../../../lib/api";
 
 type Pill = { label: string; tone: "accent" | "neutral" | "success" };
 type RowItem = { key: string; country: string; title: string; status: string; pill?: Pill; open: () => void; discard?: () => void; answers?: number; draft?: boolean };
-const READY = ["ready", "approved", "appointment_booked", "completed"];
+const READY = ["ready", "appointment_booked", "completed"];
 const weekday = (at: number, lang: string) => new Date(at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : undefined, { weekday: "short" });
 
 function StatusPill({ p }: { p: Pill }) {
@@ -102,7 +102,7 @@ export default function Applications() {
     const people = a.applicants.map((p) => p.first_name).filter(Boolean).join(` ${t("and")} `);
     const act = nextAction(a); const paid = isPaid(a);
     const cd = ACTIVE(a.status) ? countdown(a.entry_date, a.exit_date, t) : null;
-    const status = [a.status === "submitted" && paid ? t("Paid") : a.status === "submitted" && !paid ? t("Payment due") : t(STATUS_LABEL[a.status] ?? a.status), act && t(act.label), cd].filter(Boolean).join(" · ");
+    const status = [a.status === "submitted" && paid ? t("Paid") : a.status === "submitted" && !paid ? t("Payment due") : t(APP_STATUS_LABEL[a.status] ?? a.status), act && t(act.label), cd].filter(Boolean).join(" · ");
     const pill: Pill | undefined = a.status === "draft" || needsContinue(a) ? { label: t("Continue"), tone: "neutral" } : act ? { label: t(act.label.split(" ")[0]), tone: "accent" } : READY.includes(a.status) ? { label: t("Ready"), tone: "success" } : undefined;
     return { key: a.id, country: name, title: [t(name || "Application"), people].filter(Boolean).join(" · "), status, pill, draft: a.status === "draft",
       open: a.status === "draft" ? () => { openServerDraft(a.id).then((ok) => router.push(ok ? { pathname: "/apply", params: { resume: "1" } } : `/applications/${a.id}`)).catch(() => router.push(`/applications/${a.id}`)); }

@@ -15,7 +15,7 @@ import { Chevron, Text, Flag, Icon, PressScale, Avatar, Skeleton, useTabInset, P
 import { GlobiPose, GLOBI_SIZE } from "../../../components/globi/GlobiPose";
 import { PopularTiles } from "../../../components/home/PopularTiles";
 import { useColors, S, R } from "../../../lib/theme";
-import { STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, referenceOf, type Application } from "../../../lib/data";
+import { STATUS_LABEL, APP_STATUS_LABEL, employmentOf, getApplication, isPaid, needsContinue, requirementsFor, referenceOf, type Application } from "../../../lib/data";
 import { useApps } from "../../../lib/useApps";
 import { tap, error as hError } from "../../../lib/haptics";
 import { nextAction as cardAction } from "../../../lib/nextStep";
@@ -59,6 +59,7 @@ function AppCard({ a, offline }: { a: Application; offline: boolean }) {
     tap();
     switch (n.kind) {
       case "continue": router.push(`/continue/${a.id}`); return;
+      case "appointment": router.push(`/appointment/${a.id}`); return;
       case "pay":
         setPaying(true);
         startPayment(a.id).then((o) => router.push({ pathname: "/payment/[id]", params: { id: a.id, returned: o.returned } }))
@@ -195,9 +196,9 @@ function useItems(apps: Application[] | null): Item[] | null {
     ...server.filter((a) => !(a.status === "draft" && drafts.some((d) => d.draftId === a.id)) && !isUserDiscarded(a)).map((a): Item => {
       const paid = isPaid(a);
       const act = cardAction(a);
-      const status = a.status === "draft" ? t("Draft") : act ? t(a.status === "submitted" ? "Paid" : STATUS_LABEL[a.status] ?? a.status) : needsContinue(a) ? t("Continue application")
-        : a.status === "submitted" && !paid ? `${t("Submitted")} · ${t("Payment due")}` : paid && a.status === "submitted" ? t("Paid") : t(STATUS_LABEL[a.status] ?? a.status);
-      return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, action: act ? t(act.label) : undefined, actionHref: act?.href, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : ["ready", "approved", "appointment_booked", "completed"].includes(a.status) ? "green" : "secondary",
+      const status = a.status === "draft" ? t("Draft") : act ? t(a.status === "submitted" ? "Paid" : APP_STATUS_LABEL[a.status] ?? a.status) : needsContinue(a) ? t("Continue application")
+        : a.status === "submitted" && !paid ? `${t("Submitted")} · ${t("Payment due")}` : paid && a.status === "submitted" ? t("Paid") : t(APP_STATUS_LABEL[a.status] ?? a.status);
+      return { key: `s:${a.id}`, country: a.countries?.name ?? a.destination_country ?? "", status, action: act ? t(act.label) : undefined, actionHref: act?.href, at: Date.parse((a as any).updated_at ?? a.created_at ?? "") || 0, tone: status === t("Continue application") ? "accent" : ["ready", "appointment_booked", "completed"].includes(a.status) ? "green" : "secondary",
         // A draft saved from the website or another device opens in the wizard, at the question it was left on.
         open: a.status === "draft" ? () => { openServerDraft(a.id).then((ok) => router.push(ok ? { pathname: "/apply", params: { resume: "1" } } : `/applications/${a.id}`)).catch(() => router.push(`/applications/${a.id}`)); }
           : act ? () => router.push(act.href as any, { withAnchor: true })

@@ -13,12 +13,13 @@ export function stage(i: StageInput): Stage {
     : (i.docsMissing ?? 0) > 0 ? { label: i.docsMissing === 1 ? "Submit 1 document" : "Submit {n} documents", vars: { n: i.docsMissing! } } : null;
   switch (s) {
     case "cancelled": return { key: "cancelled", label: "Cancelled", tone: "grey", next: null };
-    case "rejected": return { key: "rejected", label: "Refused", tone: "red", next: null };
+    case "rejected": return { key: "rejected", label: "Closed", tone: "grey", next: null };
     case "completed": return { key: "completed", label: "Completed", tone: "green", next: null };
-    case "approved": case "ready": return { key: "ready", label: "File ready", tone: "green", next: null };
+    case "approved": return { key: "reviewing", label: "Preparing your file", tone: "orange", next: null };
+    case "ready": return { key: "ready", label: "File ready", tone: "green", next: null };
     case "appointment_booked": return { key: "appointment_booked", label: "Appointment booked", tone: "indigo", next: null };
     case "awaiting_documents": return { key: "awaiting_documents", label: "Documents needed", tone: "orange", next: afterPay() ?? { label: "Submit documents" } };
-    case "reviewing": return { key: "reviewing", label: "In review", tone: "orange", next: paid ? afterPay() : null };
+    case "reviewing": return { key: "reviewing", label: "Expert review", tone: "orange", next: paid ? afterPay() : null };
   }
   // draft / submitted (and anything unknown): payment decides.
   if (paid) return { key: "paid", label: "Paid", tone: "green", color: "#1A7F37", next: afterPay() };
