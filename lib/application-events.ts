@@ -1,8 +1,10 @@
 /**
- * The case's activity list and specialist name. Stored rows (application_events, supabase/migrations/004) win; for
- * each kind with no stored rows the list is rebuilt from what the application row already records (paid_at, the
- * upload records, document reviews, file download, appointment, insurance preference). So the list works before the
- * migration is applied and older cases are not empty. Pure: the dashboard, tracking page and tests share it.
+ * The case's activity list and specialist name, from stored rows (application_events, supabase/migrations/004) and
+ * what the application row already records, so cases from before the table existed are complete too:
+ * - uploads always come from the row's upload records (they hold every upload; stored upload events are not shown);
+ * - reviews are the stored review events plus, for document types with none, the latest document_reviews row;
+ * - payment and file download come from the row only when no event of that kind is stored.
+ * Pure: the dashboard, tracking page and tests share it.
  */
 import { parseNotes } from "@/lib/shared/wizard-contract"
 import { insurancePreference, type InsurancePreference } from "@/lib/insurance"
@@ -104,7 +106,7 @@ export function activityFor(app: ActivityApp, reviews: DocumentReviews = {}, eve
         entries.push({ id, at: e.created_at, tone: "amber", kind: "payFailed" })
         break
       case "document_uploaded":
-        if (str(p.document_type)) uploads.push({ at: e.created_at, doc: str(p.document_type) })
+        // Shown from the row's upload records below, which also cover uploads from before this table existed.
         break
       case "document_reviewed":
         if (p.status === "approved" && str(p.document_type)) approvals.push({ at: e.created_at, doc: str(p.document_type) })
@@ -135,16 +137,13 @@ export function activityFor(app: ActivityApp, reviews: DocumentReviews = {}, eve
   if (!stored.has("payment_received") && paidAt && ["paid", "completed"].includes(str(app.payment_status).toLowerCase())) {
     entries.push({ id: "paid", at: paidAt, tone: "neutral", kind: "paid", amount: app.payment_amount ?? undefined })
   }
-  if (!stored.has("document_uploaded")) {
-    for (const u of uploadRecords(app.additional_notes)) if (time(u.at)) uploads.push({ at: u.at, doc: u.type })
-  }
-  if (!stored.has("document_reviewed")) {
-    for (const [doc, review] of Object.entries(reviews)) {
-      const at = time(review.reviewedAt)
-      if (!at) continue
-      if (review.status === "approved") approvals.push({ at, doc })
-      else if (review.status === "rejected") entries.push({ id: `rejected-${doc}`, at, tone: "amber", kind: "rejected", docs: [doc] })
-    }
+  for (const u of uploadRecords(app.additional_notes)) if (time(u.at)) uploads.push({ at: u.at, doc: u.type })
+  const reviewedTypes = new Set(events.filter((e) => e.kind === "document_reviewed").map((e) => str(e.payload.document_type)))
+  for (const [doc, review] of Object.entries(reviews)) {
+    const at = time(review.reviewedAt)
+    if (!at || reviewedTypes.has(doc)) continue
+    if (review.status === "approved") approvals.push({ at, doc })
+    else if (review.status === "rejected") entries.push({ id: `rejected-${doc}`, at, tone: "amber", kind: "rejected", docs: [doc] })
   }
   const downloaded = time(app.file_downloaded_at)
   if (!stored.has("file_downloaded") && downloaded) entries.push({ id: "downloaded", at: downloaded, tone: "neutral", kind: "downloaded" })

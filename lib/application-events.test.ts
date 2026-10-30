@@ -26,6 +26,19 @@ test("activity is rebuilt from the row: newest first, same-day uploads and appro
   assert.equal(list[4].amount, 249)
 })
 
+test("uploads always come from the row; reviews merge stored events with older review rows", () => {
+  const events = toApplicationEvents([
+    { kind: "document_uploaded", payload: { document_type: "bankStatement" }, created_at: "2026-03-12T08:00:01.000Z" },
+    { kind: "document_reviewed", payload: { document_type: "photo", status: "approved" }, created_at: "2026-03-13T09:00:00.000Z" },
+  ])
+  const list = activityFor(app, reviews, events)
+  // Three uploads in two lines, as without events; no duplicate for the stored bank statement upload.
+  assert.deepEqual(list.filter((e) => e.kind === "uploaded").map((e) => e.n), [1, 2])
+  // Photo: the stored approval replaces the older rejected review row; passport + residency still come from rows.
+  assert.equal(list.some((e) => e.kind === "rejected"), false)
+  assert.deepEqual(list.filter((e) => e.kind === "approved").map((e) => e.docs), [["photo"], ["passportCopy", "residencyCopy"]])
+})
+
 test("stored events replace the rebuilt lines of the same kind", () => {
   const events = toApplicationEvents([
     { kind: "payment_received", payload: { amount: 249 }, created_at: "2026-03-10T08:21:00.000Z" },

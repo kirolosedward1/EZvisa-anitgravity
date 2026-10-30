@@ -36,13 +36,11 @@ Demo login: `/api/auth/demo-login?scenario=ready|pending|multi&next=/dashboard`.
 - `/track/[token]` still renders for a case without an account (demo token, HTTP 200).
 - Insurance preference, payment status and document flags still come from the existing helpers and API routes.
 
-## Owner actions before this is complete
+## Owner actions
 
-1. **Apply two migrations in Supabase** after review (SQL editor). Both are additive, with read-only RLS for the case owner and no customer writes:
-   - `supabase/migrations/003_document_reviews.sql`: per-document review results (approved, being checked, needs a new file + note).
-   - `supabase/migrations/004_application_events.sql`: the activity log. The payment status writer, uploads, file download, appointment and insurance saves and staff status changes already record events; until the table exists those writes are skipped and the activity card is rebuilt from the application row.
-2. **Give the team a way to write reviews and assign a specialist**: rows in `document_reviews`, and `specialist_assigned` events (or `additional_notes.specialist`). There is no staff UI for this yet.
-3. Test with a real account: saving notification switches, the appointment checklist, and uploading after a "needs a new file" review.
+1. ~~Apply migrations 003 and 004~~: applied 30 October 2026 (both tables with read-only RLS for the case owner, checked in the database).
+2. **Staff review screen** (`/admin` → **Documents** on a case → `/admin/cases/<id>`): view each uploaded file through a 15-minute signed link, mark it received, being checked, approved or needs a new file (a note for the customer is required), and assign the specialist. Saves go through `POST /api/admin/reviews` and are logged as activity. It needs the **`ADMIN_API_SECRET`** environment variable in Vercel (Production): it is not set yet, so `/admin` refuses every sign-in until it is. Choose a long random value, add it in Vercel → Project → Settings → Environment Variables, redeploy, and share it only with staff.
+3. Test with a real account: saving notification switches, uploading after a "needs a new file" review, and the appointment checklist.
 
 ## Limits and decisions to know
 

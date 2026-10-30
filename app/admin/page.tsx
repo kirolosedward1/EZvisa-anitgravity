@@ -523,6 +523,15 @@ export default function AdminPage() {
                           )}
 
                           <LocaleLink
+                            href={`/admin/cases/${c.id}`}
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-500/40 bg-sky-500/10 px-2.5 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
+                            title="Review documents and assign the specialist"
+                          >
+                            <FileText className="size-3" aria-hidden="true" />
+                            Documents
+                          </LocaleLink>
+
+                          <LocaleLink
                             href={`/track/${c.tracking_token}`}
                             target="_blank"
                             rel="noopener noreferrer"
