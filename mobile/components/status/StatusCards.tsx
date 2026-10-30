@@ -43,7 +43,8 @@ export function StatusHero({ a }: { a: Application }) {
 }
 
 export type NextKind = "pay" | "continue" | "fix" | "upload" | "us" | "ready" | "book" | "appointment" | "decision" | "approved" | "refused" | "done" | "cancelled";
-export type Next = { kind: NextKind; who: "you" | "us" | null; pose: Pose; title: string; body: string; vars?: Record<string, string | number>; cta?: string; alt?: string; item?: CheckItem };
+export type Next = { kind: NextKind; who: "you" | "us" | null; pose: Pose; title: string; body: string; vars?: Record<string, string | number>; cta?: string; alt?: string; item?: CheckItem;
+  /** Document names for the body, translated one by one (English keys). */ docs?: string[] };
 
 /** The one next thing, from the real status, payment and documents. */
 export function nextOf(a: Application, list: CheckItem[] | null): Next {
@@ -59,7 +60,7 @@ export function nextOf(a: Application, list: CheckItem[] | null): Next {
   if (rejected.length) return { kind: "fix", who: "you", pose: "magnify", item: rejected[0], title: rejected.length === 1 ? "One document needs replacing" : "{n} documents need replacing", vars: { n: rejected.length },
     body: rejected[0].reason || "Please upload a new copy.", cta: "Upload new {doc}", alt: "Ask why" };
   if (open.length) return { kind: "upload", who: "you", pose: "documents", item: open[0], title: open.length === 1 ? "1 document" : "{n} documents", vars: { n: open.length },
-    body: open.slice(0, 3).map((i) => i.req.title).join(", "), cta: open.length === 1 ? "Upload 1 document" : "Upload {n} documents" };
+    body: "", docs: open.slice(0, 3).map((i) => i.req.title), cta: open.length === 1 ? "Upload 1 document" : "Upload {n} documents" };
   const ap = appointmentOf(a);
   if (ap && Date.parse(ap.at) > Date.now() - 6 * 3600e3) return { kind: "appointment", who: "you", pose: "calendar", title: "Your appointment", body: ap.centre ?? "", cta: "View appointment" };
   if (ap) return { kind: "decision", who: "us", pose: "waiting", title: "Waiting for the decision", body: "The consulate usually decides within about 15 days. I'll message you when it changes." };
@@ -78,10 +79,10 @@ export function NextCard({ n, onPrimary, onAlt, busy }: { n: Next; onPrimary?: (
       <View style={{ gap: S.md }}>
         <View style={{ flexDirection: "row", alignItems: big ? "center" : "flex-start", gap: S.sm }}>
           <GlobiPose pose={n.pose} size={big ? 96 : GLOBI_SIZE.info + 8} style={{ margin: -6 }} />
-          <View style={{ flex: 1, gap: 4 }} accessible accessibilityLabel={[n.who ? t(n.who === "you" ? "Next: you" : "Next: us") : "", t(n.title, n.vars), t(n.body)].filter(Boolean).join(". ")}>
+          <View style={{ flex: 1, gap: 4 }} accessible accessibilityLabel={[n.who ? t(n.who === "you" ? "Next: you" : "Next: us") : "", t(n.title, n.vars), n.docs ? n.docs.map((d) => t(d)).join(", ") : t(n.body)].filter(Boolean).join(". ")}>
             {!!n.who && <View style={{ alignSelf: "flex-start" }}><Chip label={t(n.who === "you" ? "Next: you" : "Next: us")} tone={n.who === "you" ? "accent" : "neutral"} /></View>}
             <Text variant={big ? "resultTitle" : "question"}>{t(n.title, n.vars)}</Text>
-            {!!n.body && <Text variant="note" tone="secondary">{n.kind === "fix" ? n.body : t(n.body)}</Text>}
+            {!!(n.body || n.docs) && <Text variant="note" tone="secondary">{n.docs ? n.docs.map((d) => t(d)).join(t(", ")) : n.kind === "fix" ? n.body : t(n.body)}</Text>}
           </View>
         </View>
         {!!n.cta && !!onPrimary && <PrimaryButton title={t(n.cta, { ...n.vars, doc: docName })} onPress={onPrimary} loading={busy} testID="next-primary" />}

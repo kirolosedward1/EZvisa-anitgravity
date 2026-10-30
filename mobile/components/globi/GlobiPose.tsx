@@ -8,13 +8,20 @@
 import React, { useEffect, useState } from "react";
 import { AppState, I18nManager, Pressable, StyleProp, View, ViewStyle } from "react-native";
 import { Image } from "expo-image";
-import { useVideoPlayer, VideoView } from "expo-video";
+import { requireOptionalNativeModule } from "expo";
 import { useIsFocused } from "expo-router";
 import { useReducedMotion } from "../../lib/motion";
 import { useGlobiAnimations } from "../../lib/globiMotion";
 import { useT } from "../../lib/i18n";
 import { GLOBI_CLIPS, GLOBI_STILLS } from "../../assets/globi";
 import type { GlobiPose as Pose } from "./poses";
+
+// expo-video is loaded only when this build has its native module: an over-the-air update can reach a build made
+// before the module was added, and a missing native module must not crash the app (the stills still show).
+type VideoLib = typeof import("expo-video");
+const video: VideoLib | null = (() => {
+  try { return requireOptionalNativeModule("ExpoVideo") ? (require("expo-video") as VideoLib) : null; } catch { return null; }
+})();
 
 /** The 21-pose union (same name as the component: the type and the value live side by side). */
 export type GlobiPose = Pose;
@@ -45,7 +52,7 @@ export function GlobiPose({ pose, size, animated = true, onPress, accessibilityL
   const reduce = useReducedMotion(); const allowed = useGlobiAnimations(); const { rtl } = useT();
   const flip = mirrored ?? (rtl || I18nManager.isRTL);
   const clip = GLOBI_CLIPS[pose];
-  const play = animated && allowed && !reduce && clip != null;
+  const play = animated && allowed && !reduce && clip != null && video != null;
   const [shown, setShown] = useState(false); // the clip has rendered its first frame: hide the poster
   useEffect(() => { setShown(false); }, [pose, play]);
 
@@ -68,6 +75,7 @@ export function GlobiPose({ pose, size, animated = true, onPress, accessibilityL
 
 /** The looping clip. Muted, mixes with the user's audio, never keeps the screen awake, pauses off screen and in the background. */
 function GlobiClip({ source, size, onShown }: { source: number; size: number; onShown: () => void }) {
+  const { useVideoPlayer, VideoView } = video!; // only rendered when the module exists
   const focused = useFocusedSafe();
   const player = useVideoPlayer(source, (p) => {
     p.loop = true; p.muted = true; p.audioMixingMode = "mixWithOthers"; p.keepScreenOnWhilePlaying = false; p.showNowPlayingNotification = false;

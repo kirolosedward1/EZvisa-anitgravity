@@ -21,12 +21,15 @@ export function AppearanceProvider({ children }: { children: React.ReactNode }) 
       setState(p); applyNative(p);
     }).catch(() => applyNative("light")).finally(() => setReady(true));
   }, []);
-  const setPref = useCallback((p: AppearancePref) => { setState(p); applyNative("light"); AsyncStorage.setItem(KEY, "light").catch(() => {}); }, []);
+  const setPref = useCallback((p: AppearancePref) => { setState(p); applyNative(p); AsyncStorage.setItem(KEY, p).catch(() => {}); }, []);
   return <Ctx.Provider value={{ pref, setPref, ready }}>{children}</Ctx.Provider>;
 }
 
 export const useAppearance = () => useContext(Ctx);
 
-/** Effective scheme: explicit preference wins, otherwise the OS setting. */
-// Light only (product rule: no dark mode).
-export function useScheme(): "light" | "dark" { return "light"; }
+/** Effective scheme: explicit preference wins, otherwise the OS setting (canvas HomeDark: dark accent #3D5AFE). Light
+ *  stays the default until the customer picks Dark or System in Settings. */
+export function useScheme(): "light" | "dark" {
+  const { pref } = useContext(Ctx); const os = useColorScheme();
+  return pref === "system" ? (os === "dark" ? "dark" : "light") : pref;
+}

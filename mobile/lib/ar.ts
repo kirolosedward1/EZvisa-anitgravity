@@ -1179,4 +1179,11 @@ export const AR: Record<string, string> = {
   "Terms of service": "شروط الخدمة",
   "Refund policy": "سياسة الاسترداد",
   "Not approved": "لم تتم الموافقة",
+  // ---- Phase 7: QA gaps ----
+  "UAE residence visa": "الإقامة الإماراتية",
+  "Spouse's passport": "جواز الزوج أو الزوجة",
+  "NOC from your employer": "شهادة عدم ممانعة من جهة العمل",
+  "Search country": "ابحث عن دولة",
+  "Search nationality": "ابحث عن جنسية",
+  ", ": "، ",
 };

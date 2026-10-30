@@ -522,3 +522,14 @@ Not built, on purpose (need the owner or native work): Referral (no referral pro
 | Icons the web build could not draw are mapped | `components/ui/core.tsx` |
 
 Not built (no data or backend behind them): payment methods (cards are handled by the payment gateway), data & storage sizes, active-device list and "sign out everywhere", quiet hours and per-channel email / WhatsApp switches (pushes are sent by the server per status; the app can't change email or WhatsApp sending), report a problem with logs.
+
+## 7g. Phase 7 · delivered (30 Oct)
+
+| Item | Where |
+|---|---|
+| Dark mode on (canvas HomeDark): Light stays the default; Dark or System from Settings → Appearance; the dark palette uses the #3D5AFE accent; new builds report the system appearance (`userInterfaceStyle: automatic`) | `lib/appearance.tsx`, `app.json` |
+| Arabic RTL checked on sign-in, Home, status, Settings, Countries and the wizard; remaining English strings translated (document names in the Next card, "To get later" labels, search placeholders) | `lib/ar.ts`, `components/status/StatusCards.tsx` |
+| Over-the-air safety: Globi's video player loads only when the build has the expo-video native module, so this update can't crash a build made before it (the stills show instead) | `components/globi/GlobiPose.tsx` |
+| Release checks: type check, lint (0 errors), all node and bun checks, contract sync 284/284, iOS + Android `expo export` with the live database reference | `.github/workflows/eas-update.yml` (same steps) |
+
+Still open for the owner: the HEVC-alpha Globi clips need one macOS run of `scripts/globi-convert.sh` (no hevc_videotoolbox here); migration 0016 for the v1 analytics events; the app icon and splash are native assets and change with the next store build, not an update; the placeholders in `config/pricing.ts`.
