@@ -4,6 +4,7 @@ import { BookUser, Briefcase, Camera, ClipboardList, Hotel, IdCard, Landmark, Pe
 import { REQUIREMENTS } from "@/lib/shared/wizard-contract"
 import { useSiteLocale } from "@/components/locale-provider"
 import { countryNameAr } from "@/lib/countries"
+import { LocaleLink } from "@/components/locale-link"
 
 const YOU_AR: Record<string, { title: string; note: string }> = {
   passportCopy: { title: "صفحة بيانات الجواز", note: "نسخة ملونة واضحة" },
@@ -46,6 +47,7 @@ export function DocumentSplit({ country }: { country?: string }) {
         icon: PROVIDE_ICON[r.document_type] ?? ClipboardList,
         title: arabic && ar ? ar.title : title,
         note: arabic && ar ? ar.note : note,
+        sample: r.document_type === "nocCertificate" ? "/documents/noc-sample" : undefined,
       }
     }),
     {
@@ -77,6 +79,11 @@ export function DocumentSplit({ country }: { country?: string }) {
               <div className="flex flex-col gap-0.5">
                 <span className="text-sm font-medium text-foreground">{item.title}</span>
                 {item.note && <span className="text-sm text-muted-foreground">{item.note}</span>}
+                {"sample" in item && item.sample && (
+                  <LocaleLink href={item.sample} className="text-sm font-medium text-primary underline-offset-4 hover:underline">
+                    {arabic ? "شاهد نموذج خطاب عدم ممانعة" : "See a sample NOC"}
+                  </LocaleLink>
+                )}
               </div>
             </li>
           ))}
