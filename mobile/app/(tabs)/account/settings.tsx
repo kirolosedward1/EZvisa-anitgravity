@@ -3,7 +3,7 @@
 // lock, anonymous usage sharing, and the legal pages.
 import { useEffect, useState } from "react";
 import { Alert, Linking, Platform, ScrollView, View } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import Constants from "expo-constants";
 import { RowGroup, Row, SegmentedControl, Text, useTabInset } from "../../../components/ui";
@@ -87,6 +87,7 @@ export default function Settings() {
           </View>
         )}
         <Row label={t("Share usage data")} icon="chart.bar.fill" switchValue={usage} onSwitch={setUsage} testID="usage-sharing" />
+        <Row label={t("Data & storage")} icon="tray" onPress={() => router.push("/account/storage")} testID="data-storage-row" />
         <Row label={t("Privacy policy")} icon="hand.raised.fill" onPress={page("/privacy-policy")} />
       </RowGroup>
 

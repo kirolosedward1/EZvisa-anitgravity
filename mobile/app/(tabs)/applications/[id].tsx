@@ -2,6 +2,7 @@ import { StatusHero, NextCard, ToGetLater, nextOf, daysUntil } from "../../../co
 import { AppointmentDaySheet } from "../../../components/status/AppointmentDay";
 import { ReapplySheet } from "../../../components/status/Reapply";
 import { RateCard } from "../../../components/status/RateCard";
+import { DocViewer, isImagePath } from "../../../components/status/DocViewer";
 import { appointmentOf } from "../../../lib/appointment";
 import { missingDocuments, type MissingDoc } from "../../../lib/missing";
 import { track } from "../../../lib/analytics";
@@ -11,7 +12,7 @@ import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Timeline, ProgressBar, Skeleton, InlineError, Text, ChipGroup, RowGroup, Row, InfoNote } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
-import { isPaid, getApplication, listRequirements, openDocumentUrl, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, employmentOf, continueForm } from "../../../lib/data";
+import { isPaid, getApplication, listRequirements, openDocumentUrl, isUploadType, type Doc, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, employmentOf, continueForm } from "../../../lib/data";
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
@@ -75,9 +76,17 @@ export default function ApplicationDetail() {
       ActionSheetIOS.showActionSheetWithOptions({ title: t("Document type"), options: [...DOC_TYPES.map((d) => t(d.label)), t("Cancel")], cancelButtonIndex: DOC_TYPES.length }, (i) => { if (i < DOC_TYPES.length) pickFile(DOC_TYPES[i].value); });
     } else setPicking(!picking);
   };
-  const open = async (path: string) => {
-    try { const url = path ? await openDocumentUrl(path) : null; if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert(t("Stored securely"), t("Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing.")); }
-    catch (e: any) { Alert.alert(t("Can't open file"), e?.message); }
+  // Images open in the in-app viewer (canvas DocViewer); PDFs in the browser. Both from a 60-second signed link.
+  const [viewing, setViewing] = useState<{ doc: Doc; url: string | null } | null>(null);
+  const open = async (doc: Doc) => {
+    const path = doc.storage_path;
+    if (path && isImagePath(path)) setViewing({ doc, url: null });
+    try {
+      const url = path ? await openDocumentUrl(path) : null;
+      if (path && isImagePath(path)) { setViewing((v) => (v?.doc.id === doc.id ? { doc, url: url ?? "" } : v)); return; }
+      if (url) await WebBrowser.openBrowserAsync(url); else Alert.alert(t("Stored securely"), t("Your file was received and is stored privately with EZvisa. Our team reviews it; you'll be contacted if anything needs replacing."));
+    }
+    catch (e: any) { setViewing(null); Alert.alert(t("Can't open file"), e?.message); }
   };
   const paying = usePaying(); const [ziina, setZiina] = useState<string | null>(null);
   const unpaid = !!a && !isPaid(a);
@@ -182,6 +191,8 @@ export default function ApplicationDetail() {
       </View>
       <AppointmentDaySheet visible={day} onClose={() => setDay(false)} travellers={a.applicants.length} />
       <ReapplySheet a={a} visible={reapply} onClose={() => setReapply(false)} />
+      <DocViewer doc={viewing?.doc ?? null} url={viewing?.url ?? null} onClose={() => setViewing(null)}
+        onRetake={viewing && canUpload && isUploadType(viewing.doc.document_type) ? () => { const d = viewing.doc; setViewing(null); setTimeout(() => pickFile(d.document_type, d.requirement_id ?? undefined), 350); } : undefined} />
       {locked ? (
         <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
       ) : list ? (<>
@@ -200,12 +211,12 @@ export default function ApplicationDetail() {
         )}
         {list.customer.some((i) => !isOpen(i)) && (
           <ListGroup header={t("Received")} inset={58}>
-            {list.customer.filter((i) => !isOpen(i)).map((i) => <CheckRow key={i.req.id} i={i} busy={busyType(i.req.document_type)} canUpload={false} onPress={i.doc ? () => open(i.doc!.storage_path) : undefined} />)}
+            {list.customer.filter((i) => !isOpen(i)).map((i) => <CheckRow key={i.req.id} i={i} busy={busyType(i.req.document_type)} canUpload={false} onPress={i.doc ? () => open(i.doc!) : undefined} />)}
           </ListGroup>
         )}
         {!!list.ezvisa.length && (
           <ListGroup header={t("We prepare these")} inset={58}>
-            {list.ezvisa.map((i) => <CheckRow key={i.req.id} i={i} busy={false} canUpload={false} onPress={i.doc?.storage_path ? () => open(i.doc!.storage_path) : undefined} />)}
+            {list.ezvisa.map((i) => <CheckRow key={i.req.id} i={i} busy={false} canUpload={false} onPress={i.doc?.storage_path ? () => open(i.doc!) : undefined} />)}
           </ListGroup>
         )}
       </>) : <View style={{ marginHorizontal: S.lg, marginBottom: S.xl }}><Skeleton h={120} r={R.card} /></View>}
@@ -217,7 +228,7 @@ export default function ApplicationDetail() {
       )}
       {!locked && <ListGroup header={list ? t("Other documents") : t("Documents")} inset={58}>
         {others.map((d) => <ListRow key={d.id} icon="doc.fill" iconColor={d.status === "rejected" ? c.red : c.tint} title={d.file_name ?? d.document_type}
-          subtitle={`${DOC_TYPES.find((t) => t.value === d.document_type)?.label ?? d.document_type} · ${STATUS_LABEL[d.status] ?? d.status}${d.rejection_reason ? ` · ${d.rejection_reason}` : ""}`} onPress={() => open(d.storage_path)} />)}
+          subtitle={`${DOC_TYPES.find((t) => t.value === d.document_type)?.label ?? d.document_type} · ${STATUS_LABEL[d.status] ?? d.status}${d.rejection_reason ? ` · ${d.rejection_reason}` : ""}`} onPress={() => open(d)} />)}
         {others.length === 0 && !canUpload && <ListRow title={t("No other documents")} />}
         {canUpload && <ListRow icon="plus" iconColor={c.tint} title={t("Add another document")} tint onPress={addDocument} chevron={false} />}
         {picking && <View style={{ padding: S.md }}><ChipGroup label={t("Document type")} options={DOC_TYPES} value="" onChange={pickFile} /></View>}

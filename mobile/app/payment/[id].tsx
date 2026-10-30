@@ -24,6 +24,7 @@ import { forgetPayment, intentStatus, knownPayment, serverStatus, startPayment, 
 import { setupPush } from "../../lib/push";
 import { success, error as hError } from "../../lib/haptics";
 import { track } from "../../lib/analytics";
+import { useGuestCases } from "../../lib/guestCases";
 
 type State = "checking" | "paid" | "confirming" | "pending" | "failed" | "cancelled" | "offline";
 type Signals = { server?: ServerStatus | null; db?: string | null; intent?: string | null; offline: boolean };
@@ -49,7 +50,9 @@ function unsettled(s: Signals, returned: string): State {
 }
 
 export default function PaymentResult() {
-  const { id, returned: returnedParam, preview: previewParam, email: guestEmail } = useLocalSearchParams<{ id: string; returned?: string; preview?: string | string[]; email?: string }>();
+  const { id, returned: returnedParam, preview: previewParam, email: emailParam } = useLocalSearchParams<{ id: string; returned?: string; preview?: string | string[]; email?: string }>();
+  // Back from the payment gateway (app/payment-return) the link has no email: use the one this phone kept for the case.
+  const guestCases = useGuestCases(); const guestEmail = emailParam || guestCases.find((g) => g.id === id)?.email || "";
   // Dev only (?preview=checking|slow|stalled|timers|success|late|failure). Ignored in production, and it never calls Ziina.
   const preview = devPaymentPreview(previewParam); const previewRef = useRef(preview);
   useEffect(() => { previewRef.current = preview; }, [preview]);
@@ -313,7 +316,7 @@ export default function PaymentResult() {
             ? t("Use {e} so this application is in your account. Then add your details and upload documents.", { e: guestEmail || t("the email on your application") })
             : t("Use {e} so this application is in your account. You can pay from there any time.", { e: guestEmail || t("the email on your application") })}</Text>
         </View>
-        <AuthForm mode={authMode} onMode={setAuthMode} initialEmail={guestEmail || undefined} />
+        <AuthForm key={guestEmail} mode={authMode} onMode={setAuthMode} initialEmail={guestEmail || undefined} />
       </View>
     </Card>
   ) : null;

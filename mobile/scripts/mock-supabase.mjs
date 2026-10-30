@@ -138,6 +138,18 @@ http.createServer(async (req, res) => {
   if (p === "/__db/reset") { rows = []; travellers.length = 0; return send(res, 200, { ok: true }); }
   if (p === "/__db/edit") { const r = rows.find((x) => x.id === body.id); if (!r) return send(res, 404, {}); Object.assign(r, body.patch, { updated_at: nowTs() }); return send(res, 200, r); }
   if (p.startsWith("/rest/v1/")) return rest(req, res, url, body);
+  // Storage (visa_documents): signed links for the owner's own files only (path = <applicationId>/...), like the
+  // read policy in migrations/0011. The link serves a sample image so the document viewer can be exercised.
+  if (req.method === "POST" && p.startsWith("/storage/v1/object/sign/visa_documents/")) {
+    const c = claims(req); const file = p.slice("/storage/v1/object/sign/visa_documents/".length);
+    const row = rows.find((r) => r.id === file.split("/")[0]);
+    if (!c.email || !row || String(row.email).toLowerCase() !== c.email) return send(res, 400, { statusCode: "404", error: "not_found", message: "Object not found" });
+    return send(res, 200, { signedURL: `/object/sign/visa_documents/${file}?token=mock` });
+  }
+  if (req.method === "GET" && p.startsWith("/storage/v1/object/sign/visa_documents/")) {
+    res.writeHead(200, { "content-type": "image/png", "access-control-allow-origin": "*" });
+    return fs.createReadStream(new URL("../assets/icon.png", import.meta.url)).pipe(res);
+  }
   if (p === "/auth/v1/token") {
     const grant = url.searchParams.get("grant_type");
     if (grant === "password") return body?.password === "test-pass" ? send(res, 200, session(String(body.email).toLowerCase())) : send(res, 400, { error: "invalid_grant", error_description: "Invalid login credentials" });
