@@ -12,6 +12,7 @@ import {
   LogOut,
   PlusCircle,
   Settings,
+  ShieldCheck,
   Smartphone,
   UserPlus,
   UserRound,
@@ -109,9 +110,20 @@ export function UserMenu() {
   const signOut = signOutAction(useSiteLocale() === "ar")
 
   const signedIn = !!viewer
+  // Staff see a link to the console; asked once, when the menu first opens, never for demo logins.
+  const [staff, setStaff] = useState(false)
+  const [staffChecked, setStaffChecked] = useState(false)
+  const checkStaff = (open: boolean) => {
+    if (!open || staffChecked || !viewer || viewer.demo) return
+    setStaffChecked(true)
+    fetch("/api/admin/me", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : { staff: false }))
+      .then((data: { staff?: boolean }) => setStaff(data.staff === true))
+      .catch(() => {})
+  }
 
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu modal={false} onOpenChange={checkStaff}>
       <DropdownMenuTrigger
         className={cn(
           "h-10 w-10 flex cursor-pointer items-center justify-center overflow-hidden rounded-full shadow-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -143,6 +155,15 @@ export function UserMenu() {
               <MenuLink href="/documents" icon={FileText} en="Required documents" ar="المستندات المطلوبة" />
               <MenuLink href="/apply" icon={PlusCircle} en="New application" ar="طلب جديد" />
               {!viewer.demo && <MenuLink href="/account" icon={Settings} en="Account settings" ar="إعدادات الحساب" />}
+              {staff ? (
+                // A plain link: the console lives at /staff only (no /ar version).
+                <DropdownMenuItem asChild className="ez-account-menu-link cursor-pointer gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary">
+                  <a href="/staff">
+                    <ShieldCheck className="size-4 text-current" aria-hidden="true" />
+                    <LangText en="Staff console" ar="لوحة الموظفين" />
+                  </a>
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuGroup>
             <DropdownMenuSeparator className="my-1.5" />
             <DropdownMenuGroup>

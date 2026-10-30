@@ -12,6 +12,6 @@ test("saved steps resume exactly; older drafts fall back without exposing person
   assert.deepEqual(parseResumeDraft('{"firstName":"Test"}', "invalid"), { destination: "", step: "destination" })
 })
 test("reminders stay out of the wizard and account flows in both languages", () => {
-  for (const path of ["/", "/ar", "/apply", "/ar/apply", "/continue/123", "/dashboard", "/payment-success", "/login", "/track/token/upload", "/ar/account", "/admin/cases"]) assert.equal(showResumeOnPath(path), false, path)
+  for (const path of ["/", "/ar", "/apply", "/ar/apply", "/continue/123", "/dashboard", "/payment-success", "/login", "/track/token/upload", "/ar/account", "/admin/cases", "/staff/token"]) assert.equal(showResumeOnPath(path), false, path)
   for (const path of ["/destinations", "/ar/news", "/pricing"]) assert.equal(showResumeOnPath(path), true, path)
 })

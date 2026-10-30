@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { recordApplicationEvent } from "@/lib/application-events-server"
 import { createClient } from "@supabase/supabase-js"
-import { hasBearerSecret } from "@/lib/bearer-auth"
+import { isStaffRequest } from "@/lib/admin-auth"
 
 const CASE_STATUSES = new Set(["draft", "submitted", "reviewing", "preparation", "awaiting_documents", "appointment_booked", "approved", "ready", "rejected", "cancelled", "completed"])
 const HELP_STATUSES = new Set(["requested", "contacted", "booked", "cancelled"])
@@ -13,17 +13,12 @@ function getSupabaseAdmin() {
   return createClient(supabaseUrl, supabaseKey)
 }
 
-function verifyAdminAuth(request: NextRequest): boolean {
-  const authHeader = request.headers.get("Authorization")
-  const secret = process.env.ADMIN_API_SECRET
-  return hasBearerSecret(authHeader, secret)
-}
 
 /**
  * GET: List & search visa cases
  */
 export async function GET(request: NextRequest) {
-  if (!verifyAdminAuth(request)) {
+  if (!(await isStaffRequest(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
@@ -89,7 +84,7 @@ export async function GET(request: NextRequest) {
  * PATCH: Update application status with concurrency check & audit trail
  */
 export async function PATCH(request: NextRequest) {
-  if (!verifyAdminAuth(request)) {
+  if (!(await isStaffRequest(request))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

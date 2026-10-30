@@ -2,14 +2,11 @@ import { NextResponse } from "next/server";
 import { EmailService } from "@/lib/email/service";
 import { Templates } from "@/lib/email/templates";
 import { createClient } from "@supabase/supabase-js";
-import { hasBearerSecret } from "@/lib/bearer-auth";
+import { isStaffRequest } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get("Authorization");
-    const secret = process.env.ADMIN_API_SECRET;
-    
-    if (!hasBearerSecret(authHeader, secret)) {
+    if (!(await isStaffRequest(request))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

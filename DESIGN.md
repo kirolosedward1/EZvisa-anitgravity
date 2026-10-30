@@ -45,6 +45,7 @@ Triips was a reference for inspiration, not a template to copy. Preserve the web
 | Resume | Show a dismissible saved-application box with destination flag and Continue application. Dismissal must not erase answers. The floating box sits in the bottom corner (24px, 12px on phones): the chat bubble is hidden, so it no longer reserves space for it. |
 | Customer workspace | One next action per case. "What we need from you" appears only with two or more pending items. 8px buttons on customer pages; tokens `#0436dc`, `#edf4ff`, `#102347`; weights 500/600. Globi only through `components/globi/globi.tsx`. |
 | Reviews and activity | Document review results and the activity log come from `document_reviews` and `application_events` (migrations 003 and 004, applied by the owner). Until then the dashboard works from the application row. Customers never write either table. |
+| Staff console | Lives at `/staff`, signed in with a normal account whose email is in `ADMIN_EMAILS` (super admin: info@topsuite.net). It is invisible to everyone else (missing page), never indexed, sends no referrer, and has no Arabic version. `/admin` is never served directly. |
 | Family trips | Paid applications with the same email, destination and travel dates are shown as one trip. Each traveller keeps their own case, documents and status. |
 | Arabic | Prices read number first, then the currency ("245 درهم"). Every Globi video is mirrored. Western digits, as elsewhere on the site. |
 

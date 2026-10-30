@@ -329,7 +329,7 @@ const PAGES = new Set([
   "/",
   "/about",
   "/account",
-  "/admin",
+  "/staff",
   "/app",
   "/app-return",
   "/apply",

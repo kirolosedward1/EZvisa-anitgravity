@@ -2,7 +2,7 @@
 
 // Staff review of one case: each customer document with its files (signed links), a status and, when it needs a new
 // file, the note the customer will read. Also assigns the specialist shown on the customer's dashboard.
-// Uses the same staff secret as /admin (sessionStorage "ez_admin_secret") and GET/POST /api/admin/reviews.
+// Staff only (app/admin/layout.tsx); the signed-in session also authorises GET/POST /api/admin/reviews.
 import { useCallback, useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import Link from "next/link"
@@ -142,7 +142,6 @@ function DocumentReview({ row, onSave }: { row: DocumentRow; onSave: (status: Re
 
 export default function AdminCasePage() {
   const id = String(useParams().id ?? "")
-  const [secret, setSecret] = useState<string | null>(null)
   const [data, setData] = useState<CaseData | null>(null)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(true)
@@ -150,17 +149,13 @@ export default function AdminCasePage() {
   const [specialistMessage, setSpecialistMessage] = useState<{ ok: boolean; text: string } | null>(null)
   const [reviewer, setReviewer] = useState("")
 
-  const load = useCallback(async (key: string) => {
+  const load = useCallback(async () => {
     setLoading(true)
     setError("")
     try {
-      const res = await fetch(`/api/admin/reviews?id=${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${key}` }, cache: "no-store" })
+      const res = await fetch(`/api/admin/reviews?id=${encodeURIComponent(id)}`, { cache: "no-store" })
       const json = await res.json().catch(() => ({}))
-      if (res.status === 401) {
-        sessionStorage.removeItem("ez_admin_secret")
-        setSecret(null)
-        return
-      }
+      if (res.status === 401) throw new Error("Your session has ended. Sign in again with your staff account.")
       if (!res.ok) throw new Error(json.error || "Could not load the case")
       setData(json)
       setSpecialist(json.specialist || "")
@@ -172,49 +167,34 @@ export default function AdminCasePage() {
   }, [id])
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("ez_admin_secret")
     setReviewer(sessionStorage.getItem("ez_admin_reviewer") || "")
-    setSecret(saved)
-    if (saved) load(saved)
-    else setLoading(false)
+    load()
   }, [load])
 
   const post = async (body: Record<string, unknown>): Promise<string | null> => {
-    if (!secret) return "Sign in again on the admin page."
     try {
       const res = await fetch("/api/admin/reviews", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${secret}` },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, ...body }),
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) return json.error || "Could not save"
-      await load(secret)
+      await load()
       return null
     } catch {
       return "You seem to be offline. Try again."
     }
   }
 
-  if (!loading && !secret) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-slate-100">
-        <div className="max-w-sm text-center">
-          <p className="mb-4 text-slate-300">Sign in on the admin page first.</p>
-          <Link href="/admin" className="text-sky-300 hover:underline">Go to the admin page</Link>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 p-6 text-slate-100 md:p-10">
       <div className="mx-auto flex max-w-4xl flex-col gap-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/admin" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white">
+          <Link href="/staff" className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white">
             <ArrowLeft className="size-4" aria-hidden="true" /> All cases
           </Link>
-          <Button variant="outline" size="xs" onClick={() => secret && load(secret)} disabled={loading} className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800">
+          <Button variant="outline" size="xs" onClick={() => load()} disabled={loading} className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800">
             <RefreshCw className={cn("size-4", loading && "animate-spin")} aria-hidden="true" /> Refresh
           </Button>
         </div>
@@ -253,7 +233,7 @@ export default function AdminCasePage() {
                 {specialistMessage ? <p role="status" className={cn("text-sm", specialistMessage.ok ? "text-emerald-300" : "text-rose-300")}>{specialistMessage.text}</p> : null}
               </form>
               <div className="flex flex-col gap-2">
-                <label htmlFor="reviewer" className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your name (internal, saved with reviews)</label>
+                <label htmlFor="reviewer" className="text-xs font-semibold uppercase tracking-wider text-slate-400">Your name (internal, saved with reviews; your email if empty)</label>
                 <Input
                   id="reviewer"
                   value={reviewer}

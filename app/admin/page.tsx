@@ -15,7 +15,6 @@ import {
   FileCode, 
   ExternalLink,
   AlertCircle,
-  Lock
 } from "lucide-react"
 
 interface CaseItem {
@@ -46,8 +45,6 @@ interface CaseItem {
 }
 
 export default function AdminPage() {
-  const [secret, setSecret] = useState("")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [cases, setCases] = useState<CaseItem[]>([])
   const [loading, setLoading] = useState(false)
   const [filterStatus, setFilterStatus] = useState("all")
@@ -55,24 +52,12 @@ export default function AdminPage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
 
+  // Only signed-in staff get this page (app/admin/layout.tsx); the API checks the same session.
   useEffect(() => {
-    const saved = sessionStorage.getItem("ez_admin_secret")
-    if (saved) {
-      setSecret(saved)
-      setIsAuthenticated(true)
-      loadCases(saved, filterStatus, searchQuery)
-    }
+    loadCases(filterStatus, searchQuery)
   }, [])
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!secret.trim()) return
-    sessionStorage.setItem("ez_admin_secret", secret)
-    setIsAuthenticated(true)
-    loadCases(secret, filterStatus, searchQuery)
-  }
-
-  const loadCases = async (authSecret: string, status: string, search: string) => {
+  const loadCases = async (status: string, search: string) => {
     setLoading(true)
     setActionError(null)
     try {
@@ -80,18 +65,10 @@ export default function AdminPage() {
       if (status !== "all") params.set("status", status)
       if (search) params.set("search", search)
 
-      const res = await fetch(`/api/admin/cases?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${authSecret}`,
-        },
-      })
+      const res = await fetch(`/api/admin/cases?${params.toString()}`, { cache: "no-store" })
 
       if (!res.ok) {
-        if (res.status === 401) {
-          setIsAuthenticated(false)
-          sessionStorage.removeItem("ez_admin_secret")
-          throw new Error("Invalid Admin Secret")
-        }
+        if (res.status === 401) throw new Error("Your session has ended. Sign in again with your staff account.")
         throw new Error("Failed to load cases")
       }
 
@@ -112,7 +89,6 @@ export default function AdminPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
         },
         body: JSON.stringify({
           id: caseItem.id,
@@ -128,7 +104,7 @@ export default function AdminPage() {
       }
 
       setActionMessage(`Case #${caseItem.id.substring(0, 8)} updated to ${newStatus}`)
-      loadCases(secret, filterStatus, searchQuery)
+      loadCases(filterStatus, searchQuery)
     } catch (err: any) {
       setActionError(err.message)
     }
@@ -143,7 +119,6 @@ export default function AdminPage() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
         },
         body: JSON.stringify({
           id: caseItem.id,
@@ -155,7 +130,7 @@ export default function AdminPage() {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to update appointment help")
       setActionMessage(`Appointment help for #${caseItem.id.substring(0, 8)} set to ${helpStatus}`)
-      loadCases(secret, filterStatus, searchQuery)
+      loadCases(filterStatus, searchQuery)
     } catch (err: any) {
       setActionError(err.message)
     }
@@ -169,7 +144,6 @@ export default function AdminPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
         },
         body: JSON.stringify({
           event,
@@ -183,7 +157,7 @@ export default function AdminPage() {
       }
 
       setActionMessage(`Email event '${event}' dispatched successfully`)
-      loadCases(secret, filterStatus, searchQuery)
+      loadCases(filterStatus, searchQuery)
     } catch (err: any) {
       setActionError(err.message)
     }
@@ -197,7 +171,6 @@ export default function AdminPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${secret}`,
         },
         body: JSON.stringify({
           applicationId,
@@ -211,50 +184,10 @@ export default function AdminPage() {
       }
 
       setActionMessage(`Documents generated successfully for case #${applicationId.substring(0, 8)}`)
-      loadCases(secret, filterStatus, searchQuery)
+      loadCases(filterStatus, searchQuery)
     } catch (err: any) {
       setActionError(err.message)
     }
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl">
-          <div className="w-12 h-12 bg-blue-500/10 text-blue-400 rounded-xl flex items-center justify-center mb-6 border border-blue-500/20">
-            <Lock className="w-6 h-6" />
-          </div>
-          <h1 className="text-2xl font-semibold text-white mb-2">Staff Case Management</h1>
-          <p className="text-slate-400 text-sm mb-6">
-            Enter the authorized staff secret to access case operations.
-          </p>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2">
-                Admin Secret Key
-              </label>
-              <Input
-                type="password"
-                placeholder="Enter ADMIN_API_SECRET"
-                value={secret}
-                onChange={(e) => setSecret(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-600 h-12"
-                required
-              />
-            </div>
-            {actionError && (
-              <p className="text-xs text-rose-400 bg-rose-500/10 p-3 rounded-lg border border-rose-500/20">
-                {actionError}
-              </p>
-            )}
-            <Button type="submit" className="w-full">
-              Authenticate
-            </Button>
-          </form>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -276,24 +209,18 @@ export default function AdminPage() {
             <Button
               variant="outline"
               size="xs"
-              onClick={() => loadCases(secret, filterStatus, searchQuery)}
+              onClick={() => loadCases(filterStatus, searchQuery)}
               disabled={loading}
               className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800"
             >
               <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
               <span>Refresh Cases</span>
             </Button>
-            <Button
-              variant="ghost"
-              size="xs"
-              onClick={() => {
-                sessionStorage.removeItem("ez_admin_secret")
-                setIsAuthenticated(false)
-              }}
-              className="text-slate-400 hover:text-white"
-            >
-              Sign Out
-            </Button>
+<form action="/api/auth/signout" method="POST">
+              <Button type="submit" variant="ghost" size="xs" className="text-slate-400 hover:text-white">
+                Sign Out
+              </Button>
+            </form>
           </div>
         </div>
 
@@ -322,7 +249,7 @@ export default function AdminPage() {
                 variant={filterStatus === st ? "default" : "outline"}
                 onClick={() => {
                   setFilterStatus(st)
-                  loadCases(secret, st, searchQuery)
+                  loadCases(st, searchQuery)
                 }}
                 className={
                   filterStatus === st
@@ -343,14 +270,14 @@ export default function AdminPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") loadCases(secret, filterStatus, searchQuery)
+                  if (e.key === "Enter") loadCases(filterStatus, searchQuery)
                 }}
                 className="pl-9 bg-slate-950 border-slate-800 text-sm text-white placeholder:text-slate-500"
               />
             </div>
             <Button
               size="xs"
-              onClick={() => loadCases(secret, filterStatus, searchQuery)}
+              onClick={() => loadCases(filterStatus, searchQuery)}
               className="bg-slate-800 text-white hover:bg-slate-700"
             >
               Search
@@ -523,7 +450,7 @@ export default function AdminPage() {
                           )}
 
                           <LocaleLink
-                            href={`/admin/cases/${c.id}`}
+                            href={`/staff/cases/${c.id}`}
                             className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-500/40 bg-sky-500/10 px-2.5 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
                             title="Review documents and assign the specialist"
                           >

@@ -22,5 +22,5 @@ export function parseResumeDraft(raw: string | null, savedStep: string | null): 
 export function showResumeOnPath(pathname: string): boolean {
   const path = pathname.replace(/^\/ar(?=\/|$)/, "") || "/"
   if (path === "/" || path.startsWith("/payment-")) return false
-  return !["apply", "continue", "dashboard", "account", "track", "receipt", "trip", "appointment", "login", "signup", "forgot-password", "reset-password", "admin", "api"].some(route => path === `/${route}` || path.startsWith(`/${route}/`))
+  return !["apply", "continue", "dashboard", "account", "track", "receipt", "trip", "appointment", "login", "signup", "forgot-password", "reset-password", "admin", "staff", "api"].some(route => path === `/${route}` || path.startsWith(`/${route}/`))
 }

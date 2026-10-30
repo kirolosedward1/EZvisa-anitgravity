@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { adminClient, verifyAdminAuth } from "@/lib/admin-auth"
+import { adminClient, getStaffUser, isStaffRequest } from "@/lib/admin-auth"
 import { UUID_RE } from "@/lib/applications"
 import { recordApplicationEvent, loadApplicationEvents } from "@/lib/application-events-server"
 import { loadDocumentReviews } from "@/lib/document-reviews-server"
@@ -10,6 +10,7 @@ import type { ReviewStatus } from "@/lib/document-reviews"
 
 /**
  * Staff document review for one case (the /admin case page).
+ * Staff only (lib/admin-auth.ts: signed-in staff email, or the script secret).
  * GET  ?id=<uuid>: the case, its document rows (state, uploads with 15-minute signed links, latest review),
  *      the specialist and the stored activity events.
  * POST { id, action: "review", documentType, status, note?, reviewer? }: upserts the document_reviews row and logs a
@@ -23,7 +24,7 @@ const CASE_COLUMNS =
 const clean = (v: unknown, max: number) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max) : "")
 
 export async function GET(request: Request) {
-  if (!verifyAdminAuth(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!(await isStaffRequest(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const id = new URL(request.url).searchParams.get("id") ?? ""
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "Invalid case id" }, { status: 400 })
   const supabase = adminClient()
@@ -73,7 +74,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!verifyAdminAuth(request)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!(await isStaffRequest(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null
   const id = typeof body?.id === "string" ? body.id : ""
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "Invalid case id" }, { status: 400 })
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
         status,
         note: status === "rejected" ? note : note || null,
         reviewed_at: new Date().toISOString(),
-        reviewed_by: clean(body.reviewer, 60) || null,
+        reviewed_by: clean(body.reviewer, 60) || (await getStaffUser())?.email || null,
       },
       { onConflict: "application_id,document_type" },
     )
