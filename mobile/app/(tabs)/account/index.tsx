@@ -44,6 +44,7 @@ export default function Account() {
   const page = (path: string) => () => { WebBrowser.openBrowserAsync(siteUrl(path)).catch(() => Linking.openURL(siteUrl(path))); };
   const help = (
     <RowGroup header={t("Help")}>
+      <Row label={t("Questions and answers")} icon="questionmark.circle.fill" onPress={() => router.push("/account/help")} testID="account-help" />
       <Row label={t("WhatsApp support")} icon="logo.whatsapp" onPress={() => { track("whatsapp_handoff", { screen: "account" }); whatsapp(); }} testID="help-whatsapp" />
       <Row label={t("Email")} icon="envelope.fill" value={EMAIL} onPress={mailSupport} />
       <Row label={t("Privacy, terms, refunds")} icon="doc.text.fill" onPress={page("/refund-policy")} />

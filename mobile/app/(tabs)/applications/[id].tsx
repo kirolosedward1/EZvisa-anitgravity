@@ -1,4 +1,4 @@
-import { StatusHero, NextCard, ToGetLater, nextOf } from "../../../components/status/StatusCards";
+import { StatusHero, NextCard, ToGetLater, nextOf, daysUntil } from "../../../components/status/StatusCards";
 import { AppointmentDaySheet } from "../../../components/status/AppointmentDay";
 import { appointmentOf } from "../../../lib/appointment";
 import { missingDocuments, type MissingDoc } from "../../../lib/missing";
@@ -124,6 +124,7 @@ export default function ApplicationDetail() {
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
   const next = nextOf(a, list ? list.customer : null);
+  const ended = ["completed", "rejected", "cancelled"].includes(a.status);
   const due = quote?.amount ?? a.total_amount;
   if (next.kind === "pay" && due != null) { next.cta = PAY_AED; next.vars = { ...next.vars, amount: formatPayAmount(due) }; }
   const ap = appointmentOf(a);
@@ -166,8 +167,9 @@ export default function ApplicationDetail() {
         <ToGetLater items={later} onAdd={() => toDocs()} />
         {a.status !== "cancelled" && (
           <RowGroup header={t("Trip")}>
-            {paid && <Row label={t("Appointment")} icon="calendar" value={ap ? new Date(ap.at).toLocaleString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : t("Book now")} tint={!ap} onPress={() => { tap(); router.push(`/appointment/${a.id}`); }} testID="trip-appointment" />}
-            {paid && <Row label={t("What happens on the day")} icon="list.bullet" onPress={() => { tap(); setDay(true); }} testID="trip-day" />}
+            {a.status === "completed" && (daysUntil(a.entry_date) ?? -1) >= 0 && <Row label={t("Before you fly")} sub={t("{n} days to go", { n: daysUntil(a.entry_date)! })} icon="airplane" onPress={() => { tap(); router.push(`/countdown/${a.id}`); }} testID="trip-countdown" />}
+            {paid && !ended && <Row label={t("Appointment")} icon="calendar" value={ap ? new Date(ap.at).toLocaleString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : t("Book now")} tint={!ap} onPress={() => { tap(); router.push(`/appointment/${a.id}`); }} testID="trip-appointment" />}
+            {paid && !ended && <Row label={t("What happens on the day")} icon="list.bullet" onPress={() => { tap(); setDay(true); }} testID="trip-day" />}
             {paid
               ? <Row label={t("Trip plan")} sub={t("Ideas, not bookings")} icon="map.fill" onPress={() => router.push(`/trip/${a.id}`)} testID="trip-plan" />
               : <Row label={t("Trip plan")} sub={t("Your trip plan unlocks after payment")} icon="lock.fill" onPress={toPayStep} />}
@@ -186,7 +188,7 @@ export default function ApplicationDetail() {
           <Text variant="note" tone="secondary">{t("{i} of {n} received", { i: done, n: list.customer.length })}</Text>
           <View style={{ height: 4, borderRadius: R.xs, backgroundColor: c.fill, overflow: "hidden" }}><View style={{ height: 4, borderRadius: R.xs, width: `${list.customer.length ? (100 * done) / list.customer.length : 0}%`, backgroundColor: done === list.customer.length ? c.success : c.accent }} /></View>
         </View>
-        {list.customer.some(isOpen) && (
+        {canUpload && list.customer.some(isOpen) && (
           <ListGroup header={t("Still needed")} footer={canUpload ? t("PDF or image · max 4 MB. Tap a missing item to upload it.") : undefined} inset={58}>
             {list.customer.filter(isOpen).map((i) => <CheckRow key={i.req.id} flash={flash?.id === i.req.id ? flash.n : 0} i={i} busy={busyType(i.req.document_type)} canUpload={canUpload}
               onPress={canUpload ? () => pickFile(i.req.document_type, i.req.id) : undefined} />)}

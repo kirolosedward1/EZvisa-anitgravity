@@ -1,5 +1,5 @@
--- APPROVED by the owner 2026-10-22 (chat 14). NOT YET RUN: the chat-14 Supabase connector cannot see ezvisa-uae
--- (dravvaykssrbktztmrlj), so run this file in that project's SQL editor. The app needs no update afterwards (lib/analytics.ts).
+-- APPROVED by the owner 2026-10-22 (chat 14). RUN 2026-10-30 on ezvisa-uae (dravvaykssrbktztmrlj), before 0016.
+-- The app needed no update afterwards (lib/analytics.ts).
 -- Widens public.wizard_events (0004) for the full funnel: step viewed/completed, payment started/finished, upload done
 -- and cold-start time. Still anonymous: no user id, no email, no free text. Every value is an id, an enum or a number.
 -- Safe to re-run (drop/add constraint, add column if not exists). All or nothing (one transaction).
