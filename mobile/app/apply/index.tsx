@@ -439,8 +439,8 @@ export default function Apply() {
   if (page === REVIEW && after === "insurance") {
     const each = t("from {a} AED each", { a: INSURANCE_AED_PER_TRAVELLER });
     const opts: [Insurance, string, string][] = [
-      ["quote", travellers2 > 1 ? t("Quote insurance for both travellers") : t("Quote insurance for me"), t("€30,000 medical cover, accepted by every Schengen consulate. Quoted separately.")],
-      ["own", t("I already have a policy"), t("Upload the certificate with your documents")],
+      ["quote", travellers2 > 1 ? t("Quote travel insurance for both travellers") : t("Quote travel insurance for me"), t("€30,000 medical cover, accepted by every Schengen consulate. Quoted separately.")],
+      ["own", t("I already have travel insurance"), t("Upload the certificate with your documents")],
       ["later", t("Not now"), t("You can add it before the appointment")],
     ];
     return (
