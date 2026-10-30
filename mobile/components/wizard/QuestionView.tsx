@@ -14,6 +14,8 @@ import { DatesAnswer } from "./dates";
 import { DateAnswer, AdditionalCountries } from "./answers";
 import { useColors, S, R, T, curve } from "../../lib/theme";
 import { useT } from "../../lib/i18n";
+import * as WebBrowser from "expo-web-browser";
+import { siteUrl } from "../../lib/config";
 import { select, tap } from "../../lib/haptics";
 import { OTHER_NATIONALITY, tripDays, iso as isoLocal, type WizardForm } from "../../lib/wizard";
 import { type Question, questionErrors, firstError, isAnswered, getAccountEmail, getTravellers, askOf, partsOf } from "../../lib/questions";
@@ -46,7 +48,7 @@ const fieldStyle = (c: ReturnType<typeof useColors>, err: boolean, rtl: boolean,
 export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, settled, header, entering, pageKey, titleRef, allMode, chips, belowTitle, doneLabel, errorOf = firstError, onGlobiPress, children }: Props) {
   const [explain, setExplain] = useState(false);
   const openExplain = onGlobiPress ?? (() => { track("globi_tap", { question: q.id }); setExplain(true); });
-  const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl } = useT(); const isRTL = rtl || I18nManager.isRTL;
+  const c = useColors(); const insets = useSafeAreaInsets(); const { t, rtl, lang } = useT(); const isRTL = rtl || I18nManager.isRTL;
   const inputRef = useRef<TextInputInstance>(null); const input2Ref = useRef<TextInputInstance>(null);
   // Lift the screen (and its Continue bar) above the iOS keyboard; S.md between button and keyboard.
   const kb = useAnimatedKeyboard(); const barBottom = Math.max(insets.bottom, S.md);
@@ -177,6 +179,8 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
       <View style={{ gap: S.xs }}>
         <Text variant="callout" weight="600">{t("What a good NOC says")}</Text>
         <Text variant="note" tone="secondary">{t("Your name and passport number, job title, start date, monthly salary, approved leave dates, and that you'll return to work. On letterhead, signed and stamped.")}</Text>
+        {/* The sample letter lives on the website (ezvisa.net/documents/noc-sample), opened in the in-app browser. */}
+        <SecondaryButton compact title={t("See a sample NOC")} onPress={() => { WebBrowser.openBrowserAsync(siteUrl(`${lang === "ar" ? "/ar" : ""}/documents/noc-sample`), { presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET }).catch(() => {}); }} testID="noc-sample" />
         <SecondaryButton compact title={t("Send me the template")} onPress={() => { track("whatsapp_handoff", { screen: "noc-template" }); whatsapp("Hi EZvisa, please send me the NOC template for my employer."); }} />
       </View>
     </Card>

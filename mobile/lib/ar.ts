@@ -1319,4 +1319,5 @@ export const AR: Record<string, string> = {
   "See all {n} applications": "عرض كل الطلبات ({n})",
   "Go to my applications": "اذهب إلى طلباتي",
   "All questions": "كل الأسئلة",
+  "See a sample NOC": "شاهد نموذج خطاب عدم ممانعة",
 };
