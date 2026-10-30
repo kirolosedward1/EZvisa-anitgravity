@@ -15,7 +15,7 @@ export const TARGET_BYTES = 2.5 * 1024 * 1024;
 export const MIN_SHORT_SIDE = 1000;        // px; below this, passport text is often unreadable
 export const MIN_BYTES = 40 * 1024;        // a real photo/scan of a page is rarely smaller
 export type Picked = { uri: string; name: string; mimeType?: string | null; size?: number | null; width?: number; height?: number };
-export type Source = "camera" | "library" | "files" | "scan";
+export type Source = "camera" | "library" | "files";
 export type Rect = { originX: number; originY: number; width: number; height: number };
 type TFn = (s: string, v?: Record<string, string | number>) => string;
 const tr = (lang: Lang): TFn => (s, v) => translate(lang, s, v);
@@ -129,32 +129,8 @@ export async function ensureCamera(lang: Lang): Promise<boolean> {
 }
 
 // ---- Sources -------------------------------------------------------------------------------------------------------
-/** Multi-page scan: camera pages, each resized and compressed, combined into one PDF on the phone with expo-print. */
-async function scanPdf(lang: Lang): Promise<Picked | null> {
-  const t = tr(lang);
-  if (!(await ensureCamera(lang))) return null;
-  const { ImageManipulator, SaveFormat } = IM();
-  const pages: string[] = [];
-  for (;;) {
-    const r = await ImagePicker.launchCameraAsync({ mediaTypes: ["images"], quality: 1, exif: false });
-    if (r.canceled || !r.assets?.[0]) break;
-    const a = r.assets[0]; const s = Math.min(1, 1800 / Math.max(a.width, a.height));
-    const ctx = ImageManipulator.manipulate(a.uri); if (s < 1) ctx.resize(a.width >= a.height ? { width: Math.round(a.width * s) } : { height: Math.round(a.height * s) });
-    const page = await (await ctx.renderAsync()).saveAsync({ format: SaveFormat.JPEG, compress: 0.6, base64: true });
-    if (page.base64) pages.push(page.base64);
-    const more = await new Promise<boolean>((res) => Alert.alert(t(pages.length === 1 ? "{n} page" : "{n} pages", { n: pages.length }), undefined, [{ text: t("Done"), style: "cancel", onPress: () => res(false) }, { text: t("Add page"), onPress: () => res(true) }]));
-    if (!more) break;
-  }
-  if (!pages.length) return null;
-  const Print = require("expo-print") as typeof import("expo-print");
-  const html = `<html><body style="margin:0">${pages.map((b) => `<div style="page-break-after:always;height:100vh;display:flex;align-items:center;justify-content:center"><img src="data:image/jpeg;base64,${b}" style="max-width:100%;max-height:100vh"/></div>`).join("")}</body></html>`;
-  const { uri } = await Print.printToFileAsync({ html, width: 595, height: 842 });
-  return { uri, name: `scan_${Date.now()}.pdf`, mimeType: "application/pdf", size: await fileSize(uri) };
-}
-
 /** Returns the raw pick; photos are cropped/compressed on the preview screen. null = cancelled (or camera not allowed). */
 export async function pickFrom(source: Source, lang: Lang = "en"): Promise<Picked | null> {
-  if (source === "scan") return scanPdf(lang);
   if (source === "files") {
     const r = await DocumentPicker.getDocumentAsync({ type: ["application/pdf", "image/jpeg", "image/png", "image/heic", "image/heif", "image/webp"], copyToCacheDirectory: true });
     if (r.canceled || !r.assets?.[0]) return null;
@@ -175,7 +151,7 @@ export function chooseSource(lang: Lang): Promise<Source | null> {
   const t = (s: string) => translate(lang, s);
   if (Platform.OS === "web") return Promise.resolve("files");
   return new Promise((res) => {
-    const opts: [Source, string][] = [["camera", t("Take photo")], ["scan", t("Scan pages (PDF)")], ["library", t("Choose photo")], ["files", t("Choose file")]];
+    const opts: [Source, string][] = [["camera", t("Take photo")], ["library", t("Choose photo")], ["files", t("Choose file")]];
     // Canvas CameraCapture: the one tip that saves a re-upload, before the camera opens.
     const tip = t("Fill the frame. Avoid glare on the photo.");
     if (Platform.OS === "ios") ActionSheetIOS.showActionSheetWithOptions({ title: t("Add document"), message: tip, options: [...opts.map((o) => o[1]), t("Cancel")], cancelButtonIndex: opts.length }, (i) => res(i < opts.length ? opts[i][0] : null));

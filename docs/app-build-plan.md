@@ -613,3 +613,17 @@ Owner: "no need for decisions in this app … our work finished after creating t
 | Stages as the website reads them: `approved` = preparing the file (not a visa approval), `ready` = Ready (download and print), then the appointment; the case is finished once an appointment date is in. The live table has no download column, so an entered appointment also moves past Ready | `lib/timeline.ts` |
 | No visa decision anywhere: "Visa approved / Share the news", "Not approved / Talk to a specialist", "Waiting for the decision", "Visa granted / refused" and the appointment's "Decision · about 15 days" are replaced by "All done" (our work is finished), "Application closed" (status rejected, "Message us") and "Preparing your file". The country tile "Decision ~15 days" is now "When to apply · 6 months to 15 days before", like the website's facts strip | `components/status/StatusCards.tsx`, `lib/nextAction.ts`, `lib/stage.ts`, `lib/data.ts` (`APP_STATUS_LABEL`), `app/appointment/[id].tsx`, `components/country/GlanceList.tsx` |
 | Tests rewritten for the six steps | `scripts/timeline-check.ts` |
+
+## 7o. Owner round: welcome, Home, tab bar, wizard fixes (30 Oct)
+
+| Item | Where |
+|---|---|
+| Welcome heading "Schengen visa assistance" on one line (shrinks on narrow phones or very large text) | `app/welcome.tsx` |
+| Home: other applications show the newest four, with "See all" and a "See all n applications" button to the Applications tab; four common questions that fit where the customer is (before applying, before paying, after paying), "All questions" opens Help. The FAQ accordion is one component for Help and Home | `app/(tabs)/(home)/index.tsx`, `components/FaqList.tsx` |
+| Country page: tiles are Stay 90/180 and When to apply 1–5 months before (owner's copy); no embassy fee tile; no "Open in Maps" links on the visa centre addresses | `components/country/GlanceList.tsx`, `components/country/VisaCentre.tsx` |
+| Tab bar (owner: iOS 26+ glass): Liquid Glass (expo-glass-effect, interactive) where available, frosted blur otherwise; the blue selection slides between tabs on a spring with a small squish, tabs dip when pressed; Reduce Motion turns the motion off. The selection follows each tab's measured place (right to left too). Account tab shows the profile photo when there is one | `components/nav/TabBar.tsx` |
+| Wizard: Yes / No drawn as the canvas does (short centred buttons, or tiles with the text at the top when there is a sub-line); before, tall tiles left an empty space that looked like a missing icon | `components/wizard/choices.tsx`, `components/ui/canvas.tsx` |
+| Wizard: "Who is travelling?" no longer skipped when the destination is picked before the saved travellers load (the wizard waits, at most 6 s); the website request gives up after 4 s and the table is read instead | `app/apply/index.tsx`, `lib/travellers.ts` |
+| Application page: "Upload documents" scrolls to Your documents and highlights the first missing one (a rejected document still opens the picker) | `app/(tabs)/applications/[id].tsx` |
+| "Scan pages (PDF)" removed from Add document (owner: broken) | `lib/capture.ts` |
+| Session key stays the same if the Supabase address becomes a custom domain (for Google sign-in branding) | `lib/supabase.ts` |

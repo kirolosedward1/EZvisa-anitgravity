@@ -121,8 +121,10 @@ export default function Apply() {
     let on = true;
     if (!uid) { setTravellers([]); setTravellersState([]); return; }
     setTravellersState(null);
-    fetchTravellers().then((list) => { if (!on) return; setTravellers(list); setTravellersState(list); }).catch(() => { if (on) { setTravellers([]); setTravellersState([]); } });
-    return () => { on = false; };
+    const done = (list: Traveller[]) => { if (!on) return; on = false; setTravellers(list); setTravellersState(list); };
+    fetchTravellers().then(done).catch(() => done([]));
+    const cap = setTimeout(() => done([]), 6000); // never keep the wizard waiting longer than this
+    return () => { on = false; clearTimeout(cap); };
   }, [uid]);
   useEffect(() => () => setTravellers([]), []); // leaving the wizard: the next open loads them again
   // The picked traveller is recorded on the account's draft row (notes.travellerId), once the row exists.
@@ -285,6 +287,8 @@ export default function Apply() {
   const patch = (x: Partial<WizardForm>) => { setForm((y) => ({ ...y, ...x })); if (submitted) setSubmitted(null); };
   const goTo = (pg: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setPage(pg); setShowErr(false); };
 
+  const waitingFor = useRef<WizardForm | null>(null);
+  useEffect(() => { if (travellers !== null && waitingFor.current) { const nf = waitingFor.current; waitingFor.current = null; advance(nf); } }, [travellers]); // eslint-disable-line react-hooks/exhaustive-deps
   const advance = (nf0: WizardForm = fRef.current) => {
     if (!q) return;
     // Signed in: the email question is never shown, so the account email always counts as answered.
@@ -292,6 +296,9 @@ export default function Apply() {
     if (nf !== nf0) { fRef.current = nf; patch({ email: nf.email }); }
     const e = firstError(q, nf);
     if (e) { hError(); setShowErr(true); setErrTick((n) => n + 1); AccessibilityInfo.announceForAccessibility(t(e)); return; }
+    // Signed in and the saved travellers are still loading: wait for them, so "Who is travelling?" isn't skipped
+    // (it applies only once the list is in). The effect below continues as soon as they arrive.
+    if (uid && travellers === null && !editing && q.id === "destination") { waitingFor.current = nf; return; }
     tap(); timed("wizard_question_answer");
     const list = activeQuestions(nf);
     if (editing) {

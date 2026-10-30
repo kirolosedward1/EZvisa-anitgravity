@@ -6,8 +6,12 @@ import { secureStorage, forgetSessionAfterReinstall } from "./secureStorage";
 import type { Database } from "./database.types";
 
 export type DB = SupabaseClient<Database>;
-/** Same key supabase-js derives by default (sb-<project ref>-auth-token); named here so start-up can find it. */
-export const AUTH_STORAGE_KEY = SUPABASE_ENABLED ? `sb-${new URL(SUPABASE_URL).hostname.split(".")[0]}-auth-token` : "";
+/** Same key supabase-js derives by default (sb-<project ref>-auth-token); named here so start-up can find it. With a
+ *  custom auth domain (e.g. auth.ezvisa.net, so Google shows ezvisa.net) EXPO_PUBLIC_SUPABASE_REF keeps the old key,
+ *  so nobody is signed out by the switch. */
+const host = SUPABASE_ENABLED ? new URL(SUPABASE_URL).hostname : "";
+const REF = host.endsWith(".supabase.co") ? host.split(".")[0] : process.env.EXPO_PUBLIC_SUPABASE_REF || host.split(".")[0];
+export const AUTH_STORAGE_KEY = SUPABASE_ENABLED ? `sb-${REF}-auth-token` : "";
 const ready = SUPABASE_ENABLED ? forgetSessionAfterReinstall([AUTH_STORAGE_KEY, `${AUTH_STORAGE_KEY}-code-verifier`, `${AUTH_STORAGE_KEY}-user`]) : Promise.resolve();
 const storage = {
   getItem: async (k: string) => { await ready; return secureStorage.getItem(k); },

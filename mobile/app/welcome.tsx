@@ -58,7 +58,7 @@ export default function Welcome() {
         <Animated.View entering={reduce ? undefined : FadeIn.duration(300)}>
           <GlobiPose pose="welcome" size={big ? 160 : GLOBI_SIZE.welcome} style={{ margin: big ? -12 : -18 }} />
         </Animated.View>
-        <Text variant="title1" center accessibilityRole="header" style={{ maxWidth: 300, fontSize: 24, lineHeight: 28 }}>{t("Schengen visa assistance")}</Text>
+        <Text variant="title1" center accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={{ alignSelf: "stretch", fontSize: 24, lineHeight: 28 }}>{t("Schengen visa assistance")}</Text>
       </View>
       <Animated.View entering={reduce ? undefined : FadeInDown.delay(120).springify().damping(22).stiffness(240)} style={{ gap: 10 }}>
         {notice ? <Text variant="subhead" tone="secondary" center accessibilityLiveRegion="polite" testID="session-notice">{t(notice)}</Text> : null}

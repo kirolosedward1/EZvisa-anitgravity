@@ -15,10 +15,24 @@ const fill = (s: string, f: WizardForm, t: (k: string) => string) =>
 
 /** Options of a choice question as the canvas draws them (q.view.layout). Tap = answer (the screen auto-advances). */
 export function OptionAnswers({ q, f, options, value, onPick }: { q: Question; f: WizardForm; options: Opt[]; value: string; onPick: (v: string) => void }) {
-  const { t } = useT(); const c = useColors(); const big = useLargeText();
+  const { t } = useT(); const c = useColors(); const dark = useIsDark(); const big = useLargeText();
   const v = q.view ?? {}; const layout = v.layout ?? "list";
   const label = (o: Opt) => fill(t(v.labels?.[o.value] ?? o.label), f, t);
   const sub = (o: Opt) => (v.subs?.[o.value] ? fill(t(v.subs[o.value]), f, t) : undefined);
+  // Canvas yes/no: two short centred buttons when there is no sub-line (FirstVisa), tiles with the text at the top
+  // when there is one (Passport). Never a tall empty tile.
+  if (layout === "tiles" && !options.some((o) => sub(o))) {
+    return (
+      <View accessibilityRole="radiogroup" accessibilityLabel={t(q.label)} style={{ flexDirection: big ? "column" : "row", gap: 10 }} testID="option-tiles">
+        {options.map((o) => { const on = value === o.value; return (
+          <PressScale key={o.value} onPress={() => { select(); onPick(o.value); }} accessibilityRole="radio" accessibilityState={{ checked: on }} aria-checked={on} accessibilityLabel={label(o)} testID={`choice-${o.value}`}
+            style={[{ flex: big ? undefined : 1, minHeight: 52, paddingHorizontal: S.md, paddingVertical: S.sm, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: on ? c.accentSoft : dark ? c.surface : c.surfaceRaised, borderWidth: on ? 1.5 : 1, borderColor: on ? c.accent : c.border }, curve]}>
+            <Text variant="callout" weight="600" center>{label(o)}</Text>
+          </PressScale>
+        ); })}
+      </View>
+    );
+  }
   if (layout === "grid" || layout === "tiles") {
     const tall = layout === "tiles";
     return (
@@ -27,7 +41,7 @@ export function OptionAnswers({ q, f, options, value, onPick }: { q: Question; f
           <View key={o.value} style={{ width: big ? "100%" : tall && options.length === 2 ? "48.4%" : "48.4%" }}>
             <ChoiceTile variant={tall ? "yesno" : "grid"} label={label(o)} sub={sub(o)} selected={value === o.value} onPress={() => onPick(o.value)} testID={`choice-${o.value}`}
               leading={!tall && v.icons?.[o.value] ? <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: c.fillSubtle, alignItems: "center", justifyContent: "center" }}><Icon name={v.icons[o.value]} size={18} color={value === o.value ? c.accent : c.textSecondary} /></View> : undefined}
-              minHeight={tall ? 110 : v.subs ? 104 : 84} />
+              minHeight={tall ? 96 : v.subs ? 104 : 84} />
           </View>
         ))}
       </View>

@@ -161,11 +161,11 @@ export function ChoiceTile({ label, sub, selected, onPress, variant = "option", 
   icon?: IconName; leading?: React.ReactNode; trailing?: React.ReactNode; minHeight?: number; a11yLabel?: string; testID?: string;
 }) {
   const c = useColors(); const dark = useIsDark();
-  const h = minHeight ?? (variant === "yesno" ? 110 : variant === "grid" ? 84 : 64);
+  const h = minHeight ?? (variant === "yesno" ? 96 : variant === "grid" ? 84 : 64);
   return (
     <PressScale onPress={() => { select(); onPress(); }} accessibilityRole="radio" accessibilityState={{ checked: selected }} aria-checked={selected} accessibilityLabel={a11yLabel ?? [label, sub].filter(Boolean).join(", ")} testID={testID}
       style={[{ minHeight: h, borderRadius: R.tile, padding: variant === "yesno" ? 16 : 14, backgroundColor: selected ? c.accentSoft : dark ? c.surface : c.surfaceRaised, borderWidth: selected ? 1.5 : 1, borderColor: selected ? c.accent : c.border,
-        flexDirection: variant === "option" ? "row" : "column", alignItems: variant === "option" ? "center" : "flex-start", justifyContent: variant === "yesno" ? "flex-end" : variant === "grid" ? "space-between" : "flex-start", gap: variant === "option" ? S.sm : 6 }, curve]}>
+        flexDirection: variant === "option" ? "row" : "column", alignItems: variant === "option" ? "center" : "flex-start", justifyContent: variant === "grid" ? "space-between" : "flex-start", gap: variant === "option" ? S.sm : 6 }, curve]}>
       {leading ?? (icon ? <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: c.fillSubtle, alignItems: "center", justifyContent: "center" }}><Icon name={icon} size={18} color={selected ? c.accent : c.textSecondary} /></View> : null)}
       <View style={{ flex: variant === "option" ? 1 : undefined, gap: 2 }}>
         <Text variant={variant === "yesno" ? "tile" : variant === "grid" ? "optionSm" : "option"} weight={selected && variant === "option" ? "600" : undefined}>{label}</Text>

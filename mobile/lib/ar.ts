@@ -1313,4 +1313,10 @@ export const AR: Record<string, string> = {
   "A specialist is checking everything. Your file is usually ready 1 to 2 days after that; I'll message you.": "يراجع مختص كل شيء. يكون ملفك جاهزًا عادةً بعد ذلك بيوم إلى يومين، وسأراسلك.",
   "A specialist is checking everything. No action needed.": "يراجع مختص كل شيء. لا يلزمك أي إجراء.",
   "6 months to 15 days before": "من 6 أشهر إلى 15 يومًا قبل السفر",
+  "1–5 months before": "قبل 1–5 أشهر",
+  "Appointments at {p} in Dubai or Abu Dhabi. Apply 1 to 5 months before you travel.": "المواعيد لدى {p} في دبي أو أبوظبي. قدّم قبل سفرك بشهر إلى 5 أشهر.",
+  "Apply 1 to 5 months before you travel.": "قدّم قبل سفرك بشهر إلى 5 أشهر.",
+  "See all {n} applications": "عرض كل الطلبات ({n})",
+  "Go to my applications": "اذهب إلى طلباتي",
+  "All questions": "كل الأسئلة",
 };
