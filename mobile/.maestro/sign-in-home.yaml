@@ -1,0 +1,30 @@
+# Sign in with a test account and reach Home, then open each tab. Set the account with -e:
+#   maestro test -e EMAIL=test@example.com -e PASSWORD=... .maestro/sign-in-home.yaml
+appId: net.ezvisa.app
+---
+- launchApp:
+    clearState: true
+- tapOn: "I already have an account"
+- tapOn:
+    id: "auth-email"
+- inputText: ${EMAIL}
+- tapOn:
+    id: "auth-password"
+- inputText: ${PASSWORD}
+- pressKey: Enter
+- assertVisible:
+    id: "home-header"
+    timeout: 15000
+- tapOn:
+    id: "tab-(countries)"
+- assertVisible:
+    id: "countries-list"
+- tapOn:
+    id: "tab-applications"
+- tapOn:
+    id: "tab-account"
+- tapOn:
+    id: "account-settings"
+- assertVisible:
+    id: "settings"
+- takeScreenshot: signed-in-tour

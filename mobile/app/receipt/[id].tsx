@@ -12,6 +12,7 @@ import { useT, ltr } from "../../lib/i18n";
 import { useAuth } from "../../lib/auth";
 import { getApplication, isPaid, withTimeout, type Application } from "../../lib/data";
 import { receiptInfo, shareReceipt } from "../../lib/receipt";
+import { cachedApplication } from "../../lib/appsCache";
 
 const LOGO = require("../../assets/logo.png");
 const LOGO_H = 28; const LOGO_W = Math.round((873 / 216) * LOGO_H);
@@ -19,7 +20,7 @@ const LOGO_H = 28; const LOGO_W = Math.round((873 / 216) * LOGO_H);
 export default function ReceiptScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors(); const dark = useIsDark(); const insets = useSafeAreaInsets(); const { t, lang, rtl } = useT(); const { session } = useAuth();
-  const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null); const [busy, setBusy] = useState(false);
+  const [a, setA] = useState<Application | null>(() => cachedApplication(id)); /* shown at once, then the full row */ const [err, setErr] = useState<string | null>(null); const [busy, setBusy] = useState(false);
   useEffect(() => { let live = true; withTimeout(getApplication(id!), 12000).then((x) => { if (live) setA(x); }).catch((e) => { if (live) setErr(e?.message ?? String(e)); }); return () => { live = false; }; }, [id]);
   const name = (session?.user.user_metadata?.full_name as string | undefined) ?? a?.full_name ?? ""; const mail = session?.user.email ?? a?.email ?? "";
   const pdf = async () => { if (!a) return; setBusy(true); try { await shareReceipt(a, name, mail, lang); } finally { setBusy(false); } };

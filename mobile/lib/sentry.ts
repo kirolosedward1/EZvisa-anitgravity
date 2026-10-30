@@ -38,7 +38,7 @@ export function buildEvent(r: CrashReport) {
   const [, type = "Error", value = r.message] = r.message.match(/^([A-Za-z]*Error): (.*)$/s) ?? [];
   return scrubCrashEvent({
     event_id: hex32(), timestamp: r.at / 1000, platform: "javascript", level: r.fatal ? "fatal" : "error",
-    release: `ezvisa@${Constants.expoConfig?.version ?? "0"}`, environment: __DEV__ ? "development" : "preview",
+    release: `ezvisa@${Constants.expoConfig?.version ?? "0"}`, environment: __DEV__ ? "development" : ((Constants.expoConfig?.extra as { variant?: string } | undefined)?.variant ?? "preview"),
     exception: { values: [{ type, value, mechanism: { type: r.fatal ? "onerror" : "generic", handled: !r.fatal }, stacktrace: { frames: parseStack(r.stack) } }] },
     contexts: { os: { name: Platform.OS, version: String(Platform.Version ?? "") }, app: { app_version: Constants.expoConfig?.version ?? "" } },
     tags: { runtime: Constants.executionEnvironment ?? "unknown" },

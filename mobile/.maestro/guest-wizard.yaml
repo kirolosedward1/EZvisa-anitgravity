@@ -1,0 +1,14 @@
+# Guest start: Welcome -> wizard -> destination -> nationality. Runs on a real build (EAS Build / simulator):
+#   maestro test .maestro            (all flows)    https://maestro.mobile.dev
+# Nothing is submitted or paid.
+appId: net.ezvisa.app
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: "start-application"
+- assertVisible: "Where are you travelling?"
+- tapOn: "France"
+- assertVisible:
+    text: ".*nationality.*|.*passport.*"
+- takeScreenshot: guest-wizard

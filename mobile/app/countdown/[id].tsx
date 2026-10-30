@@ -12,6 +12,7 @@ import { getApplication, type Application } from "../../lib/data";
 import { formatDetailDate } from "../../lib/dates";
 import { daysUntil } from "../../components/status/StatusCards";
 import { tap } from "../../lib/haptics";
+import { cachedApplication } from "../../lib/appsCache";
 
 export const BEFORE_YOU_FLY = ["Passport with the visa, collected", "Travel insurance certificate", "Flight tickets (the reservation in your file is not a ticket)",
   "Hotel confirmation", "The printed EZvisa file (border officers may ask)", "Euros or a travel card"] as const;
@@ -19,7 +20,7 @@ export const BEFORE_YOU_FLY = ["Passport with the visa, collected", "Travel insu
 export default function Countdown() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useColors(); const insets = useSafeAreaInsets(); const { t, lang } = useT();
-  const [a, setA] = useState<Application | null>(null); const [err, setErr] = useState<string | null>(null);
+  const [a, setA] = useState<Application | null>(() => cachedApplication(id)); /* shown at once, then the full row */ const [err, setErr] = useState<string | null>(null);
   const load = useCallback(async () => { try { setErr(null); setA(await getApplication(id!)); } catch (e: any) { setErr(e?.message ?? String(e)); } }, [id]);
   useEffect(() => { load(); }, [load]);
   const close = () => { tap(); if (router.canGoBack()) router.back(); else router.replace(`/applications/${id}`, { withAnchor: true }); };
