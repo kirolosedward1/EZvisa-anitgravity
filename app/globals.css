@@ -1431,17 +1431,6 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 .ez-customer-panel { border-color:#dee5f0; border-radius:8px; box-shadow:none; }
 .ez-customer-panel-heading { padding-top:24px; padding-bottom:12px; }
 .ez-customer-panel h2 { font-weight:500; }
-.ez-account-layout { max-width:1104px; margin-inline:auto; width:100%; display:grid; grid-template-columns:280px minmax(0,1fr); gap:40px 64px; align-items:start; }
-.ez-account-heading { grid-column:1/-1; display:flex; justify-content:space-between; align-items:end; gap:24px; padding-bottom:28px; border-bottom:1px solid #dee5f0; }
-.ez-account-heading h1 { font-size:36px; line-height:1.2; letter-spacing:-.035em; font-weight:500; }
-.ez-account-heading p { color:#52617a; font-size:15px; margin-top:12px; line-height:1.6; }
-.ez-account-back { display:flex; align-items:center; gap:8px; color:#0436dc; font-size:14px; flex-shrink:0; }
-.ez-account-profile { background:#edf4ff; border-radius:8px; padding-block:32px; }
-.ez-account-links { background:transparent; border-bottom:1px solid #dee5f0; border-radius:0; padding-bottom:20px; }
-.ez-account-section h2 { font-size:22px; font-weight:500; letter-spacing:-.02em; }
-.ez-account-section-body { background:#fff; border-block:1px solid #dee5f0; }
-.ez-account-section-body button:focus-visible { outline:2px solid #0436dc; outline-offset:-2px; }
-.ez-account-row-icon { width:24px; }
 .ez-receipt { border-radius:8px; }
 .ez-receipt>div:first-child { padding:36px; background:#edf4ff; }
 .ez-receipt h1 { font-size:30px; font-weight:500; margin-top:20px; }
@@ -1454,7 +1443,6 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
  .ez-auth-layout { display:block; }
  .ez-auth-brand { display:none; }
  .ez-auth-main { padding:24px; }
- .ez-account-layout { grid-template-columns:240px minmax(0,1fr); gap:32px; }
 }
 @media(max-width:639px) {
  .ez-auth-main { padding:24px 20px; }
@@ -1462,11 +1450,7 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
  .ez-auth-form h1 { font-size:30px; }
  .ez-auth-form h1+p { font-size:14px; }
  .ez-customer-heading { padding-top:104px; padding-bottom:24px; }
- .ez-customer-heading h1,.ez-account-heading h1 { font-size:30px; }
- .ez-account-layout { grid-template-columns:minmax(0,1fr); gap:28px; }
- .ez-account-heading { align-items:start; flex-direction:column; padding-bottom:24px; gap:16px; }
- .ez-account-profile { padding:24px; }
- .ez-account-section h2 { font-size:21px; }
+ .ez-customer-heading h1 { font-size:30px; }
  .ez-receipt>div:first-child { padding:24px; }
  .ez-payment-result { padding:24px; }
 }

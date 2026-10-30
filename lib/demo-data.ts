@@ -217,6 +217,8 @@ export const DEMO_TRAVELLERS: Record<string, Traveller[]> = {
   "demo.family@ezvisa.net": [
     { id: "demo-traveller-family-1", relationship: "self", firstName: "Marcus", lastName: "Vance", nationality: "India", dateOfBirth: "1985-02-20", passportNumber: "Z11223344", passportExpiry: "2032-09-09", hasValidPassport: "yes", phone: "+971 52 111 2222", phoneCountry: "AE", cityOfResidence: "Dubai", lastUsedAt: "2026-03-08T09:00:00.000Z" },
     { id: "demo-traveller-family-2", relationship: "spouse", firstName: "Elena", lastName: "Vance", nationality: "India", dateOfBirth: "1987-07-14", passportNumber: "Z55667788", passportExpiry: "2029-12-01", hasValidPassport: "yes", cityOfResidence: "Dubai", lastUsedAt: "2026-03-08T09:00:00.000Z" },
+    // A child whose passport runs out within six months: the account page flags it.
+    { id: "demo-traveller-family-3", relationship: "other", firstName: "Lina", lastName: "Vance", nationality: "India", dateOfBirth: "2015-05-02", passportNumber: "Z99001122", passportExpiry: "2027-03-20", hasValidPassport: "yes", cityOfResidence: "Dubai", lastUsedAt: null },
   ],
 };
 
