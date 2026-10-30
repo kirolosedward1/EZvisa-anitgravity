@@ -15,7 +15,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
 import { Button, Text, Icon, SuccessCheck, InlineError, StepHeader, HeaderIconButton, QuestionHeader, Card, RowGroup, Row, PrimaryButton, SecondaryButton, InfoNote, SheetScaffold, StickyCTA, ChoiceTile } from "../../components/ui";
-import { AuthForm } from "../../components/AuthForm";
 import { missingDocuments, MISSING_LABEL } from "../../lib/missing";
 import { INSURANCE_AED_PER_TRAVELLER, VISA_FEE_EUR, appointmentFeesAed } from "../../config/pricing";
 import { Note } from "../../components/wizard/fields";
@@ -56,7 +55,7 @@ const STEP_ORDER: WizardStep[] = ["destination", "personal", "payment"];
 type Params = { step?: string; from?: string; to?: string; nationality?: string; destination?: string; travelStartDate?: string; travelEndDate?: string; country?: string; resume?: string; city?: string; cityOfResidence?: string };
 
 /** After Review, before the payment page (canvas): create the account (guests), insurance, the price breakdown. */
-type After = "signup" | "insurance" | "price";
+type After = "insurance" | "price";
 /** Insurance choice (canvas Insurance): a separately quoted request or the customer's own policy. Never charged here;
  *  stored as additional_notes.insurancePreference ("quote" | "own"), the website's dashboard key. */
 type Insurance = "quote" | "own" | "later";
@@ -133,7 +132,7 @@ export default function Apply() {
   const [profileAsk, setProfileAsk] = useState<{ uid: string; key: string; changes: ProfileChange[] } | null>(null);
   const [profileBusy, setProfileBusy] = useState(false); const [profileErr, setProfileErr] = useState<string | null>(null); const [profileSavedFor, setProfileSavedFor] = useState<string | null>(null);
   const prevStep = useRef<WizardStep | null>(null);
-  const [after, setAfter] = useState<After | null>(null); const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
+  const [after, setAfter] = useState<After | null>(null);
   const [insurance, setInsurance] = useState<Insurance>("quote");
   useEffect(() => { listRequirements().then(setReqs).catch(() => {}); cancelDraftReminder(); }, []);
 
@@ -273,13 +272,6 @@ export default function Apply() {
     const s0 = qStart.current; if (!s0 || !q || s0.id !== q.id) return;
     track(e, { question: q.id, step: q.step as any, ms: msSince(s0.at) }); qStart.current = null;
   };
-  // Account created or signed in at "Create account to pay": continue to insurance with the same draft.
-  useEffect(() => {
-    if (after !== "signup" || !session) return;
-    const prov = (session.user.app_metadata?.provider as string | undefined) ?? "email";
-    track("signup_at_pay", { method: prov === "apple" || prov === "google" ? prov : "email" });
-    setAfter("insurance");
-  }, [after, session]);
   // New question: move VoiceOver focus to its title.
   useEffect(() => {
     setShowErr(false);
@@ -364,9 +356,10 @@ export default function Apply() {
   const invalid = firstInvalid(f);
   /** Submit once: button disabled + in-flight guard + the same draft row updated idempotently (lib/data.ts). */
   /** Opens the payment gateway for a submitted application, then the verified result screen. */
-  const payNow = async (id: string) => {
+  const payNow = async (id: string, guestEmail?: string) => {
     if (paying) return;
-    const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned } }); setTimeout(() => setSubmitted(null), 400); };
+    // A guest's email goes along so the result screen can offer "Create your account" with it, paid or not.
+    const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned, ...(guestEmail ? { email: guestEmail } : {}) } }); setTimeout(() => setSubmitted(null), 400); };
     try { track("payment_started"); track("payment_start"); const o = await startPayment(id); result(o.returned); }
     catch (e: any) { if (e?.busy) return; if (e?.alreadyPaid) { result("success"); return; } hError(); setErr(e?.message ?? String(e)); }
   };
@@ -377,9 +370,11 @@ export default function Apply() {
     if (profileAsk) { markAsked(profileAsk.key); setProfileAsk(null); } // submitting without answering = keep the profile as is
     try {
       if (!session) { // guest checkout: pay first, sign in with the same email afterwards
-        const g = await guestSubmit(f, guestId.current ?? (guestId.current = Crypto.randomUUID())); success(); cancelDraftReminder();
+        const g = await guestSubmit({ ...f }, guestId.current ?? (guestId.current = Crypto.randomUUID())); success(); cancelDraftReminder();
         guestId.current = null; // the next application gets its own id
-        setSubmitted({ applicationId: g.id, reference: g.reference, destination: f.destination, spouse, guestEmail: g.email }); clearDraft(); return;
+        setSubmitted({ applicationId: g.id, reference: g.reference, destination: f.destination, spouse, guestEmail: g.email }); clearDraft();
+        if (pay) { inFlight.current = false; setBusy(false); await payNow(g.id, g.email); }
+        return;
       }
       // Submit only what the server confirmed: an unsaved or changed-elsewhere draft is never submitted.
       const id = await flushDraft();
@@ -407,7 +402,7 @@ export default function Apply() {
         <Button title={paying ? t("Opening secure payment…") : quote ? t(PAY_AED, { amount: formatPayAmount(quote.amount) }) : t("Pay securely")} icon="creditcard.fill" loading={busy || paying} disabled={busy || paying} onPress={async () => {
           if (inFlight.current || paying) return; inFlight.current = true; setBusy(true); setErr(null);
           const id = submitted.applicationId;
-          const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned } }); setTimeout(() => setSubmitted(null), 400); };
+          const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned, ...(submitted.guestEmail ? { email: submitted.guestEmail } : {}) } }); setTimeout(() => setSubmitted(null), 400); };
           try { track("payment_started"); const o = await startPayment(id); result(o.returned); }
           catch (e: any) { if (e?.busy) return; if (e?.alreadyPaid) { result("success"); return; } hError(); setErr(e?.message ?? String(e)); }
           finally { inFlight.current = false; setBusy(false); }
@@ -425,7 +420,7 @@ export default function Apply() {
   const prog = progressOf(f, page); const seg = prog.segs[prog.stepIndex];
   const review = page === REVIEW;
   const stepIndex = review || after ? 2 : prog.stepIndex;
-  const fraction = after === "signup" ? 0.85 : after === "insurance" ? 0.4 : after === "price" ? 0.7 : review ? 0.5 : seg?.fill ?? 0;
+  const fraction = after === "insurance" ? 0.4 : after === "price" ? 0.7 : review ? 0.5 : seg?.fill ?? 0;
   const a11y = review || after ? t("Review and pay, step 3 of 3") : t("{step}, question {i} of {n}", { step: t(prog.curStep === "destination" ? "Destination" : "Traveller"), i: Math.max(1, seg?.index ?? 1), n: Math.max(1, seg?.count ?? 1) });
   const header = (
     <View style={{ paddingTop: top, paddingBottom: S.sm, gap: S.xxs }}>
@@ -439,16 +434,6 @@ export default function Apply() {
   const travellerNames = [[f.firstName, f.lastName].filter(Boolean).join(" ") || t("You"), ...(travellers2 > 1 ? [t("Your spouse")] : [])];
 
   // ---------------- After Review: create account, insurance, price ----------------
-  if (page === REVIEW && after === "signup") return (
-    <View style={{ flex: 1, backgroundColor: c.bg }} testID="signup-at-pay">
-      {header}
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: S.gutter, paddingTop: S.md, paddingBottom: Math.max(insets.bottom, S.lg) + S.lg, gap: S.lg }}>
-        <QuestionHeader question={t("Create an account so your application has a home.")} pose="lock" />
-        <AuthForm mode={authMode} onMode={setAuthMode} initialEmail={f.email || undefined} />
-        <RowGroup><Row label={t("Your answers")} value={t("Kept, nothing to redo")} />{!!f.phone && <Row label={t("Phone")} value={phoneDisplay(f.phone)} />}</RowGroup>
-      </ScrollView>
-    </View>
-  );
   if (page === REVIEW && after === "insurance") {
     const each = t("from {a} AED each", { a: INSURANCE_AED_PER_TRAVELLER });
     const opts: [Insurance, string, string][] = [
@@ -533,7 +518,7 @@ export default function Apply() {
     const toPay = () => {
       tap();
       if (invalid) { hError(); edit(invalid.id); return; }
-      setAfter(session ? "insurance" : "signup");
+      setAfter("insurance"); // guests too: pay first, create the account after payment
     };
     return (
       <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -570,7 +555,9 @@ export default function Apply() {
             {sections.filter(([, list]) => list.length).map(([title, list]) => (
               <RowGroup key={title} header={title}>
                 {list.map(row)}
-                {title === t("Contact") && !!session?.user.email && <ReviewRow label={t("Email")} value={session.user.email} tag={t("account")} />}
+                {title === t("Contact") && (session?.user.email
+                  ? <ReviewRow label={t("Email")} value={session.user.email} tag={t("account")} />
+                  : !!f.email && <ReviewRow label={t("Email")} value={f.email} onPress={() => { track("review_row_tap", { field: "contact" }); edit("contact"); }} testID="review-email" />)}
               </RowGroup>
             ))}
             {later.length > 0 && (

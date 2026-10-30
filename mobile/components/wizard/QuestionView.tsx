@@ -55,7 +55,7 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
 
   const [focus, setFocus] = useState<string | null>(null); // the field being typed in (blue border)
   const liveErr = errorOf(q, f);
-  const hasInput = q.kind === "contact" ? !!f.phoneLocal.trim() : q.kind === "dates" ? !!f.travelStartDate : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
+  const hasInput = q.kind === "contact" ? !!f.phoneLocal.trim() && (!!account || !!f.email.trim()) : q.kind === "dates" ? !!f.travelStartDate : q.kind === "pair" ? q.keys.every((k) => !!String(f[k] ?? "").trim()) : isAnswered(q, f);
   const group = q.kind === "group";
   const e = showErr || (settled && hasInput && !group) ? liveErr : undefined;
   const note = q.note?.(f);
@@ -119,6 +119,15 @@ export function QuestionView({ q, f, patch, pick, advance, showErr, errTick, set
       }
       case "contact": return (
         <View style={{ gap: S.md }}>
+          {!account && (
+            <View style={{ gap: S.xs }}>
+              <Text variant="note" weight="600" tone="secondary">{t("Email")}</Text>
+              <TextInput value={f.email} onChangeText={(v) => patch({ email: v.trim() })} placeholder="you@example.com" placeholderTextColor={c.secondaryLabel} accessibilityLabel={t("Email")}
+                keyboardType="email-address" autoCapitalize="none" autoCorrect={false} textContentType="emailAddress" autoComplete="email" testID="contact-email"
+                onFocus={() => setFocus("email")} onBlur={() => setFocus(null)} style={fieldStyle(c, !!e && !!qe.email, isRTL, focus === "email")} />
+              <Text variant="footnote" tone="secondary">{t("Your receipt goes here. You create your account with it after paying.")}</Text>
+            </View>
+          )}
           <View style={{ gap: S.xs }}>
             <Text variant="note" weight="600" tone="secondary">{t("Phone number")}</Text>
             <PhoneField country={f.phoneCountry} local={f.phoneLocal} error={!!e && !!qe.phone} onChange={(iso2, local, full) => patch({ phoneCountry: iso2, phoneLocal: local, phone: full })} />

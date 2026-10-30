@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { emptyForm, applyTraveller, coerceResidence, validatePersonal, validatePassport, validateStep, UAE_NATIONALITIES, OTHER_NATIONALITY, SCHENGEN_VISA_REQUIRED, SCHENGEN, UAE_EMIRATES, RESIDENCE_COUNTRIES, type TravellerDetails, type WizardForm } from "../lib/wizard";
-import { QUESTIONS, Q_BY_ID, REVIEW, activeQuestions, firstUnanswered, progressOf, normalizePage, setAccountEmail, setTravellers, partsOf, questionErrors } from "../lib/questions";
+import { QUESTIONS, Q_BY_ID, REVIEW, activeQuestions, firstUnanswered, progressOf, normalizePage, setAccountEmail, setTravellers, partsOf, questionErrors, isAnswered } from "../lib/questions";
 import { searchCountries } from "../lib/search";
 import { WORLD } from "../lib/world";
 import { AR } from "../lib/ar";
@@ -201,4 +201,12 @@ test("every option has an Arabic label", () => {
   const names = [...SCHENGEN, ...UAE_NATIONALITIES, ...UAE_EMIRATES, ...QUESTIONS.flatMap((q) => q.options?.map((o) => o.label) ?? []), ...QUESTIONS.map((q) => q.label)];
   const missing = [...new Set(names)].filter((n) => !AR[n]);
   assert.deepEqual(missing, []);
+});
+
+test("contact: a guest gives email and phone (pay first, account after payment); signed in, the phone is enough", () => {
+  const phone = { phone: "+971501234567", phoneCountry: "AE", phoneLocal: "501234567" };
+  assert.equal(isAnswered(Q_BY_ID.contact, form(phone)), false, "guest without email");
+  assert.equal(isAnswered(Q_BY_ID.contact, form({ ...phone, email: "a@example.com" })), true, "guest with email");
+  setAccountEmail("me@example.com");
+  try { assert.equal(isAnswered(Q_BY_ID.contact, form(phone)), true, "signed in: account email"); } finally { setAccountEmail(null); }
 });

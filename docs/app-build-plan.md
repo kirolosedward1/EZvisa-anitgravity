@@ -547,3 +547,11 @@ The owner approved the open items ("Approve all").
 | Finished cases | No "Book now" or "Still needed" once a case is approved, refused or cancelled |
 
 Still needs a Mac or a store build: the Globi clips, the app icon, the splash and the system appearance setting.
+
+## 7i. Pay first, then the account; Globi animated (30 Oct)
+
+| Item | Where |
+|---|---|
+| Owner: the payment comes before the account. Guests give email and phone at Contact (signed-in customers still see only the phone), go Review → insurance → price → "Pay N AED securely" (the guest row is created and the payment gateway opens in one step). After the result (paid, pending, failed or cancelled) the payment screen asks "Create your account" with that email prefilled; once signed in it re-checks and shows the signed-in next steps. The sign-up-at-pay page is removed. | `lib/questions.ts`, `components/wizard/QuestionView.tsx`, `app/apply/index.tsx`, `app/payment/[id].tsx` |
+| Globi moves: transparent animated WebP for all 21 poses (320 px, 12 fps, 8.7 MB in total), built on Linux by `scripts/globi-convert.sh --stills-only`; no new native module, so it ships in an update. Web uses React Native's Image (expo-image's web wrapper has zero height and Chrome never advances it). | `assets/globi/anim/`, `components/globi/GlobiPose.tsx` |
+| Test: a guest's contact needs email and phone; signed in, the phone is enough | `scripts/wizard-rules.test.ts` |
