@@ -1,5 +1,7 @@
 import { StatusHero, NextCard, ToGetLater, nextOf, daysUntil } from "../../../components/status/StatusCards";
 import { AppointmentDaySheet } from "../../../components/status/AppointmentDay";
+import { ReapplySheet } from "../../../components/status/Reapply";
+import { RateCard } from "../../../components/status/RateCard";
 import { appointmentOf } from "../../../lib/appointment";
 import { missingDocuments, type MissingDoc } from "../../../lib/missing";
 import { track } from "../../../lib/analytics";
@@ -37,7 +39,7 @@ export default function ApplicationDetail() {
   const [upErr, setUpErr] = useState<string | null>(null);
   const [picking, setPicking] = useState(false);
   const [reqs, setReqs] = useState<Requirement[] | null>(null);
-  const [day, setDay] = useState(false);
+  const [day, setDay] = useState(false); const [reapply, setReapply] = useState(false);
   /** quiet = background refresh: a failure keeps what is on screen instead of replacing it with an error. */
   const load = useCallback(async (quiet = false) => {
     try {
@@ -132,7 +134,7 @@ export default function ApplicationDetail() {
   const received = new Set((list?.customer ?? []).filter((i) => !isOpen(i)).map((i) => i.req.document_type));
   const later = ["completed", "rejected", "cancelled"].includes(a.status) ? []
     : ((((a.notes as any)?.missingDocuments as MissingDoc[] | undefined) ?? missingDocuments(continueForm(a))).filter((m) => !received.has(m)));
-  const applyAgain = () => { tap(); router.push({ pathname: "/apply", params: { to: name } }); };
+  const applyAgain = () => { tap(); setReapply(true); };
   const primary = () => {
     tap();
     switch (next.kind) {
@@ -163,6 +165,7 @@ export default function ApplicationDetail() {
         <StatusHero a={a} />
         <NextCard n={next} onPrimary={next.cta ? primary : undefined} onAlt={next.alt ? alt : undefined} busy={next.kind === "pay" && paying} />
         {ziina === "completed" && unpaid && <InfoNote tone="success" text={t("Payment received. Updating your application…")} />}
+        {(a.status === "completed" || a.status === "rejected") && <RateCard appId={a.id} reference={a.reference} />}
         <RowGroup header={t("Status")}><Timeline a={a} t={t} /></RowGroup>
         <ToGetLater items={later} onAdd={() => toDocs()} />
         {a.status !== "cancelled" && (
@@ -178,6 +181,7 @@ export default function ApplicationDetail() {
         )}
       </View>
       <AppointmentDaySheet visible={day} onClose={() => setDay(false)} travellers={a.applicants.length} />
+      <ReapplySheet a={a} visible={reapply} onClose={() => setReapply(false)} />
       {locked ? (
         <ListGroup header={t("Documents")} inset={58}><ListRow icon="lock.fill" iconColor={c.grey} title={t("Upload documents")} subtitle={t("Available after payment")} chevron={false} /></ListGroup>
       ) : list ? (<>

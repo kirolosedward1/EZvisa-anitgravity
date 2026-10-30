@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RefreshControl, SectionList, View, StyleSheet } from "react-native";
 import { Stack, router, useFocusEffect } from "expo-router";
 import { GlobiPose } from "../../../components/globi/GlobiPose";
@@ -7,13 +7,16 @@ import { useColors, S, R, HIT, SIZE } from "../../../lib/theme";
 import { listNotifications, markRead, Notification } from "../../../lib/data";
 import { useAuth } from "../../../lib/auth";
 import { useT } from "../../../lib/i18n";
+import { notifications } from "../../../lib/push";
 
 const isToday = (s: string) => new Date(s).toDateString() === new Date().toDateString();
 const time = (s: string) => isToday(s) ? new Date(s).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }) : new Date(s).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
 export default function Notifications() {
   const c = useColors(); const pb = useTabInset(); const { session } = useAuth(); const { t } = useT();
-  const [items, setItems] = useState<Notification[] | null>(null); const [err, setErr] = useState<string | null>(null); const [refreshing, setRefreshing] = useState(false);
+  const [items, setItems] = useState<Notification[] | null>(null);
+  const [pushOn, setPushOn] = useState(false);
+  useEffect(() => { notifications()?.getPermissionsAsync().then((p) => setPushOn(p.status === "granted")).catch(() => {}); }, []); const [err, setErr] = useState<string | null>(null); const [refreshing, setRefreshing] = useState(false);
   const load = useCallback(async () => { if (!session) return; try { setErr(null); setItems(await listNotifications()); } catch (e: any) { setErr(t(e?.message ?? String(e))); } }, [session]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
   const unreadIds = (items ?? []).filter((n) => !n.read_at).map((n) => n.id);
@@ -29,6 +32,7 @@ export default function Notifications() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} tintColor={c.accent} />}
         ListHeaderComponent={items === null ? <View style={{ marginTop: S.xl }}><SkeletonRows n={3} leading={S.sm} /></View> : undefined}
         ListEmptyComponent={items === null ? undefined : <EmptyState icon="bell.slash" mascot={<GlobiPose pose="waiting" size={120} />} title={t("No notifications")} />}
+        ListFooterComponent={items?.length ? <Text variant="footnote" tone="secondary" center style={{ marginTop: S.lg, paddingHorizontal: S.gutter }}>{t(pushOn ? "Push notifications are on. Change them in your phone's Settings." : "Push notifications are off. Turn them on in your phone's Settings to hear when your file moves.")}</Text> : undefined}
         renderSectionHeader={({ section }) => <View style={{ marginTop: S.xl }}><SectionHeader title={section.title} /></View>}
         renderItem={({ item: n, index, section }) => {
           const first = index === 0, last = index === section.data.length - 1;
