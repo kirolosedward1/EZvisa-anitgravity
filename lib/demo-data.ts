@@ -94,7 +94,7 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       exit_date: "2026-06-22",
       duration_days: 13,
       has_passport: true,
-      has_photos: false,
+      has_photos: true,
       has_bank_statements: false,
       has_employment_proof: false,
       has_accommodation: false,
@@ -103,6 +103,14 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
       application_status: "submitted",
       payment_status: "paid",
       payment_amount: 249,
+      // Passport and residence visa are in; the photo was sent back (DEMO_DOCUMENT_REVIEWS) and needs a new file.
+      additional_notes: JSON.stringify({
+        uploads: [
+          { type: "passportCopy", path: "demo/passport.pdf", name: "passport-sara.pdf", at: "2026-03-10T10:41:00.000Z" },
+          { type: "residencyCopy", path: "demo/residency.jpg", name: "IMG_4471.jpg", at: "2026-03-10T10:43:00.000Z" },
+          { type: "photo", path: "demo/photo.jpg", name: "photo.jpg", at: "2026-03-10T10:45:00.000Z" },
+        ],
+      }),
       created_at: "2026-03-10T08:15:00.000Z",
       updated_at: "2026-03-10T08:15:00.000Z",
     },
@@ -183,6 +191,20 @@ export const DEMO_APPLICATIONS: Record<string, VisaApplication[]> = {
     },
   ],
 };
+
+/** Review rows of the demo cases (same shape as the document_reviews table). */
+export const DEMO_DOCUMENT_REVIEWS: Record<string, { document_type: string; status: string; note: string | null; reviewed_at: string }[]> = {
+  "demo-app-pending": [
+    { document_type: "passportCopy", status: "approved", note: null, reviewed_at: "2026-03-11T09:00:00.000Z" },
+    { document_type: "residencyCopy", status: "checking", note: null, reviewed_at: "2026-03-11T09:05:00.000Z" },
+    {
+      document_type: "photo",
+      status: "rejected",
+      note: "The background is not plain white and the photo is cropped at the chin. Please retake it against a white wall, face centred, no glasses.",
+      reviewed_at: "2026-03-11T09:10:00.000Z",
+    },
+  ],
+}
 
 /** Saved travellers of the demo accounts (GET /api/travellers never reads or writes the database for them). */
 export const DEMO_TRAVELLERS: Record<string, Traveller[]> = {

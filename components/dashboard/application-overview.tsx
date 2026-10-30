@@ -14,6 +14,7 @@ import { customerText, statusText } from "@/lib/translations/customer"
 import { getStatusLabel, isPaid, type Stage } from "@/lib/application-status"
 import { whoseTurn } from "@/lib/dashboard-state"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import type { DocumentReviews } from "@/lib/document-reviews"
 import type { ReactNode } from "react"
 
 function shortDate(value: string, arabic: boolean, withYear = true): ReactNode {
@@ -29,7 +30,7 @@ function travelDates(app: VisaApplication, arabic: boolean): ReactNode | null {
 }
 
 /** The case card: destination photo, flag and reference, status and whose turn it is, then the one next step. */
-export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplication; stage: Stage; arabic: boolean }) {
+export function ApplicationOverview({ app, stage, arabic, reviews }: { app: VisaApplication; stage: Stage; arabic: boolean; reviews?: DocumentReviews }) {
   const locale = arabic ? "ar" : "en"
   const t = (key: Parameters<typeof customerText>[1], values?: Record<string, string | number>) => customerText(locale, key, values)
   const countryEn = app.destination_country || "Schengen"
@@ -37,7 +38,7 @@ export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplicati
   const photo = destinations.find((d) => d.name === countryEn)?.image
   const reference = app.id ? referenceOf(app.id) : ""
   const status = getStatusLabel(app)
-  const turn = whoseTurn(app)
+  const turn = whoseTurn(app, reviews)
   const paid = isPaid(app)
   const dates = travelDates(app, arabic)
 
@@ -112,7 +113,7 @@ export function ApplicationOverview({ app, stage, arabic }: { app: VisaApplicati
       </div>
 
       <div className="m-5 mt-5 sm:m-6 sm:mt-5">
-        <NextStepCard app={app} stage={stage} arabic={arabic} />
+        <NextStepCard app={app} stage={stage} arabic={arabic} reviews={reviews} />
       </div>
     </section>
   )

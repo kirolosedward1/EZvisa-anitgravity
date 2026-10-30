@@ -3,6 +3,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import crypto from "crypto"
 import { checkRateLimit, getClientIp, rateLimitHeaders, RATE_LIMITS } from "@/lib/rate-limit"
 import { isDemoToken, getDemoApplicationByToken } from "@/lib/demo-data"
+import { loadDocumentReviews, uploadRecords } from "@/lib/document-reviews-server"
 import {
   DOC_BUCKET,
   DOC_FLAG,
@@ -42,7 +43,11 @@ async function bearerEmail(request: NextRequest, supabase: SupabaseClient): Prom
 }
 
 /** What the upload pages need: the row's flags plus which flags this case actually requires (NOC only for employees). */
-function statusView(row: Record<string, unknown>) {
+/**
+ * What the upload pages and the app see of a case. `uploads` (file name and time per upload, no storage path) and
+ * `reviews` (latest document_reviews row per type; empty until migration 003 is applied) are additive fields.
+ */
+async function statusView(row: Record<string, unknown>) {
   const required = requiredFlags(continueAnswers(row as { additional_notes?: string | null; passport_number?: string | null }).employmentStatus)
   return {
     id: row.id,
@@ -56,7 +61,14 @@ function statusView(row: Record<string, unknown>) {
     payment_status: row.payment_status,
     tracking_token: row.tracking_token,
     required,
+    uploads: uploadRecords(row.additional_notes as string | null | undefined),
+    reviews: await loadDocumentReviews(typeof row.id === "string" ? row.id : null),
   }
+}
+
+/** Demo cases return their whole row, as before, plus the same uploads and reviews fields. */
+async function demoView(demoApp: NonNullable<ReturnType<typeof getDemoApplicationByToken>>) {
+  return { ...demoApp, required: requiredFlags("employed"), uploads: uploadRecords(demoApp.additional_notes), reviews: await loadDocumentReviews(demoApp.id) }
 }
 
 export async function POST(request: NextRequest) {
@@ -182,13 +194,13 @@ export async function GET(request: NextRequest) {
 
     if (token && isDemoToken(token)) {
       const demoApp = getDemoApplicationByToken(token)
-      if (demoApp) return NextResponse.json({ success: true, app: { ...demoApp, required: requiredFlags("employed") } })
+      if (demoApp) return NextResponse.json({ success: true, app: await demoView(demoApp) })
     }
 
     const supabase = serviceClient()
     if (!supabase) {
       const demoApp = token ? getDemoApplicationByToken(token) : null
-      if (demoApp) return NextResponse.json({ success: true, app: { ...demoApp, required: requiredFlags("employed") } })
+      if (demoApp) return NextResponse.json({ success: true, app: await demoView(demoApp) })
       return NextResponse.json({ error: "Storage/Database not configured" }, { status: 500 })
     }
 
@@ -201,16 +213,16 @@ export async function GET(request: NextRequest) {
       if (error || !row || String(row.email ?? "").toLowerCase() !== userEmail) {
         return NextResponse.json({ error: "Application not found" }, { status: 404 })
       }
-      return NextResponse.json({ success: true, app: statusView(row) })
+      return NextResponse.json({ success: true, app: await statusView(row) })
     }
 
     const { data: row, error } = await supabase.from("visa_applications").select(APP_COLUMNS).eq("tracking_token", token).single()
     if (error || !row) {
       const demoApp = getDemoApplicationByToken(token as string)
-      if (demoApp) return NextResponse.json({ success: true, app: { ...demoApp, required: requiredFlags("employed") } })
+      if (demoApp) return NextResponse.json({ success: true, app: await demoView(demoApp) })
       return NextResponse.json({ error: "Application not found" }, { status: 404 })
     }
-    return NextResponse.json({ success: true, app: statusView(row) })
+    return NextResponse.json({ success: true, app: await statusView(row) })
   } catch {
     return NextResponse.json({ error: "Server error during status check" }, { status: 500 })
   }

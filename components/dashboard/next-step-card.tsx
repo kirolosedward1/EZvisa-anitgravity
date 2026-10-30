@@ -10,15 +10,16 @@ import { customerText, type CustomerKey } from "@/lib/translations/customer"
 import { getCaseTrackingWhatsAppUrl } from "@/lib/whatsapp"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import type { ReactNode } from "react"
+import type { DocumentReviews } from "@/lib/document-reviews"
 
 type NextStep = { title: string; body: string; primary?: ReactNode; secondary?: ReactNode; pose: GlobiPose | null }
 
 /** One case, one next action: a title, one primary button and at most one secondary action. */
-export function NextStepCard({ app, stage, arabic }: { app: VisaApplication; stage: Stage; arabic: boolean }) {
+export function NextStepCard({ app, stage, arabic, reviews }: { app: VisaApplication; stage: Stage; arabic: boolean; reviews?: DocumentReviews }) {
   const locale = arabic ? "ar" : "en"
   const t = (key: CustomerKey, values?: Record<string, string | number>) => customerText(locale, key, values)
   const token = app.tracking_token ?? ""
-  const { missing, total } = customerDocuments(app)
+  const { missing, total } = customerDocuments(app, reviews)
   const details = isPaid(app) && detailsMissing(app) && !!app.id
   const finishDetails = (variant: "default" | "outline") => (
     <Button asChild variant={variant}>
@@ -30,7 +31,8 @@ export function NextStepCard({ app, stage, arabic }: { app: VisaApplication; sta
   )
 
   const step = ((): NextStep => {
-    switch (stage) {
+    // A document sent back for a new file brings the case back to the customer even while it sits in review.
+    switch (stage === "review" && missing.length > 0 ? "documents" : stage) {
       case "payment":
         return {
           title: t("dash.payTitle"),

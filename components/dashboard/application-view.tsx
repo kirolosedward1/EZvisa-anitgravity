@@ -10,6 +10,7 @@ import { getSessionUser } from "@/lib/applications"
 import { ownsApplication } from "@/lib/appointment"
 import { customerProgress, getStage, isPaid } from "@/lib/application-status"
 import { applicationInsurance } from "@/lib/insurance"
+import { loadDocumentReviews } from "@/lib/document-reviews-server"
 import { requestLocale } from "@/lib/request-locale"
 import { customerText } from "@/lib/translations/customer"
 import type { VisaApplication } from "@/lib/types/visa-application"
@@ -42,6 +43,7 @@ export async function ApplicationView({
   const open = stage !== "rejected" && stage !== "cancelled"
   const progress = open ? customerProgress(app) : null
   const insurance = applicationInsurance(app.additional_notes)
+  const reviews = await loadDocumentReviews(app.id)
 
   return (
     <div className="ez-application-view flex flex-col gap-7">
@@ -49,15 +51,15 @@ export async function ApplicationView({
 
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-w-0 flex-col gap-5">
-          <ApplicationOverview app={app} stage={stage} arabic={arabic} />
+          <ApplicationOverview app={app} stage={stage} arabic={arabic} reviews={reviews} />
           <AppointmentCard app={app} arabic={arabic} showHelp={showHelp} />
-          <DocumentChecklist app={app} arabic={arabic} />
+          <DocumentChecklist app={app} arabic={arabic} reviews={reviews} />
           {showInsurance && app.id && isPaid(app) && open && (
             <InsuranceCard key={app.id} applicationId={app.id} initialValue={insurance} arabic={arabic} />
           )}
         </div>
         <aside className="flex min-w-0 flex-col gap-5" aria-label={customerText(locale, "case.aside")}>
-          {progress && <ProgressCard progress={progress} arabic={arabic} insurance={insurance} showInsurance={showInsurance} app={app} />}
+          {progress && <ProgressCard progress={progress} arabic={arabic} insurance={insurance} showInsurance={showInsurance} app={app} reviews={reviews} />}
           <CaseSummary app={app} stage={stage} showTrackingLink={showTrackingLink} allowDiscard={allowDiscard} arabic={arabic} />
           <SupportCard id={app.id} token={app.tracking_token ?? ""} destination={app.destination_country} stage={stage} />
         </aside>

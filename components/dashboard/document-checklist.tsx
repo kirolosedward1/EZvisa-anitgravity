@@ -8,6 +8,7 @@ import { customerText, type CustomerKey } from "@/lib/translations/customer"
 import { DOC_FLAG, PRICE_AED } from "@/lib/shared/wizard-contract"
 import { DOC_TITLE_KEY, customerDocuments } from "@/lib/dashboard-state"
 import type { VisaApplication } from "@/lib/types/visa-application"
+import type { DocumentReviews } from "@/lib/document-reviews"
 
 const PREPARED: CustomerKey[] = ["dash.prepCover", "dash.prepFlight", "dash.prepHotel", "dash.prepItinerary"]
 const PREPARED_FILE: CustomerKey[] = ["dash.prepCover", "dash.prepForm", "dash.prepFlight", "dash.prepHotel", "dash.prepDayPlan"]
@@ -151,14 +152,14 @@ function YourFile({ app, stage, arabic }: { app: VisaApplication; stage: Stage; 
 }
 
 /** The documents section under the next step, shaped by the stage. */
-export function DocumentChecklist({ app, arabic }: { app: VisaApplication; arabic: boolean }) {
+export function DocumentChecklist({ app, arabic, reviews }: { app: VisaApplication; arabic: boolean; reviews?: DocumentReviews }) {
   const stage = getStage(app)
   const token = app.tracking_token ?? ""
   if (stage === "cancelled") return null
   if (!isPaid(app)) return <BeforePayment app={app} arabic={arabic} />
   if (token && (stage === "documents" || stage === "review")) {
-    const { rows, status } = customerDocuments(app)
-    return <DocumentUploadPanel token={token} rows={rows} status={status} footer={<WePrepare arabic={arabic} />} />
+    const { rows, status, uploads } = customerDocuments(app, reviews)
+    return <DocumentUploadPanel token={token} rows={rows} status={status} reviews={reviews} uploads={uploads} footer={<WePrepare arabic={arabic} />} />
   }
   return <YourFile app={app} stage={stage} arabic={arabic} />
 }

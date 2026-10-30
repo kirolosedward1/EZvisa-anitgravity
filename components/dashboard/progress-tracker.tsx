@@ -9,6 +9,7 @@ import { customerText, type CustomerKey } from "@/lib/translations/customer"
 import type { InsurancePreference } from "@/lib/insurance"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
+import type { DocumentReviews } from "@/lib/document-reviews"
 
 type TrackerKey = StepKey | "insurance"
 
@@ -38,13 +39,13 @@ export function progressPosition(progress: CustomerProgress, showInsurance: bool
 }
 
 /** The line under each step: a date or count where the case has one, else the step's plain description. */
-function stepDetail(key: TrackerKey, state: StepState, arabic: boolean, app?: ApplicationLike, insurance?: InsurancePreference): ReactNode {
+function stepDetail(key: TrackerKey, state: StepState, arabic: boolean, app?: ApplicationLike, insurance?: InsurancePreference, reviews?: DocumentReviews): ReactNode {
   const locale = arabic ? "ar" : "en"
   const t = (k: CustomerKey, values?: Record<string, string | number>) => customerText(locale, k, values)
   const yourTurn = (text: string) => `${text} · ${t("prog.yourTurn")}`
   if (key === "insurance") return t(insurance === "quote" ? "step.insuranceQuote" : insurance === "own" ? "step.insuranceOwn" : "step.insuranceHint")
   if (!app) return t(STEP_COPY[key].hint)
-  const docs = customerDocuments(app)
+  const docs = customerDocuments(app, reviews)
   switch (key) {
     case "payment": {
       const amount = formatAedLabel(app.payment_amount || PRICE_AED, locale)
@@ -78,12 +79,14 @@ export function ProgressTracker({
   insurance,
   showInsurance = false,
   app,
+  reviews,
 }: {
   progress: CustomerProgress
   arabic: boolean
   insurance?: InsurancePreference
   showInsurance?: boolean
   app?: ApplicationLike
+  reviews?: DocumentReviews
 }) {
   const locale = arabic ? "ar" : "en"
   const steps = trackerSteps(showInsurance)
@@ -121,7 +124,7 @@ export function ProgressTracker({
                 {state === "done" && <span className="sr-only"> ({customerText(locale, "step.completed")})</span>}
                 {state === "current" && <span className="sr-only"> ({customerText(locale, "step.current")})</span>}
               </span>
-              <span className="text-xs text-muted-foreground">{stepDetail(step.key, state, arabic, app, insurance)}</span>
+              <span className="text-xs text-muted-foreground">{stepDetail(step.key, state, arabic, app, insurance, reviews)}</span>
             </span>
           </li>
         )
