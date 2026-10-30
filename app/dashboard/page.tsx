@@ -1,21 +1,18 @@
 import { Globi } from "@/components/globi/globi"
-import { redirectLocalized, requestLocale } from "@/lib/request-locale";
+import { requestLocale } from "@/lib/request-locale";
 import { LocaleLink } from "@/components/locale-link";
-import { cookies } from "next/headers";
 import { Plus } from "lucide-react";
-import { createServerClient } from "@/lib/supabase/server";
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon";
-import { isDemoEmail, getDemoApplicationsByEmail, DEMO_CONFIGS, type DemoScenario } from "@/lib/demo-data";
+import { type DemoScenario } from "@/lib/demo-data";
+import { SHOW_DEMO_ACCESS, loadCustomerApplications } from "@/lib/customer-applications";
 import { DemoModeBar } from "@/components/dashboard/demo-mode-bar";
 import { DemoLoginButtons } from "@/components/auth/demo-login-buttons";
 import { ApplicationView } from "@/components/dashboard/application-view";
 import { DashboardStarter } from "@/components/dashboard/dashboard-starter";
-import { visibleApplications } from "@/lib/active-applications";
 import { metadataFullName } from "@/lib/auth/apple-profile";
-import type { VisaApplication } from "@/lib/types/visa-application";
 import { SupportApplication } from "@/components/support-application";
 import { getStatusLabel } from "@/lib/application-status";
 import { attentionCount } from "@/lib/dashboard-state";
@@ -24,8 +21,6 @@ import { PRICE_AED } from "@/lib/shared/wizard-contract";
 import { customerText, type CustomerKey } from "@/lib/translations/customer";
 import { getWhatsAppUrl } from "@/lib/whatsapp";
 
-// Demo shortcuts are for previews and local testing, not real customers
-const SHOW_DEMO_ACCESS = process.env.VERCEL_ENV !== "production";
 
 const HOW_STEPS: [CustomerKey, CustomerKey][] = [
   ["empty.step1", "empty.step1Body"],
@@ -38,82 +33,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const arabic = (await requestLocale()) === "ar";
   const locale = arabic ? "ar" : "en";
   const t = (key: CustomerKey, values?: Record<string, string | number>) => customerText(locale, key, values);
-  const cookieStore = await cookies();
   const resolvedSearchParams = await searchParams;
-  const demoCookie = cookieStore.get("ez_demo_session");
-  const demoParam = resolvedSearchParams.demo;
-
-  let demoSession: { email: string; name: string; scenario: DemoScenario } | null = null;
-  if (demoCookie?.value) {
-    try {
-      const parsed = JSON.parse(demoCookie.value);
-      // The cookie is client-editable: only honour it for demo accounts
-      const config = DEMO_CONFIGS[parsed?.scenario as DemoScenario];
-      if (config && parsed.email === config.email) {
-        demoSession = parsed;
-      }
-    } catch {
-      // ignore JSON parse error
-    }
-  } else if (demoParam && demoParam in DEMO_CONFIGS) {
-    const config = DEMO_CONFIGS[demoParam as DemoScenario];
-    demoSession = {
-      email: config.email,
-      name: config.name,
-      scenario: config.id,
-    };
-  }
-
-  let user: { email?: string; user_metadata?: any } | null = null;
-  // Preview builds only: ?demo=empty shows the dashboard of an account with no applications.
-  const emptyPreview = SHOW_DEMO_ACCESS && demoParam === "empty";
-
-  if (emptyPreview) {
-    user = { email: "demo.empty@ezvisa.net", user_metadata: { full_name: "Demo Visitor" } };
-  } else if (demoSession) {
-    user = {
-      email: demoSession.email,
-      user_metadata: { full_name: demoSession.name },
-    };
-  } else {
-    try {
-      const supabase = await createServerClient();
-      const { data } = await supabase.auth.getUser();
-      user = data.user;
-    } catch {
-      // Fallback if supabase client fails
-    }
-  }
-
-  if (!user || !user.email) {
-    redirectLocalized("/login?next=/dashboard", arabic);
-  }
-
-  const isDemo = isDemoEmail(user.email);
-  let relatedApps: VisaApplication[] = [];
-
-  if (emptyPreview) {
-    relatedApps = [];
-  } else if (isDemo) {
-    relatedApps = getDemoApplicationsByEmail(user.email);
-  } else {
-    try {
-      const supabase = await createServerClient();
-      const { data, error: relatedError } = await supabase
-        .from("visa_applications")
-        .select("*")
-        .eq("email", user.email)
-        .order("created_at", { ascending: false });
-
-      if (!relatedError && data && data.length > 0) {
-        relatedApps = data;
-      }
-    } catch {
-      // Fallback
-    }
-  }
-
-  relatedApps = visibleApplications(relatedApps);
+  const { user, demoSession, isDemo, apps: relatedApps } = await loadCustomerApplications({ demoParam: resolvedSearchParams.demo, arabic, next: "/dashboard" });
 
   const appName = typeof relatedApps[0]?.full_name === "string" ? relatedApps[0].full_name : "";
   const firstName = (metadataFullName(user.user_metadata, user.email) || appName).split(" ")[0];
@@ -233,6 +154,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             showTrackingLink
             showInsurance
             allowDiscard={!isDemo}
+            allAppsHref="/dashboard/applications"
           />
         </div>
       </main>

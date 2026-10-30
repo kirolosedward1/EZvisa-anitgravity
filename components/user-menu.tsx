@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import {
   FileText,
   LayoutDashboard,
+  List,
   LifeBuoy,
   LogIn,
   LogOut,
@@ -137,7 +138,8 @@ export function UserMenu() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator className="my-1.5" />
             <DropdownMenuGroup>
-              <MenuLink href="/dashboard" icon={LayoutDashboard} en="My applications" ar="طلباتي" />
+              <MenuLink href="/dashboard" icon={LayoutDashboard} en="Dashboard" ar="لوحة التحكم" />
+              <MenuLink href="/dashboard/applications" icon={List} en="My applications" ar="طلباتي" />
               <MenuLink href="/documents" icon={FileText} en="Required documents" ar="المستندات المطلوبة" />
               <MenuLink href="/apply" icon={PlusCircle} en="New application" ar="طلب جديد" />
               {!viewer.demo && <MenuLink href="/account" icon={Settings} en="Account settings" ar="إعدادات الحساب" />}

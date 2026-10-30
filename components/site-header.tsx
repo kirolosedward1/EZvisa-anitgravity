@@ -20,6 +20,7 @@ import { citizenshipName, toCitizenshipIso } from "@/lib/nationalities"
 import { HOMEPAGE_NATIONALITIES } from "@/lib/shared/wizard-contract"
 import { supportMessage, useSupportCase } from "@/lib/support-context"
 import { useSiteLocale } from "@/components/locale-provider"
+import { HeaderLanguageSwitch } from "@/components/language-toggle"
 import { getWhatsAppUrl } from "@/lib/whatsapp"
 
 const nationalities = HOMEPAGE_NATIONALITIES
@@ -30,12 +31,18 @@ const MINIMAL_PREFIXES = ["/apply", "/continue", "/appointment", "/payment-succe
 const ACCOUNT_PREFIXES = ["/dashboard", "/account", "/track", "/receipt", "/trip"]
 
 const ACCOUNT_NAV = [
-  { href: "/dashboard", en: "My applications", ar: "طلباتي" },
+  { href: "/dashboard", en: "Dashboard", ar: "لوحة التحكم" },
+  { href: "/dashboard/applications", en: "My applications", ar: "طلباتي" },
   { href: "/apply", en: "New application", ar: "طلب جديد" },
   { href: "/help", en: "Help center", ar: "مركز المساعدة" },
 ]
 
 const matches = (path: string, prefixes: string[]) => prefixes.some((p) => path === p || path.startsWith(`${p}/`))
+/** Dashboard covers the case pages (one case, its upload desk, tracking, continue); My applications is the table. */
+const accountNavActive = (path: string, href: string) =>
+  href === "/dashboard"
+    ? matches(path, ["/dashboard", "/track", "/continue"]) && !matches(path, ["/dashboard/applications"])
+    : matches(path, [href])
 
 interface SiteHeaderProps {
   hideNavigation?: boolean
@@ -56,6 +63,11 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
   const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
   const isWizardPage = path.startsWith("/apply")
   const { viewer } = useViewer()
+  // Signed in (or in the demo): the logo opens the dashboard from every page; signed out it goes home.
+  const logoHref = viewer ? "/dashboard" : "/"
+  const logoLabel = rawPathname === "/ar" || rawPathname?.startsWith("/ar/")
+    ? viewer ? "إيزي فيزا، طلباتي" : "الصفحة الرئيسية لإيزي فيزا"
+    : viewer ? "EZvisa, my applications" : "EZvisa home"
   const isMinimal = matches(path, MINIMAL_PREFIXES)
   // Signed-in customers get the short account header everywhere; customer pages use it before the check finishes.
   const isAccount = !isMinimal && (matches(path, ACCOUNT_PREFIXES) || !!viewer)
@@ -260,7 +272,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
     return (
       <header ref={headerRef} className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-4">
-          <LocaleLink href="/" className="flex shrink-0 items-center" aria-label="EZvisa home">
+          <LocaleLink href={logoHref} className="flex shrink-0 items-center" aria-label={logoLabel}>
             <Image src="/images/logo-main.png" alt="EZvisa Logo" width={120} height={38} className="h-7 w-auto" priority />
           </LocaleLink>
           <div className="flex items-center gap-2">
@@ -302,7 +314,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
               ? "bg-background border border-border/60 shadow-lg shadow-black/5" 
               : "bg-transparent border-transparent"
           }`}>
-            <LocaleLink href="/" className="flex items-center flex-shrink-0">
+            <LocaleLink href={logoHref} className="flex items-center flex-shrink-0" aria-label={logoLabel}>
               <Image 
                 src="/images/logo-main.png" 
                 alt="EZvisa Logo" 
@@ -314,9 +326,9 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
             </LocaleLink>
 
             {isAccount && !hideNavigation && (
-              <nav className="hidden lg:flex items-center gap-1 px-1" aria-label="Account">
+              <nav className="hidden lg:flex items-center gap-1 px-1 ms-2 me-auto" aria-label="Account">
                 {ACCOUNT_NAV.map((item) => {
-                  const active = item.href === "/dashboard" ? matches(path, ["/dashboard", "/track", "/continue"]) : matches(path, [item.href])
+                  const active = accountNavActive(path, item.href)
                   return (
                     <LocaleLink
                       key={item.href}
@@ -335,7 +347,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
             )}
 
             {isFull && !hideNavigation && (
-              <nav className="hidden xl:flex items-center gap-1.5 px-1">
+              <nav className="hidden xl:flex items-center gap-1.5 px-1 ms-2 me-auto">
                 {navItems.map((item) => (
                   <div 
                     key={item.id} 
@@ -459,6 +471,8 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
                 </AnimatePresence>
               </div>
 
+              <HeaderLanguageSwitch />
+
               {!isMinimal && <UserMenu />}
 
               {isFull && (
@@ -569,7 +583,7 @@ export function SiteHeader({ hideNavigation = false, forceBackground = false, wi
                   )}
                   <div className="flex flex-col gap-1">
                     {[...ACCOUNT_NAV, ...(viewer && !viewer.demo ? [{ href: "/account", en: "Account settings", ar: "إعدادات الحساب" }] : [])].map((item) => {
-                      const active = item.href === "/dashboard" ? matches(path, ["/dashboard", "/track", "/continue"]) : matches(path, [item.href])
+                      const active = accountNavActive(path, item.href)
                       return (
                         <LocaleLink
                           key={item.href}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { groupTrips, tripKey, tripMates } from "./trips.ts"
+import { groupTrips, recentEntries, tripKey, tripMates } from "./trips.ts"
 
 const base = { email: "a@x.com", destination_country: "Italy", entry_date: "2026-07-01", exit_date: "2026-07-14", payment_status: "paid", application_status: "reviewing" }
 const apps = [
@@ -26,4 +26,14 @@ test("grouping keeps order and puts the trip where its first case was", () => {
 test("trip mates include the case itself, or nothing outside a trip", () => {
   assert.deepEqual(tripMates(apps[2], apps).map((a) => a.id), ["1", "3"])
   assert.deepEqual(tripMates(apps[1], apps), [])
+})
+
+test("recent entries: first five, the open case swapped in when it is older", () => {
+  const many = Array.from({ length: 8 }, (_, i) => ({ ...base, id: `m${i}`, destination_country: `C${i}` }))
+  const entries = groupTrips(many)
+  const ids = (list: ReturnType<typeof recentEntries>) => list.map((e) => (e.kind === "single" ? e.app.id : e.key))
+  assert.deepEqual(ids(recentEntries(entries, "m1", 5)), ["m0", "m1", "m2", "m3", "m4"])
+  assert.deepEqual(ids(recentEntries(entries, "m7", 5)), ["m0", "m1", "m2", "m3", "m7"])
+  assert.deepEqual(ids(recentEntries(entries, undefined, 5)), ["m0", "m1", "m2", "m3", "m4"])
+  assert.equal(recentEntries(entries.slice(0, 3), "m7", 5).length, 3)
 })

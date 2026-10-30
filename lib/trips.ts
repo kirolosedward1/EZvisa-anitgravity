@@ -60,3 +60,15 @@ export function tripMates<T extends TripApp>(app: T, apps: T[]): T[] {
   const group = apps.filter((a) => tripKey(a) === key)
   return group.length > 1 ? group : []
 }
+
+/**
+ * The first `limit` switcher entries (newest first), swapping the last one for the open case's entry when that case
+ * is older, so the customer always sees where they are.
+ */
+export function recentEntries<T extends TripApp>(entries: SwitcherEntry<T>[], activeId: string | undefined, limit: number): SwitcherEntry<T>[] {
+  if (entries.length <= limit) return entries
+  const isActive = (entry: SwitcherEntry<T>) => (entry.kind === "single" ? entry.app.id === activeId : entry.apps.some((a) => a.id === activeId))
+  const shown = entries.slice(0, limit)
+  const active = activeId ? entries.find(isActive) : undefined
+  return active && !shown.includes(active) ? [...shown.slice(0, limit - 1), active] : shown
+}

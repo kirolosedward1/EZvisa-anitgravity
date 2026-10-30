@@ -3,6 +3,7 @@
 import { WhatsAppIcon } from "@/components/icons/whatsapp-icon"
 import { Image } from "@/components/image"
 import { useState } from "react"
+import { useViewer } from "@/components/user-menu"
 import { usePathname } from "next/navigation"
 import { ChevronDown, ArrowUpRight } from "lucide-react"
 
@@ -174,6 +175,8 @@ export function Footer({
   const pathname = usePathname()
   const arabic = useSiteLocale() === "ar"
   const path = (pathname || "/").replace(/^\/ar(?=\/|$)/, "") || "/"
+  // Same rule as the header: signed in, the logo opens the dashboard.
+  const { viewer } = useViewer()
   if (ACCOUNT_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) return <AccountFooter className={className} />
 
   const toggleSection = (title: string) => {
@@ -207,7 +210,7 @@ export function Footer({
 
               {/* Brand block */}
               <div>
-                <LocaleLink href="/" className="inline-block mb-8">
+                <LocaleLink href={viewer ? "/dashboard" : "/"} className="inline-block mb-8">
                   <Image
                     src="/images/logo-main.png"
                     alt="EZvisa"

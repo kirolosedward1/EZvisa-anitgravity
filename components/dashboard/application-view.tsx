@@ -36,6 +36,7 @@ export async function ApplicationView({
   showTrackingLink,
   allowDiscard,
   showInsurance = false,
+  allAppsHref,
 }: {
   app: VisaApplication
   relatedApps: VisaApplication[]
@@ -43,6 +44,8 @@ export async function ApplicationView({
   showTrackingLink?: boolean
   allowDiscard?: boolean
   showInsurance?: boolean
+  /** The switcher's "View all applications" link (the dashboard's table page); none on the tracking page. */
+  allAppsHref?: string
 }) {
   const stage = getStage(app)
   const arabic = (await requestLocale()) === "ar"
@@ -59,7 +62,7 @@ export async function ApplicationView({
 
   return (
     <div className="ez-application-view flex flex-col gap-7">
-      <ApplicationSwitcher apps={relatedApps} activeId={app.id} hrefFor={hrefFor} arabic={arabic} />
+      <ApplicationSwitcher apps={relatedApps} activeId={app.id} hrefFor={hrefFor} arabic={arabic} allHref={allAppsHref} />
 
       <div className="grid items-start gap-7 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="flex min-w-0 flex-col gap-5">
