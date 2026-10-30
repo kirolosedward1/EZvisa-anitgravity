@@ -8,7 +8,7 @@ Implements the "EZvisa dashboard redesign" canvas (13 artboards) in five phases 
 | 2. Upload desk | `a34e0b0` | Shared upload desk for `/dashboard/upload` and `/track/[token]/upload`; per-document states and the specialist's note; `document_reviews` migration. |
 | 3. Account settings | `d698733` | Profile card, section rail, ruled settings, saved travellers with passport-expiry warning, notification switches, sign-in and language. |
 | 4. Review, Appointment, Family | `9b19ff2` | "What we need from you", activity log and `application_events` migration, specialist name, appointment countdown and checklist, family trips. |
-| 5. Mobile and Arabic | this commit | Collapsible progress card, sticky action bar, compact case card, chip switcher scrolls to the open case, accessibility fixes, these screenshots, DESIGN.md section 4. |
+| 5. Mobile and Arabic | `a661157` | Collapsible progress card, sticky action bar, compact case card, chip switcher scrolls to the open case, accessibility fixes, these screenshots, DESIGN.md section 4. |
 
 ## Screenshots
 
