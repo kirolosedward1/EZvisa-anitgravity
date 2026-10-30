@@ -97,7 +97,7 @@ export const QUESTIONS: Question[] = [
   // Passport number: asked after payment only (website traveller step and CLAUDE.md "Passport number stays after
   // payment"); see passportNumberAfter. A saved traveller still carries it, so it is never asked twice.
   // Email + phone on one screen. Signed in: the account email is used and only the phone is shown (see accountEmail).
-  { id: "contact", explain: { why: "So the team can reach you about your file. WhatsApp is the fastest.", usedFor: "Updates about this application", sharedWith: "EZvisa only" }, ask: "Best number to reach you?", pose: "phone", step: "personal", keys: ["phone", "phoneLocal", "phoneCountry", "whatsappOptIn"], label: "Phone Number", required: true, kind: "contact" },
+  { id: "contact", explain: { why: "So the team can reach you about your file. WhatsApp is the fastest.", usedFor: "Updates about this application", sharedWith: "EZvisa only" }, ask: (f) => (accountEmail ? "Best number to reach you?" : "Where can we reach you?"), pose: "phone", step: "personal", keys: ["email", "phone", "phoneLocal", "phoneCountry", "whatsappOptIn"], label: "Phone Number", required: true, kind: "contact" },
   { id: "travellingWith", explain: { why: "A spouse travelling with you gets their own application in the same file.", usedFor: "Price, number of applications", sharedWith: "EZvisa only" }, view: {"layout": "tiles", "labels": {"no": "Just me", "yes": "With my spouse"}, "subs": {"no": "{price} AED.", "yes": "Two applications in one file. {price2} AED."}}, ask: "Who's travelling with you?", pose: "companion", step: "personal", keys: ["spouseAccompanying"], label: "Travelling with", required: true, kind: "choice",
     options: [{ value: "no", label: "Just me" }, { value: "yes", label: "With my spouse" }],
     hint: "With your spouse: two applicants. Spouse details are asked after payment.",
@@ -227,8 +227,9 @@ export const firstError = (q: Question, f: WizardForm) => Object.values(question
  *  WhatsApp opt-in; neither is an answer, so the screen stays open until there is an email and a phone number.
  *  Signed in, the account email counts (the email field is not shown). */
 export const isAnswered = (q: Question, f: WizardForm) => {
-  // The email is the account's (canvas: the account is created at Review & pay), so Contact asks the phone only.
-  if (q.kind === "contact") return !!(f.phone.trim() || f.phoneLocal.trim());
+  // Signed in, the email is the account's and Contact asks the phone only. A guest pays first and creates the account
+  // after payment with this email (owner, 30 Oct), so the guest gives both.
+  if (q.kind === "contact") return !!(f.phone.trim() || f.phoneLocal.trim()) && (!!accountEmail || !!f.email.trim());
   return q.keys.some((k) => { const v = f[k]; return Array.isArray(v) ? v.length > 0 : typeof v === "boolean" ? false : !!String(v ?? "").trim(); });
 };
 /** First question that still has an error (null when the whole application is valid). */

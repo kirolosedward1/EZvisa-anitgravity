@@ -1209,4 +1209,10 @@ export const AR: Record<string, string> = {
   "Hotel confirmation": "تأكيد الفندق",
   "The printed EZvisa file (border officers may ask)": "ملف EZvisa مطبوعًا (قد يطلبه موظفو الحدود)",
   "Euros or a travel card": "يورو أو بطاقة سفر",
+  // ---- Pay first, account after payment ----
+  "Where can we reach you?": "كيف نتواصل معك؟",
+  "Your receipt goes here. You create your account with it after paying.": "يصلك الإيصال على هذا البريد. تنشئ حسابك به بعد الدفع.",
+  "Use {e} so this application is in your account. Then add your details and upload documents.": "استخدم {e} ليكون هذا الطلب في حسابك. ثم أضف بياناتك وارفع المستندات.",
+  "Use {e} so this application is in your account. You can pay from there any time.": "استخدم {e} ليكون هذا الطلب في حسابك. يمكنك الدفع من هناك في أي وقت.",
+  "the email on your application": "البريد المسجل في طلبك",
 };

@@ -25,6 +25,31 @@ export const GLOBI_STILLS: Record<GlobiPose, number> = {
   magnify: require("./magnify.webp"),
 };
 
+/** Transparent animated WebP, one per pose (played with expo-image). */
+export const GLOBI_ANIMS: Record<GlobiPose, number> = {
+  welcome: require("./anim/welcome.webp"),
+  destination: require("./anim/destination.webp"),
+  passport: require("./anim/passport.webp"),
+  checklist: require("./anim/checklist.webp"),
+  calendar: require("./anim/calendar.webp"),
+  shield: require("./anim/shield.webp"),
+  waiting: require("./anim/waiting.webp"),
+  celebrate: require("./anim/celebrate.webp"),
+  companion: require("./anim/companion.webp"),
+  documents: require("./anim/documents.webp"),
+  travel: require("./anim/travel.webp"),
+  thinking: require("./anim/thinking.webp"),
+  phone: require("./anim/phone.webp"),
+  writing: require("./anim/writing.webp"),
+  wallet: require("./anim/wallet.webp"),
+  lock: require("./anim/lock.webp"),
+  plane: require("./anim/plane.webp"),
+  hotel: require("./anim/hotel.webp"),
+  stamp: require("./anim/stamp.webp"),
+  puzzled: require("./anim/puzzled.webp"),
+  magnify: require("./anim/magnify.webp"),
+};
+
 /** HEVC-with-alpha clips (iOS). Empty until the script has run on macOS. */
 export const GLOBI_CLIPS: Partial<Record<GlobiPose, number>> = {
 };

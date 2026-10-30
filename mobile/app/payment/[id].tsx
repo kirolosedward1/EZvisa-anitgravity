@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Card, HeaderIconButton, Icon, InfoNote, PrimaryButton, SecondaryButton, Text } from "../../components/ui";
 import { GlobiPose, GLOBI_SIZE, type GlobiPose as Pose } from "../../components/globi/GlobiPose";
 import { PushAsk, shouldAskPush } from "../../components/payment/PushAsk";
+import { AuthForm } from "../../components/AuthForm";
 import { devPaymentPreview, paymentPhrase, paymentWaitPhase, usePaymentWaitClock, PAYMENT_SLOW_MS, PAYMENT_STALL_MS } from "../../components/payment/PaymentWait";
 import { useColors, S } from "../../lib/theme";
 import { referenceOf } from "../../lib/wizard";
@@ -48,7 +49,7 @@ function unsettled(s: Signals, returned: string): State {
 }
 
 export default function PaymentResult() {
-  const { id, returned: returnedParam, preview: previewParam } = useLocalSearchParams<{ id: string; returned?: string; preview?: string | string[] }>();
+  const { id, returned: returnedParam, preview: previewParam, email: guestEmail } = useLocalSearchParams<{ id: string; returned?: string; preview?: string | string[]; email?: string }>();
   // Dev only (?preview=checking|slow|stalled|timers|success|late|failure). Ignored in production, and it never calls Ziina.
   const preview = devPaymentPreview(previewParam); const previewRef = useRef(preview);
   useEffect(() => { previewRef.current = preview; }, [preview]);
@@ -179,7 +180,7 @@ export default function PaymentResult() {
     checking: phase === "slow" ? pt("Still confirming with the payment gateway…") : t("Confirming with your bank. A few seconds."),
     paid: [amount != null ? `${amount} AED` : "", ref, clock(paidAt)].filter(Boolean).join(" · "),
     confirming: t("Updating your application. This can take a minute."),
-    pending: guest ? t("Sign in with the email you used to see the latest status.") : t("If you paid, it can take a minute to show. You don't need to stay here."),
+    pending: t("If you paid, it can take a minute to show. You don't need to stay here."),
     failed: t("You weren't charged. Try again, or pay on WhatsApp."),
     cancelled: t("Nothing was charged. Your answers are saved."),
     offline: t("I'll check your payment when you're back online"),
@@ -269,13 +270,13 @@ export default function PaymentResult() {
       {wa(t("Ask a person on WhatsApp"), "Hi EZvisa, my payment is still confirming.")}
     </>;
     if (state === "checking") return null;
-    if (received && guest) return <PrimaryButton title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} />;
+    if (received && guest) return null; // the account form above is the next step
     if (received) return <>
       <PrimaryButton title={needsEmp ? t("Continue application") : t("Upload documents")} onPress={next} testID="payment-continue" />
       {state === "paid" && <SecondaryButton title={t("View receipt")} onPress={then(() => router.replace(`/receipt/${id}`, { withAnchor: true }))} testID="payment-receipt" />}
     </>;
     if (state === "pending") return <>
-      {guest ? <PrimaryButton title={t("Sign in to continue")} onPress={() => router.replace({ pathname: "/auth", params: { mode: "signin" } })} /> : <PrimaryButton title={t("Check again")} onPress={verify} testID="payment-check" />}
+      <PrimaryButton title={t("Check again")} onPress={verify} testID="payment-check" />
       {wa(t("I paid but it isn't showing"), "Hi EZvisa, I paid but my payment isn't showing yet.")}
     </>;
     if (state === "failed") return <>
@@ -292,19 +293,44 @@ export default function PaymentResult() {
     </>;
   })();
   const done = ["paid", "confirming", "pending", "failed", "cancelled"].includes(state) && !stalled;
+  // A guest paid (or tried to) before having an account: create it now with the email on the application, so the case
+  // is theirs (ownership = the row's email). Once signed in, the screen re-checks and shows the signed-in next steps.
+  const askAccount = guest && state !== "checking" && state !== "offline";
+  const [authMode, setAuthMode] = useState<"signup" | "signin">("signup");
+  const wasGuest = useRef(guest);
+  useEffect(() => {
+    if (!session || !wasGuest.current) return;
+    wasGuest.current = false;
+    const prov = (session.user.app_metadata?.provider as string | undefined) ?? "email";
+    track("signup_at_pay", { method: prov === "apple" || prov === "google" ? prov : "email" });
+  }, [session]);
+  const accountCard = askAccount ? (
+    <Card padded testID="guest-account">
+      <View style={{ gap: S.md }}>
+        <View style={{ gap: 4 }}>
+          <Text variant="question" accessibilityRole="header">{authMode === "signup" ? t("Create your account") : t("Sign in")}</Text>
+          <Text variant="note" tone="secondary">{received
+            ? t("Use {e} so this application is in your account. Then add your details and upload documents.", { e: guestEmail || t("the email on your application") })
+            : t("Use {e} so this application is in your account. You can pay from there any time.", { e: guestEmail || t("the email on your application") })}</Text>
+        </View>
+        <AuthForm mode={authMode} onMode={setAuthMode} initialEmail={guestEmail || undefined} />
+      </View>
+    </Card>
+  ) : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: Platform.OS === "ios" ? S.sm : insets.top + S.sm }} testID="payment-result">
       <View style={{ height: 44, flexDirection: "row", justifyContent: "flex-end", alignItems: "center", paddingHorizontal: S.gutter }}>
         {done && <HeaderIconButton icon="xmark" label={t("Done")} onPress={received ? then(leave) : leave} testID="payment-done" />}
       </View>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center", gap: S.lg, paddingHorizontal: S.gutter, paddingBottom: S.lg }}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ flexGrow: 1, justifyContent: "center", gap: S.lg, paddingHorizontal: S.gutter, paddingBottom: S.lg }}>
         <View style={{ alignItems: "center", gap: S.sm }} accessibilityLiveRegion="polite">
-          <GlobiPose pose={stalled ? "thinking" : GLOBI[state]} size={GLOBI_SIZE.result} animated={state === "checking" || received} />
+          <GlobiPose pose={stalled ? "thinking" : GLOBI[state]} size={askAccount ? GLOBI_SIZE.home : GLOBI_SIZE.result} animated={state === "checking" || received} />
           <Text variant="resultTitle" center accessibilityRole="header" testID="payment-state">{title}</Text>
           {!!line && <Text variant="callout" tone="secondary" center style={{ maxWidth: 320 }}>{line}</Text>}
         </View>
         {body}
+        {accountCard}
       </ScrollView>
       <View style={{ paddingHorizontal: S.gutter, paddingBottom: Math.max(insets.bottom, S.lg), gap: 10 }}>
         {actions}

@@ -1,19 +1,20 @@
 // Globi, the EZvisa globe character: the supplied transparent clips, one per pose (components/globi/poses.ts).
 //
-// iOS cannot play transparent WebM, so each clip ships as HEVC with alpha (`.mov`, 480×480, scripts/globi-convert.sh)
-// and plays muted and looping in expo-video. The transparent `.webp` first frame is the poster until the clip renders,
-// and the only image when Reduce Motion is on, when "Globi animations" is off, when `animated` is false, or before the
-// clips have been converted. Globi faces the text: he is mirrored in right-to-left layouts.
+// He moves with a transparent animated WebP per pose (assets/globi/anim, 320×320 at 12 fps, scripts/globi-convert.sh),
+// played by expo-image on iOS, Android and web: no extra native module, so it ships in an over-the-air update. When the
+// HEVC-with-alpha `.mov` clips exist (a macOS run of the script) and the build has expo-video, those play instead (smoother,
+// 24 fps). The transparent `.webp` first frame is the only image when Reduce Motion is on, when "Globi animations" is off
+// or when `animated` is false. Globi faces the text: he is mirrored in right-to-left layouts.
 // Canvas rules: no gradients, glows or sparkles around him; one Globi per screen; never on the icon, splash or receipt.
-import React, { useEffect, useState } from "react";
-import { AppState, I18nManager, Pressable, StyleProp, View, ViewStyle } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import { AppState, I18nManager, Image as RNImage, Platform, Pressable, StyleProp, View, ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import { requireOptionalNativeModule } from "expo";
 import { useIsFocused } from "expo-router";
 import { useReducedMotion } from "../../lib/motion";
 import { useGlobiAnimations } from "../../lib/globiMotion";
 import { useT } from "../../lib/i18n";
-import { GLOBI_CLIPS, GLOBI_STILLS } from "../../assets/globi";
+import { GLOBI_ANIMS, GLOBI_CLIPS, GLOBI_STILLS } from "../../assets/globi";
 import type { GlobiPose as Pose } from "./poses";
 
 // expo-video is loaded only when this build has its native module: an over-the-air update can reach a build made
@@ -52,7 +53,8 @@ export function GlobiPose({ pose, size, animated = true, onPress, accessibilityL
   const reduce = useReducedMotion(); const allowed = useGlobiAnimations(); const { rtl } = useT();
   const flip = mirrored ?? (rtl || I18nManager.isRTL);
   const clip = GLOBI_CLIPS[pose];
-  const play = animated && allowed && !reduce && clip != null && video != null;
+  const move = animated && allowed && !reduce;
+  const play = move && clip != null && video != null; // the HEVC clip, when this build and the assets have it
   const [shown, setShown] = useState(false); // the clip has rendered its first frame: hide the poster
   useEffect(() => { setShown(false); }, [pose, play]);
 
@@ -60,7 +62,9 @@ export function GlobiPose({ pose, size, animated = true, onPress, accessibilityL
   const art = (
     <View style={[box, style]} pointerEvents={onPress ? "box-none" : "none"} testID={testID ?? `globi-${pose}`}
       accessibilityElementsHidden={!onPress} importantForAccessibility={onPress ? "auto" : "no-hide-descendants"}>
-      {!shown && <Image source={GLOBI_STILLS[pose]} style={{ width: size, height: size }} contentFit="contain" transition={0} accessibilityIgnoresInvertColors />}
+      {move && !play
+        ? <GlobiAnim pose={pose} size={size} />
+        : !shown && <Image source={GLOBI_STILLS[pose]} style={{ width: size, height: size }} contentFit="contain" transition={0} accessibilityIgnoresInvertColors />}
       {play && clip != null && <GlobiClip source={clip} size={size} onShown={() => setShown(true)} />}
     </View>
   );
@@ -70,6 +74,21 @@ export function GlobiPose({ pose, size, animated = true, onPress, accessibilityL
       style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}>
       {art}
     </Pressable>
+  );
+}
+
+/** The animated WebP, looping. The still shows until the animation has loaded; it pauses off screen and in the background. */
+function GlobiAnim({ pose, size }: { pose: Pose; size: number }) {
+  const focused = useFocusedSafe(); const ref = useRef<Image>(null);
+  const [active, setActive] = useState(AppState.currentState === "active");
+  useEffect(() => { const s = AppState.addEventListener("change", (st) => setActive(st === "active")); return () => s.remove(); }, []);
+  useEffect(() => { if (focused && active) ref.current?.startAnimating?.(); else ref.current?.stopAnimating?.(); }, [focused, active]);
+  // Web: expo-image wraps the img in a zero-height box, and Chrome never advances an animation it considers off screen,
+  // so the web build (previews, tests) uses React Native's own Image. iOS and Android decode the WebP natively.
+  if (Platform.OS === "web") return <RNImage source={GLOBI_ANIMS[pose]} style={{ width: size, height: size }} resizeMode="contain" />;
+  return (
+    <Image ref={ref} source={GLOBI_ANIMS[pose]} placeholder={GLOBI_STILLS[pose]} placeholderContentFit="contain" autoplay={focused && active}
+      style={{ width: size, height: size }} contentFit="contain" transition={0} accessibilityIgnoresInvertColors />
   );
 }
 
