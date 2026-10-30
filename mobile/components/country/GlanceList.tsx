@@ -8,11 +8,11 @@ import { GlobiPose } from "../globi/GlobiPose";
 import { useColors, useLargeText, S, R, curve } from "../../lib/theme";
 import { VISA_FEE_EUR } from "../../config/pricing";
 
-/** Canvas Country.dc.html: three fact tiles (stay, embassy fee, decision), then Globi's tip about the visa centre.
+/** Canvas Country.dc.html: three fact tiles (stay, embassy fee, when to apply: the website's facts strip), then Globi's tip about the visa centre.
  *  Facts are the Schengen rules every country shares; the fee is the standard adult fee kept in config/pricing.ts. */
 export function GlanceList({ info, onCentre }: { info: CountryInfo; onCentre: () => void }) {
   const c = useColors(); const { t } = useT(); const big = useLargeText();
-  const tiles: [string, string][] = [[t("Stay"), t("90 days")], [t("Embassy fee"), `€${VISA_FEE_EUR}`], [t("Decision"), t("~15 days")]];
+  const tiles: [string, string][] = [[t("Stay"), t("90 days")], [t("Embassy fee"), `€${VISA_FEE_EUR}`], [t("When to apply"), t("6 months to 15 days before")]];
   return (
     <View testID="country-glance" style={{ gap: S.md, paddingHorizontal: S.gutter }}>
       <View style={{ flexDirection: big ? "column" : "row", gap: S.xs }}>

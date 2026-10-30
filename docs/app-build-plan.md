@@ -602,3 +602,14 @@ Canvas screens still not built, and why:
 - Live Activity, App Store review prompt, icon and splash: need native code in the next store build.
 - Device list (Security & privacy) and quiet hours for pushes: need a server-side session list and push scheduling.
 - Two-factor sign-in by email: needs the Supabase MFA setting.
+
+## 7n. The website's steps, no decision (30 Oct)
+
+Owner: "no need for decisions in this app … our work finished after creating the file … follow the same steps as the web app".
+
+| Item | Where |
+|---|---|
+| Status steps are the website tracker's (`components/dashboard/progress-tracker.tsx`, `lib/application-status.ts` on main): Payment, Documents, Expert review, Preparation, Ready, Appointment, with the website's labels, descriptions and counts ("1 of 4 uploaded"). The Submitted and Decision steps are gone | `lib/timeline.ts`, `components/ui/data.tsx` (timeline and the small progress rail) |
+| Stages as the website reads them: `approved` = preparing the file (not a visa approval), `ready` = Ready (download and print), then the appointment; the case is finished once an appointment date is in. The live table has no download column, so an entered appointment also moves past Ready | `lib/timeline.ts` |
+| No visa decision anywhere: "Visa approved / Share the news", "Not approved / Talk to a specialist", "Waiting for the decision", "Visa granted / refused" and the appointment's "Decision · about 15 days" are replaced by "All done" (our work is finished), "Application closed" (status rejected, "Message us") and "Preparing your file". The country tile "Decision ~15 days" is now "When to apply · 6 months to 15 days before", like the website's facts strip | `components/status/StatusCards.tsx`, `lib/nextAction.ts`, `lib/stage.ts`, `lib/data.ts` (`APP_STATUS_LABEL`), `app/appointment/[id].tsx`, `components/country/GlanceList.tsx` |
+| Tests rewritten for the six steps | `scripts/timeline-check.ts` |

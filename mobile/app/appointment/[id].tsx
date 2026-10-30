@@ -138,7 +138,6 @@ export default function Appointment() {
         <PackingList appId={a.id} />
         <RowGroup>
           <Row label={t("Biometrics")} value={a.applicants.length > 1 ? t("Fingerprints and photo, both of you") : t("Fingerprints and photo")} />
-          <Row label={t("Decision")} value={t("Usually about 15 days after")} />
           <Row label={t("What happens on the day")} onPress={() => setDay(true)} />
           {remindersSupported && <Row label={t("Remind me the day before")} switchValue={remind} onSwitch={(v) => { setRemind(v); setRemindersEnabled(v, [a]).then((r) => setRemind(r.on)).catch(() => {}); }} />}
         </RowGroup>

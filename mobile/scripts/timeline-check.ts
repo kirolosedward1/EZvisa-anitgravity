@@ -2,7 +2,7 @@
 // Input rows have exactly the live visa_applications shape and go through the real mapper (toApplication), so the
 // rules are checked against what the app actually reads. Run: bun scripts/run-check.ts scripts/timeline-check.ts
 import { toApplication, type VisaRow } from "../lib/data";
-import { buildTimeline, chooseHero, doneCount, type Step } from "../lib/timeline";
+import { buildTimeline, chooseHero, doneCount, submittedAt, type Step } from "../lib/timeline";
 import { nextAction } from "../lib/nextAction";
 import { buildChecklist } from "../lib/checklist";
 import { employmentOf, keepOrigin, requirementsFor } from "../lib/data";
@@ -31,75 +31,85 @@ const up = (type: string, at: string) => ({ type, path: `x/${type}.pdf`, name: `
 const ALL = ["passportCopy", "residencyCopy", "photo", "bankStatement"];
 const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new Date(Date.now() - 3 * 864e5).toISOString();
 
-// A. Website submission, unpaid (row inserted at submit, so created_at is the submit time).
+// The website's six steps, in order, and no decision step.
+{ const s = buildTimeline(row({}));
+  ok(s.map((x) => x.key).join(",") === "payment,documents,review,preparation,ready,appointment", "order: payment, documents, review, preparation, ready, appointment (the website tracker)");
+  ok(!s.some((x) => /decision|approved|refused/i.test(x.label + (x.note ?? ""))), "no decision step or wording"); }
+
+// A. Website submission, unpaid.
 { const a = row({}); const s = buildTimeline(a);
-  ok(st(s, "submitted").state === "done" && st(s, "submitted").at === base.created_at, "A website row: Submitted done at created_at");
-  ok(st(s, "paid").state === "current" && st(s, "paid").at === null, "A unpaid: Paid is current, no time");
-  ok(["documents", "appointment", "file"].every((k) => st(s, k as any).state === "todo"), "A later steps not done");
+  ok(st(s, "payment").state === "current" && st(s, "payment").at === null, "A unpaid: Payment is current, no time");
+  ok(["documents", "review", "preparation", "ready", "appointment"].every((k) => st(s, k as any).state === "todo"), "A later steps not done");
   ok(next(a).kind === "pay", "A next action: Pay"); }
 
-// B. App draft submitted in the app, paid, documents partly uploaded.
-{ const a = row({ payment_status: "paid", payment_id: "z1", created_at: "2026-09-01T08:00:00Z" }, { ...app, submittedAt: "2026-10-02T09:30:00Z", wizard: afterPay, uploads: [up("passportCopy", "2026-10-03T10:00:00Z")] });
+// B. Paid, documents partly uploaded.
+{ const a = row({ payment_status: "paid", payment_id: "z1" }, { ...app, submittedAt: "2026-10-02T09:30:00Z", wizard: afterPay, uploads: [up("passportCopy", "2026-10-03T10:00:00Z")] });
   const s = buildTimeline(a);
-  ok(st(s, "submitted").at === "2026-10-02T09:30:00Z", "B app row: Submitted time is notes.submittedAt, not the draft's created_at");
-  ok(st(s, "paid").state === "done" && st(s, "paid").at === null, "B Paid done, no invented paid time (no column)");
-  ok(st(s, "documents").state === "current" && st(s, "documents").at === null, "B Documents current while some are missing");
+  ok(st(s, "payment").state === "done" && st(s, "payment").at === null, "B Payment done, no invented paid time (no column)");
+  ok(st(s, "documents").state === "current" && st(s, "documents").note === "{n} of {total} uploaded", "B Documents current with the count, like the website");
   ok(next(a).kind === "upload", "B next action: Upload documents"); }
 
-// C. App row submitted before submittedAt existed: done, but no time (created_at is the draft start).
-{ const a = row({ created_at: "2026-09-01T08:00:00Z" }, { ...app }); const s = buildTimeline(a);
-  ok(st(s, "submitted").state === "done" && st(s, "submitted").at === null, "C missing timestamp: Submitted done without a time"); }
+// C. Paid, every document in, staff reviewing: Expert review is current.
+{ const s = buildTimeline(row({ application_status: "reviewing", payment_status: "paid" }, { ...app, wizard: selfEmployed, uploads: ALL.map((t, i) => up(t, `2026-10-0${4 + i}T10:00:00Z`)) }));
+  ok(st(s, "documents").state === "done" && st(s, "documents").at === "2026-10-07T10:00:00Z", "C Documents done at the last real upload time");
+  ok(st(s, "review").state === "current", "C Expert review current"); }
 
-// D. Paid, every document uploaded, file ready, upcoming appointment.
-{ const a = row({ application_status: "ready", payment_status: "paid", appointment_at: future, appointment_centre: "VFS Dubai", appointment_address: "Wafi Mall" },
-    { ...app, submittedAt: "2026-10-02T09:30:00Z", wizard: selfEmployed, uploads: ALL.map((t, i) => up(t, `2026-10-0${4 + i}T10:00:00Z`)) });
+// D. Status approved = the file is being prepared (website getStage), never a visa approval.
+{ const a = row({ application_status: "approved", payment_status: "paid" }, { ...app, wizard: selfEmployed, uploads: ALL.map((t) => up(t, "2026-10-04T10:00:00Z")) });
   const s = buildTimeline(a);
-  ok(st(s, "documents").state === "done" && st(s, "documents").at === "2026-10-07T10:00:00Z", "D Documents done at the last real upload time");
-  ok(st(s, "appointment").state === "done" && st(s, "appointment").at === future && st(s, "appointment").scheduled === true, "D Appointment shows the scheduled time");
-  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download", "D File ready to download is done");
-  ok(next(a).kind === "appointment" && next(a).cta === "View appointment", "D next action: View appointment");
-  ok(doneCount(s) === 5, "D progress 5 of 5"); }
+  ok(st(s, "review").state === "done" && st(s, "preparation").state === "current", "D approved: Preparation current");
+  ok(next(a).title === "Preparing your file", "D next action: Preparing your file"); }
 
-// E. Appointment already passed, no decision yet.
+// E. File ready, no appointment yet: Ready current (download and print), Appointment next.
+{ const a = row({ application_status: "ready", payment_status: "paid" }, { ...app, wizard: selfEmployed, uploads: ALL.map((t) => up(t, "2026-10-04T10:00:00Z")) });
+  const s = buildTimeline(a);
+  ok(st(s, "ready").state === "current" && st(s, "appointment").state === "todo", "E ready: Ready current, Appointment to do");
+  ok(next(a).kind === "appointment" && next(a).cta === "Add the appointment", "E next action: Add the appointment"); }
+
+// F. File ready and an appointment entered: every step done (the website's appointmentSettled), date shown.
+{ const a = row({ application_status: "ready", payment_status: "paid", appointment_at: future, appointment_centre: "VFS Dubai" }, { ...app, wizard: selfEmployed, uploads: ALL.map((t) => up(t, "2026-10-04T10:00:00Z")) });
+  const s = buildTimeline(a);
+  ok(st(s, "appointment").state === "done" && st(s, "appointment").at === future && st(s, "appointment").scheduled === true && st(s, "appointment").note === "VFS Dubai", "F Appointment done with its date and centre");
+  ok(doneCount(s) === 6, "F progress 6 of 6");
+  ok(next(a).kind === "appointment" && next(a).cta === "View appointment", "F upcoming appointment: View appointment"); }
+
+// G. Appointment passed: our work is finished, nothing about a decision.
 { const a = row({ application_status: "ready", payment_status: "paid", appointment_at: past }, { ...app, wizard: selfEmployed, uploads: ALL.map((t) => up(t, "2026-10-04T10:00:00Z")) });
-  ok(next(a).title === "Awaiting decision" && next(a).kind === "none", "E past appointment: Awaiting decision, no action"); }
+  ok(next(a).title === "All done" && next(a).kind === "none", "G past appointment: All done, no action"); }
 
-// F. Refused (status rejected).
+// H. Completed: all six done.
+{ const a = row({ application_status: "completed", payment_status: "paid" }, { ...app });
+  ok(doneCount(buildTimeline(a)) === 6, "H completed: 6 of 6 done");
+  ok(next(a).title === "All done", "H next action: All done (no visa decision)"); }
+
+// I. Closed by EZvisa (status rejected): the step it stopped at is Closed, nothing current, no refusal wording.
 { const a = row({ application_status: "rejected", payment_status: "paid" }, { ...app, wizard: selfEmployed }); const s = buildTimeline(a);
-  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download" && st(s, "file").at === null, "F refused after the file was delivered: File ready done, no time");
-  ok(!s.some((x) => x.state === "current"), "F nothing is current once the case has ended");
-  ok(st(s, "decision").label === "Not approved" && st(s, "decision").state === "failed" && st(s, "documents").state === "done" && st(s, "appointment").state === "done", "F refused: documents and appointment done, decision Not approved");
-  ok(next(a).title === "Visa refused", "F next action: Visa refused"); }
+  ok(!s.some((x) => x.state === "current") && s.some((x) => x.label === "Closed" && x.state === "failed"), "I rejected: one step Closed, nothing current");
+  ok(next(a).title === "Application closed", "I next action: Application closed"); }
 
-// G. Granted (status completed).
-{ const s = buildTimeline(row({ application_status: "completed", payment_status: "paid" }, { ...app }));
-  ok(st(s, "file").state === "done" && st(s, "file").label === "File ready to download", "G granted: File ready done");
-  ok(s.at(-1)!.key === "decision" && s.at(-1)!.label === "Visa approved" && s.at(-1)!.state === "done", "G the last step is the decision: Visa approved");
-  ok(s.map((x) => x.key).join(",") === "submitted,paid,documents,file,appointment,decision", "G order: the file is ready before the appointment, then the decision"); }
-
-// H. Cancelled by EZvisa after payment.
+// J. Cancelled by EZvisa after payment.
 { const s = buildTimeline(row({ application_status: "cancelled", payment_status: "paid" }, { ...app, submittedAt: "2026-10-02T09:30:00Z" }));
-  ok(st(s, "submitted").state === "done" && st(s, "paid").state === "done" && st(s, "file").label === "Cancelled" && st(s, "file").state === "failed", "H staff-cancelled paid case: Cancelled"); }
+  ok(st(s, "payment").state === "done" && s.some((x) => x.label === "Cancelled" && x.state === "failed"), "J staff-cancelled paid case: Cancelled"); }
 
-// I. Discarded by the customer while still a draft: nothing is marked done.
+// K. Discarded by the customer while still a draft: nothing is marked done or failed.
 { const a = row({ application_status: "cancelled" }, { ...app, discarded_at: "2026-10-05T10:00:00Z" }); const s = buildTimeline(a);
-  ok(doneCount(s) === 0, "I discarded draft: no step done without evidence");
-  ok(chooseHero([a], []) === null, "I discarded case is never the Home hero"); }
+  ok(doneCount(s) === 0 && !s.some((x) => x.state === "failed"), "K discarded draft: no step done or failed");
+  ok(chooseHero([a], []) === null, "K discarded case is never the Home hero"); }
 
-// J. Payment failed.
+// L. Payment failed.
 { const s = buildTimeline(row({ payment_status: "failed" }));
-  ok(st(s, "paid").state === "attention" && st(s, "paid").label === "Payment failed", "J failed payment needs attention"); }
+  ok(st(s, "payment").state === "attention" && st(s, "payment").label === "Payment failed", "L failed payment needs attention"); }
 
-// K. A document rejected by staff (document_reviews).
+// L2. A document rejected by staff (document_reviews).
 { const a = row({ payment_status: "paid", document_reviews: { passportCopy: { status: "rejected", reason: "Blurry", at: "2026-10-06T10:00:00Z" } } }, { ...app, wizard: afterPay, uploads: [up("passportCopy", "2026-10-03T10:00:00Z")] });
   const s = buildTimeline(a);
-  ok(st(s, "documents").state === "attention" && st(s, "documents").note === "Re-upload needed", "K rejected document: Documents needs attention");
-  ok(next(a).kind === "upload" && next(a).title.startsWith("Re-upload"), "K next action: Re-upload"); }
+  ok(st(s, "documents").state === "attention" && st(s, "documents").note === "Re-upload needed", "L2 rejected document: Documents needs attention");
+  ok(next(a).kind === "upload" && next(a).title.startsWith("Re-upload"), "L2 next action: Re-upload"); }
 
-// L. Website row with has_* flags only (no upload times), file ready: done, no time.
+// L3. Website row with has_* flags only (no upload times), file ready: documents done, no time; Ready current.
 { const s = buildTimeline(row({ application_status: "ready", payment_status: "paid", has_passport: true, has_photos: true, has_bank_statements: true, has_employment_proof: true }));
-  ok(st(s, "documents").state === "done" && st(s, "documents").at === null, "L flags only: Documents done with no time");
-  ok(st(s, "appointment").state === "current", "L no appointment data: Appointment not done"); }
+  ok(st(s, "documents").state === "done" && st(s, "documents").at === null, "L3 flags only: Documents done with no time");
+  ok(st(s, "ready").state === "current" && st(s, "appointment").state === "todo", "L3 no appointment data: Appointment not done"); }
 
 // M. Paid but employment answers missing -> Continue application.
 { ok(next(row({ payment_status: "paid" }, { ...app })).kind === "continue", "M paid, employment missing: Continue application"); }
@@ -114,7 +124,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
 
 // N. Draft -> Continue draft.
 { const a = row({ application_status: "draft" }, { ...app }); const s = buildTimeline(a);
-  ok(doneCount(s) === 0 && st(s, "submitted").state === "current", "N draft: nothing done, Submitted current");
+  ok(doneCount(s) === 0 && st(s, "payment").state === "current" && st(s, "payment").label === "Finish application", "N draft: nothing done, Finish application current");
   ok(next(a).kind === "draft" && next(a).cta === "Continue draft", "N next action: Continue draft"); }
 
 // O. Hero choice with several applications (newest first).
@@ -162,7 +172,7 @@ const future = new Date(Date.now() + 9 * 864e5).toISOString(); const past = new 
   const saved = { ...keepOrigin(webNotes), lastEditedOn: "app", wizard: { ...afterPay, employmentStatus: "student", hasValidPassport: "yes", passportNumber: "N1234567" } };
   const a = row({ application_status: "reviewing", payment_status: "paid", passport_number: "N1234567" }, saved);
   ok(saved.source !== "mobile-app", "U keepOrigin: a website row is not relabelled as an app row");
-  ok(st(buildTimeline(a), "submitted").at === base.created_at, "U website row after Continue: Submitted keeps its real time");
+  ok(submittedAt(a) === base.created_at, "U website row after Continue: the submit time stays real");
   ok(next(a).kind !== "continue", `U website row after Continue: not asked to continue again (got "${next(a).title}")`);
   ok(keepOrigin({ source: "mobile-app" }).source === "mobile-app", "U keepOrigin: app rows stay app rows"); }
 

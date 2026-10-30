@@ -565,6 +565,9 @@ export async function unregisterPushToken(): Promise<boolean> {
 }
 
 export const STATUS_LABEL: Record<string, string> = { draft: "Draft", submitted: "Submitted", reviewing: "In review", awaiting_documents: "Documents needed", approved: "Approved", ready: "File ready", appointment_booked: "Appointment booked", completed: "Completed", rejected: "Refused", cancelled: "Cancelled", pending: "Unpaid", processing: "Processing", paid: "Paid", failed: "Payment failed", expired: "Payment expired", refunded: "Refunded", partially_refunded: "Part refunded", uploaded: "Uploaded", under_review: "Under review", generated: "Prepared by EZvisa", superseded: "Replaced" };
+/** Application status as the customer reads it in the app: the website tracker's steps (approved = the file is being
+ *  prepared) and no visa decision (a closed case is "Closed", not "Refused"). STATUS_LABEL stays for documents. */
+export const APP_STATUS_LABEL: Record<string, string> = { ...STATUS_LABEL, reviewing: "Expert review", approved: "Preparing your file", rejected: "Closed" };
 
 /** Discard an unpaid draft/submitted case (migration 0007: the guard trigger only allows this one change, never on paid rows). */
 export async function cancelApplication(id: string): Promise<boolean> {
