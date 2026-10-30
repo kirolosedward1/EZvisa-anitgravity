@@ -176,3 +176,35 @@ test("device labels", () => {
   assert.equal(deviceLabel("Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1"), "Safari on iPhone")
   assert.equal(deviceLabel(null), "")
 })
+
+test("queue: tabs, filters, search and sort", async () => {
+  const { applyQueue, parseFilters, tabCounts, matches, toCsv, travelLabel, agoLabel, slaCell } = await import("./queue.ts")
+  const mk = (id: string, over: Record<string, unknown>, owner: string | null = null) => toStaffCase(app({ id, ...over }), {}, owner)
+  const cases = [
+    mk("a", { full_name: "Rania Khalil", phone: "+971 50 123 4567", has_passport: true, additional_notes: notes([{ type: "passportCopy", at: "2026-10-29T06:00:00Z" }]) }, "s1"),
+    mk("b", { full_name: "Omar Said", destination_country: "Italy" }),
+    mk("c", { full_name: "Hana Fathy", application_status: "completed" }),
+    mk("d", { full_name: "Lina Draft", payment_status: "pending", application_status: "draft" }),
+  ]
+  const counts = tabCounts(cases, NOW)
+  assert.equal(counts.all, 3)
+  assert.equal(counts.us, 1)
+  assert.equal(counts.customer, 1)
+  assert.equal(counts.sla, 1)
+  assert.equal(counts.unassigned, 1, "unpaid drafts are not 'unassigned'")
+  assert.equal(counts.closed, 1)
+  assert.deepEqual(applyQueue(cases, parseFilters({ country: "Italy" }), NOW).map((c) => c.id), ["b"])
+  assert.deepEqual(applyQueue(cases, parseFilters({ owner: "none", tab: "all" }), NOW).map((c) => c.id).sort(), ["b", "d"])
+  assert.equal(parseFilters({ tab: "nope", sort: "x" }).tab, "all")
+  assert.equal(matches(cases[0], "050 123 4567".slice(1)), true, "phone digits match across formatting")
+  assert.equal(matches(cases[0], "ez-abcdef"), true)
+  assert.equal(matches(cases[0], "rania"), true)
+  assert.equal(matches(cases[0], "nobody"), false)
+  assert.equal(slaCell(cases[0], NOW).tone, "red")
+  assert.equal(slaCell(cases[2], NOW).text, "Closed")
+  assert.equal(travelLabel("2026-12-14", "2026-12-28"), "14 to 28 Dec")
+  assert.equal(travelLabel("2026-12-28", "2027-01-04"), "28 Dec to 4 Jan")
+  assert.equal(travelLabel(null, null), "Not set")
+  assert.equal(agoLabel(new Date(NOW - 3 * 86_400_000).toISOString(), NOW), "3d ago")
+  assert.equal(toCsv([["=SUM(A1)", 'a "b"', "x,y"]]), `'=SUM(A1),"a ""b""","x,y"\r\n`)
+})

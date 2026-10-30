@@ -50,7 +50,8 @@ export function missingTable(error: { code?: string } | null | undefined): boole
 
 type StaffRow = { id: string; user_id: string | null; email: string; name: string; role: string; active: boolean; last_seen_at: string | null }
 
-async function staffRow(client: SupabaseClient, userId: string, email: string): Promise<StaffRow | null> {
+/** The staff_users row, or null; `ready` is false when the table is missing or could not be read. */
+async function staffRow(client: SupabaseClient, userId: string, email: string): Promise<{ row: StaffRow | null; ready: boolean }> {
   try {
     const { data, error } = await client
       .from("staff_users")
@@ -60,12 +61,12 @@ async function staffRow(client: SupabaseClient, userId: string, email: string): 
       .limit(2)
     if (error) {
       if (!missingTable(error)) console.error("[staff] lookup failed:", error.code)
-      return null
+      return { row: null, ready: false }
     }
     const rows = (data ?? []) as StaffRow[]
-    return rows.find((r) => r.user_id === userId) ?? rows.find((r) => r.email.toLowerCase() === email) ?? null
+    return { row: rows.find((r) => r.user_id === userId) ?? rows.find((r) => r.email.toLowerCase() === email) ?? null, ready: true }
   } catch {
-    return null
+    return { row: null, ready: false }
   }
 }
 
@@ -81,9 +82,23 @@ export const getRealStaff = cache(async (): Promise<Staff | null> => {
   const email = user.email.trim().toLowerCase()
   const envAdmin = isStaffEmail(email)
   const client = serviceClient()
-  const row = client ? await staffRow(client, user.id, email) : null
+  const lookup = client ? await staffRow(client, user.id, email) : { row: null, ready: false }
+  let row = lookup.row
   const role: Role | null = envAdmin ? "admin" : row?.active && isRole(row.role) ? row.role : null
   if (!role) return null
+
+  const meta = (user.user_metadata ?? {}) as Record<string, unknown>
+  const metaName = [meta.full_name, meta.name].find((v): v is string => typeof v === "string" && v.trim().length > 0)
+
+  if (client && envAdmin && !row && lookup.ready) {
+    // An ADMIN_EMAILS admin gets a staff_users row on first sign-in, so cases can be assigned to them.
+    const { data } = await client
+      .from("staff_users")
+      .insert({ user_id: user.id, email, name: (metaName || email.split("@")[0]).trim(), role: "admin" })
+      .select("id, user_id, email, name, role, active, last_seen_at")
+      .maybeSingle()
+    row = (data as StaffRow | null) ?? null
+  }
 
   if (client && row) {
     // Link the row to this sign-in on first use, and note activity at most every 5 minutes.
@@ -97,8 +112,6 @@ export const getRealStaff = cache(async (): Promise<Staff | null> => {
     }
   }
 
-  const meta = (user.user_metadata ?? {}) as Record<string, unknown>
-  const metaName = [meta.full_name, meta.name].find((v): v is string => typeof v === "string" && v.trim().length > 0)
   return {
     userId: user.id,
     staffId: row?.id ?? null,

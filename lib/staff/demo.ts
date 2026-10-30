@@ -110,9 +110,16 @@ export function demoConsoleData(now = Date.now()): DemoConsoleData {
         nationality: pick(["Egypt", "Jordan", "Lebanon", "Syria", "India", "Pakistan"]),
         destination_country: pick(COUNTRIES),
         travel_purpose: "tourism",
+        ...(() => {
+          const start = new Date(now + (12 + rand() * 110) * 86400_000)
+          const end = new Date(start.getTime() + (6 + Math.floor(rand() * 15)) * 86400_000)
+          const day = (d: Date) => d.toISOString().slice(0, 10)
+          return rand() > 0.25 ? { entry_date: day(start), exit_date: day(end) } : {}
+        })(),
         ...flags,
         additional_notes: JSON.stringify({
           employmentStatus: "employed",
+          spouseAccompanying: rand() > 0.8 ? "yes" : "no",
           uploads,
           ...(kind === "ready" && rand() > 0.5 ? { insurancePreference: "quote" } : {}),
         }),

@@ -9,7 +9,7 @@ import { getReference, isPaid } from "@/lib/application-status"
 import { customerDocuments } from "@/lib/dashboard-state"
 import { applicationInsurance } from "@/lib/insurance"
 import { uploadRecords, type DocumentReviews } from "@/lib/document-reviews"
-import { REQUIREMENTS } from "@/lib/shared/wizard-contract"
+import { parseNotes, REQUIREMENTS } from "@/lib/shared/wizard-contract"
 import type { VisaApplication } from "@/lib/types/visa-application"
 import { addBusinessDays, addHours, SLA } from "@/lib/staff/sla"
 
@@ -68,12 +68,24 @@ export type StaffCase = {
   insuranceQuote: boolean
   /** Documents uploaded and not yet decided. */
   docsToCheck: number
+  nationality: string
+  trackingToken: string | null
+  /** Trip dates (YYYY-MM-DD), entry/exit first, else the planned travel window. */
+  travelStart: string | null
+  travelEnd: string | null
+  /** 2 when a spouse travels on the same application (priced ×2), else 1. */
+  travellers: number
 }
 
 const TITLE: Record<string, string> = Object.fromEntries(REQUIREMENTS.map((r) => [r.document_type, r.title]))
 
 export function docTitle(type: string): string {
   return TITLE[type] ?? type
+}
+
+function spouseTravels(notes?: string | null): boolean {
+  const n = parseNotes(notes) as Record<string, unknown> & { wizard?: Record<string, unknown> }
+  return (n.wizard?.spouseAccompanying ?? n.spouseAccompanying) === "yes"
 }
 
 function list(names: string[]): string {
@@ -127,6 +139,11 @@ export function toStaffCase(app: VisaApplication, reviews: DocumentReviews = {},
     helpRequested: app.appointment_help_status === "requested",
     insuranceQuote: applicationInsurance(app.additional_notes) === "quote",
     docsToCheck: 0,
+    nationality: app.nationality || "",
+    trackingToken: app.tracking_token ?? null,
+    travelStart: app.entry_date || app.travel_start_date || null,
+    travelEnd: app.exit_date || app.travel_end_date || null,
+    travellers: spouseTravels(app.additional_notes) ? 2 : 1,
   }
 
   if (stage === "completed" || stage === "cancelled" || stage === "closed") return { ...base, side: "closed", what: STAGE[stage].label }

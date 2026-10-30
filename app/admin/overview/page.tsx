@@ -66,7 +66,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
     showMoney && { n: o.kpi.failedPayments, tone: "red", label: "Failed payments to follow up", href: "/staff/payments" },
     showMoney && { n: o.counts.insurance, tone: "amber", label: "Insurance quotes requested", href: "/staff/insurance" },
     { n: o.counts.help, tone: "blue", label: "Appointment help requests", href: "/staff/appointments" },
-    { n: o.counts.staleDrafts, tone: "grey", label: `Drafts unpaid for 7+ days`, href: "/staff/cases?tab=drafts" },
+    { n: o.counts.staleDrafts, tone: "grey", label: `Drafts unpaid for 7+ days`, href: "/staff/cases?stage=payment" },
   ].filter((a): a is { n: number; tone: string; label: string; href: string } => !!a && a.n > 0)
 
   const unassigned = o.counts.unassigned

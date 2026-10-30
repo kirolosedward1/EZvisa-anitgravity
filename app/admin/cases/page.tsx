@@ -1,482 +1,139 @@
-"use client"
+// Cases board: the queue with tabs, filters, sort, saved views, bulk actions and a row menu. Filters live in the URL
+// so a view can be shared or saved; the CSV export uses the same query.
+import { Download, Plus } from "lucide-react"
+import { CasesQueue, type QueueRow } from "@/components/staff/cases-queue"
+import { ErrorBanner } from "@/components/staff/states"
+import { SCHENGEN_META } from "@/lib/countries"
+import { STAGE, isOpen } from "@/lib/staff/cases"
+import { loadConsoleData } from "@/lib/staff/data"
+import { sectionAccess } from "@/lib/staff/guard"
+import { agoLabel, applyQueue, PAGE_SIZE, parseFilters, QUEUE_TABS, slaCell, SORTS, STAGE_OPTIONS, tabCounts, travelLabel, whoLabel } from "@/lib/staff/queue"
+import { can } from "@/lib/staff/roles"
+import { initials } from "@/lib/staff/session"
 
-import { useState, useEffect } from "react"
-import { LocaleLink } from "@/components/locale-link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { 
-  ShieldAlert, 
-  Search, 
-  RefreshCw, 
-  CheckCircle2, 
-  Clock, 
-  FileText, 
-  Mail, 
-  FileCode, 
-  ExternalLink,
-  AlertCircle,
-} from "lucide-react"
+export const dynamic = "force-dynamic"
 
-interface CaseItem {
-  id: string
-  tracking_token: string
-  full_name: string
-  email: string
-  phone: string
-  destination_country: string
-  nationality: string
-  entry_date?: string
-  exit_date?: string
-  travel_start_date?: string
-  travel_end_date?: string
-  application_status: string
-  payment_status: string
-  payment_amount: number
-  has_passport: boolean
-  has_bank_statements: boolean
-  has_employment_proof: boolean
-  has_photos: boolean
-  created_at: string
-  updated_at: string
-  appointment_choice?: string | null
-  appointment_help_status?: string | null
-  appointment_at?: string | null
-  appointment_centre?: string | null
+const waLink = (phone: string) => {
+  const d = phone.replace(/\D/g, "")
+  return d.length >= 8 ? `https://wa.me/${d}` : null
 }
 
-export default function AdminPage() {
-  const [cases, setCases] = useState<CaseItem[]>([])
-  const [loading, setLoading] = useState(false)
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [actionMessage, setActionMessage] = useState<string | null>(null)
-  const [actionError, setActionError] = useState<string | null>(null)
+export default async function CasesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const { staff } = await sectionAccess("cases")
+  const sp = await searchParams
+  const filters = parseFilters(sp)
+  const { cases, team, problem } = await loadConsoleData(staff)
+  const now = Date.now()
 
-  // Only signed-in staff get this page (app/admin/layout.tsx); the API checks the same session.
-  useEffect(() => {
-    loadCases(filterStatus, searchQuery)
-  }, [])
+  const counts = tabCounts(cases, now)
+  const list = applyQueue(cases, filters, now)
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE))
+  const page = Math.min(pages, Math.max(1, Number.parseInt(String(sp.page ?? "1"), 10) || 1))
+  const shown = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const openCount = cases.filter(isOpen).length
 
-  const loadCases = async (status: string, search: string) => {
-    setLoading(true)
-    setActionError(null)
-    try {
-      const params = new URLSearchParams()
-      if (status !== "all") params.set("status", status)
-      if (search) params.set("search", search)
-
-      const res = await fetch(`/api/admin/cases?${params.toString()}`, { cache: "no-store" })
-
-      if (!res.ok) {
-        if (res.status === 401) throw new Error("Your session has ended. Sign in again with your staff account.")
-        throw new Error("Failed to load cases")
-      }
-
-      const data = await res.json()
-      setCases(data.cases || [])
-    } catch (err: any) {
-      setActionError(err.message)
-    } finally {
-      setLoading(false)
+  const nameOf = (id: string | null) => (id ? team.find((m) => m.id === id)?.name ?? "Former staff" : "Unassigned")
+  const rows: QueueRow[] = shown.map((c) => {
+    const sla = slaCell(c, now)
+    return {
+      id: c.id,
+      name: c.name,
+      ref: c.ref,
+      country: c.country,
+      iso: SCHENGEN_META[c.country]?.iso,
+      travellers: c.travellers,
+      stage: STAGE[c.stage].label,
+      tone: STAGE[c.stage].tone,
+      what: c.what,
+      who: whoLabel(c),
+      travel: travelLabel(c.travelStart, c.travelEnd),
+      last: agoLabel(c.updatedAt, now),
+      ownerId: c.ownerId,
+      owner: c.ownerId ? initials(nameOf(c.ownerId)) : null,
+      ownerName: nameOf(c.ownerId),
+      sla: sla.text,
+      slaTone: sla.tone,
+      open: isOpen(c),
+      paid: c.paid,
+      canRemind: c.side === "customer" && c.stage === "documents",
+      waLink: waLink(c.phone),
+      trackingPath: c.trackingToken ? `/track/${c.trackingToken}` : null,
     }
-  }
+  })
 
-  const handleStatusUpdate = async (caseItem: CaseItem, newStatus: string) => {
-    setActionError(null)
-    setActionMessage(null)
-    try {
-      const res = await fetch("/api/admin/cases", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: caseItem.id,
-          application_status: newStatus,
-          expected_updated_at: caseItem.updated_at,
-          notes: `Updated status from ${caseItem.application_status} to ${newStatus}`,
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to update case")
-      }
-
-      setActionMessage(`Case #${caseItem.id.substring(0, 8)} updated to ${newStatus}`)
-      loadCases(filterStatus, searchQuery)
-    } catch (err: any) {
-      setActionError(err.message)
+  const query = (over: Record<string, string>) => {
+    const p = new URLSearchParams()
+    for (const [k, v] of Object.entries({ ...Object.fromEntries(Object.entries(sp).map(([k, v]) => [k, Array.isArray(v) ? v[0] ?? "" : v ?? ""])), ...over })) {
+      if (v) p.set(k, v)
     }
+    const s = p.toString()
+    return s ? `?${s}` : ""
   }
-
-  const handleHelpStatus = async (caseItem: CaseItem, helpStatus: string) => {
-    if (!helpStatus) return
-    setActionError(null)
-    setActionMessage(null)
-    try {
-      const res = await fetch("/api/admin/cases", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: caseItem.id,
-          appointment_help_status: helpStatus,
-          expected_updated_at: caseItem.updated_at,
-          notes: `Appointment help status set to ${helpStatus}`,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || "Failed to update appointment help")
-      setActionMessage(`Appointment help for #${caseItem.id.substring(0, 8)} set to ${helpStatus}`)
-      loadCases(filterStatus, searchQuery)
-    } catch (err: any) {
-      setActionError(err.message)
-    }
-  }
-
-  const handleTriggerEmail = async (applicationId: string, event: string) => {
-    setActionError(null)
-    setActionMessage(null)
-    try {
-      const res = await fetch("/api/admin/trigger-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          event,
-          application_id: applicationId,
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to dispatch email")
-      }
-
-      setActionMessage(`Email event '${event}' dispatched successfully`)
-      loadCases(filterStatus, searchQuery)
-    } catch (err: any) {
-      setActionError(err.message)
-    }
-  }
-
-  const handleGenerateDocuments = async (applicationId: string) => {
-    setActionError(null)
-    setActionMessage(null)
-    try {
-      const res = await fetch("/api/admin/generate-documents", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          applicationId,
-          version: 1,
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to generate documents")
-      }
-
-      setActionMessage(`Documents generated successfully for case #${applicationId.substring(0, 8)}`)
-      loadCases(filterStatus, searchQuery)
-    } catch (err: any) {
-      setActionError(err.message)
-    }
-  }
+  const countries = [...new Set(cases.map((c) => c.country).filter(Boolean))].sort()
+  const owners = [...team.map((m) => ({ value: m.id, label: m.name })), { value: "none", label: "Unassigned" }]
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
-      <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-6 border-b border-slate-800">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-                Authorized Operations Console
-              </span>
-            </div>
-            <h1 className="text-3xl font-semibold text-white">Visa Case Management</h1>
-          </div>
+    <>
+      {problem ? <ErrorBanner title="Some data did not load." body={`${problem} What did load is shown; reload to try again.`} /> : null}
 
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="xs"
-              onClick={() => loadCases(filterStatus, searchQuery)}
-              disabled={loading}
-              className="border-slate-800 bg-slate-900 text-slate-200 hover:bg-slate-800"
-            >
-              <RefreshCw className={`size-4 ${loading ? "animate-spin" : ""}`} />
-              <span>Refresh Cases</span>
-            </Button>
-<form action="/api/auth/signout" method="POST">
-              <Button type="submit" variant="ghost" size="xs" className="text-slate-400 hover:text-white">
-                Sign Out
-              </Button>
-            </form>
-          </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <h1>Cases</h1>
+          <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+            {list.length} shown · {openCount} open · {cases.length - openCount} closed
+          </p>
         </div>
-
-        {/* Notifications */}
-        {actionMessage && (
-          <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm">
-            <CheckCircle2 className="w-5 h-5 shrink-0" />
-            <span>{actionMessage}</span>
-          </div>
-        )}
-        {actionError && (
-          <div className="flex items-center gap-3 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-sm">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <span>{actionError}</span>
-          </div>
-        )}
-
-        {/* Filter & Search Bar */}
-        <div className="flex flex-col md:flex-row gap-4 justify-between bg-slate-900/60 border border-slate-800 p-4 rounded-xl">
-          <div className="flex flex-wrap gap-2">
-            {["all", "draft", "submitted", "reviewing", "awaiting_documents", "ready", "completed", "rejected", "cancelled"].map((st) => (
-              <Button
-                key={st}
-                type="button"
-                size="xs"
-                variant={filterStatus === st ? "default" : "outline"}
-                onClick={() => {
-                  setFilterStatus(st)
-                  loadCases(st, searchQuery)
-                }}
-                className={
-                  filterStatus === st
-                    ? "capitalize"
-                    : "capitalize border-slate-800 bg-slate-800/80 text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-                }
-              >
-                {st}
-              </Button>
-            ))}
-          </div>
-
-          <div className="flex gap-2 max-w-sm w-full">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-3.5" />
-              <Input
-                placeholder="Search name, email, or country..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") loadCases(filterStatus, searchQuery)
-                }}
-                className="pl-9 bg-slate-950 border-slate-800 text-sm text-white placeholder:text-slate-500"
-              />
-            </div>
-            <Button
-              size="xs"
-              onClick={() => loadCases(filterStatus, searchQuery)}
-              className="bg-slate-800 text-white hover:bg-slate-700"
-            >
-              Search
-            </Button>
-          </div>
-        </div>
-
-        {/* Cases Table */}
-        <div className="bg-slate-900/40 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-900/80 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-                <tr>
-                  <th className="p-4 pl-6">Case Ref / Created</th>
-                  <th className="p-4">Applicant & Destination</th>
-                  <th className="p-4">Payment</th>
-                  <th className="p-4">Document Checklist</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4 pr-6 text-right">Staff Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {cases.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="p-8 text-center text-slate-500">
-                      {loading ? "Loading cases..." : "No visa cases matching criteria"}
-                    </td>
-                  </tr>
-                ) : (
-                  cases.map((c) => (
-                    <tr key={c.id} className="hover:bg-slate-800/30 transition-colors">
-                      <td className="p-4 pl-6">
-                        <span className="font-mono text-xs text-blue-400 font-semibold block">
-                          #{c.id.substring(0, 8)}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          {new Date(c.created_at).toLocaleDateString()}
-                        </span>
-                      </td>
-
-                      <td className="p-4">
-                        <div className="font-semibold text-white">{c.full_name}</div>
-                        <div className="text-xs text-slate-400">{c.email}</div>
-                        <div className="text-xs text-blue-300/80 mt-0.5 font-medium">
-                          {c.destination_country} ({c.nationality})
-                        </div>
-                      </td>
-
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                            c.payment_status === "paid" || c.payment_status === "completed"
-                              ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                          }`}
-                        >
-                          {c.payment_status}
-                        </span>
-                        <span className="text-xs text-slate-400 block mt-1">
-                          {c.payment_amount ? `${c.payment_amount} AED` : "Standard"}
-                        </span>
-                      </td>
-
-                      <td className="p-4">
-                        <div className="flex flex-wrap gap-1 max-w-[200px]">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                              c.has_passport ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-500"
-                            }`}
-                          >
-                            Passport
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                              c.has_bank_statements ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-500"
-                            }`}
-                          >
-                            Bank
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                              c.has_employment_proof ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-500"
-                            }`}
-                          >
-                            NOC
-                          </span>
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                              c.has_photos ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-800 text-slate-500"
-                            }`}
-                          >
-                            Photo
-                          </span>
-                        </div>
-                      </td>
-
-                      <td className="p-4">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold capitalize ${
-                            c.application_status === "ready"
-                              ? "bg-emerald-600 text-white"
-                              : c.application_status === "reviewing"
-                              ? "bg-blue-600 text-white"
-                              : c.application_status === "cancelled"
-                              ? "bg-rose-900/60 text-rose-300"
-                              : "bg-slate-800 text-slate-300"
-                          }`}
-                        >
-                          {c.application_status}
-                        </span>
-                        {c.appointment_choice ? (
-                          <p className="mt-2 text-[10px] text-slate-400">Choice: {c.appointment_choice}</p>
-                        ) : null}
-                        <label className="mt-2 block text-[10px] text-slate-400">
-                          Help status
-                          <select
-                            value={c.appointment_help_status || ""}
-                            onChange={(event) => handleHelpStatus(c, event.target.value)}
-                            className="mt-1 block w-full rounded border border-slate-700 bg-slate-900 px-1 py-1 text-[11px] text-slate-200"
-                          >
-                            <option value="">—</option>
-                            <option value="requested">requested</option>
-                            <option value="contacted">contacted</option>
-                            <option value="booked">booked</option>
-                            <option value="cancelled">cancelled</option>
-                          </select>
-                        </label>
-                      </td>
-
-                      <td className="p-4 pr-6 text-right">
-                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
-                          {c.application_status === "submitted" && (
-                            <Button
-                              size="xs"
-                              onClick={() => handleStatusUpdate(c, "reviewing")}
-                            >
-                              Review
-                            </Button>
-                          )}
-
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            onClick={() => handleTriggerEmail(c.id, "documents.requested")}
-                            className="border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800"
-                          >
-                            <Mail className="size-3" aria-hidden="true" />
-                            <span>Request Docs</span>
-                          </Button>
-
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            onClick={() => handleGenerateDocuments(c.id)}
-                            className="border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800"
-                          >
-                            <FileCode className="size-3" aria-hidden="true" />
-                            <span>Generate</span>
-                          </Button>
-
-                          {c.application_status !== "ready" && (
-                            <Button
-                              size="xs"
-                              onClick={() => handleTriggerEmail(c.id, "documents.ready")}
-                              className="bg-emerald-600 text-white hover:bg-emerald-500"
-                            >
-                              <CheckCircle2 className="size-3" aria-hidden="true" />
-                              <span>Mark Ready</span>
-                            </Button>
-                          )}
-
-                          <LocaleLink
-                            href={`/staff/cases/${c.id}`}
-                            className="inline-flex h-7 items-center gap-1 rounded-md border border-sky-500/40 bg-sky-500/10 px-2.5 text-xs font-medium text-sky-200 hover:bg-sky-500/20"
-                            title="Review documents and assign the specialist"
-                          >
-                            <FileText className="size-3" aria-hidden="true" />
-                            Documents
-                          </LocaleLink>
-
-                          <LocaleLink
-                            href={`/track/${c.tracking_token}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-800 inline-flex items-center"
-                            title="View customer tracking page"
-                          >
-                            <ExternalLink className="w-4 h-4" />
-                          </LocaleLink>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {can(staff.role, "stage") ? (
+            <a className="btn ghost" href="/staff/cases/legacy" title="Status changes and emails, until the Case board replaces them">Old case tools</a>
+          ) : null}
+          {can(staff.role, "export") ? (
+            <a className="btn outline" href={`/api/admin/export/cases${query({ page: "" })}`}>
+              <Download size={16} aria-hidden /> Export CSV
+            </a>
+          ) : null}
+          {staff.role !== "finance" ? (
+            <a className="btn primary" href="/staff/cases/new">
+              <Plus size={16} aria-hidden /> New case
+            </a>
+          ) : null}
         </div>
       </div>
-    </div>
+
+      <nav className="utabs" aria-label="Queues">
+        {QUEUE_TABS.map((t) => (
+          <a key={t.key} className="tab" href={`/staff/cases${query({ tab: t.key === "all" ? "" : t.key, page: "" })}`} aria-current={filters.tab === t.key ? "page" : undefined}>
+            {t.label}
+            {"tone" in t ? <span className={`pill xs ${t.tone}`}>{counts[t.key]}</span> : null}
+          </a>
+        ))}
+      </nav>
+
+      <CasesQueue
+        rows={rows}
+        stages={STAGE_OPTIONS.map((s) => ({ value: s, label: STAGE[s].label }))}
+        owners={owners}
+        countries={countries.map((c) => ({ value: c, label: c }))}
+        sorts={SORTS.map((s) => ({ value: s.key, label: s.label }))}
+        me={{ staffId: staff.staffId }}
+        perms={{
+          assign: can(staff.role, "assign"),
+          selfAssign: can(staff.role, "docs"),
+          stage: can(staff.role, "stage"),
+          export: can(staff.role, "export"),
+          msg: can(staff.role, "msg"),
+        }}
+      />
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+        <span className="muted" style={{ fontSize: 13 }}>
+          {list.length === 0 ? "No cases" : `Showing ${(page - 1) * PAGE_SIZE + 1} to ${(page - 1) * PAGE_SIZE + shown.length} of ${list.length}`}
+        </span>
+        <div style={{ display: "flex", gap: 8 }}>
+          {page > 1 ? <a className="btn outline sm" href={`/staff/cases${query({ page: String(page - 1) })}`}>Previous</a> : <span className="btn outline sm" aria-disabled="true" style={{ opacity: 0.5 }}>Previous</span>}
+          {page < pages ? <a className="btn outline sm" href={`/staff/cases${query({ page: String(page + 1) })}`}>Next</a> : <span className="btn outline sm" aria-disabled="true" style={{ opacity: 0.5 }}>Next</span>}
+        </div>
+      </div>
+    </>
   )
 }

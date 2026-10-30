@@ -23,6 +23,7 @@ push to `main`.
 | Step | Status | What changed |
 | --- | --- | --- |
 | 1–4. Roles, audit helper, shell, Overview | done | `005_staff_console.sql` (staff_users, audit_events, case_assignments, case_notes; RLS on, no client policies). `lib/staff/*`: roles and permission matrix, staff session, `staffWrite` audit helper, case model with SLA clocks, demo data. Console shell with the grouped sidebar per role and the top bar. Overview board. Boards not built yet show a placeholder. |
+| 5a. Cases | done | Queue with tabs, search, stage/owner/destination filters, four sorts, pages of 50, saved views and column choice (this device), bulk assign and CSV export, row menu, cancel with a required audit note. `lib/staff/queue.ts`, `app/admin/cases/actions.ts`, `GET /api/admin/export/cases`. |
 
 ## Overview (step 4)
 
@@ -33,6 +34,25 @@ push to `main`.
 - "Waiting on customers" does not say reminders are sent automatically: no reminder automation exists yet.
 - The money tile and money alerts only show for roles that can view payments (Admin, Finance).
 - "Paid this month" uses the payment time when migration 002 is applied, otherwise the application's creation time.
+
+## Cases (step 5a)
+
+- Screenshots: `compare-cases-1440.jpg` (board left, build right), `cases-390-top.jpg`, `cases-bulk-1440.jpg`,
+  `cases-menu-1440.jpg`, `cases-cancel-1440.jpg`.
+- Search covers name, email, phone (any formatting), EZ reference and destination.
+- "Saved views" and "Columns" are kept in this browser only (no shared saved views yet).
+- Assigning: admins assign anyone; specialists can take an unassigned case for themselves (the board's "Assign to
+  me"). Each assignment is one audit row (undoable later from Audit) and tells the customer's dashboard the
+  specialist's first name. An ADMIN_EMAILS admin gets a staff_users row on first sign-in so cases can be theirs.
+- WhatsApp: "WhatsApp the customer" and "Send document reminder" open WhatsApp with the message written; the bulk
+  reminder is shown as not connected (WhatsApp Business API).
+- "Resend tracking link" became "Copy tracking link" because the email provider key is not working.
+- Cancel needs the Change stage permission and a note, uses a compare-before-write check, and does not refund; that
+  stays a Payments step.
+- Exports need the Export permission (Admin, Finance), cells that start with = + - @ are neutralised, and each export
+  is an audit row.
+- The old case tools (status changes, emails, document generation) stay at `/staff/cases/legacy` until the Case board
+  replaces them.
 
 ## Demo session (local and preview builds only)
 
