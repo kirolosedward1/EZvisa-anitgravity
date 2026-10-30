@@ -576,3 +576,14 @@ Still needs a Mac or a store build: the Globi clips, the app icon, the splash an
 | Rate your experience (canvas RateExperience), once per finished case: stars, what went well, what to fix, sent to support by email (no feedback backend). The App Store review ask waits for the next store build (native module) | `components/status/RateCard.tsx` |
 | Photo tip before the camera (canvas CameraCapture): "Fill the frame. Avoid glare on the photo." on the source picker | `lib/capture.ts` |
 | Inbox footer says whether push notifications are on | `app/(tabs)/account/notifications.tsx` |
+
+## 7l. Document viewer, Data & storage, guest email after the gateway (30 Oct)
+
+| Item | Where |
+|---|---|
+| Document viewer (canvas DocViewer): an uploaded photo opens inside the app from a 60-second signed link (never cached to disk), with its name, type, where it stands with the team ("Being checked by the team", "Checked by the team", "Needs replacing"), Retake while the case still takes documents, and Done. PDFs still open in the browser | `components/status/DocViewer.tsx`, `app/(tabs)/applications/[id].tsx` |
+| Data & storage (canvas DataStorage), from Settings: measured space on this phone (documents waiting to send, cached files, saved answers and settings), uploads waiting to sync (a failed one retries on tap), Clear cached files (never the upload queue's copies), Export my data (a JSON file of the account, applications and saved travellers; uploaded documents are not included) | `app/(tabs)/account/storage.tsx`, `lib/storage.ts` |
+| A guest who comes back from the payment gateway (no email in the link) still gets the "Create your account" form prefilled: the email comes from the case kept on this phone | `app/payment/[id].tsx` |
+| Mock backend: signed links for the owner's own documents (`/storage/v1/object/sign/visa_documents/…`) | `scripts/mock-supabase.mjs` |
+
+Not drawn as in the canvas: Globi's size is not listed (he ships inside the app and can't be cleared), and the export is a file the person saves or shares, not a ZIP by email (that needs a server job).
