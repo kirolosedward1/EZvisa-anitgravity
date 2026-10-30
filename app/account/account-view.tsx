@@ -391,7 +391,7 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
                 disabled={photoBusy}
               >
                 <span className="relative flex size-20 items-center justify-center overflow-hidden rounded-full bg-[#edf4ff] text-xl font-semibold text-primary">
-                  <AvatarPhoto src={photo} initials={initialsOf(profile.name, profile.email)} className="absolute inset-0" />
+                  <AvatarPhoto src={photo} initials={<span aria-hidden="true">{initialsOf(profile.name, profile.email)}</span>} className="absolute inset-0" />
                   {photoBusy ? (
                     <span className="absolute inset-0 flex items-center justify-center bg-foreground/40">
                       <Loader2 className="size-6 animate-spin text-primary-foreground" aria-hidden="true" />
@@ -566,7 +566,7 @@ export function AccountView({ profile, applications }: { profile: AccountProfile
 
           <section aria-label={t("acct.deleteLink")} className="flex flex-col gap-3 px-1 pt-1 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
             <p className="text-[13px] leading-relaxed text-muted-foreground">{t("acct.deleteBody")}</p>
-            <button type="button" onClick={() => setDeleteStep("ask")} className="shrink-0 self-start rounded text-sm font-medium text-destructive hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-destructive sm:self-auto">
+            <button type="button" onClick={() => setDeleteStep("ask")} className="shrink-0 self-start rounded text-sm font-medium text-[#b42318] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b42318] sm:self-auto">
               {t("acct.deleteLink")}
             </button>
           </section>

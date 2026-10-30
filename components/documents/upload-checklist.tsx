@@ -122,7 +122,7 @@ function ChecklistRow({
       htmlFor={inputId}
       aria-label={`${t(isIn ? "docs.replace" : rejected ? "docs.uploadNew" : "docs.upload")} ${title}`}
       className={cn(
-        "inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg text-sm font-medium transition-colors",
+        "ez-upload-action inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg text-sm font-medium transition-colors",
         variant === "desk" ? "h-[38px] px-4" : "h-9 px-3.5",
         busy && "pointer-events-none opacity-50",
         rejected ? "bg-primary text-primary-foreground hover:bg-primary/90"
@@ -158,13 +158,14 @@ function ChecklistRow({
         setDragging(false)
         send(e.dataTransfer.files?.[0])
       }}
-      className={cn("border-t border-[#eef1f6] transition-colors", dragging && "bg-primary/5", rejected && !dragging && "bg-[#fffaf0]")}
+      className={cn("ez-upload-row border-t border-[#eef1f6] transition-colors", dragging && "bg-primary/5", rejected && !dragging && "bg-[#fffaf0]")}
     >
       <input
         ref={input}
         id={inputId}
         type="file"
         accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+        aria-label={title}
         className="sr-only"
         onChange={(e) => send(e.target.files?.[0])}
         disabled={busy}

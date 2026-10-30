@@ -233,7 +233,7 @@ export function SavedTravellers({ applicantNames = [], demo = false, header }: {
               {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
               <div className="flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
                 {editing.id ? (
-                  <button type="button" onClick={askRemove} disabled={busy} className="me-auto rounded text-sm font-medium text-destructive hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-destructive">
+                  <button type="button" onClick={askRemove} disabled={busy} className="me-auto rounded text-sm font-medium text-[#b42318] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b42318]">
                     {t("trav.removeLink")}
                   </button>
                 ) : null}

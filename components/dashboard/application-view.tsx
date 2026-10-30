@@ -3,6 +3,7 @@ import { ApplicationSwitcher } from "@/components/dashboard/application-switcher
 import { ActivityCard } from "@/components/dashboard/activity-card"
 import { AppointmentCard } from "@/components/dashboard/appointment-card"
 import { AppointmentCountdown, daysUntil } from "@/components/dashboard/appointment-countdown"
+import { MobileActionBar } from "@/components/dashboard/mobile-action-bar"
 import { NeedsYouCard } from "@/components/dashboard/needs-you-card"
 import { TripCard } from "@/components/dashboard/trip-card"
 import { CaseSummary } from "@/components/dashboard/case-summary"
@@ -64,6 +65,11 @@ export async function ApplicationView({
         <div className="flex min-w-0 flex-col gap-5">
           <NeedsYouCard app={app} reviews={reviews} arabic={arabic} />
           <ApplicationOverview app={app} stage={stage} arabic={arabic} reviews={reviews} />
+          {progress && (
+            <div className="lg:hidden">
+              <ProgressCard collapsible progress={progress} arabic={arabic} insurance={insurance} showInsurance={showInsurance} app={app} reviews={reviews} />
+            </div>
+          )}
           {countdown ? <AppointmentCountdown app={app} arabic={arabic} showInsurance={showInsurance} /> : <AppointmentCard app={app} arabic={arabic} showHelp={showHelp} />}
           <TripCard app={app} mates={mates} hrefFor={hrefFor} arabic={arabic} />
           <DocumentChecklist app={app} arabic={arabic} reviews={reviews} />
@@ -72,12 +78,17 @@ export async function ApplicationView({
           )}
         </div>
         <aside className="flex min-w-0 flex-col gap-5" aria-label={customerText(locale, "case.aside")}>
-          {progress && <ProgressCard progress={progress} arabic={arabic} insurance={insurance} showInsurance={showInsurance} app={app} reviews={reviews} />}
+          {progress && (
+            <div className="hidden lg:block">
+              <ProgressCard progress={progress} arabic={arabic} insurance={insurance} showInsurance={showInsurance} app={app} reviews={reviews} />
+            </div>
+          )}
           <ActivityCard app={app} reviews={reviews} events={events} arabic={arabic} />
           <CaseSummary app={app} stage={stage} showTrackingLink={showTrackingLink} allowDiscard={allowDiscard} arabic={arabic} specialist={specialist} />
           <SupportCard id={app.id} token={app.tracking_token ?? ""} destination={app.destination_country} stage={stage} specialist={specialist} />
         </aside>
       </div>
+      {open && <MobileActionBar app={app} stage={stage} reviews={reviews} arabic={arabic} />}
     </div>
   )
 }

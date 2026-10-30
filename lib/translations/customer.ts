@@ -615,6 +615,16 @@ const en = {
   "trip.docs": "{n} of {total}",
   "trip.open": "Open",
   "trip.current": "Open now",
+
+  "prog.shortPayment": "Payment",
+  "prog.shortDocuments": "Docs",
+  "prog.shortReview": "Review",
+  "prog.shortPreparation": "Prep",
+  "prog.shortInsurance": "Insurance",
+  "prog.shortReady": "Ready",
+  "prog.shortAppointment": "Appt",
+  "bar.chat": "Chat on WhatsApp",
+  "bar.label": "Next action",
 } as const
 
 export type CustomerKey = keyof typeof en
@@ -1227,6 +1237,16 @@ const ar = {
   "trip.docs": "{n} من {total}",
   "trip.open": "فتح",
   "trip.current": "مفتوح الآن",
+
+  "prog.shortPayment": "الدفع",
+  "prog.shortDocuments": "المستندات",
+  "prog.shortReview": "المراجعة",
+  "prog.shortPreparation": "التجهيز",
+  "prog.shortInsurance": "التأمين",
+  "prog.shortReady": "جاهز",
+  "prog.shortAppointment": "الموعد",
+  "bar.chat": "الدردشة عبر واتساب",
+  "bar.label": "الإجراء التالي",
 } satisfies Record<CustomerKey, string>
 
 const catalogs = { en, ar } as const

@@ -1,5 +1,6 @@
 import { LocaleLink } from "@/components/locale-link"
 import { CountryFlag } from "@/components/country-flag"
+import { ScrollCurrentChip } from "@/components/dashboard/scroll-current-chip"
 import { StatusDot } from "@/components/dashboard/dash-pill"
 import { SCHENGEN_META } from "@/lib/countries"
 import { getStatusLabel } from "@/lib/application-status"
@@ -93,6 +94,7 @@ export function ApplicationSwitcher({
           )
         })}
       </ul>
+      <ScrollCurrentChip />
     </nav>
   )
 }

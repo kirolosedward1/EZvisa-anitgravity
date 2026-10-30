@@ -1561,6 +1561,13 @@ html[lang="ar"] .ez-journal-masthead h1 em { font-family: var(--font-arabic), sa
 
 /* Customer dashboard (canvas "EZvisa dashboard redesign"): white cards on #f6f8fc, 8px buttons inside customer pages. */
 .ez-dash { background:#f6f8fc; }
+/* The upload buttons are labels for a visually hidden file input: show its keyboard focus on the button. */
+.ez-upload-row:has(> input:focus-visible) .ez-upload-action { outline:2px solid #0436dc; outline-offset:2px; }
+/* Dashboard mobile action bar (components/dashboard/mobile-action-bar.tsx): room under the footer, no Crisp bubble on top of it. */
+@media (max-width:1023px) {
+  body:has(.ez-mobile-bar) { padding-bottom:calc(72px + env(safe-area-inset-bottom)); }
+  body:has(.ez-mobile-bar) .crisp-client { display:none !important; }
+}
 .ez-dash-card { background:#fff; border:1px solid #dee5f0; border-radius:12px; }
 .ez-dash-card.ez-dash-hero { background:#edf4ff; border-color:#dbe6fa; }
 .ez-dash-next { display:flex; align-items:center; gap:20px; padding:24px 28px; background:#edf4ff; border-radius:12px; }
@@ -1579,5 +1586,5 @@ h2.ez-dash-row-title { font-size:14px; font-weight:500; line-height:1.4; letter-
 @media (max-width:640px) { h2.ez-dash-hero-title { font-size:24px; } h3.ez-dash-next-title { font-size:20px; } }
 @media (max-width:640px) {
   .ez-dash-next { flex-direction:column; align-items:flex-start; gap:12px; padding:20px; }
-  .ez-dash-next-globi { width:120px; }
+  .ez-dash-next-globi { display:none; } /* compact mobile case card (Mobile artboard): text and actions only */
 }

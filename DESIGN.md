@@ -27,7 +27,7 @@ Triips was a reference for inspiration, not a template to copy. Preserve the web
 | Brand | Keep the original blue. |
 | Homepage heading | Exactly **“Your Schengen visa, made simple.”** Keep its reduced size. |
 | Globi | Leads the homepage and wizard. Use supplied videos, with visually transparent backgrounds, autoplay, muted, inline and looping. No visible pause icons. |
-| Navigation | Public header includes Blog, Videos and **Help**. Hide the language switcher and Travel tools in the header; the language switcher (English / العربية, full page load because the root layout sets `lang`/`dir`) sits in the bottom row of both footers. Signed-in header contains only **My applications**, **New application**, **Help**, plus account and WhatsApp controls. Every header Help link (public, signed-in, drawers, account dropdown) goes to the help center at `/help`; Contact is linked from the footers, not the header. Below 1024px signed-in visitors get a menu button; its drawer shows their photo, name and email, those three links, Account settings and Sign out. Drawers close on Escape, on navigation and when the screen widens, open from the inline end (left in Arabic), and hide the cookie notice while open. |
+| Navigation | Public header includes Blog, Videos and **Help**. Hide the language switcher and Travel tools in the header; the language switcher (English / العربية, full page load because the root layout sets `lang`/`dir`) sits in the bottom row of both footers. Signed-in header contains only **My applications**, **New application**, **Help center**, plus account and WhatsApp controls. Every header Help center link (public, signed-in, drawers, account dropdown) goes to the help center at `/help`; Contact is linked from the footers, not the header. Below 1024px signed-in visitors get a menu button; its drawer shows their photo, name and email, those three links, Account settings and Sign out. Drawers close on Escape, on navigation and when the screen widens, open from the inline end (left in Arabic), and hide the cookie notice while open. |
 | Active state | Account links use a blue-text pale-blue pill, with **no underline**. Dropdown links use a pale-blue hover/keyboard-focus fill without an outer border or outline. Public links use their existing underline treatment. Do not combine both styles. |
 | Homepage starter | Searchable nationality/destination fields with flags; small Start application button beside fields when space permits. No price inside this box. Button corners match fields: 6px. |
 | Nationalities | Short list of common UAE resident nationalities plus **Show all nationalities**. Do not delete valid nationalities to shorten the list. |
@@ -39,10 +39,14 @@ Triips was a reference for inspiration, not a template to copy. Preserve the web
 | Support | Always use the shared WhatsApp icon. Do not claim support hours. Chat plugin is hidden for now. |
 | Payment copy | Say **payment gateway**, not the provider's brand. Internal integration identifiers are technical details, not UI copy. |
 | Passport | Collect passport number after payment in the continuation flow. Do not reintroduce the pre-payment requirement. |
-| Insurance | Dashboard-only step named **Insurance**, after Preparation and before Ready, offers an EZvisa purchase/quote option and an own-policy option. Quote separately; do not add an invented premium to the service fee. |
+| Insurance | Dashboard-only step named **Travel insurance** (also in the app), after Preparation and before Ready, offers an EZvisa purchase/quote option and an own-policy option. Quote separately; do not add an invented premium to the service fee. |
 | Account creation | Name and birthdate; minimum age 18; explicit unchecked 18+ declaration. Do not expose “Explore demo accounts” on login/signup. |
 | Social login | Use name, email and avatar when supplied. Never invent age/DOB. Ask for missing required details in the completion flow. |
 | Resume | Show a dismissible saved-application box with destination flag and Continue application. Dismissal must not erase answers. The floating box sits in the bottom corner (24px, 12px on phones): the chat bubble is hidden, so it no longer reserves space for it. |
+| Customer workspace | One next action per case. "What we need from you" appears only with two or more pending items. 8px buttons on customer pages; tokens `#0436dc`, `#edf4ff`, `#102347`; weights 500/600. Globi only through `components/globi/globi.tsx`. |
+| Reviews and activity | Document review results and the activity log come from `document_reviews` and `application_events` (migrations 003 and 004, applied by the owner). Until then the dashboard works from the application row. Customers never write either table. |
+| Family trips | Paid applications with the same email, destination and travel dates are shown as one trip. Each traveller keeps their own case, documents and status. |
+| Arabic | Prices read number first, then the currency ("245 درهم"). Every Globi video is mirrored. Western digits, as elsewhere on the site. |
 
 ## Tokens and typography
 
@@ -130,13 +134,26 @@ Separate the **wizard stepper** from the **application lifecycle tracker**. They
 
 ### 4. Customer workspace
 
-Sources: [`components/dashboard`](components/dashboard), [`components/user-menu.tsx`](components/user-menu.tsx), [`lib/application-status.ts`](lib/application-status.ts).
+Sources: [`components/dashboard`](components/dashboard), [`components/documents`](components/documents), [`app/account`](app/account), [`lib/dashboard-state.ts`](lib/dashboard-state.ts), [`lib/application-status.ts`](lib/application-status.ts). Release note and screenshots of every state: [`docs/releases/2026-10-30-dashboard`](docs/releases/2026-10-30-dashboard/README.md).
 
-A compact account header, case heading with flag/photo, clear next action, progress tracker, documents and side summary. Desktop uses a main column plus approximately 320px summary sidebar; below 1024px sidebar content follows the case, and small phones stack.
+**Tokens.** Customer pages sit on `#f6f8fc` (`.ez-dash`) with white cards (`.ez-dash-card`: 1px `#dee5f0`, 12px corners). Blue `#0436dc`, sky `#edf4ff`, ink `#102347`, muted `#52617a`; amber `#fff4de`/`#7a4b00` for "needs you", green `#e3f5e8`/`#135c2b` for done. Weights 500 and 600 only. Buttons inside `.ez-customer-page` have 8px corners. Headings use the unlayered `ez-dash-*` classes (`h1.ez-dash-h1`, `h2.ez-dash-section`, `h2.ez-dash-panel` and friends) because the global heading sizes otherwise win over utilities.
 
-Progress circles and connectors reflect real application state. Current, complete and upcoming states must be distinct beyond color. Status is derived from the shared status helpers, not invented in presentation components. Preserve loading, empty, error, retry, unpaid and refused/cancelled states.
+**Dashboard (`/dashboard`, and `/track/[token]` through the shared `ApplicationView`).** Greeting and count line, then the switcher: a card grid on desktop, a sideways chip row below 1024px that scrolls the open case into view. Paid cases with the same email, destination and travel dates are one trip card (`lib/trips.ts`). Main column, top to bottom:
+- **What we need from you**, only when two or more things wait on the customer (`customerTodos`): documents sent back, documents missing, post-payment details, the appointment. Numbered; the first button is primary.
+- **Case card**: photo banner, flag, reference with copy, status pill and "Next: you/us", then exactly one next step (one primary, at most one secondary action) with a Globi pose. Below 640px the Globi is hidden and the banner is shorter.
+- **Appointment**: a countdown card (days to go, date, centre, download, `.ics` calendar link, change) and a "Before your appointment" checklist while a saved appointment is ahead; otherwise the compact appointment card. No maps or directions links.
+- **Travellers on this trip** table when the case is part of a trip.
+- **Documents** (upload panel or prepared-file tiles) and the **Travel insurance** row (signed-in owner only).
 
-Account settings use a profile column and ruled settings sections. Keep auth feedback readable. Do not use marketing hero sizes inside a dashboard. Receipt and print layouts remain clean, with printable controls excluded from printed output.
+Sidebar (about 320px): **Progress** (vertical timeline; current, done and upcoming differ in shape as well as color), **Activity** (newest first, five lines then "Show all activity"; `lib/application-events.ts`), **Case details** (reference, fee, specialist, dates, links) and **Support** ("Message {specialist} on WhatsApp" when one is assigned).
+
+Below 1024px the sidebar follows the main column, the Progress card moves under the case card as a collapsible card (compact step rail by default, `aria-expanded` toggle to the full timeline), and a sticky bottom bar holds the case's primary action and WhatsApp. The page reserves room for the bar and the cookie notice sits above it.
+
+**Upload desk** (`/dashboard/upload`, `/track/[token]/upload`, `components/documents/upload-desk.tsx`): count and segments, one ruled row per document with drop zone, file name and time, state pill (missing, received, being checked, approved, needs a new file) and the specialist's note on a rejected row; tips with the documents Globi and WhatsApp help beside it. The button of each row is the label of its file input.
+
+**Account (`/account`)**: profile card and a section rail that follows the scroll (a chip row on phones), then ruled settings cards: Account details (Edit per row; date of birth changes via support), Saved travellers (relationship pill, passport expiry warning within six months, under 18, application count; remove sits in the edit dialog), Notifications (switches saved to the profile as `user_metadata.notifications`), Sign in and security (password, connected sign-ins, language), Receipts, and the delete link.
+
+Status is always derived from the shared helpers (`lib/application-status.ts`, `lib/dashboard-state.ts`), never in presentation components. Keep the loading, empty, error, retry, unpaid and refused/cancelled states. Every string is in `lib/translations/customer.ts` in English and Arabic. Demo accounts (`/api/auth/demo-login?scenario=ready|pending|multi`, plus `/dashboard?demo=empty` on previews) reach every state and never write. Do not use marketing hero sizes inside the workspace. Receipt and print layouts stay clean, with printable controls excluded from print.
 
 ### 5. Authentication
 

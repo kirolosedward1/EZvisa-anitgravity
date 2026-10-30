@@ -45,7 +45,7 @@ export function ApplicationOverview({ app, stage, arabic, reviews }: { app: Visa
   return (
     <section aria-label={t("overview.caseAria", { country })} className="ez-dash-card overflow-hidden">
       {photo ? (
-        <div className="relative h-[168px] bg-[#edf4ff]">
+        <div className="relative h-[112px] bg-[#edf4ff] sm:h-[168px]">
           <Image src={photo} alt={t("dash.photoAlt", { country })} fill sizes="(min-width: 1024px) 760px, 100vw" className="object-cover" priority />
         </div>
       ) : null}

@@ -10,17 +10,18 @@ import type { InsurancePreference } from "@/lib/insurance"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 import type { DocumentReviews } from "@/lib/document-reviews"
+import { ProgressCollapsible } from "@/components/dashboard/progress-collapsible"
 
 type TrackerKey = StepKey | "insurance"
 
-const STEP_COPY: Record<TrackerKey, { label: CustomerKey; hint: CustomerKey }> = {
-  insurance: { label: "step.insurance", hint: "step.insuranceHint" },
-  payment: { label: "step.payment", hint: "step.paymentHint" },
-  documents: { label: "step.documents", hint: "step.documentsHint" },
-  review: { label: "step.review", hint: "step.reviewHint" },
-  preparation: { label: "step.preparation", hint: "step.preparationHint" },
-  ready: { label: "step.ready", hint: "step.readyHint" },
-  appointment: { label: "step.appointment", hint: "step.appointmentHint" },
+const STEP_COPY: Record<TrackerKey, { label: CustomerKey; hint: CustomerKey; short: CustomerKey }> = {
+  insurance: { label: "step.insurance", hint: "step.insuranceHint", short: "prog.shortInsurance" },
+  payment: { label: "step.payment", hint: "step.paymentHint", short: "prog.shortPayment" },
+  documents: { label: "step.documents", hint: "step.documentsHint", short: "prog.shortDocuments" },
+  review: { label: "step.review", hint: "step.reviewHint", short: "prog.shortReview" },
+  preparation: { label: "step.preparation", hint: "step.preparationHint", short: "prog.shortPreparation" },
+  ready: { label: "step.ready", hint: "step.readyHint", short: "prog.shortReady" },
+  appointment: { label: "step.appointment", hint: "step.appointmentHint", short: "prog.shortAppointment" },
 }
 
 const TRACKER_STEPS: { key: TrackerKey }[] = [...APPLICATION_STEPS.slice(0, 4), { key: "insurance" }, ...APPLICATION_STEPS.slice(4)]
@@ -70,6 +71,48 @@ function stepDetail(key: TrackerKey, state: StepState, arabic: boolean, app?: Ap
       if (state === "current") return yourTurn(t("prog.apptNow"))
       return state === "done" ? t("prog.done") : t("step.appointmentHint")
   }
+}
+
+function stepStates(progress: CustomerProgress, showInsurance: boolean, insurance?: InsurancePreference) {
+  const steps = trackerSteps(showInsurance)
+  const currentIndex = steps.findIndex((step) => step.key === progress.key)
+  return steps.map((step, index) => {
+    const isCurrent = index === currentIndex && !progress.finished
+    const isDone = step.key === "insurance" ? !!insurance : index < currentIndex || (progress.finished && index === currentIndex)
+    return { key: step.key, index, state: (isCurrent ? "current" : isDone ? "done" : "todo") as StepState, lineDone: index < currentIndex || progress.finished }
+  })
+}
+
+/** Compact horizontal rail for the collapsed mobile card: a marker and a short label per step. */
+export function ProgressRail({ progress, arabic, insurance, showInsurance = false }: { progress: CustomerProgress; arabic: boolean; insurance?: InsurancePreference; showInsurance?: boolean }) {
+  const locale = arabic ? "ar" : "en"
+  const steps = stepStates(progress, showInsurance, insurance)
+  return (
+    <ol className="grid" style={{ gridTemplateColumns: `repeat(${steps.length}, minmax(0, 1fr))` }} aria-label={customerText(locale, "step.progress")}>
+      {steps.map(({ key, index, state, lineDone }) => (
+        <li key={key} aria-current={state === "current" ? "step" : undefined} className="relative flex flex-col items-center gap-1.5 text-center">
+          {index < steps.length - 1 ? (
+            <span aria-hidden="true" className={cn("absolute start-1/2 top-[11px] h-0.5 w-full", lineDone ? "bg-primary" : "bg-border")} />
+          ) : null}
+          <span
+            className={cn(
+              "relative z-10 flex size-6 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums",
+              state === "done" && "bg-primary text-primary-foreground",
+              state === "current" && "border-2 border-primary bg-background text-primary ring-[3px] ring-primary/10",
+              state === "todo" && "border border-border bg-background text-muted-foreground",
+            )}
+          >
+            {state === "done" ? <Check className="size-3" strokeWidth={3} aria-hidden="true" /> : index + 1}
+          </span>
+          <span className={cn("w-full truncate text-[11px] leading-tight", state === "current" ? "font-semibold text-primary" : "text-muted-foreground")}>
+            {customerText(locale, STEP_COPY[key].short)}
+            {state === "done" && <span className="sr-only"> ({customerText(locale, "step.completed")})</span>}
+            {state === "current" && <span className="sr-only"> ({customerText(locale, "step.current")})</span>}
+          </span>
+        </li>
+      ))}
+    </ol>
+  )
 }
 
 /** Vertical timeline. Current, done and upcoming steps differ in shape too: ring with number, filled check, outline number. */
@@ -133,10 +176,20 @@ export function ProgressTracker({
   )
 }
 
-/** The sidebar card: heading with "Step n of N", then the timeline. */
-export function ProgressCard(props: Parameters<typeof ProgressTracker>[0]) {
+/** The sidebar card: heading with "Step n of N", then the timeline. `collapsible`: the mobile card (rail first). */
+export function ProgressCard({ collapsible = false, ...props }: Parameters<typeof ProgressTracker>[0] & { collapsible?: boolean }) {
   const locale = props.arabic ? "ar" : "en"
   const { n, total } = progressPosition(props.progress, props.showInsurance ?? false)
+  if (collapsible) {
+    return (
+      <ProgressCollapsible
+        title={customerText(locale, "prog.title")}
+        position={customerText(locale, "prog.stepOf", { n, total })}
+        rail={<ProgressRail progress={props.progress} arabic={props.arabic} insurance={props.insurance} showInsurance={props.showInsurance} />}
+        timeline={<ProgressTracker {...props} />}
+      />
+    )
+  }
   return (
     <section aria-label={customerText(locale, "prog.title")} className="ez-dash-card px-5 pb-5 pt-5">
       <div className="mb-4 flex items-center justify-between gap-3">

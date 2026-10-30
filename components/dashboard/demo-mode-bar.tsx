@@ -43,7 +43,7 @@ export function DemoModeBar({ currentScenario, applicantName, applicantEmail }: 
     <aside aria-label="Demo mode" className="border-b border-border/60 bg-secondary/60">
       <div className="container mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 text-sm sm:px-6 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1 rounded-full border border-warning/25 bg-warning/10 px-2.5 py-0.5 text-xs font-medium text-warning">
+          <span className="inline-flex items-center gap-1 rounded-full border border-[#f3dcae] bg-[#fff4de] px-2.5 py-0.5 text-xs font-medium text-[#7a4b00]">
             Demo mode
           </span>
           <span className="text-muted-foreground">
