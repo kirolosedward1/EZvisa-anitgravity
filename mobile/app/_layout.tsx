@@ -50,6 +50,7 @@ function Routes() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="apply" options={{ presentation: "modal" }} />
         <Stack.Screen name="trip/[id]" options={{ presentation: "modal" }} />
+        <Stack.Screen name="appointment/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="continue/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="receipt/[id]" />
         {/* full screen: a swipe-to-dismiss sheet would fight the crop handles */}

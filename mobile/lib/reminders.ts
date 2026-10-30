@@ -52,6 +52,13 @@ export function planReminders(apps: Application[], now = new Date(), passportExp
       out.push({ id: `${PREFIX}${a.id}-trip7`, date: at9(a.entry_date, -7), title: "Your trip is in one week", body: "Check your documents and travel insurance.", url });
       out.push({ id: `${PREFIX}${a.id}-trip1`, date: at9(a.entry_date, -1), title: "Your trip is tomorrow", body: "Have your passport and visa ready.", url });
     }
+    // The appointment (staff-set column, or the date the customer added): a reminder the day before, opening the
+    // appointment screen with the packing list.
+    const apAt = ((a as any).appointment_at as string | undefined) ?? ((a.notes as any)?.appointment?.at as string | undefined);
+    if (apAt && !isNaN(Date.parse(apAt))) {
+      const d = new Date(apAt); const eve = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1, 18, 0, 0);
+      out.push({ id: `${PREFIX}${a.id}-appt1`, date: eve, title: "Appointment tomorrow", body: "Bring the printed set. Open the packing list.", url: `/appointment/${a.id}` });
+    }
     for (const p of a.applicants ?? []) {
       if (!p.passport_expiry_date) continue;
       const k = `${p.passport_number ?? p.id}-${p.passport_expiry_date}`;

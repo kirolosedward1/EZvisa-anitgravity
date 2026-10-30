@@ -496,3 +496,17 @@ spouse employment screens have no contract fields and are left out (website alig
 | Residence visa asks "valid until at least {return + 3 months}?"; NOC shows what a good NOC says and "Send me the template" (WhatsApp) | `lib/questions.ts`, `QuestionView.tsx` |
 | Last question's button: "Finish and upload documents" | `app/continue/[id].tsx` |
 | Tests updated for the grouped screens, plus a new test of the group rules; Arabic for every new string | `scripts/wizard-rules.test.ts`, `scripts/test-after-payment.ts`, `lib/ar.ts` |
+
+## 7e. Phase 5 · delivered (30 Oct)
+
+| Item | Where |
+|---|---|
+| Status as drawn: hero (flag, country, travellers, dates, "in N days"), one card with Globi and "Next: you / Next: us" and the single action (pay, a few more questions, upload N documents, a document needs replacing with the staff reason and "Ask why", the team is writing your file, file ready, appointment, waiting for the decision, approved with Share and Apply again, refused with Talk to a specialist and Apply again), the status steps, "To get later" (until the document arrives), Trip rows (Appointment, What happens on the day, Trip plan, Receipt) | `components/status/StatusCards.tsx`, `app/(tabs)/applications/[id].tsx` |
+| Documents: "Your documents · i of n received", Still needed, Received, We prepare these | `app/(tabs)/applications/[id].tsx` |
+| Book appointment: centre from `lib/visaCentres.ts` (Dubai or Abu Dhabi by emirate), reference and passport numbers to type, "any date before {trip − 14 days}", then "I have booked, add the date" (date + time, saved to `additional_notes.appointment`; staff columns still win) | `app/appointment/[id].tsx` |
+| Appointment booked: date and place, Directions, Add to calendar, Change, packing list (on the phone), biometrics, decision timing, the day-before reminder (local notification opening the appointment) | `app/appointment/[id].tsx`, `components/status/AppointmentDay.tsx`, `lib/reminders.ts` |
+| What happens on the day sheet (fees from `config/pricing.ts`) | `components/status/AppointmentDay.tsx` |
+| Every push opens its own screen: application, continue, appointment, trip plan, receipt (tested) | `lib/notifyRoute.ts`, `scripts/check-push.mjs` |
+| v1 analytics: status_view (you / us), appointment_booked, WhatsApp hand-offs | `components/status/StatusCards.tsx`, `app/appointment/[id].tsx` |
+
+Not built, on purpose (need the owner or native work): Referral (no referral programme or credit exists on the business side; the 50 AED in `config/pricing.ts` stays a placeholder), Rate experience and the App Store review ask, the Live Activity (needs an ActivityKit widget target in a native build), the camera capture guide and document viewer redesign (the existing picker, crop and upload queue stay), the trip countdown screen (the trip-day reminders already exist). "Approved" and "Refused" use the website's `completed` and `rejected` statuses.
