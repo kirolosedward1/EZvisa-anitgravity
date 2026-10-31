@@ -12,6 +12,7 @@ import { supabase } from "../../../lib/supabase";
 import { SCHENGEN_VISA_REQUIRED } from "../../../lib/wizard";
 import { WORLD } from "../../../lib/world";
 import { citizenshipIso, citizenshipName } from "../../../lib/citizenship";
+import { PHONE_UAE_ONLY } from "../../../lib/config";
 import { parseSaved, displayPhone, formatNational, toE164, phoneError } from "../../../lib/phone";
 import { PhoneField } from "../../../components/CountryPicker";
 import { Flag } from "../../../components/ui";
@@ -43,7 +44,7 @@ export default function AccountDetails() {
   const providers = [...new Set(ids.length ? ids : [(u.app_metadata?.provider as string | undefined) ?? "email"])];
   const hasEmailPw = providers.includes("email");
   const full = (meta.full_name as string | undefined) ?? "";
-  const open = (e: Edit) => { select(); setErr(null); setNote(null); setQ(""); setV2(""); if (e === "phone") { const p = parseSaved(meta.phone); setPIso(p.iso); setV1(formatNational(p.iso, p.digits)); setPE164(toE164(p.iso, p.digits) ?? ""); setEdit(e); return; }
+  const open = (e: Edit) => { select(); setErr(null); setNote(null); setQ(""); setV2(""); if (e === "phone") { const p0 = parseSaved(meta.phone); const p = PHONE_UAE_ONLY && p0.iso !== "AE" ? { iso: "AE", digits: "" } : p0; setPIso(p.iso); setV1(formatNational(p.iso, p.digits)); setPE164(toE164(p.iso, p.digits) ?? ""); setEdit(e); return; }
     setV1(e === "name" ? full : e === "email" ? u.email ?? "" : e === "citizenship" ? citizenshipIso(meta.citizenship) : ""); setEdit(e); };
   const close = () => { if (!busy) setEdit(null); };
   const save = async (val?: string) => {

@@ -5,6 +5,8 @@ export const phoneDisplay = (v: string) => { try { return parsePhoneNumberFromSt
 // components/apply/*): the same fields, labels, options, order and validation. Each question owns one or more form keys;
 // its errors are exactly validateStep(step) filtered to those keys, so the rules can never drift from the web.
 import { WORLD } from "./world";
+import { PHONE_UAE_ONLY } from "./config";
+import { isUaeMobile } from "./phone";
 import type { GlobiPose } from "../components/globi/poses";
 import type { IconName } from "../components/ui/core";
 import {
@@ -97,7 +99,9 @@ export const QUESTIONS: Question[] = [
   // Passport number: asked after payment only (website traveller step and CLAUDE.md "Passport number stays after
   // payment"); see passportNumberAfter. A saved traveller still carries it, so it is never asked twice.
   // Email + phone on one screen. Signed in: the account email is used and only the phone is shown (see accountEmail).
-  { id: "contact", explain: { why: "So the team can reach you about your file. WhatsApp is the fastest.", usedFor: "Updates about this application", sharedWith: "EZvisa only" }, ask: (f) => (accountEmail ? "Best number to reach you?" : "Where can we reach you?"), pose: "phone", step: "personal", keys: ["email", "phone", "phoneLocal", "phoneCountry", "whatsappOptIn"], label: "Phone Number", required: true, kind: "contact" },
+  { id: "contact", explain: { why: "So the team can reach you about your file. WhatsApp is the fastest.", usedFor: "Updates about this application", sharedWith: "EZvisa only" }, ask: (f) => (accountEmail ? "Best number to reach you?" : "Where can we reach you?"), pose: "phone", step: "personal", keys: ["email", "phone", "phoneLocal", "phoneCountry", "whatsappOptIn"], label: "Phone Number", required: true, kind: "contact",
+    // UAE mobiles only for now: a saved or prefilled number from another country keeps this question open.
+    check: (f) => (PHONE_UAE_ONLY && f.phone.trim() && !isUaeMobile(f.phone) ? { phone: "Enter a valid UAE mobile number" } : {}) },
   { id: "travellingWith", explain: { why: "A spouse travelling with you gets their own application in the same file.", usedFor: "Price, number of applications", sharedWith: "EZvisa only" }, view: {"layout": "tiles", "labels": {"no": "Just me", "yes": "With my spouse"}, "subs": {"no": "{price} AED.", "yes": "Two applications in one file. {price2} AED."}}, ask: "Who's travelling with you?", pose: "companion", step: "personal", keys: ["spouseAccompanying"], label: "Travelling with", required: true, kind: "choice",
     options: [{ value: "no", label: "Just me" }, { value: "yes", label: "With my spouse" }],
     hint: "With your spouse: two applicants. Spouse details are asked after payment.",

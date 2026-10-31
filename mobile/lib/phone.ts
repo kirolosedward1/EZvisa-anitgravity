@@ -66,4 +66,6 @@ export function displayPhone(v?: string | null): string {
   const p = parsePhoneNumberFromString(digits, iso as CountryCode);
   return p ? p.formatInternational() : `+${dialOf(iso)} ${digits}`;
 }
+/** +9715XXXXXXXX: a UAE mobile number in E.164. */
+export const isUaeMobile = (v?: string | null) => /^\+9715\d{8}$/.test((v ?? "").replace(/[\s-]/g, ""));
 export const phoneError = (iso: string) => (iso === "AE" ? "Enter a valid UAE mobile number" : "Enter a valid phone number");

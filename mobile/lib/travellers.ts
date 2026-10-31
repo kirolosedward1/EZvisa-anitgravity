@@ -7,7 +7,8 @@
 // first time), falling back to the table itself; writing (after the after-payment step, Account edits) is direct.
 // Nothing is cached on the phone: the list lives in component state, like lib/profile.ts.
 import { supabase } from "./supabase";
-import { siteUrl } from "./config";
+import { siteUrl, PHONE_UAE_ONLY } from "./config";
+import { isUaeMobile } from "./phone";
 import { splitPhone } from "./profile";
 import {
   TRAVELLERS_TABLE, applyTraveller, spouseFromAnswers, travellerFromAnswers, travellerFromRow, travellerKeys, travellerToRow,
@@ -52,6 +53,8 @@ export async function fetchTravellers(): Promise<Traveller[]> {
 export function applyTravellerToForm(f: WizardForm, t: Traveller): WizardForm {
   const nf = applyTraveller(f, t);
   if (str(t.phone) && !str(t.phoneLocal)) { const sp = splitPhone(t.phone!, t.phoneCountry); if (sp) Object.assign(nf, sp); }
+  // UAE mobiles only for now: a saved number from another country is not carried into the form.
+  if (PHONE_UAE_ONLY && str(nf.phone) && !isUaeMobile(nf.phone)) Object.assign(nf, { phone: "", phoneLocal: "", phoneCountry: "AE" });
   return nf;
 }
 
