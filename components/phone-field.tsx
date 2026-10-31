@@ -3,12 +3,21 @@
 import { useMemo, useState } from "react"
 import {
   AsYouType,
+  getExampleNumber,
   getCountries,
   getCountryCallingCode,
   parsePhoneNumberFromString,
   type CountryCode,
 } from "libphonenumber-js"
+import examples from "libphonenumber-js/mobile/examples"
 import { Label } from "@/components/ui/label"
+
+/** A generic number spaced exactly as typing groups it: UAE 50 000 0000, elsewhere the library's example (test) number. */
+function placeholderFor(country: CountryCode): string {
+  if (country === "AE") return "50 000 0000"
+  const example = getExampleNumber(country, examples)
+  return example ? example.formatInternational().replace(`+${example.countryCallingCode}`, "").trim() : "Phone number"
+}
 
 const COUNTRIES = getCountries()
   .map((iso) => ({ iso, calling: getCountryCallingCode(iso) }))
@@ -61,7 +70,7 @@ export function PhoneField({
           id={id}
           inputMode="tel"
           autoComplete="tel-national"
-          placeholder={country === "AE" ? "50 000 0000" : "Phone number"}
+          placeholder={placeholderFor(country)}
           value={national}
           onChange={(event) => apply(country, event.target.value)}
           className="h-12 w-full rounded-xl border border-input bg-background px-3 text-base text-foreground"
