@@ -243,10 +243,17 @@ export default function Apply() {
     if (lastSlug.current !== undefined && p.step === lastSlug.current) return;
     if (p.step === undefined) { if (lastSlug.current === undefined) lastSlug.current = stepOfPage(page); return; }
     const s = parseStep(p.step);
-    lastSlug.current = s; setDir(-1); setPage(pageForStep(s, fRef.current)); setShowErr(false); setEditing(null);
+    const target = pageForStep(s, fRef.current);
+    lastSlug.current = s; stepHold.current = target === REVIEW ? null : stepOfPage(target); setDir(-1); setPage(target); setShowErr(false); setEditing(null);
   }, [hydrated, p.step]);
-  // Keep ?step= in sync with the current step, like the site.
-  useEffect(() => { if (hydrated && navReady && lastSlug.current !== undefined && step !== lastSlug.current) { lastSlug.current = step; router.setParams({ step }); } }, [step, navReady, hydrated]);
+  // Keep ?step= in sync with the current step, like the site. After ?step= moved the page, wait until the page has
+  // reached that step: in the same render `step` is still the old one, and writing it back made the two effects
+  // chase each other ("Maximum update depth exceeded" when a country page opened /apply?step=personal).
+  const stepHold = useRef<string | null>(null);
+  useEffect(() => {
+    if (stepHold.current) { if (step === stepHold.current) stepHold.current = null; else return; }
+    if (hydrated && navReady && lastSlug.current !== undefined && step !== lastSlug.current) { lastSlug.current = step; router.setParams({ step }); }
+  }, [step, navReady, hydrated, page]);
   // Signed-in users: always the account email (the email question is skipped), so the application shows up in their account.
   // Re-applied whenever the email changes underneath (a new or switched draft, a traveller prefill), not only on sign-in.
   useEffect(() => { const e = session?.user.email; if (e && f.email !== e) setForm((x) => (x.email === e ? x : { ...x, email: e })); }, [session, f.email]);
@@ -287,6 +294,18 @@ export default function Apply() {
   const patch = (x: Partial<WizardForm>) => { setForm((y) => ({ ...y, ...x })); if (submitted) setSubmitted(null); };
   const goTo = (pg: string, d: number) => { if (auto.current) clearTimeout(auto.current); setDir(d); setPage(pg); setShowErr(false); };
 
+  // Saved travellers arrive after the wizard picked its first question (a country page or a link opens it with the
+  // destination chosen, a resumed draft opens where it stopped): while no personal answer is in yet, go back to
+  // "Who is travelling?" so the customer picks someone instead of typing everything again. Once per draft.
+  const offeredTravellers = useRef<string | null>(null);
+  useEffect(() => {
+    if (!uid || !travellers?.length || pickedTraveller || editing || submitted || offeredTravellers.current === activeKey) return;
+    if (!page.startsWith("q:") || !isFreshDraft(fRef.current)) return;
+    const list = activeQuestions(fRef.current);
+    const ti = list.findIndex((x) => x.id === "traveller"); const pi = list.findIndex((x) => `q:${x.id}` === page);
+    if (ti < 0 || pi <= ti) return;
+    offeredTravellers.current = activeKey; goTo("q:traveller", -1);
+  }, [travellers, page, uid, pickedTraveller, editing, submitted, activeKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const waitingFor = useRef<WizardForm | null>(null);
   useEffect(() => { if (travellers !== null && waitingFor.current) { const nf = waitingFor.current; waitingFor.current = null; advance(nf); } }, [travellers]); // eslint-disable-line react-hooks/exhaustive-deps
   const advance = (nf0: WizardForm = fRef.current) => {
