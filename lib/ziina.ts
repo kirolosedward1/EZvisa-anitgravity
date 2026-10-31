@@ -130,6 +130,9 @@ export async function applyIntentStatus(
   if (next === "paid") {
     const { rememberTravellersFromApplication } = await import("@/lib/travellers")
     await rememberTravellersFromApplication(stored, supabase)
+    // The case gets an owner (staff console, fewest open cases; never throws).
+    const { autoAssignOnPayment } = await import("@/lib/staff/auto-assign")
+    await autoAssignOnPayment(supabase, row.id)
   }
   return { row: stored, status: next, changed: true }
 }

@@ -74,7 +74,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  if (!(await isStaffRequest(request))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!(await isStaffRequest(request, "docs"))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null
   const id = typeof body?.id === "string" ? body.id : ""
   if (!UUID_RE.test(id)) return NextResponse.json({ error: "Invalid case id" }, { status: 400 })

@@ -7,6 +7,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 import { hasBearerSecret } from "@/lib/bearer-auth"
 import { getRealStaff } from "@/lib/staff/session"
+import { can, type Permission } from "@/lib/staff/roles"
 
 export { isStaffEmail, staffEmails } from "@/lib/staff/session"
 
@@ -16,10 +17,14 @@ export async function getStaffUser(): Promise<{ id: string; email: string } | nu
   return staff?.userId ? { id: staff.userId, email: staff.email } : null
 }
 
-/** Staff API check: the staff session, or the script secret. */
-export async function isStaffRequest(request: Request): Promise<boolean> {
+/**
+ * Staff API check: the script secret, or a staff session whose role has the permission (lib/staff/roles.ts). Without
+ * a permission any staff role passes (read-only routes).
+ */
+export async function isStaffRequest(request: Request, permission?: Permission): Promise<boolean> {
   if (hasBearerSecret(request.headers.get("Authorization"), process.env.ADMIN_API_SECRET)) return true
-  return (await getStaffUser()) !== null
+  const staff = await getRealStaff()
+  return !!staff?.userId && (!permission || can(staff.role, permission))
 }
 
 export function adminClient(): SupabaseClient | null {

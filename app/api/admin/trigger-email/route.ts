@@ -6,7 +6,7 @@ import { isStaffRequest } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
   try {
-    if (!(await isStaffRequest(request))) {
+    if (!(await isStaffRequest(request, "stage"))) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

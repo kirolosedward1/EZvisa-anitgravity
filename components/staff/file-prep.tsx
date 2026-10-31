@@ -5,7 +5,8 @@
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { FileText, Upload } from "lucide-react"
-import { assembleAndReady, generatePart, savePart, uploadPart } from "@/app/admin/files/actions"
+import { assembleAndReady, finishUpload, generatePart, savePart, startUpload } from "@/app/admin/files/actions"
+import { uploadWithToken } from "@/lib/staff/direct-upload"
 import { PARTS, type Part } from "@/lib/staff/file-prep"
 
 const STATE = { todo: { label: "Not started", tone: "grey" }, draft: { label: "Draft, review", tone: "amber" }, done: { label: "Done", tone: "green" } } as const
@@ -80,11 +81,15 @@ export function FileParts({ caseId, parts: initial, canWrite, canReady, demo }: 
                           onChange={(e) => {
                             const file = e.target.files?.[0]
                             if (!file) return
-                            const fd = new FormData()
-                            fd.set("caseId", caseId)
-                            fd.set("part", p.key)
-                            fd.set("file", file)
-                            run(() => uploadPart(fd), () => update(p.key, { state: "done", fileName: file.name }))
+                            run(async () => {
+                              const s = await startUpload({ caseId, part: p.key, fileName: file.name, size: file.size })
+                              if (!s.ok) return s
+                              if (!s.demo) {
+                                const err = await uploadWithToken(s.path, s.token, file)
+                                if (err) return { ok: false as const, error: err }
+                              }
+                              return finishUpload({ caseId, part: p.key, fileName: file.name })
+                            }, () => update(p.key, { state: "done", fileName: file.name }))
                             e.target.value = ""
                           }}
                         />

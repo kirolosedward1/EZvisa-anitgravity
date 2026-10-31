@@ -6,6 +6,8 @@ import { CountryFlag } from "@/components/country-flag"
 import { CaseControls, CaseNotes } from "@/components/staff/case-controls"
 import { CaseDocuments } from "@/components/staff/document-review"
 import { RefundButton } from "@/components/staff/refunds"
+import { EditApplication } from "@/components/staff/edit-application"
+import { editableAnswers } from "@/lib/staff/editable"
 import { refundPolicy } from "@/lib/staff/refunds"
 import { ErrorBanner } from "@/components/staff/states"
 import { SCHENGEN_META } from "@/lib/countries"
@@ -202,7 +204,8 @@ export default async function CasePage({ params, searchParams }: { params: Promi
           {tab === "details" ? (
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12 }} aria-labelledby="det-h">
               <h2 id="det-h">Application details</h2>
-              <p className="muted" style={{ margin: 0, fontSize: 12 }}>As the customer answered on the website or app. Editing on their behalf comes with the Customers board.</p>
+              <p className="muted" style={{ margin: 0, fontSize: 12 }}>As the customer answered on the website or app{can(staff.role, "edit") ? ", or as edited on their behalf" : ""}.</p>
+              {can(staff.role, "edit") && c.side !== "closed" ? <EditApplication caseId={c.id} initial={editableAnswers(app as unknown as Record<string, unknown>)} paid={c.paid} demo={staff.demo} /> : null}
               <div className="cols2">
                 <dl className="kv">
                   <dt>Full name</dt><dd>{c.name}</dd>

@@ -3,7 +3,8 @@
 // Insurance board rows: price and send a quote, then remind, accept, decline or issue the policy.
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
-import { issuePolicy, sendQuote, setQuoteStatus } from "@/app/admin/insurance/actions"
+import { issuePolicy, sendQuote, setQuoteStatus, startPolicyUpload } from "@/app/admin/insurance/actions"
+import { uploadWithToken } from "@/lib/staff/direct-upload"
 
 type Result = { ok: true; message: string } | { ok: false; error: string }
 
@@ -71,10 +72,15 @@ export function QuoteActions({ caseId, status, first, phone, demo }: { caseId: s
             <input type="file" accept="application/pdf" className="sr-only" onChange={(e) => {
               const file = e.target.files?.[0]
               if (!file) return
-              const fd = new FormData()
-              fd.set("caseId", caseId)
-              fd.set("file", file)
-              run(() => issuePolicy(fd))
+              run(async () => {
+                const s = await startPolicyUpload({ caseId, fileName: file.name, size: file.size })
+                if (!s.ok) return s
+                if (!s.demo) {
+                  const err = await uploadWithToken(s.path, s.token, file)
+                  if (err) return { ok: false as const, error: err }
+                }
+                return issuePolicy({ caseId, fileName: file.name })
+              })
               e.target.value = ""
             }} />
           </label>

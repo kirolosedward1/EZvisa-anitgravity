@@ -301,3 +301,22 @@ test("notification feed and preferences", async () => {
   assert.deepEqual(readPrefs(null), defaultPrefs())
   assert.equal(readPrefs({ events: { mention: { in_app: true, email: false, push: false } }, digest: false }).events.mention.email, false)
 })
+
+test("auto-assign picks the specialist with the fewest open cases", async () => {
+  const { pickFewestOpen } = await import("./auto-assign.ts")
+  const sp = [{ id: "a", name: "Zed" }, { id: "b", name: "Amy" }, { id: "c", name: "Bob" }]
+  assert.equal(pickFewestOpen(sp, new Map([["a", 3], ["b", 1], ["c", 1]]))?.id, "b", "ties go by name")
+  assert.equal(pickFewestOpen(sp, new Map([["b", 2], ["c", 5]]))?.id, "a", "no open cases counts as zero")
+  assert.equal(pickFewestOpen([], new Map()), null)
+})
+
+test("editable answers fall back to the row columns", async () => {
+  const { editableAnswers } = await import("./editable.ts")
+  const e = editableAnswers({ full_name: "Rania Khalil Haddad", destination_country: "Italy", entry_date: "2026-12-01", passport_number: "A123", additional_notes: JSON.stringify({ wizard: { employmentStatus: "employed" } }) })
+  assert.equal(e.firstName, "Rania")
+  assert.equal(e.lastName, "Khalil Haddad")
+  assert.equal(e.destination, "Italy")
+  assert.equal(e.travelStartDate, "2026-12-01")
+  assert.equal(e.passportNumber, "A123")
+  assert.equal(e.employmentStatus, "employed")
+})

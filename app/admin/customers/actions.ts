@@ -7,7 +7,7 @@ import { z } from "zod"
 import { serviceClient } from "@/lib/applications"
 import { recordAudit } from "@/lib/staff/audit"
 import { can } from "@/lib/staff/roles"
-import { getStaff } from "@/lib/staff/session"
+import { getStaff, isStaffEmail } from "@/lib/staff/session"
 
 export async function createSignInLink(input: { email: string }): Promise<{ ok: true; link: string; message: string } | { ok: false; error: string }> {
   const staff = await getStaff()
@@ -18,8 +18,14 @@ export async function createSignInLink(input: { email: string }): Promise<{ ok: 
   if (staff.demo) return { ok: true, link: "https://www.ezvisa.net/login", message: "Demo: no real link was created." }
   const client = serviceClient()
   if (!client) return { ok: false, error: "The database is not configured." }
+  // Never for a staff account: a link for an admin's email would let anyone with this tool sign in as them.
+  if (isStaffEmail(v.data.email)) return { ok: false, error: "This is a staff account. Staff sign in themselves." }
+  const { data: staffRow } = await client.from("staff_users").select("id").eq("email", v.data.email).limit(1)
+  if (staffRow?.length) return { ok: false, error: "This is a staff account. Staff sign in themselves." }
   const h = await headers()
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "www.ezvisa.net"
+  // Only our own hosts as the return address; anything else falls back to the live site.
+  const raw = (h.get("x-forwarded-host") ?? h.get("host") ?? "").toLowerCase()
+  const host = /^(www\.|new\.)?ezvisa\.net$|\.vercel\.app$|^localhost(:\d+)?$/.test(raw) ? raw : "www.ezvisa.net"
   const proto = host.startsWith("localhost") ? "http" : "https"
   const { data, error } = await client.auth.admin.generateLink({ type: "magiclink", email: v.data.email, options: { redirectTo: `${proto}://${host}/auth/callback?next=/dashboard` } })
   const link = data?.properties?.action_link

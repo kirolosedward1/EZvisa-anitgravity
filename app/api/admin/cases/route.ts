@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
  * PATCH: Update application status with concurrency check & audit trail
  */
 export async function PATCH(request: NextRequest) {
-  if (!(await isStaffRequest(request))) {
+  if (!(await isStaffRequest(request, "stage"))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 

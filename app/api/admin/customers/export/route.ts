@@ -17,12 +17,14 @@ export async function GET(request: Request) {
   if (staff.demo) return NextResponse.json({ demo: true, email, note: "Demo cases are invented." })
   const client = serviceClient()
   if (!client) return NextResponse.json({ error: "Database unconfigured" }, { status: 500 })
-  const { data: apps } = await client.from("visa_applications").select("*").ilike("email", email)
+  // Case-insensitive but exact: % and _ are escaped so the email cannot act as a wildcard.
+  const exact = email.replace(/[\\%_]/g, (c) => `\\${c}`)
+  const { data: apps } = await client.from("visa_applications").select("*").ilike("email", exact)
   const ids = (apps ?? []).map((a) => a.id as string)
   const [reviews, events, travellers, refunds] = await Promise.all([
     ids.length ? client.from("document_reviews").select("*").in("application_id", ids) : Promise.resolve({ data: [] }),
     ids.length ? client.from("application_events").select("*").in("application_id", ids) : Promise.resolve({ data: [] }),
-    client.from("travellers").select("*").ilike("email", email),
+    client.from("travellers").select("*").ilike("email", exact),
     ids.length ? client.from("refund_requests").select("*").in("application_id", ids) : Promise.resolve({ data: [] }),
   ])
   await recordAudit(staff, { action: `Customer data exported for ${email} (${ids.length} applications)`, type: "export", targetTable: "customers", targetLabel: email, field: "export", notified: "No" })

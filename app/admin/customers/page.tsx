@@ -49,7 +49,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
   let travellers: ReturnType<typeof travellerFromRow>[] = []
   if (selected && !staff.demo) {
     const client = serviceClient()
-    const res = client ? await client.from(TRAVELLERS_TABLE).select("*").ilike("email", selected.email).limit(20) : null
+    const res = client ? await client.from(TRAVELLERS_TABLE).select("*").ilike("email", selected.email.replace(/[\\%_]/g, (c) => `\\${c}`)).limit(20) : null
     travellers = ((res?.data ?? []) as Record<string, unknown>[]).map(travellerFromRow)
   }
   const href = (o: Record<string, string>) => `/staff/customers?${new URLSearchParams({ ...(q ? { q } : {}), ...(seg !== "all" ? { seg } : {}), ...o })}`

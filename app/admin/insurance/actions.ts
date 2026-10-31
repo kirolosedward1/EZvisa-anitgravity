@@ -66,23 +66,35 @@ export async function setQuoteStatus(input: { caseId: string; status: "accepted"
   return { ok: true, message: v.status === "declined" ? "Declined. The case now shows the customer is providing their own policy." : v.status === "accepted" ? "Accepted. Issue the policy when the insurer sends it." : "Reminder noted." }
 }
 
-export async function issuePolicy(form: FormData): Promise<InsuranceResult> {
+/** Policy PDF: signed upload straight to storage (see app/admin/files/actions.ts), then recorded as issued. */
+export async function startPolicyUpload(input: { caseId: string; fileName: string; size: number }): Promise<{ ok: true; path: string; token: string; demo?: boolean } | { ok: false; error: string }> {
   const w = await writer()
   if ("error" in w) return { ok: false, error: w.error! }
-  const caseId = String(form.get("caseId") ?? "")
-  const file = form.get("file")
-  if (!(file instanceof File) || !/\.pdf$/i.test(file.name)) return { ok: false, error: "Upload the policy as a PDF." }
-  if (file.size > 10 * 1024 * 1024) return { ok: false, error: "The PDF is over 10 MB." }
-  if (w.staff.demo) return { ok: true, message: "Demo: policy issued. Nothing was stored." }
-  if (!UUID_RE.test(caseId)) return { ok: false, error: "Invalid case." }
+  if (!/\.pdf$/i.test(input.fileName)) return { ok: false, error: "Upload the policy as a PDF." }
+  if (!(input.size > 0) || input.size > 10 * 1024 * 1024) return { ok: false, error: "The PDF is over 10 MB." }
+  if (w.staff.demo) return { ok: true, path: "", token: "", demo: true }
+  if (!UUID_RE.test(input.caseId)) return { ok: false, error: "Invalid case." }
   const client = serviceClient()
   if (!client) return { ok: false, error: "The database is not configured." }
-  const path = `${caseId}/insurance_policy.pdf`
-  const { error: up } = await client.storage.from(DOC_BUCKET).upload(path, Buffer.from(await file.arrayBuffer()), { contentType: "application/pdf", upsert: true })
-  if (up) return { ok: false, error: "The upload failed." }
-  const { data, error } = await client.from("insurance_quotes").update({ status: "issued", policy_path: path, decided_at: new Date().toISOString(), updated_by: w.staff.name }).eq("application_id", caseId).select("id")
+  const path = `${input.caseId}/insurance_policy.pdf`
+  const { data, error } = await client.storage.from(DOC_BUCKET).createSignedUploadUrl(path, { upsert: true })
+  if (error || !data) return { ok: false, error: "The upload could not start." }
+  return { ok: true, path, token: data.token }
+}
+
+export async function issuePolicy(input: { caseId: string; fileName: string }): Promise<InsuranceResult> {
+  const w = await writer()
+  if ("error" in w) return { ok: false, error: w.error! }
+  if (w.staff.demo) return { ok: true, message: "Demo: policy issued. Nothing was stored." }
+  if (!UUID_RE.test(input.caseId)) return { ok: false, error: "Invalid case." }
+  const client = serviceClient()
+  if (!client) return { ok: false, error: "The database is not configured." }
+  const { data: listed } = await client.storage.from(DOC_BUCKET).list(input.caseId, { search: "insurance_policy.pdf" })
+  if (!listed?.some((f) => f.name === "insurance_policy.pdf")) return { ok: false, error: "The PDF did not arrive. Try again." }
+  const path = `${input.caseId}/insurance_policy.pdf`
+  const { data, error } = await client.from("insurance_quotes").update({ status: "issued", policy_path: path, decided_at: new Date().toISOString(), updated_by: w.staff.name }).eq("application_id", input.caseId).select("id")
   if (error || !data?.length) return { ok: false, error: missingTable(error) ? NEEDS_009 : "Record the quote first." }
-  await recordAudit(w.staff, { action: "Insurance policy issued and attached to the case", type: "insurance", targetTable: "visa_applications", targetId: caseId, field: "insurance_quotes.policy_path", after: { file: file.name }, notified: "No" }, client)
+  await recordAudit(w.staff, { action: "Insurance policy issued and attached to the case", type: "insurance", targetTable: "visa_applications", targetId: input.caseId, field: "insurance_quotes.policy_path", after: { file: input.fileName }, notified: "No" }, client)
   revalidatePath("/admin/insurance")
   return { ok: true, message: "Policy issued and attached to the case file. Send it to the customer on WhatsApp." }
 }

@@ -69,28 +69,44 @@ export async function savePart(input: { caseId: string; part: string; body: stri
   return { ok: true, message: parsed.data.markDone ? "Saved and marked done." : "Saved as a draft." }
 }
 
-export async function uploadPart(form: FormData): Promise<FileResult> {
+/**
+ * Uploads go straight from the browser to storage with a one-time signed URL (function request bodies are capped at
+ * about 4.5 MB on Vercel). startUpload checks the role and the file and returns the URL token; finishUpload checks the
+ * object arrived and records the part.
+ */
+export async function startUpload(input: { caseId: string; part: string; fileName: string; size: number }): Promise<{ ok: true; path: string; token: string; demo?: boolean } | { ok: false; error: string }> {
   const w = await writer()
   if ("error" in w) return { ok: false, error: w.error }
-  const caseId = String(form.get("caseId") ?? "")
-  const part = String(form.get("part") ?? "")
-  const file = form.get("file")
-  if (!isPartKey(part) || !(file instanceof File)) return { ok: false, error: "Choose a file." }
-  const kind = fileKind(file.name)
+  if (!isPartKey(input.part)) return { ok: false, error: "That part is not valid." }
+  const kind = fileKind(input.fileName)
   if (!kind) return { ok: false, error: "Upload a PDF, JPG or PNG." }
-  if (file.size > MAX_UPLOAD) return { ok: false, error: "The file is over 15 MB." }
-  if (w.staff.demo) return { ok: true, message: `Demo: ${file.name} would be uploaded. Nothing was stored.` }
-  if (!UUID_RE.test(caseId)) return { ok: false, error: "Invalid case." }
+  if (!(input.size > 0) || input.size > MAX_UPLOAD) return { ok: false, error: "The file is over 15 MB." }
+  if (w.staff.demo) return { ok: true, path: "", token: "", demo: true }
+  if (!UUID_RE.test(input.caseId)) return { ok: false, error: "Invalid case." }
   const client = serviceClient()
   if (!client) return { ok: false, error: "The database is not configured." }
-  const path = `${caseId}/prep/${part}.${kind}`
-  const { error } = await client.storage.from(DOC_BUCKET).upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type || (kind === "pdf" ? "application/pdf" : `image/${kind === "jpg" ? "jpeg" : "png"}`), upsert: true })
-  if (error) return { ok: false, error: "The upload failed." }
-  const err = await upsertPart(caseId, part, { state: "done", file_path: path, file_name: file.name.slice(0, 120) }, w.staff)
+  const path = `${input.caseId}/prep/${input.part}.${kind}`
+  const { data, error } = await client.storage.from(DOC_BUCKET).createSignedUploadUrl(path, { upsert: true })
+  if (error || !data) return { ok: false, error: "The upload could not start." }
+  return { ok: true, path, token: data.token }
+}
+
+export async function finishUpload(input: { caseId: string; part: string; fileName: string }): Promise<FileResult> {
+  const w = await writer()
+  if ("error" in w) return { ok: false, error: w.error }
+  if (w.staff.demo) return { ok: true, message: `Demo: ${input.fileName} would be uploaded. Nothing was stored.` }
+  const kind = fileKind(input.fileName)
+  if (!isPartKey(input.part) || !kind || !UUID_RE.test(input.caseId)) return { ok: false, error: "That upload is not valid." }
+  const client = serviceClient()
+  if (!client) return { ok: false, error: "The database is not configured." }
+  const path = `${input.caseId}/prep/${input.part}.${kind}`
+  const { data: listed } = await client.storage.from(DOC_BUCKET).list(`${input.caseId}/prep`, { search: `${input.part}.${kind}` })
+  if (!listed?.some((f) => f.name === `${input.part}.${kind}`)) return { ok: false, error: "The file did not arrive. Try again." }
+  const err = await upsertPart(input.caseId, input.part, { state: "done", file_path: path, file_name: input.fileName.slice(0, 120) }, w.staff)
   if (err) return { ok: false, error: err }
-  await recordAudit(w.staff, { action: `${PARTS.find((p) => p.key === part)?.name} uploaded for the prepared file`, type: "upload", targetTable: "visa_applications", targetId: caseId, field: `file_parts.${part}`, after: { file: file.name }, notified: "No" }, client)
-  done(caseId)
-  return { ok: true, message: `${file.name} uploaded and the part marked done.` }
+  await recordAudit(w.staff, { action: `${PARTS.find((p) => p.key === input.part)?.name} uploaded for the prepared file`, type: "upload", targetTable: "visa_applications", targetId: input.caseId, field: `file_parts.${input.part}`, after: { file: input.fileName }, notified: "No" }, client)
+  done(input.caseId)
+  return { ok: true, message: `${input.fileName} uploaded and the part marked done.` }
 }
 
 /** Assembles the prepared file in embassy order, stores it as final_package.pdf and moves the case to Ready. */
