@@ -384,7 +384,9 @@
   .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top > * { pointer-events: auto; }
   .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top .ezc-search { display: none; }
   .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top .ezc-search-btn { display: inline-flex; }
-  .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-main > .ezc-pagehead { padding-inline-end: 340px; }
+  .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-main > .ezc-pagehead { padding-inline-end: 330px; }
+  .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top .ezc-refresh { width: 36px; padding: 0; justify-content: center; }
+  .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top .ezc-refresh span { display: none; }
   .ezc-main > .ezc-pagehead {
     order: -1; position: sticky; top: 0; z-index: 20; margin: -24px -24px 0; min-height: 56px; padding: 10px 24px;
     background: #fff; border-bottom: 1px solid var(--ezc-border); align-items: center !important;
