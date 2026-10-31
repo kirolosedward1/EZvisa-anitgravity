@@ -12,7 +12,7 @@ import { Stack, useLocalSearchParams, useFocusEffect } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import { useTabInset, Button, ListGroup, ListRow, EmptyState, Timeline, ProgressBar, Skeleton, InlineError, Text, ChipGroup, RowGroup, Row, InfoNote } from "../../../components/ui";
 import { useColors, S, R } from "../../../lib/theme";
-import { isPaid, getApplication, listRequirements, openDocumentUrl, isUploadType, type Doc, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, employmentOf, continueForm } from "../../../lib/data";
+import { isPaid, getApplication, listRequirements, openDocumentUrl, isUploadType, patchNotes, type Doc, Application, Requirement, DOC_TYPES, STATUS_LABEL, UPLOAD_STATUSES, employmentOf, continueForm } from "../../../lib/data";
 import { retryUpload, removeUpload, clearDone, useUploads, type UploadJob } from "../../../lib/uploads";
 import { buildChecklist, isOpen, type CheckItem } from "../../../lib/checklist";
 import { SupportButton } from "../../../components/Support";
@@ -29,6 +29,7 @@ import { Icon } from "../../../components/ui";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from "react-native-reanimated";
 import { formatPayAmount, PAY_AED } from "../../../lib/payLabel";
 import { cachedApplication, putApplication } from "../../../lib/appsCache";
+import { SHOW_TRIP_PLAN } from "../../../lib/config";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 
@@ -153,6 +154,19 @@ export default function ApplicationDetail() {
   const later = ["completed", "rejected", "cancelled"].includes(a.status) ? []
     : ((((a.notes as any)?.missingDocuments as MissingDoc[] | undefined) ?? missingDocuments(continueForm(a))).filter((m) => !received.has(m)));
   const applyAgain = () => { tap(); setReapply(true); };
+  /** Paid case: record the request on the application (notes, readable by staff) and tell the team on WhatsApp. */
+  const requestCancel = () => {
+    const go = async () => {
+      try { const r = await patchNotes(a.id, { cancellationRequest: { at: new Date().toISOString(), from: "app" } } as any); if (r.synced) success(); }
+      catch (e: any) { setUpErr(e?.message ?? String(e)); }
+      track("whatsapp_handoff", { screen: "cancel" });
+      whatsapp(`Hi EZvisa, please cancel my ${name} application (${a.reference}).`);
+      load(true);
+    };
+    const title = t("Request cancellation?"); const body = t("We'll ask the team to cancel this application. Before we start reviewing your documents you get a full refund. Once the review has started, the fee is refunded only if the mistake is ours.");
+    if (Platform.OS === "web") { if (typeof window !== "undefined" && window.confirm(`${title}\n\n${body}`)) go(); return; }
+    Alert.alert(title, body, [{ text: t("Keep application"), style: "cancel" }, { text: t("Request cancellation"), style: "destructive", onPress: go }]);
+  };
   const primary = () => {
     tap();
     switch (next.kind) {
@@ -188,14 +202,14 @@ export default function ApplicationDetail() {
         {(a.status === "completed" || a.status === "rejected") && <RateCard appId={a.id} reference={a.reference} />}
         <RowGroup header={t("Status")}><Timeline a={a} t={t} /></RowGroup>
         <ToGetLater items={later} onAdd={() => toDocs()} />
-        {a.status !== "cancelled" && (
+        {a.status !== "cancelled" && (paid || SHOW_TRIP_PLAN) && (
           <RowGroup header={t("Trip")}>
             {a.status === "completed" && (daysUntil(a.entry_date) ?? -1) >= 0 && <Row label={t("Before you fly")} sub={t("{n} days to go", { n: daysUntil(a.entry_date)! })} icon="airplane" onPress={() => { tap(); router.push(`/countdown/${a.id}`); }} testID="trip-countdown" />}
             {paid && !ended && <Row label={t("Appointment")} icon="calendar" value={ap ? new Date(ap.at).toLocaleString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : t("Book now")} tint={!ap} onPress={() => { tap(); router.push(`/appointment/${a.id}`); }} testID="trip-appointment" />}
             {paid && !ended && <Row label={t("What happens on the day")} icon="list.bullet" onPress={() => { tap(); setDay(true); }} testID="trip-day" />}
-            {paid
+            {SHOW_TRIP_PLAN && (paid
               ? <Row label={t("Trip plan")} sub={t("Ideas, not bookings")} icon="map.fill" onPress={() => router.push(`/trip/${a.id}`)} testID="trip-plan" />
-              : <Row label={t("Trip plan")} sub={t("Your trip plan unlocks after payment")} icon="lock.fill" onPress={toPayStep} />}
+              : <Row label={t("Trip plan")} sub={t("Your trip plan unlocks after payment")} icon="lock.fill" onPress={toPayStep} />)}
             {paid && <Row label={t("Receipt")} icon="doc.text.fill" value={[a.total_amount != null ? money({ amount: a.total_amount, currency: a.currency }) : "", "PDF"].filter(Boolean).join(" · ")} onPress={() => router.push(`/receipt/${a.id}`)} testID="trip-receipt" />}
           </RowGroup>
         )}
@@ -249,6 +263,26 @@ export default function ApplicationDetail() {
         <ListRow icon="logo.whatsapp" iconColor={c.whatsapp} title="WhatsApp" onPress={() => whatsapp(`Hi EZvisa, I have a question about application ${a.reference} (${name}).`)} />
         <ListRow icon="envelope.fill" iconColor={c.tint} title={t("Email")} onPress={() => Linking.openURL(`mailto:support@ezvisa.net?subject=${encodeURIComponent(`Application ${a.reference}`)}`)} />
       </ListGroup>
+      {/* Cancel: an unpaid case is cancelled at once (lib/discard); a paid one is a request to the team, decided under
+          the refund policy (full refund before document review starts). Finished cases have nothing to cancel. */}
+      {!["completed", "rejected", "cancelled"].includes(a.status) && (isAbandoned(a) ? (
+        <ListGroup footer={t("Nothing was paid, so it's cancelled straight away.")}>
+          <ListRow title={t("Cancel application")} destructive onPress={() => askDiscard(() => { discardApplication(a).then(() => (router.canGoBack() ? router.back() : router.replace("/applications"))).catch((e) => setUpErr(e?.message ?? String(e))); }, t)} />
+        </ListGroup>
+      ) : paid && (a.notes as any)?.cancellationRequest ? (
+        <ListGroup footer={t("The team will contact you about it.")}>
+          <ListRow title={t("Cancellation requested")} subtitle={new Date((a.notes as any).cancellationRequest.at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "short" })} />
+        </ListGroup>
+      ) : paid && UPLOAD_STATUSES.includes(a.status) ? (
+        <ListGroup footer={t("Before we start reviewing your documents you get a full refund. Once the review has started, the fee is refunded only if the mistake is ours.")}>
+          <ListRow title={t("Request cancellation")} destructive onPress={requestCancel} />
+        </ListGroup>
+      ) : paid ? (
+        // File being prepared or ready: the request can't be recorded on the row any more (RLS), so it goes to the team.
+        <ListGroup footer={t("Your file is already being prepared, so the team handles cancellations directly.")}>
+          <ListRow title={t("Ask the team to cancel")} destructive onPress={() => { track("whatsapp_handoff", { screen: "cancel" }); whatsapp(`Hi EZvisa, I'd like to cancel my ${name} application (${a.reference}).`); }} />
+        </ListGroup>
+      ) : null)}
     </ScrollView>
   );
 }
