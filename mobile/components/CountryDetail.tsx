@@ -27,7 +27,7 @@ export default function CountryDetail() {
   const segs = useSegments() as string[];
   const info = countryInfo(slug ?? "");
   const { session, apps, err } = useApps();
-  const { hydrated, drafts, openDraft, openServerDraft } = useForm();
+  const { hydrated, drafts, openDraft, openServerDraft, startNew } = useForm();
   const scrollY = useSharedValue(0); const under = useSharedValue(1);
   const scroller = useRef<Animated.ScrollView>(null);
   const [footerH, setFooterH] = useState(0); const [centreY, setCentreY] = useState<number | null>(null);
@@ -53,13 +53,17 @@ export default function CountryDetail() {
   const known = hydrated && (!session || apps !== null || !!err);
   const state = countryApp(info.name, apps, session ? drafts : drafts.filter((d) => !d.owner));
 
-  const apply = () => router.push({ pathname: "/apply", params: { step: "personal", to: info.name } });
+  // The wizard opens at the first question still open (nationality, or "Who is travelling?" with saved travellers),
+  // not at the personal step, which skipped the nationality question.
+  const apply = () => router.push({ pathname: "/apply", params: { to: info.name } });
   const continueDraft = () => {
     if (state.kind !== "draft") return;
     if (state.draftKey) { openDraft(state.draftKey); router.push({ pathname: "/apply", params: { resume: "1" } }); return; }
     const id = state.app?.id; if (!id) return;
     openServerDraft(id).then((ok) => router.push(ok ? { pathname: "/apply", params: { resume: "1" } } : `/applications/${id}`)).catch(() => router.push(`/applications/${id}`));
   };
+  // A second application for this country: a fresh draft (the open one stays as it is), then the wizard.
+  const startAnother = () => { startNew(); router.push({ pathname: "/apply", params: { to: info.name } }); };
   const view = () => { if (state.kind === "active") router.push(`/applications/${state.app.id}`, { withAnchor: true }); };
   const share = () => {
     const url = info.docsUrl; const msg = t("Schengen visa for {c}", { c: title });
@@ -84,7 +88,7 @@ export default function CountryDetail() {
         </View>
       </Animated.ScrollView>
       <TopBar name={info.name} title={title} scrollY={scrollY} showAt={sheetTop + S.xl + S.xl - barH} onBack={back} onShare={share} />
-      <CountryFooter name={info.name} state={state} loading={!known} onApply={apply} onContinue={continueDraft} onView={view} under={under}
+      <CountryFooter name={info.name} state={state} loading={!known} onApply={apply} onContinue={continueDraft} onView={view} onNew={startAnother} under={under}
         onLayout={(e) => setFooterH(e.nativeEvent.layout.height)} />
     </View>
   );

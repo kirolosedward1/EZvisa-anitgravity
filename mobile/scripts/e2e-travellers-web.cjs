@@ -1,4 +1,4 @@
-// Saved travellers in the wizard, opened the way a country page opens it (/apply?step=personal&to=France): the first
+// Saved travellers in the wizard, opened the way a country page opens it (/apply?to=France): the first
 // screen is "Who is travelling?" and picking someone fills their details. Needs the mock (scripts/mock-supabase.mjs)
 // and the web build against it on :8081. Run: node scripts/e2e-travellers-web.cjs
 const { chromium } = require("playwright");
@@ -12,8 +12,8 @@ const SVC = { apikey: "mock-service-role", authorization: "Bearer mock-service-r
   const p = await ctx.newPage(); const errs = []; p.on("pageerror", (e) => errs.push(e.message)); p.on("console", (m) => { if (m.type() === "error" && !/WebSocket|ERR_TUNNEL|Failed to load/.test(m.text())) console.log("CONSOLE:", m.text().slice(0, 400)); });
   await p.goto(`${APP}/auth?mode=signin`, { waitUntil: "networkidle" }); await p.waitForTimeout(1500);
   await p.getByTestId("auth-email").fill(EMAIL); await p.getByTestId("auth-password").fill("test-pass"); await p.keyboard.press("Enter"); await p.waitForTimeout(3500);
-  // Same as the country page's "Start application": /apply?step=personal&to=France
-  await p.goto(`${APP}/apply?step=personal&to=France`, { waitUntil: "networkidle" }); await p.waitForTimeout(5000);
+  // Same as the country page's "Start application": /apply?to=France
+  await p.goto(`${APP}/apply?to=France`, { waitUntil: "networkidle" }); await p.waitForTimeout(5000);
   const h = await p.getByRole("heading").first().innerText(); console.log(/Who is travelling/.test(h) ? `PASS  opens on: ${h}` : `FAIL  opens on: ${h}`);
   await p.getByText("Sara Khan").first().click(); await p.waitForTimeout(2500);
   const next = await p.getByRole("heading").first().innerText(); console.log(`after picking Sara: ${next}`);
