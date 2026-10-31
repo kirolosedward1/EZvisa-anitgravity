@@ -526,3 +526,6 @@ button.ezc-search { min-width: 0; overflow: hidden; }
   .ezc .ezc-actions { gap: 4px; }
   .ezc .ezc-actions .ezc-refresh { width: 36px; padding: 0; justify-content: center; }
 }
+.ezc .guide-sec ol { list-style: decimal; }
+.ezc .guide-sec ul { list-style: disc; }
+.ezc .guide-sec li::marker { color: var(--ezc-blue); font-weight: 500; }

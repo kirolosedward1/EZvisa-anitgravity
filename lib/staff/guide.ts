@@ -6,7 +6,7 @@
 import type { NavKey, Role } from "@/lib/staff/roles"
 
 export type GuideSection = {
-  key: NavKey | "start" | "case" | "new-case" | "viewer" | "roles" | "search"
+  key: NavKey | "start" | "case" | "new-case" | "viewer" | "roles" | "search" | "tasks"
   title: string
   /** Where it lives, for the "Open" link. */
   href?: string
@@ -52,10 +52,28 @@ export const GUIDE: GuideSection[] = [
       "Sign in at www.ezvisa.net/staff with your work email (Google or an email sign-in link). Ask an admin to add you on Team first.",
       "Start each day on Overview: the tiles show what needs the team now, and Needs action lists the most urgent cases.",
       "Click any name, reference, number tile, stage or owner to open it: almost everything links to its page.",
-      "Use Refresh (top right) to load the newest data without losing your place.",
+      "Top right on every page: search, this guide (opens at the page you are on), Refresh (loads the newest data without losing your place), New case and the notifications bell.",
       "Every change you make is saved with your name in the Audit log. Customers see only what is meant for them.",
     ],
     tips: ["Can't find something? Press Ctrl+K and type it.", "On a phone, the menu button opens the sidebar and the bar at the bottom has Queue, Inbox, Appointments and Customers."],
+  },
+  {
+    key: "tasks",
+    title: "Common tasks",
+    summary: "Step by step for the things that come up every day.",
+    steps: [
+      "A new customer messages on WhatsApp: Cases list, New case (or press Ctrl+K and type New case), fill their details and send the pay link.",
+      "Find a customer fast: press Ctrl+K and type their name, phone or EZ reference.",
+      "Check uploaded documents: Document review, pick the oldest, Approve (A) or Send back (R) with a note.",
+      "Prepare the file: File preparation, pick the case, generate or upload each part, then Assemble and mark Ready.",
+      "Book an appointment for a customer: Appointments, Customers who asked us to book, Book and save (or open the case and use the Appointment tile).",
+      "The customer cannot sign in: Customers, open them, Create sign-in link, and send it on WhatsApp.",
+      "The customer has a new phone number: Customers, open them, Edit contact details (saved on all their cases).",
+      "Refund a customer: open the case, Payments tab, request or issue the refund with a reason.",
+      "Someone is away: Cases list, filter by their name under owner, select the cases and Assign to someone else.",
+      "Move several cases at once: Cases list, tick them, Move to stage, write the reason, Apply.",
+      "Who changed something: Audit log, search the case reference or the person's name.",
+    ],
   },
   {
     key: "search",
@@ -110,7 +128,7 @@ export const GUIDE: GuideSection[] = [
     href: "/staff/cases",
     summary: "Every case with tabs, filters, sorting, saved views and bulk actions.",
     steps: [
-      "Tabs: Needs us, Waiting on customer, Past SLA, Unassigned, All, Closed.",
+      "Tabs: All open, Needs us, Needs customer, Past SLA, Unassigned and Closed.",
       "Filter by stage, owner, country or search text; sort by waiting time, SLA, newest or travel date. The filters are in the address, so you can bookmark or share a view.",
       "Click anywhere on a row to open the case. Click the flag, stage or owner to filter by it; click the ? on an unassigned case to take it.",
       "Tick cases to act on several: assign, move to a stage (write a reason), copy phone numbers, or export them as CSV.",
@@ -212,7 +230,9 @@ export const GUIDE: GuideSection[] = [
     summary: "Customers waiting on a reply, quick replies and broadcasts.",
     steps: [
       "Inbox: pick a customer; quick replies fill the message with their details; Send on WhatsApp opens WhatsApp with the text ready.",
+      "Waiting on customers: cases where we are waiting for the customer, with a reminder ready to send.",
       "Broadcast: pick the audience by stage, country and language and a template; copy the list to send.",
+      "App push: how many app devices receive notifications. Sending pushes from the console is not built yet; the app's automatic status notifications still go out.",
     ],
     tips: ["WhatsApp Business is not connected yet, so messages open WhatsApp and are not stored here. Edit the templates in Settings."],
   },
