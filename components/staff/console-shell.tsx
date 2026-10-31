@@ -143,6 +143,12 @@ export function ConsoleShell({
             </a>
           </div>
         </header>
+        <nav className="ezc-tabbar" aria-label="Quick">
+          <a href="/staff/cases?tab=us" aria-current={pathname.startsWith("/staff/cases") ? "page" : undefined}><Inbox aria-hidden /><span>Queue</span></a>
+          <a href="/staff/notifications" aria-current={pathname.startsWith("/staff/notifications") ? "page" : undefined}><Bell aria-hidden /><span>Inbox</span>{bellCount ? <i>{bellCount > 99 ? "99+" : bellCount}</i> : null}</a>
+          <a href="/staff/appointments" aria-current={pathname.startsWith("/staff/appointments") ? "page" : undefined}><Calendar aria-hidden /><span>Appointments</span></a>
+          <a href="/staff/customers" aria-current={pathname.startsWith("/staff/customers") ? "page" : undefined}><Search aria-hidden /><span>Customers</span></a>
+        </nav>
         <main className="ezc-main" id="main">
           {me.demo ? (
             <div className="banner amber" role="note">

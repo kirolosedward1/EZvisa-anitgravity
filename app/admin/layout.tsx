@@ -3,7 +3,9 @@ import { notFound } from "next/navigation"
 import { ConsoleShell, type ShellCounts } from "@/components/staff/console-shell"
 import { loadConsoleData } from "@/lib/staff/data"
 import { navFor, ROLE_LABEL } from "@/lib/staff/roles"
-import { getStaff, initials } from "@/lib/staff/session"
+import { firstName, getStaff, initials } from "@/lib/staff/session"
+import { buildFeed } from "@/lib/staff/notifications"
+import { serviceClient } from "@/lib/applications"
 import { isOpen } from "@/lib/staff/cases"
 import "./console.css"
 
@@ -32,6 +34,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     payments: { n: open.filter((c) => c.paymentFailed).length },
     insurance: { n: open.filter((c) => c.paid && c.insuranceQuote).length },
   }
+  // Bell: unread items from the person's own cases (mentions and money are counted on the Notifications page).
+  let readAt: string | null = null
+  if (!staff.demo && staff.staffId) {
+    const { data } = (await serviceClient()?.from("staff_users").select("notifications_read_at").eq("id", staff.staffId).maybeSingle()) ?? { data: null }
+    readAt = (data as { notifications_read_at?: string | null } | null)?.notifications_read_at ?? null
+  }
+  counts.notifications = { n: buildFeed({ staffId: staff.staffId, firstName: firstName(staff), role: staff.role, cases, mentions: [], refunds: [] }).filter((i) => !readAt || i.at > readAt).length, tone: "red" }
 
   return (
     <ConsoleShell

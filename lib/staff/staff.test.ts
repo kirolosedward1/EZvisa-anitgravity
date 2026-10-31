@@ -277,3 +277,27 @@ test("analytics: median, delta, sources and funnel", async () => {
   assert.equal(m.cur.revenue, 249)
   assert.equal(m.funnel[1].n, 1)
 })
+
+test("reports: periods and catalogue rows", async () => {
+  const { periodRange, REPORTS } = await import("./reports.ts")
+  const p = periodRange("this_month", NOW)
+  assert.equal(new Date(p.from).toISOString(), "2026-09-30T20:00:00.000Z", "1 October 00:00 Dubai")
+  assert.equal(new Date(periodRange("last_month", NOW).from).toISOString(), "2026-08-31T20:00:00.000Z")
+  const cases = [toStaffCase(app({ id: "r1", paid_at: "2026-10-10T08:00:00Z", payment_amount: 249 }))]
+  const data = { cases, refunds: [], rejections: [], ownerName: () => "Unassigned" }
+  const revenue = REPORTS.find((r) => r.key === "revenue")!
+  assert.deepEqual(revenue.csv(data, p.from, p.to, NOW)[1], ["France", 1, "249.00", "0.00", "249.00"])
+  for (const r of REPORTS) assert.ok(r.preview(data, p.from, p.to, NOW).length > 0)
+})
+
+test("notification feed and preferences", async () => {
+  const { buildFeed, readPrefs, defaultPrefs } = await import("./notifications.ts")
+  const mine = toStaffCase(app({ id: "n1", has_passport: true, additional_notes: notes([{ type: "passportCopy", at: "2026-10-29T06:00:00Z" }]) }), {}, "s1")
+  const other = toStaffCase(app({ id: "n2", payment_status: "failed", application_status: "draft" }))
+  const feed = buildFeed({ staffId: "s1", firstName: "Ann", role: "specialist", cases: [mine, other], mentions: [{ id: "m", applicationId: "n2", author: "Bo", body: "@Ann can you check?", at: "2026-10-30T09:00:00Z" }, { id: "x", applicationId: "n2", author: "Bo", body: "no mention", at: "2026-10-30T09:00:00Z" }], refunds: [{ id: "r", applicationId: "n1", amount: 249, requestedBy: "Bo", at: "2026-10-30T08:00:00Z" }], now: NOW })
+  assert.deepEqual(feed.map((f) => f.event).sort(), ["mention", "sla", "uploaded"], "specialists do not get money items")
+  const fin = buildFeed({ staffId: null, firstName: "Rae", role: "finance", cases: [mine, other], mentions: [], refunds: [{ id: "r", applicationId: "n1", amount: 249, requestedBy: "Bo", at: "2026-10-30T08:00:00Z" }], now: NOW })
+  assert.deepEqual(fin.map((f) => f.event).sort(), ["payment", "refund"])
+  assert.deepEqual(readPrefs(null), defaultPrefs())
+  assert.equal(readPrefs({ events: { mention: { in_app: true, email: false, push: false } }, digest: false }).events.mention.email, false)
+})
