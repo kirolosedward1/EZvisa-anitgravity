@@ -13,3 +13,6 @@ export const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ""
 export const SUPABASE_ENABLED = !!SUPABASE_URL && !!SUPABASE_ANON_KEY;
 export const WHATSAPP = "971547109533";
 export const EMAIL = "support@ezvisa.net";
+
+/** Trip plan (app/trip/[id].tsx): hidden for now at the owner's request; true brings the row back on the application page. */
+export const SHOW_TRIP_PLAN = false;
