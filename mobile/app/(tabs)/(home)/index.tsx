@@ -34,6 +34,7 @@ import { LIST_LAYOUT, LIST_IN, LIST_OUT } from "../../../lib/motion";
 import { ABANDONED_LIMIT, askDiscard, discardApplication, isAbandoned } from "../../../lib/discard";
 import { SwipeToDiscard, SwipeLock } from "../../../components/SwipeToDiscard";
 import { useAvatar } from "../../../lib/avatar";
+import { useHomeHidden, hideFromHome, showOnHome } from "../../../lib/homeHidden";
 import { whatsapp } from "../../../lib/api";
 import { onTabScroll } from "../../../lib/tabBarScroll";
 import { useUploads, removeUpload } from "../../../lib/uploads";
@@ -44,8 +45,19 @@ const SERVER_STEP: Record<string, string> = { ...STEP_LABEL, payment: "Review & 
 const draftStep = (d: LocalDraft) => { const q = d.page.startsWith("q:") ? Q_BY_ID[d.page.slice(2)] : null; return q ? STEP_LABEL[q.step] ?? q.step : "Review & pay"; };
 const hhmm = (t: number) => new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
+/** The × that hides an application from Home (it stays in the Applications tab; lib/homeHidden.ts). */
+function HideX({ label, onHide, inline }: { label: string; onHide: () => void; inline?: boolean }) {
+  const c = useColors(); const { t } = useT();
+  return (
+    <PressScale onPress={() => { tap(); onHide(); }} hitSlop={10} accessibilityRole="button" accessibilityLabel={t("Hide {c} from Home", { c: label })} testID="home-hide"
+      style={[{ width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: c.fill }, inline ? null : { position: "absolute", top: S.sm, end: S.sm, zIndex: 2 }]}>
+      <Icon name="xmark" size={12} color={c.secondaryLabel} weight="semibold" />
+    </PressScale>
+  );
+}
+
 /** The active application (canvas Home hero card): Globi beside the reference, the one next action, progress, button. */
-function AppCard({ a, offline }: { a: Application; offline: boolean }) {
+function AppCard({ a, offline, onHide }: { a: Application; offline: boolean; onHide?: () => void }) {
   const c = useColors(); const { t } = useT();
   const [paying, setPaying] = useState(false);
   const name = a.countries?.name ?? a.destination_country ?? "";
@@ -75,10 +87,11 @@ function AppCard({ a, offline }: { a: Application; offline: boolean }) {
   const sub = offline && queued.length ? t("It sends when you're back online.") : [n.body && t(n.body), cd].filter(Boolean).join(" · ");
   return (
     <Card padded testID="home-hero">
+      {onHide && <HideX label={t(name || "Application")} onHide={onHide} />}
       <PressScale onPress={() => { tap(); open(); }} scaleTo={0.985} accessibilityRole="button" accessibilityLabel={[t(name), ref, headline, sub].filter(Boolean).join(", ")} accessibilityHint={t("Opens the application")}
         style={{ flexDirection: "row", gap: S.sm, alignItems: "flex-start" }}>
         <GlobiPose pose={offline ? "waiting" : "checklist"} size={96} style={{ marginTop: -8, marginEnd: -8, marginBottom: -12, marginStart: -16 }} />
-        <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flex: 1, gap: 4, paddingEnd: onHide ? 28 : 0 }}>
           <Text variant="footnote" weight="600" tone="accent" numberOfLines={1} style={{ textTransform: "uppercase", letterSpacing: 0.3 }}>{`${t(name || "Application")} · ${ltr(ref)}`}</Text>
           <Text variant="headline" style={{ fontSize: 17, lineHeight: 22 }} testID="next-action">{headline}</Text>
           {!!sub && <Text variant="callout" tone="secondary">{sub}</Text>}
@@ -105,16 +118,17 @@ function AppCard({ a, offline }: { a: Application; offline: boolean }) {
 }
 
 /** A draft (canvas HomeDraft): Globi asks "Pick up where you left off?" with the question it stopped at. */
-function DraftCard({ country, local, step, onResume }: { country: string; local?: LocalDraft; step: string; onResume: () => void }) {
+function DraftCard({ country, local, step, onResume, onHide }: { country: string; local?: LocalDraft; step: string; onResume: () => void; onHide?: () => void }) {
   const { t } = useT();
   const q = local?.page.startsWith("q:") ? Q_BY_ID[local.page.slice(2)] : null;
   const where = q ? t("stopped at {q}", { q: t(q.label).toLowerCase() }) : t("stopped at {q}", { q: t(step).toLowerCase() });
   const prog = local ? progressOf(local.form, local.page) : null;
   return (
     <Card padded testID="home-hero-draft">
+      {onHide && <HideX label={t(country || "Application")} onHide={onHide} />}
       <View style={{ flexDirection: "row", alignItems: "flex-end", gap: 6 }}>
         <GlobiPose pose="passport" size={96} style={{ marginTop: -8, marginEnd: -8, marginBottom: -12, marginStart: -16 }} />
-        <Bubble style={{ flex: 1 }}>
+        <Bubble style={{ flex: 1, marginEnd: onHide ? 28 : 0 }}>
           <Text variant="headline" style={{ fontSize: 16, lineHeight: 21 }} accessibilityRole="header">{t("Pick up where you left off?")}</Text>
           <Text variant="callout" tone="secondary" testID="next-action">{[country && t(country), where].filter(Boolean).join(" · ")}</Text>
         </Bubble>
@@ -212,7 +226,7 @@ function useItems(apps: Application[] | null): Item[] | null {
 
 /** "Other applications" (canvas Home): round flag, name, status, chevron. Unpaid drafts swipe left to discard. */
 const HOME_APPS = 4;
-function AppList({ items: all, title }: { items: Item[]; title: string }) {
+function AppList({ items: all, title, onHide }: { items: Item[]; title: string; onHide?: (key: string) => void }) {
   const c = useColors(); const { t } = useT();
   if (!all.length) return null;
   // Home previews the newest four (items arrive newest first); the Applications tab has them all.
@@ -225,16 +239,20 @@ function AppList({ items: all, title }: { items: Item[]; title: string }) {
         {items.map((i, idx) => (
           <Animated.View key={i.key} layout={LIST_LAYOUT} entering={LIST_IN} exiting={LIST_OUT} testID="home-app-row">
             <SwipeToDiscard enabled={!!i.remove} onDiscard={() => askDiscard(i.remove!, t, { country: i.country, answers: i.answers, draft: !!i.draft })} testID="home-swipe">
+              <View>
               <PressScale onPress={() => { tap(); i.open(); }} onLongPress={i.remove ? () => askDiscard(i.remove!, t, { country: i.country, answers: i.answers, draft: !!i.draft }) : undefined} accessibilityRole="button" accessibilityLabel={`${t(i.country || "Application")}, ${i.status}`}
                 accessibilityHint={i.remove ? t("Swipe left to discard") : undefined} scaleTo={0.99}
-                style={{ flexDirection: "row", alignItems: "center", gap: S.sm, paddingHorizontal: S.md, minHeight: 56, paddingVertical: S.xs, backgroundColor: c.surface }}>
+                style={{ flexDirection: "row", alignItems: "center", gap: S.sm, paddingStart: S.md, paddingEnd: S.md, minHeight: 56, paddingVertical: S.xs, backgroundColor: c.surface }}>
                 {i.country ? <Flag country={i.country} size={40} /> : <View style={{ width: 40, height: 40, borderRadius: R.round, backgroundColor: c.fill, alignItems: "center", justifyContent: "center" }}><Icon name="doc.text.fill" size={15} color={c.tint} /></View>}
                 <View style={{ flex: 1 }}>
                   <Text variant="row" numberOfLines={1}>{t(i.country || "New application")}</Text>
                   <Text variant="note" tone={i.tone === "green" ? "success" : i.tone === "accent" ? "accent" : "secondary"} numberOfLines={1}>{[i.status, i.action].filter(Boolean).join(" · ")}</Text>
                 </View>
+                {onHide && <View style={{ width: 28 }} />}{/* room for the × (a sibling: a button can't sit inside a button) */}
                 <Chevron size={13} />
               </PressScale>
+              {onHide && <View style={{ position: "absolute", top: 0, bottom: 0, end: S.md + 13 + S.sm, justifyContent: "center" }}><HideX inline label={t(i.country || "Application")} onHide={() => onHide(i.key)} /></View>}
+              </View>
             </SwipeToDiscard>
             {idx < items.length - 1 && <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: c.separator, marginStart: S.md + 40 + S.sm }} />}
           </Animated.View>
@@ -281,8 +299,11 @@ export default function Home() {
   useEffect(() => { setErrAt(err ? Date.now() : null); }, [err]);
   const fullName = (session?.user.user_metadata?.full_name as string | undefined) ?? "";
   const first = fullName.split(" ")[0];
-  const items = useItems(session ? apps : null);
-  const server = session ? apps ?? [] : [];
+  const hidden = useHomeHidden(); const [justHidden, setJustHidden] = useState<{ key: string; country: string } | null>(null);
+  const allItems = useItems(session ? apps : null);
+  const items = allItems ? allItems.filter((i) => !hidden.has(i.key)) : allItems;
+  const server = session ? (apps ?? []).filter((a) => !hidden.has(`s:${a.id}`)) : [];
+  const hide = (key: string, country: string) => { hideFromHome(key); setJustHidden({ key, country }); };
 
   // Hero: most recent active case; else the newest draft (server or this phone); else the newest finished case.
   const hero = items ? chooseHero(server, items.filter((i) => i.draft)) : null;
@@ -317,8 +338,8 @@ export default function Home() {
           <Card padded><ErrorView compact title={t("Couldn't load your applications")} message={t("Check your connection and try again. Your answers are saved.")} onRetry={() => { tap(); load(); }} onWhatsApp={() => whatsapp()}
             diagnostic={[offline ? "offline" : "network error", errAt ? hhmm(errAt) : ""].filter(Boolean).join(" · ")} /></Card>
         ) : guestCase ? <GuestCaseCard g={guestCase} />
-          : heroApp ? <AppCard a={heroApp} offline={offline} />
-          : draftItem ? <DraftCard country={draftItem.country} local={local} step={draftItem.draft ?? ""} onResume={() => draftItem.open()} />
+          : heroApp ? <AppCard a={heroApp} offline={offline} onHide={() => hide(`s:${heroApp.id}`, heroApp.countries?.name ?? heroApp.destination_country ?? "")} />
+          : draftItem ? <DraftCard country={draftItem.country} local={local} step={draftItem.draft ?? ""} onResume={() => draftItem.open()} onHide={() => hide(draftItem.key, draftItem.country)} />
           : <EmptyCard />}
       </View>
       {empty && (
@@ -327,7 +348,17 @@ export default function Home() {
             onSubmitEditing={() => { const v = q.trim(); router.navigate(v ? { pathname: "/countries", params: { q: v } } : "/countries"); }} />
         </View>
       )}
-      <AppList items={others} title={othersTitle} />
+      {justHidden && (
+        <View style={{ paddingHorizontal: S.gutter }}>
+          <Card padded testID="home-hidden-note">
+            <View style={{ flexDirection: "row", alignItems: "center", gap: S.sm }}>
+              <Text variant="subhead" tone="secondary" style={{ flex: 1 }}>{t("{c} is hidden from Home. You'll still find it in Applications.", { c: t(justHidden.country || "Application") })}</Text>
+              <PressScale onPress={() => { tap(); showOnHome(justHidden.key); setJustHidden(null); }} hitSlop={10} accessibilityRole="button" testID="home-undo-hide"><Text variant="subhead" tone="accent" weight="600">{t("Undo")}</Text></PressScale>
+            </View>
+          </Card>
+        </View>
+      )}
+      <AppList items={others} title={othersTitle} onHide={session ? (key) => hide(key, others.find((i) => i.key === key)?.country ?? "") : undefined} />
       {!offline && !loading && <PopularTiles />}
       {!loading && (
         <View testID="home-faq">

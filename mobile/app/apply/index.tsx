@@ -14,7 +14,7 @@ import { slideIn } from "../../lib/motion";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { matchEmirate, DEFAULT_RESIDENCE, coerceResidence } from "../../lib/wizard";
 import { router, useLocalSearchParams, useRootNavigationState } from "expo-router";
-import { Button, Text, Icon, SuccessCheck, InlineError, StepHeader, HeaderIconButton, QuestionHeader, Card, RowGroup, Row, PrimaryButton, SecondaryButton, InfoNote, SheetScaffold, StickyCTA, ChoiceTile } from "../../components/ui";
+import { Button, Text, Icon, InlineError, StepHeader, HeaderIconButton, QuestionHeader, Card, RowGroup, Row, PrimaryButton, SecondaryButton, InfoNote, SheetScaffold, StickyCTA, ChoiceTile } from "../../components/ui";
 import { missingDocuments, MISSING_LABEL } from "../../lib/missing";
 import { INSURANCE_AED_PER_TRAVELLER, VISA_FEE_EUR, appointmentFeesAed } from "../../config/pricing";
 import { Note } from "../../components/wizard/fields";
@@ -39,6 +39,7 @@ import { loadProfile, applyProfile, isFreshDraft, profileChanges, saveProfile, m
 import { useNetInfo } from "@react-native-community/netinfo";
 import { scheduleDraftReminder, cancelDraftReminder } from "../../lib/reminders";
 import { error as hError, tap, success, select } from "../../lib/haptics";
+import { GlobiPose, GLOBI_SIZE } from "../../components/globi/GlobiPose";
 import { WORLD } from "../../lib/world";
 import { emptyForm, type WizardForm, type WizardStep, type Traveller, TRAVELLER_KEYS, SCHENGEN, SCHENGEN_VISA_REQUIRED, OTHER_NATIONALITY, STEP_TITLES, showSpouse, parseStep, matchCountry, hasAnswers, safeDecode, priceAed, PRICE_AED } from "../../lib/wizard";
 import { type Question, setAccountEmail, setTravellers, Q_BY_ID, REVIEW, activeQuestions, firstError, firstInvalid, firstUnanswered, normalizePage, pageForStep, stepOfPage, progressOf, displayValue, phoneDisplay } from "../../lib/questions";
@@ -421,8 +422,8 @@ export default function Apply() {
   if (submitted) return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: S.md, padding: S.xl }}>
-        <SuccessCheck />
-        <Text variant="largeTitle" center accessibilityRole="header" style={{ marginTop: S.md }}>{t("Submitted")}</Text>
+        <SubmittedGlobi />
+        <Text variant="largeTitle" center accessibilityRole="header">{t("Submitted")}</Text>
         <Text variant="title3" tone="secondary" tabular center>{submitted.reference}</Text>
       </View>
       <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
@@ -633,4 +634,10 @@ export default function Apply() {
       </SheetScaffold>
     </QuestionView>
   );
+}
+
+/** Submitted: Globi celebrating (canvas result size) in place of the plain check, with the same success haptic. */
+function SubmittedGlobi() {
+  useEffect(() => { success(); }, []);
+  return <GlobiPose pose="celebrate" size={GLOBI_SIZE.result} testID="submitted-globi" />;
 }

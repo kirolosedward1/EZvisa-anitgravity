@@ -1320,4 +1320,7 @@ export const AR: Record<string, string> = {
   "Go to my applications": "اذهب إلى طلباتي",
   "All questions": "كل الأسئلة",
   "See a sample NOC": "شاهد نموذج خطاب عدم ممانعة",
+  "Hide {c} from Home": "إخفاء {c} من الرئيسية",
+  "{c} is hidden from Home. You'll still find it in Applications.": "تم إخفاء {c} من الرئيسية. ستجده دائمًا في الطلبات.",
+  "Undo": "تراجع",
 };

@@ -5,6 +5,7 @@ import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { clearQueue } from "./uploads";
 import { resetAppsCache } from "./appsCache";
+import { resetHomeHidden } from "./homeHidden";
 import { resetDiscarded } from "./discard";
 import { resetAvatar } from "./avatar";
 import { setRemindersEnabled } from "./reminders";
@@ -19,11 +20,12 @@ export const USER_KEYS = [
   "ezvisa.prefill.v1",                               // per-draft "profile question answered" flags (lib/profile.ts)
   "ezvisa.avatar.v1",                                // profile photo (lib/avatar.ts)
   "ezvisa.payments.v1",                              // open checkouts (lib/payments.ts): must not resume for the next account
+  "ezvisa.homeHidden.v1",                            // applications hidden from Home (lib/homeHidden.ts)
 ];
 const USER_PREFIXES = ["ezvisa.itinerary.v1."];      // trip plans per application (lib/itinerary.ts)
 
 export async function clearUserData() {
-  resetAppsCache(); // the shared applications list (memory only)
+  resetAppsCache(); resetHomeHidden(); // the shared applications list (memory only), Home hide list
   clearQueue(); // upload queue + the local copies of passports/statements (lib/uploads.ts)
   resetDiscarded(); resetAvatar();
   if (Platform.OS !== "web") await setRemindersEnabled(false, null).catch(() => {}); // cancels scheduled reminders
