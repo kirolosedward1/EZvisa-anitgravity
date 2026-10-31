@@ -29,7 +29,7 @@ import { Icon } from "../../../components/ui";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSequence, Easing } from "react-native-reanimated";
 import { formatPayAmount, PAY_AED } from "../../../lib/payLabel";
 import { cachedApplication, putApplication } from "../../../lib/appsCache";
-import { SHOW_TRIP_PLAN } from "../../../lib/config";
+import { SHOW_TRIP_PLAN, siteUrl } from "../../../lib/config";
 import { supabase } from "../../../lib/supabase";
 import { useAuth } from "../../../lib/auth";
 
@@ -144,15 +144,15 @@ export default function ApplicationDetail() {
   const paid = isPaid(a); const locked = a.status !== "draft" && !paid;
   const canUpload = paid && EDITABLE.includes(a.status);
   const name = a.countries?.name ?? "Application";
-  const next = nextOf(a, list ? list.customer : null);
-  const ended = ["completed", "rejected", "cancelled"].includes(a.status);
-  const due = quote?.amount ?? a.total_amount;
-  if (next.kind === "pay" && due != null) { next.cta = PAY_AED; next.vars = { ...next.vars, amount: formatPayAmount(due) }; }
-  const ap = appointmentOf(a);
   // "To get later" until the document arrives; nothing once the case is finished.
   const received = new Set((list?.customer ?? []).filter((i) => !isOpen(i)).map((i) => i.req.document_type));
   const later = ["completed", "rejected", "cancelled"].includes(a.status) ? []
     : ((((a.notes as any)?.missingDocuments as MissingDoc[] | undefined) ?? missingDocuments(continueForm(a))).filter((m) => !received.has(m)));
+  const next = nextOf(a, list ? list.customer : null, later);
+  const ended = ["completed", "rejected", "cancelled"].includes(a.status);
+  const due = quote?.amount ?? a.total_amount;
+  if (next.kind === "pay" && due != null) { next.cta = PAY_AED; next.vars = { ...next.vars, amount: formatPayAmount(due) }; }
+  const ap = appointmentOf(a);
   const applyAgain = () => { tap(); setReapply(true); };
   /** Paid case: record the request on the application (notes, readable by staff) and tell the team on WhatsApp. */
   const requestCancel = () => {
@@ -163,7 +163,7 @@ export default function ApplicationDetail() {
       whatsapp(`Hi EZvisa, please cancel my ${name} application (${a.reference}).`);
       load(true);
     };
-    const title = t("Request cancellation?"); const body = t("We'll ask the team to cancel this application. Before we start reviewing your documents you get a full refund. Once the review has started, the fee is refunded only if the mistake is ours.");
+    const title = t("Request cancellation?"); const body = t("We'll ask the team to cancel this application.");
     if (Platform.OS === "web") { if (typeof window !== "undefined" && window.confirm(`${title}\n\n${body}`)) go(); return; }
     Alert.alert(title, body, [{ text: t("Keep application"), style: "cancel" }, { text: t("Request cancellation"), style: "destructive", onPress: go }]);
   };
@@ -201,7 +201,8 @@ export default function ApplicationDetail() {
         {ziina === "completed" && unpaid && <InfoNote tone="success" text={t("Payment received. Updating your application…")} />}
         {(a.status === "completed" || a.status === "rejected") && <RateCard appId={a.id} reference={a.reference} />}
         <RowGroup header={t("Status")}><Timeline a={a} t={t} /></RowGroup>
-        <ToGetLater items={later} onAdd={() => toDocs()} />
+        {/* Shown once: while uploads are open these documents sit in "Still needed", marked "To get later". */}
+        {!canUpload && <ToGetLater items={later} onAdd={() => toDocs()} />}
         {a.status !== "cancelled" && (paid || SHOW_TRIP_PLAN) && (
           <RowGroup header={t("Trip")}>
             {a.status === "completed" && (daysUntil(a.entry_date) ?? -1) >= 0 && <Row label={t("Before you fly")} sub={t("{n} days to go", { n: daysUntil(a.entry_date)! })} icon="airplane" onPress={() => { tap(); router.push(`/countdown/${a.id}`); }} testID="trip-countdown" />}
@@ -230,7 +231,7 @@ export default function ApplicationDetail() {
         </View>
         {canUpload && list.customer.some(isOpen) && (
           <ListGroup header={t("Still needed")} footer={canUpload ? t("PDF or image · max 4 MB. Tap a missing item to upload it.") : undefined} inset={58}>
-            {list.customer.filter(isOpen).map((i) => <CheckRow key={i.req.id} flash={flash?.id === i.req.id ? flash.n : 0} i={i} busy={busyType(i.req.document_type)} canUpload={canUpload}
+            {list.customer.filter(isOpen).map((i) => <CheckRow key={i.req.id} flash={flash?.id === i.req.id ? flash.n : 0} i={i} later={(later as string[]).includes(i.req.document_type)} busy={busyType(i.req.document_type)} canUpload={canUpload}
               onPress={canUpload ? () => pickFile(i.req.document_type, i.req.id) : undefined} />)}
           </ListGroup>
         )}
@@ -274,8 +275,9 @@ export default function ApplicationDetail() {
           <ListRow title={t("Cancellation requested")} subtitle={new Date((a.notes as any).cancellationRequest.at).toLocaleDateString(lang === "ar" ? "ar-u-nu-latn" : "en-GB", { day: "numeric", month: "short" })} />
         </ListGroup>
       ) : paid && UPLOAD_STATUSES.includes(a.status) ? (
-        <ListGroup footer={t("Before we start reviewing your documents you get a full refund. Once the review has started, the fee is refunded only if the mistake is ours.")}>
+        <ListGroup>
           <ListRow title={t("Request cancellation")} destructive onPress={requestCancel} />
+          <ListRow title={t("Refund policy")} onPress={() => { WebBrowser.openBrowserAsync(siteUrl(`${lang === "ar" ? "/ar" : ""}/refund-policy`)).catch(() => {}); }} />
         </ListGroup>
       ) : paid ? (
         // File being prepared or ready: the request can't be recorded on the row any more (RLS), so it goes to the team.
@@ -310,7 +312,7 @@ function UploadRow({ j }: { j: UploadJob }) {
   );
 }
 
-function CheckRow({ i, busy, canUpload, onPress, flash = 0 }: { i: CheckItem; busy: boolean; canUpload: boolean; onPress?: () => void; flash?: number }) {
+function CheckRow({ i, busy, canUpload, onPress, flash = 0, later = false }: { i: CheckItem; busy: boolean; canUpload: boolean; onPress?: () => void; flash?: number; /** the customer said they'll get it later */ later?: boolean }) {
   const c = useColors(); const { t } = useT();
   const hl = useSharedValue(0);
   useEffect(() => { if (flash) hl.value = withSequence(withTiming(1, { duration: 150 }), withTiming(0, { duration: 1200, easing: Easing.out(Easing.quad) })); }, [flash]);
@@ -326,7 +328,7 @@ function CheckRow({ i, busy, canUpload, onPress, flash = 0 }: { i: CheckItem; bu
     preparing: { icon: "hourglass", color: c.secondaryLabel, label: t("We'll prepare this") },
   };
   const m = map[i.state];
-  const label = busy ? t("Uploading…") : m.label;
+  const label = busy ? t("Uploading…") : later && i.state === "missing" ? t("To get later") : m.label;
   const title = t(i.req.title);
   return <View><ListRow icon={m.icon} iconColor={m.color} title={title} subtitle={label} onPress={busy ? undefined : onPress} chevron={!!onPress && !busy}
     trailing={isOpen(i) && canUpload && !busy ? <Text variant="subhead" tone="tint">{t("Upload")}</Text> : undefined}

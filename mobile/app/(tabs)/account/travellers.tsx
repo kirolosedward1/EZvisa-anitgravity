@@ -103,11 +103,11 @@ export default function SavedTravellers() {
       <Sheet visible={!!edit} onClose={() => { if (!busy) setEdit(null); }} title={edit?.id ? t("Edit traveller") : t("Add traveller")} closeLabel={t("Close")} testID="traveller-sheet">
         {!!edit && (
           <View style={{ gap: S.md, width: "100%", alignSelf: "stretch" }}>
-            <FormField label={t("First Name")}>
-              <Input value={edit.d.firstName} onChangeText={set("firstName")} autoCapitalize="words" autoCorrect={false} textContentType="givenName" accessibilityLabel={t("First Name")} placeholder={t("Enter first name")} />
+            <FormField label={t("First name")}>
+              <Input value={edit.d.firstName} onChangeText={set("firstName")} autoCapitalize="words" autoCorrect={false} textContentType="givenName" accessibilityLabel={t("First name")} placeholder={t("Enter first name")} />
             </FormField>
-            <FormField label={t("Last Name")}>
-              <Input value={edit.d.lastName} onChangeText={set("lastName")} autoCapitalize="words" autoCorrect={false} textContentType="familyName" accessibilityLabel={t("Last Name")} placeholder={t("Enter last name")} />
+            <FormField label={t("Last name")}>
+              <Input value={edit.d.lastName} onChangeText={set("lastName")} autoCapitalize="words" autoCorrect={false} textContentType="familyName" accessibilityLabel={t("Last name")} placeholder={t("Enter last name")} />
             </FormField>
             <FormField label={t("Who is this?")}>
               <SegmentedControl label={t("Who is this?")} value={edit.d.relationship} onChange={(v) => set("relationship")(v as TravellerRelationship)} options={RELATION.filter((r) => TRAVELLER_RELATIONSHIPS.includes(r.value)).map((r) => ({ value: r.value, label: t(r.label) }))} />
@@ -118,11 +118,11 @@ export default function SavedTravellers() {
             <FormField label={t("Date of Birth")}>
               <DateField label={t("Date of Birth")} value={edit.d.dateOfBirth} onChange={set("dateOfBirth")} max={iso(new Date())} placeholder={t("Select date of birth")} />
             </FormField>
-            <FormField label={t("Passport Number")}>
-              <Input value={edit.d.passportNumber} onChangeText={(v) => set("passportNumber")(v.toUpperCase())} autoCapitalize="characters" autoCorrect={false} spellCheck={false} placeholder={t("e.g. A1234567")} accessibilityLabel={t("Passport Number")} />
+            <FormField label={t("Passport number")}>
+              <Input value={edit.d.passportNumber} onChangeText={(v) => set("passportNumber")(v.toUpperCase())} autoCapitalize="characters" autoCorrect={false} spellCheck={false} placeholder={t("e.g. A1234567")} accessibilityLabel={t("Passport number")} />
             </FormField>
-            <FormField label={t("Passport Expiry Date")}>
-              <DateField label={t("Passport Expiry Date")} value={edit.d.passportExpiry} onChange={set("passportExpiry")} placeholder={t("Select expiry date")} />
+            <FormField label={t("Passport expiry date")}>
+              <DateField label={t("Passport expiry date")} value={edit.d.passportExpiry} onChange={set("passportExpiry")} placeholder={t("Select expiry date")} />
             </FormField>
             <FormField label={t("Emirate")}>
               <SelectField label={t("Emirate")} value={edit.d.cityOfResidence} options={EMIRATE_OPTIONS} placeholder={t("Select emirate")} onChange={set("cityOfResidence")} />

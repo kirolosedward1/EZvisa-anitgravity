@@ -77,14 +77,12 @@ export function TopBar({ name, title, scrollY, showAt, onBack, onShare }: { name
 }
 
 export function TitleBlock({ name, title, capital }: { name: string; title: string; capital: string }) {
-  const { t } = useT();
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: S.md, paddingHorizontal: S.gutter }} testID="country-title">
       <Flag country={name} size={AVATAR.lg} />
       <View style={{ flex: 1 }}>
         <Text variant="largeTitle" accessibilityRole="header">{title}</Text>
         {!!capital && <Text variant="subhead" tone="secondary">{capital}</Text>}
-        <Text variant="footnote" tone="secondary" style={{ marginTop: S.xxs }}>{t("Schengen short-stay visa")}</Text>
       </View>
     </View>
   );

@@ -176,16 +176,16 @@ export function AdditionalCountries({ f, onChange }: { f: WizardForm; onChange: 
             <Flag country={nc} size={28} /><Text variant="headline" style={{ flex: 1 }}>{t(nc)}</Text>
             <PressScale onPress={() => { setNc(""); setNa(""); setNd(""); setErr(""); }} accessibilityRole="button" accessibilityLabel={t("Cancel")} style={{ minHeight: 44, justifyContent: "center" }}><Text variant="subhead" tone="tint" weight="600">{t("Cancel")}</Text></PressScale>
           </View>
-          <Text variant="footnote" tone="secondary" weight="600">{t("Arrival Date")}</Text>
-          <DateAnswer label={t("Arrival Date")} value={na} style="calendar" placeholder={t("Select arrival date")} min={f.travelStartDate || todayIso} max={f.travelEndDate || undefined}
+          <Text variant="footnote" tone="secondary" weight="600">{t("Arrival date")}</Text>
+          <DateAnswer label={t("Arrival date")} value={na} style="calendar" placeholder={t("Select arrival date")} min={f.travelStartDate || todayIso} max={f.travelEndDate || undefined}
             onChange={(v) => { setNa(v); setErr(""); if (nd && v && nd <= v) { setNd(""); setErr(t("Departure date must be after arrival date")); } }} />
           {!!na && <>
-            <Text variant="footnote" tone="secondary" weight="600">{t("Departure Date")}</Text>
-            <DateAnswer label={t("Departure Date")} value={nd} style="calendar" placeholder={t("Select departure date")} min={dayAfter(na)} max={f.travelEndDate || undefined}
+            <Text variant="footnote" tone="secondary" weight="600">{t("Departure date")}</Text>
+            <DateAnswer label={t("Departure date")} value={nd} style="calendar" placeholder={t("Select departure date")} min={dayAfter(na)} max={f.travelEndDate || undefined}
               onChange={(v) => { if (na && v <= na) { setErr(t("Departure date must be after arrival date")); return; } setErr(""); setNd(v); }} />
           </>}
           {!!err && <Note tone="red" icon="exclamationmark.circle.fill"><Text variant="subhead" tone="red">{err}</Text></Note>}
-          <Button title={t("Add Country")} icon="plus" variant="secondary" disabled={!nc || !na || !nd || !!err} onPress={add} />
+          <Button title={t("Add country")} icon="plus" variant="secondary" disabled={!nc || !na || !nd || !!err} onPress={add} />
         </View>
       )}
     </View>

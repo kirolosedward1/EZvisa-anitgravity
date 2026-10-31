@@ -428,7 +428,7 @@ export default function Apply() {
       </View>
       <View style={{ paddingHorizontal: S.lg, paddingBottom: Math.max(insets.bottom, S.lg), gap: S.xs }}>
         <InlineError text={err} />
-        <Button title={paying ? t("Opening secure payment…") : quote ? t(PAY_AED, { amount: formatPayAmount(quote.amount) }) : t("Pay securely")} icon="creditcard.fill" loading={busy || paying} disabled={busy || paying} onPress={async () => {
+        <Button title={paying || busy ? t("Opening secure payment…") : quote ? t(PAY_AED, { amount: formatPayAmount(quote.amount) }) : t("Pay securely")} icon="creditcard.fill" loading={busy || paying} disabled={busy || paying} onPress={async () => {
           if (inFlight.current || paying) return; inFlight.current = true; setBusy(true); setErr(null);
           const id = submitted.applicationId;
           const result = (returned: string) => { router.replace({ pathname: "/payment/[id]", params: { id, returned, ...(submitted.guestEmail ? { email: submitted.guestEmail } : {}) } }); setTimeout(() => setSubmitted(null), 400); };
@@ -523,7 +523,7 @@ export default function Apply() {
           <InlineError text={err} />
         </ScrollView>
         <StickyCTA caption={t("Full refund if you cancel before review starts.")}>
-          <PrimaryButton title={paying ? t("Opening secure payment…") : t("Pay {a} AED securely", { a: formatPayAmount(due) })} loading={busy || paying} disabled={busy || paying || !SUPABASE_ENABLED || (offline && !!session)} onPress={() => submit(true)} testID="pay-now" />
+          <PrimaryButton title={paying || busy ? t("Opening secure payment…") : t("Pay {a} AED securely", { a: formatPayAmount(due) })} loading={busy || paying} disabled={busy || paying || !SUPABASE_ENABLED || (offline && !!session)} onPress={() => submit(true)} testID="pay-now" />
         </StickyCTA>
         <DraftConflictSheet />
       </View>

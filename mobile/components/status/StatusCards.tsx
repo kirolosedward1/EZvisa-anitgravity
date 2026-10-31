@@ -47,9 +47,12 @@ export type Next = { kind: NextKind; who: "you" | "us" | null; pose: Pose; title
   /** Document names for the body, translated one by one (English keys). */ docs?: string[] };
 
 /** The one next thing, from the real status, payment and documents. */
-export function nextOf(a: Application, list: CheckItem[] | null): Next {
+export function nextOf(a: Application, list: CheckItem[] | null, later: string[] = []): Next {
   const uploadsOpen = UPLOAD_STATUSES.includes(a.status);
-  const open = uploadsOpen && list ? list.filter(isOpen) : [];
+  const allOpen = uploadsOpen && list ? list.filter(isOpen) : [];
+  // Documents the customer said they'll get later aren't asked for now (unless nothing else is left).
+  const now = allOpen.filter((i) => i.state === "rejected" || !later.includes(i.req.document_type));
+  const open = now.length ? now : allOpen;
   const rejected = open.filter((i) => i.state === "rejected");
   const country = a.countries?.name ?? "";
   if (a.status === "cancelled") return { kind: "cancelled", who: null, pose: "waiting", title: "Cancelled", body: "This application was cancelled. Nothing more to do." };
@@ -60,7 +63,7 @@ export function nextOf(a: Application, list: CheckItem[] | null): Next {
   if (rejected.length) return { kind: "fix", who: "you", pose: "magnify", item: rejected[0], title: rejected.length === 1 ? "One document needs replacing" : "{n} documents need replacing", vars: { n: rejected.length },
     body: rejected[0].reason || "Please upload a new copy.", cta: "Upload new {doc}", alt: "Ask why" };
   if (open.length) return { kind: "upload", who: "you", pose: "documents", item: open[0], title: open.length === 1 ? "1 document" : "{n} documents", vars: { n: open.length },
-    body: "", docs: open.slice(0, 3).map((i) => i.req.title), cta: open.length === 1 ? "Upload 1 document" : "Upload {n} documents" };
+    body: "", docs: open.map((i) => i.req.title), cta: open.length === 1 ? "Upload 1 document" : "Upload {n} documents" }; // every name the count promises
   const ap = appointmentOf(a);
   if (ap && Date.parse(ap.at) > Date.now() - 6 * 3600e3) return { kind: "appointment", who: "you", pose: "calendar", title: "Your appointment", body: ap.centre ?? "", cta: "View appointment" };
   if (ap) return { kind: "done", who: null, pose: "celebrate", title: "All done", body: "Your file is ready and your appointment is set. Our work on this application is finished.", cta: "View appointment", alt: "Apply again" };

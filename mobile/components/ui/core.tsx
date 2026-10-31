@@ -49,12 +49,11 @@ export function Button({ title, onPress, variant = "primary", size = "L", loadin
     <PressScale onPress={() => { tap(); onPress(); }} onPressIn={() => setDown(true)} onPressOut={() => setDown(false)} scaleTo={0.98} disabled={off} accessibilityRole="button" accessibilityLabel={a11yLabel ?? title} accessibilityState={{ disabled: !!disabled, busy: !!loading }}
       style={[{ minHeight: size === "L" ? SIZE.buttonL : HIT, borderRadius: R.button, paddingHorizontal: S.lg, paddingVertical: S.xs, alignItems: "center", justifyContent: "center", backgroundColor: fill, opacity: disabled ? PRESS.disabled : 1 },
         variant === "secondary" && { borderWidth: 1, borderColor: c.border, backgroundColor: dark ? c.surface : c.surfaceRaised }, curve]}>
-      {loading ? <ActivityIndicator color={fg} /> : (
-        <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
-          {!!icon && <Icon name={icon} size={ICON.md} color={fg} weight="semibold" />}
-          <Text variant={size === "L" ? "button" : "headline"} color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>
-        </View>
-      )}
+      {/* Loading keeps the label next to the spinner, so a busy button still says what it is doing. */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: S.xs }}>
+        {loading ? <ActivityIndicator color={fg} /> : !!icon && <Icon name={icon} size={ICON.md} color={fg} weight="semibold" />}
+        {!!title && <Text variant={size === "L" ? "button" : "headline"} color={fg} numberOfLines={2} center style={{ flexShrink: 1 }}>{title}</Text>}
+      </View>
     </PressScale>
   );
 }
