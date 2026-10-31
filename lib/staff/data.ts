@@ -34,6 +34,8 @@ const BASE_COLUMNS =
 const STEP_002_COLUMNS = "paid_at, file_downloaded_at, appointment_choice, appointment_help_status, appointment_help_requested_at"
 
 const CASE_LIMIT = 5000
+/** Columns this database reported missing, remembered per server instance so later reads skip them straight away. */
+const KNOWN_MISSING = new Set<string>()
 /** Without these a case cannot be shown, so they are never dropped. */
 const REQUIRED_COLUMNS = new Set(["id", "full_name", "email", "application_status", "payment_status", "created_at"])
 
@@ -61,7 +63,7 @@ export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> 
   // Columns differ between databases (older rows have entry_date/exit_date, newer ones travel_start_date/
   // travel_end_date; paid_at and the 002 columns may be missing). A missing column is dropped and the read retried,
   // so one absent optional column never hides every case.
-  let columns = `${BASE_COLUMNS}, ${STEP_002_COLUMNS}`.split(",").map((c) => c.trim())
+  let columns = `${BASE_COLUMNS}, ${STEP_002_COLUMNS}`.split(",").map((c) => c.trim()).filter((c) => !KNOWN_MISSING.has(c))
   for (let attempt = 0; attempt < 8; attempt++) {
     const res = await client.from("visa_applications").select(columns.join(", ")).order("created_at", { ascending: false }).limit(CASE_LIMIT)
     if (!res.error) {
@@ -74,6 +76,7 @@ export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> 
       problem = "Cases could not be loaded."
       break
     }
+    KNOWN_MISSING.add(missing)
     columns = columns.filter((c) => c !== missing)
   }
 
