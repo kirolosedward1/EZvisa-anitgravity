@@ -1,5 +1,6 @@
 // File preparation board: cases whose file is due (paid, documents approved), the parts of the selected case's file,
 // what the templates use, the approved customer documents and the other travellers on the same trip.
+import { Check } from "lucide-react"
 import { CountryFlag } from "@/components/country-flag"
 import { FileParts } from "@/components/staff/file-prep"
 import { PermissionDenied } from "@/components/staff/states"
@@ -41,7 +42,7 @@ export default async function FilesPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+      <div className="ezc-pagehead" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <h1>File preparation</h1>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>{queue.length} {queue.length === 1 ? "file" : "files"} to prepare · {readyWaiting.length} ready, waiting for the customer</p>
@@ -99,10 +100,10 @@ export default async function FilesPage({ searchParams }: { searchParams: Promis
               <a href={`/staff/cases/${detail.c.id}?tab=details`} style={{ fontSize: 13 }}>Application details</a>
             </section>
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 6 }} aria-labelledby="cd-h">
-              <h2 id="cd-h">Customer documents</h2>
+              <h2 id="cd-h">Customer documents, approved</h2>
               {detail.docs.map((d) => (
-                <span key={d.type} style={{ fontSize: 13, display: "flex", gap: 6, alignItems: "center" }}>
-                  <span className={`pill xs ${d.state === "approved" ? "green" : d.state === "rejected" ? "amber" : "grey"}`}>{d.state === "approved" ? "Approved" : d.state === "rejected" ? "Sent back" : d.state === "missing" ? "Missing" : "To check"}</span>
+                <span key={d.type} style={{ fontSize: 13, display: "flex", gap: 8, alignItems: "center" }}>
+                  {d.state === "approved" ? <Check size={15} color="#1a7f37" aria-label="Approved" /> : <span className={`pill xs ${d.state === "rejected" ? "amber" : "grey"}`}>{d.state === "rejected" ? "Sent back" : d.state === "missing" ? "Missing" : "To check"}</span>}
                   {d.title}
                 </span>
               ))}

@@ -89,7 +89,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
     <>
       {problem ? <ErrorBanner title="Part of this case did not load." body={`${problem} The rest is shown.`} /> : null}
 
-      <div className="case-head">
+      <div className="ezc-pagehead case-head">
         <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
           <a href="/staff/cases" className="muted" style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4 }}><ArrowLeft size={14} aria-hidden /> Cases</a>
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>

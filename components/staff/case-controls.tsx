@@ -242,14 +242,14 @@ export function CaseNotes({ caseId, notes, canWrite }: { caseId: string; notes: 
             <label className="muted" style={{ fontSize: 12, display: "flex", gap: 6, alignItems: "center" }}>
               <input type="checkbox" checked={pinned} onChange={(e) => setPinned(e.target.checked)} /> Pin to top
             </label>
-            <button type="submit" className="btn outline sm" disabled={pending || !body.trim()}>Add note</button>
+            <button type="submit" className="btn primary sm" disabled={pending || !body.trim()}>Add note</button>
           </div>
         </form>
       ) : null}
       {flashNode}
       {all.length === 0 ? <p className="muted" style={{ margin: 0, fontSize: 13 }}>No notes yet.</p> : null}
       {all.map((n) => (
-        <div key={n.id} style={{ borderTop: "1px solid #eef1f6", paddingTop: 8, display: "flex", flexDirection: "column", gap: 2 }}>
+        <div key={n.id} className="note-card">
           <p style={{ margin: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>{n.pinned ? <Pin size={12} aria-label="Pinned" style={{ marginInlineEnd: 4 }} /> : null}{n.body}</p>
           <span className="muted" style={{ fontSize: 11 }}>{n.author} · {new Date(n.at).toLocaleString("en-GB", { timeZone: "Asia/Dubai", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
         </div>

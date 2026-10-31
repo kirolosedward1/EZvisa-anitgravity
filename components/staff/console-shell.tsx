@@ -1,7 +1,7 @@
 "use client"
 
 // Staff console frame: grouped sidebar built from the role (lib/staff/roles.ts), top bar with search, New case and the
-// notifications bell. Below 1024px the sidebar opens from a menu button. "/" focuses search, Esc closes the menu.
+// notifications bell (with Refresh). Below 1024px the sidebar opens from a menu button. "/" focuses search, Esc closes the menu.
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -10,6 +10,7 @@ import {
   Menu, MessageCircle, Plus, Search, Settings, ShieldCheck, Users, UserCog, X,
 } from "lucide-react"
 import type { NavGroup, NavKey } from "@/lib/staff/roles"
+import { RefreshButton } from "@/components/staff/refresh-button"
 
 const ICON: Record<NavKey, React.ComponentType<{ "aria-hidden"?: boolean }>> = {
   notifications: Bell,
@@ -131,6 +132,7 @@ export function ConsoleShell({
             <kbd className="ezc-kbd hide-sm" aria-hidden="true">/</kbd>
           </form>
           <div style={{ marginInlineStart: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            <RefreshButton />
             {canCreate ? (
               <a href="/staff/cases/new" className="btn primary" aria-label="New case">
                 <Plus size={16} aria-hidden />

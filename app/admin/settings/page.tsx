@@ -46,7 +46,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <div>
+      <div className="ezc-pagehead">
         <h1>Settings</h1>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>Shared with the website and the app through the wizard contract. Shown read only: changing them is a code change for now, so nothing drifts between web and app.</p>
       </div>
@@ -57,9 +57,21 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <div className="stack">
           {sec === "destinations" ? (
             <>
-              <section className="card" style={{ padding: "16px 18px" }} aria-labelledby="d-h">
-                <h2 id="d-h" style={{ marginBottom: 10 }}>Destinations · {SCHENGEN.length}</h2>
-                <div className="dest-grid">{SCHENGEN.map((c) => <span key={c} className="dest"><CountryFlag iso={SCHENGEN_META[c]?.iso} title={c} className="size-5" />{c}</span>)}</div>
+              <section className="card" style={{ overflow: "hidden" }} aria-labelledby="d-h">
+                <div style={{ padding: "14px 18px 10px" }}>
+                  <h2 id="d-h">Destinations · {SCHENGEN.length}</h2>
+                  <p className="muted" style={{ margin: 0, fontSize: 12 }}>What the website and the app offer. The visa centre is chosen by the customer when they book.</p>
+                </div>
+                <div className="tbl" style={{ border: 0, borderRadius: 0 }}>
+                  <div className="tbl-h" style={{ gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr) 0.8fr" }}><span>Destination</span><span>Service fee</span><span>Status</span></div>
+                  {SCHENGEN.map((c) => (
+                    <div key={c} className="tbl-r" style={{ gridTemplateColumns: "minmax(0,1.4fr) minmax(0,1fr) 0.8fr" }}>
+                      <span className="dest"><CountryFlag iso={SCHENGEN_META[c]?.iso} title={c} className="size-6" />{c}</span>
+                      <span className="muted">{PRICE_AED} AED per traveller</span>
+                      <span><span className="pill xs green">Live</span></span>
+                    </div>
+                  ))}
+                </div>
               </section>
               <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="r-h">
                 <h2 id="r-h">Documents the customer uploads, by employment</h2>
@@ -67,7 +79,10 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
                   {REQUIREMENTS.filter((r) => !r.provided_by_ezvisa).map((r) => (
                     <div key={r.id} className="tbl-r" style={{ gridTemplateColumns: `minmax(0,2fr) repeat(${EMPLOYMENT.length}, 0.7fr)` }}>
                       <span style={{ display: "flex", flexDirection: "column" }}>{r.title}{r.description ? <span className="muted" style={{ fontSize: 11 }}>{r.description}</span> : null}</span>
-                      {EMPLOYMENT.map((e) => <span key={e.value}>{requiredFlags(e.value).includes(DOC_FLAG[r.document_type]) ? <span className="pill xs green">Yes</span> : <span className="muted">–</span>}</span>)}
+                      {EMPLOYMENT.map((e) => {
+                        const on = requiredFlags(e.value).includes(DOC_FLAG[r.document_type])
+                        return <span key={e.value}><span className="switch" data-on={on ? "true" : undefined} role="img" aria-label={`${e.label}: ${on ? "required" : "not required"}`} /></span>
+                      })}
                     </div>
                   ))}
                 </div>

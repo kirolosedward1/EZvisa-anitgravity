@@ -1,5 +1,6 @@
 // Cases board: the queue with tabs, filters, sort, saved views, bulk actions and a row menu. Filters live in the URL
 // so a view can be shared or saved; the CSV export uses the same query.
+import { RefreshButton } from "@/components/staff/refresh-button"
 import { Download, Plus } from "lucide-react"
 import { CasesQueue, type QueueRow } from "@/components/staff/cases-queue"
 import { ErrorBanner } from "@/components/staff/states"
@@ -76,7 +77,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
     <>
       {problem ? <ErrorBanner title="Some data did not load." body={`${problem} What did load is shown; reload to try again.`} /> : null}
 
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+      <div className="ezc-pagehead" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <h1>Cases</h1>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>
@@ -92,6 +93,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
               <Download size={16} aria-hidden /> Export CSV
             </a>
           ) : null}
+          <RefreshButton className="desk-only" />
           {staff.role !== "finance" ? (
             <a className="btn primary" href="/staff/cases/new">
               <Plus size={16} aria-hidden /> New case

@@ -50,7 +50,7 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
 
   return (
     <>
-      <div>
+      <div className="ezc-pagehead">
         <h1>Audit log</h1>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>Every change made from the console. Kept 7 years, read only.</p>
       </div>

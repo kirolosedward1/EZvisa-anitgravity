@@ -60,7 +60,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div className="ezc-pagehead" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div>
           <h1>Analytics</h1>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>Last {range} days · compared with the {range} days before. Website visits and ad cost are not connected.</p>
@@ -95,9 +95,9 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
             </section>
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="src-h">
               <h2 id="src-h">Applications by source</h2>
-              <div className="tbl"><div className="tbl-h" style={{ gridTemplateColumns: "1.4fr 0.7fr 0.7fr 0.7fr" }}><span>Source</span><span>Started</span><span>Paid</span><span>Rate</span></div>
+              <div className="tbl"><div className="tbl-h" style={{ gridTemplateColumns: "1.3fr 0.6fr 0.6fr 0.9fr" }}><span>Source</span><span>Started</span><span>Paid</span><span>Rate</span></div>
                 {[...sources.entries()].sort((a, b) => b[1].started - a[1].started).map(([k, s]) => (
-                  <div key={k} className="tbl-r" style={{ gridTemplateColumns: "1.4fr 0.7fr 0.7fr 0.7fr" }}><span className="ellipsis">{k}</span><span>{s.started}</span><span>{s.paid}</span><span>{s.started ? Math.round((s.paid / s.started) * 100) : 0} percent</span></div>
+                  <div key={k} className="tbl-r" style={{ gridTemplateColumns: "1.3fr 0.6fr 0.6fr 0.9fr" }}><span className="ellipsis">{k}</span><span>{s.started}</span><span>{s.paid}</span><span>{s.started ? Math.round((s.paid / s.started) * 100) : 0} percent</span></div>
                 ))}
               </div>
               <p className="muted" style={{ margin: 0, fontSize: 12 }}>From the referrer recorded with each application. Campaign names and cost per paid need Google Ads, which is not connected.</p>
@@ -106,7 +106,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12 }} aria-labelledby="pd-h">
             <h2 id="pd-h">Paid applications per day{range > 30 ? ", last 30 days" : ""}</h2>
             <div className="chart" role="img" aria-label={`Paid applications per day: ${m.days.join(", ")}`}>
-              {m.days.map((d, i) => <div key={i} className="col" title={`${d} paid`}><div className="bw"><div className="b top" style={{ height: `${(d / maxDay) * 100}%`, minHeight: d ? 3 : 0 }} /></div></div>)}
+              {m.days.map((d, i) => {
+                const day = new Date(now - (m.days.length - 1 - i) * 86_400_000).toLocaleDateString("en-GB", { timeZone: "Asia/Dubai", day: "numeric" })
+                return <div key={i} className="col" title={`${day}: ${d} paid`}><div className="bw base"><div className="b top" style={{ height: `${(d / maxDay) * 100}%`, minHeight: d ? 3 : 0 }} /></div><span className="d">{i % 3 === (m.days.length - 1) % 3 ? day : "\u00a0"}</span></div>
+              })}
             </div>
           </section>
         </>

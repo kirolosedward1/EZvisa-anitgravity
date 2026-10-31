@@ -33,7 +33,7 @@ export default async function TeamPage() {
   return (
     <>
       {problem ? <ErrorBanner title="Team" body={problem} /> : null}
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
+      <div className="ezc-pagehead" style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "flex-start" }}>
         <div>
           <h1>Team</h1>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>{members.filter((m) => m.active).length + envOnly.length} members · 4 roles · staff sign in with Google or an email link; 2-step is set on their own account</p>

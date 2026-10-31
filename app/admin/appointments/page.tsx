@@ -46,7 +46,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div className="ezc-pagehead" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <h1 style={{ marginInlineEnd: 8 }}>Appointments</h1>
           <a className="btn outline sm" href={q({ w: offset - 1 })} aria-label="Previous week"><ChevronLeft size={16} aria-hidden /></a>

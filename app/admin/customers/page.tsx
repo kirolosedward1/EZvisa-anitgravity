@@ -11,6 +11,8 @@ import { sectionAccess } from "@/lib/staff/guard"
 import { travelLabel } from "@/lib/staff/queue"
 import { can } from "@/lib/staff/roles"
 import { initials } from "@/lib/staff/session"
+import { waUrl } from "@/lib/staff/templates"
+import { MessageCircle } from "lucide-react"
 
 export const dynamic = "force-dynamic"
 const SEGMENTS = [{ key: "all", label: "All" }, { key: "repeat", label: "Repeat customers" }, { key: "active", label: "With an open case" }, { key: "arabic", label: "Arabic" }] as const
@@ -56,7 +58,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+      <div className="ezc-pagehead" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div>
           <h1>Customers</h1>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>{byEmail.size} customers · {cases.filter((c) => c.stage === "completed").length} completed cases</p>
@@ -76,6 +78,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                 <b className="ellipsis">{c.name}</b>
                 <span className="muted ellipsis" style={{ fontSize: 12 }}>{c.email} · {c.phone || "no phone"}</span>
               </span>
+              <span className="muted cust-meta" style={{ fontSize: 12 }}>{c.nationality || "–"}<br />{c.arabic ? "Arabic" : "English"}</span>
               <span className="muted" style={{ fontSize: 12, whiteSpace: "nowrap" }}>{c.cases.length} {c.cases.length === 1 ? "case" : "cases"}</span>
               {c.cases.some(isOpen) ? <span className="pill xs blue">Active</span> : <span className="pill xs green">Done</span>}
             </a>
@@ -95,8 +98,13 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               <span className="av" style={{ width: 44, height: 44, fontSize: 14 }} aria-hidden="true">{initials(selected.name)}</span>
               <div style={{ minWidth: 0 }}>
                 <h2>{selected.name}</h2>
-                <p className="muted" style={{ margin: 0, fontSize: 12 }}>Customer since {day(selected.since)}</p>
+                <p className="muted" style={{ margin: 0, fontSize: 12 }}>Customer since {day(selected.since)} · {selected.cases.length} {selected.cases.length === 1 ? "case" : "cases"}</p>
               </div>
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {waUrl(selected.phone) && can(staff.role, "msg") ? <a className="btn outline sm" href={waUrl(selected.phone)!} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} color="#1a7f37" aria-hidden /> WhatsApp</a> : null}
+              <a className="btn outline sm" href={`mailto:${selected.email}`}>Email</a>
+              {selected.cases[0] ? <a className="btn outline sm" href={`/staff/cases/${selected.cases[0].id}`}>Latest case</a> : null}
             </div>
             <dl className="kv">
               <dt>Email</dt><dd>{selected.email}</dd>

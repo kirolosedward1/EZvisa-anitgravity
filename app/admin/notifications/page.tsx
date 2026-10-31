@@ -35,7 +35,7 @@ export default async function NotificationsPage() {
   const items = buildFeed({ staffId: staff.staffId, firstName: firstName(staff), role: staff.role, cases, mentions, refunds })
   return (
     <>
-      <div>
+      <div className="ezc-pagehead">
         <h1>Notifications</h1>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>You are {staff.name}, {ROLE_LABEL[staff.role]}. Built from your cases, mentions in internal notes{staff.role === "finance" || staff.role === "admin" ? " and money waiting on you" : ""}.</p>
       </div>

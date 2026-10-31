@@ -73,7 +73,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   return (
     <>
       {problem ? <ErrorBanner title="Part of Payments did not load." body={problem} /> : null}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+      <div className="ezc-pagehead" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <h1>{finance ? "Finance desk" : "Payments"}</h1>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>

@@ -29,7 +29,7 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <div>
+      <div className="ezc-pagehead">
         <h1>Reports and exports</h1>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>Every export is logged with who ran it and the period. Scheduled and emailed reports need the email service, which is not working yet.</p>
       </div>

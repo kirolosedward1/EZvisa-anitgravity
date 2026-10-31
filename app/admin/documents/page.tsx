@@ -57,7 +57,7 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+      <div className="ezc-pagehead" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <h1>Document review</h1>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>

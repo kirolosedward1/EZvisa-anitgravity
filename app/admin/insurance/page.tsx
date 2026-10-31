@@ -43,7 +43,7 @@ export default async function InsurancePage() {
   return (
     <>
       {problem ? <ErrorBanner title="Part of Insurance did not load." body={problem} /> : null}
-      <div>
+      <div className="ezc-pagehead">
         <h1>Travel insurance</h1>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>Quotes are separate from the service fee. A request is a preference, never a policy. No insurer rate card is connected: type the price from the insurer&rsquo;s rates.</p>
       </div>

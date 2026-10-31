@@ -30,10 +30,9 @@ export default async function NewCasePage() {
 
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <p className="muted" style={{ margin: 0, fontSize: 13 }}>
-          <a href="/staff/cases">Cases</a> / New case
-        </p>
+      <div className="ezc-pagehead" style={{ display: "flex", alignItems: "baseline", gap: "4px 12px", flexWrap: "wrap" }}>
+        <a href="/staff/cases" className="muted" style={{ fontSize: 13 }}>&larr; Cases</a>
+        <span className="muted" aria-hidden="true">/</span>
         <h1>New case on behalf of a customer</h1>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>Same questions as the website wizard, no marketing, saved as Payment due under the customer&rsquo;s email.</p>
       </div>
