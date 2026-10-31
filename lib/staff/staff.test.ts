@@ -208,3 +208,18 @@ test("queue: tabs, filters, search and sort", async () => {
   assert.equal(agoLabel(new Date(NOW - 3 * 86_400_000).toISOString(), NOW), "3d ago")
   assert.equal(toCsv([["=SUM(A1)", 'a "b"', "x,y"]]), `'=SUM(A1),"a ""b""","x,y"\r\n`)
 })
+
+test("document queue: waiting uploads oldest first, re-uploads and SLA", async () => {
+  const { docQueue, queueTag } = await import("./doc-queue.ts")
+  const { checklistFor, QUICK_REASONS } = await import("./checklists.ts")
+  const a = app({ id: "q1", has_passport: true, has_photos: true, additional_notes: notes([{ type: "passportCopy", at: "2026-10-30T08:00:00Z" }, { type: "photo", at: "2026-10-28T08:00:00Z" }]) })
+  const reviews = { q1: { photo: { status: "rejected" as const, note: "Blurry", reviewedAt: "2026-10-27T08:00:00Z" } } }
+  const c = toStaffCase(a, reviews.q1)
+  const q = docQueue([c], [a], reviews, NOW)
+  assert.deepEqual(q.map((x) => x.type), ["photo", "passportCopy"], "oldest first; the residence row shares the passport flag but has no upload")
+  assert.equal(q[0].reupload, true)
+  assert.equal(queueTag(q[0], NOW).text, "Over SLA")
+  assert.equal(queueTag(q[1], NOW).text, "2h")
+  assert.ok(checklistFor("bankStatement").length >= 4)
+  assert.equal(QUICK_REASONS.length, 4)
+})

@@ -24,6 +24,9 @@ push to `main`.
 | --- | --- | --- |
 | 1–4. Roles, audit helper, shell, Overview | done | `005_staff_console.sql` (staff_users, audit_events, case_assignments, case_notes; RLS on, no client policies). `lib/staff/*`: roles and permission matrix, staff session, `staffWrite` audit helper, case model with SLA clocks, demo data. Console shell with the grouped sidebar per role and the top bar. Overview board. Boards not built yet show a placeholder. |
 | 5a. Cases | done | Queue with tabs, search, stage/owner/destination filters, four sorts, pages of 50, saved views and column choice (this device), bulk assign and CSV export, row menu, cancel with a required audit note. `lib/staff/queue.ts`, `app/admin/cases/actions.ts`, `GET /api/admin/export/cases`. |
+| 5b. New case | done | Four steps (customer, trip, traveller and work, review). Saves a Payment due row with the shared wizard contract, auto-assigns the specialist with the fewest open cases, and gives the pay link to copy or send on WhatsApp. |
+| 6. Case + DocumentReview | done | Header with stage and SLA pills, owner, WhatsApp, Change stage (note required; Ready needs `final_package.pdf`), More menu; stage bar; Overview, Documents, Application details, Payments and Activity tabs; customer card, internal notes, quick actions. Shared `DocumentReview` (approve, send back with quick reasons, undo); all approved moves the case to Preparation. |
+| 7. Document review + Viewer | done | Queue of uploads waiting (oldest first, Over SLA, Re-upload), file preview with zoom and rotate, checklist per document type, compare box, A/R/J/K keys. Viewer with highlight boxes listed in the send-back note; `006_document_review_highlights.sql` stores them. |
 
 ## Overview (step 4)
 
@@ -54,6 +57,23 @@ push to `main`.
 - The old case tools (status changes, emails, document generation) stay at `/staff/cases/legacy` until the Case board
   replaces them.
 
+## New case, Case, Document review and Viewer (steps 5b to 7)
+
+- Screenshots: `newcase-review-1440.jpg`, `newcase-done-1440.jpg`, `newcase-390.jpg`, `case-1440.jpg`,
+  `case-docs-1440.jpg`, `case-stage-1440.jpg`, `case-390.jpg`, `documents-1440.jpg`, `documents-390.jpg`,
+  `viewer-1440.jpg` (demo cases have no files, so previews show a placeholder).
+- New case: customers come from existing cases (by email) or are created inline; the email is how they sign in.
+  Children and other family members get their own case (grouped as a trip by email and dates), because the price is
+  per person with ×2 only for a spouse on the same application. No child price, rush option, promo code or offline
+  "mark paid" (decisions above). The case is logged as entered by staff with the channel (WhatsApp, phone, walk-in…).
+- Document decisions write `document_reviews` (with the reviewer's name) and a customer timeline event; a send-back
+  note is required and is what the customer reads. Approving with checklist items unticked is allowed and logged.
+- Stage changes need a note, use compare-before-write, and only Cancelled is possible before payment. "Notify the
+  customer" means their dashboard: WhatsApp and email sending are not connected.
+- Highlights: boxes work on image uploads; PDFs open in the browser's viewer and the area is described in the note.
+  Cropped images on the customer's dashboard are not built; the numbered list in the note is what they see.
+- "Edit on behalf of the customer" and "Sign in as" are left for the Customers board.
+
 ## Demo session (local and preview builds only)
 
 `/api/auth/demo-login?scenario=staff&role=admin|specialist|support|finance` opens the console with invented cases. It
@@ -63,5 +83,5 @@ never reads or writes the database, and the staff API routes reject it (401). Pr
 
 1. Apply `supabase/migrations/002_appointment_step.sql` (still missing in production: appointment saves, help requests
    and the download stamp depend on it).
-2. Apply `supabase/migrations/005_staff_console.sql`. Until then the console works with `ADMIN_EMAILS` only, every case
+2. Apply `supabase/migrations/005_staff_console.sql`, then `006_document_review_highlights.sql`. Until then the console works with `ADMIN_EMAILS` only, every case
    shows as unassigned and audit rows are not stored.

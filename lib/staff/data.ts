@@ -16,6 +16,9 @@ export type StaffMember = { id: string; name: string; email: string; role: Role;
 
 export type ConsoleData = {
   cases: StaffCase[]
+  /** The rows behind the cases (same order) and their reviews, for boards that need answers or uploads. */
+  apps: VisaApplication[]
+  reviews: Record<string, DocumentReviews>
   team: StaffMember[]
   /** Set when part of the data could not be read (shown as a banner, the rest stays visible). */
   problem: string | null
@@ -33,13 +36,15 @@ export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> 
     const { apps, reviews, owners } = demoConsoleData()
     return {
       cases: apps.map((a) => toStaffCase(a, reviews[a.id ?? ""] ?? {}, owners[a.id ?? ""] ?? null)),
+      apps,
+      reviews,
       team: DEMO_STAFF.map((m) => ({ ...m, active: true })),
       problem: null,
     }
   }
 
   const client = serviceClient()
-  if (!client) return { cases: [], team: [], problem: "The database is not configured for this deployment." }
+  if (!client) return { cases: [], apps: [], reviews: {}, team: [], problem: "The database is not configured for this deployment." }
 
   let problem: string | null = null
   let apps: VisaApplication[] = []
@@ -74,10 +79,12 @@ export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> 
     if (!ownerBy.has(row.application_id)) ownerBy.set(row.application_id, row.staff_id)
   }
 
+  const reviewMap: Record<string, DocumentReviews> = {}
   const cases = apps.map((a) => {
     const reviews: DocumentReviews = toDocumentReviews(reviewsBy.get(a.id ?? "") ?? [])
+    reviewMap[a.id ?? ""] = reviews
     return toStaffCase(a, reviews, ownerBy.get(a.id ?? "") ?? null)
   })
   const team = ((teamRows.data ?? []) as StaffMember[]).filter((m) => m.active)
-  return { cases, team, problem }
+  return { cases, apps, reviews: reviewMap, team, problem }
 })
