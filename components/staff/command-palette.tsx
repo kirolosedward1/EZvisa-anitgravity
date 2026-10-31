@@ -68,6 +68,8 @@ export function CommandPalette({ open, onClose, nav }: { open: boolean; onClose:
               if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(items.length - 1, a + 1)) }
               if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(0, a - 1)) }
               if (e.key === "Escape") { e.preventDefault(); onClose() }
+              // Focus stays in the dialog: Tab and Shift+Tab move through the results like the arrows.
+              if (e.key === "Tab") { e.preventDefault(); setActive((a) => (e.shiftKey ? Math.max(0, a - 1) : Math.min(items.length - 1, a + 1))) }
             }}
             placeholder="Name, email, phone, EZ reference or a board"
             aria-label="Search"
