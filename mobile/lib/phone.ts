@@ -38,7 +38,7 @@ export function formatNational(iso: string, digits: string) {
   const out = new AsYouType().input(pre + digits); // international formatting groups without the trunk 0
   return out.startsWith(pre) ? out.slice(pre.length).trim() : digits;
 }
-export const placeholderFor = (iso: string) => (iso === "AE" ? "50 123 4567" : getExampleNumber(iso as CountryCode, examples as any)?.formatNational().replace(/^0/, "") ?? "");
+export const placeholderFor = (iso: string) => (iso === "AE" ? "50 000 0000" : getExampleNumber(iso as CountryCode, examples as any)?.formatNational().replace(/^0/, "") ?? "");
 /** E.164 when valid for that country (UAE must be a mobile number: 5X XXX XXXX), else null. */
 export function toE164(iso: string, digits: string): string | null {
   const p = parsePhoneNumberFromString(digits, iso as CountryCode);
