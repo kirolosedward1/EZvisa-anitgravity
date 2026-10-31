@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { hasInvalidPhone, isValidPhone, leadPhoneForSend, phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "./phone"
+import { formatUaeLocal, hasInvalidPhone, isValidPhone, leadPhoneForSend, phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "./phone"
 
 /** The field's onChange: each new character is appended, then only Western digits (and a leading +) are kept. */
 function typePhone(chars: string) {
@@ -124,4 +124,16 @@ test("too short, repeated dial code, and foreign numbers are rejected", () => {
   assert.equal(isValidPhone("+971201012345678"), false)
   assert.equal(uaeMobileE164("+971201012345678"), null)
   assert.equal(uaeMobileE164("+20 1012345678"), null)
+})
+
+test("UAE numbers typed without a dial code are shown grouped 00 000 0000, display only", () => {
+  assert.equal(formatUaeLocal("5"), "5")
+  assert.equal(formatUaeLocal("501"), "50 1")
+  assert.equal(formatUaeLocal("501234567"), "50 123 4567")
+  assert.equal(formatUaeLocal("0501234567"), "050 123 4567")
+  assert.equal(formatUaeLocal("+971501234567"), "+971501234567")
+  assert.equal(formatUaeLocal("971501234567"), "971501234567")
+  assert.equal(formatUaeLocal("00971501234567"), "00971501234567")
+  // The field keeps digits only, so a grouped value typed back in validates the same.
+  assert.equal(uaeMobileE164(phoneTypingValue(formatUaeLocal("501234567"))), "+971501234567")
 })

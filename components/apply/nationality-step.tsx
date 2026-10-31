@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils"
 import { isValidCalendarDate } from "@/lib/dates"
 import { ChevronDown, UserRound } from "lucide-react"
 import { toWesternDigits } from "@/lib/digits"
-import { phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "@/lib/phone"
+import { phoneTypingValue, uaeLocalDigits, formatUaeLocal, uaeMobileE164 } from "@/lib/phone"
 
 interface NationalityStepProps {
   formData: FormData
@@ -227,7 +227,7 @@ export function NationalityStep({ formData, updateFormData, onNext, onBack, isLo
             inputMode="numeric"
             autoComplete="tel-national"
             dir="ltr"
-            value={formData.phone && formData.phone === phone ? uaeLocalDigits(formData.phone) : typedPhone}
+            value={formatUaeLocal(formData.phone && formData.phone === phone ? uaeLocalDigits(formData.phone) : typedPhone)}
             onChange={(event) => set({ phone: phoneTypingValue(event.target.value) })}
             onBlur={(event) => {
               const raw = phoneTypingValue(event.currentTarget.value)

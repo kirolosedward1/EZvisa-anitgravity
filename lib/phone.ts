@@ -17,6 +17,17 @@ export function phoneTypingValue(input: string): string {
 }
 
 /**
+ * Display only: a UAE number typed without a dial code, grouped like the app ("501234567" -> "50 123 4567",
+ * "0501234567" -> "050 123 4567"). Anything with a dial code (+, 00, 971) or other characters is shown as typed.
+ * The field still keeps phoneTypingValue's digits, so validation never sees the spaces.
+ */
+export function formatUaeLocal(value: string): string {
+  if (!/^\d+$/.test(value) || value.startsWith("00") || value.startsWith("971")) return value
+  const lead = value.startsWith("0") ? 3 : 2
+  return [value.slice(0, lead), value.slice(lead, lead + 3), value.slice(lead + 3)].filter(Boolean).join(" ")
+}
+
+/**
  * Digits after one UAE prefix (+971, 00971, or 971) and any leading zeros.
  * The prefix is removed once: 971971… stays 971… and then fails the mobile pattern.
  * Callers must not strip first. A second pass would turn 971971501234567 into a valid mobile.

@@ -26,12 +26,16 @@ export function PhoneField({
 }) {
   const initial = useMemo(() => parsePhoneNumberFromString(value || ""), [value])
   const [country, setCountry] = useState<CountryCode>(initial?.country || "AE")
-  const [national, setNational] = useState(initial?.formatNational() || "")
+  const [national, setNational] = useState(initial ? initial.formatInternational().replace(`+${initial.countryCallingCode}`, "").trim() : "")
 
   const apply = (nextCountry: CountryCode, raw: string) => {
     let digits = raw.replace(/\D/g, "")
     if (digits.startsWith("0")) digits = digits.replace(/^0+/, "")
-    const formatted = new AsYouType(nextCountry).input(digits)
+    // Grouped as you type, without the trunk 0: "501234567" -> "50 123 4567" (same as the app). AsYouType with a
+    // country and no trunk 0 leaves the digits ungrouped, so format the international number and drop the dial code.
+    const dial = `+${getCountryCallingCode(nextCountry)}`
+    const intl = digits ? new AsYouType().input(dial + digits) : ""
+    const formatted = intl.startsWith(dial) ? intl.slice(dial.length).trim() : digits
     setCountry(nextCountry)
     setNational(formatted)
     const parsed = digits ? parsePhoneNumberFromString(digits, nextCountry) : undefined
@@ -58,7 +62,7 @@ export function PhoneField({
           id={id}
           inputMode="tel"
           autoComplete="tel-national"
-          placeholder={country === "AE" ? "56 303 5666" : "Phone number"}
+          placeholder={country === "AE" ? "50 123 4567" : "Phone number"}
           value={national}
           onChange={(event) => apply(country, event.target.value)}
           className="h-12 w-full rounded-xl border border-input bg-background px-3 text-base text-foreground"
