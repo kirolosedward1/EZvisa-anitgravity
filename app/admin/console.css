@@ -552,3 +552,5 @@ button.ezc-search { min-width: 0; overflow: hidden; }
 /* Grid columns may shrink below their content (long report names, pills) instead of pushing past the screen. */
 .ezc .grid2 > *, .ezc .grid2 > * > * { min-width: 0; }
 @media (max-width: 640px) { .ezc .qbtn { flex-wrap: wrap; white-space: normal; } }
+.ezc .web-msg { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+.ezc .web-msg[data-status="new"] { border-inline-start: 3px solid #d98a00; }

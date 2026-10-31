@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { ConsoleShell, type ShellCounts } from "@/components/staff/console-shell"
 import { loadConsoleData } from "@/lib/staff/data"
+import { loadContactMessages } from "@/lib/staff/contact-messages"
 import { navFor, ROLE_LABEL } from "@/lib/staff/roles"
 import { firstName, getStaff, initials } from "@/lib/staff/session"
 import { buildFeed } from "@/lib/staff/notifications"
@@ -33,6 +34,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     appointments: { n: open.filter((c) => c.task === "help").length },
     payments: { n: open.filter((c) => c.paymentFailed).length },
     insurance: { n: open.filter((c) => c.paid && c.insuranceQuote).length },
+    messaging: { n: (await loadContactMessages(staff)).rows.filter((m) => m.status === "new").length },
   }
   // Bell: unread items from the person's own cases (mentions and money are counted on the Notifications page).
   let readAt: string | null = null

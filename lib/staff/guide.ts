@@ -35,6 +35,7 @@ export const WHATS_NEW: { date: string; items: string[] }[] = [
       "Hover over any case name or reference (with a mouse) to preview it: stage, what it waits for, owner, SLA, travel, appointment and contact.",
       "Overview quick actions open exactly what they say: Remind unpaid drafts opens Broadcast with the unpaid-draft reminder chosen; This week's report opens Analytics for the last 7 days.",
       "Links only lead to boards your role can open, forms say what is still missing before Continue, and phones show a label next to every value on Team.",
+      "Messaging, Website messages: contact form messages are saved in the console, so none are lost while the email service is down.",
     ],
   },
 ]
@@ -78,6 +79,7 @@ export const GUIDE: GuideSection[] = [
       "The customer cannot sign in: Customers, open them, Create sign-in link, and send it on WhatsApp.",
       "The customer has a new phone number: Customers, open them, Edit contact details (saved on all their cases).",
       "Refund a customer: open the case, Payments tab, request or issue the refund with a reason.",
+      "A message came in through the website contact form: Messaging, Website messages, reply by email, then Mark handled.",
       "Someone is away: Cases list, filter by their name under owner, select the cases and Assign to someone else.",
       "Move several cases at once: Cases list, tick them, Move to stage, write the reason, Apply.",
       "Who changed something: Audit log, search the case reference or the person's name.",
@@ -239,6 +241,7 @@ export const GUIDE: GuideSection[] = [
     summary: "Customers waiting on a reply, quick replies and broadcasts.",
     steps: [
       "Inbox: pick a customer; quick replies fill the message with their details; Send on WhatsApp opens WhatsApp with the text ready.",
+      "Website messages: everything sent through the website contact form, saved here even when email is down. Reply by email, find the customer, start a case, then Mark handled. The sidebar shows how many are new.",
       "Waiting on customers: cases where we are waiting for the customer, with a reminder ready to send.",
       "Broadcast: pick the audience by stage, country and language and a template; copy the list to send.",
       "App push: how many app devices receive notifications. Sending pushes from the console is not built yet; the app's automatic status notifications still go out.",

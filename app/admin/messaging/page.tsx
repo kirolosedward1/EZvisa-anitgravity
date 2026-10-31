@@ -9,6 +9,9 @@ import { customerDocuments } from "@/lib/dashboard-state"
 import { parseNotes } from "@/lib/shared/wizard-contract"
 import { byUrgency, docTitle, isOpen, isOver, OPEN_STAGES, STAGE, lowerFirst } from "@/lib/staff/cases"
 import { loadConsoleData } from "@/lib/staff/data"
+import { loadContactMessages } from "@/lib/staff/contact-messages"
+import { can } from "@/lib/staff/roles"
+import { ContactStatusButton } from "@/components/staff/contact-message-actions"
 import { sectionAccess } from "@/lib/staff/guard"
 import { agoLabel } from "@/lib/staff/queue"
 import { slaLabel } from "@/lib/staff/sla"
@@ -16,7 +19,7 @@ import { fillTemplate, waUrl, type TemplateKey } from "@/lib/staff/templates"
 import { initials } from "@/lib/staff/session"
 
 export const dynamic = "force-dynamic"
-const TABS = [{ key: "inbox", label: "Inbox" }, { key: "customer", label: "Waiting on customers" }, { key: "broadcast", label: "Broadcast" }, { key: "push", label: "App push" }] as const
+const TABS = [{ key: "inbox", label: "Inbox" }, { key: "website", label: "Website messages" }, { key: "customer", label: "Waiting on customers" }, { key: "broadcast", label: "Broadcast" }, { key: "push", label: "App push" }] as const
 const QUICK: TemplateKey[] = ["status", "documents", "appointment", "greeting"]
 
 export default async function MessagingPage({ searchParams }: { searchParams: Promise<{ tab?: string; c?: string; tpl?: string; stage?: string }> }) {
@@ -25,6 +28,8 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
   const sp = await searchParams
   const tab = TABS.find((t) => t.key === sp.tab)?.key ?? "inbox"
   const { cases, apps, reviews, settings } = await loadConsoleData(staff)
+  const contact = await loadContactMessages(staff)
+  const newMessages = contact.rows.filter((m) => m.status === "new").length
   const TEMPLATES = settings.templates
   const now = Date.now()
   const appById = new Map(apps.map((a) => [a.id ?? "", a]))
@@ -71,7 +76,7 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
         </div>
       ) : null}
       <nav className="utabs" aria-label="Messaging">
-        {TABS.map((t) => <a key={t.key} className="tab" href={`/staff/messaging?tab=${t.key}`} aria-current={tab === t.key ? "page" : undefined}>{t.label}</a>)}
+        {TABS.map((t) => <a key={t.key} className="tab" href={`/staff/messaging?tab=${t.key}`} aria-current={tab === t.key ? "page" : undefined}>{t.label}{t.key === "website" && newMessages ? <span className="pill xs amber" style={{ marginInlineStart: 6 }}>{newMessages}</span> : null}</a>)}
       </nav>
 
       {tab === "inbox" || tab === "customer" ? (() => {
@@ -125,6 +130,32 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
         <Broadcast recipients={recipients} stages={OPEN_STAGES.map((s) => ({ key: s, label: STAGE[s].label }))} countries={[...new Set(recipients.map((r) => r.country))].sort()} templates={settings.templates} initialTpl={sp.tpl} initialStages={sp.stage ? sp.stage.split(",") : undefined} />
       ) : null}
 
+      {tab === "website" ? (
+        <section className="stack" aria-label="Website messages" style={{ gap: 10 }}>
+          <p className="muted" style={{ margin: 0, fontSize: 13 }}>From the contact form on the website. Saved here even when the email service is down; reply by email, or start a case for them.</p>
+          {contact.problem ? <div className="banner amber" role="note">{contact.problem}</div> : null}
+          {!contact.problem && contact.rows.length === 0 ? <div className="card empty" style={{ borderTop: 0 }}>No messages from the website yet.</div> : null}
+          {contact.rows.map((m) => (
+            <article key={m.id} className="card web-msg" data-status={m.status}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10, flexWrap: "wrap", alignItems: "baseline" }}>
+                <span style={{ minWidth: 0 }}>
+                  <b style={{ fontWeight: 500 }}>{m.name}</b> <a href={`mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject || "your message to EZvisa"}`)}`} style={{ fontSize: 13 }}>{m.email}</a>
+                  {m.subject ? <span className="muted" style={{ fontSize: 13 }}> · {m.subject}</span> : null}
+                </span>
+                <span className="muted" style={{ fontSize: 12 }}>{new Date(m.at).toLocaleString("en-GB", { timeZone: "Asia/Dubai", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}{m.status === "handled" && m.handledBy ? ` · handled by ${m.handledBy}` : ""}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 14, whiteSpace: "pre-wrap" }}>{m.message}</p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                {m.status === "new" ? <span className="pill xs amber">New</span> : <span className="pill xs green">Handled</span>}
+                <a className="btn outline sm" href={`mailto:${m.email}?subject=${encodeURIComponent(`Re: ${m.subject || "your message to EZvisa"}`)}`}>Reply by email</a>
+                <a className="btn outline sm" href={`/staff/customers?q=${encodeURIComponent(m.email)}`}>Find customer</a>
+                <a className="btn outline sm" href="/staff/cases/new">Start a case</a>
+                {can(staff.role, "msg") ? <ContactStatusButton id={m.id} status={m.status} demo={staff.demo} /> : null}
+              </div>
+            </article>
+          ))}
+        </section>
+      ) : null}
       {tab === "push" ? (
         <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8 }} aria-labelledby="push-h">
           <h2 id="push-h">App push</h2>

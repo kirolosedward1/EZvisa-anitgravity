@@ -197,6 +197,14 @@ Owner request: more edit buttons and links, everything connected, and control fr
 - **Live-data checks:** the console's reads and writes were compared with the live database (columns, check
   constraints, guard triggers); demo data now has the same shapes as live rows.
 
+### Live checks (31 October, evening)
+
+- Production error log (7 days): the contact form failed 12 times (email key invalid) and the messages were lost.
+  Contact messages are now saved first (`013_contact_messages.sql`, applied) and shown under Messaging, Website
+  messages, with a sidebar count; the visitor sees success when the message was saved even if email fails.
+- The old "Generate documents" tool stored HTML, which storage rejects (pdf and images only); Old case tools now link
+  to File preparation for that case instead.
+
 ## Demo session (local and preview builds only)
 
 `/api/auth/demo-login?scenario=staff&role=admin|specialist|support|finance` opens the console with invented cases. It
@@ -204,7 +212,7 @@ never reads or writes the database, and the staff API routes reject it (401). Pr
 
 ## Owner actions
 
-1. ~~Apply migrations 002 and 005 to 012~~: applied 31 October 2026 at the owner's request, in number order, and checked:
+1. ~~Apply migrations 002 and 005 to 013~~: applied 31 October 2026 at the owner's request, in number order, and checked:
    every new table has row level security on with no client policies (server only), the new columns exist, and the
    database logged no errors afterwards. 002 replaced the older `visa_applications_guard_appointment` function with
    the reviewed version (customers can edit drafts and the after-payment answers as before; appointment fields only

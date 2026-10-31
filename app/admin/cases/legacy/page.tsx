@@ -163,33 +163,6 @@ export default function AdminPage() {
     }
   }
 
-  const handleGenerateDocuments = async (applicationId: string) => {
-    setActionError(null)
-    setActionMessage(null)
-    try {
-      const res = await fetch("/api/admin/generate-documents", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          applicationId,
-          version: 1,
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to generate documents")
-      }
-
-      setActionMessage(`Documents generated successfully for case #${applicationId.substring(0, 8)}`)
-      loadCases(filterStatus, searchQuery)
-    } catch (err: any) {
-      setActionError(err.message)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -428,15 +401,14 @@ export default function AdminPage() {
                             <span>Request Docs</span>
                           </Button>
 
-                          <Button
-                            size="xs"
-                            variant="outline"
-                            onClick={() => handleGenerateDocuments(c.id)}
-                            className="border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800"
+                          {/* The old generator stored HTML, which file storage rejects; File preparation builds the PDF. */}
+                          <a
+                            href={`/staff/files?case=${c.id}`}
+                            className="inline-flex h-7 items-center gap-1 rounded-md border border-slate-700 bg-slate-800/60 px-2 text-xs text-slate-300 hover:bg-slate-800"
                           >
                             <FileCode className="size-3" aria-hidden="true" />
-                            <span>Generate</span>
-                          </Button>
+                            <span>Prepare file</span>
+                          </a>
 
                           {c.application_status !== "ready" && (
                             <Button
