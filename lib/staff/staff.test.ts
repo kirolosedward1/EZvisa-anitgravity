@@ -223,3 +223,20 @@ test("document queue: waiting uploads oldest first, re-uploads and SLA", async (
   assert.ok(checklistFor("bankStatement").length >= 4)
   assert.equal(QUICK_REASONS.length, 4)
 })
+
+test("file preparation: parts, text from templates, PDF assembly", async () => {
+  const { partsFrom, htmlToText, assemblePdf, fileKind } = await import("./file-prep.ts")
+  const parts = partsFrom([{ part: "cover_letter", state: "done", body: "Hi", file_name: null, file_path: null, updated_by: "Ann" }])
+  assert.equal(parts.length, 6)
+  assert.equal(parts.find((p) => p.key === "cover_letter")?.state, "done")
+  assert.equal(parts.find((p) => p.key === "flight")?.state, "todo")
+  assert.equal(htmlToText("<h1>Title</h1><p>One &amp; two</p><ul><li>A</li></ul>"), "Title\nOne & two\n• A")
+  const { pages, skipped } = await assemblePdf([
+    { kind: "text", title: "Cover letter", body: "Line one\n\n" + "word ".repeat(2000) + "\nمرحبا" },
+    { kind: "pdf", title: "Broken", bytes: new Uint8Array([1, 2, 3]) },
+  ])
+  assert.ok(pages >= 2, "long text flows onto more pages; unsupported characters are replaced")
+  assert.deepEqual(skipped, ["Broken"])
+  assert.equal(fileKind("a.PDF"), "pdf")
+  assert.equal(fileKind("a.heic"), null)
+})

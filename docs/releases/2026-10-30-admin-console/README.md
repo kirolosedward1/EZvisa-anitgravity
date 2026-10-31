@@ -27,6 +27,8 @@ push to `main`.
 | 5b. New case | done | Four steps (customer, trip, traveller and work, review). Saves a Payment due row with the shared wizard contract, auto-assigns the specialist with the fewest open cases, and gives the pay link to copy or send on WhatsApp. |
 | 6. Case + DocumentReview | done | Header with stage and SLA pills, owner, WhatsApp, Change stage (note required; Ready needs `final_package.pdf`), More menu; stage bar; Overview, Documents, Application details, Payments and Activity tabs; customer card, internal notes, quick actions. Shared `DocumentReview` (approve, send back with quick reasons, undo); all approved moves the case to Preparation. |
 | 7. Document review + Viewer | done | Queue of uploads waiting (oldest first, Over SLA, Re-upload), file preview with zoom and rotate, checklist per document type, compare box, A/R/J/K keys. Viewer with highlight boxes listed in the send-back note; `006_document_review_highlights.sql` stores them. |
+| 8. File preparation | done | Queue of files due, six parts (generate from the existing templates and edit, or upload bookings), assemble `final_package.pdf` with pdf-lib in embassy order (parts, then the customer's documents) and move to Ready. `007_file_preparation.sql` (file_parts). |
+| 9. Appointments | done | Week view by day with centre filter and previous/next week, help requests with an SLA and inline "Book and save", ready files with no appointment (WhatsApp nudge, call). |
 
 ## Overview (step 4)
 
@@ -74,6 +76,19 @@ push to `main`.
   Cropped images on the customer's dashboard are not built; the numbered list in the note is what they see.
 - "Edit on behalf of the customer" and "Sign in as" are left for the Customers board.
 
+## File preparation and Appointments (steps 8 and 9)
+
+- Screenshots: `files-1440.jpg`, `files-390.jpg`, `appointments-1440.jpg`, `appointments-390.jpg`.
+- Assembly: generated parts become simple A4 text pages (characters the standard PDF font cannot draw, such as
+  Arabic, become "?"; edit the text in English), uploaded PDFs are copied page by page, JPG and PNG uploads get their
+  own page. Unreadable files are listed in the message and the audit entry. The old HTML generator route is kept.
+- An "Arabic version generated automatically", a "Preview PDF" before assembling, and the 48-hour download reminder
+  from the board are not built (no automation runner yet).
+- Saving an appointment writes the same columns as the customer's own save, marks the help request booked, moves a
+  Ready case to Appointment booked and adds the customer timeline entry. The 48h and 2h WhatsApp reminders and the
+  "reminder not delivered" tile are not built (WhatsApp is not connected); the fourth tile counts the next 48 hours.
+- Help requests need migration 002 (still missing in production); until then the list stays empty.
+
 ## Demo session (local and preview builds only)
 
 `/api/auth/demo-login?scenario=staff&role=admin|specialist|support|finance` opens the console with invented cases. It
@@ -83,5 +98,5 @@ never reads or writes the database, and the staff API routes reject it (401). Pr
 
 1. Apply `supabase/migrations/002_appointment_step.sql` (still missing in production: appointment saves, help requests
    and the download stamp depend on it).
-2. Apply `supabase/migrations/005_staff_console.sql`, then `006_document_review_highlights.sql`. Until then the console works with `ADMIN_EMAILS` only, every case
+2. Apply `supabase/migrations/005_staff_console.sql`, then `006_document_review_highlights.sql` and `007_file_preparation.sql`. Until then the console works with `ADMIN_EMAILS` only, every case
    shows as unassigned and audit rows are not stored.
