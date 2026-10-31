@@ -44,7 +44,7 @@ async function walk(p, stop, guestEmail) {
       await inputs.first().fill(ph.includes("@") ? guestEmail ?? EMAIL : "Kirolos");
       if (await p.getByTestId("question-input-2").count()) await p.getByTestId("question-input-2").fill("Test");
     }
-    const phone = p.getByPlaceholder("50 123 4567");
+    const phone = p.getByPlaceholder("50 000 0000");
     if (await phone.count()) await phone.fill("501234567");
     if (!(await inputs.count()) && !(await phone.count())) {
       const named = ["France", "India", "Dubai", "Single", "No"];
