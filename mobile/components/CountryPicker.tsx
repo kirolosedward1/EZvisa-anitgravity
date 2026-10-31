@@ -8,6 +8,7 @@ import { Field } from "./AuthForm";
 import { CircleButton } from "./flow";
 import { useColors, S, R, T, curve } from "../lib/theme";
 import { WORLD } from "../lib/world";
+import { PHONE_UAE_ONLY } from "../lib/config";
 import { PHONE_COUNTRIES, nationalDigits, formatNational, placeholderFor, toE164, detectCountry } from "../lib/phone";
 import { select } from "../lib/haptics";
 import { useT } from "../lib/i18n";
@@ -60,23 +61,34 @@ export function CountrySheet({ visible, title, onClose, onPick, selected, select
 }
 
 /** Phone input: compact calling-code picker (UAE default; UAE, GCC, then A to Z) and a number formatted as you type.
- *  A leading 0 after the code is dropped. onChange gets the formatted national part and the E.164 value (or "" when invalid). */
+ *  A leading 0 after the code is dropped. onChange gets the formatted national part and the E.164 value (or "" when invalid).
+ *  While PHONE_UAE_ONLY is on, the code is a fixed +971 (no picker) and a saved number from another country shows empty. */
 export function PhoneField({ country, local, onChange, error, autoFocus }: { country: string; local: string; onChange: (iso2: string, local: string, full: string) => void; error?: boolean; autoFocus?: boolean }) {
   const c = useColors(); const [open, setOpen] = useState(false); const { t } = useT();
-  const w = WORLD.find((x) => x.iso2 === country) ?? WORLD.find((x) => x.iso2 === "AE")!;
-  const emit = (iso0: string, raw: string) => { const iso = detectCountry(raw, iso0) ?? iso0; const d = nationalDigits(iso, raw); onChange(iso, formatNational(iso, d), toE164(iso, d) ?? ""); };
+  const iso0 = PHONE_UAE_ONLY ? "AE" : country;
+  const shown = PHONE_UAE_ONLY && country && country !== "AE" ? "" : local;
+  const w = WORLD.find((x) => x.iso2 === iso0) ?? WORLD.find((x) => x.iso2 === "AE")!;
+  const emit = (iso1: string, raw: string) => { const iso = PHONE_UAE_ONLY ? "AE" : detectCountry(raw, iso1) ?? iso1; const d = nationalDigits(iso, raw); onChange(iso, formatNational(iso, d), toE164(iso, d) ?? ""); };
+  const code = <>
+    <Flag country={w.name} size={22} />
+    <Text variant="body" tabular>+{w.dial}</Text>
+  </>;
+  const codeStyle = { flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.sm, minWidth: 44, flexShrink: 0, borderEndWidth: 1, borderEndColor: c.separator } as const;
   return (
     <View style={{ flexDirection: "row", alignItems: "stretch", backgroundColor: c.card, borderRadius: R.input, minHeight: 56, overflow: "hidden", borderWidth: 1, borderColor: error ? c.red : c.separator, direction: "ltr" } as any}>
-      <PressScale onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${t("Country code")} ${t(w.name)}, +${w.dial}`} testID="phone-country"
-        style={({ pressed }) => ({ flexDirection: "row", alignItems: "center", gap: S.xs, paddingHorizontal: S.sm, minWidth: 44, flexShrink: 0, opacity: pressed ? 0.6 : 1, borderEndWidth: 1, borderEndColor: c.separator })}>
-        <Flag country={w.name} size={22} />
-        <Text variant="body" tabular>+{w.dial}</Text>
-        <Icon name="chevron.down" size={11} color={c.secondaryLabel} weight="semibold" />
-      </PressScale>
-      <TextInput value={local} onChangeText={(v) => emit(w.iso2, v)} autoFocus={autoFocus} testID="phone-input"
-        placeholder={placeholderFor(w.iso2)} placeholderTextColor={c.secondaryLabel} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" accessibilityLabel={t("Phone number")}
+      {PHONE_UAE_ONLY ? (
+        <View style={codeStyle} accessible accessibilityLabel={`${t("Country code")} ${t(w.name)}, +${w.dial}`} testID="phone-country">{code}</View>
+      ) : (
+        <PressScale onPress={() => { select(); setOpen(true); }} accessibilityRole="button" accessibilityLabel={`${t("Country code")} ${t(w.name)}, +${w.dial}`} testID="phone-country"
+          style={({ pressed }) => ({ ...codeStyle, opacity: pressed ? 0.6 : 1 })}>
+          {code}
+          <Icon name="chevron.down" size={11} color={c.secondaryLabel} weight="semibold" />
+        </PressScale>
+      )}
+      <TextInput value={shown} onChangeText={(v) => emit(w.iso2, v)} autoFocus={autoFocus} testID="phone-input"
+        placeholder={placeholderFor(w.iso2)} placeholderTextColor={c.secondaryLabel} keyboardType="phone-pad" textContentType="telephoneNumber" autoComplete="tel" accessibilityLabel={PHONE_UAE_ONLY ? t("UAE mobile number") : t("Phone number")}
         style={[T.body, { flex: 1, minWidth: 0, flexShrink: 1, color: c.label, paddingHorizontal: S.md, minHeight: 56, textAlign: "left" }, Platform.OS === "web" && ({ outlineStyle: "none" } as any)]} />
-      <CountrySheet visible={open} title={t("Country code")} showDial selected={w.iso2} onClose={() => setOpen(false)} onPick={(iso) => { setOpen(false); emit(iso, local); }} />
+      {!PHONE_UAE_ONLY && <CountrySheet visible={open} title={t("Country code")} showDial selected={w.iso2} onClose={() => setOpen(false)} onPick={(iso) => { setOpen(false); emit(iso, local); }} />}
     </View>
   );
 }

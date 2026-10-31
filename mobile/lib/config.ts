@@ -16,3 +16,7 @@ export const EMAIL = "support@ezvisa.net";
 
 /** Trip plan (app/trip/[id].tsx): hidden for now at the owner's request; true brings the row back on the application page. */
 export const SHOW_TRIP_PLAN = false;
+
+/** Phone numbers: UAE mobiles only for now (owner, 31 Oct). The field shows a fixed +971 with no country picker;
+ *  false brings the calling-code picker back (the rest of lib/phone still handles every country). */
+export const PHONE_UAE_ONLY = true;

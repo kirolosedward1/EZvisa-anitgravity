@@ -647,7 +647,7 @@ export const AR: Record<string, string> = {
   "Step {i} of {n}": "الخطوة {i} من {n}",
   "View": "عرض",
   "Citizens of this country don't need a Schengen visa for short visits, so we can't apply for one. Choose another nationality if you hold one.": "لا يحتاج مواطنو هذه الدولة إلى تأشيرة شنغن للزيارات القصيرة، لذا لا يمكننا التقديم لها. اختر جنسية أخرى إن كنت تحملها.",
-  "Phone number": "رقم الهاتف",
+  "Phone number": "رقم الهاتف", "UAE mobile number": "رقم الجوال الإماراتي",
   "Citizenship": "الجنسية",
   "Sign-in": "تسجيل الدخول",
   "Sign-in methods": "طرق تسجيل الدخول",
