@@ -6,7 +6,8 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Check, Download, MoreHorizontal } from "lucide-react"
 import { CountryFlag } from "@/components/country-flag"
-import { assignCases, cancelCase, type ActionResult } from "@/app/admin/cases/actions"
+import { assignCases, bulkChangeStage, cancelCase, type ActionResult } from "@/app/admin/cases/actions"
+import { STAGE_TARGETS } from "@/lib/staff/stage-targets"
 
 export type QueueRow = {
   id: string
@@ -87,6 +88,8 @@ export function CasesQueue({
   const [pending, start] = useTransition()
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [menu, setMenu] = useState<string | null>(null)
+  const [bulkTo, setBulkTo] = useState("")
+  const [bulkNote, setBulkNote] = useState("")
   const [flash, setFlash] = useState<{ ok: boolean; text: string } | null>(null)
   const [cancelling, setCancelling] = useState<QueueRow | null>(null)
   const [note, setNote] = useState("")
@@ -275,9 +278,23 @@ export function CasesQueue({
               <option value="none">Unassign</option>
             </select>
           ) : null}
+          {perms.stage ? (
+            <>
+              <select className="sel" style={{ height: 30 }} aria-label="Move selected cases to stage" value={bulkTo} disabled={pending} onChange={(e) => setBulkTo(e.target.value)}>
+                <option value="">Move to stage…</option>
+                {Object.entries(STAGE_TARGETS).map(([k, label]) => <option key={k} value={k}>{label}</option>)}
+              </select>
+              {bulkTo ? (
+                <form style={{ display: "flex", gap: 6 }} onSubmit={(e) => { e.preventDefault(); run(() => bulkChangeStage({ ids: selectedIds, to: bulkTo, note: bulkNote })); setBulkTo(""); setBulkNote("") }}>
+                  <input className="inp" style={{ height: 30, minWidth: 0, width: 200 }} required minLength={3} placeholder="Reason (for the audit log)" value={bulkNote} onChange={(e) => setBulkNote(e.target.value)} aria-label="Reason for the stage change" />
+                  <button type="submit" className="btn primary" style={{ height: 30 }} disabled={pending || bulkNote.trim().length < 3}>Apply</button>
+                </form>
+              ) : null}
+            </>
+          ) : null}
           {perms.msg ? (
-            <button type="button" className="btn outline" style={{ height: 30 }} disabled title="WhatsApp Business is not connected yet. Use the row menu to message one customer.">
-              Send WhatsApp reminder · not connected
+            <button type="button" className="btn outline" style={{ height: 30 }} onClick={() => copy(rows.filter((r) => selected.has(r.id) && r.waLink).map((r) => `${r.name}\t+${r.waLink!.replace(/\D/g, "")}`).join("\n"), "Names and phone numbers")} title="Copies name and number of each selected customer, for WhatsApp or a call list">
+              Copy phone numbers
             </button>
           ) : null}
           {perms.export ? (

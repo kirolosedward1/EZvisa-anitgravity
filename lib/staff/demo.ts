@@ -97,6 +97,7 @@ export function demoConsoleData(now = Date.now()): DemoConsoleData {
         : kind === "booked" ? "appointment_booked"
         : kind === "completed" ? "completed"
         : kind === "cancelled" ? "cancelled"
+        : kind === "review" && rand() > 0.5 ? "reviewing"
         : "submitted"
       const appointmentAt =
         kind === "booked" ? new Date(now + (rand() * 6 - 1) * 86400_000).toISOString().slice(0, 14) + "30:00.000Z" : null
@@ -117,15 +118,24 @@ export function demoConsoleData(now = Date.now()): DemoConsoleData {
           return rand() > 0.25 ? { entry_date: day(start), exit_date: day(end) } : {}
         })(),
         ...flags,
+        // Shaped like the live rows: top-level answers, sometimes a wizard object, discarded drafts, no paid_at.
         additional_notes: JSON.stringify({
           employmentStatus: "employed",
+          maritalStatus: rand() > 0.5 ? "married" : "single",
+          monthlySalary: pick(["5000-10000", "10000-20000", ""]),
+          companyName: rand() > 0.3 ? "Emirates Group" : "",
+          jobTitle: rand() > 0.3 ? "Engineer" : "",
           spouseAccompanying: rand() > 0.8 ? "yes" : "no",
           uploads,
+          ...(rand() > 0.45 ? { wizard: { fundingSource: "self", cityOfResidence: "Dubai", countryOfResidence: "United Arab Emirates", datesFlexible: rand() > 0.7 ? "yes" : "no", itinerary: "", additionalCountries: [], isFirstSchengenVisa: "yes", previousRefusals: "no", whatsappOptIn: true } } : {}),
+          ...(kind === "cancelled" && rand() > 0.4 ? { discarded_at: hoursAgo(30) } : {}),
+          ...(rand() > 0.85 ? { itinerary: { days: [] } } : {}),
           ...(kind === "ready" && rand() > 0.5 ? { insurancePreference: "quote" } : {}),
         }),
         payment_status: kind === "failed" ? "failed" : paid ? "paid" : "pending",
         payment_amount: paid || kind === "failed" ? 249 : null,
-        paid_at: paid ? new Date(Date.parse(created) + 600_000).toISOString() : null,
+        // The live table has no paid_at column; only some demo rows carry it so both shapes are exercised.
+        ...(paid && rand() > 0.5 ? { paid_at: new Date(Date.parse(created) + 600_000).toISOString() } : {}),
         application_status: status,
         appointment_at: appointmentAt,
         appointment_centre: appointmentAt ? pick(CENTRES) : null,

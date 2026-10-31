@@ -87,6 +87,7 @@ export type NavKey =
   | "team"
   | "settings"
   | "audit"
+  | "guide"
 
 export type NavItem = { key: NavKey; label: string; href: string; roles: Role[] }
 export type NavGroup = { label: string | null; items: NavItem[] }
@@ -95,7 +96,7 @@ const ALL: Role[] = ["admin", "specialist", "support", "finance"]
 
 /** Console paths are served under /staff (middleware.ts rewrites them to app/admin). */
 export const NAV: NavGroup[] = [
-  { label: null, items: [{ key: "notifications", label: "Notifications", href: "/staff/notifications", roles: ALL }] },
+  { label: null, items: [{ key: "notifications", label: "Notifications", href: "/staff/notifications", roles: ALL }, { key: "guide", label: "User guide", href: "/staff/guide", roles: ALL }] },
   {
     label: "Work",
     items: [

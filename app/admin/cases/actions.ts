@@ -118,3 +118,26 @@ export async function cancelCase(input: { id: string; note: string }): Promise<A
   revalidatePath("/admin/overview")
   return { ok: true, message: "Case cancelled and logged. If the customer paid, issue any refund from Payments." }
 }
+
+/** Bulk stage change from the queue: the same checks as the Case board, case by case (each one is logged). */
+export async function bulkChangeStage(input: { ids: string[]; to: string; note: string }): Promise<ActionResult> {
+  const { changeStage } = await import("@/app/admin/cases/[id]/actions")
+  const { STAGE_TARGETS } = await import("@/lib/staff/stage-targets")
+  const staff = await getStaff()
+  if (!staff) return { ok: false, error: "Your session has ended. Sign in again." }
+  if (!can(staff.role, "stage")) return { ok: false, error: "Your role cannot change a case's stage." }
+  const v = z.object({ ids: z.array(z.string().min(1)).min(1).max(100), to: z.enum(Object.keys(STAGE_TARGETS) as [string, ...string[]]), note: z.string().trim().min(3).max(500) }).safeParse(input)
+  if (!v.success) return { ok: false, error: "Choose a stage and write a reason for the audit log." }
+  let done = 0
+  const failed: string[] = []
+  for (const id of v.data.ids) {
+    const r = await changeStage({ id, to: v.data.to as keyof typeof STAGE_TARGETS, note: v.data.note })
+    if (r.ok) done++
+    else failed.push(r.error)
+  }
+  const label = STAGE_TARGETS[v.data.to as keyof typeof STAGE_TARGETS]
+  if (staff.demo) return { ok: true, message: `Demo: ${v.data.ids.length} ${v.data.ids.length === 1 ? "case" : "cases"} would move to ${label}. Nothing was saved.` }
+  if (!failed.length) return { ok: true, message: `${done} ${done === 1 ? "case" : "cases"} moved to ${label}.` }
+  const reasons = [...new Set(failed)].slice(0, 2).join(" ")
+  return done ? { ok: true, message: `${done} moved to ${label}; ${failed.length} not changed: ${reasons}` } : { ok: false, error: `None changed: ${reasons}` }
+}

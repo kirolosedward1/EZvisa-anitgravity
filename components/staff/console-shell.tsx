@@ -2,15 +2,17 @@
 
 // Staff console frame: grouped sidebar built from the role (lib/staff/roles.ts), top bar with search, New case and the
 // notifications bell (with Refresh). Below 1024px the sidebar opens from a menu button. "/" focuses search, Esc closes the menu.
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
   BarChart3, Bell, Calendar, CreditCard, FileSpreadsheet, FileText, FolderOpen, History, Inbox, LayoutGrid, LogOut,
-  Menu, MessageCircle, Plus, Search, Settings, ShieldCheck, Users, UserCog, X,
+  BookOpen, Menu, MessageCircle, Plus, Search, Settings, ShieldCheck, Users, UserCog, X,
 } from "lucide-react"
 import type { NavGroup, NavKey } from "@/lib/staff/roles"
 import { RefreshButton } from "@/components/staff/refresh-button"
+import { CommandPalette } from "@/components/staff/command-palette"
+import { guideAnchorFor } from "@/lib/staff/guide"
 
 const ICON: Record<NavKey, React.ComponentType<{ "aria-hidden"?: boolean }>> = {
   notifications: Bell,
@@ -28,6 +30,7 @@ const ICON: Record<NavKey, React.ComponentType<{ "aria-hidden"?: boolean }>> = {
   team: UserCog,
   settings: Settings,
   audit: History,
+  guide: BookOpen,
 }
 
 export type ShellCounts = Partial<Record<NavKey, { n: number; tone?: "red" }>>
@@ -49,18 +52,20 @@ export function ConsoleShell({
   // The console is served at /staff and rendered from app/admin; accept either form.
   const pathname = raw.replace(/^\/admin(?=\/|$)/, "/staff")
   const [open, setOpen] = useState(false)
-  const search = useRef<HTMLInputElement>(null)
+  const [palette, setPalette] = useState(false)
 
   useEffect(() => setOpen(false), [pathname])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false)
+      // Ctrl+K / Cmd+K anywhere; "/" when not typing in a field.
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPalette(true); return }
       if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return
       const t = e.target as HTMLElement | null
       if (t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))) return
       e.preventDefault()
-      search.current?.focus()
+      setPalette(true)
     }
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
@@ -113,6 +118,7 @@ export function ConsoleShell({
         </div>
       </aside>
       {open ? <div className="ezc-scrim" onClick={() => setOpen(false)} aria-hidden="true" /> : null}
+      <CommandPalette open={palette} onClose={() => setPalette(false)} nav={nav} />
 
       <div className="ezc-body">
         <header className="ezc-top">
@@ -126,12 +132,14 @@ export function ConsoleShell({
           >
             {open ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
           </button>
-          <form action="/staff/cases" method="get" role="search" className="ezc-search">
+          <button type="button" className="ezc-search" onClick={() => setPalette(true)} aria-label="Search cases, customers and boards (Ctrl+K)">
             <Search size={16} aria-hidden />
-            <input ref={search} name="q" type="search" placeholder="Search by name, email, phone or EZ reference" aria-label="Search cases" />
-            <kbd className="ezc-kbd hide-sm" aria-hidden="true">/</kbd>
-          </form>
-          <div style={{ marginInlineStart: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            <span className="ezc-search-ph">Search by name, email, phone or EZ reference</span>
+            <kbd className="ezc-kbd hide-sm" aria-hidden="true">Ctrl K</kbd>
+          </button>
+          <div className="ezc-actions">
+            <button type="button" className="btn outline ezc-search-btn" onClick={() => setPalette(true)} aria-label="Search (Ctrl+K)" title="Search (Ctrl+K)"><Search size={16} aria-hidden /></button>
+            <a href={`/staff/guide#${guideAnchorFor(pathname)}`} className="btn ghost ezc-help-btn" aria-label="How this page works (user guide)" title="How this page works"><BookOpen size={18} aria-hidden /></a>
             <RefreshButton />
             {canCreate ? (
               <a href="/staff/cases/new" className="btn primary" aria-label="New case">

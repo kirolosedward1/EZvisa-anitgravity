@@ -1,7 +1,7 @@
 // Case board: one case with its stage bar, owner, explicit stage change, tabs (Overview, Documents with the shared
 // DocumentReview, Application details, Payments, Activity) and the customer card, internal notes and quick actions.
 import { notFound } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ArrowRight } from "lucide-react"
 import { CountryFlag } from "@/components/country-flag"
 import { CaseControls, CaseNotes } from "@/components/staff/case-controls"
 import { CaseDocuments } from "@/components/staff/document-review"
@@ -17,7 +17,7 @@ import { SCHENGEN_META } from "@/lib/countries"
 import { applicationInsurance } from "@/lib/insurance"
 import { EMPLOYMENT, FUNDING, MARITAL, PURPOSES, label, type WizardAnswers } from "@/lib/shared/wizard-contract"
 import { loadCaseDetail } from "@/lib/staff/case-detail"
-import { docTitle, isOver, STAGE } from "@/lib/staff/cases"
+import { byUrgency, docTitle, isOpen, isOver, STAGE } from "@/lib/staff/cases"
 import { sectionAccess } from "@/lib/staff/guard"
 import { agoLabel, travelLabel } from "@/lib/staff/queue"
 import { can } from "@/lib/staff/roles"
@@ -59,7 +59,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const sp = await searchParams
   const detail = await loadCaseDetail(staff, id)
   if (!detail) notFound()
-  const { app, notes, c, docs, events, audit, caseNotes, others, team, hasPreparedFile, problem } = detail
+  const { app, notes, c, docs, events, audit, caseNotes, others, team, hasPreparedFile, problem, refunds, quotes } = detail
   const tab: Tab = (TABS.find((t) => t.key === sp.tab)?.key ?? "overview") as Tab
   const now = Date.now()
   const w = (notes.wizard ?? {}) as Partial<WizardAnswers>
@@ -77,7 +77,10 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const source = staffEntered
     ? `Entered by ${staffEntered.name ?? "staff"} (${String(staffEntered.channel ?? "").replace("_", " ")})`
     : [notes.source === "mobile-app" ? "Mobile app" : "Website", notes.platform, app.referrer ? `from ${app.referrer}` : ""].filter(Boolean).join(" · ")
-  const { settings } = await loadConsoleData(staff)
+  const { settings, cases: allCases } = await loadConsoleData(staff)
+  // "Next case": the most urgent other case waiting on the team (mine first when I own any).
+  const waiting = allCases.filter((x) => x.id !== c.id && isOpen(x) && x.side === "us").sort(byUrgency(now))
+  const nextCase = waiting.find((x) => staff.staffId && x.ownerId === staff.staffId) ?? waiting[0] ?? null
   // The saved appointment as Dubai date and time, to prefill "Change appointment".
   const apptParts = c.appointmentAt ? (() => { const d = new Date(Date.parse(c.appointmentAt) + 4 * 3_600_000).toISOString(); return { date: d.slice(0, 10), time: d.slice(11, 16), reference: (app as { appointment_reference?: string | null }).appointment_reference ?? null } })() : null
   const canEdit = can(staff.role, "edit") && c.side !== "closed"
@@ -91,6 +94,18 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const timeline = [
     ...events.map((e, i) => ({ id: `e${i}`, at: e.created_at, text: EVENT_TEXT[e.kind]?.(e.payload) ?? e.kind, by: "Customer timeline", visible: true, tone: e.kind === "payment_failed" || (e.kind === "document_reviewed" && e.payload.status === "rejected") ? "red" : e.kind === "payment_received" || (e.kind === "document_reviewed" && e.payload.status === "approved") ? "green" : "blue" })),
     ...audit.map((a) => ({ id: `a${a.id}`, at: a.at, text: a.action, by: a.actor, visible: false, tone: a.type === "document" ? "amber" : "grey" })),
+    // Full history: case created, paid, refunds, insurance quotes and internal notes, in one dated list.
+    { id: "created", at: c.createdAt, text: `Application started${staffEntered ? " by staff" : ""}`, by: staffEntered?.name ?? "Customer", visible: true, tone: "blue" },
+    ...(c.paidAt && !events.some((e) => e.kind === "payment_received") ? [{ id: "paid", at: c.paidAt, text: `Service fee paid${c.amount ? `, ${c.amount} AED` : ""}`, by: "Payment gateway", visible: true, tone: "green" }] : []),
+    ...refunds.flatMap((r) => [
+      { id: `rr${r.id}`, at: r.at, text: `Refund requested, ${r.amount.toFixed(2)} AED: ${r.reason}`, by: r.by, visible: false, tone: "amber" },
+      ...(r.decidedAt ? [{ id: `rd${r.id}`, at: r.decidedAt, text: `Refund ${r.status === "declined" ? "declined" : r.status === "sent" ? "sent" : r.status}`, by: r.decidedBy ?? "Finance", visible: r.status === "sent", tone: r.status === "declined" ? "grey" : "green" }] : []),
+    ]),
+    ...quotes.flatMap((q, i) => [
+      { id: `q${i}`, at: q.at, text: `Insurance quote sent, ${q.price.toFixed(2)} AED${q.insurer ? ` (${q.insurer})` : ""}`, by: "Finance", visible: true, tone: "blue" },
+      ...(q.decidedAt ? [{ id: `qd${i}`, at: q.decidedAt, text: `Insurance quote ${q.status === "issued" ? "policy issued" : q.status}`, by: "Finance", visible: true, tone: q.status === "declined" ? "grey" : "green" }] : []),
+    ]),
+    ...caseNotes.map((n) => ({ id: `n${n.id}`, at: n.at, text: `Note: ${n.body.length > 140 ? `${n.body.slice(0, 140)}…` : n.body}`, by: n.author, visible: false, tone: "grey" })),
   ]
     .filter((t) => view === "all" || (view === "customer" ? t.visible : !t.visible))
     .sort((a, b) => b.at.localeCompare(a.at))
@@ -123,6 +138,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+          {nextCase ? <a href={`/staff/cases/${nextCase.id}${nextCase.task === "review" ? "?tab=documents" : ""}`} className="next-case" title={`${nextCase.name}: ${nextCase.what}`}>Next case: {nextCase.name.split(" ")[0]}, {nextCase.what.toLowerCase()} <ArrowRight size={14} aria-hidden /></a> : null}
           <CaseControls
             caseId={c.id}
             status={(app.application_status ?? "").toLowerCase()}

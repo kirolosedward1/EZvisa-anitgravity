@@ -137,10 +137,10 @@ test("roles: matrix, sidebars per role", () => {
   assert.equal(can("finance", "msg"), false)
   const keys = (role: Parameters<typeof navFor>[0]) => navFor(role).flatMap((g) => g.items.map((i) => i.key))
   // Support desk board sidebar.
-  assert.deepEqual(keys("support"), ["notifications", "overview", "cases", "appointments", "customers", "messaging", "analytics"])
+  assert.deepEqual(keys("support"), ["notifications", "guide", "overview", "cases", "appointments", "customers", "messaging", "analytics"])
   // Finance desk board sidebar.
-  assert.deepEqual(keys("finance"), ["notifications", "overview", "cases", "customers", "payments", "insurance", "analytics", "reports", "audit"])
-  assert.equal(keys("admin").length, 15)
+  assert.deepEqual(keys("finance"), ["notifications", "guide", "overview", "cases", "customers", "payments", "insurance", "analytics", "reports", "audit"])
+  assert.equal(keys("admin").length, 16)
   assert.equal(canOpen("specialist", "payments"), false)
 })
 
@@ -379,4 +379,20 @@ test("permission matrix: saved changes apply, admin-only stays admin-only, view 
   }
   assert.equal(roles.can("support", "pay"), false)
   assert.equal(roles.canOpen("support", "payments"), false)
+})
+
+test("user guide: every sidebar board has a section, and the book icon finds it", async () => {
+  const { GUIDE, guideAnchorFor, WHATS_NEW } = await import("./guide")
+  const { NAV } = await import("./roles")
+  const keys = new Set(GUIDE.map((g) => g.key))
+  for (const item of NAV.flatMap((g) => g.items)) {
+    assert.ok(keys.has(item.key), `The user guide (lib/staff/guide.ts) has no section for the "${item.label}" board. Add one.`)
+    assert.equal(guideAnchorFor(item.href), item.key)
+  }
+  assert.equal(new Set(GUIDE.map((g) => g.key)).size, GUIDE.length, "duplicate guide sections")
+  for (const g of GUIDE) assert.ok(g.steps.length > 0 && g.summary.length > 10, `guide section ${g.key} is empty`)
+  assert.equal(guideAnchorFor("/staff/cases/new"), "new-case")
+  assert.equal(guideAnchorFor("/staff/cases/abc"), "case")
+  assert.equal(guideAnchorFor("/staff/documents/abc~photo"), "viewer")
+  assert.ok(WHATS_NEW.length > 0)
 })
