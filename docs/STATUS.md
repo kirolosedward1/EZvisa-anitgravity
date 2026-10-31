@@ -66,8 +66,12 @@ form answers, checklist, flight and hotel options, Google Drive folder) as draft
   - Vercel variables: `MAKE_API_SECRET`, `MAKE_WEBHOOK_URL`.
 - **Agent instructions:** `docs/automation/make-agent-prompt.md`.
 - **Recommended next step:** build the agent into the website with the Claude API instead of Make (data stays in
-  EZvisa's systems; no per-step fees; tested with the site). The full brief for a new session is
-  `docs/automation/build-in-app-agent-prompt.md`.
+  EZvisa's systems; no per-step fees; tested with the site). Full instructions, in three parts (owner setup, the
+  prompt for a new session, owner steps after): `docs/automation/build-in-app-agent-prompt.md`. The agent is built
+  into this repository and controlled from the staff console (File preparation, Case page, Settings, Notifications,
+  Overview, Audit log, guide).
+- **Flow canvas:** a picture of the whole flow, drawn by a separate session from
+  `docs/automation/flow-canvas-prompt.md` (saved as `docs/automation/file-prep-flow.html` once built).
 
 ### Options compared
 
