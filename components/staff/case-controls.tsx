@@ -9,14 +9,15 @@ import { assignCases, cancelCase } from "@/app/admin/cases/actions"
 import { addCaseNote, changeStage, deleteCaseNote, editCaseNote } from "@/app/admin/cases/[id]/actions"
 import { STAGE_TARGETS, type StageTarget } from "@/lib/staff/stage-targets"
 
-type Flash = { ok: boolean; text: string } | null
+type Flash = { ok: boolean; text: string; undo?: () => void } | null
 
 function useFlash() {
   const [flash, setFlash] = useState<Flash>(null)
   const node = flash ? (
     <div className={flash.ok ? "flash ok" : "flash err"} role="status">
       <span>{flash.text}</span>
-      <button type="button" className="btn ghost" style={{ height: 28, marginInlineStart: "auto" }} onClick={() => setFlash(null)}>Dismiss</button>
+      {flash.undo ? <button type="button" className="btn outline" style={{ height: 28, marginInlineStart: "auto" }} onClick={() => { const u = flash.undo!; setFlash(null); u() }}>Undo</button> : null}
+      <button type="button" className="btn ghost" style={{ height: 28, marginInlineStart: flash.undo ? 0 : "auto" }} onClick={() => setFlash(null)}>Dismiss</button>
     </div>
   ) : null
   return [node, setFlash] as const
@@ -70,10 +71,10 @@ export function CaseControls({
     }
   }, [])
 
-  const run = (fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>, after?: () => void) =>
+  const run = (fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>, after?: () => void, undo?: () => void) =>
     start(async () => {
       const r = await fn()
-      setFlash(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.error })
+      setFlash(r.ok ? { ok: true, text: r.message, undo: r.message.startsWith("Demo") ? undefined : undo } : { ok: false, text: r.error })
       if (r.ok) {
         after?.()
         router.refresh()
@@ -93,7 +94,10 @@ export function CaseControls({
               className="sel"
               value={ownerId ?? ""}
               disabled={pending}
-              onChange={(e) => run(() => assignCases({ ids: [caseId], staffId: e.target.value || null }))}
+              onChange={(e) => {
+                const prev = ownerId
+                run(() => assignCases({ ids: [caseId], staffId: e.target.value || null }), undefined, () => run(() => assignCases({ ids: [caseId], staffId: prev })))
+              }}
             >
               {perms.assign ? <option value="">Unassigned</option> : <option value="" disabled>Unassigned</option>}
               {owners.filter((o) => perms.assign || o.id === me).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}

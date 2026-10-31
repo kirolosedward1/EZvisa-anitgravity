@@ -31,6 +31,7 @@ export const WHATS_NEW: { date: string; items: string[] }[] = [
       "Internal notes can be edited, pinned or deleted by their author or an admin. Customer contact details can be corrected once for all their cases.",
       "This guide.",
       "Cases list: Undo right after assigning puts the previous owners back. Keyboard: J and K move through the list, Enter opens, X selects.",
+      "Every board refreshes itself every 2 minutes while you are on it (not while you are typing). The case page offers Undo after changing the owner.",
     ],
   },
 ]
@@ -56,7 +57,7 @@ export const GUIDE: GuideSection[] = [
       "Sign in at www.ezvisa.net/staff with your work email (Google or an email sign-in link). Ask an admin to add you on Team first.",
       "Start each day on Overview: the tiles show what needs the team now, and Needs action lists the most urgent cases.",
       "Click any name, reference, number tile, stage or owner to open it: almost everything links to its page.",
-      "Top right on every page: search, this guide (opens at the page you are on), Refresh (loads the newest data without losing your place), New case and the notifications bell.",
+      "Top right on every page: search, this guide (opens at the page you are on), Refresh (loads the newest data without losing your place; boards also refresh themselves every 2 minutes), New case and the notifications bell.",
       "Every change you make is saved with your name in the Audit log. Customers see only what is meant for them.",
     ],
     tips: ["Can't find something? Press Ctrl+K and type it.", "On a phone, the menu button opens the sidebar and the bar at the bottom has Queue, Inbox, Appointments and Customers."],
@@ -159,7 +160,7 @@ export const GUIDE: GuideSection[] = [
     summary: "Everything about one case, and every action on it.",
     steps: [
       "Header: the customer's name opens their profile; the country and stage open the matching list; Email, Call, WhatsApp and Open in inbox contact the customer.",
-      "Top right: Next case opens the most urgent case waiting on the team. Owner changes who is responsible. Change stage moves the case (Ready needs the prepared file). The ... menu has more.",
+      "Top right: Next case opens the most urgent case waiting on the team. Owner changes who is responsible (Undo appears right after). Change stage moves the case (Ready needs the prepared file). The ... menu has more.",
       "Overview tab: what we are waiting for (with a button to do it), documents, travel (Edit trip), and the appointment: save it or Change it right there.",
       "Documents tab: approve or send back each document with a note; click a document name to open it in the viewer.",
       "Application details: Edit details changes the customer's answers on their behalf (write why; it is logged and the customer sees the new details).",

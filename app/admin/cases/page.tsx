@@ -1,6 +1,5 @@
 // Cases board: the queue with tabs, filters, sort, saved views, bulk actions and a row menu. Filters live in the URL
 // so a view can be shared or saved; the CSV export uses the same query.
-import { RefreshButton } from "@/components/staff/refresh-button"
 import { Download, Plus } from "lucide-react"
 import { CasesQueue, type QueueRow } from "@/components/staff/cases-queue"
 import { ErrorBanner } from "@/components/staff/states"
@@ -94,7 +93,6 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
               <Download size={16} aria-hidden /> Export CSV
             </a>
           ) : null}
-          <RefreshButton className="desk-only" />
           {staff.role !== "finance" ? (
             <a className="btn primary" href="/staff/cases/new">
               <Plus size={16} aria-hidden /> New case
