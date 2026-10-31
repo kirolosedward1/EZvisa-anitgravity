@@ -181,6 +181,22 @@ Owner request: more edit buttons and links, everything connected, and control fr
 - **Customer contact details** (name, phone, nationality) are corrected once on the Customers board and saved on every
   case under that email, with a reason for the audit. The sign-in email never changes there.
 
+### Ready for daily use (31 October, later)
+
+- **Search everywhere:** Ctrl+K / Cmd+K / "/" or the search box opens a search over cases (name, email, phone,
+  EZ reference, tracking code, country), customers and boards.
+- **Actions on every board:** search, guide, Refresh, New case and the bell stay at the top right on desktop and phone.
+- **Boards refresh themselves** every 2 minutes while visible (not while typing or with a dialog open).
+- **Hover preview** of any case link: stage, waiting on, owner, SLA, travel, appointment, contact, fee.
+- **Cases list:** bulk move to a stage (with a reason, same checks as the case page), copy phone numbers, Undo after
+  assigning, keyboard J/K/Enter/X.
+- **Case page:** Next case, Undo after changing the owner, Activity with payments, refunds, insurance and notes.
+- **User guide** at `/staff/guide` (sidebar and book icon): getting started, common tasks, every board, what's new,
+  shortcuts. `lib/staff/guide.ts`; a unit test requires a section for every sidebar board, and AGENTS.md requires
+  updating it with every console change.
+- **Live-data checks:** the console's reads and writes were compared with the live database (columns, check
+  constraints, guard triggers); demo data now has the same shapes as live rows.
+
 ## Demo session (local and preview builds only)
 
 `/api/auth/demo-login?scenario=staff&role=admin|specialist|support|finance` opens the console with invented cases. It
