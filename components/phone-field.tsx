@@ -58,7 +58,7 @@ export function PhoneField({
           id={id}
           inputMode="tel"
           autoComplete="tel-national"
-          placeholder={country === "AE" ? "56 303 5666" : "Phone number"}
+          placeholder={country === "AE" ? "50 000 0000" : "Phone number"}
           value={national}
           onChange={(event) => apply(country, event.target.value)}
           className="h-12 w-full rounded-xl border border-input bg-background px-3 text-base text-foreground"
