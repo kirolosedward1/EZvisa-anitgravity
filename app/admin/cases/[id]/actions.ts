@@ -191,3 +191,42 @@ export async function addCaseNote(input: { id: string; body: string; pinned?: bo
   refresh(parsed.data.id)
   return { ok: true, message: "Note added." }
 }
+
+/** Edit or pin/unpin an internal note: its author or an admin. The old text is kept in the audit. */
+export async function editCaseNote(input: { id: string; noteId: string; body?: string; pinned?: boolean }): Promise<CaseActionResult> {
+  const staff = await session()
+  if ("error" in staff) return { ok: false, error: staff.error }
+  const parsed = z.object({ id: staff.demo ? z.string().min(1) : id, noteId: z.string().min(1).max(64), body: z.string().trim().min(1).max(4000).optional(), pinned: z.boolean().optional() }).safeParse(input)
+  if (!parsed.success || (parsed.data.body === undefined && parsed.data.pinned === undefined)) return { ok: false, error: "Nothing to change." }
+  if (staff.demo) return { ok: true, message: "Demo: the note would be updated. Nothing was saved." }
+  const client = serviceClient()
+  if (!client) return { ok: false, error: "The database is not configured." }
+  const { data: note } = await client.from("case_notes").select("id, application_id, author_id, body, pinned").eq("id", parsed.data.noteId).eq("application_id", parsed.data.id).maybeSingle()
+  if (!note) return { ok: false, error: "Note not found." }
+  if (note.author_id !== staff.staffId && staff.role !== "admin") return { ok: false, error: "Only the author or an admin can change this note." }
+  const patch = { ...(parsed.data.body !== undefined ? { body: parsed.data.body } : {}), ...(parsed.data.pinned !== undefined ? { pinned: parsed.data.pinned } : {}) }
+  const { error } = await client.from("case_notes").update(patch).eq("id", note.id)
+  if (error) return { ok: false, error: "The note could not be saved." }
+  await recordAudit(staff, { action: parsed.data.body !== undefined ? "Internal note edited" : parsed.data.pinned ? "Internal note pinned" : "Internal note unpinned", type: "note", targetTable: "visa_applications", targetId: parsed.data.id, field: "note_edit", before: { body: note.body, pinned: note.pinned }, after: patch, notified: "No", reversible: false }, client)
+  refresh(parsed.data.id)
+  return { ok: true, message: "Note updated." }
+}
+
+/** Delete an internal note: its author or an admin. The text is kept in the audit. */
+export async function deleteCaseNote(input: { id: string; noteId: string }): Promise<CaseActionResult> {
+  const staff = await session()
+  if ("error" in staff) return { ok: false, error: staff.error }
+  const parsed = z.object({ id: staff.demo ? z.string().min(1) : id, noteId: z.string().min(1).max(64) }).safeParse(input)
+  if (!parsed.success) return { ok: false, error: "Note not found." }
+  if (staff.demo) return { ok: true, message: "Demo: the note would be deleted. Nothing was saved." }
+  const client = serviceClient()
+  if (!client) return { ok: false, error: "The database is not configured." }
+  const { data: note } = await client.from("case_notes").select("id, author_id, author_name, body").eq("id", parsed.data.noteId).eq("application_id", parsed.data.id).maybeSingle()
+  if (!note) return { ok: false, error: "Note not found." }
+  if (note.author_id !== staff.staffId && staff.role !== "admin") return { ok: false, error: "Only the author or an admin can delete this note." }
+  const { error } = await client.from("case_notes").delete().eq("id", note.id)
+  if (error) return { ok: false, error: "The note could not be deleted." }
+  await recordAudit(staff, { action: `Internal note by ${note.author_name} deleted`, type: "note", targetTable: "visa_applications", targetId: parsed.data.id, field: "note_delete", before: { body: note.body }, notified: "No", reversible: false }, client)
+  refresh(parsed.data.id)
+  return { ok: true, message: "Note deleted." }
+}

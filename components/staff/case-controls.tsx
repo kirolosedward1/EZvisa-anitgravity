@@ -6,7 +6,7 @@ import { useEffect, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { ChevronDown, MessageCircle, MoreHorizontal, Pin } from "lucide-react"
 import { assignCases, cancelCase } from "@/app/admin/cases/actions"
-import { addCaseNote, changeStage } from "@/app/admin/cases/[id]/actions"
+import { addCaseNote, changeStage, deleteCaseNote, editCaseNote } from "@/app/admin/cases/[id]/actions"
 import { STAGE_TARGETS, type StageTarget } from "@/lib/staff/stage-targets"
 
 type Flash = { ok: boolean; text: string } | null
@@ -204,7 +204,7 @@ export function CaseControls({
   )
 }
 
-export function CaseNotes({ caseId, notes, canWrite }: { caseId: string; notes: { id: string; at: string; author: string; body: string; pinned: boolean }[]; canWrite: boolean }) {
+export function CaseNotes({ caseId, notes, canWrite, me, admin = false }: { caseId: string; notes: { id: string; at: string; author: string; authorId?: string | null; body: string; pinned: boolean }[]; canWrite: boolean; me?: string | null; admin?: boolean }) {
   const router = useRouter()
   const [body, setBody] = useState("")
   const [pinned, setPinned] = useState(false)
@@ -249,11 +249,40 @@ export function CaseNotes({ caseId, notes, canWrite }: { caseId: string; notes: 
       {flashNode}
       {all.length === 0 ? <p className="muted" style={{ margin: 0, fontSize: 13 }}>No notes yet.</p> : null}
       {all.map((n) => (
-        <div key={n.id} className="note-card">
-          <p style={{ margin: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>{n.pinned ? <Pin size={12} aria-label="Pinned" style={{ marginInlineEnd: 4 }} /> : null}{n.body}</p>
-          <span className="muted" style={{ fontSize: 11 }}>{n.author} · {new Date(n.at).toLocaleString("en-GB", { timeZone: "Asia/Dubai", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-        </div>
+        <NoteCard key={n.id} caseId={caseId} note={n} canChange={canWrite && !n.id.startsWith("local-") && (admin || (!!me && n.authorId === me))} onDone={(r) => { setFlash(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.error }); if (r.ok && !r.message.startsWith("Demo")) router.refresh() }} />
       ))}
     </section>
+  )
+}
+
+function NoteCard({ caseId, note, canChange, onDone }: { caseId: string; note: { id: string; at: string; author: string; body: string; pinned: boolean }; canChange: boolean; onDone: (r: { ok: true; message: string } | { ok: false; error: string }) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [text, setText] = useState(note.body)
+  const [pending, start] = useTransition()
+  const act = (fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>, after?: () => void) => start(async () => { const r = await fn(); onDone(r); if (r.ok) after?.() })
+  return (
+    <div className="note-card">
+      {editing ? (
+        <form style={{ display: "flex", flexDirection: "column", gap: 6 }} onSubmit={(e) => { e.preventDefault(); act(() => editCaseNote({ id: caseId, noteId: note.id, body: text }), () => setEditing(false)) }}>
+          <textarea className="inp" rows={3} maxLength={4000} value={text} onChange={(e) => setText(e.target.value)} aria-label="Edit note" style={{ height: "auto", padding: 10, minWidth: 0 }} />
+          <div style={{ display: "flex", gap: 6 }}>
+            <button type="submit" className="btn primary sm" disabled={pending || !text.trim() || text.trim() === note.body}>Save</button>
+            <button type="button" className="btn ghost sm" onClick={() => { setText(note.body); setEditing(false) }}>Cancel</button>
+          </div>
+        </form>
+      ) : (
+        <p style={{ margin: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>{note.pinned ? <Pin size={12} aria-label="Pinned" style={{ marginInlineEnd: 4 }} /> : null}{note.body}</p>
+      )}
+      <span style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+        <span className="muted" style={{ fontSize: 11 }}>{note.author} · {new Date(note.at).toLocaleString("en-GB", { timeZone: "Asia/Dubai", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+        {canChange && !editing ? (
+          <span className="note-actions">
+            <button type="button" disabled={pending} onClick={() => setEditing(true)}>Edit</button>
+            <button type="button" disabled={pending} onClick={() => act(() => editCaseNote({ id: caseId, noteId: note.id, pinned: !note.pinned }))}>{note.pinned ? "Unpin" : "Pin"}</button>
+            <button type="button" disabled={pending} className="danger" onClick={() => { if (confirm("Delete this note? Its text stays in the audit log.")) act(() => deleteCaseNote({ id: caseId, noteId: note.id })) }}>Delete</button>
+          </span>
+        ) : null}
+      </span>
+    </div>
   )
 }

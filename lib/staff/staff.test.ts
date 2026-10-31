@@ -359,3 +359,24 @@ test("a missing column is found in Postgres and PostgREST errors", async () => {
   assert.equal(missingColumn({ code: "42501", message: "permission denied" }, asked), null)
   assert.equal(missingColumn(null, asked), null)
 })
+
+test("permission matrix: saved changes apply, admin-only stays admin-only, view is kept", async () => {
+  const roles = await import("./roles")
+  try {
+    roles.setMatrix({ support: ["view", "msg", "appt", "pay", "team", "settings"], specialist: ["docs"], finance: "nonsense" })
+    assert.equal(roles.can("support", "pay"), true)
+    assert.equal(roles.canOpen("support", "payments"), true)
+    assert.ok(roles.navFor("support").some((g) => g.items.some((i) => i.key === "payments")))
+    assert.equal(roles.can("support", "team"), false)
+    assert.equal(roles.can("support", "settings"), false)
+    assert.equal(roles.can("specialist", "view"), true)
+    assert.equal(roles.can("specialist", "stage"), false)
+    assert.equal(roles.canOpen("specialist", "documents"), true)
+    assert.deepEqual(roles.currentMatrix().finance, roles.DEFAULT_MATRIX.finance)
+    assert.equal(roles.can("admin", "settings"), true)
+  } finally {
+    roles.setMatrix(null)
+  }
+  assert.equal(roles.can("support", "pay"), false)
+  assert.equal(roles.canOpen("support", "payments"), false)
+})

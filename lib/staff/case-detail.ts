@@ -27,7 +27,7 @@ export type DocRow = {
   files: DocFile[]
 }
 export type AuditRow = { id: number; at: string; actor: string; action: string; type: string; field: string | null; notified: string | null }
-export type NoteRow = { id: string; at: string; author: string; body: string; pinned: boolean }
+export type NoteRow = { id: string; at: string; author: string; authorId?: string | null; body: string; pinned: boolean }
 
 export type CaseDetail = {
   app: VisaApplication
@@ -71,7 +71,7 @@ export async function loadCaseDetail(staff: Staff, id: string): Promise<CaseDeta
     client.from("document_reviews").select("document_type, status, note, reviewed_at, reviewed_by").eq("application_id", id),
     loadApplicationEvents(id),
     client.from("audit_events").select("id, created_at, actor_name, actor_type, action, type, field, notified").eq("target_table", "visa_applications").eq("target_id", id).order("created_at", { ascending: false }).limit(100),
-    client.from("case_notes").select("id, created_at, author_name, body, pinned").eq("application_id", id).order("created_at", { ascending: false }).limit(100),
+    client.from("case_notes").select("id, created_at, author_id, author_name, body, pinned").eq("application_id", id).order("created_at", { ascending: false }).limit(100),
     client.from("case_assignments").select("staff_id").eq("application_id", id).order("created_at", { ascending: false }).limit(1),
     client.storage.from(DOC_BUCKET).list(id, { limit: 100 }),
     loadConsoleData(staff),
@@ -113,8 +113,8 @@ export async function loadCaseDetail(staff: Staff, id: string): Promise<CaseDeta
       field: a.field,
       notified: a.notified,
     })),
-    caseNotes: ((notesRes.data ?? []) as { id: string; created_at: string; author_name: string; body: string; pinned: boolean }[])
-      .map((n) => ({ id: n.id, at: n.created_at, author: n.author_name, body: n.body, pinned: n.pinned }))
+    caseNotes: ((notesRes.data ?? []) as { id: string; created_at: string; author_id: string | null; author_name: string; body: string; pinned: boolean }[])
+      .map((n) => ({ id: n.id, at: n.created_at, author: n.author_name, authorId: n.author_id, body: n.body, pinned: n.pinned }))
       .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.at.localeCompare(a.at)),
     others: consoleData.cases.filter((x) => x.email.toLowerCase() === email && x.id !== id),
     team: consoleData.team,

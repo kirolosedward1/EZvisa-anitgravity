@@ -37,8 +37,38 @@ export const DEFAULT_MATRIX: Record<Exclude<Role, "admin">, Permission[]> = {
   finance: ["view", "pay", "refund", "export"],
 }
 
+/** Permissions an admin can grant to other roles. Team and Settings stay admin only, so no one can promote themselves. */
+export const GRANTABLE: Permission[] = PERMISSIONS.map((p) => p.id).filter((id) => id !== "team" && id !== "settings")
+
+export type Matrix = Record<Exclude<Role, "admin">, Permission[]>
+
+// The matrix in force: the default, or the one saved on the Team board (console_settings "permissions", loaded with
+// the staff session in lib/staff/session.ts). It is the same for every request, so a shared value is safe.
+let MATRIX: Matrix = DEFAULT_MATRIX
+
+/** Pure: a stored matrix limited to grantable permissions, always with "view"; anything else falls back to the default. */
+export function cleanMatrix(value: unknown): Matrix {
+  if (!value || typeof value !== "object") return DEFAULT_MATRIX
+  const out = { ...DEFAULT_MATRIX }
+  for (const role of ["specialist", "support", "finance"] as const) {
+    const list = (value as Record<string, unknown>)[role]
+    if (!Array.isArray(list)) continue
+    const perms = [...new Set(list.filter((p): p is Permission => GRANTABLE.includes(p as Permission)))]
+    out[role] = perms.includes("view") ? perms : ["view", ...perms]
+  }
+  return out
+}
+
+export function setMatrix(value: unknown): void {
+  MATRIX = value ? cleanMatrix(value) : DEFAULT_MATRIX
+}
+
+export function currentMatrix(): Matrix {
+  return MATRIX
+}
+
 export function can(role: Role, permission: Permission): boolean {
-  return role === "admin" || DEFAULT_MATRIX[role].includes(permission)
+  return role === "admin" || MATRIX[role].includes(permission)
 }
 
 export type NavKey =
@@ -107,11 +137,16 @@ export const NAV: NavGroup[] = [
   },
 ]
 
-/** The sidebar for one role: groups with no visible item are dropped. */
-export function navFor(role: Role): NavGroup[] {
-  return NAV.map((g) => ({ ...g, items: g.items.filter((i) => i.roles.includes(role)) })).filter((g) => g.items.length > 0)
-}
+/** A granted permission also opens its board (giving Support "View payments" shows them Payments). */
+const PAGE_PERMISSION: Partial<Record<NavKey, Permission>> = { documents: "docs", files: "files", appointments: "appt", messaging: "msg", payments: "pay", insurance: "pay", reports: "export" }
 
 export function canOpen(role: Role, key: NavKey): boolean {
-  return NAV.some((g) => g.items.some((i) => i.key === key && i.roles.includes(role)))
+  const byRole = NAV.some((g) => g.items.some((i) => i.key === key && i.roles.includes(role)))
+  const perm = PAGE_PERMISSION[key]
+  return byRole || (!!perm && can(role, perm))
+}
+
+/** The sidebar for one role: groups with no visible item are dropped. */
+export function navFor(role: Role): NavGroup[] {
+  return NAV.map((g) => ({ ...g, items: g.items.filter((i) => canOpen(role, i.key)) })).filter((g) => g.items.length > 0)
 }

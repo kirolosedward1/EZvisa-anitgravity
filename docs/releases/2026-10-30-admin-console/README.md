@@ -170,6 +170,17 @@ Owner request: more edit buttons and links, everything connected, and control fr
   person and link settings and team targets; notifications open from their text; ready files without an appointment
   can be saved from Appointments; staff can be renamed on Team.
 
+### Also on 31 October
+
+- **Live fix:** the console showed "Cases could not be loaded" because the live table has no `travel_start_date`,
+  `travel_end_date` or `paid_at`. The case read now drops a column the database reports missing and retries.
+- **Permissions by role** are edited on the Team board (`012_console_permissions.sql`). Admin always has everything;
+  Team and Settings stay admin only; every role keeps View cases. Granting a permission also opens its board.
+- **Internal notes** can be edited, pinned, unpinned and deleted by their author or an admin (old text kept in the
+  audit).
+- **Customer contact details** (name, phone, nationality) are corrected once on the Customers board and saved on every
+  case under that email, with a reason for the audit. The sign-in email never changes there.
+
 ## Demo session (local and preview builds only)
 
 `/api/auth/demo-login?scenario=staff&role=admin|specialist|support|finance` opens the console with invented cases. It
@@ -177,7 +188,7 @@ never reads or writes the database, and the staff API routes reject it (401). Pr
 
 ## Owner actions
 
-1. ~~Apply migrations 002 and 005 to 011~~: applied 31 October 2026 at the owner's request, in number order, and checked:
+1. ~~Apply migrations 002 and 005 to 012~~: applied 31 October 2026 at the owner's request, in number order, and checked:
    every new table has row level security on with no client policies (server only), the new columns exist, and the
    database logged no errors afterwards. 002 replaced the older `visa_applications_guard_appointment` function with
    the reviewed version (customers can edit drafts and the after-payment answers as before; appointment fields only

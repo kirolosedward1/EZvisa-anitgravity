@@ -7,7 +7,8 @@ import { loadConsoleData } from "@/lib/staff/data"
 import { DEMO_STAFF } from "@/lib/staff/demo"
 import { sectionAccess } from "@/lib/staff/guard"
 import { agoLabel } from "@/lib/staff/queue"
-import { can, DEFAULT_MATRIX, PERMISSIONS, ROLE_LABEL, ROLES, isRole } from "@/lib/staff/roles"
+import { can, currentMatrix, ROLE_LABEL, isRole } from "@/lib/staff/roles"
+import { PermissionsEditor } from "@/components/staff/settings-editors"
 import { initials, isStaffEmail, missingTable, staffEmails } from "@/lib/staff/session"
 
 export const dynamic = "force-dynamic"
@@ -64,14 +65,8 @@ export default async function TeamPage() {
       </section>
       <div className="grid2">
         <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="pm-h">
-          <div><h2 id="pm-h">Permissions by role</h2><p className="muted" style={{ margin: 0, fontSize: 12 }}>Admin always has everything. The matrix is fixed in code for now; editing it here is not built.</p></div>
-          <div className="tbl"><div className="tbl-h perm"><span>Permission</span>{ROLES.map((r) => <span key={r}>{ROLE_LABEL[r]}</span>)}</div>
-            {PERMISSIONS.map((p) => (
-              <div key={p.id} className="tbl-r perm"><span style={{ display: "flex", flexDirection: "column" }}>{p.label}<span className="muted" style={{ fontSize: 11 }}>{p.hint}</span></span>
-                {ROLES.map((r) => <span key={r} aria-label={`${ROLE_LABEL[r]}: ${can(r, p.id) ? "yes" : "no"}`}>{r === "admin" || DEFAULT_MATRIX[r as Exclude<typeof r, "admin">]?.includes(p.id) ? <span className="pill xs green">Yes</span> : <span className="muted">–</span>}</span>)}
-              </div>
-            ))}
-          </div>
+          <div><h2 id="pm-h">Permissions by role</h2><p className="muted" style={{ margin: 0, fontSize: 12 }}>What each role can do. Changes are logged in the audit.</p></div>
+          <PermissionsEditor initial={currentMatrix()} canEdit={can(staff.role, "settings")} demo={staff.demo} updated={settings.updated.permissions} />
         </section>
         <aside className="stack">
           <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8 }} aria-labelledby="aa-h">

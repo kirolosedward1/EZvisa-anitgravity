@@ -6,6 +6,7 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { resetSetting, saveSetting, type SettingResult } from "@/app/admin/settings/actions"
 import { matchFromName, type AutoAssign, type Centre, type SettingKey, type SlaTargets, type Templates } from "@/lib/staff/console-settings"
+import { GRANTABLE, PERMISSIONS, ROLE_LABEL, type Matrix, type Permission } from "@/lib/staff/roles"
 
 function useSave(demo: boolean) {
   const router = useRouter()
@@ -114,6 +115,40 @@ export function CentresEditor({ initial, canEdit, demo, updated }: { initial: Ce
       {canEdit ? <button type="button" className="btn outline sm" style={{ alignSelf: "flex-start" }} disabled={list.length >= 20} onClick={() => setList([...list, { name: "", short: "", match: ["new"] }])}>+ Add centre</button> : null}
       <p className="muted" style={{ margin: 0, fontSize: 12 }}>Shown on the staff appointment form and as filters on Appointments. A saved appointment matches a centre when its text contains the keywords.</p>
       <Footer k="centres" pending={pending} dirty={dirty} run={run} flash={flash} canEdit={canEdit} updated={updated} />
+    </form>
+  )
+}
+
+export function PermissionsEditor({ initial, canEdit, demo, updated }: { initial: Matrix; canEdit: boolean; demo: boolean; updated?: string }) {
+  const [m, setM] = useState(initial)
+  const { pending, run, flash } = useSave(demo)
+  const dirty = JSON.stringify(m) !== JSON.stringify(initial)
+  const roles = ["specialist", "support", "finance"] as const
+  const toggle = (r: (typeof roles)[number], p: Permission) => setM({ ...m, [r]: m[r].includes(p) ? m[r].filter((x) => x !== p) : [...m[r], p] })
+  return (
+    <form className="stack" style={{ gap: 10 }} onSubmit={(e) => { e.preventDefault(); run(() => saveSetting("permissions", m)) }}>
+      <div className="tbl">
+        <div className="tbl-h perm"><span>Permission</span><span>Admin</span>{roles.map((r) => <span key={r}>{ROLE_LABEL[r]}</span>)}</div>
+        {PERMISSIONS.map((p) => {
+          const locked = !GRANTABLE.includes(p.id) || p.id === "view"
+          return (
+            <div key={p.id} className="tbl-r perm">
+              <span style={{ display: "flex", flexDirection: "column" }}>{p.label}<span className="muted" style={{ fontSize: 11 }}>{p.hint}{p.id === "view" ? " · every role" : !GRANTABLE.includes(p.id) ? " · admin only" : ""}</span></span>
+              <span><span className="switch" data-on="true" role="img" aria-label="Admin: always" style={{ opacity: 0.55 }} /></span>
+              {roles.map((r) => {
+                const on = m[r].includes(p.id)
+                return (
+                  <span key={r}>
+                    <button type="button" className="switch" data-on={on ? "true" : undefined} role="switch" aria-checked={on} aria-label={`${ROLE_LABEL[r]}: ${p.label}`} disabled={!canEdit || locked || pending} onClick={() => toggle(r, p.id)} />
+                  </span>
+                )
+              })}
+            </div>
+          )
+        })}
+      </div>
+      <p className="muted" style={{ margin: 0, fontSize: 12 }}>Applies on everyone&rsquo;s next page load. Granting a permission also opens its board (for example View payments shows Payments). Admin always has everything; Team and Settings stay admin only.</p>
+      <Footer k="permissions" pending={pending} dirty={dirty} run={run} flash={flash} canEdit={canEdit} updated={updated} />
     </form>
   )
 }

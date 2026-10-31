@@ -318,7 +318,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
               </div>
             ) : null}
           </section>
-          <CaseNotes caseId={c.id} notes={caseNotes} canWrite={staff.role !== "finance"} />
+          <CaseNotes caseId={c.id} notes={caseNotes} canWrite={staff.role !== "finance"} me={staff.staffId} admin={staff.role === "admin"} />
           <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 6 }} aria-labelledby="qa-h">
             <h2 id="qa-h">Quick actions</h2>
             {can(staff.role, "msg") && waLink && c.side === "customer" ? (

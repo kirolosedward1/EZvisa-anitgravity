@@ -1,19 +1,20 @@
 /**
- * Editable console settings (Settings board, migration 011): message templates, SLA targets, automatic assignment
- * and the visa centres on the staff appointment form. Pure: defaults, validation and merging. Stored values that do
+ * Editable console settings (Settings board, migrations 011 and 012): message templates, SLA targets, automatic
+ * assignment, the visa centres on the staff appointment form, and the permission matrix (Team board). Pure: defaults, validation and merging. Stored values that do
  * not validate are ignored, so a bad row can never break the console. Server loading is in console-settings-server.ts.
  */
 import { z } from "zod"
 import { TEMPLATES, type TemplateKey } from "@/lib/staff/templates"
 import { SLA } from "@/lib/staff/sla"
 import { CENTRES } from "@/lib/staff/centres"
+import { GRANTABLE } from "@/lib/staff/roles"
 
 export type SlaTargets = { reviewHours: number; fileBusinessDays: number; helpHours: number }
 export type Centre = { name: string; short: string; match: string[] }
 export type Templates = Record<TemplateKey, { label: string; en: string; ar: string; broadcast?: boolean }>
 export type AutoAssign = { on: boolean; cap: number | null }
 export type ConsoleSettings = { templates: Templates; sla: SlaTargets; autoAssign: AutoAssign; centres: Centre[] }
-export type SettingKey = "templates" | "sla" | "auto_assign" | "centres"
+export type SettingKey = "templates" | "sla" | "auto_assign" | "centres" | "permissions"
 
 export const DEFAULT_SETTINGS: ConsoleSettings = {
   templates: TEMPLATES,
@@ -32,6 +33,10 @@ export const SCHEMAS = {
     .min(1)
     .max(20)
     .refine((list) => new Set(list.map((c) => c.short.toLowerCase())).size === list.length, "Short names must be different"),
+  permissions: (() => {
+    const list = z.array(z.enum(GRANTABLE as [string, ...string[]])).max(20).refine((l) => l.includes("view"), "Every role keeps View cases")
+    return z.object({ specialist: list, support: list, finance: list })
+  })(),
 } as const
 
 /** Merges stored rows over the defaults; each key is validated on its own. */

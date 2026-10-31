@@ -2,6 +2,7 @@
 // cases, saved travellers and the account tools that work today (sign-in link, data export).
 import { CountryFlag } from "@/components/country-flag"
 import { SignInLink } from "@/components/staff/sign-in-link"
+import { CustomerContactEdit } from "@/components/staff/customer-contact"
 import { serviceClient } from "@/lib/applications"
 import { SCHENGEN_META } from "@/lib/countries"
 import { parseNotes, travellerFromRow, TRAVELLERS_TABLE } from "@/lib/shared/wizard-contract"
@@ -105,9 +106,9 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               {waUrl(selected.phone) && can(staff.role, "msg") ? <a className="btn outline sm" href={waUrl(selected.phone)!} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} color="#1a7f37" aria-hidden /> WhatsApp</a> : null}
               <a className="btn outline sm" href={`mailto:${selected.email}`}>Email</a>
               {selected.cases[0] ? <a className="btn outline sm" href={`/staff/cases/${selected.cases[0].id}`}>Latest case</a> : null}
-              {selected.cases[0] && can(staff.role, "edit") ? <a className="btn outline sm" href={`/staff/cases/${selected.cases[0].id}?tab=details&edit=1`}>Edit details</a> : null}
               {staff.role !== "finance" ? <a className="btn primary sm" href="/staff/cases/new">New case</a> : null}
             </div>
+            {can(staff.role, "edit") ? <CustomerContactEdit key={selected.email} email={selected.email} name={selected.name} phone={selected.phone} nationality={selected.nationality} cases={selected.cases.length} demo={staff.demo} /> : null}
             <dl className="kv">
               <dt>Email</dt><dd><a href={`mailto:${selected.email}`}>{selected.email}</a></dd>
               <dt>Phone</dt><dd>{selected.phone ? <><a href={`tel:${selected.phone.replace(/[^+\d]/g, "")}`}>{selected.phone}</a>{waUrl(selected.phone) ? <> · <a href={waUrl(selected.phone)!} target="_blank" rel="noopener noreferrer">WhatsApp</a></> : null}</> : "Not given"}</dd>
@@ -139,7 +140,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               {can(staff.role, "msg") ? <SignInLink email={selected.email} phone={selected.phone} first={selected.name.split(" ")[0]} /> : null}
               {can(staff.role, "export") ? <a className="btn outline sm" style={{ alignSelf: "flex-start" }} href={`/api/admin/customers/export?email=${encodeURIComponent(selected.email)}`}>Export everything we hold (JSON)</a> : null}
               <p className="muted" style={{ margin: 0, fontSize: 12 }}>
-                Not available yet: changing the email, unlinking Google or Apple, resetting 2-step, merging duplicate accounts and deletion. Ask the owner; these change the customer&rsquo;s sign-in and need care. Finance records are kept 7 years.
+                Not available yet: changing the sign-in email, unlinking Google or Apple, resetting 2-step, merging duplicate accounts and deletion. Ask the owner; these change the customer&rsquo;s sign-in and need care. Finance records are kept 7 years.
               </p>
             </div>
           </section>

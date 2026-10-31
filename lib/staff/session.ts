@@ -14,7 +14,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { serviceClient } from "@/lib/applications"
 import { createServerClient } from "@/lib/supabase/server"
 import { DEMO_STAFF } from "@/lib/staff/demo"
-import { isRole, type Role } from "@/lib/staff/roles"
+import { isRole, setMatrix, type Role } from "@/lib/staff/roles"
 
 export const DEMO_STAFF_COOKIE = "ez_demo_staff"
 export const DEMO_STAFF_ALLOWED = process.env.VERCEL_ENV !== "production"
@@ -71,6 +71,24 @@ async function staffRow(client: SupabaseClient, userId: string, email: string): 
 }
 
 /** The signed-in staff member from a real Supabase session, or null. Never the demo session. */
+// Permission matrix saved on the Team board, re-read at most every 30 seconds per server instance.
+let matrixReadAt = 0
+async function refreshMatrix(client: ReturnType<typeof serviceClient>): Promise<void> {
+  if (!client || Date.now() - matrixReadAt < 30_000) return
+  matrixReadAt = Date.now()
+  try {
+    const { data, error } = await client.from("console_settings").select("value").eq("key", "permissions").maybeSingle()
+    if (!error) setMatrix(data?.value ?? null)
+  } catch {
+    // keep the matrix in force
+  }
+}
+
+/** Forces the next staff request to re-read the matrix (after it is saved). */
+export async function invalidateMatrix(): Promise<void> {
+  matrixReadAt = 0
+}
+
 export const getRealStaff = cache(async (): Promise<Staff | null> => {
   let user
   try {
@@ -82,7 +100,7 @@ export const getRealStaff = cache(async (): Promise<Staff | null> => {
   const email = user.email.trim().toLowerCase()
   const envAdmin = isStaffEmail(email)
   const client = serviceClient()
-  const lookup = client ? await staffRow(client, user.id, email) : { row: null, ready: false }
+  const [lookup] = await Promise.all([client ? staffRow(client, user.id, email) : Promise.resolve({ row: null, ready: false }), refreshMatrix(client)])
   let row = lookup.row
   const role: Role | null = envAdmin ? "admin" : row?.active && isRole(row.role) ? row.role : null
   if (!role) return null
