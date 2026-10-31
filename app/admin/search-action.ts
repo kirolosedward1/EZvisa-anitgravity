@@ -2,7 +2,21 @@
 
 // Console search (the top bar and Ctrl+K): cases by name, email, phone, EZ reference, tracking code or country, and
 // customers by email. Reads the same per-request console data as the boards; nothing is written.
-import { loadConsoleData } from "@/lib/staff/data"
+import { loadConsoleData as loadFresh } from "@/lib/staff/data"
+import type { Staff } from "@/lib/staff/session"
+
+// Search and hover previews run on every keystroke or hover: reuse one read for 20 seconds per server instance
+// (every staff member sees the same cases, so one copy serves everyone; the demo has its own).
+const CACHE_MS = 20_000
+const cached: Record<"live" | "demo", { at: number; data: Awaited<ReturnType<typeof loadFresh>> } | undefined> = { live: undefined, demo: undefined }
+async function loadConsoleData(staff: Staff) {
+  const key = staff.demo ? "demo" : "live"
+  const hit = cached[key]
+  if (hit && Date.now() - hit.at < CACHE_MS) return hit.data
+  const data = await loadFresh(staff)
+  if (!data.problem) cached[key] = { at: Date.now(), data }
+  return data
+}
 import { getStaff } from "@/lib/staff/session"
 import { STAGE } from "@/lib/staff/cases"
 
