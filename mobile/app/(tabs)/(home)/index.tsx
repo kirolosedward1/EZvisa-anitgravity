@@ -109,7 +109,12 @@ function AppCard({ a, offline, onHide }: { a: Application; offline: boolean; onH
           </PressScale>
         </View>
       ))}
-      <View style={{ marginTop: S.md }}><ProgressSegments count={steps.length} index={done} fraction={0.35} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t("{n} of {total} steps done", { n: done, total: steps.length })} /></View>
+      <View style={{ marginTop: S.md, gap: S.xs }}>
+        <ProgressSegments count={steps.length} index={done} fraction={0.35} current={!["completed", "rejected", "cancelled"].includes(a.status)} label={t("{n} of {total} steps done", { n: done, total: steps.length })} />
+        {/* The bar in words: which step this is. */}
+        {(() => { const cur = steps.findIndex((x) => x.state !== "done"); const i = cur < 0 ? steps.length - 1 : cur;
+          return <Text variant="footnote" tone="secondary" testID="hero-step">{cur < 0 ? t("All done") : t("Step {i} of {n} · {s}", { i: i + 1, n: steps.length, s: t(steps[i].label) })}</Text>; })()}
+      </View>
       <View style={{ marginTop: S.md }}>
         <PrimaryButton title={t(n.cta ?? "View application", n.vars)} loading={paying} disabled={offline && n.kind !== "open" && n.kind !== "none"} onPress={act} testID="hero-action" />
       </View>
@@ -206,7 +211,7 @@ function useItems(apps: Application[] | null): Item[] | null {
   const linked = new Set(server.map((a) => a.id));
   return [
     ...drafts.filter((d) => hasAnswers(d.form) && !(d.draftId && linked.has(d.draftId) && server.find((a) => a.id === d.draftId)?.status !== "draft")).map((d): Item => ({
-      key: d.draftId ? `s:${d.draftId}` : `l:${d.key}`, country: d.form.destination || (server.find((a) => a.id === d.draftId)?.destination_country ?? ""), status: `${t("Draft")} · ${t("Details {i} of {n}", draftPosition(d.form, d.page))}`, at: d.savedAt, draft: draftStep(d), answers: answeredCount(d.form),
+      key: d.draftId ? `s:${d.draftId}` : `l:${d.key}`, country: d.form.destination || (server.find((a) => a.id === d.draftId)?.destination_country ?? ""), status: `${t("Draft")} · ${!d.page.startsWith("q:") ? t("Ready to pay") : ((pos) => { const left = Math.max(1, pos.n - pos.i + 1); return left === 1 ? t("1 question left") : t("{n} questions left", { n: left }); })(draftPosition(d.form, d.page))}`, at: d.savedAt, draft: draftStep(d), answers: answeredCount(d.form),
       open: () => { openDraft(d.key); router.push({ pathname: "/apply", params: { resume: "1" } }); }, remove: () => removeDraft(d.key) })),
     ...server.filter((a) => !(a.status === "draft" && drafts.some((d) => d.draftId === a.id)) && !isUserDiscarded(a)).map((a): Item => {
       const paid = isPaid(a);

@@ -85,6 +85,11 @@ export function buildTimeline(a: Application): Step[] {
       else if (here) { note = "{n} of {total} uploaded"; vars = { n: received, total: items.length }; }
     }
     if (k === "appointment" && ap) { when = ap.at; scheduled = true; note = ap.centre ?? note; }
+    // A finished step says what happened, not what it is for (website prog.done).
+    if (state === "done" && note === HINT[k]) {
+      if (k === "payment") { const amt = Number(a.payment_amount); note = amt > 0 ? "Paid · {amount} AED" : "Paid"; vars = amt > 0 ? { amount: amt } : undefined; }
+      else note = "Done";
+    }
     if (state === "failed") label = st === "cancelled" ? "Cancelled" : "Closed";
     return { key: k, label, state, at: when, scheduled, note, vars };
   });
