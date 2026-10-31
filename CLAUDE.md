@@ -1,6 +1,6 @@
 # EZvisa — Claude handoff
 
-Read [AGENTS.md](AGENTS.md), then [DESIGN.md](DESIGN.md) before editing. The design guide is the owner's accepted brief; their newer instructions take precedence. [README.md](README.md) maps the repository. Detailed release history and verification limits are in [docs/releases/2026-10-29-redesign.md](docs/releases/2026-10-29-redesign.md).
+Read [AGENTS.md](AGENTS.md), then [DESIGN.md](DESIGN.md) before editing. **Current status, open items and next steps: [docs/STATUS.md](docs/STATUS.md)** (update it at the end of every session). The design guide is the owner's accepted brief; their newer instructions take precedence. [README.md](README.md) maps the repository. Detailed release history and verification limits are in [docs/releases/2026-10-29-redesign.md](docs/releases/2026-10-29-redesign.md).
 
 ## Current release — 29 October 2026
 
@@ -12,7 +12,9 @@ Read [AGENTS.md](AGENTS.md), then [DESIGN.md](DESIGN.md) before editing. The des
 
 ## Last completed changes
 
-- Staff console at `www.ezvisa.net/staff` (31 October 2026): all boards, editable settings and permissions, global search (Ctrl+K), user guide at `/staff/guide`. **Every console change must update `lib/staff/guide.ts`** (section, `GUIDE_UPDATED`, `WHATS_NEW`); the test suite enforces a section per board. Release notes: [docs/releases/2026-10-30-admin-console/README.md](docs/releases/2026-10-30-admin-console/README.md). Migrations 002 and 005 to 012 are applied to the live database.
+- 31 October 2026 (evening): contact-form messages saved and shown in the console (migration 013); secure Make connection for file preparation (`/api/automation/*`, `docs/automation/`); privacy policy updated for automation and AI; brief for the in-app Claude agent in `docs/automation/build-in-app-agent-prompt.md`. Pending owner approvals and decisions are listed in `docs/STATUS.md`.
+
+- Staff console at `www.ezvisa.net/staff` (31 October 2026): all boards, editable settings and permissions, global search (Ctrl+K), user guide at `/staff/guide`. **Every console change must update `lib/staff/guide.ts`** (section, `GUIDE_UPDATED`, `WHATS_NEW`); the test suite enforces a section per board. Release notes: [docs/releases/2026-10-30-admin-console/README.md](docs/releases/2026-10-30-admin-console/README.md). Migrations 002 and 005 to 013 are applied to the live database.
 
 - SEO pass (branch `claude/ezvisa-seo-improvement-2hdd3u`): per-language canonicals, en/ar hreflang, bilingual sitemap, destination `Service`/`BreadcrumbList` schema, 1200×630 share cards, corrected social profiles, `llms.txt`. Details and open recommendations: [docs/seo/2026-10-29-seo-audit.md](docs/seo/2026-10-29-seo-audit.md). New indexable pages should use `withArabicMeta()` or `localeAlternates()` and be added to `app/sitemap.ts`.
 

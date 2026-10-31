@@ -9,6 +9,8 @@ Schengen visa application assistance for UAE residents. The website uses Next.js
 The guide records approved colors, typography, page layouts, Globi video usage, components, navigation, wizard behavior, accessibility, content rules and owner decisions. Read it before extending or redesigning the website.
 
 - [Agent instructions](AGENTS.md)
+- [Project status, open items and next steps](docs/STATUS.md)
+- [File preparation automation and AI agent](docs/automation/)
 - [Website ↔ mobile contract](docs/APP_WEB_SYNC.md)
 - [Release record and known verification gaps](docs/releases/2026-10-29-redesign.md)
 - [Blog implementation guide](docs/BLOG_SYSTEM_GUIDE.md)
