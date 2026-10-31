@@ -21,17 +21,29 @@ function useAction(demo: boolean) {
   return { pending, run, flash: msg ? <div className={msg.ok ? "flash ok" : "flash err"} role="status"><span>{msg.text}</span></div> : null }
 }
 
-export function MemberControls({ id, role, active, self, envAdmin, demo }: { id: string; role: string; active: boolean; self: boolean; envAdmin: boolean; demo: boolean }) {
+export function MemberControls({ id, name, role, active, self, envAdmin, demo }: { id: string; name: string; role: string; active: boolean; self: boolean; envAdmin: boolean; demo: boolean }) {
   const { pending, run, flash } = useAction(demo)
-  if (self) return <span className="muted" style={{ fontSize: 12 }}>You</span>
+  const [renaming, setRenaming] = useState(false)
+  const [value, setValue] = useState(name)
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
-      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-        <select className="sel" aria-label="Role" value={role} disabled={pending || envAdmin} onChange={(e) => run(() => updateMember({ id, role: e.target.value }))} style={{ height: 30 }}>
-          {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
-        </select>
-        <button type="button" className="btn ghost sm" disabled={pending} onClick={() => run(() => updateMember({ id, active: !active }))}>{active ? "Deactivate" : "Reactivate"}</button>
+      <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end" }}>
+        {self ? <span className="muted" style={{ fontSize: 12 }}>You</span> : (
+          <>
+            <select className="sel" aria-label={`Role for ${name}`} value={role} disabled={pending || envAdmin} onChange={(e) => run(() => updateMember({ id, role: e.target.value }))} style={{ height: 30 }}>
+              {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+            </select>
+            <button type="button" className="btn ghost sm" disabled={pending} onClick={() => run(() => updateMember({ id, active: !active }))}>{active ? "Deactivate" : "Reactivate"}</button>
+          </>
+        )}
+        <button type="button" className="btn ghost sm" aria-expanded={renaming} onClick={() => setRenaming((v) => !v)}>Rename</button>
       </div>
+      {renaming ? (
+        <form style={{ display: "flex", gap: 6 }} onSubmit={(e) => { e.preventDefault(); run(() => updateMember({ id, name: value }), () => setRenaming(false)) }}>
+          <input className="inp" style={{ minWidth: 0, width: 180, height: 30 }} aria-label={`New name for ${name}`} required minLength={2} maxLength={80} value={value} onChange={(e) => setValue(e.target.value)} />
+          <button type="submit" className="btn primary sm" disabled={pending || value.trim() === name}>Save</button>
+        </form>
+      ) : null}
       {flash}
     </div>
   )

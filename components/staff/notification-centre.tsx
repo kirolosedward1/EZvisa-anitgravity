@@ -40,7 +40,7 @@ export function NotificationCentre({ items, readAt, prefs: initialPrefs, demo }:
           <div key={n.id} className="note-item" data-unread={unread(n) ? "true" : undefined}>
             <span className="dot-unread" aria-label={unread(n) ? "Unread" : undefined} />
             <div style={{ minWidth: 0, flex: 1 }}>
-              <p style={{ margin: 0, fontSize: 13 }}><b style={{ fontWeight: 500 }}>{n.who}</b> {n.text}</p>
+              <a href={n.href} onClick={() => setRead((r) => new Set(r).add(n.id))} style={{ display: "block", margin: 0, fontSize: 13, color: "#102347" }}><b style={{ fontWeight: 500 }}>{n.who}</b> {n.text}</a>
               <span className="muted" style={{ fontSize: 12 }}>{ago(n.at)}</span>
             </div>
             <a className="btn outline sm" href={n.href} onClick={() => setRead((r) => new Set(r).add(n.id))}>{n.action}</a>

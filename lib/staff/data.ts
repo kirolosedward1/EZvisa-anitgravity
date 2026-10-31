@@ -11,6 +11,7 @@ import { toStaffCase, type StaffCase } from "@/lib/staff/cases"
 import { DEMO_STAFF, demoConsoleData } from "@/lib/staff/demo"
 import { missingTable, type Staff } from "@/lib/staff/session"
 import type { Role } from "@/lib/staff/roles"
+import { loadSettings, type LoadedSettings } from "@/lib/staff/console-settings-server"
 
 export type StaffMember = { id: string; name: string; email: string; role: Role; active: boolean }
 
@@ -22,6 +23,8 @@ export type ConsoleData = {
   team: StaffMember[]
   /** Set when part of the data could not be read (shown as a banner, the rest stays visible). */
   problem: string | null
+  /** Editable console settings (SLA targets, templates, centres, auto-assign), defaults until migration 011. */
+  settings: LoadedSettings
 }
 
 const BASE_COLUMNS =
@@ -32,10 +35,12 @@ const STEP_002_COLUMNS = "paid_at, file_downloaded_at, appointment_choice, appoi
 const CASE_LIMIT = 5000
 
 export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> => {
+  const settings = await loadSettings(staff.demo)
   if (staff.demo) {
     const { apps, reviews, owners } = demoConsoleData()
     return {
-      cases: apps.map((a) => toStaffCase(a, reviews[a.id ?? ""] ?? {}, owners[a.id ?? ""] ?? null)),
+      settings,
+      cases: apps.map((a) => toStaffCase(a, reviews[a.id ?? ""] ?? {}, owners[a.id ?? ""] ?? null, settings.sla)),
       apps,
       reviews,
       team: DEMO_STAFF.map((m) => ({ ...m, active: true })),
@@ -44,7 +49,7 @@ export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> 
   }
 
   const client = serviceClient()
-  if (!client) return { cases: [], apps: [], reviews: {}, team: [], problem: "The database is not configured for this deployment." }
+  if (!client) return { cases: [], apps: [], reviews: {}, team: [], settings, problem: "The database is not configured for this deployment." }
 
   let problem: string | null = null
   let apps: VisaApplication[] = []
@@ -83,8 +88,8 @@ export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> 
   const cases = apps.map((a) => {
     const reviews: DocumentReviews = toDocumentReviews(reviewsBy.get(a.id ?? "") ?? [])
     reviewMap[a.id ?? ""] = reviews
-    return toStaffCase(a, reviews, ownerBy.get(a.id ?? "") ?? null)
+    return toStaffCase(a, reviews, ownerBy.get(a.id ?? "") ?? null, settings.sla)
   })
   const team = ((teamRows.data ?? []) as StaffMember[]).filter((m) => m.active)
-  return { cases, apps, reviews: reviewMap, team, problem }
+  return { cases, apps, reviews: reviewMap, team, settings, problem }
 })

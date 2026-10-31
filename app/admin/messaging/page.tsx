@@ -12,7 +12,7 @@ import { loadConsoleData } from "@/lib/staff/data"
 import { sectionAccess } from "@/lib/staff/guard"
 import { agoLabel } from "@/lib/staff/queue"
 import { slaLabel } from "@/lib/staff/sla"
-import { fillTemplate, TEMPLATES, waUrl, type TemplateKey } from "@/lib/staff/templates"
+import { fillTemplate, waUrl, type TemplateKey } from "@/lib/staff/templates"
 import { initials } from "@/lib/staff/session"
 
 export const dynamic = "force-dynamic"
@@ -24,7 +24,8 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
   if (!allowed) return <PermissionDenied what="Messaging is not part of your role" role={staff.role} who="Specialists, Support and admins message customers." />
   const sp = await searchParams
   const tab = TABS.find((t) => t.key === sp.tab)?.key ?? "inbox"
-  const { cases, apps, reviews } = await loadConsoleData(staff)
+  const { cases, apps, reviews, settings } = await loadConsoleData(staff)
+  const TEMPLATES = settings.templates
   const now = Date.now()
   const appById = new Map(apps.map((a) => [a.id ?? "", a]))
   const support = staff.role === "support"
@@ -63,10 +64,10 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
       </div>
       {support ? (
         <div className="kpis" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-          <div className="card kpi"><span className="v">{cases.filter((c) => isOpen(c) && c.side === "us").length}</span><span className="l">Customers waiting on us</span></div>
-          <div className="card kpi"><span className="v">{cases.filter((c) => isOpen(c) && c.task === "help").length}</span><span className="l">Appointment help requests</span></div>
-          <div className="card kpi"><span className="v">{tomorrow.length}</span><span className="l">Appointments in the next 48 hours</span></div>
-          <div className="card kpi"><span className="v">{cases.filter((c) => isOpen(c) && c.side === "customer").length}</span><span className="l">Waiting on customers</span></div>
+          <a className="card kpi" href="/staff/cases?tab=us"><span className="v">{cases.filter((c) => isOpen(c) && c.side === "us").length}</span><span className="l">Customers waiting on us</span></a>
+          <a className="card kpi" href="/staff/appointments#help-h"><span className="v">{cases.filter((c) => isOpen(c) && c.task === "help").length}</span><span className="l">Appointment help requests</span></a>
+          <a className="card kpi" href="/staff/appointments"><span className="v">{tomorrow.length}</span><span className="l">Appointments in the next 48 hours</span></a>
+          <a className="card kpi" href="/staff/cases?tab=customer"><span className="v">{cases.filter((c) => isOpen(c) && c.side === "customer").length}</span><span className="l">Waiting on customers</span></a>
         </div>
       ) : null}
       <nav className="utabs" aria-label="Messaging">
@@ -100,8 +101,8 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
                 <header className="thread-head">
                   <span className="av" aria-hidden="true">{initials(sel.name)}</span>
                   <span style={{ display: "flex", flexDirection: "column", minWidth: 0, flex: 1 }}>
-                    <b style={{ fontWeight: 500 }}>{sel.name}</b>
-                    <span className="muted" style={{ fontSize: 12 }}>{sel.phone || "No phone"} · <a href={`/staff/cases/${sel.id}`}>{sel.ref}</a> · {STAGE[sel.stage].label}{selInfo.lang === "ar" ? " · Arabic" : " · English"}</span>
+                    <a href={`/staff/customers?case=${sel.id}`} style={{ fontWeight: 500, color: "inherit" }} title="Customer profile">{sel.name}</a>
+                    <span className="muted" style={{ fontSize: 12 }}>{sel.phone ? <a href={`tel:${sel.phone.replace(/[^+\d]/g, "")}`}>{sel.phone}</a> : "No phone"} · <a href={`/staff/cases/${sel.id}`}>{sel.ref}</a> · <a href={`/staff/cases?stage=${sel.stage}`}>{STAGE[sel.stage].label}</a>{selInfo.lang === "ar" ? " · Arabic" : " · English"}</span>
                   </span>
                   <a className="btn outline sm" href={`/staff/cases/${sel.id}`}>Open case</a>
                 </header>
@@ -112,7 +113,7 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
                 {selInfo.optIn ? (
                   <ReplyComposer phone={sel.phone} quick={QUICK.map((k) => ({ label: TEMPLATES[k].label, text: fillTemplate(k === "greeting" || selInfo.lang === "ar" ? TEMPLATES[k].ar : TEMPLATES[k].en, vars) }))} />
                 ) : (
-                  <p className="muted" style={{ padding: "12px 16px", margin: 0, fontSize: 13 }}>This customer switched WhatsApp messages off in their application. Use email: {sel.email}</p>
+                  <p className="muted" style={{ padding: "12px 16px", margin: 0, fontSize: 13 }}>This customer switched WhatsApp messages off in their application. Use email: <a href={`mailto:${sel.email}`}>{sel.email}</a></p>
                 )}
               </section>
             ) : null}
@@ -121,7 +122,7 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
       })() : null}
 
       {tab === "broadcast" ? (
-        <Broadcast recipients={recipients} stages={OPEN_STAGES.map((s) => ({ key: s, label: STAGE[s].label }))} countries={[...new Set(recipients.map((r) => r.country))].sort()} />
+        <Broadcast recipients={recipients} stages={OPEN_STAGES.map((s) => ({ key: s, label: STAGE[s].label }))} countries={[...new Set(recipients.map((r) => r.country))].sort()} templates={settings.templates} />
       ) : null}
 
       {tab === "push" ? (

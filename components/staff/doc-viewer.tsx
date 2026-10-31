@@ -78,7 +78,7 @@ export function DocViewer({
   return (
     <div className="viewer">
       <div className="viewer-head">
-        <a href="/staff/documents" className="btn ghost"><ArrowLeft size={16} aria-hidden /> Back to review</a>
+        <a href={`/staff/documents?case=${caseId}`} className="btn ghost"><ArrowLeft size={16} aria-hidden /> Back to review</a>
         <div style={{ minWidth: 0 }}>
           <h1 className="ellipsis">{doc.title} · {file.name ?? "no file"}</h1>
           <p className="muted ellipsis" style={{ margin: 0, fontSize: 13 }}><a href={`/staff/cases/${caseId}?tab=documents`}>{customerFirst} · {caseRef}</a></p>

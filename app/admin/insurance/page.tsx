@@ -19,10 +19,13 @@ type Quote = { application_id: string; price: number; insurer: string | null; st
 const TONE: Record<string, string> = { sent: "blue", accepted: "green", declined: "grey", issued: "green" }
 const LABEL: Record<string, string> = { sent: "Sent, waiting", accepted: "Accepted", declined: "Declined", issued: "Policy issued" }
 
-export default async function InsurancePage() {
+export default async function InsurancePage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { staff, allowed } = await sectionAccess("insurance")
   if (!allowed) return <PermissionDenied what="Insurance is part of the Finance role" role={staff.role} who="Finance or an admin sends quotes and issues policies." />
-  const { cases, apps } = await loadConsoleData(staff)
+  const { cases: all, apps } = await loadConsoleData(staff)
+  // ?q= (from a case page): one customer's quotes by reference, name or email.
+  const q = ((await searchParams).q ?? "").trim().toLowerCase()
+  const cases = q ? all.filter((c) => `${c.ref} ${c.name} ${c.email}`.toLowerCase().includes(q)) : all
   const now = Date.now()
   let quotes: Quote[] = []
   let problem: string | null = null
@@ -47,11 +50,12 @@ export default async function InsurancePage() {
         <h1>Travel insurance</h1>
         <p className="muted" style={{ margin: 0, fontSize: 13 }}>Quotes are separate from the service fee. A request is a preference, never a policy. No insurer rate card is connected: type the price from the insurer&rsquo;s rates.</p>
       </div>
+      {q ? <div className="banner amber" role="note">Showing quotes matching &ldquo;{q}&rdquo;. <a href="/staff/insurance">Show all</a></div> : null}
       <div className="kpis" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-        <div className="card kpi"><span className="v" style={{ color: "#7a4b00" }}>{requests.length}</span><span className="l">Quotes requested, not sent</span></div>
-        <div className="card kpi"><span className="v">{quotes.filter((q) => q.status === "sent").length}</span><span className="l">Quotes sent, awaiting answer</span></div>
-        <div className="card kpi"><span className="v">{issuedMonth}</span><span className="l">Policies issued this month</span></div>
-        <div className="card kpi"><span className="v">{own}</span><span className="l">Own policy, to check at the appointment</span></div>
+        <a className="card kpi" href="#qr-h"><span className="v" style={{ color: "#7a4b00" }}>{requests.length}</span><span className="l">Quotes requested, not sent</span></a>
+        <a className="card kpi" href="#qs-h"><span className="v">{quotes.filter((x) => x.status === "sent").length}</span><span className="l">Quotes sent, awaiting answer</span></a>
+        <a className="card kpi" href="#qs-h"><span className="v">{issuedMonth}</span><span className="l">Policies issued this month</span></a>
+        <a className="card kpi" href="/staff/appointments"><span className="v">{own}</span><span className="l">Own policy, to check at the appointment</span></a>
       </div>
       <div className="grid2" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
         <section className="card" aria-labelledby="qr-h" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>

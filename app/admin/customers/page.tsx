@@ -105,13 +105,15 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               {waUrl(selected.phone) && can(staff.role, "msg") ? <a className="btn outline sm" href={waUrl(selected.phone)!} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} color="#1a7f37" aria-hidden /> WhatsApp</a> : null}
               <a className="btn outline sm" href={`mailto:${selected.email}`}>Email</a>
               {selected.cases[0] ? <a className="btn outline sm" href={`/staff/cases/${selected.cases[0].id}`}>Latest case</a> : null}
+              {selected.cases[0] && can(staff.role, "edit") ? <a className="btn outline sm" href={`/staff/cases/${selected.cases[0].id}?tab=details&edit=1`}>Edit details</a> : null}
+              {staff.role !== "finance" ? <a className="btn primary sm" href="/staff/cases/new">New case</a> : null}
             </div>
             <dl className="kv">
-              <dt>Email</dt><dd>{selected.email}</dd>
-              <dt>Phone</dt><dd>{selected.phone || "Not given"}</dd>
+              <dt>Email</dt><dd><a href={`mailto:${selected.email}`}>{selected.email}</a></dd>
+              <dt>Phone</dt><dd>{selected.phone ? <><a href={`tel:${selected.phone.replace(/[^+\d]/g, "")}`}>{selected.phone}</a>{waUrl(selected.phone) ? <> · <a href={waUrl(selected.phone)!} target="_blank" rel="noopener noreferrer">WhatsApp</a></> : null}</> : "Not given"}</dd>
               <dt>Nationality</dt><dd>{selected.nationality || "Not given"}</dd>
               <dt>Language</dt><dd>{selected.arabic ? "Arabic" : "English"}</dd>
-              <dt>Paid</dt><dd>{selected.paid.toLocaleString("en-US")} AED across {selected.cases.filter((c) => c.paid).length} {selected.cases.filter((c) => c.paid).length === 1 ? "case" : "cases"}</dd>
+              <dt>Paid</dt><dd>{can(staff.role, "pay") ? <a href={`/staff/payments?tab=all&q=${encodeURIComponent(selected.email)}`}>{selected.paid.toLocaleString("en-US")} AED</a> : `${selected.paid.toLocaleString("en-US")} AED`} across {selected.cases.filter((c) => c.paid).length} {selected.cases.filter((c) => c.paid).length === 1 ? "case" : "cases"}</dd>
             </dl>
             <div className="stack" style={{ gap: 6 }}>
               <h3>Cases</h3>

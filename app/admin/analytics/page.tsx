@@ -75,10 +75,10 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       {tab === "marketing" ? (
         <>
           <div className="kpis" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-            <div className="card kpi"><span className="v">{m.cur.started}</span><span className="l">Applications started</span><Delta v={delta(m.cur.started, m.prev.started)} /></div>
-            <div className="card kpi"><span className="v">{m.cur.paid}</span><span className="l">Paid</span><Delta v={delta(m.cur.paid, m.prev.paid)} /></div>
-            <div className="card kpi"><span className="v">{Math.round(m.cur.revenue).toLocaleString("en-US")}<small> AED</small></span><span className="l">Revenue</span><Delta v={delta(m.cur.revenue, m.prev.revenue)} /></div>
-            <div className="card kpi"><span className="v">{m.cur.started ? Math.round((m.cur.paid / m.cur.started) * 100) : 0}<small> percent</small></span><span className="l">Started to paid</span></div>
+            <a className="card kpi" href="/staff/cases?sort=newest"><span className="v">{m.cur.started}</span><span className="l">Applications started</span><Delta v={delta(m.cur.started, m.prev.started)} /></a>
+            <a className="card kpi" href="/staff/payments?tab=all"><span className="v">{m.cur.paid}</span><span className="l">Paid</span><Delta v={delta(m.cur.paid, m.prev.paid)} /></a>
+            <a className="card kpi" href="/staff/payments?tab=all"><span className="v">{Math.round(m.cur.revenue).toLocaleString("en-US")}<small> AED</small></span><span className="l">Revenue</span><Delta v={delta(m.cur.revenue, m.prev.revenue)} /></a>
+            <a className="card kpi" href="#fn-h"><span className="v">{m.cur.started ? Math.round((m.cur.paid / m.cur.started) * 100) : 0}<small> percent</small></span><span className="l">Started to paid</span></a>
           </div>
           <div className="grid2">
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="fn-h">
@@ -116,23 +116,23 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       ) : (
         <>
           <div className="kpis" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-            <div className="card kpi"><span className="v">{fmt(o.medianToReadyDays)}<small> days</small></span><span className="l">Paid to file ready, median</span></div>
-            <div className="card kpi"><span className="v">{fmt(o.withinSla, 0)}<small> percent</small></span><span className="l">Open cases within SLA, now</span></div>
-            <div className="card kpi"><span className="v">{fmt(o.medianReviewHours)}<small> h</small></span><span className="l">Upload to review decision, median</span></div>
-            <div className="card kpi"><span className="v">{reviewHours.length}</span><span className="l">Document decisions in the period</span></div>
+            <a className="card kpi" href="/staff/cases?tab=us"><span className="v">{fmt(o.medianToReadyDays)}<small> days</small></span><span className="l">Paid to file ready, median</span></a>
+            <a className="card kpi" href="/staff/cases?tab=sla"><span className="v">{fmt(o.withinSla, 0)}<small> percent</small></span><span className="l">Open cases within SLA, now</span></a>
+            <a className="card kpi" href="/staff/documents"><span className="v">{fmt(o.medianReviewHours)}<small> h</small></span><span className="l">Upload to review decision, median</span></a>
+            <a className="card kpi" href="/staff/audit?type=document"><span className="v">{reviewHours.length}</span><span className="l">Document decisions in the period</span></a>
           </div>
           <div className="grid2" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="bd-h">
               <h2 id="bd-h">By destination, paid in the period</h2>
               <div className="tbl"><div className="tbl-h" style={{ gridTemplateColumns: "1.3fr 0.6fr 0.6fr 0.8fr 1fr" }}><span>Destination</span><span>Paid</span><span>Ready</span><span>Appts</span><span>Median to ready</span></div>
-                {o.destinations.map((d) => <div key={d.country} className="tbl-r" style={{ gridTemplateColumns: "1.3fr 0.6fr 0.6fr 0.8fr 1fr" }}><span>{d.country}</span><span>{d.paid}</span><span>{d.ready}</span><span>{d.appts}</span><span>{d.median === null ? "–" : `${fmt(d.median)} days`}</span></div>)}
+                {o.destinations.map((d) => <div key={d.country} className="tbl-r" style={{ gridTemplateColumns: "1.3fr 0.6fr 0.6fr 0.8fr 1fr" }}><a href={`/staff/cases?country=${encodeURIComponent(d.country)}&tab=all`}>{d.country}</a><span>{d.paid}</span><span>{d.ready}</span><span>{d.appts}</span><span>{d.median === null ? "–" : `${fmt(d.median)} days`}</span></div>)}
                 {o.destinations.length === 0 ? <div className="empty">No payments in the period.</div> : null}
               </div>
             </section>
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="tm-h">
               <h2 id="tm-h">Team</h2>
               <div className="tbl"><div className="tbl-h" style={{ gridTemplateColumns: "1.3fr 0.6fr 0.8fr 0.8fr 1fr" }}><span>Specialist</span><span>Open</span><span>Ready+</span><span>Past SLA</span><span>Within SLA</span></div>
-                {t.map((r) => <div key={r.id} className="tbl-r" style={{ gridTemplateColumns: "1.3fr 0.6fr 0.8fr 0.8fr 1fr" }}><span className="ellipsis">{r.name}</span><span>{r.open}</span><span>{r.ready}</span><span style={{ color: r.over ? "#8a1c1c" : undefined }}>{r.over}</span><span>{r.withinSla === null ? "–" : <span className={`pill xs ${r.withinSla >= 90 ? "green" : "amber"}`}>{r.withinSla} percent</span>}</span></div>)}
+                {t.map((r) => <div key={r.id} className="tbl-r" style={{ gridTemplateColumns: "1.3fr 0.6fr 0.8fr 0.8fr 1fr" }}><a className="ellipsis" href={`/staff/cases?owner=${r.id}`}>{r.name}</a><a href={`/staff/cases?owner=${r.id}`}>{r.open}</a><span>{r.ready}</span><a href={`/staff/cases?owner=${r.id}&tab=sla`} style={{ color: r.over ? "#8a1c1c" : undefined }}>{r.over}</a><span>{r.withinSla === null ? "–" : <span className={`pill xs ${r.withinSla >= 90 ? "green" : "amber"}`}>{r.withinSla} percent</span>}</span></div>)}
                 {t.length === 0 ? <div className="empty">No specialists yet.</div> : null}
               </div>
               <p className="muted" style={{ margin: 0, fontSize: 12 }}>Customer ratings are not collected yet.{staff.demo ? " The demo has no stage-change history, so time to ready shows a dash." : ""}</p>

@@ -102,7 +102,7 @@ export function CaseDocuments({ caseId, docs, canDecide, demo }: { caseId: strin
               <span className="doc-ico" data-state={d.state} aria-hidden="true"><FileText size={16} /></span>
               <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
                 <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <b style={{ fontWeight: 500 }}>{d.title}</b>
+                  {latest ? <a href={`/staff/documents/${caseId}~${d.type}`} style={{ fontWeight: 500, color: "inherit" }} title="Open in the document viewer">{d.title}</a> : <b style={{ fontWeight: 500 }}>{d.title}</b>}
                   <StatePill state={d.state} />
                 </div>
                 <span className="muted" style={{ fontSize: 12 }}>

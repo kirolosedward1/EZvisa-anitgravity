@@ -16,6 +16,7 @@ export type QueueRow = {
   iso?: string
   travellers: number
   stage: string
+  stageKey: string
   tone: string
   what: string
   who: string
@@ -78,7 +79,7 @@ export function CasesQueue({
   countries: Option[]
   sorts: Option[]
   me: { staffId: string | null }
-  perms: { assign: boolean; selfAssign: boolean; stage: boolean; export: boolean; msg: boolean }
+  perms: { assign: boolean; selfAssign: boolean; stage: boolean; export: boolean; msg: boolean; edit: boolean }
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -312,14 +313,14 @@ export function CasesQueue({
                 <button type="button" className={on ? "chk on" : "chk"} aria-label={`Select ${r.name}`} aria-pressed={on} onClick={() => toggle(r.id)}>
                   {on ? <Check size={11} strokeWidth={3} aria-hidden /> : null}
                 </button>
-                <CountryFlag iso={r.iso} title={r.country} className="size-[26px]" />
+                <a href={`/staff/cases?country=${encodeURIComponent(r.country)}`} className="row-flag" title={`All ${r.country} cases`}><CountryFlag iso={r.iso} title={r.country} className="size-[26px]" /></a>
                 <a href={`/staff/cases/${r.id}`} className="who">
                   <b>{r.name}</b>
                   <span className="muted" style={{ fontSize: 12 }}>
                     {r.ref} · {r.country} · {r.travellers === 1 ? "1 traveller" : `${r.travellers} travellers`}
                   </span>
                 </a>
-                <span className={`pill ${r.tone}`}><span className="dot" />{r.stage}</span>
+                <a href={`/staff/cases?stage=${r.stageKey}`} className={`pill ${r.tone}`} title={`All cases at ${r.stage}`}><span className="dot" />{r.stage}</a>
                 {visible.map((c) =>
                   c.key === "waiting" ? (
                     <span key={c.key} className="c-waiting">
@@ -332,12 +333,16 @@ export function CasesQueue({
                     <span key={c.key} className="muted c-last" style={{ fontSize: 12 }}>{r.last}</span>
                   ) : c.key === "owner" ? (
                     r.owner ? (
-                      <span key={c.key} className="av c-owner" title={r.ownerName}>{r.owner}</span>
+                      <a key={c.key} href={`/staff/cases?owner=${r.ownerId}`} className="av c-owner" title={`${r.ownerName}: their cases`}>{r.owner}</a>
                     ) : !r.paid ? (
                       // Unpaid drafts get an owner after payment; no "unassigned" marker for them.
                       <span key={c.key} className="muted c-owner" style={{ textAlign: "center" }} title="Assigned after payment">–</span>
                     ) : (
-                      <span key={c.key} className="av none c-owner" title="Unassigned">?</span>
+                      r.open && me.staffId && (perms.assign || perms.selfAssign) ? (
+                        <button key={c.key} type="button" className="av none c-owner" title="Unassigned: assign to me" aria-label={`Assign ${r.name} to me`} onClick={() => run(() => assignCases({ ids: [r.id], staffId: me.staffId }))}>?</button>
+                      ) : (
+                        <a key={c.key} href="/staff/cases?owner=none" className="av none c-owner" title="Unassigned cases">?</a>
+                      )
                     )
                   ) : (
                     <span key={c.key} className="c-sla" style={{ fontSize: 12, fontWeight: 500, color: SLA_COLOR[r.slaTone], whiteSpace: "nowrap" }}>{r.sla}</span>
@@ -364,7 +369,9 @@ export function CasesQueue({
                       {perms.msg && r.waLink ? (
                         <a role="menuitem" href={r.waLink} target="_blank" rel="noopener noreferrer">WhatsApp the customer</a>
                       ) : null}
-                      <a role="menuitem" href={`/staff/cases/${r.id}`}>Review documents</a>
+                      {r.paid ? <a role="menuitem" href={`/staff/cases/${r.id}?tab=documents`}>Review documents</a> : null}
+                      {perms.edit && r.open ? <a role="menuitem" href={`/staff/cases/${r.id}?tab=details&edit=1`}>Edit application details</a> : null}
+                      <a role="menuitem" href={`/staff/customers?case=${r.id}`}>Customer profile</a>
                       {perms.msg && r.canRemind && r.waLink ? (
                         <a role="menuitem" href={`${r.waLink}?text=${encodeURIComponent(`Hi ${r.name.split(" ")[0]}, this is EZvisa about your application ${r.ref}. ${r.what}. You can upload from your dashboard: https://www.ezvisa.net/dashboard`)}`} target="_blank" rel="noopener noreferrer">
                           Send document reminder (WhatsApp)

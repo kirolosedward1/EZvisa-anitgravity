@@ -150,6 +150,26 @@ push to `main`.
   need the matching permission (status changes and emails: Change stage; reviews: Review documents; document
   generation: Prepare files).
 
+## Connected console and editable settings (31 October)
+
+Owner request: more edit buttons and links, everything connected, and control from the console.
+
+- **Settings are editable** (admins, logged in the audit, `011_console_settings.sql`): message templates in English and
+  Arabic (used by quick replies and broadcasts), SLA targets (due times and "Past SLA" on every board), automatic
+  assignment on payment (on/off and a cap per specialist) and the visa centres on the appointment form and filters.
+  Each can be reset to the default. Destinations, document requirements and the service fee stay read only: they are
+  the shared website/app contract, so the app and the website never disagree.
+- **Case page**: the name opens the customer profile, the country and stage open the filtered queue, Email / Call /
+  WhatsApp / Open in inbox sit under the title, the appointment can be saved or changed in place, "Edit details" opens
+  the edit form directly (`?tab=details&edit=1`), the owner links to their cases, document titles open the viewer and
+  the File preparation tab opens this case's file.
+- **Queue**: the whole row opens the case; the flag, stage pill and owner filter the queue; an unassigned "?" assigns
+  the case to you; the row menu adds Edit application details and Customer profile.
+- **Every board**: KPI tiles are links; workload, team and analytics rows open that person's or country's cases;
+  names open the customer profile; emails and phones are mailto / tel / WhatsApp links; audit events filter by type and
+  person and link settings and team targets; notifications open from their text; ready files without an appointment
+  can be saved from Appointments; staff can be renamed on Team.
+
 ## Demo session (local and preview builds only)
 
 `/api/auth/demo-login?scenario=staff&role=admin|specialist|support|finance` opens the console with invented cases. It

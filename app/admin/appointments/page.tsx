@@ -6,7 +6,7 @@ import { CountryFlag } from "@/components/country-flag"
 import { PermissionDenied } from "@/components/staff/states"
 import { SCHENGEN_META } from "@/lib/countries"
 import { isOpen } from "@/lib/staff/cases"
-import { CENTRES, centreMatches, centreTone } from "@/lib/staff/centres"
+import { centreMatches, centreTone } from "@/lib/staff/centres"
 import { loadConsoleData } from "@/lib/staff/data"
 import { sectionAccess } from "@/lib/staff/guard"
 import { agoLabel } from "@/lib/staff/queue"
@@ -23,12 +23,13 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
   if (!allowed) return <PermissionDenied what="Appointments are not part of your role" role={staff.role} who="Specialists, Support and admins save appointments." />
   const sp = await searchParams
   const offset = Math.max(-8, Math.min(12, Number.parseInt(sp.w ?? "0", 10) || 0))
+  const { cases, team, settings } = await loadConsoleData(staff)
+  const CENTRES = settings.centres
   const centre = CENTRES.some((c) => c.short === sp.centre) ? sp.centre! : ""
-  const { cases, team } = await loadConsoleData(staff)
   const now = Date.now()
   const start = dubaiWeekStart(now) + offset * 7 * DAY
   const end = start + 7 * DAY
-  const matchesCentre = (c: string | null) => !centre || centreMatches(c, centre)
+  const matchesCentre = (c: string | null) => !centre || centreMatches(c, centre, CENTRES)
   const booked = cases.filter((c) => c.appointmentAt && c.stage !== "cancelled" && matchesCentre(c.appointmentCentre))
   const week = booked.filter((c) => Date.parse(c.appointmentAt!) >= start && Date.parse(c.appointmentAt!) < end).sort((a, b) => a.appointmentAt!.localeCompare(b.appointmentAt!))
   const help = cases.filter((c) => isOpen(c) && c.task === "help").sort((a, b) => (a.dueAt ?? "").localeCompare(b.dueAt ?? ""))
@@ -61,13 +62,13 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
       </div>
 
       <div className="kpis" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
-        <div className="card kpi"><span className="v">{week.length}</span><span className="l">Appointments this week</span></div>
-        <div className="card kpi"><span className="v" style={{ color: "#7a4b00" }}>{help.length}</span><span className="l">Help requests, want us to book</span></div>
-        <div className="card kpi"><span className="v">{readyNoAppt.length}</span><span className="l">Ready files with no appointment yet</span></div>
-        <div className="card kpi"><span className="v">{soon}</span><span className="l">In the next 48 hours</span></div>
+        <a className="card kpi" href="#week-h"><span className="v">{week.length}</span><span className="l">Appointments this week</span></a>
+        <a className="card kpi" href="#help-h"><span className="v" style={{ color: "#7a4b00" }}>{help.length}</span><span className="l">Help requests, want us to book</span></a>
+        <a className="card kpi" href="#rna-h"><span className="v">{readyNoAppt.length}</span><span className="l">Ready files with no appointment yet</span></a>
+        <a className="card kpi" href="#week-h"><span className="v">{soon}</span><span className="l">In the next 48 hours</span></a>
       </div>
 
-      <section className="card" aria-label="Week" style={{ overflow: "hidden" }}>
+      <section className="card" id="week-h" aria-label="Week" style={{ overflow: "hidden" }}>
         <div className="week">
           {Array.from({ length: 7 }, (_, i) => {
             const dayStart = start + i * DAY
@@ -111,9 +112,9 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
                     <span className="muted ellipsis" style={{ fontSize: 12 }}>{c.country} · {c.appointmentCentre ?? "any centre"}</span>
                   </a>
                   {sla ? <span className={`pill xs ${sla.over ? "red" : "amber"}`}>{sla.over ? `Over SLA ${sla.text.replace(" over", "")}` : sla.text}</span> : null}
-                  {owner ? <span className="av" title={owner}>{initials(owner)}</span> : <span className="av none" title="Unassigned">?</span>}
+                  {owner ? <a className="av" href={`/staff/cases?owner=${c.ownerId}`} title={`${owner}: their cases`}>{initials(owner)}</a> : <a className="av none" href="/staff/cases?owner=none" title="Unassigned cases">?</a>}
                 </div>
-                {can(staff.role, "appt") ? <BookAndSave caseId={c.id} defaultCentre={c.appointmentCentre} canAssignSelf={!c.ownerId && can(staff.role, "docs")} me={staff.staffId} demo={staff.demo} /> : null}
+                {can(staff.role, "appt") ? <BookAndSave caseId={c.id} centres={CENTRES.map((x) => x.name)} defaultCentre={c.appointmentCentre} canAssignSelf={!c.ownerId && can(staff.role, "docs")} me={staff.staffId} demo={staff.demo} /> : null}
               </div>
             )
           })}
@@ -129,15 +130,18 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
             const digits = c.phone.replace(/\D/g, "")
             const text = `Hi ${c.name.split(" ")[0]}, your ${c.country} visa file (${c.ref}) is ready. Have you booked your visa centre appointment? Save it on your dashboard, or reply and we can help: https://www.ezvisa.net/dashboard`
             return (
-              <div key={c.id} className="appt-row" style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <a href={`/staff/cases/${c.id}`} style={{ display: "flex", flexDirection: "column", minWidth: 0, color: "#102347" }}>
-                  <b className="ellipsis" style={{ fontWeight: 500 }}>{c.name}</b>
-                  <span className="muted" style={{ fontSize: 12 }}>{c.country} · ready {agoLabel(c.updatedAt, now)}</span>
-                </a>
-                <div style={{ display: "flex", gap: 6 }}>
-                  {digits.length >= 8 && can(staff.role, "msg") ? <a className="btn outline sm" href={`https://wa.me/${digits}?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">Nudge now</a> : null}
-                  {digits.length >= 8 ? <a className="btn ghost sm" href={`tel:+${digits}`}>Call</a> : null}
+              <div key={c.id} className="appt-row">
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <a href={`/staff/cases/${c.id}`} style={{ display: "flex", flexDirection: "column", minWidth: 0, color: "#102347" }}>
+                    <b className="ellipsis" style={{ fontWeight: 500 }}>{c.name}</b>
+                    <span className="muted" style={{ fontSize: 12 }}>{c.country} · ready {agoLabel(c.updatedAt, now)}</span>
+                  </a>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    {digits.length >= 8 && can(staff.role, "msg") ? <a className="btn outline sm" href={`https://wa.me/${digits}?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">Nudge now</a> : null}
+                    {digits.length >= 8 ? <a className="btn ghost sm" href={`tel:+${digits}`}>Call</a> : null}
+                  </div>
                 </div>
+                {can(staff.role, "appt") ? <BookAndSave caseId={c.id} centres={CENTRES.map((x) => x.name)} defaultCentre={c.appointmentCentre} label="They booked: save it" canAssignSelf={false} me={staff.staffId} demo={staff.demo} /> : null}
               </div>
             )
           })}

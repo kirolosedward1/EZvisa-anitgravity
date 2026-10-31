@@ -27,31 +27,33 @@ export async function addMember(input: { email: string; name: string; role: stri
   return { ok: true, message: `${v.data.name} added. They sign in at /staff with ${v.data.email} (Google or an email sign-in link); 2-step can be turned on in their account.` }
 }
 
-export async function updateMember(input: { id: string; role?: string; active?: boolean }): Promise<TeamResult> {
+export async function updateMember(input: { id: string; role?: string; active?: boolean; name?: string }): Promise<TeamResult> {
   const staff = await getStaff()
   if (!staff || !can(staff.role, "team")) return { ok: false, error: "Only an admin can manage the team." }
-  const v = z.object({ id: staff.demo ? z.string().min(1) : z.string().uuid(), role: z.enum(ROLES).optional(), active: z.boolean().optional() }).safeParse(input)
-  if (!v.success || (v.data.role === undefined && v.data.active === undefined)) return { ok: false, error: "Nothing to change." }
-  if (v.data.id === staff.staffId) return { ok: false, error: "You cannot change your own role or access." }
+  const v = z.object({ id: staff.demo ? z.string().min(1) : z.string().uuid(), role: z.enum(ROLES).optional(), active: z.boolean().optional(), name: z.string().trim().min(2).max(80).optional() }).safeParse(input)
+  if (!v.success || (v.data.role === undefined && v.data.active === undefined && v.data.name === undefined)) return { ok: false, error: v.success ? "Nothing to change." : "Enter a name of 2 to 80 characters." }
+  if (v.data.id === staff.staffId && v.data.name === undefined) return { ok: false, error: "You cannot change your own role or access." }
   if (staff.demo) return { ok: true, message: "Demo: the change would be saved. Nothing was stored." }
   const client = serviceClient()
   if (!client) return { ok: false, error: "The database is not configured." }
   const { data: before } = await client.from("staff_users").select("name, email, role, active").eq("id", v.data.id).maybeSingle()
   if (!before) return { ok: false, error: "Member not found." }
-  const patch = { ...(v.data.role ? { role: v.data.role } : {}), ...(v.data.active !== undefined ? { active: v.data.active } : {}) }
+  // A rename is its own change (also allowed on yourself); role and access are not changed with it.
+  const renaming = v.data.name !== undefined
+  const patch = renaming ? { name: v.data.name } : { ...(v.data.role ? { role: v.data.role } : {}), ...(v.data.active !== undefined ? { active: v.data.active } : {}) }
   const { error } = await client.from("staff_users").update(patch).eq("id", v.data.id)
   if (error) return { ok: false, error: "The change could not be saved." }
   await recordAudit(staff, {
-    action: v.data.role ? `Role changed for ${before.name}: ${before.role} to ${v.data.role}` : `${before.name} ${v.data.active ? "reactivated" : "deactivated"}`,
+    action: renaming ? `Renamed ${before.name} to ${v.data.name}` : v.data.role ? `Role changed for ${before.name}: ${before.role} to ${v.data.role}` : `${before.name} ${v.data.active ? "reactivated" : "deactivated"}`,
     type: "team",
     targetTable: "staff_users",
     targetId: v.data.id,
     targetLabel: before.email,
-    field: v.data.role ? "role" : "active",
-    before: v.data.role ? before.role : before.active,
-    after: v.data.role ?? v.data.active,
+    field: renaming ? "name" : v.data.role ? "role" : "active",
+    before: renaming ? before.name : v.data.role ? before.role : before.active,
+    after: renaming ? v.data.name : v.data.role ?? v.data.active,
     notified: "No",
-    reversible: true,
+    reversible: !renaming,
   }, client)
   revalidatePath("/admin/team")
   const env = isStaffEmail(before.email) ? " This email is in ADMIN_EMAILS, so it stays an admin until it is removed there." : ""

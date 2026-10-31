@@ -105,7 +105,7 @@ function staffStage(app: VisaApplication, missing: number): StaffStage {
   return missing > 0 ? "documents" : "review"
 }
 
-export function toStaffCase(app: VisaApplication, reviews: DocumentReviews = {}, ownerId: string | null = null): StaffCase {
+export function toStaffCase(app: VisaApplication, reviews: DocumentReviews = {}, ownerId: string | null = null, sla: { reviewHours: number; fileBusinessDays: number; helpHours: number } = SLA): StaffCase {
   const id = app.id ?? ""
   const docs = customerDocuments(app, reviews)
   const uploads = uploadRecords(app.additional_notes)
@@ -166,7 +166,7 @@ export function toStaffCase(app: VisaApplication, reviews: DocumentReviews = {},
         task: "review",
         what: waiting.length === 1 ? `${names[0]} uploaded` : `${waiting.length} documents to check`,
         since,
-        dueAt: addHours(since, SLA.reviewHours),
+        dueAt: addHours(since, sla.reviewHours),
         docsToCheck: waiting.length,
       }
     }
@@ -182,13 +182,13 @@ export function toStaffCase(app: VisaApplication, reviews: DocumentReviews = {},
   if (stage === "preparation" || stage === "documents" || stage === "review") {
     const approvals = Object.values(reviews).filter((r) => r.status === "approved").map((r) => r.reviewedAt).sort()
     const since = approvals[approvals.length - 1] || updated
-    return { ...base, side: "us", task: "files", what: "File to prepare", since, dueAt: addBusinessDays(since, SLA.fileBusinessDays) }
+    return { ...base, side: "us", task: "files", what: "File to prepare", since, dueAt: addBusinessDays(since, sla.fileBusinessDays) }
   }
 
   // Ready
   if (base.helpRequested) {
     const since = app.appointment_help_requested_at || updated
-    return { ...base, side: "us", task: "help", what: "Asked us to book the appointment", since, dueAt: addHours(since, SLA.helpHours) }
+    return { ...base, side: "us", task: "help", what: "Asked us to book the appointment", since, dueAt: addHours(since, sla.helpHours) }
   }
   if (base.appointmentAt) return { ...base, side: "none", what: "Appointment saved" }
   return { ...base, side: "customer", what: app.file_downloaded_at ? "Appointment not saved yet" : "File not downloaded yet" }

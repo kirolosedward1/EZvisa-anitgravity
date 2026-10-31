@@ -19,10 +19,10 @@ export type NeedsRow = {
 }
 
 type Tab = "overdue" | "docs" | "files"
-const TABS: { key: Tab; label: string; tone: string; empty: string }[] = [
-  { key: "overdue", label: "Past SLA", tone: "red", empty: "Nothing is past its SLA." },
-  { key: "docs", label: "Documents", tone: "blue", empty: "No documents waiting for a check." },
-  { key: "files", label: "Files", tone: "grey", empty: "No files to prepare." },
+const TABS: { key: Tab; label: string; tone: string; empty: string; all: { href: string; label: string } }[] = [
+  { key: "overdue", label: "Past SLA", tone: "red", empty: "Nothing is past its SLA.", all: { href: "/staff/cases?tab=sla", label: "Open every case past SLA" } },
+  { key: "docs", label: "Documents", tone: "blue", empty: "No documents waiting for a check.", all: { href: "/staff/documents", label: "Open document review" } },
+  { key: "files", label: "Files", tone: "grey", empty: "No files to prepare.", all: { href: "/staff/files", label: "Open file preparation" } },
 ]
 const WAIT_COLOR = { red: "#8a1c1c", amber: "#7a4b00", muted: "#52617a" }
 
@@ -74,7 +74,7 @@ export function NeedsAction({ rows, counts }: { rows: Record<Tab, NeedsRow[]>; c
         )}
       </div>
       <div style={{ padding: "12px 18px", borderTop: "1px solid #eef1f6" }}>
-        <a href="/staff/cases" style={{ fontSize: 13, fontWeight: 500 }}>Open the full queue</a>
+        <a href={current.all.href} style={{ fontSize: 13, fontWeight: 500 }}>{current.all.label}</a>
       </div>
     </section>
   )

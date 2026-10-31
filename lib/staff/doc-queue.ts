@@ -25,7 +25,7 @@ export type DocQueueItem = {
   over: boolean
 }
 
-export function docQueue(cases: StaffCase[], apps: VisaApplication[], reviews: Record<string, DocumentReviews>, now = Date.now()): DocQueueItem[] {
+export function docQueue(cases: StaffCase[], apps: VisaApplication[], reviews: Record<string, DocumentReviews>, now = Date.now(), reviewHours: number = SLA.reviewHours): DocQueueItem[] {
   const byId = new Map(apps.map((a) => [a.id ?? "", a]))
   const out: DocQueueItem[] = []
   for (const c of cases) {
@@ -53,7 +53,7 @@ export function docQueue(cases: StaffCase[], apps: VisaApplication[], reviews: R
         at,
         fileName: latest?.name ?? null,
         reupload: !!review && review.status === "rejected",
-        over: Date.parse(at) + SLA.reviewHours * 3_600_000 < now,
+        over: Date.parse(at) + reviewHours * 3_600_000 < now,
       })
     }
   }

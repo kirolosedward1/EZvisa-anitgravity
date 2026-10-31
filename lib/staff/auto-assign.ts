@@ -1,7 +1,7 @@
 /**
  * Automatic owner on payment (Team board, "fewest open cases"): a newly paid case without an owner goes to the active
  * specialist with the fewest open cases. Server only, best effort: it never throws and never blocks the payment;
- * before migration 005 (or with no specialists) it does nothing. Logged as an automation, undoable from Audit.
+ * before migration 005 (or with no specialists) it does nothing. Settings can turn it off or cap it per specialist. Logged as an automation, undoable from Audit.
  */
 import type { SupabaseClient } from "@supabase/supabase-js"
 
@@ -14,6 +14,10 @@ export function pickFewestOpen(specialists: { id: string; name: string }[], open
 
 export async function autoAssignOnPayment(client: SupabaseClient, applicationId: string): Promise<void> {
   try {
+    // Settings board (migration 011): automatic assignment can be turned off or capped. No row means on, no cap.
+    const setting = await client.from("console_settings").select("value").eq("key", "auto_assign").maybeSingle()
+    const rule = (setting.data?.value ?? {}) as { on?: boolean; cap?: number | null }
+    if (rule.on === false) return
     const existing = await client.from("case_assignments").select("id").eq("application_id", applicationId).limit(1)
     if (existing.error || existing.data?.length) return
     const staff = await client.from("staff_users").select("id, name").eq("role", "specialist").eq("active", true)
@@ -35,7 +39,8 @@ export async function autoAssignOnPayment(client: SupabaseClient, applicationId:
         open.set(s, (open.get(s) ?? 0) + 1)
       }
     }
-    const owner = pickFewestOpen(specialists, open)
+    const cap = typeof rule.cap === "number" && rule.cap > 0 ? rule.cap : null
+    const owner = pickFewestOpen(cap ? specialists.filter((x) => (open.get(x.id) ?? 0) < cap) : specialists, open)
     if (!owner) return
     const { error } = await client.from("case_assignments").insert({ application_id: applicationId, staff_id: owner.id, assigned_by: null, rule: "fewest_open" })
     if (error) return

@@ -5,15 +5,14 @@ import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { saveAppointment } from "@/app/admin/appointments/actions"
 import { assignCases } from "@/app/admin/cases/actions"
-import { CENTRES } from "@/lib/staff/centres"
 
-export function BookAndSave({ caseId, defaultCentre, canAssignSelf, me, demo }: { caseId: string; defaultCentre: string | null; canAssignSelf: boolean; me: string | null; demo: boolean }) {
+export function BookAndSave({ caseId, defaultCentre, canAssignSelf, me, demo, centres, current, label }: { caseId: string; defaultCentre: string | null; canAssignSelf: boolean; me: string | null; demo: boolean; centres: string[]; current?: { date: string; time: string; reference?: string | null } | null; label?: string }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
-  const [date, setDate] = useState("")
-  const [time, setTime] = useState("10:30")
-  const [centre, setCentre] = useState(defaultCentre || CENTRES[0].name)
-  const [reference, setReference] = useState("")
+  const [date, setDate] = useState(current?.date ?? "")
+  const [time, setTime] = useState(current?.time ?? "10:30")
+  const [centre, setCentre] = useState(defaultCentre || centres[0] || "")
+  const [reference, setReference] = useState(current?.reference ?? "")
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [pending, start] = useTransition()
   const run = (fn: () => Promise<{ ok: true; message: string } | { ok: false; error: string }>, close = false) =>
@@ -29,7 +28,7 @@ export function BookAndSave({ caseId, defaultCentre, canAssignSelf, me, demo }: 
     <div className="stack" style={{ gap: 8 }}>
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
         {canAssignSelf && me ? <button type="button" className="btn ghost sm" disabled={pending} onClick={() => run(() => assignCases({ ids: [caseId], staffId: me }))}>Assign to me</button> : null}
-        <button type="button" className="btn outline sm" aria-expanded={open} onClick={() => setOpen((v) => !v)}>Book and save</button>
+        <button type="button" className="btn outline sm" aria-expanded={open} onClick={() => setOpen((v) => !v)}>{label ?? "Book and save"}</button>
       </div>
       {open ? (
         <form
@@ -42,7 +41,7 @@ export function BookAndSave({ caseId, defaultCentre, canAssignSelf, me, demo }: 
           <div className="grid-form">
             <label>Date<input className="inp" type="date" required value={date} onChange={(e) => setDate(e.target.value)} /></label>
             <label>Time<input className="inp" type="time" required value={time} onChange={(e) => setTime(e.target.value)} /></label>
-            <label>Centre<select className="sel" value={centre} onChange={(e) => setCentre(e.target.value)}>{CENTRES.map((c) => <option key={c.name}>{c.name}</option>)}</select></label>
+            <label>Centre<select className="sel" value={centre} onChange={(e) => setCentre(e.target.value)}>{[...new Set([...(centre && !centres.includes(centre) ? [centre] : []), ...centres])].map((c) => <option key={c}>{c}</option>)}</select></label>
             <label>Centre reference<input className="inp" placeholder="e.g. VFS-2211-8842" value={reference} onChange={(e) => setReference(e.target.value)} /></label>
           </div>
           <p className="muted" style={{ margin: 0, fontSize: 12 }}>Book on the centre&rsquo;s site first, then save the slot: the customer sees the countdown and checklist on their dashboard. WhatsApp reminders are not connected yet.</p>

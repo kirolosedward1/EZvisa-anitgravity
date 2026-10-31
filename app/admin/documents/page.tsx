@@ -18,9 +18,9 @@ export default async function DocumentsPage({ searchParams }: { searchParams: Pr
   if (!allowed) return <PermissionDenied what="Document review is not part of your role" role={staff.role} who="Documents are view only for your role; specialists and admins decide on them." />
   const sp = await searchParams
   const mine = sp.scope === "mine"
-  const { cases, apps, reviews } = await loadConsoleData(staff)
+  const { cases, apps, reviews, settings } = await loadConsoleData(staff)
   const now = Date.now()
-  let queue = docQueue(cases, apps, reviews, now)
+  let queue = docQueue(cases, apps, reviews, now, settings.sla.reviewHours)
   if (mine) queue = queue.filter((q) => q.ownerId && q.ownerId === staff.staffId)
   if (sp.case) queue = [...queue.filter((q) => q.caseId === sp.case), ...queue.filter((q) => q.caseId !== sp.case)]
 

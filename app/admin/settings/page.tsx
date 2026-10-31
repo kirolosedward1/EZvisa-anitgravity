@@ -1,19 +1,22 @@
-// Settings board: what the website, the app and the console run on today. Values come from the shared contract and
-// the console's code, so this page shows the truth; editing them here (versioned) is not built yet. Integration
-// status shows only whether something is configured, never a value.
+// Settings board. Editable here (migration 011, logged in the audit): message templates, SLA targets, automatic
+// assignment and visa centres. Read only: destinations, document requirements and the service fee, which come from
+// the shared website/app contract so web and app never disagree. Integration status shows only whether something is
+// configured, never a value.
 import { CountryFlag } from "@/components/country-flag"
 import { PermissionDenied } from "@/components/staff/states"
 import { SCHENGEN_META } from "@/lib/countries"
 import { EMPLOYMENT, PRICE_AED, REQUIREMENTS, requiredFlags, DOC_FLAG, SCHENGEN, SPOUSE_MULTIPLIER } from "@/lib/shared/wizard-contract"
-import { CENTRES } from "@/lib/staff/centres"
+import { AutoAssignEditor, CentresEditor, SlaEditor, TemplatesEditor } from "@/components/staff/settings-editors"
+import { loadSettings } from "@/lib/staff/console-settings-server"
+import { can } from "@/lib/staff/roles"
 import { sectionAccess } from "@/lib/staff/guard"
-import { TEMPLATES, type TemplateKey } from "@/lib/staff/templates"
 
 export const dynamic = "force-dynamic"
 const SECTIONS = [
   { key: "destinations", label: "Destinations and requirements" },
   { key: "pricing", label: "Pricing and refunds" },
   { key: "templates", label: "Message templates" },
+  { key: "sla", label: "SLA and assignment" },
   { key: "automations", label: "Automations" },
   { key: "centres", label: "Visa centres" },
   { key: "integrations", label: "Integrations" },
@@ -24,7 +27,9 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   if (!allowed) return <PermissionDenied what="Settings are admin only" role={staff.role} who="Ask an admin." />
   const sp = await searchParams
   const sec = SECTIONS.find((s) => s.key === sp.sec)?.key ?? "destinations"
-  const lang = sp.lang === "ar" ? "ar" : "en"
+  const settings = await loadSettings(staff.demo)
+  const canEdit = can(staff.role, "settings")
+  const ed = { canEdit, demo: staff.demo }
   const set = (k: string) => !!process.env[k]
   const integrations = [
     { name: "Payment gateway", desc: "Checkout and payment status", status: set("ZIINA_API_KEY") ? (process.env.ZIINA_TEST_MODE === "true" ? "Connected, test mode" : "Connected") : "Not configured", tone: set("ZIINA_API_KEY") ? "green" : "amber" },
@@ -48,13 +53,14 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     <>
       <div className="ezc-pagehead">
         <h1>Settings</h1>
-        <p className="muted" style={{ margin: 0, fontSize: 13 }}>Shared with the website and the app through the wizard contract. Shown read only: changing them is a code change for now, so nothing drifts between web and app.</p>
+        <p className="muted" style={{ margin: 0, fontSize: 13 }}>Templates, SLA targets, assignment and centres are edited here and logged in the audit. Destinations, documents and the fee are shared with the app, so they change in code.</p>
       </div>
       <div className="settings">
         <nav className="card" aria-label="Settings sections" style={{ padding: 8, display: "flex", flexDirection: "column", gap: 2 }}>
           {SECTIONS.map((s) => <a key={s.key} className="qbtn" href={`/staff/settings?sec=${s.key}`} aria-current={sec === s.key ? "true" : undefined}>{s.label}</a>)}
         </nav>
         <div className="stack">
+          {!staff.demo && !settings.stored && sec !== "destinations" && sec !== "pricing" && sec !== "integrations" ? <div className="banner amber" role="note">Saving needs migration 011 (console_settings). Until it is applied, the defaults below are used.</div> : null}
           {sec === "destinations" ? (
             <>
               <section className="card" style={{ overflow: "hidden" }} aria-labelledby="d-h">
@@ -109,18 +115,21 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           ) : null}
           {sec === "templates" ? (
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="t-h">
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-                <h2 id="t-h">Message templates</h2>
-                <nav className="seg" aria-label="Language"><a className="tab" href="/staff/settings?sec=templates" aria-current={lang === "en" ? "page" : undefined}>English</a><a className="tab" href="/staff/settings?sec=templates&lang=ar" aria-current={lang === "ar" ? "page" : undefined}>Arabic</a></nav>
-              </div>
-              <p className="muted" style={{ margin: 0, fontSize: 12 }}>Used for quick replies and broadcasts; variables fill from the case. They open WhatsApp with the text (WhatsApp Business templates and approval are not connected).</p>
-              {(Object.keys(TEMPLATES) as TemplateKey[]).map((k) => (
-                <div key={k} className="appt-row">
-                  <b style={{ fontWeight: 500 }}>{TEMPLATES[k].label}{TEMPLATES[k].broadcast ? <span className="pill xs blue" style={{ marginInlineStart: 8 }}>Broadcast</span> : null}</b>
-                  <p dir={lang === "ar" ? "rtl" : "ltr"} style={{ margin: 0, fontSize: 13, whiteSpace: "pre-wrap" }}>{TEMPLATES[k][lang]}</p>
-                </div>
-              ))}
+              <h2 id="t-h">Message templates</h2>
+              <TemplatesEditor initial={settings.templates} updated={settings.updated.templates} {...ed} />
             </section>
+          ) : null}
+          {sec === "sla" ? (
+            <>
+              <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="sla-h">
+                <h2 id="sla-h">SLA targets</h2>
+                <SlaEditor initial={settings.sla} updated={settings.updated.sla} {...ed} />
+              </section>
+              <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="aa-h">
+                <h2 id="aa-h">Automatic assignment</h2>
+                <AutoAssignEditor initial={settings.autoAssign} updated={settings.updated.auto_assign} {...ed} />
+              </section>
+            </>
           ) : null}
           {sec === "automations" ? (
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="a-h">
@@ -132,8 +141,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
           {sec === "centres" ? (
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="c-h">
               <h2 id="c-h">Visa centres on the staff appointment form</h2>
-              {CENTRES.map((c) => <div key={c.name} className="appt-row" style={{ flexDirection: "row", justifyContent: "space-between" }}><b style={{ fontWeight: 500 }}>{c.name}</b><span className="muted" style={{ fontSize: 12 }}>{c.short}</span></div>)}
-              <p className="muted" style={{ margin: 0, fontSize: 12 }}>Customers type their own centre when they save an appointment; check addresses and hours on the centre&rsquo;s site.</p>
+              <CentresEditor initial={settings.centres} updated={settings.updated.centres} {...ed} />
             </section>
           ) : null}
           {sec === "integrations" ? (

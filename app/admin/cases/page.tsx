@@ -44,6 +44,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
       iso: SCHENGEN_META[c.country]?.iso,
       travellers: c.travellers,
       stage: STAGE[c.stage].label,
+      stageKey: c.stage,
       tone: STAGE[c.stage].tone,
       what: c.what,
       who: whoLabel(c),
@@ -124,6 +125,7 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
           stage: can(staff.role, "stage"),
           export: can(staff.role, "export"),
           msg: can(staff.role, "msg"),
+          edit: can(staff.role, "edit"),
         }}
       />
 

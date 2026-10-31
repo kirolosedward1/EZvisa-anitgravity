@@ -28,9 +28,9 @@ const LABELS: Record<K, string> = {
 }
 const TYPE: Partial<Record<K, string>> = { dateOfBirth: "date", travelStartDate: "date", travelEndDate: "date", passportExpiry: "date", employmentStartDate: "month" }
 
-export function EditApplication({ caseId, initial, paid, demo }: { caseId: string; initial: EditableFields; paid: boolean; demo: boolean }) {
+export function EditApplication({ caseId, initial, paid, demo, defaultOpen = false }: { caseId: string; initial: EditableFields; paid: boolean; demo: boolean; defaultOpen?: boolean }) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
   const [v, setV] = useState(initial)
   const [note, setNote] = useState("")
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)

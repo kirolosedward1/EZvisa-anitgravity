@@ -8,7 +8,6 @@ import { DEMO_STAFF } from "@/lib/staff/demo"
 import { sectionAccess } from "@/lib/staff/guard"
 import { agoLabel } from "@/lib/staff/queue"
 import { can, DEFAULT_MATRIX, PERMISSIONS, ROLE_LABEL, ROLES, isRole } from "@/lib/staff/roles"
-import { SLA } from "@/lib/staff/sla"
 import { initials, isStaffEmail, missingTable, staffEmails } from "@/lib/staff/session"
 
 export const dynamic = "force-dynamic"
@@ -17,7 +16,8 @@ type Member = { id: string; name: string; email: string; role: string; active: b
 export default async function TeamPage() {
   const { staff, allowed } = await sectionAccess("team")
   if (!allowed) return <PermissionDenied what="Team and roles are admin only" role={staff.role} who="Ask an admin to change roles." />
-  const { cases } = await loadConsoleData(staff)
+  const { cases, settings } = await loadConsoleData(staff)
+  const SLA = settings.sla
   const now = Date.now()
   let members: Member[] = []
   let problem: string | null = null
@@ -51,12 +51,12 @@ export default async function TeamPage() {
             const over = open.filter((c) => isOver(c, now)).length
             return (
               <div key={m.id} className="tbl-r team" style={{ opacity: m.active ? 1 : 0.55 }}>
-                <span style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}><span className="av">{initials(m.name)}</span><span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}><b className="ellipsis" style={{ fontWeight: 500 }}>{m.name}</b><span className="muted ellipsis" style={{ fontSize: 12 }}>{m.email}{m.active ? "" : " · deactivated"}</span></span></span>
+                <span style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}><span className="av">{initials(m.name)}</span><span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}><b className="ellipsis" style={{ fontWeight: 500 }}>{m.name}</b><a className="muted ellipsis" style={{ fontSize: 12 }} href={`mailto:${m.email}`}>{m.email}</a>{m.active ? null : <span className="muted" style={{ fontSize: 12 }}>Deactivated</span>}</span></span>
                 <span><span className="pill xs grey">{isStaffEmail(m.email) ? "Admin" : isRole(m.role) ? ROLE_LABEL[m.role] : m.role}</span></span>
-                <span>{m.role === "specialist" || open.length ? open.length : "–"}</span>
-                <span style={{ color: over ? "#8a1c1c" : undefined }}>{open.length ? over : "–"}</span>
+                <span>{m.role === "specialist" || open.length ? <a href={`/staff/cases?owner=${m.id}`} title={`${m.name}: open cases`}>{open.length}</a> : "–"}</span>
+                <span>{open.length ? <a href={`/staff/cases?owner=${m.id}&tab=sla`} style={{ color: over ? "#8a1c1c" : undefined }} title={`${m.name}: cases past SLA`}>{over}</a> : "–"}</span>
                 <span className="muted">{m.last_seen_at ? agoLabel(m.last_seen_at, now) : "Never"}</span>
-                <MemberControls id={m.id} role={m.role} active={m.active} self={m.id === staff.staffId} envAdmin={isStaffEmail(m.email)} demo={staff.demo} />
+                <MemberControls id={m.id} name={m.name} role={m.role} active={m.active} self={m.id === staff.staffId} envAdmin={isStaffEmail(m.email)} demo={staff.demo} />
               </div>
             )
           })}
@@ -77,11 +77,13 @@ export default async function TeamPage() {
           <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8 }} aria-labelledby="aa-h">
             <h2 id="aa-h">Assignment</h2>
             <p style={{ margin: 0, fontSize: 13 }}>New cases created by staff go to the active specialist with the fewest open cases unless an owner is picked. Paid website cases are assigned from the queue (admins) or taken by a specialist with &ldquo;Assign to me&rdquo;.</p>
-            <p className="muted" style={{ margin: 0, fontSize: 12 }}>Automatic assignment on payment, caps and away days are not built yet.</p>
+            <p className="muted" style={{ margin: 0, fontSize: 12 }}>Automatic assignment on payment is {settings.autoAssign.on ? `on${settings.autoAssign.cap ? `, capped at ${settings.autoAssign.cap} open cases per specialist` : ", no cap"}` : "off"}. Away days are not built yet.</p>
+            {can(staff.role, "settings") ? <a href="/staff/settings?sec=sla" style={{ fontSize: 13 }}>Change in Settings</a> : null}
           </section>
           <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 8 }} aria-labelledby="sla-h">
             <h2 id="sla-h">SLA targets</h2>
             <dl className="kv"><dt>First document check</dt><dd>{SLA.reviewHours}h after the upload</dd><dt>File prepared</dt><dd>{SLA.fileBusinessDays} business days after the last approval (Mon to Fri, Dubai)</dd><dt>Appointment help</dt><dd>{SLA.helpHours}h after the request</dd></dl>
+            {can(staff.role, "settings") ? <a href="/staff/settings?sec=sla" style={{ fontSize: 13 }}>Change in Settings</a> : null}
           </section>
         </aside>
       </div>

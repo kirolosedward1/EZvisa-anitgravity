@@ -4,11 +4,12 @@
 // a preview. WhatsApp Business is not connected, so the list is copied (logged) for sending from WhatsApp.
 import { useMemo, useState } from "react"
 import { logBroadcastList } from "@/app/admin/messaging/actions"
-import { fillTemplate, TEMPLATES, type TemplateKey } from "@/lib/staff/templates"
+import { fillTemplate, type TemplateKey } from "@/lib/staff/templates"
+import type { Templates } from "@/lib/staff/console-settings"
 
 export type Recipient = { phone: string; first: string; lang: "en" | "ar"; stage: string; stageLabel: string; country: string; missing: string; ref: string }
 
-export function Broadcast({ recipients, stages, countries }: { recipients: Recipient[]; stages: { key: string; label: string }[]; countries: string[] }) {
+export function Broadcast({ recipients, stages, countries, templates: TEMPLATES }: { recipients: Recipient[]; stages: { key: string; label: string }[]; countries: string[]; templates: Templates }) {
   const [onStages, setOnStages] = useState<string[]>(["payment", "documents"])
   const [onCountries, setOnCountries] = useState<string[]>(countries)
   const [lang, setLang] = useState<"both" | "en" | "ar">("both")

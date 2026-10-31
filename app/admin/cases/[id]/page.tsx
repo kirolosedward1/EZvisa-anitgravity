@@ -7,6 +7,9 @@ import { CaseControls, CaseNotes } from "@/components/staff/case-controls"
 import { CaseDocuments } from "@/components/staff/document-review"
 import { RefundButton } from "@/components/staff/refunds"
 import { EditApplication } from "@/components/staff/edit-application"
+import { BookAndSave } from "@/components/staff/appointment-booking"
+import { loadConsoleData } from "@/lib/staff/data"
+import { Mail, MessageCircle, Pencil, Phone } from "lucide-react"
 import { editableAnswers } from "@/lib/staff/editable"
 import { refundPolicy } from "@/lib/staff/refunds"
 import { ErrorBanner } from "@/components/staff/states"
@@ -50,7 +53,7 @@ const EVENT_TEXT: Record<string, (p: Record<string, unknown>) => string> = {
   insurance_preference: (p) => (p.preference === "quote" ? "Asked for an insurance quote" : "Will provide own insurance"),
 }
 
-export default async function CasePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; view?: string }> }) {
+export default async function CasePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; view?: string; edit?: string }> }) {
   const { staff } = await sectionAccess("cases")
   const { id } = await params
   const sp = await searchParams
@@ -74,7 +77,14 @@ export default async function CasePage({ params, searchParams }: { params: Promi
   const source = staffEntered
     ? `Entered by ${staffEntered.name ?? "staff"} (${String(staffEntered.channel ?? "").replace("_", " ")})`
     : [notes.source === "mobile-app" ? "Mobile app" : "Website", notes.platform, app.referrer ? `from ${app.referrer}` : ""].filter(Boolean).join(" · ")
+  const { settings } = await loadConsoleData(staff)
+  // The saved appointment as Dubai date and time, to prefill "Change appointment".
+  const apptParts = c.appointmentAt ? (() => { const d = new Date(Date.parse(c.appointmentAt) + 4 * 3_600_000).toISOString(); return { date: d.slice(0, 10), time: d.slice(11, 16), reference: (app as { appointment_reference?: string | null }).appointment_reference ?? null } })() : null
+  const canEdit = can(staff.role, "edit") && c.side !== "closed"
+  const taskLinkFn = () => c.task === "review" ? { href: href("documents"), label: "Review documents" } : c.task === "files" ? { href: `/staff/files?case=${c.id}`, label: "Prepare the file" } : c.task === "help" ? { href: "#appt", label: "Book the appointment" } : c.side === "customer" && waLink ? { href: `${waLink}?text=${encodeURIComponent(`Hi ${c.name.split(" ")[0]}, this is EZvisa about ${c.ref}. ${c.what}. You can do it from your dashboard: https://www.ezvisa.net/dashboard`)}`, label: "Remind on WhatsApp" } : null
   const href = (t: Tab, extra = "") => `/staff/cases/${c.id}${t === "overview" ? "" : `?tab=${t}`}${extra}`
+  const taskLink = taskLinkFn()
+  const customerHref = `/staff/customers?case=${c.id}`
 
   // Activity: what the customer sees (application_events) and what only staff see (audit log).
   const view = sp.view === "customer" || sp.view === "internal" ? sp.view : "all"
@@ -94,16 +104,22 @@ export default async function CasePage({ params, searchParams }: { params: Promi
           <a href="/staff/cases" className="muted" style={{ fontSize: 13, display: "inline-flex", alignItems: "center", gap: 4 }}><ArrowLeft size={14} aria-hidden /> Cases</a>
           <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
             <CountryFlag iso={SCHENGEN_META[c.country]?.iso} title={c.country} className="size-7" />
-            <h1 className="ellipsis">{c.name} · {c.country}</h1>
+            <h1 className="ellipsis"><a className="h-link" href={customerHref} title="Customer profile">{c.name}</a> · <a className="h-link" href={`/staff/cases?country=${encodeURIComponent(c.country)}`} title={`All ${c.country} cases`}>{c.country}</a></h1>
           </div>
           <p className="muted" style={{ margin: 0, fontSize: 13 }}>
             {c.ref} · Schengen {label(PURPOSES, app.travel_purpose ?? "tourism").toLowerCase()} visa · {c.travellers === 1 ? "1 traveller" : `${c.travellers} travellers`} · created {day(c.createdAt)}
           </p>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <span className={`pill ${stage.tone}`}><span className="dot" />{stage.label}</span>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+            <a href={`/staff/cases?stage=${c.stage}`} className={`pill ${stage.tone}`} title={`All cases at ${stage.label}`}><span className="dot" />{stage.label}</a>
             {c.dueAt && c.side === "us" ? (
               <span className={`pill ${isOver(c, now) ? "red" : "amber"}`}>{slaLabel(c.dueAt, now).text} SLA</span>
             ) : null}
+            <span className="contact-links">
+              {c.email ? <a href={`mailto:${c.email}?subject=${encodeURIComponent(`Your EZvisa application ${c.ref}`)}`} title={c.email}><Mail size={14} aria-hidden /> Email</a> : null}
+              {c.phone ? <a href={`tel:${c.phone.replace(/[^+\d]/g, "")}`} title={c.phone}><Phone size={14} aria-hidden /> Call</a> : null}
+              {waLink && can(staff.role, "msg") ? <a href={waLink} target="_blank" rel="noopener noreferrer"><MessageCircle size={14} aria-hidden /> WhatsApp</a> : null}
+              {can(staff.role, "msg") ? <a href={`/staff/messaging?tab=inbox&c=${c.id}`}>Open in inbox</a> : null}
+            </span>
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
@@ -136,7 +152,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             {t.key === "documents" && toCheck + sentBack > 0 ? <span className="pill xs amber">{toCheck + sentBack}</span> : null}
           </a>
         ))}
-        <a className="tab" href="/staff/files">File</a>
+        {can(staff.role, "files") ? <a className="tab" href={`/staff/files?case=${c.id}`}>File preparation</a> : null}
       </nav>
 
       <div className="grid2">
@@ -148,6 +164,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   <span className="muted">Waiting for</span>
                   <b>{c.side === "us" ? "Us: " : c.side === "customer" || c.side === "draft" ? "Customer: " : ""}{c.what}</b>
                   {c.dueAt && c.side === "us" ? <span className={`pill ${isOver(c, now) ? "red" : "amber"}`}>{isOver(c, now) ? "SLA passed" : "Due"} {dt(c.dueAt)}</span> : null}
+                  {taskLink ? <a href={taskLink.href} style={{ fontSize: 13 }} {...(taskLink.href.startsWith("https://") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{taskLink.label}</a> : null}
                 </div>
                 <div className="card tile">
                   <span className="muted">Documents</span>
@@ -158,22 +175,28 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   <span className="muted">Travel</span>
                   <b>{w.datesFlexible === "yes" ? `${travelLabel(c.travelStart, c.travelEnd)}, flexible` : travelLabel(c.travelStart, c.travelEnd)}</b>
                   <span className="muted" style={{ fontSize: 12 }}>Nationality {dash(app.nationality)} · UAE resident</span>
+                  {canEdit ? <a href={href("details", "&edit=1")} style={{ fontSize: 13 }}>Edit trip</a> : null}
                 </div>
-                <div className="card tile">
+                <div className="card tile" id="appt">
                   <span className="muted">Appointment</span>
                   <b>{c.appointmentAt ? `${dt(c.appointmentAt)}${c.appointmentCentre ? `, ${c.appointmentCentre}` : ""}` : c.helpRequested ? "Customer asked us to book" : "Not booked yet"}</b>
-                  {can(staff.role, "appt") ? <a href="/staff/appointments" style={{ fontSize: 13 }}>{c.appointmentAt ? "Open appointments" : "Book for the customer"}</a> : null}
+                  {can(staff.role, "appt") && c.paid && c.side !== "closed" ? (
+                    <BookAndSave caseId={c.id} centres={settings.centres.map((x) => x.name)} defaultCentre={c.appointmentCentre} current={apptParts} label={c.appointmentAt ? "Change" : "Save appointment"} canAssignSelf={false} me={staff.staffId} demo={staff.demo} />
+                  ) : c.appointmentAt ? <a href="/staff/appointments" style={{ fontSize: 13 }}>Appointments calendar</a> : null}
                 </div>
               </div>
               <section className="card" style={{ padding: "16px 18px" }} aria-labelledby="app-h">
-                <h2 id="app-h" style={{ marginBottom: 10 }}>Application</h2>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, gap: 8 }}>
+                  <h2 id="app-h">Application</h2>
+                  {canEdit ? <a className="btn outline sm" href={href("details", "&edit=1")}><Pencil size={14} aria-hidden /> Edit details</a> : null}
+                </div>
                 <dl className="kv">
                   <dt>Traveller</dt><dd>{c.name}{app.date_of_birth ? ` · born ${day(app.date_of_birth)}` : ""} · {dash(app.nationality)}{app.passport_number ? ` · passport ${app.passport_number}` : " · passport after payment"}</dd>
-                  <dt>Contact</dt><dd>{c.email} · {c.phone || "no phone"}{notes.preferredLanguage === "ar" ? " · prefers Arabic" : ""}</dd>
+                  <dt>Contact</dt><dd>{c.email ? <a href={`mailto:${c.email}`}>{c.email}</a> : "no email"} · {c.phone ? <a href={`tel:${c.phone.replace(/[^+\d]/g, "")}`}>{c.phone}</a> : "no phone"}{notes.preferredLanguage === "ar" ? " · prefers Arabic" : ""}</dd>
                   <dt>Employment</dt><dd>{w.employmentStatus ? label(EMPLOYMENT, w.employmentStatus) : "Not answered yet"}{w.companyName ? `, ${w.companyName}` : ""}{w.jobTitle ? `, ${w.jobTitle}` : ""}</dd>
                   <dt>Previous Schengen</dt><dd>{w.isFirstSchengenVisa === "yes" ? "First Schengen visa" : w.isFirstSchengenVisa === "no" ? "Has had a Schengen visa" : "Not answered yet"}{w.previousRefusals === "yes" ? " · refused before" : w.previousRefusals === "no" ? " · no refusals" : ""}</dd>
-                  <dt>Service fee</dt><dd>{c.paid ? <span className="pill green">Paid</span> : c.paymentFailed ? <span className="pill red">Failed</span> : <span className="pill grey">Not paid</span>} {c.amount ? `${c.amount} AED` : ""}{c.paidAt ? ` · ${dt(c.paidAt)}` : ""}{app.payment_id ? ` · payment gateway ref ${app.payment_id}` : ""}</dd>
-                  <dt>Insurance</dt><dd>{insurance === "quote" ? "Asked for a quote through EZvisa" : insurance === "own" ? "Providing own policy" : "No choice yet"}</dd>
+                  <dt>Service fee</dt><dd>{c.paid ? <span className="pill green">Paid</span> : c.paymentFailed ? <span className="pill red">Failed</span> : <span className="pill grey">Not paid</span>} {c.amount ? `${c.amount} AED` : ""}{c.paidAt ? ` · ${dt(c.paidAt)}` : ""}{app.payment_id ? ` · payment gateway ref ${app.payment_id}` : ""}{can(staff.role, "pay") ? <> · <a href={href("payments")}>Payments</a></> : null}</dd>
+                  <dt>Insurance</dt><dd>{insurance === "quote" ? "Asked for a quote through EZvisa" : insurance === "own" ? "Providing own policy" : "No choice yet"}{insurance === "quote" ? <> · <a href={`/staff/insurance?q=${encodeURIComponent(c.ref)}`}>Open in Insurance</a></> : null}</dd>
                   <dt>Source</dt><dd>{source}</dd>
                 </dl>
               </section>
@@ -205,7 +228,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12 }} aria-labelledby="det-h">
               <h2 id="det-h">Application details</h2>
               <p className="muted" style={{ margin: 0, fontSize: 12 }}>As the customer answered on the website or app{can(staff.role, "edit") ? ", or as edited on their behalf" : ""}.</p>
-              {can(staff.role, "edit") && c.side !== "closed" ? <EditApplication caseId={c.id} initial={editableAnswers(app as unknown as Record<string, unknown>)} paid={c.paid} demo={staff.demo} /> : null}
+              {canEdit ? <EditApplication caseId={c.id} initial={editableAnswers(app as unknown as Record<string, unknown>)} paid={c.paid} demo={staff.demo} defaultOpen={sp.edit === "1"} /> : null}
               <div className="cols2">
                 <dl className="kv">
                   <dt>Full name</dt><dd>{c.name}</dd>
@@ -280,13 +303,14 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <span className="av" style={{ width: 36, height: 36 }} aria-hidden="true">{initials(c.name)}</span>
               <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                <b style={{ fontWeight: 500 }}>{c.name}</b>
+                <a href={customerHref} style={{ fontWeight: 500, color: "inherit" }}>{c.name}</a>
                 <span className="muted" style={{ fontSize: 12 }}>{others.length + 1} {others.length ? "cases" : "case"} · since {day([c.createdAt, ...others.map((o) => o.createdAt)].sort()[0])}</span>
               </span>
             </div>
-            <span className="ellipsis" style={{ fontSize: 13 }}>{c.email}</span>
-            <span style={{ fontSize: 13 }}>{c.phone || "No phone"}{waLink ? " · WhatsApp" : ""}</span>
-            {ownerName ? <span className="muted" style={{ fontSize: 12 }}>Owner: {ownerName}</span> : null}
+            {c.email ? <a className="ellipsis" style={{ fontSize: 13 }} href={`mailto:${c.email}`}>{c.email}</a> : <span className="muted" style={{ fontSize: 13 }}>No email</span>}
+            <span style={{ fontSize: 13, display: "flex", gap: 8, flexWrap: "wrap" }}>{c.phone ? <a href={`tel:${c.phone.replace(/[^+\d]/g, "")}`}>{c.phone}</a> : "No phone"}{waLink ? <a href={waLink} target="_blank" rel="noopener noreferrer">WhatsApp</a> : null}</span>
+            <span className="muted" style={{ fontSize: 12 }}>Owner: {ownerName && c.ownerId ? <a href={`/staff/cases?owner=${c.ownerId}`}>{ownerName}</a> : <a href="/staff/cases?owner=none">Unassigned</a>}</span>
+            <a className="btn outline sm" href={customerHref} style={{ alignSelf: "flex-start" }}>Customer profile</a>
             {others.length ? (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                 <span className="muted" style={{ fontSize: 12 }}>Other cases:</span>
@@ -300,8 +324,10 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             {can(staff.role, "msg") && waLink && c.side === "customer" ? (
               <a className="btn outline sm" href={`${waLink}?text=${encodeURIComponent(`Hi ${c.name.split(" ")[0]}, this is EZvisa about ${c.ref}. ${c.what}. You can do it from your dashboard: https://www.ezvisa.net/dashboard`)}`} target="_blank" rel="noopener noreferrer">Send a reminder (WhatsApp)</a>
             ) : null}
-            {can(staff.role, "files") ? <a className="btn outline sm" href="/staff/files">Start file preparation</a> : null}
-            {can(staff.role, "appt") ? <a className="btn outline sm" href="/staff/appointments">Book the appointment for the customer</a> : null}
+            {can(staff.role, "docs") && c.paid ? <a className="btn outline sm" href={`/staff/documents?case=${c.id}`}>Review documents</a> : null}
+            {can(staff.role, "files") && c.paid ? <a className="btn outline sm" href={`/staff/files?case=${c.id}`}>Prepare the file</a> : null}
+            {can(staff.role, "appt") && c.paid ? <a className="btn outline sm" href={`${href("overview")}#appt`}>{c.appointmentAt ? "Change the appointment" : "Save the appointment"}</a> : null}
+            {canEdit ? <a className="btn outline sm" href={href("details", "&edit=1")}>Edit application details</a> : null}
             <a className="btn ghost sm" href={`/staff/cases/legacy`}>Old case tools (emails, documents)</a>
           </section>
         </aside>

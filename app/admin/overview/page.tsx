@@ -165,14 +165,14 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           <section className="card" aria-labelledby="workload" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 12 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <h2 id="workload">Workload</h2>
-              {can(staff.role, "assign") ? <a href="/staff/team" style={{ fontSize: 12, fontWeight: 500 }}>Reassign</a> : null}
+              {can(staff.role, "assign") ? <a href="/staff/cases?tab=all" style={{ fontSize: 12, fontWeight: 500 }} title="Select cases in the queue and assign them">Reassign</a> : null}
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {o.workload.length === 0 && unassigned === 0 ? (
                 <p className="muted" style={{ margin: 0, fontSize: 13 }}>No open cases are assigned yet.</p>
               ) : null}
               {o.workload.map((w) => (
-                <div key={w.id} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <a key={w.id} href={`/staff/cases?owner=${w.id}`} className="wl-row" title={`${w.name}: open cases`}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13 }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span className="av" aria-hidden="true">{initials(w.name)}</span>
@@ -181,10 +181,10 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                     <span className="muted">{w.open} open{w.over ? ` · ${w.over} past SLA` : ""}</span>
                   </div>
                   <div className="bar" role="presentation"><span style={{ width: `${Math.min(100, (w.open / WORKLOAD_CAP) * 100)}%` }} /></div>
-                </div>
+                </a>
               ))}
               {unassigned > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                <a href="/staff/cases?tab=unassigned" className="wl-row" title="Unassigned cases: assign them from the queue">
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13 }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span className="av none" aria-hidden="true">?</span>Unassigned
@@ -192,7 +192,7 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
                     <span style={{ color: "#7a4b00", fontWeight: 500 }}>{unassigned} {unassigned === 1 ? "case" : "cases"}</span>
                   </div>
                   <div className="bar" role="presentation"><span style={{ width: `${Math.min(100, (unassigned / WORKLOAD_CAP) * 100)}%`, background: "#d98a00" }} /></div>
-                </div>
+                </a>
               ) : null}
             </div>
           </section>

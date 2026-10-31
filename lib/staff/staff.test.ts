@@ -320,3 +320,32 @@ test("editable answers fall back to the row columns", async () => {
   assert.equal(e.passportNumber, "A123")
   assert.equal(e.employmentStatus, "employed")
 })
+
+test("console settings: stored values merge over defaults, invalid rows are ignored", async () => {
+  const { DEFAULT_SETTINGS, mergeSettings, matchFromName, SCHEMAS } = await import("./console-settings")
+  const merged = mergeSettings([
+    { key: "sla", value: { reviewHours: 12, fileBusinessDays: 3, helpHours: 4 } },
+    { key: "auto_assign", value: { on: false, cap: null } },
+    { key: "templates", value: { status: { en: "Hi {first_name}", ar: "مرحباً {first_name}" } } },
+    { key: "centres", value: [] },
+  ])
+  assert.deepEqual(merged.sla, { reviewHours: 12, fileBusinessDays: 3, helpHours: 4 })
+  assert.equal(merged.autoAssign.on, false)
+  assert.equal(merged.templates.status.en, "Hi {first_name}")
+  assert.equal(merged.templates.status.label, DEFAULT_SETTINGS.templates.status.label)
+  assert.equal(merged.templates.greeting.en, DEFAULT_SETTINGS.templates.greeting.en)
+  // An empty centre list is invalid: the defaults stay.
+  assert.deepEqual(merged.centres, DEFAULT_SETTINGS.centres)
+  assert.equal(mergeSettings([{ key: "sla", value: { reviewHours: 0, fileBusinessDays: 2, helpHours: 8 } }]).sla.reviewHours, DEFAULT_SETTINGS.sla.reviewHours)
+  assert.equal(SCHEMAS.centres.safeParse([{ name: "VFS Dubai", short: "VFS", match: ["vfs"] }, { name: "VFS Abu Dhabi", short: "vfs", match: ["vfs"] }]).success, false)
+  assert.deepEqual(matchFromName("VFS Global Abu Dhabi"), ["vfs", "abu dhabi"])
+  assert.deepEqual(matchFromName("TLScontact Dubai"), ["tls", "dubai"])
+})
+
+test("SLA targets from settings change the due time", () => {
+  const app = { id: "x", application_status: "under_review", payment_status: "paid", additional_notes: JSON.stringify({ uploads: [{ type: "passportCopy", name: "p.jpg", at: "2026-10-27T08:00:00.000Z", path: "x/p.jpg" }] }), has_passport: true, created_at: "2026-10-20T08:00:00.000Z", updated_at: "2026-10-27T08:00:00.000Z" } as never
+  const def = toStaffCase(app)
+  const fast = toStaffCase(app, {}, null, { reviewHours: 2, fileBusinessDays: 2, helpHours: 8 })
+  assert.equal(def.task, "review")
+  assert.equal(Date.parse(def.dueAt!) - Date.parse(fast.dueAt!), 22 * 3_600_000)
+})

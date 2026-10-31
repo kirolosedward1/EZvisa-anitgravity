@@ -45,7 +45,7 @@ export default async function FilesPage({ searchParams }: { searchParams: Promis
       <div className="ezc-pagehead" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
         <div>
           <h1>File preparation</h1>
-          <p className="muted" style={{ margin: 0, fontSize: 13 }}>{queue.length} {queue.length === 1 ? "file" : "files"} to prepare · {readyWaiting.length} ready, waiting for the customer</p>
+          <p className="muted" style={{ margin: 0, fontSize: 13 }}>{queue.length} {queue.length === 1 ? "file" : "files"} to prepare · <a href="/staff/appointments#rna-h">{readyWaiting.length} ready, waiting for the customer</a></p>
         </div>
       </div>
       <div className="files">
@@ -73,12 +73,13 @@ export default async function FilesPage({ searchParams }: { searchParams: Promis
             <div className="card" style={{ padding: "14px 16px", display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
               <CountryFlag iso={SCHENGEN_META[detail.c.country]?.iso} title={detail.c.country} className="size-7" />
               <div style={{ minWidth: 0, flex: 1 }}>
-                <h2>{detail.c.name} · {detail.c.country}</h2>
+                <h2><a className="h-link" href={`/staff/cases/${detail.c.id}`}>{detail.c.name}</a> · {detail.c.country}</h2>
                 <p className="muted" style={{ margin: 0, fontSize: 12 }}>
-                  <a href={`/staff/cases/${detail.c.id}`}>{detail.c.ref}</a> · {travelLabel(detail.c.travelStart, detail.c.travelEnd)}{mates.length ? ` · same trip as ${mates.map((m) => m.name.split(" ")[0]).join(", ")}` : ""}
+                  <a href={`/staff/cases/${detail.c.id}`}>{detail.c.ref}</a> · {travelLabel(detail.c.travelStart, detail.c.travelEnd)}{mates.length ? <> · same trip as {mates.map((m, i) => <span key={m.id}>{i ? ", " : ""}<a href={`/staff/files?case=${m.id}`}>{m.name.split(" ")[0]}</a></span>)}</> : null}
                 </p>
               </div>
               <span className={`pill ${STAGE[detail.c.stage].tone}`}><span className="dot" />{STAGE[detail.c.stage].label}</span>
+              {can(staff.role, "edit") ? <a className="btn outline sm" href={`/staff/cases/${detail.c.id}?tab=details&edit=1`}>Edit details</a> : null}
             </div>
             {problem ? <div className="banner amber" role="note">{problem}</div> : null}
             <FileParts key={detail.c.id} caseId={detail.c.id} parts={parts} canWrite={can(staff.role, "files") && !problem} canReady={can(staff.role, "stage") && !problem} demo={staff.demo} />
@@ -97,14 +98,14 @@ export default async function FilesPage({ searchParams }: { searchParams: Promis
                 <dt>Employer</dt><dd>{w.companyName || "Not given"}{w.jobTitle ? `, ${w.jobTitle}` : ""}{w.employmentStatus ? ` (${label(EMPLOYMENT, w.employmentStatus).toLowerCase()})` : ""}</dd>
                 <dt>Funds</dt><dd>{w.fundingSource ? label(FUNDING, w.fundingSource) : "Not given"}</dd>
               </dl>
-              <a href={`/staff/cases/${detail.c.id}?tab=details`} style={{ fontSize: 13 }}>Application details</a>
+              <a href={`/staff/cases/${detail.c.id}?tab=details${can(staff.role, "edit") ? "&edit=1" : ""}`} style={{ fontSize: 13 }}>{can(staff.role, "edit") ? "Edit application details" : "Application details"}</a>
             </section>
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 6 }} aria-labelledby="cd-h">
               <h2 id="cd-h">Customer documents, approved</h2>
               {detail.docs.map((d) => (
                 <span key={d.type} style={{ fontSize: 13, display: "flex", gap: 8, alignItems: "center" }}>
                   {d.state === "approved" ? <Check size={15} color="#1a7f37" aria-label="Approved" /> : <span className={`pill xs ${d.state === "rejected" ? "amber" : "grey"}`}>{d.state === "rejected" ? "Sent back" : d.state === "missing" ? "Missing" : "To check"}</span>}
-                  {d.title}
+                  {d.state === "missing" ? d.title : <a href={`/staff/documents/${detail.c.id}~${d.type}`}>{d.title}</a>}
                 </span>
               ))}
             </section>

@@ -94,7 +94,7 @@ export async function loadCaseDetail(staff: Staff, id: string): Promise<CaseDeta
   )
   const docs = buildDocs(app, reviews, reviewers, signed)
   const ownerId = ((assignRes.data ?? []) as { staff_id: string | null }[])[0]?.staff_id ?? null
-  const c = toStaffCase(app, reviews, ownerId)
+  const c = toStaffCase(app, reviews, ownerId, consoleData.settings.sla)
   const email = (app.email ?? "").toLowerCase()
 
   return {

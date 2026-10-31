@@ -451,3 +451,33 @@
 @keyframes ezc-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .ezc .ezc-refresh .spin { animation: none; } }
 @media (max-width: 1023px) { .ezc .desk-only { display: none; } }
+/* Settings editors */
+.ezc .ta { width: 100%; min-width: 0; border: 1px solid var(--ezc-border); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; line-height: 1.45; color: var(--ezc-ink); background: #fff; resize: vertical; }
+.ezc .ta:focus { outline: none; border-color: var(--ezc-blue); box-shadow: 0 0 0 3px var(--ezc-sky); }
+.ezc .ta:disabled, .ezc .inp:disabled { background: #f7f9fd; color: var(--ezc-muted); }
+.ezc .tpl-edit { border: 1px solid var(--ezc-rule); border-radius: 10px; padding: 10px 14px 14px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ezc .tpl-edit legend { font-size: 13px; font-weight: 500; padding: 0 4px; }
+.ezc .tpl-edit label, .ezc .centre-row label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ezc-muted); }
+.ezc .centre-row { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 0.8fr) auto; gap: 10px; padding: 10px 0; border-top: 1px solid var(--ezc-rule); }
+.ezc .centre-row .inp { min-width: 0; width: 100%; }
+.ezc button.switch { border: 0; padding: 0; cursor: pointer; flex: none; }
+.ezc button.switch:disabled { cursor: default; opacity: 0.6; }
+@media (max-width: 760px) {
+  .ezc .tpl-edit { grid-template-columns: 1fr; }
+  .ezc .centre-row { grid-template-columns: 1fr 1fr; }
+}
+/* Connected links: headings and pills that open their page */
+.ezc .h-link { color: inherit; }
+.ezc .h-link:hover { color: var(--ezc-blue); text-decoration: underline; text-underline-offset: 3px; }
+.ezc a.pill:hover { filter: brightness(0.96); text-decoration: none; }
+.ezc .contact-links { display: inline-flex; gap: 12px; flex-wrap: wrap; font-size: 13px; margin-inline-start: 4px; }
+.ezc .contact-links a { display: inline-flex; gap: 4px; align-items: center; }
+/* Queue rows: the whole row opens the case; flag, stage, owner and the menu keep their own links */
+.ezc .tr .who::after { content: ""; position: absolute; inset: 0; }
+.ezc .tr > button, .ezc .tr > a:not(.who), .ezc .tr > .c-owner { position: relative; z-index: 1; }
+.ezc .tr > [data-menu-root] { z-index: 2; }
+.ezc .tr .row-flag { display: inline-flex; }
+.ezc button.av { border: 0; cursor: pointer; font: inherit; font-size: 11px; font-weight: 600; }
+.ezc a.av:hover, .ezc button.av:hover { box-shadow: 0 0 0 2px var(--ezc-blue); }
+.ezc .wl-row { display: flex; flex-direction: column; gap: 5px; color: var(--ezc-ink); border-radius: 8px; margin: -4px -6px; padding: 4px 6px; }
+.ezc .wl-row:hover { background: #f7f9fd; color: var(--ezc-ink); }

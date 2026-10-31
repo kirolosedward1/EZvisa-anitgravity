@@ -82,11 +82,11 @@ export default async function AuditPage({ searchParams }: { searchParams: Promis
         {selected ? (
           <aside className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-label={`Event ${selected.id}`}>
             <div style={{ display: "flex", justifyContent: "space-between" }}><span className="muted">Event #{selected.id}</span><a href={href({ page: String(page) })} aria-label="Close">✕</a></div>
-            <span className={`pill ${TONE[selected.type] ?? "grey"}`}>{selected.type}</span>
+            <a href={href({ type: selected.type, ev: "", page: "1" })} className={`pill ${TONE[selected.type] ?? "grey"}`} title={`Only ${selected.type} events`} style={{ alignSelf: "flex-start" }}>{selected.type}</a>
             <h2>{selected.action}</h2>
-            <p className="muted" style={{ margin: 0, fontSize: 12 }}>{when(selected.created_at)} · {selected.actor_name || selected.actor_type}{selected.device ? ` · ${selected.device}` : ""}</p>
+            <p className="muted" style={{ margin: 0, fontSize: 12 }}>{when(selected.created_at)} · <a href={href({ q: selected.actor_name || selected.actor_type, ev: "", page: "1" })} title="Everything this person did">{selected.actor_name || selected.actor_type}</a>{selected.device ? ` · ${selected.device}` : ""}</p>
             <dl className="kv">
-              <dt>Target</dt><dd>{selected.target_table === "visa_applications" && selected.target_id ? <a href={`/staff/cases/${selected.target_id}`}>{selected.target_label ?? "Open case"}</a> : selected.target_label ?? selected.target_id ?? "–"}</dd>
+              <dt>Target</dt><dd>{selected.target_table === "visa_applications" && selected.target_id ? <a href={`/staff/cases/${selected.target_id}`}>{selected.target_label ?? "Open case"}</a> : selected.target_table === "staff_users" ? <a href="/staff/team">{selected.target_label ?? "Team"}</a> : selected.target_table === "console_settings" ? <a href={`/staff/settings?sec=${selected.target_id === "auto_assign" ? "sla" : selected.target_id ?? ""}`}>{selected.target_label ?? "Settings"}</a> : selected.target_label ?? selected.target_id ?? "–"}</dd>
               <dt>Field</dt><dd>{selected.field ?? "–"}</dd>
               <dt>Customer told</dt><dd>{selected.notified ?? "–"}</dd>
               <dt>Request id</dt><dd className="mono">{selected.request_id ?? "–"}</dd>

@@ -7,8 +7,8 @@ export const CENTRES = [
 ] as const
 
 /** Whether a saved centre (free text from the customer or staff) is the filtered centre. */
-export function centreMatches(saved: string | null | undefined, short: string): boolean {
-  const c = CENTRES.find((x) => x.short === short)
+export function centreMatches(saved: string | null | undefined, short: string, list: readonly { short: string; match: readonly string[] }[] = CENTRES): boolean {
+  const c = list.find((x) => x.short === short)
   if (!c) return true
   const s = (saved ?? "").toLowerCase()
   return c.match.every((k) => s.includes(k))

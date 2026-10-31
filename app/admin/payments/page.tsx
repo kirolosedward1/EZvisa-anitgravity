@@ -87,11 +87,11 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
       </div>
 
       <div className="kpis">
-        <div className="card kpi"><span className="v">{Math.round(collected).toLocaleString("en-US")}<small> AED</small></span><span className="l">Collected this month · {paidMonth.length} payments</span></div>
-        <div className="card kpi"><span className="v">{Math.round(refundedSum).toLocaleString("en-US")}<small> AED</small></span><span className="l">Refunded this month · {refundedMonth.length}</span></div>
-        <div className="card kpi"><span className="v">{Math.round(collected - refundedSum).toLocaleString("en-US")}<small> AED</small></span><span className="l">Net</span></div>
-        <div className="card kpi"><span className="v" style={{ color: failed.length ? "#8a1c1c" : undefined }}>{failed.length}</span><span className="l">Failed, not paid since</span></div>
-        <div className="card kpi"><span className="v">{(drafts.length * PRICE_AED).toLocaleString("en-US")}<small> AED</small></span><span className="l">{drafts.length} unpaid drafts, potential</span></div>
+        <a className="card kpi" href="/staff/payments?tab=all"><span className="v">{Math.round(collected).toLocaleString("en-US")}<small> AED</small></span><span className="l">Collected this month · {paidMonth.length} payments</span></a>
+        <a className="card kpi" href="/staff/payments?tab=refunds"><span className="v">{Math.round(refundedSum).toLocaleString("en-US")}<small> AED</small></span><span className="l">Refunded this month · {refundedMonth.length}</span></a>
+        <a className="card kpi" href="/staff/payments?tab=all"><span className="v">{Math.round(collected - refundedSum).toLocaleString("en-US")}<small> AED</small></span><span className="l">Net</span></a>
+        <a className="card kpi" href="/staff/payments?tab=failed"><span className="v" style={{ color: failed.length ? "#8a1c1c" : undefined }}>{failed.length}</span><span className="l">Failed, not paid since</span></a>
+        <a className="card kpi" href="/staff/cases?stage=payment"><span className="v">{(drafts.length * PRICE_AED).toLocaleString("en-US")}<small> AED</small></span><span className="l">{drafts.length} unpaid drafts, potential</span></a>
       </div>
 
       <nav className="utabs" aria-label="Payments">
@@ -116,7 +116,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
               return (
                 <div key={c.id} className="tbl-r pay">
                   <span>{when(c.paidAt ?? c.updatedAt)}</span>
-                  <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}><b className="ellipsis" style={{ fontWeight: 500 }}>{c.name}</b><span className="muted ellipsis" style={{ fontSize: 12 }}>{c.email}</span></span>
+                  <span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}><a className="ellipsis" style={{ fontWeight: 500, color: "inherit" }} href={`/staff/customers?case=${c.id}`} title="Customer profile">{c.name}</a><a className="muted ellipsis" style={{ fontSize: 12 }} href={`mailto:${c.email}`}>{c.email}</a></span>
                   <a href={`/staff/cases/${c.id}?tab=payments`} style={{ display: "flex", flexDirection: "column" }}>{c.ref}<span className="muted" style={{ fontSize: 12 }}>{c.country}</span></a>
                   <span className="muted ellipsis" style={{ fontSize: 12 }}>Payment gateway</span>
                   <span><span className={`pill ${status.tone}`}>{status.label}{refund ? ` ${Number(refund.amount).toFixed(2)}` : ""}</span></span>
@@ -142,7 +142,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
             return (
               <div key={r.id} className="card refund">
                 <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-                  <b style={{ fontWeight: 500 }}>{c?.name ?? "Case"} · <a href={`/staff/cases/${r.application_id}?tab=payments`}>{c?.ref ?? r.application_id.slice(0, 8)}</a></b>
+                  <b style={{ fontWeight: 500 }}>{c ? <a href={`/staff/customers?case=${c.id}`} style={{ color: "inherit" }}>{c.name}</a> : "Case"} · <a href={`/staff/cases/${r.application_id}?tab=payments`}>{c?.ref ?? r.application_id.slice(0, 8)}</a></b>
                   <span className="muted" style={{ fontSize: 12 }}>Paid {Number(r.amount_paid).toFixed(2)} AED · requested {when(r.requested_at)} by {r.requested_by}{r.decided_by ? ` · decided by ${r.decided_by}` : ""}{r.gateway_ref ? ` · gateway ref ${r.gateway_ref}` : ""}</span>
                   <span style={{ fontSize: 13 }}>{r.reason}{r.note ? `: ${r.note}` : ""}</span>
                   <span style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
