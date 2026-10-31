@@ -17,8 +17,8 @@ export const COMPANY = {
   REGISTERED_ADDRESS: "[REGISTERED ADDRESS]",
   EMAIL: "[EMAIL]",
   /** "Last updated" date on the legal pages. */
-  LEGAL_UPDATED: "24 October 2026",
-  LEGAL_UPDATED_AR: "24 أكتوبر 2026",
+  LEGAL_UPDATED: "31 October 2026",
+  LEGAL_UPDATED_AR: "31 أكتوبر 2026",
   PHONE_DISPLAY: "+971 54 710 9533",
   PHONE_E164: "+971547109533",
   WHATSAPP_URL: "https://wa.me/971547109533",

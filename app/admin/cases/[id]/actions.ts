@@ -63,7 +63,7 @@ export async function reviewDocument(input: { id: string; documentType: string; 
   if (!client) return { ok: false, error: "The database is not configured." }
   const { data: row } = await client
     .from("visa_applications")
-    .select("id, application_status, payment_status, additional_notes, has_passport, has_photos, has_bank_statements, has_employment_proof, updated_at")
+    .select("id, tracking_token, application_status, payment_status, additional_notes, has_passport, has_photos, has_bank_statements, has_employment_proof, updated_at")
     .eq("id", v.id)
     .maybeSingle()
   if (!row) return { ok: false, error: "Case not found." }
@@ -116,6 +116,10 @@ export async function reviewDocument(input: { id: string; documentType: string; 
         moved = true
         await recordAudit(staff, { action: "Stage changed to Preparation: all documents approved", type: "stage", targetTable: "visa_applications", targetId: v.id, field: "application_status", before: row.application_status, after: "preparation", notified: "Customer dashboard" }, client)
         await recordApplicationEvent(v.id, "status_changed", { to: "preparation" }, "team", client)
+        // File preparation automation (Make), when configured: ids only, best effort.
+        const { notifyAutomation } = await import("@/lib/automation/make")
+        const { getReference } = await import("@/lib/application-status")
+        await notifyAutomation(v.id, getReference(row.tracking_token) || `EZ-${v.id.slice(0, 8).toUpperCase()}`, "all_documents_approved")
       }
     }
   }
@@ -139,7 +143,7 @@ export async function changeStage(input: { id: string; to: StageTarget; note: st
 
   const client = serviceClient()
   if (!client) return { ok: false, error: "The database is not configured." }
-  const { data: row } = await client.from("visa_applications").select("application_status, payment_status, updated_at").eq("id", v.id).maybeSingle()
+  const { data: row } = await client.from("visa_applications").select("tracking_token, application_status, payment_status, updated_at").eq("id", v.id).maybeSingle()
   if (!row) return { ok: false, error: "Case not found." }
   if (!["paid", "completed"].includes((row.payment_status ?? "").toLowerCase()) && v.to !== "cancelled") {
     return { ok: false, error: "The case is not paid yet. Only Cancelled is possible before payment." }
@@ -167,6 +171,11 @@ export async function changeStage(input: { id: string; to: StageTarget; note: st
     notified: "Customer dashboard",
   }, client)
   await recordApplicationEvent(v.id, "status_changed", { to: v.to }, "team", client)
+  if (v.to === "preparation") {
+    const { notifyAutomation } = await import("@/lib/automation/make")
+    const { getReference } = await import("@/lib/application-status")
+    await notifyAutomation(v.id, getReference(row.tracking_token) || `EZ-${v.id.slice(0, 8).toUpperCase()}`, "stage_changed")
+  }
   refresh(v.id)
   return { ok: true, message: `Stage changed to ${label}. Logged; the customer sees it on their dashboard.` }
 }

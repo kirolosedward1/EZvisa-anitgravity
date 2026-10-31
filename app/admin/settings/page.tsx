@@ -35,6 +35,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     { name: "Payment gateway", desc: "Checkout and payment status", status: set("ZIINA_API_KEY") ? (process.env.ZIINA_TEST_MODE === "true" ? "Connected, test mode" : "Connected") : "Not configured", tone: set("ZIINA_API_KEY") ? "green" : "amber" },
     { name: "Database and sign-in", desc: "Cases, accounts, files", status: set("SUPABASE_SERVICE_ROLE_KEY") || set("SUPABASE_SECRET_KEY") ? "Connected" : "Not configured", tone: set("SUPABASE_SERVICE_ROLE_KEY") || set("SUPABASE_SECRET_KEY") ? "green" : "red" },
     { name: "Email sending", desc: "Confirmations, resets, digests", status: set("RESEND_API_KEY") ? "Key set, last reported not working" : "Not configured", tone: "amber" },
+    { name: "File preparation automation (Make)", desc: "Drafts travel plan, cover letter, form answers, reservations and checklist for review", status: set("MAKE_API_SECRET") && set("MAKE_WEBHOOK_URL") ? "Connected" : set("MAKE_API_SECRET") ? "Secret set, webhook URL missing" : "Not connected", tone: set("MAKE_API_SECRET") && set("MAKE_WEBHOOK_URL") ? "green" : "grey" },
     { name: "WhatsApp Business", desc: "Inbox, templates, broadcasts", status: "Not connected", tone: "grey" },
     { name: "Insurance partner", desc: "Rate card and policy issuing", status: "Not connected", tone: "grey" },
     { name: "Google Analytics and Ads", desc: "Visits, campaigns, cost per paid", status: "Not connected to the console", tone: "grey" },

@@ -3,6 +3,8 @@
 import { Check } from "lucide-react"
 import { CountryFlag } from "@/components/country-flag"
 import { FileParts } from "@/components/staff/file-prep"
+import { SendToAutomation } from "@/components/staff/send-to-automation"
+import { automationConfigured } from "@/lib/automation/make"
 import { PermissionDenied } from "@/components/staff/states"
 import { serviceClient } from "@/lib/applications"
 import { SCHENGEN_META } from "@/lib/countries"
@@ -80,6 +82,7 @@ export default async function FilesPage({ searchParams }: { searchParams: Promis
               </div>
               <span className={`pill ${STAGE[detail.c.stage].tone}`}><span className="dot" />{STAGE[detail.c.stage].label}</span>
               {can(staff.role, "edit") ? <a className="btn outline sm" href={`/staff/cases/${detail.c.id}?tab=details&edit=1`}>Edit details</a> : null}
+              {can(staff.role, "files") ? <SendToAutomation caseId={detail.c.id} connected={automationConfigured().outbound} /> : null}
             </div>
             {problem ? <div className="banner amber" role="note">{problem}</div> : null}
             <FileParts key={detail.c.id} caseId={detail.c.id} parts={parts} canWrite={can(staff.role, "files") && !problem} canReady={can(staff.role, "stage") && !problem} demo={staff.demo} />

@@ -20,7 +20,7 @@ EZvisa is the **controller** of your personal data under UAE Federal Decree-Law 
 | Employment & financial data | Employer, job title, salary/income, bank statements, sponsorship letters, NOCs | You |
 | Family data | Spouse and dependants' details (where you apply together) | You — you must have their permission to share it |
 | Payment data | Amount, transaction reference, payment status (we do **not** store full card numbers; cards are processed by the payment gateway) | You / Payment gateway |
-| Account & communications | Login details, messages, chat transcripts, support history | You |
+| Account & communications | Login details, messages, website contact-form messages, chat transcripts, support history | You |
 | Technical & usage data | IP address, device and browser type, pages viewed, referrer, cookie IDs, app push-notification token | Automatically, see the [Cookie Policy](/cookie-policy) |
 
 **Sensitive data.** Identity documents, biometric photographs, and information that may reveal nationality, religion, ethnicity, health (e.g. travel insurance) or financial status can be **sensitive personal data** under the PDPL and special-category data under the GDPR. We process it only to prepare the visa application you request, with your **explicit consent** given when you submit it, and protect it with additional safeguards (Section 7). You may withdraw consent at any time, but we will then be unable to continue preparing your application.
@@ -32,6 +32,7 @@ We do not knowingly collect data of children except where a parent or guardian s
 | Purpose | Data used | Legal basis (PDPL / GDPR) |
 |---|---|---|
 | Preparing your visa file (forms, cover letter, itinerary, reservations) | Identity, documents, photo, travel, employment, family | Performance of a contract (PDPL Art. 4(4); GDPR Art. 6(1)(b)); explicit consent for sensitive data (PDPL Art. 4/Art. 7; GDPR Art. 9(2)(a)) |
+| Drafting your file with automation and AI tools (itinerary, cover letter, form answers, reservation searches, organising your documents), always reviewed by a visa specialist | Identity, documents, travel, employment, family | Performance of a contract; explicit consent for sensitive data |
 | Creating and managing your account and the app | Contact, account, technical | Performance of a contract |
 | Processing payments and refunds | Payment, contact | Performance of a contract; legal obligation |
 | Customer support via WhatsApp, phone, email and chat | Contact, communications | Performance of a contract; legitimate interest in responding to enquiries |
@@ -43,6 +44,8 @@ We do not knowingly collect data of children except where a parent or guardian s
 | Accounting, tax and legal compliance; handling disputes | Payment, account, communications | Legal obligation (PDPL Art. 4(5); GDPR Art. 6(1)(c)); establishment or defence of legal claims |
 
 We do not sell personal data and we do not make decisions about you based solely on automated processing that produce legal effects.
+
+**Automation and AI.** To prepare files faster, we use an automation platform and an AI model to draft parts of your file (for example the day-by-day itinerary, the cover letter and the answers for the application form), to search for flight and hotel reservations, and to organise your documents into a case folder. These tools only prepare drafts: a visa specialist checks and approves everything before it is used, and the tools never decide anything about you, submit your application or make payments. We use these providers on business terms under which your data is not used to train their AI models.
 
 ## 4. Who we share data with
 
@@ -59,8 +62,12 @@ We do not sell personal data and we do not make decisions about you based solely
 | Resend | Transactional email delivery | Email address, message content | USA |
 | Expo | Mobile app push notifications | Push token, notification content | USA |
 | Meta (WhatsApp) | Messaging when you contact us on WhatsApp | Phone number, messages | Global |
+| Make (Celonis) | Automation platform that runs our file preparation workflow | Application data and documents needed for your file | EU or USA (account region) |
+| AI model provider (used through Make) | Drafting itineraries, cover letters and form answers for specialist review | Application data needed for the draft | USA/EU |
+| Google Workspace (Google Drive and Docs) | Case folders with your prepared file and documents, restricted to the EZvisa team | Application data, documents, prepared files | USA/global |
+| Flight and hotel search providers | Searching and holding reservations for your visa file | Traveller names, travel dates and destinations | Global |
 
-*Locations to be confirmed against each provider's current terms and our account settings.
+*Locations to be confirmed against each provider's current terms and our account settings. The names of the AI model provider and the flight and hotel search providers in use are available on request at {{EMAIL}}.
 
 **Other recipients:** embassies, consulates or visa application centres **only where you ask us to submit or transmit documents on your behalf**; airlines/hotels for reservations; professional advisers (lawyers, auditors); and authorities where required by law or a court order. In a sale or restructuring of our business, data may transfer to the successor under this policy.
 
@@ -73,6 +80,9 @@ Several providers store or access data outside the UAE (for example in the USA o
 |---|---|
 | Passport, ID documents, photos and supporting documents (bank statements, letters) | Deleted **90 days after your case closes** (file delivered, cancelled or refunded), unless a longer period is required by law or to handle an open dispute |
 | Prepared application files (forms, cover letter, itinerary) | 90 days after the case closes |
+| Case folders in Google Drive | Deleted with the documents above, 90 days after the case closes |
+| Automation run records (Make) | Kept for no more than 30 days, then deleted by the platform |
+| Website contact-form messages | 12 months after last contact |
 | Account data | While your account is active; deleted within 90 days after you request account deletion |
 | Payment, invoice and transaction records | 5 years (or longer if required by UAE commercial/tax law) |
 | Support communications and chat transcripts | 12 months after last contact |
@@ -84,7 +94,7 @@ Several providers store or access data outside the UAE (for example in the USA o
 When retention ends, data is securely deleted or irreversibly anonymised.
 
 ## 7. Security
-We use technical and organisational measures appropriate to the sensitivity of the data, including: TLS encryption in transit; encryption at rest; private storage buckets for documents with access via short-lived signed links; row-level security and role-based access limited to staff who need it; multi-factor authentication for admin accounts; logging of access; and data processing agreements with providers. No system is completely secure. If a breach is likely to affect your privacy, we will notify the UAE Data Office and affected individuals as required by the PDPL (and, where applicable, the competent EU authority within 72 hours).
+We use technical and organisational measures appropriate to the sensitivity of the data, including: TLS encryption in transit; encryption at rest; private storage buckets for documents with access via short-lived signed links; row-level security and role-based access limited to staff who need it; multi-factor authentication for admin accounts; logging of access; case folders shared only with the EZvisa team (never by public link); automation access limited to the case being prepared, through a secured connection that never holds our full database key; and data processing agreements with providers. No system is completely secure. If a breach is likely to affect your privacy, we will notify the UAE Data Office and affected individuals as required by the PDPL (and, where applicable, the competent EU authority within 72 hours).
 
 ## 8. Your rights
 Subject to applicable law, you have the right to:

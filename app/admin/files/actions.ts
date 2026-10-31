@@ -15,7 +15,8 @@ import { can } from "@/lib/staff/roles"
 import { getStaff, missingTable, type Staff } from "@/lib/staff/session"
 
 export type FileResult = { ok: true; message: string; body?: string } | { ok: false; error: string }
-const MAX_UPLOAD = 15 * 1024 * 1024
+// The visa_documents bucket rejects files over 5 MB, so the same limit is checked here first.
+const MAX_UPLOAD = 5 * 1024 * 1024
 
 async function writer(): Promise<{ staff: Staff } | { error: string }> {
   const staff = await getStaff()
@@ -80,7 +81,7 @@ export async function startUpload(input: { caseId: string; part: string; fileNam
   if (!isPartKey(input.part)) return { ok: false, error: "That part is not valid." }
   const kind = fileKind(input.fileName)
   if (!kind) return { ok: false, error: "Upload a PDF, JPG or PNG." }
-  if (!(input.size > 0) || input.size > MAX_UPLOAD) return { ok: false, error: "The file is over 15 MB." }
+  if (!(input.size > 0) || input.size > MAX_UPLOAD) return { ok: false, error: "The file is over 5 MB. Compress it or save it as a smaller PDF." }
   if (w.staff.demo) return { ok: true, path: "", token: "", demo: true }
   if (!UUID_RE.test(input.caseId)) return { ok: false, error: "Invalid case." }
   const client = serviceClient()
@@ -185,4 +186,24 @@ export async function assembleAndReady(input: { caseId: string }): Promise<FileR
   return moved
     ? { ok: true, message: `File assembled, ${pages} pages. Case moved to Ready; the customer can download it from their dashboard.${skippedText}` }
     : { ok: true, message: `File assembled, ${pages} pages, but the case changed meanwhile so the stage was not moved. Reload and use Change stage.${skippedText}` }
+}
+
+/** "Send to automation" on File preparation: asks the Make scenario to prepare drafts for this case. Logged. */
+export async function sendToAutomation(input: { caseId: string }): Promise<FileResult> {
+  const w = await writer()
+  if ("error" in w) return { ok: false, error: w.error }
+  const { automationConfigured, notifyAutomation } = await import("@/lib/automation/make")
+  if (w.staff.demo) return { ok: true, message: "Demo: the case would be sent to the file preparation automation. Nothing was sent." }
+  if (!automationConfigured().outbound) return { ok: false, error: "The automation is not connected yet: MAKE_WEBHOOK_URL and MAKE_API_SECRET need to be set in Vercel." }
+  if (!UUID_RE.test(input.caseId)) return { ok: false, error: "Invalid case." }
+  const client = serviceClient()
+  if (!client) return { ok: false, error: "The database is not configured." }
+  const { data: row } = await client.from("visa_applications").select("tracking_token, payment_status").eq("id", input.caseId).maybeSingle()
+  if (!row) return { ok: false, error: "Case not found." }
+  if (!["paid", "completed"].includes(String(row.payment_status ?? "").toLowerCase())) return { ok: false, error: "The case is not paid." }
+  const { getReference } = await import("@/lib/application-status")
+  const ref = getReference(row.tracking_token as string | null) || `EZ-${input.caseId.slice(0, 8).toUpperCase()}`
+  const r = await notifyAutomation(input.caseId, ref, "manual")
+  await recordAudit(w.staff, { action: r.sent ? "Sent to the file preparation automation" : `Sending to the automation failed (${r.reason})`, type: "upload", targetTable: "visa_applications", targetId: input.caseId, targetLabel: ref, field: "automation", notified: "No" }, client)
+  return r.sent ? { ok: true, message: "Sent. Drafts appear here as the automation saves them (refresh in a minute or two)." } : { ok: false, error: `The automation did not accept it (${r.reason?.replace(/_/g, " ")}). Check the Make scenario is on.` }
 }

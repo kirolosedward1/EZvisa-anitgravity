@@ -36,6 +36,7 @@ export const WHATS_NEW: { date: string; items: string[] }[] = [
       "Overview quick actions open exactly what they say: Remind unpaid drafts opens Broadcast with the unpaid-draft reminder chosen; This week's report opens Analytics for the last 7 days.",
       "Links only lead to boards your role can open, forms say what is still missing before Continue, and phones show a label next to every value on Team.",
       "Messaging, Website messages: contact form messages are saved in the console, so none are lost while the email service is down.",
+      "File preparation: Draft with automation sends a case to the Make automation, which writes drafts back for review (Settings, Integrations shows whether it is connected).",
     ],
   },
 ]
@@ -203,6 +204,7 @@ export const GUIDE: GuideSection[] = [
       "Pick a case on the left (most urgent first).",
       "For each part (application form, cover letter, flight reservation, hotel bookings, itinerary, appointment checklist): Generate it from the answers, or Upload the PDF.",
       "Check What the templates use on the right; Edit application details if something is wrong.",
+      "Draft with automation (when connected): sends the case to the file preparation automation, which saves drafts of the parts here and adds an internal note with what is missing. Check and edit every draft before marking it done. Cases are also sent automatically when the last document is approved.",
       "Assemble and mark Ready merges everything in embassy order into one PDF and moves the case to Ready. The customer can then download it.",
     ],
     tips: ["Travellers on the same trip are listed under Same trip: bookings can be shared, cover letters are per person."],
