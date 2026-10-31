@@ -52,3 +52,52 @@ export async function searchConsole(query: string): Promise<SearchHit[]> {
   }
   return hits
 }
+
+export type CasePeek = {
+  id: string
+  name: string
+  ref: string
+  country: string
+  stage: string
+  tone: string
+  what: string
+  waitingOn: string
+  owner: string
+  due: string | null
+  over: boolean
+  travel: string
+  phone: string
+  email: string
+  paid: boolean
+  appointment: string | null
+}
+
+/** Hover preview of a case (any link to a case in the console). Read only. */
+export async function peekCase(id: string): Promise<CasePeek | null> {
+  const staff = await getStaff()
+  if (!staff || typeof id !== "string" || id.length > 64) return null
+  const { cases, team } = await loadConsoleData(staff)
+  const c = cases.find((x) => x.id === id)
+  if (!c) return null
+  const { slaLabel } = await import("@/lib/staff/sla")
+  const { travelLabel } = await import("@/lib/staff/queue")
+  const sla = c.dueAt && c.side === "us" ? slaLabel(c.dueAt) : null
+  return {
+    id: c.id,
+    name: c.name,
+    ref: c.ref,
+    country: c.country,
+    stage: STAGE[c.stage].label,
+    tone: STAGE[c.stage].tone,
+    what: c.what,
+    waitingOn: c.side === "us" ? "Us" : c.side === "customer" || c.side === "draft" ? "Customer" : "Nobody",
+    owner: c.ownerId ? team.find((m) => m.id === c.ownerId)?.name ?? "Former staff" : "Unassigned",
+    due: sla ? sla.text : null,
+    over: !!sla?.over,
+    travel: travelLabel(c.travelStart, c.travelEnd),
+    phone: c.phone,
+    email: c.email,
+    paid: c.paid,
+    appointment: c.appointmentAt ? new Date(c.appointmentAt).toLocaleString("en-GB", { timeZone: "Asia/Dubai", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + (c.appointmentCentre ? `, ${c.appointmentCentre}` : "") : null,
+  }
+}

@@ -530,3 +530,11 @@ button.ezc-search { min-width: 0; overflow: hidden; }
 .ezc .guide-sec ul { list-style: disc; }
 .ezc .guide-sec li::marker { color: var(--ezc-blue); font-weight: 500; }
 .ezc .tr[data-cursor] { box-shadow: inset 3px 0 0 var(--ezc-blue); background: #f7f9fd; }
+/* Case hover preview */
+.ezc .case-peek { position: fixed; z-index: 45; width: 320px; background: #fff; border: 1px solid var(--ezc-border); border-radius: 12px; box-shadow: 0 12px 32px rgba(16, 35, 71, 0.18); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; color: var(--ezc-ink); pointer-events: none; }
+.ezc .case-peek b { font-weight: 500; }
+.ezc .case-peek dl { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 4px 8px; margin: 0; }
+.ezc .case-peek dt { color: var(--ezc-muted); font-size: 12px; }
+.ezc .case-peek dd { margin: 0; min-width: 0; }
+@media (prefers-reduced-motion: no-preference) { .ezc .case-peek { animation: peek-in 0.12s ease-out; } }
+@keyframes peek-in { from { opacity: 0; } to { opacity: 1; } }

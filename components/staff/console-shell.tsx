@@ -12,6 +12,7 @@ import {
 import type { NavGroup, NavKey } from "@/lib/staff/roles"
 import { RefreshButton } from "@/components/staff/refresh-button"
 import { CommandPalette } from "@/components/staff/command-palette"
+import { CasePeekLayer } from "@/components/staff/case-peek"
 import { guideAnchorFor } from "@/lib/staff/guide"
 
 const ICON: Record<NavKey, React.ComponentType<{ "aria-hidden"?: boolean }>> = {
@@ -119,6 +120,7 @@ export function ConsoleShell({
       </aside>
       {open ? <div className="ezc-scrim" onClick={() => setOpen(false)} aria-hidden="true" /> : null}
       <CommandPalette open={palette} onClose={() => setPalette(false)} nav={nav} />
+      <CasePeekLayer />
 
       <div className="ezc-body">
         <header className="ezc-top">

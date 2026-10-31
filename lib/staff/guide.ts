@@ -32,6 +32,7 @@ export const WHATS_NEW: { date: string; items: string[] }[] = [
       "This guide.",
       "Cases list: Undo right after assigning puts the previous owners back. Keyboard: J and K move through the list, Enter opens, X selects.",
       "Every board refreshes itself every 2 minutes while you are on it (not while you are typing). The case page offers Undo after changing the owner.",
+      "Hover over any case name or reference (with a mouse) to preview it: stage, what it waits for, owner, SLA, travel, appointment and contact.",
     ],
   },
 ]
@@ -56,7 +57,7 @@ export const GUIDE: GuideSection[] = [
     steps: [
       "Sign in at www.ezvisa.net/staff with your work email (Google or an email sign-in link). Ask an admin to add you on Team first.",
       "Start each day on Overview: the tiles show what needs the team now, and Needs action lists the most urgent cases.",
-      "Click any name, reference, number tile, stage or owner to open it: almost everything links to its page.",
+      "Click any name, reference, number tile, stage or owner to open it: almost everything links to its page. Hover over a case link to preview the case without opening it.",
       "Top right on every page: search, this guide (opens at the page you are on), Refresh (loads the newest data without losing your place; boards also refresh themselves every 2 minutes), New case and the notifications bell.",
       "Every change you make is saved with your name in the Audit log. Customers see only what is meant for them.",
     ],
