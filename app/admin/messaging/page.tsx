@@ -7,7 +7,7 @@ import { PermissionDenied } from "@/components/staff/states"
 import { serviceClient } from "@/lib/applications"
 import { customerDocuments } from "@/lib/dashboard-state"
 import { parseNotes } from "@/lib/shared/wizard-contract"
-import { byUrgency, docTitle, isOpen, isOver, OPEN_STAGES, STAGE } from "@/lib/staff/cases"
+import { byUrgency, docTitle, isOpen, isOver, OPEN_STAGES, STAGE, lowerFirst } from "@/lib/staff/cases"
 import { loadConsoleData } from "@/lib/staff/data"
 import { sectionAccess } from "@/lib/staff/guard"
 import { agoLabel } from "@/lib/staff/queue"
@@ -19,7 +19,7 @@ export const dynamic = "force-dynamic"
 const TABS = [{ key: "inbox", label: "Inbox" }, { key: "customer", label: "Waiting on customers" }, { key: "broadcast", label: "Broadcast" }, { key: "push", label: "App push" }] as const
 const QUICK: TemplateKey[] = ["status", "documents", "appointment", "greeting"]
 
-export default async function MessagingPage({ searchParams }: { searchParams: Promise<{ tab?: string; c?: string }> }) {
+export default async function MessagingPage({ searchParams }: { searchParams: Promise<{ tab?: string; c?: string; tpl?: string; stage?: string }> }) {
   const { staff, allowed } = await sectionAccess("messaging")
   if (!allowed) return <PermissionDenied what="Messaging is not part of your role" role={staff.role} who="Specialists, Support and admins message customers." />
   const sp = await searchParams
@@ -35,7 +35,7 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
     const notes = parseNotes(app?.additional_notes) as Record<string, unknown> & { wizard?: Record<string, unknown> }
     const lang = notes.preferredLanguage === "ar" ? "ar" : "en"
     const optIn = notes.wizard?.whatsappOptIn !== false
-    const missing = app ? customerDocuments(app, reviews[id] ?? {}).rows.filter((r) => r.state === "missing" || r.state === "rejected").map((r) => docTitle(r.document_type).toLowerCase()).join(", ") : ""
+    const missing = app ? customerDocuments(app, reviews[id] ?? {}).rows.filter((r) => r.state === "missing" || r.state === "rejected").map((r) => lowerFirst(docTitle(r.document_type))).join(", ") : ""
     return { lang: lang as "en" | "ar", optIn, missing }
   }
   const list = cases.filter((c) => isOpen(c) && (tab === "customer" ? c.side === "customer" : c.side === "us")).sort(byUrgency(now)).slice(0, 60)
@@ -122,7 +122,7 @@ export default async function MessagingPage({ searchParams }: { searchParams: Pr
       })() : null}
 
       {tab === "broadcast" ? (
-        <Broadcast recipients={recipients} stages={OPEN_STAGES.map((s) => ({ key: s, label: STAGE[s].label }))} countries={[...new Set(recipients.map((r) => r.country))].sort()} templates={settings.templates} />
+        <Broadcast recipients={recipients} stages={OPEN_STAGES.map((s) => ({ key: s, label: STAGE[s].label }))} countries={[...new Set(recipients.map((r) => r.country))].sort()} templates={settings.templates} initialTpl={sp.tpl} initialStages={sp.stage ? sp.stage.split(",") : undefined} />
       ) : null}
 
       {tab === "push" ? (

@@ -44,6 +44,7 @@ export function QuoteRequest({ caseId, first, phone, trip, flexible, demo }: { c
             <input className="inp" type="number" min={1} placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} style={{ width: 90, minWidth: 0, height: 32 }} aria-label="Price in AED" />
             <span className="muted" style={{ fontSize: 12 }}>AED</span>
             <button type="button" className="btn primary sm" disabled={pending || !(Number(price) > 0)} onClick={() => run(() => sendQuote({ caseId, price: Number(price), insurer, cover: "Schengen medical 30,000 EUR" }), () => setSent(true))}>Record quote</button>
+            {!(Number(price) > 0) ? <span className="muted" style={{ fontSize: 12 }}>Type the price first</span> : null}
           </>
         )}
       </div>

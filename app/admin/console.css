@@ -384,7 +384,7 @@
   .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top > * { pointer-events: auto; }
   .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top .ezc-search { display: none; }
   .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top .ezc-search-btn { display: inline-flex; }
-  .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-main > .ezc-pagehead { padding-inline-end: 330px; }
+  .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-main > .ezc-pagehead { padding-inline-end: calc(var(--ezc-actions-w, 330px) + 40px); }
   .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top .ezc-refresh { width: 36px; padding: 0; justify-content: center; }
   .ezc-body:has(> .ezc-main > .ezc-pagehead) > .ezc-top .ezc-refresh span { display: none; }
   .ezc-main > .ezc-pagehead {
@@ -419,7 +419,7 @@
 
 @media (max-width: 1180px) {
   .ezc .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .ezc .grid2 { grid-template-columns: 1fr; }
+  .ezc .grid2 { grid-template-columns: 1fr !important; }
 }
 @media (max-width: 1023px) {
   .ezc-side { position: fixed; inset-block: 0; inset-inline-start: 0; z-index: 40; transform: translateX(-100%); transition: transform 0.2s ease; box-shadow: 0 10px 40px rgba(16, 35, 71, 0.18); }
@@ -483,7 +483,6 @@
 .ezc .tr .who::after { content: ""; position: absolute; inset: 0; }
 .ezc .tr > button, .ezc .tr > a:not(.who), .ezc .tr > .c-owner { position: relative; z-index: 1; }
 .ezc .tr > [data-menu-root] { z-index: 2; }
-.ezc .tr .row-flag { display: inline-flex; }
 .ezc button.av { border: 0; cursor: pointer; font: inherit; font-size: 11px; font-weight: 600; }
 .ezc a.av:hover, .ezc button.av:hover { box-shadow: 0 0 0 2px var(--ezc-blue); }
 .ezc .wl-row { display: flex; flex-direction: column; gap: 5px; color: var(--ezc-ink); border-radius: 8px; margin: -4px -6px; padding: 4px 6px; }
@@ -540,3 +539,16 @@ button.ezc-search { min-width: 0; overflow: hidden; }
 .ezc .case-peek dd { margin: 0; min-width: 0; }
 @media (prefers-reduced-motion: no-preference) { .ezc .case-peek { animation: peek-in 0.12s ease-out; } }
 @keyframes peek-in { from { opacity: 0; } to { opacity: 1; } }
+/* Pills inside cards may wrap instead of being cut off */
+.ezc .tile .pill, .ezc .case-peek .pill { white-space: normal; height: auto; min-height: 24px; padding-block: 3px; width: auto; max-width: 100%; }
+/* Tables whose headings hide on small screens label each value instead */
+@media (max-width: 1023px) {
+  .ezc .tbl-r [data-l] { display: inline-flex; align-items: center; gap: 6px; }
+  .ezc .tbl-r [data-l]::before { content: attr(data-l); color: var(--ezc-muted); font-size: 11px; }
+  .ezc .tbl-h.perm { display: none; }
+  .ezc .tbl-r.perm { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 8px; }
+  .ezc .tbl-r.perm > span:first-child { grid-column: 1 / -1; }
+}
+/* Grid columns may shrink below their content (long report names, pills) instead of pushing past the screen. */
+.ezc .grid2 > *, .ezc .grid2 > * > * { min-width: 0; }
+@media (max-width: 640px) { .ezc .qbtn { flex-wrap: wrap; white-space: normal; } }

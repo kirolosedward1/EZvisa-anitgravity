@@ -22,7 +22,8 @@ export default async function TeamPage() {
   const now = Date.now()
   let members: Member[] = []
   let problem: string | null = null
-  if (staff.demo) members = DEMO_STAFF.map((m) => ({ ...m, active: true, last_seen_at: new Date(now - 3_600_000).toISOString() }))
+  // The demo session acts as the first demo member; show it with the role it was opened with.
+  if (staff.demo) members = DEMO_STAFF.map((m) => ({ ...m, role: m.id === staff.staffId ? staff.role : m.role, active: true, last_seen_at: new Date(now - 3_600_000).toISOString() }))
   else {
     const client = serviceClient()
     const res = client ? await client.from("staff_users").select("id, name, email, role, active, last_seen_at").order("name") : null
@@ -54,9 +55,9 @@ export default async function TeamPage() {
               <div key={m.id} className="tbl-r team" style={{ opacity: m.active ? 1 : 0.55 }}>
                 <span style={{ display: "flex", gap: 8, alignItems: "center", minWidth: 0 }}><span className="av">{initials(m.name)}</span><span style={{ display: "flex", flexDirection: "column", minWidth: 0 }}><b className="ellipsis" style={{ fontWeight: 500 }}>{m.name}</b><a className="muted ellipsis" style={{ fontSize: 12 }} href={`mailto:${m.email}`}>{m.email}</a>{m.active ? null : <span className="muted" style={{ fontSize: 12 }}>Deactivated</span>}</span></span>
                 <span><span className="pill xs grey">{isStaffEmail(m.email) ? "Admin" : isRole(m.role) ? ROLE_LABEL[m.role] : m.role}</span></span>
-                <span>{m.role === "specialist" || open.length ? <a href={`/staff/cases?owner=${m.id}`} title={`${m.name}: open cases`}>{open.length}</a> : "–"}</span>
-                <span>{open.length ? <a href={`/staff/cases?owner=${m.id}&tab=sla`} style={{ color: over ? "#8a1c1c" : undefined }} title={`${m.name}: cases past SLA`}>{over}</a> : "–"}</span>
-                <span className="muted">{m.last_seen_at ? agoLabel(m.last_seen_at, now) : "Never"}</span>
+                <span data-l="Open cases">{m.role === "specialist" || open.length ? <a href={`/staff/cases?owner=${m.id}`} title={`${m.name}: open cases`}>{open.length}</a> : "–"}</span>
+                <span data-l="Past SLA">{open.length ? <a href={`/staff/cases?owner=${m.id}&tab=sla`} style={{ color: over ? "#8a1c1c" : undefined }} title={`${m.name}: cases past SLA`}>{over}</a> : "–"}</span>
+                <span className="muted" data-l="Last active">{m.last_seen_at ? agoLabel(m.last_seen_at, now) : "Never"}</span>
                 <MemberControls id={m.id} name={m.name} role={m.role} active={m.active} self={m.id === staff.staffId} envAdmin={isStaffEmail(m.email)} demo={staff.demo} />
               </div>
             )

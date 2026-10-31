@@ -33,6 +33,8 @@ export const WHATS_NEW: { date: string; items: string[] }[] = [
       "Cases list: Undo right after assigning puts the previous owners back. Keyboard: J and K move through the list, Enter opens, X selects.",
       "Every board refreshes itself every 2 minutes while you are on it (not while you are typing). The case page offers Undo after changing the owner.",
       "Hover over any case name or reference (with a mouse) to preview it: stage, what it waits for, owner, SLA, travel, appointment and contact.",
+      "Overview quick actions open exactly what they say: Remind unpaid drafts opens Broadcast with the unpaid-draft reminder chosen; This week's report opens Analytics for the last 7 days.",
+      "Links only lead to boards your role can open, forms say what is still missing before Continue, and phones show a label next to every value on Team.",
     ],
   },
 ]

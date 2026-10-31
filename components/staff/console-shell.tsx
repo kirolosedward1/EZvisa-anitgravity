@@ -2,7 +2,7 @@
 
 // Staff console frame: grouped sidebar built from the role (lib/staff/roles.ts), top bar with search, New case and the
 // notifications bell (with Refresh). Below 1024px the sidebar opens from a menu button. "/" focuses search, Esc closes the menu.
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import {
@@ -54,6 +54,18 @@ export function ConsoleShell({
   const pathname = raw.replace(/^\/admin(?=\/|$)/, "/staff")
   const [open, setOpen] = useState(false)
   const [palette, setPalette] = useState(false)
+  const actions = useRef<HTMLDivElement>(null)
+
+  // The page header bar reserves exactly the width of the actions floating over its right end (desktop).
+  useEffect(() => {
+    const el = actions.current
+    if (!el || typeof ResizeObserver === "undefined") return
+    const set = () => document.documentElement.style.setProperty("--ezc-actions-w", `${Math.ceil(el.getBoundingClientRect().width)}px`)
+    set()
+    const ro = new ResizeObserver(set)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   useEffect(() => setOpen(false), [pathname])
 
@@ -139,7 +151,7 @@ export function ConsoleShell({
             <span className="ezc-search-ph">Search by name, email, phone or EZ reference</span>
             <kbd className="ezc-kbd hide-sm" aria-hidden="true">Ctrl K</kbd>
           </button>
-          <div className="ezc-actions">
+          <div className="ezc-actions" ref={actions}>
             <button type="button" className="btn outline ezc-search-btn" onClick={() => setPalette(true)} aria-label="Search (Ctrl+K)" title="Search (Ctrl+K)"><Search size={16} aria-hidden /></button>
             <a href={`/staff/guide#${guideAnchorFor(pathname)}`} className="btn ghost ezc-help-btn" aria-label="How this page works (user guide)" title="How this page works"><BookOpen size={18} aria-hidden /></a>
             <RefreshButton />
@@ -158,17 +170,21 @@ export function ConsoleShell({
         <nav className="ezc-tabbar" aria-label="Quick">
           <a href="/staff/cases?tab=us" aria-current={pathname.startsWith("/staff/cases") ? "page" : undefined}><Inbox aria-hidden /><span>Queue</span></a>
           <a href="/staff/notifications" aria-current={pathname.startsWith("/staff/notifications") ? "page" : undefined}><Bell aria-hidden /><span>Inbox</span>{bellCount ? <i>{bellCount > 99 ? "99+" : bellCount}</i> : null}</a>
-          <a href="/staff/appointments" aria-current={pathname.startsWith("/staff/appointments") ? "page" : undefined}><Calendar aria-hidden /><span>Appointments</span></a>
+          {nav.some((g) => g.items.some((i) => i.key === "appointments")) ? (
+            <a href="/staff/appointments" aria-current={pathname.startsWith("/staff/appointments") ? "page" : undefined}><Calendar aria-hidden /><span>Appointments</span></a>
+          ) : (
+            <a href="/staff/payments" aria-current={pathname.startsWith("/staff/payments") ? "page" : undefined}><CreditCard aria-hidden /><span>Payments</span></a>
+          )}
           <a href="/staff/customers" aria-current={pathname.startsWith("/staff/customers") ? "page" : undefined}><Search aria-hidden /><span>Customers</span></a>
         </nav>
-        <main className="ezc-main" id="main">
+        <div className="ezc-main" id="main" role="region" aria-label="Board">
           {me.demo ? (
             <div className="banner amber" role="note">
               Demo session: invented cases only. Nothing you do here is saved or sent.
             </div>
           ) : null}
           {children}
-        </main>
+        </div>
       </div>
     </div>
   )

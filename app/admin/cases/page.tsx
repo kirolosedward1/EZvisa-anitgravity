@@ -1,6 +1,6 @@
 // Cases board: the queue with tabs, filters, sort, saved views, bulk actions and a row menu. Filters live in the URL
 // so a view can be shared or saved; the CSV export uses the same query.
-import { Download, Plus } from "lucide-react"
+import { Download } from "lucide-react"
 import { CasesQueue, type QueueRow } from "@/components/staff/cases-queue"
 import { ErrorBanner } from "@/components/staff/states"
 import { SCHENGEN_META } from "@/lib/countries"
@@ -85,17 +85,12 @@ export default async function CasesPage({ searchParams }: { searchParams: Promis
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {can(staff.role, "stage") ? (
+          {staff.role === "admin" && !staff.demo ? (
             <a className="btn ghost" href="/staff/cases/legacy" title="Status changes and emails, until the Case board replaces them">Old case tools</a>
           ) : null}
           {can(staff.role, "export") ? (
             <a className="btn outline" href={`/api/admin/export/cases${query({ page: "" })}`}>
               <Download size={16} aria-hidden /> Export CSV
-            </a>
-          ) : null}
-          {staff.role !== "finance" ? (
-            <a className="btn primary" href="/staff/cases/new">
-              <Plus size={16} aria-hidden /> New case
             </a>
           ) : null}
         </div>

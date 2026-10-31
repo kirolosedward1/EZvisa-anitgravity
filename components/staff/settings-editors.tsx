@@ -134,11 +134,11 @@ export function PermissionsEditor({ initial, canEdit, demo, updated }: { initial
           return (
             <div key={p.id} className="tbl-r perm">
               <span style={{ display: "flex", flexDirection: "column" }}>{p.label}<span className="muted" style={{ fontSize: 11 }}>{p.hint}{p.id === "view" ? " · every role" : !GRANTABLE.includes(p.id) ? " · admin only" : ""}</span></span>
-              <span><span className="switch" data-on="true" role="img" aria-label="Admin: always" style={{ opacity: 0.55 }} /></span>
+              <span data-l="Admin"><span className="switch" data-on="true" role="img" aria-label="Admin: always" style={{ opacity: 0.55 }} /></span>
               {roles.map((r) => {
                 const on = m[r].includes(p.id)
                 return (
-                  <span key={r}>
+                  <span key={r} data-l={ROLE_LABEL[r]}>
                     <button type="button" className="switch" data-on={on ? "true" : undefined} role="switch" aria-checked={on} aria-label={`${ROLE_LABEL[r]}: ${p.label}`} disabled={!canEdit || locked || pending} onClick={() => toggle(r, p.id)} />
                   </span>
                 )

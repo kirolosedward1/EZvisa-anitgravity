@@ -47,6 +47,13 @@ export function NewCaseForm({ customers, nationalities, owners }: { customers: C
       : `${TRIP_LENGTHS.find((l) => l.days === trip.days)?.en ?? `${trip.days} days`} in ${months.find((m) => m.value === trip.month)?.en ?? "a month to choose"}, flexible`
 
   const customerOk = customer.fullName.trim().length >= 3 && /\S+@\S+\.\S+/.test(customer.email) && customer.phone.replace(/\D/g, "").length >= 7 && customer.nationality
+  // What still blocks Continue, said next to the button.
+  const customerMissing = [
+    customer.fullName.trim().length < 3 && "full name",
+    !/\S+@\S+\.\S+/.test(customer.email) && "email",
+    customer.phone.replace(/\D/g, "").length < 7 && "phone",
+    !customer.nationality && "nationality",
+  ].filter(Boolean) as string[]
   const tripOk = trip.kind === "fixed" ? !!trip.start && !!trip.end && trip.end > trip.start : !!trip.month
   const go = (n: number) => {
     setError(null)
@@ -171,7 +178,7 @@ export function NewCaseForm({ customers, nationalities, owners }: { customers: C
             {creating ? (
               <div className="grid-form">
                 <label>Full name, as in passport<input className="inp" value={customer.fullName} onChange={(e) => setCustomer({ ...customer, fullName: e.target.value })} autoComplete="off" /></label>
-                <label>WhatsApp number<input className="inp" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} inputMode="tel" /></label>
+                <label>WhatsApp number<input className="inp" value={customer.phone} onChange={(e) => setCustomer({ ...customer, phone: e.target.value })} inputMode="tel" placeholder="+971 50 000 0000" /></label>
                 <label>Email (they sign in with it)<input className="inp" type="email" value={customer.email} onChange={(e) => setCustomer({ ...customer, email: e.target.value })} /></label>
                 <label>Language<select className="sel" value={customer.language} onChange={(e) => setCustomer({ ...customer, language: e.target.value as "en" | "ar" })}><option value="en">English</option><option value="ar">Arabic</option></select></label>
                 <label>Nationality
@@ -180,7 +187,8 @@ export function NewCaseForm({ customers, nationalities, owners }: { customers: C
                     {nationalities.map((n) => <option key={n} value={n}>{n}</option>)}
                   </select>
                 </label>
-                <div style={{ alignSelf: "end" }}>
+                <div style={{ alignSelf: "end", display: "flex", flexDirection: "column", gap: 4, alignItems: "flex-start" }}>
+                  {customerMissing.length ? <span className="muted" style={{ fontSize: 12 }}>Still needed: {customerMissing.join(", ")}</span> : null}
                   <button type="button" className="btn primary" disabled={!customerOk} onClick={() => { setPicked(true); go(2) }}>Continue</button>
                 </div>
               </div>
@@ -223,7 +231,7 @@ export function NewCaseForm({ customers, nationalities, owners }: { customers: C
               </label>
             </div>
             <p className="muted" style={{ margin: 0, fontSize: 12 }}>Children and other family members get their own case; cases with the same email and dates show as one trip.</p>
-            <div className="actions"><button type="button" className="btn outline" onClick={() => go(1)}>Back</button><button type="button" className="btn primary" disabled={!tripOk} onClick={() => go(3)}>Continue</button></div>
+            <div className="actions"><button type="button" className="btn outline" onClick={() => go(1)}>Back</button>{!tripOk ? <span className="muted" style={{ fontSize: 12, alignSelf: "center" }}>{trip.kind === "fixed" ? "Choose the travel dates (return after departure)" : "Choose the travel month"}</span> : null}<button type="button" className="btn primary" disabled={!tripOk} onClick={() => go(3)}>Continue</button></div>
           </section>
         ) : null}
 

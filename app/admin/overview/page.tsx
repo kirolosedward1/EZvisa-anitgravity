@@ -7,7 +7,7 @@ import { SCHENGEN_META } from "@/lib/countries"
 import { loadConsoleData } from "@/lib/staff/data"
 import { sectionAccess } from "@/lib/staff/guard"
 import { greeting, overviewFor, WORKLOAD_CAP, type QueueRow } from "@/lib/staff/overview"
-import { can } from "@/lib/staff/roles"
+import { can, canOpen } from "@/lib/staff/roles"
 import { firstName, initials } from "@/lib/staff/session"
 
 export const dynamic = "force-dynamic"
@@ -56,16 +56,16 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
 
   const quick = [
     can(staff.role, "assign") && o.counts.unassigned > 0 && { href: "/staff/cases?tab=unassigned", label: `Assign ${o.counts.unassigned} unassigned ${o.counts.unassigned === 1 ? "case" : "cases"}` },
-    can(staff.role, "msg") && o.counts.staleDrafts > 0 && { href: "/staff/messaging", label: `Remind ${o.counts.staleDrafts} unpaid ${o.counts.staleDrafts === 1 ? "draft" : "drafts"}` },
+    can(staff.role, "msg") && o.counts.staleDrafts > 0 && { href: "/staff/messaging?tab=broadcast&tpl=pay_reminder&stage=payment", label: `Remind ${o.counts.staleDrafts} unpaid ${o.counts.staleDrafts === 1 ? "draft" : "drafts"}` },
     can(staff.role, "docs") && o.counts.docsToCheck > 0 && { href: "/staff/documents", label: `Start document review (${o.counts.docsToCheck})` },
     can(staff.role, "appt") && o.counts.help > 0 && { href: "/staff/appointments", label: `Answer ${o.counts.help} appointment ${o.counts.help === 1 ? "request" : "requests"}` },
-    { href: "/staff/analytics", label: "This week's report" },
+    { href: "/staff/analytics?range=7", label: "This week's report" },
   ].filter(Boolean) as { href: string; label: string }[]
 
   const alerts = [
     showMoney && { n: o.kpi.failedPayments, tone: "red", label: "Failed payments to follow up", href: "/staff/payments" },
     showMoney && { n: o.counts.insurance, tone: "amber", label: "Insurance quotes requested", href: "/staff/insurance" },
-    { n: o.counts.help, tone: "blue", label: "Appointment help requests", href: "/staff/appointments" },
+    { n: o.counts.help, tone: "blue", label: "Appointment help requests", href: canOpen(staff.role, "appointments") ? "/staff/appointments" : "/staff/cases?tab=us" },
     { n: o.counts.staleDrafts, tone: "grey", label: `Drafts unpaid for 7+ days`, href: "/staff/cases?stage=payment" },
   ].filter((a): a is { n: number; tone: string; label: string; href: string } => !!a && a.n > 0)
 
@@ -104,12 +104,12 @@ export default async function OverviewPage({ searchParams }: { searchParams: Pro
           <span className="l">Waiting on customers</span>
           <span className="s">Documents, a re-upload or the appointment</span>
         </a>
-        <a className="card kpi" href="/staff/files">
+        <a className="card kpi" href={canOpen(staff.role, "files") ? "/staff/files" : "/staff/cases?stage=preparation"}>
           <span className="v">{o.kpi.files}</span>
           <span className="l">Files to prepare</span>
           <span className="s">{o.kpi.filesDueSoon} due before Monday</span>
         </a>
-        <a className="card kpi" href="/staff/appointments">
+        <a className="card kpi" href={canOpen(staff.role, "appointments") ? "/staff/appointments" : "/staff/cases?stage=appointment"}>
           <span className="v">{o.kpi.apptsThisWeek}</span>
           <span className="l">Appointments this week</span>
           <span className="s">

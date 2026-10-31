@@ -88,6 +88,11 @@ function spouseTravels(notes?: string | null): boolean {
   return (n.wizard?.spouseAccompanying ?? n.spouseAccompanying) === "yes"
 }
 
+/** Lower-cases the first letter for use mid-sentence, keeping abbreviations ("UAE residence visa", "NOC") intact. */
+export function lowerFirst(s: string): string {
+  return /^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s
+}
+
 function list(names: string[]): string {
   if (names.length <= 2) return names.join(" and ")
   return `${names.slice(0, 2).join(", ")} and ${names.length - 2} more`
@@ -174,7 +179,7 @@ export function toStaffCase(app: VisaApplication, reviews: DocumentReviews = {},
     const unsent = uploads.length > 0 ? flagged.filter((r) => !lastUpload(r.document_type)) : []
     const missing = [...docs.rows.filter((r) => r.state === "missing"), ...unsent].map((r) => docTitle(r.document_type))
     if (redo.length || missing.length) {
-      return { ...base, side: "customer", what: redo.length ? `${list(redo)} sent back` : `Waiting for ${list(missing).toLowerCase()}` }
+      return { ...base, side: "customer", what: redo.length ? `${list(redo)} sent back` : `Waiting for ${list(missing.map(lowerFirst))}` }
     }
     // Everything approved but the stage was not moved on: the file is due, as in Preparation.
   }

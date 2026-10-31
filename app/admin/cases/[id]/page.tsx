@@ -17,10 +17,10 @@ import { SCHENGEN_META } from "@/lib/countries"
 import { applicationInsurance } from "@/lib/insurance"
 import { EMPLOYMENT, FUNDING, MARITAL, PURPOSES, label, type WizardAnswers } from "@/lib/shared/wizard-contract"
 import { loadCaseDetail } from "@/lib/staff/case-detail"
-import { byUrgency, docTitle, isOpen, isOver, STAGE } from "@/lib/staff/cases"
+import { byUrgency, docTitle, isOpen, isOver, lowerFirst, STAGE } from "@/lib/staff/cases"
 import { sectionAccess } from "@/lib/staff/guard"
 import { agoLabel, travelLabel } from "@/lib/staff/queue"
-import { can } from "@/lib/staff/roles"
+import { can, canOpen } from "@/lib/staff/roles"
 import { slaLabel } from "@/lib/staff/sla"
 import { initials } from "@/lib/staff/session"
 
@@ -138,7 +138,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
-          {nextCase ? <a href={`/staff/cases/${nextCase.id}${nextCase.task === "review" ? "?tab=documents" : ""}`} className="next-case" title={`${nextCase.name}: ${nextCase.what}`}>Next case: {nextCase.name.split(" ")[0]}, {nextCase.what.toLowerCase()} <ArrowRight size={14} aria-hidden /></a> : null}
+          {nextCase ? <a href={`/staff/cases/${nextCase.id}${nextCase.task === "review" ? "?tab=documents" : ""}`} className="next-case" title={`${nextCase.name}: ${nextCase.what}`}>Next case: {nextCase.name.split(" ")[0]}, {lowerFirst(nextCase.what)} <ArrowRight size={14} aria-hidden /></a> : null}
           <CaseControls
             caseId={c.id}
             status={(app.application_status ?? "").toLowerCase()}
@@ -146,7 +146,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             owners={team.filter((m) => m.active && m.role !== "finance").map((m) => ({ id: m.id, name: m.name }))}
             waLink={waLink}
             trackingUrl={trackingUrl}
-            perms={{ assign: can(staff.role, "assign"), stage: can(staff.role, "stage"), msg: can(staff.role, "msg"), selfAssign: can(staff.role, "docs") }}
+            perms={{ assign: can(staff.role, "assign"), stage: can(staff.role, "stage"), msg: can(staff.role, "msg"), selfAssign: can(staff.role, "docs"), files: canOpen(staff.role, "files") }}
             hasPreparedFile={hasPreparedFile}
             me={staff.staffId}
           />
@@ -198,7 +198,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   <b>{c.appointmentAt ? `${dt(c.appointmentAt)}${c.appointmentCentre ? `, ${c.appointmentCentre}` : ""}` : c.helpRequested ? "Customer asked us to book" : "Not booked yet"}</b>
                   {can(staff.role, "appt") && c.paid && c.side !== "closed" ? (
                     <BookAndSave caseId={c.id} centres={settings.centres.map((x) => x.name)} defaultCentre={c.appointmentCentre} current={apptParts} label={c.appointmentAt ? "Change" : "Save appointment"} canAssignSelf={false} me={staff.staffId} demo={staff.demo} />
-                  ) : c.appointmentAt ? <a href="/staff/appointments" style={{ fontSize: 13 }}>Appointments calendar</a> : null}
+                  ) : c.appointmentAt && canOpen(staff.role, "appointments") ? <a href="/staff/appointments" style={{ fontSize: 13 }}>Appointments calendar</a> : null}
                 </div>
               </div>
               <section className="card" style={{ padding: "16px 18px" }} aria-labelledby="app-h">
@@ -212,7 +212,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   <dt>Employment</dt><dd>{w.employmentStatus ? label(EMPLOYMENT, w.employmentStatus) : "Not answered yet"}{w.companyName ? `, ${w.companyName}` : ""}{w.jobTitle ? `, ${w.jobTitle}` : ""}</dd>
                   <dt>Previous Schengen</dt><dd>{w.isFirstSchengenVisa === "yes" ? "First Schengen visa" : w.isFirstSchengenVisa === "no" ? "Has had a Schengen visa" : "Not answered yet"}{w.previousRefusals === "yes" ? " · refused before" : w.previousRefusals === "no" ? " · no refusals" : ""}</dd>
                   <dt>Service fee</dt><dd>{c.paid ? <span className="pill green">Paid</span> : c.paymentFailed ? <span className="pill red">Failed</span> : <span className="pill grey">Not paid</span>} {c.amount ? `${c.amount} AED` : ""}{c.paidAt ? ` · ${dt(c.paidAt)}` : ""}{app.payment_id ? ` · payment gateway ref ${app.payment_id}` : ""}{can(staff.role, "pay") ? <> · <a href={href("payments")}>Payments</a></> : null}</dd>
-                  <dt>Insurance</dt><dd>{insurance === "quote" ? "Asked for a quote through EZvisa" : insurance === "own" ? "Providing own policy" : "No choice yet"}{insurance === "quote" ? <> · <a href={`/staff/insurance?q=${encodeURIComponent(c.ref)}`}>Open in Insurance</a></> : null}</dd>
+                  <dt>Insurance</dt><dd>{insurance === "quote" ? "Asked for a quote through EZvisa" : insurance === "own" ? "Providing own policy" : "No choice yet"}{insurance === "quote" && canOpen(staff.role, "insurance") ? <> · <a href={`/staff/insurance?q=${encodeURIComponent(c.ref)}`}>Open in Insurance</a></> : null}</dd>
                   <dt>Source</dt><dd>{source}</dd>
                 </dl>
               </section>
@@ -344,7 +344,7 @@ export default async function CasePage({ params, searchParams }: { params: Promi
             {can(staff.role, "files") && c.paid ? <a className="btn outline sm" href={`/staff/files?case=${c.id}`}>Prepare the file</a> : null}
             {can(staff.role, "appt") && c.paid ? <a className="btn outline sm" href={`${href("overview")}#appt`}>{c.appointmentAt ? "Change the appointment" : "Save the appointment"}</a> : null}
             {canEdit ? <a className="btn outline sm" href={href("details", "&edit=1")}>Edit application details</a> : null}
-            <a className="btn ghost sm" href={`/staff/cases/legacy`}>Old case tools (emails, documents)</a>
+            {staff.role === "admin" && !staff.demo ? <a className="btn ghost sm" href={`/staff/cases/legacy`}>Old case tools (emails, documents)</a> : null}
           </section>
         </aside>
       </div>

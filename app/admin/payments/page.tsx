@@ -6,6 +6,7 @@ import { ErrorBanner, PermissionDenied } from "@/components/staff/states"
 import { serviceClient } from "@/lib/applications"
 import { STAGE, isOpen, type StaffCase } from "@/lib/staff/cases"
 import { loadConsoleData } from "@/lib/staff/data"
+import { demoRefunds } from "@/lib/staff/demo"
 import { sectionAccess } from "@/lib/staff/guard"
 import { refundPolicy, REFUND_STATUS } from "@/lib/staff/refunds"
 import { can } from "@/lib/staff/roles"
@@ -38,8 +39,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   let refunds: Refund[] = []
   let problem: string | null = null
   if (staff.demo) {
-    const paid = cases.filter((c) => c.paid).slice(0, 3)
-    refunds = paid.map((c, i) => ({ id: `demo-refund-${i}`, application_id: c.id, amount: i === 1 ? 124.5 : 249, amount_paid: 249, reason: i === 0 ? "Customer cancelled before review" : i === 1 ? "Goodwill" : "Duplicate payment", policy: i === 1 ? "After review, 50 percent" : "Before review, full refund", stage_at_request: STAGE[c.stage].label, note: null, status: i === 2 ? "sent" : "requested", requested_by: "Demo specialist", requested_at: new Date(now - (i + 1) * 7_200_000).toISOString(), decided_by: null, gateway_ref: i === 2 ? "demo-ref" : null }))
+    refunds = demoRefunds(cases.map((c) => ({ id: c.id, paid: c.paid, stageLabel: STAGE[c.stage].label })), now) as Refund[]
   } else {
     const client = serviceClient()
     const res = client ? await client.from("refund_requests").select("*").order("requested_at", { ascending: false }).limit(500) : null

@@ -6,6 +6,7 @@ import { parseNotes } from "@/lib/shared/wizard-contract"
 import { delta, marketing, operations, sourceOf, team, type Range, type StageEvent } from "@/lib/staff/analytics"
 import { loadConsoleData } from "@/lib/staff/data"
 import { sectionAccess } from "@/lib/staff/guard"
+import { canOpen } from "@/lib/staff/roles"
 import { uploadRecords } from "@/lib/document-reviews"
 
 export const dynamic = "force-dynamic"
@@ -54,6 +55,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
     if (c.paid) s.paid++
     sources.set(key, s)
   }
+  const payHref = canOpen(staff.role, "payments") ? "/staff/payments?tab=all" : "/staff/cases?tab=all"
   const maxDay = Math.max(1, ...m.days)
   const top = Math.max(1, m.funnel[0].n)
   const href = (o2: Record<string, string | number>) => `/staff/analytics?${new URLSearchParams({ range: String(range), tab, ...Object.fromEntries(Object.entries(o2).map(([k, v]) => [k, String(v)])) })}`
@@ -76,8 +78,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
         <>
           <div className="kpis" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
             <a className="card kpi" href="/staff/cases?sort=newest"><span className="v">{m.cur.started}</span><span className="l">Applications started</span><Delta v={delta(m.cur.started, m.prev.started)} /></a>
-            <a className="card kpi" href="/staff/payments?tab=all"><span className="v">{m.cur.paid}</span><span className="l">Paid</span><Delta v={delta(m.cur.paid, m.prev.paid)} /></a>
-            <a className="card kpi" href="/staff/payments?tab=all"><span className="v">{Math.round(m.cur.revenue).toLocaleString("en-US")}<small> AED</small></span><span className="l">Revenue</span><Delta v={delta(m.cur.revenue, m.prev.revenue)} /></a>
+            <a className="card kpi" href={payHref}><span className="v">{m.cur.paid}</span><span className="l">Paid</span><Delta v={delta(m.cur.paid, m.prev.paid)} /></a>
+            <a className="card kpi" href={payHref}><span className="v">{Math.round(m.cur.revenue).toLocaleString("en-US")}<small> AED</small></span><span className="l">Revenue</span><Delta v={delta(m.cur.revenue, m.prev.revenue)} /></a>
             <a className="card kpi" href="#fn-h"><span className="v">{m.cur.started ? Math.round((m.cur.paid / m.cur.started) * 100) : 0}<small> percent</small></span><span className="l">Started to paid</span></a>
           </div>
           <div className="grid2">
@@ -118,8 +120,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
           <div className="kpis" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
             <a className="card kpi" href="/staff/cases?tab=us"><span className="v">{fmt(o.medianToReadyDays)}<small> days</small></span><span className="l">Paid to file ready, median</span></a>
             <a className="card kpi" href="/staff/cases?tab=sla"><span className="v">{fmt(o.withinSla, 0)}<small> percent</small></span><span className="l">Open cases within SLA, now</span></a>
-            <a className="card kpi" href="/staff/documents"><span className="v">{fmt(o.medianReviewHours)}<small> h</small></span><span className="l">Upload to review decision, median</span></a>
-            <a className="card kpi" href="/staff/audit?type=document"><span className="v">{reviewHours.length}</span><span className="l">Document decisions in the period</span></a>
+            <a className="card kpi" href={canOpen(staff.role, "documents") ? "/staff/documents" : "/staff/cases?tab=us"}><span className="v">{fmt(o.medianReviewHours)}<small> h</small></span><span className="l">Upload to review decision, median</span></a>
+            <a className="card kpi" href={canOpen(staff.role, "audit") ? "/staff/audit?type=document" : "/staff/cases?tab=all"}><span className="v">{reviewHours.length}</span><span className="l">Document decisions in the period</span></a>
           </div>
           <div className="grid2" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
             <section className="card" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }} aria-labelledby="bd-h">

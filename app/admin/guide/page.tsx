@@ -1,6 +1,7 @@
 // User guide board: how every part of the console works (lib/staff/guide.ts), with what's new and the keyboard
 // shortcuts. "My role" shows the sections for the signed-in role first; ?all=1 shows every section.
 import { ArrowRight } from "lucide-react"
+import { GuideScroll } from "@/components/staff/guide-scroll"
 import { GUIDE, GUIDE_UPDATED, SHORTCUTS, WHATS_NEW } from "@/lib/staff/guide"
 import { sectionAccess } from "@/lib/staff/guard"
 import { ROLE_LABEL } from "@/lib/staff/roles"
@@ -27,6 +28,7 @@ export default async function GuidePage({ searchParams }: { searchParams: Promis
           <input className="inp" type="search" name="q" defaultValue={sp.q ?? ""} placeholder="Search the guide" aria-label="Search the guide" />
         </form>
       </div>
+      <GuideScroll />
       <div className="guide">
         <nav className="card guide-toc" aria-label="Guide sections">
           <div className="seg" style={{ marginBottom: 8 }}>

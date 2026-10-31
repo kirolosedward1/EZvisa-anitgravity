@@ -40,7 +40,7 @@ export function CaseControls({
   owners: { id: string; name: string }[]
   waLink: string | null
   trackingUrl: string | null
-  perms: { assign: boolean; stage: boolean; msg: boolean; selfAssign: boolean }
+  perms: { assign: boolean; stage: boolean; msg: boolean; selfAssign: boolean; files?: boolean }
   hasPreparedFile: boolean
   me: string | null
 }) {
@@ -120,7 +120,7 @@ export function CaseControls({
           </button>
           {menu ? (
             <div className="menu" role="menu">
-              <a role="menuitem" href="/staff/files">{hasPreparedFile ? "Prepared file (File preparation)" : "Start file preparation"}</a>
+              {perms.files ? <a role="menuitem" href={`/staff/files?case=${caseId}`}>{hasPreparedFile ? "Prepared file (File preparation)" : "Start file preparation"}</a> : null}
               <button role="menuitem" type="button" onClick={() => { setMenu(false); window.print() }}>Print case summary</button>
               {trackingUrl ? (
                 <button

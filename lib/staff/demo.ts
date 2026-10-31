@@ -152,3 +152,22 @@ export function demoConsoleData(now = Date.now()): DemoConsoleData {
   cached = { at: now, data: { apps, reviews, owners } }
   return cached.data
 }
+
+/** Demo refunds, shared by Payments and Reports so both boards agree (three paid cases: requested, goodwill, sent). */
+export function demoRefunds(cases: { id: string; paid: boolean; stageLabel: string }[], now = Date.now()) {
+  return cases.filter((c) => c.paid).slice(0, 3).map((c, i) => ({
+    id: `demo-refund-${i}`,
+    application_id: c.id,
+    amount: i === 1 ? 124.5 : 249,
+    amount_paid: 249,
+    reason: i === 0 ? "Customer cancelled before review" : i === 1 ? "Goodwill" : "Duplicate payment",
+    policy: i === 1 ? "After review, 50 percent" : "Before review, full refund",
+    stage_at_request: c.stageLabel,
+    note: null as string | null,
+    status: i === 2 ? "sent" : "requested",
+    requested_by: "Demo specialist",
+    requested_at: new Date(now - (i + 1) * 7_200_000).toISOString(),
+    decided_by: null as string | null,
+    gateway_ref: i === 2 ? "demo-ref" : null,
+  }))
+}

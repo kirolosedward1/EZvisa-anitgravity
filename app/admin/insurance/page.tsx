@@ -10,6 +10,7 @@ import { applicationInsurance } from "@/lib/insurance"
 import { isOpen } from "@/lib/staff/cases"
 import { loadConsoleData } from "@/lib/staff/data"
 import { sectionAccess } from "@/lib/staff/guard"
+import { canOpen } from "@/lib/staff/roles"
 import { agoLabel, travelLabel } from "@/lib/staff/queue"
 import { dubaiMonthStart } from "@/lib/staff/sla"
 import { missingTable } from "@/lib/staff/session"
@@ -55,7 +56,7 @@ export default async function InsurancePage({ searchParams }: { searchParams: Pr
         <a className="card kpi" href="#qr-h"><span className="v" style={{ color: "#7a4b00" }}>{requests.length}</span><span className="l">Quotes requested, not sent</span></a>
         <a className="card kpi" href="#qs-h"><span className="v">{quotes.filter((x) => x.status === "sent").length}</span><span className="l">Quotes sent, awaiting answer</span></a>
         <a className="card kpi" href="#qs-h"><span className="v">{issuedMonth}</span><span className="l">Policies issued this month</span></a>
-        <a className="card kpi" href="/staff/appointments"><span className="v">{own}</span><span className="l">Own policy, to check at the appointment</span></a>
+        <a className="card kpi" href={canOpen(staff.role, "appointments") ? "/staff/appointments" : "/staff/cases?stage=ready"}><span className="v">{own}</span><span className="l">Own policy, to check at the appointment</span></a>
       </div>
       <div className="grid2" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
         <section className="card" aria-labelledby="qr-h" style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: 10 }}>

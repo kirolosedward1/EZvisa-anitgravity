@@ -387,7 +387,7 @@ export function CasesQueue({
                   c.key === "waiting" ? (
                     <span key={c.key} className="c-waiting">
                       <span className="ellipsis" style={{ fontSize: 13 }}>{r.what}</span>
-                      <span className="muted" style={{ fontSize: 11 }}>{r.who}</span>
+                      <span className="muted" style={{ fontSize: 11 }}>{r.who === "us" ? "Waiting on us" : r.who === "customer" ? "Waiting on the customer" : r.who === "closed" ? "Closed" : "No clock running"}</span>
                     </span>
                   ) : c.key === "travel" ? (
                     <span key={c.key} className="muted c-travel" style={{ fontSize: 12 }}>{r.travel}</span>

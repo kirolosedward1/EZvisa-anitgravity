@@ -51,7 +51,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <h1 style={{ marginInlineEnd: 8 }}>Appointments</h1>
           <a className="btn outline sm" href={q({ w: offset - 1 })} aria-label="Previous week"><ChevronLeft size={16} aria-hidden /></a>
-          <span style={{ fontSize: 14, fontWeight: 500 }}>{fmt(start, fmt(start, { month: "long" }) === fmt(end - DAY, { month: "long" }) ? { day: "numeric" } : { day: "numeric", month: "short" })} to {fmt(end - DAY, { day: "numeric", month: "long", year: "numeric" })}</span>
+          <span style={{ fontSize: 14, fontWeight: 500 }}>{fmt(start, fmt(start, { month: "long" }) === fmt(end - DAY, { month: "long" }) ? { day: "numeric" } : { day: "numeric", month: "short" })} to {fmt(end - DAY, fmt(start, { month: "long" }) === fmt(end - DAY, { month: "long" }) ? { day: "numeric", month: "long", year: "numeric" } : { day: "numeric", month: "short", year: "numeric" })}</span>
           <a className="btn outline sm" href={q({ w: offset + 1 })} aria-label="Next week"><ChevronRight size={16} aria-hidden /></a>
           {offset !== 0 ? <a className="btn ghost sm" href={q({ w: 0 })}>This week</a> : null}
         </div>

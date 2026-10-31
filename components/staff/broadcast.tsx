@@ -9,12 +9,14 @@ import type { Templates } from "@/lib/staff/console-settings"
 
 export type Recipient = { phone: string; first: string; lang: "en" | "ar"; stage: string; stageLabel: string; country: string; missing: string; ref: string }
 
-export function Broadcast({ recipients, stages, countries, templates: TEMPLATES }: { recipients: Recipient[]; stages: { key: string; label: string }[]; countries: string[]; templates: Templates }) {
-  const [onStages, setOnStages] = useState<string[]>(["payment", "documents"])
+export function Broadcast({ recipients, stages, countries, templates: TEMPLATES, initialTpl, initialStages }: { recipients: Recipient[]; stages: { key: string; label: string }[]; countries: string[]; templates: Templates; initialTpl?: string; initialStages?: string[] }) {
+  // Opened from a quick action (?tpl=&stage=) the template and audience are already chosen.
+  const startTpl = (initialTpl && initialTpl in TEMPLATES && TEMPLATES[initialTpl as TemplateKey].broadcast ? initialTpl : "documents_reminder") as TemplateKey
+  const [onStages, setOnStages] = useState<string[]>(initialStages?.filter((s) => stages.some((x) => x.key === s)).length ? initialStages.filter((s) => stages.some((x) => x.key === s)) : ["payment", "documents"])
   const [onCountries, setOnCountries] = useState<string[]>(countries)
   const [lang, setLang] = useState<"both" | "en" | "ar">("both")
-  const [tpl, setTpl] = useState<TemplateKey>("documents_reminder")
-  const [body, setBody] = useState(TEMPLATES.documents_reminder.en)
+  const [tpl, setTpl] = useState<TemplateKey>(startTpl)
+  const [body, setBody] = useState(TEMPLATES[startTpl].en)
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const audience = useMemo(() => recipients.filter((r) => onStages.includes(r.stage) && onCountries.includes(r.country) && (lang === "both" || r.lang === lang)), [recipients, onStages, onCountries, lang])
   const sample = audience[0]
