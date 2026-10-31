@@ -90,7 +90,9 @@ export function CasesQueue({
   const [menu, setMenu] = useState<string | null>(null)
   const [bulkTo, setBulkTo] = useState("")
   const [bulkNote, setBulkNote] = useState("")
-  const [flash, setFlash] = useState<{ ok: boolean; text: string } | null>(null)
+  const [flash, setFlash] = useState<{ ok: boolean; text: string; undo?: () => void } | null>(null)
+  // Keyboard: J/K move, Enter opens, X selects (not while typing in a field).
+  const [cursor, setCursor] = useState(-1)
   const [cancelling, setCancelling] = useState<QueueRow | null>(null)
   const [note, setNote] = useState("")
   const [hidden, setHidden] = useState<Col[]>([])
@@ -152,12 +154,54 @@ export function CasesQueue({
       return n
     })
 
-  const run = (fn: () => Promise<ActionResult>) =>
+  const run = (fn: () => Promise<ActionResult>, undo?: () => void) =>
     start(async () => {
       const r = await fn()
-      setFlash(r.ok ? { ok: true, text: r.message } : { ok: false, text: r.error })
+      setFlash(r.ok ? { ok: true, text: r.message, undo: r.message.startsWith("Demo") ? undefined : undo } : { ok: false, text: r.error })
       if (r.ok) router.refresh()
     })
+
+  /** Assign with Undo: the previous owner of each case is restored by the Undo button. */
+  const assign = (ids: string[], staffId: string | null) => {
+    const before = new Map<string | null, string[]>()
+    for (const id of ids) {
+      const prev = rows.find((r) => r.id === id)?.ownerId ?? null
+      if (prev === staffId) continue
+      before.set(prev, [...(before.get(prev) ?? []), id])
+    }
+    run(
+      () => assignCases({ ids, staffId }),
+      () => run(async () => {
+        let last: ActionResult = { ok: true, message: "Undone." }
+        for (const [prev, group] of before) last = await assignCases({ ids: group, staffId: prev })
+        return last.ok ? { ok: true, message: "Undone: the previous owners are back." } : last
+      }),
+    )
+  }
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (e.metaKey || e.ctrlKey || e.altKey || (t && (t.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName))) || document.querySelector(".modal-scrim")) return
+      const k = e.key.toLowerCase()
+      if (k === "j" || k === "k") {
+        e.preventDefault()
+        setCursor((c) => {
+          const n = Math.max(0, Math.min(rows.length - 1, c + (k === "j" ? 1 : -1)))
+          document.querySelectorAll(".tr")[n]?.scrollIntoView({ block: "nearest" })
+          return n
+        })
+      } else if (k === "enter" && cursor >= 0 && rows[cursor]) {
+        e.preventDefault()
+        router.push(`/staff/cases/${rows[cursor].id}`)
+      } else if (k === "x" && cursor >= 0 && rows[cursor]) {
+        e.preventDefault()
+        toggle(rows[cursor].id)
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [rows, cursor, router])
 
   const saveView = () => {
     const name = window.prompt("Name this view")?.trim()
@@ -254,6 +298,7 @@ export function CasesQueue({
         <div className={flash.ok ? "flash ok" : "flash err"} role="status">
           {flash.ok ? <Check size={16} aria-hidden /> : null}
           <span>{flash.text}</span>
+          {flash.undo ? <button type="button" className="btn outline" style={{ height: 28, marginInlineStart: "auto" }} disabled={pending} onClick={() => { const u = flash.undo!; setFlash(null); u() }}>Undo</button> : null}
           <button type="button" className="btn ghost" style={{ height: 28, marginInlineStart: "auto" }} onClick={() => setFlash(null)}>Dismiss</button>
         </div>
       ) : null}
@@ -270,7 +315,7 @@ export function CasesQueue({
               disabled={pending}
               onChange={(e) => {
                 const v = e.target.value
-                if (v) run(() => assignCases({ ids: selectedIds, staffId: v === "none" ? null : v }))
+                if (v) assign(selectedIds, v === "none" ? null : v)
               }}
             >
               <option value="">Assign to…</option>
@@ -323,10 +368,10 @@ export function CasesQueue({
             <a className="btn outline sm" href="/staff/cases">Clear the filters</a>
           </div>
         ) : (
-          rows.map((r) => {
+          rows.map((r, i) => {
             const on = selected.has(r.id)
             return (
-              <div key={r.id} className="tr" style={{ gridTemplateColumns: grid }}>
+              <div key={r.id} className="tr" style={{ gridTemplateColumns: grid }} data-cursor={i === cursor ? "true" : undefined}>
                 <button type="button" className={on ? "chk on" : "chk"} aria-label={`Select ${r.name}`} aria-pressed={on} onClick={() => toggle(r.id)}>
                   {on ? <Check size={11} strokeWidth={3} aria-hidden /> : null}
                 </button>
@@ -356,7 +401,7 @@ export function CasesQueue({
                       <span key={c.key} className="muted c-owner" style={{ textAlign: "center" }} title="Assigned after payment">–</span>
                     ) : (
                       r.open && me.staffId && (perms.assign || perms.selfAssign) ? (
-                        <button key={c.key} type="button" className="av none c-owner" title="Unassigned: assign to me" aria-label={`Assign ${r.name} to me`} onClick={() => run(() => assignCases({ ids: [r.id], staffId: me.staffId }))}>?</button>
+                        <button key={c.key} type="button" className="av none c-owner" title="Unassigned: assign to me" aria-label={`Assign ${r.name} to me`} onClick={() => assign([r.id], me.staffId)}>?</button>
                       ) : (
                         <a key={c.key} href="/staff/cases?owner=none" className="av none c-owner" title="Unassigned cases">?</a>
                       )
@@ -381,7 +426,7 @@ export function CasesQueue({
                     <div className="menu" role="menu" aria-label={`Actions for ${r.name}`}>
                       <a role="menuitem" href={`/staff/cases/${r.id}`}>Open case</a>
                       {r.open && (perms.assign || (perms.selfAssign && !r.ownerId)) && me.staffId && r.ownerId !== me.staffId ? (
-                        <button role="menuitem" type="button" onClick={() => { setMenu(null); run(() => assignCases({ ids: [r.id], staffId: me.staffId })) }}>Assign to me</button>
+                        <button role="menuitem" type="button" onClick={() => { setMenu(null); assign([r.id], me.staffId) }}>Assign to me</button>
                       ) : null}
                       {perms.msg && r.waLink ? (
                         <a role="menuitem" href={r.waLink} target="_blank" rel="noopener noreferrer">WhatsApp the customer</a>

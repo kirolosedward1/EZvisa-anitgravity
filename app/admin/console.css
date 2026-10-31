@@ -529,3 +529,4 @@ button.ezc-search { min-width: 0; overflow: hidden; }
 .ezc .guide-sec ol { list-style: decimal; }
 .ezc .guide-sec ul { list-style: disc; }
 .ezc .guide-sec li::marker { color: var(--ezc-blue); font-weight: 500; }
+.ezc .tr[data-cursor] { box-shadow: inset 3px 0 0 var(--ezc-blue); background: #f7f9fd; }
