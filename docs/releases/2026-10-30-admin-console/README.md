@@ -31,6 +31,8 @@ push to `main`.
 | 9. Appointments | done | Week view by day with centre filter and previous/next week, help requests with an SLA and inline "Book and save", ready files with no appointment (WhatsApp nudge, call). |
 | 10. Payments + Finance desk | done | Month totals, transactions, failed payments (pay link on WhatsApp), refunds and refund requests. Refund modal with the fixed policy, reason and note; Support and specialists request from the case, Finance/Admin approve, decline or mark sent. `008_refund_requests.sql`. |
 | 11. Insurance | done | Quote requests (price typed by staff, quote sent on WhatsApp, ask for dates when flexible), sent quotes (remind, accepted, declined sets "own policy", issue policy PDF). `009_insurance_quotes.sql`. |
+| 12. Messaging + Support desk | done | Customers waiting on us or on them with WhatsApp quick replies (English/Arabic templates filled from the case), broadcast audience by stage, destination and language with a live count and preview, recipient list copied with a log entry, registered app devices. Support sees it as the Support desk. |
+| 13. Analytics | done | Marketing (started, paid, revenue with deltas, funnel to completed, paid per day, applications by source) and Operations (paid to ready, within SLA, review time, by destination, team), 7/30/90 days. |
 
 ## Overview (step 4)
 
@@ -100,6 +102,16 @@ push to `main`.
 - Finance sees the same board titled "Finance desk", opening on refund requests.
 - Insurance: no insurer or rate card is connected; the policy PDF is stored with the case but the customer's dashboard
   does not show it yet. Declining sets the customer's choice to "I'll provide my own".
+
+## Messaging, Support desk and Analytics (steps 12 and 13)
+
+- Screenshots: `messaging-1440.jpg`, `messaging-390.jpg`, `broadcast-1440.jpg`, `analytics-1440.jpg`,
+  `analytics-operations-1440.jpg`, `analytics-390.jpg`.
+- No WhatsApp inbox: incoming messages, the 24-hour window, delivery and read receipts, scheduled broadcasts and quiet
+  hours all need WhatsApp Business, which is not connected. Customers who switched WhatsApp off in their application
+  are left out of broadcasts and quick replies.
+- Analytics: website visits, campaign names and ad cost (Google Analytics/Ads), and customer ratings are not
+  connected. Time to ready uses the stage-change events, so it fills in as cases move through the console.
 
 ## Demo session (local and preview builds only)
 

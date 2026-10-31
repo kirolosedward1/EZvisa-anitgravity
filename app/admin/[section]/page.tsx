@@ -6,8 +6,6 @@ import type { NavKey } from "@/lib/staff/roles"
 // Console boards that are not built yet, in the agreed build order. Each board replaces its entry here with its own
 // route folder (a static route wins over this one); this file goes once every board exists.
 const UPCOMING: Partial<Record<NavKey, string>> = {
-  messaging: "Messaging and the Support desk",
-  analytics: "Analytics",
   reports: "Reports",
   notifications: "Notifications",
   customers: "Customers",

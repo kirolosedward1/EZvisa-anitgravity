@@ -311,6 +311,19 @@
 .ezc .refund { display: flex; gap: 12px; padding: 14px 16px; align-items: center; flex-wrap: wrap; }
 @media (max-width: 1023px) { .ezc .tbl-h.pay { display: none; } .ezc .tbl-r.pay { grid-template-columns: 1fr 1fr; } }
 
+/* Messaging */
+.ezc .thread { display: flex; gap: 12px; padding: 14px 16px; border-top: 1px solid var(--ezc-rule); align-items: flex-start; }
+.ezc .thread:first-child { border-top: 0; }
+.ezc .phone { background: #e7ded5; border-radius: 16px; padding: 16px; min-height: 160px; }
+.ezc .bubble { background: #fff; border-radius: 10px 10px 10px 2px; padding: 10px 12px; font-size: 13px; max-width: 90%; white-space: pre-wrap; box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08); }
+.ezc .tab[aria-pressed="true"] { background: var(--ezc-sky); color: var(--ezc-blue); }
+
+/* Analytics */
+.ezc .funnel { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.4fr) 48px 90px; gap: 10px; align-items: center; font-size: 13px; }
+.ezc .funnel b { font-weight: 500; text-align: end; }
+.ezc .funnel .muted { font-size: 12px; }
+@media (max-width: 640px) { .ezc .funnel { grid-template-columns: 1fr 48px; } .ezc .funnel .bar, .ezc .funnel .muted { display: none; } }
+
 @media (max-width: 1180px) {
   .ezc .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ezc .grid2 { grid-template-columns: 1fr; }

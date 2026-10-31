@@ -250,3 +250,30 @@ test("refund policy", async () => {
   assert.equal(refundPolicy(c("ready"), true).amount, 0)
   assert.equal(refundPolicy(c("ready"), true, "Duplicate payment").amount, 249, "duplicate charges are always full")
 })
+
+test("message templates fill variables and keep unknown ones", async () => {
+  const { fillTemplate, waUrl, TEMPLATES } = await import("./templates.ts")
+  assert.equal(fillTemplate("Hi {first_name}, {reference} {nope}", { first_name: "Ann", reference: "EZ-1" }), "Hi Ann, EZ-1 {nope}")
+  assert.equal(waUrl("+971 50 123 4567", "a b"), "https://wa.me/971501234567?text=a%20b")
+  assert.equal(waUrl("12"), null)
+  for (const t of Object.values(TEMPLATES)) assert.ok(t.en && t.ar)
+})
+
+test("analytics: median, delta, sources and funnel", async () => {
+  const { median, delta, sourceOf, marketing } = await import("./analytics.ts")
+  assert.equal(median([3, 1, 2]), 2)
+  assert.equal(median([1, 2, 3, 4]), 2.5)
+  assert.equal(median([]), null)
+  assert.equal(delta(12, 10), 20)
+  assert.equal(delta(5, 0), null)
+  assert.equal(sourceOf("https://www.google.com/search?q=x"), "Google")
+  assert.equal(sourceOf(null, "walk_in"), "Staff, walk in")
+  assert.equal(sourceOf(null, null, "ios"), "Mobile app")
+  assert.equal(sourceOf("not a url"), "Direct")
+  const cs = [toStaffCase(app({ id: "m1", created_at: "2026-10-29T08:00:00Z", paid_at: "2026-10-29T09:00:00Z", payment_amount: 249 })), toStaffCase(app({ id: "m2", created_at: "2026-10-29T08:00:00Z", payment_status: "pending", application_status: "draft" }))]
+  const m = marketing(cs, 7, NOW)
+  assert.equal(m.cur.started, 2)
+  assert.equal(m.cur.paid, 1)
+  assert.equal(m.cur.revenue, 249)
+  assert.equal(m.funnel[1].n, 1)
+})

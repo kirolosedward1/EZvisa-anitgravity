@@ -25,7 +25,7 @@ export type ConsoleData = {
 }
 
 const BASE_COLUMNS =
-  "id, tracking_token, full_name, email, phone, nationality, destination_country, travel_purpose, application_status, payment_status, payment_amount, additional_notes, has_passport, has_photos, has_bank_statements, has_employment_proof, appointment_at, appointment_centre, entry_date, exit_date, travel_start_date, travel_end_date, created_at, updated_at"
+  "id, tracking_token, full_name, email, phone, nationality, destination_country, travel_purpose, application_status, payment_status, payment_amount, additional_notes, has_passport, has_photos, has_bank_statements, has_employment_proof, appointment_at, appointment_centre, entry_date, exit_date, travel_start_date, travel_end_date, referrer, payment_id, created_at, updated_at"
 /** Columns from supabase/migrations/002_appointment_step.sql; read only when that migration is applied. */
 const STEP_002_COLUMNS = "paid_at, file_downloaded_at, appointment_choice, appointment_help_status, appointment_help_requested_at"
 
