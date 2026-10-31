@@ -70,8 +70,9 @@ form answers, checklist, flight and hotel options, Google Drive folder) as draft
   prompt for a new session, owner steps after): `docs/automation/build-in-app-agent-prompt.md`. The agent is built
   into this repository and controlled from the staff console (File preparation, Case page, Settings, Notifications,
   Overview, Audit log, guide).
-- **Flow canvas:** a picture of the whole flow, drawn by a separate session from
-  `docs/automation/flow-canvas-prompt.md` (saved as `docs/automation/file-prep-flow.html` once built).
+- **Flow canvas (built 1 November 2026):** `docs/automation/file-prep-flow.html`, published privately at
+  https://claude.ai/artifact/GTfSFKTZ7k9LV4enWshoBt (drawn from `docs/automation/flow-canvas-prompt.md`; every step
+  is marked Live or To build against the code of that day).
 
 ### Options compared
 
