@@ -14,6 +14,7 @@ const SVC = { apikey: "mock-service-role", authorization: "Bearer mock-service-r
   await p.getByTestId("auth-email").fill(EMAIL); await p.getByTestId("auth-password").fill("test-pass"); await p.keyboard.press("Enter"); await p.waitForTimeout(3500);
   // Same as the country page's "Start application": /apply?step=personal&to=France
   await p.goto(`${APP}/apply?step=personal&to=France`, { waitUntil: "networkidle" }); await p.waitForTimeout(5000);
+  const h = await p.getByRole("heading").first().innerText(); console.log(/Who is travelling/.test(h) ? `PASS  opens on: ${h}` : `FAIL  opens on: ${h}`);
   await p.getByText("Sara Khan").first().click(); await p.waitForTimeout(2500);
   const next = await p.getByRole("heading").first().innerText(); console.log(`after picking Sara: ${next}`);
   const f = await p.evaluate(() => JSON.parse(localStorage.getItem("ezvisa.wizard.v1") || "{}").form || {});
