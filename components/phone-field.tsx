@@ -1,27 +1,21 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import {
-  AsYouType,
-  getExampleNumber,
-  getCountries,
-  getCountryCallingCode,
-  parsePhoneNumberFromString,
-  type CountryCode,
-} from "libphonenumber-js"
-import examples from "libphonenumber-js/mobile/examples"
+import { AsYouType, parsePhoneNumberFromString } from "libphonenumber-js"
 import { Label } from "@/components/ui/label"
 
-/** A generic number spaced exactly as typing groups it: UAE 50 000 0000, elsewhere the library's example (test) number. */
-function placeholderFor(country: CountryCode): string {
-  if (country === "AE") return "50 000 0000"
-  const example = getExampleNumber(country, examples)
-  return example ? example.formatInternational().replace(`+${example.countryCallingCode}`, "").trim() : "Phone number"
+/** UAE mobile numbers only for now (owner, 31 Oct): a fixed +971 and a 9-digit mobile number starting with 5,
+ *  grouped as typing goes ("50 123 4567"). The wizard's contact step follows the same rule. */
+const UAE_MOBILE = /^5\d{8}$/
+
+/** "0501234567", "+971 50 123 4567", "00971501234567" -> "501234567". */
+function nationalDigits(raw: string): string {
+  let digits = raw.replace(/\D/g, "")
+  if (raw.trim().startsWith("+") || digits.startsWith("00971") || /^9715\d{8}$/.test(digits)) digits = digits.replace(/^(00)?971/, "")
+  return digits.replace(/^0+/, "").slice(0, 9)
 }
 
-const COUNTRIES = getCountries()
-  .map((iso) => ({ iso, calling: getCountryCallingCode(iso) }))
-  .sort((a, b) => a.iso.localeCompare(b.iso))
+const format = (digits: string) => (digits ? new AsYouType("AE").input(`+971${digits}`).replace(/^\+971\s?/, "") : "")
 
 export function PhoneField({
   id = "phone",
@@ -34,48 +28,41 @@ export function PhoneField({
   onChange: (e164: string, valid: boolean) => void
 }) {
   const initial = useMemo(() => parsePhoneNumberFromString(value || ""), [value])
-  const [country, setCountry] = useState<CountryCode>(initial?.country || "AE")
-  const [national, setNational] = useState(initial?.formatNational().replace(/^0/, "") || "")
+  const savedElsewhere = Boolean(initial && initial.countryCallingCode !== "971")
+  const [national, setNational] = useState(() =>
+    initial && !savedElsewhere ? format(nationalDigits(String(initial.nationalNumber))) : "",
+  )
 
-  const apply = (nextCountry: CountryCode, raw: string) => {
-    let digits = raw.replace(/\D/g, "")
-    if (digits.startsWith("0")) digits = digits.replace(/^0+/, "")
-    // Typed as international so the national part comes back grouped ("50 123 4567"); a national-only input with no
-    // leading 0 is left unspaced by the library.
-    const calling = getCountryCallingCode(nextCountry)
-    const formatted = digits ? new AsYouType(nextCountry).input(`+${calling}${digits}`).replace(new RegExp(`^\\+${calling}\\s?`), "") : ""
-    setCountry(nextCountry)
-    setNational(formatted)
-    const parsed = digits ? parsePhoneNumberFromString(digits, nextCountry) : undefined
-    onChange(parsed?.number || "", Boolean(parsed?.isValid()))
+  const apply = (raw: string) => {
+    const digits = nationalDigits(raw)
+    setNational(format(digits))
+    const valid = UAE_MOBILE.test(digits)
+    onChange(digits ? `+971${digits}` : "", valid)
   }
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={id}>Phone number</Label>
-      <div className="flex gap-2">
-        <select
-          aria-label="Country code"
-          value={country}
-          onChange={(event) => apply(event.target.value as CountryCode, national)}
-          className="h-12 rounded-xl border border-input bg-background px-3 text-sm text-foreground"
-        >
-          {COUNTRIES.map((item) => (
-            <option key={item.iso} value={item.iso}>
-              {item.iso} +{item.calling}
-            </option>
-          ))}
-        </select>
+      <Label htmlFor={id}>UAE mobile number</Label>
+      <div className="flex h-12 items-stretch overflow-hidden rounded-xl border border-input bg-background focus-within:ring-2 focus-within:ring-ring">
+        <span className="flex items-center border-r border-input px-3 text-sm text-muted-foreground" aria-hidden="true">
+          +971
+        </span>
         <input
           id={id}
           inputMode="tel"
           autoComplete="tel-national"
-          placeholder={placeholderFor(country)}
+          placeholder="50 000 0000"
+          aria-label="UAE mobile number, after +971"
           value={national}
-          onChange={(event) => apply(country, event.target.value)}
-          className="h-12 w-full rounded-xl border border-input bg-background px-3 text-base text-foreground"
+          onChange={(event) => apply(event.target.value)}
+          className="w-full bg-transparent px-3 text-base text-foreground outline-none"
         />
       </div>
+      {savedElsewhere ? (
+        <p className="text-xs text-muted-foreground">
+          Your saved number ({initial?.formatInternational()}) is not a UAE mobile number. Enter a UAE mobile number to replace it.
+        </p>
+      ) : null}
     </div>
   )
 }
