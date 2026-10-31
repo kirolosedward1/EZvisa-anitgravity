@@ -240,3 +240,13 @@ test("file preparation: parts, text from templates, PDF assembly", async () => {
   assert.equal(fileKind("a.PDF"), "pdf")
   assert.equal(fileKind("a.heic"), null)
 })
+
+test("refund policy", async () => {
+  const { refundPolicy } = await import("./refunds.ts")
+  const c = (stage: string) => ({ stage: stage as never, amount: 249, docsToCheck: 0 })
+  assert.deepEqual(refundPolicy(c("documents"), false), { key: "full", label: "Before review, full refund", amount: 249 })
+  assert.equal(refundPolicy(c("review"), true).amount, 124.5)
+  assert.equal(refundPolicy(c("preparation"), true).key, "half")
+  assert.equal(refundPolicy(c("ready"), true).amount, 0)
+  assert.equal(refundPolicy(c("ready"), true, "Duplicate payment").amount, 249, "duplicate charges are always full")
+})

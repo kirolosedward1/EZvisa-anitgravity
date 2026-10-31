@@ -5,6 +5,8 @@ import { ArrowLeft } from "lucide-react"
 import { CountryFlag } from "@/components/country-flag"
 import { CaseControls, CaseNotes } from "@/components/staff/case-controls"
 import { CaseDocuments } from "@/components/staff/document-review"
+import { RefundButton } from "@/components/staff/refunds"
+import { refundPolicy } from "@/lib/staff/refunds"
 import { ErrorBanner } from "@/components/staff/states"
 import { SCHENGEN_META } from "@/lib/countries"
 import { applicationInsurance } from "@/lib/insurance"
@@ -235,7 +237,20 @@ export default async function CasePage({ params, searchParams }: { params: Promi
                   <span>{c.amount ? `${c.amount.toFixed(2)} AED` : "–"}</span>
                 </div>
               </div>
-              <p className="muted" style={{ margin: 0, fontSize: 12 }}>Refunds need a reason and are logged. Finance or Admin only, from Payments.</p>
+              {c.paid ? (
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <RefundButton
+                    target={(() => {
+                      const p = refundPolicy(c, Object.keys(detail.reviews).length > 0)
+                      return { caseId: c.id, name: c.name, amount: c.amount ?? 249, method: "Payment gateway", stageLabel: STAGE[c.stage].label, stage: c.stage, policyLabel: p.label, policyAmount: p.amount, duplicateAmount: c.amount ?? 249 }
+                    })()}
+                    canApprove={can(staff.role, "refund")}
+                    label={can(staff.role, "refund") ? "Issue refund" : "Request a refund"}
+                    demo={staff.demo}
+                  />
+                </div>
+              ) : null}
+              <p className="muted" style={{ margin: 0, fontSize: 12 }}>Refunds need a reason and are logged. Finance or an admin approves them; others send a request.</p>
             </section>
           ) : null}
 

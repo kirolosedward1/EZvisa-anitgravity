@@ -306,6 +306,11 @@
 .ezc .appt-row { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid var(--ezc-rule); }
 @media (max-width: 1023px) { .ezc .week { grid-template-columns: 1fr; } .ezc .day { border-inline-start: 0; border-top: 1px solid var(--ezc-rule); min-height: 0; } .ezc .grid2 { grid-template-columns: 1fr !important; } }
 
+/* Payments */
+.ezc .tbl-h.pay, .ezc .tbl-r.pay { grid-template-columns: 110px minmax(0, 1.3fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.9fr) 100px minmax(0, 1fr); }
+.ezc .refund { display: flex; gap: 12px; padding: 14px 16px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 1023px) { .ezc .tbl-h.pay { display: none; } .ezc .tbl-r.pay { grid-template-columns: 1fr 1fr; } }
+
 @media (max-width: 1180px) {
   .ezc .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ezc .grid2 { grid-template-columns: 1fr; }

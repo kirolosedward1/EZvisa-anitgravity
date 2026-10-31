@@ -29,6 +29,8 @@ push to `main`.
 | 7. Document review + Viewer | done | Queue of uploads waiting (oldest first, Over SLA, Re-upload), file preview with zoom and rotate, checklist per document type, compare box, A/R/J/K keys. Viewer with highlight boxes listed in the send-back note; `006_document_review_highlights.sql` stores them. |
 | 8. File preparation | done | Queue of files due, six parts (generate from the existing templates and edit, or upload bookings), assemble `final_package.pdf` with pdf-lib in embassy order (parts, then the customer's documents) and move to Ready. `007_file_preparation.sql` (file_parts). |
 | 9. Appointments | done | Week view by day with centre filter and previous/next week, help requests with an SLA and inline "Book and save", ready files with no appointment (WhatsApp nudge, call). |
+| 10. Payments + Finance desk | done | Month totals, transactions, failed payments (pay link on WhatsApp), refunds and refund requests. Refund modal with the fixed policy, reason and note; Support and specialists request from the case, Finance/Admin approve, decline or mark sent. `008_refund_requests.sql`. |
+| 11. Insurance | done | Quote requests (price typed by staff, quote sent on WhatsApp, ask for dates when flexible), sent quotes (remind, accepted, declined sets "own policy", issue policy PDF). `009_insurance_quotes.sql`. |
 
 ## Overview (step 4)
 
@@ -89,6 +91,16 @@ push to `main`.
   "reminder not delivered" tile are not built (WhatsApp is not connected); the fourth tile counts the next 48 hours.
 - Help requests need migration 002 (still missing in production); until then the list stays empty.
 
+## Payments, Finance desk and Insurance (steps 10 and 11)
+
+- Screenshots: `payments-1440.jpg`, `payments-390.jpg`, `finance-desk-1440.jpg`, `insurance-1440.jpg`, `insurance-390.jpg`.
+- The console does not call the payment gateway. An approved refund is issued in the payment gateway's dashboard
+  (test mode stays on) and then marked sent with its reference. Settlement, payout, webhook health, card details and
+  reconciliation of unmatched gateway rows are not connected, so those cards are not shown.
+- Finance sees the same board titled "Finance desk", opening on refund requests.
+- Insurance: no insurer or rate card is connected; the policy PDF is stored with the case but the customer's dashboard
+  does not show it yet. Declining sets the customer's choice to "I'll provide my own".
+
 ## Demo session (local and preview builds only)
 
 `/api/auth/demo-login?scenario=staff&role=admin|specialist|support|finance` opens the console with invented cases. It
@@ -98,5 +110,5 @@ never reads or writes the database, and the staff API routes reject it (401). Pr
 
 1. Apply `supabase/migrations/002_appointment_step.sql` (still missing in production: appointment saves, help requests
    and the download stamp depend on it).
-2. Apply `supabase/migrations/005_staff_console.sql`, then `006_document_review_highlights.sql` and `007_file_preparation.sql`. Until then the console works with `ADMIN_EMAILS` only, every case
+2. Apply `supabase/migrations/005_staff_console.sql`, then `006_document_review_highlights.sql` `007_file_preparation.sql`, `008_refund_requests.sql` and `009_insurance_quotes.sql`. Until then the console works with `ADMIN_EMAILS` only, every case
    shows as unassigned and audit rows are not stored.
