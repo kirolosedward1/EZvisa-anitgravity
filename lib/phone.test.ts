@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { hasInvalidPhone, isValidPhone, leadPhoneForSend, phoneTypingValue, uaeLocalDigits, uaeMobileE164 } from "./phone"
+import { hasInvalidPhone, isValidPhone, leadPhoneForSend, phoneTypingValue, spacedUaeTyping, uaeLocalDigits, uaeMobileE164 } from "./phone"
 
 /** The field's onChange: each new character is appended, then only Western digits (and a leading +) are kept. */
 function typePhone(chars: string) {
@@ -124,4 +124,16 @@ test("too short, repeated dial code, and foreign numbers are rejected", () => {
   assert.equal(isValidPhone("+971201012345678"), false)
   assert.equal(uaeMobileE164("+971201012345678"), null)
   assert.equal(uaeMobileE164("+20 1012345678"), null)
+})
+
+test("UAE numbers are shown spaced while typing, stored without spaces", () => {
+  assert.equal(spacedUaeTyping(""), "")
+  assert.equal(spacedUaeTyping("5"), "5")
+  assert.equal(spacedUaeTyping("501"), "50 1")
+  assert.equal(spacedUaeTyping("50123"), "50 123")
+  assert.equal(spacedUaeTyping("501234567"), "50 123 4567")
+  assert.equal(spacedUaeTyping("0501234567"), "050 123 4567")
+  assert.equal(spacedUaeTyping("+971501234567"), "+971501234567")
+  // Typing into the spaced value keeps digits only.
+  assert.equal(phoneTypingValue(spacedUaeTyping("5012") + "3"), "50123")
 })

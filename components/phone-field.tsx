@@ -26,12 +26,15 @@ export function PhoneField({
 }) {
   const initial = useMemo(() => parsePhoneNumberFromString(value || ""), [value])
   const [country, setCountry] = useState<CountryCode>(initial?.country || "AE")
-  const [national, setNational] = useState(initial?.formatNational() || "")
+  const [national, setNational] = useState(initial?.formatNational().replace(/^0/, "") || "")
 
   const apply = (nextCountry: CountryCode, raw: string) => {
     let digits = raw.replace(/\D/g, "")
     if (digits.startsWith("0")) digits = digits.replace(/^0+/, "")
-    const formatted = new AsYouType(nextCountry).input(digits)
+    // Typed as international so the national part comes back grouped ("50 123 4567"); a national-only input with no
+    // leading 0 is left unspaced by the library.
+    const calling = getCountryCallingCode(nextCountry)
+    const formatted = digits ? new AsYouType(nextCountry).input(`+${calling}${digits}`).replace(new RegExp(`^\\+${calling}\\s?`), "") : ""
     setCountry(nextCountry)
     setNational(formatted)
     const parsed = digits ? parsePhoneNumberFromString(digits, nextCountry) : undefined
@@ -58,7 +61,7 @@ export function PhoneField({
           id={id}
           inputMode="tel"
           autoComplete="tel-national"
-          placeholder={country === "AE" ? "56 303 5666" : "Phone number"}
+          placeholder={country === "AE" ? "50 000 0000" : "Phone number"}
           value={national}
           onChange={(event) => apply(country, event.target.value)}
           className="h-12 w-full rounded-xl border border-input bg-background px-3 text-base text-foreground"

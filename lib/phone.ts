@@ -21,6 +21,16 @@ export function phoneTypingValue(input: string): string {
  * The prefix is removed once: 971971… stays 971… and then fails the mobile pattern.
  * Callers must not strip first. A second pass would turn 971971501234567 into a valid mobile.
  */
+/**
+ * Display while typing a UAE number: digits grouped 2-3-4 ("50 123 4567"), or 3-3-4 with a leading 0
+ * ("050 123 4567"). Numbers typed with + are left as typed. Pure; the stored value never has spaces.
+ */
+export function spacedUaeTyping(value: string): string {
+  if (!value || value.startsWith("+")) return value
+  const lead = value.startsWith("0") ? 3 : 2
+  return [value.slice(0, lead), value.slice(lead, lead + 3), value.slice(lead + 3)].filter(Boolean).join(" ")
+}
+
 export function uaeLocalDigits(input: string): string {
   let digits = toWesternDigits(input).replace(/\D/g, "")
   if (digits.startsWith("00971")) digits = digits.slice(5)
