@@ -56,6 +56,9 @@ ul.check .opt{margin-left:auto;font-size:11px;color:var(--muted)}
 .cost .meta{color:var(--muted);font-size:13.5px;max-width:52ch}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
 .prose{color:var(--muted);font-size:13.5px}
+ol.sugg{margin:0;padding-left:22px;display:flex;flex-direction:column;gap:9px;font-size:14px;color:var(--muted)}
+ol.sugg li::marker{color:var(--blue);font-weight:600}
+ol.sugg b{color:var(--ink);font-weight:600}
 </style>
 <div class="wrap">
 <header>
@@ -234,6 +237,19 @@ ul.check .opt{margin-left:auto;font-size:11px;color:var(--muted)}
 
 <section class="card" aria-labelledby="s9"><h2 id="s9"><span class="n">9</span>Cost</h2><div class="cost"><span class="big">$0.40 to $1.50</span><span class="meta">per case, with Claude Opus 5.5 ($4 per million input tokens, $20 per million output tokens), before any flight or hotel search fees. <b>Estimate</b>, to be confirmed by the first test runs.</span></div>
 <p class="dev"><b>For developers:</b> cost is computed from <code>usage</code> (input, output, cache read, cache write) in one tested function and saved as <code>cost_usd</code> on the run; the monthly budget setting stops new runs when reached.</p></section>
+
+<section class="card" aria-labelledby="s10"><h2 id="s10"><span class="n">10</span>Suggestions before the build</h2><p class="prose">Review notes from drawing the flow, 1 November 2026. These are proposals for the owner, not part of the planned flow until he adopts them.</p>
+<ol class="sugg">
+<li><b>Start by button first, automatic start later.</b> The last approval starts a paid run even if a document was approved by mistake and reversed a minute later. Keep "start automatically" off for the first month; staff press Draft with automation when the case is ready.</li>
+<li><b>Protect edited drafts, not only Done.</b> Run again replaces every draft that is not Done, including one a specialist has already edited. Either count an edited draft as protected, or show "2 edited drafts will be replaced" before the rerun starts.</li>
+<li><b>Make Run again cheaper.</b> After Needs info, a rerun should reuse the Drive folder and the protected parts and redraft only what the new information changes, instead of a full-price second run.</li>
+<li><b>Unverified country means Needs info.</b> A destination whose checklist is not yet verified from its official page should never end as Succeeded; force Needs info so no unchecked checklist leaves the agent as a quiet warning.</li>
+<li><b>Decide document reading before the session.</b> Whether the agent reads uploaded documents or only the typed answers changes the privacy policy, the cost estimate and the data check. Settle it in Part A, not mid-build.</li>
+<li><b>Per-run dollar cap.</b> The monthly budget stops new runs, but one runaway case can spend most of it. Add a cap per run (for example $3) next to the step cap.</li>
+<li><b>Set expectations on flights and hotels.</b> No search provider gives a visa-grade reservation, so the agent's output is an options list and staff place the holds. Say so in the agent's note so the team does not wait for a PDF.</li>
+<li><b>Leave room for the letter's language.</b> Cover letters stay in English for now, but keep a field for the embassy's language, since some consulates prefer it.</li>
+</ol>
+<p class="dev"><b>For developers:</b> items 1, 2 and 4 touch <code>lib/automation/start.ts</code>, <code>lib/automation/save-parts.ts</code> and <code>lib/automation/checklists.ts</code> in the build prompt; item 6 is one more cap beside the step and token caps; the rest are settings or copy.</p></section>
 
 <p class="prose">Source: <code>docs/automation/file-prep-flow.html</code> in the EZvisa repository. Drawn on 1 November 2026 from <code>docs/STATUS.md</code>, <code>docs/automation/build-in-app-agent-prompt.md</code>, <code>docs/automation/make-file-preparation.md</code> and the staff console code.</p>
 </div>
