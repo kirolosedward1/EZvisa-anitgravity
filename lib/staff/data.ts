@@ -11,6 +11,7 @@ import { toStaffCase, type StaffCase } from "@/lib/staff/cases"
 import { DEMO_STAFF, demoConsoleData } from "@/lib/staff/demo"
 import { missingTable, type Staff } from "@/lib/staff/session"
 import type { Role } from "@/lib/staff/roles"
+import { missingColumn } from "@/lib/staff/columns"
 import { loadSettings, type LoadedSettings } from "@/lib/staff/console-settings-server"
 
 export type StaffMember = { id: string; name: string; email: string; role: Role; active: boolean }
@@ -33,6 +34,10 @@ const BASE_COLUMNS =
 const STEP_002_COLUMNS = "paid_at, file_downloaded_at, appointment_choice, appointment_help_status, appointment_help_requested_at"
 
 const CASE_LIMIT = 5000
+/** Without these a case cannot be shown, so they are never dropped. */
+const REQUIRED_COLUMNS = new Set(["id", "full_name", "email", "application_status", "payment_status", "created_at"])
+
+
 
 export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> => {
   const settings = await loadSettings(staff.demo)
@@ -53,16 +58,23 @@ export const loadConsoleData = cache(async (staff: Staff): Promise<ConsoleData> 
 
   let problem: string | null = null
   let apps: VisaApplication[] = []
-  const full = await client.from("visa_applications").select(`${BASE_COLUMNS}, ${STEP_002_COLUMNS}`).order("created_at", { ascending: false }).limit(CASE_LIMIT)
-  if (full.error?.code === "42703") {
-    // Migration 002 not applied: read without its columns.
-    const base = await client.from("visa_applications").select(BASE_COLUMNS).order("created_at", { ascending: false }).limit(CASE_LIMIT)
-    if (base.error) problem = "Cases could not be loaded."
-    else apps = (base.data ?? []) as VisaApplication[]
-  } else if (full.error) {
-    problem = "Cases could not be loaded."
-  } else {
-    apps = (full.data ?? []) as VisaApplication[]
+  // Columns differ between databases (older rows have entry_date/exit_date, newer ones travel_start_date/
+  // travel_end_date; paid_at and the 002 columns may be missing). A missing column is dropped and the read retried,
+  // so one absent optional column never hides every case.
+  let columns = `${BASE_COLUMNS}, ${STEP_002_COLUMNS}`.split(",").map((c) => c.trim())
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const res = await client.from("visa_applications").select(columns.join(", ")).order("created_at", { ascending: false }).limit(CASE_LIMIT)
+    if (!res.error) {
+      apps = (res.data ?? []) as unknown as VisaApplication[]
+      break
+    }
+    const missing = missingColumn(res.error, columns)
+    if (!missing || REQUIRED_COLUMNS.has(missing)) {
+      console.error(`[console] cases could not be loaded: ${res.error.code ?? ""} ${res.error.message ?? ""}`.slice(0, 300))
+      problem = "Cases could not be loaded."
+      break
+    }
+    columns = columns.filter((c) => c !== missing)
   }
 
   const [reviewRows, assignmentRows, teamRows] = await Promise.all([

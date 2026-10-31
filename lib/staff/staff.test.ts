@@ -349,3 +349,13 @@ test("SLA targets from settings change the due time", () => {
   assert.equal(def.task, "review")
   assert.equal(Date.parse(def.dueAt!) - Date.parse(fast.dueAt!), 22 * 3_600_000)
 })
+
+test("a missing column is found in Postgres and PostgREST errors", async () => {
+  const { missingColumn } = await import("./columns")
+  const asked = ["id", "full_name", "entry_date", "travel_start_date", "travel_end_date", "paid_at"]
+  assert.equal(missingColumn({ code: "42703", message: 'column "travel_start_date" does not exist' }, asked), "travel_start_date")
+  assert.equal(missingColumn({ code: "42703", message: "column visa_applications.paid_at does not exist" }, asked), "paid_at")
+  assert.equal(missingColumn({ code: "PGRST204", message: "Could not find the 'travel_end_date' column of 'visa_applications' in the schema cache" }, asked), "travel_end_date")
+  assert.equal(missingColumn({ code: "42501", message: "permission denied" }, asked), null)
+  assert.equal(missingColumn(null, asked), null)
+})
