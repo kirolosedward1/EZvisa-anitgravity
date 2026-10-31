@@ -157,7 +157,10 @@ never reads or writes the database, and the staff API routes reject it (401). Pr
 
 ## Owner actions
 
-1. Apply `supabase/migrations/002_appointment_step.sql` (still missing in production: appointment saves, help requests
-   and the download stamp depend on it).
-2. Apply `supabase/migrations/005_staff_console.sql`, then `006_document_review_highlights.sql` `007_file_preparation.sql`, `008_refund_requests.sql`, `009_insurance_quotes.sql` and `010_staff_notifications.sql` (in number order). Until then the console works with `ADMIN_EMAILS` only, every case
-   shows as unassigned and audit rows are not stored.
+1. ~~Apply migrations 002 and 005 to 010~~: applied 31 October 2026 at the owner's request, in number order, and checked:
+   every new table has row level security on with no client policies (server only), the new columns exist, and the
+   database logged no errors afterwards. 002 replaced the older `visa_applications_guard_appointment` function with
+   the reviewed version (customers can edit drafts and the after-payment answers as before; appointment fields only
+   once the case is paid and the file was downloaded; no edits to other columns from Preparation on). The separate
+   `visa_applications_guard_customer_update` guard is unchanged.
+2. Test the console with a real account at `/staff` (assign, review a document, assemble a file) before pushing to main.
