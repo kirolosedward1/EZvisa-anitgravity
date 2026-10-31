@@ -177,7 +177,7 @@ never reads or writes the database, and the staff API routes reject it (401). Pr
 
 ## Owner actions
 
-1. ~~Apply migrations 002 and 005 to 010~~: applied 31 October 2026 at the owner's request, in number order, and checked:
+1. ~~Apply migrations 002 and 005 to 011~~: applied 31 October 2026 at the owner's request, in number order, and checked:
    every new table has row level security on with no client policies (server only), the new columns exist, and the
    database logged no errors afterwards. 002 replaced the older `visa_applications_guard_appointment` function with
    the reviewed version (customers can edit drafts and the after-payment answers as before; appointment fields only
